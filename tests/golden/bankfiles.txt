@@ -1,0 +1,15 @@
+ 0 0 0 0
+ 10012341234
+ 6abcdef 0
+ 3
+ 6
+ 3
+ 1
+ERROR  68
+ 3 1 100 6
+ERROR  81
+ERROR  94
+ERROR  23
+ERROR  23
+ERROR  36
+end

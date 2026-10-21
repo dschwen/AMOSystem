@@ -1487,9 +1487,9 @@ J_EPatch
 	Rjsr	L_ChVerBuf2
 	Rjsr	L_Dsk.PathIt
 	move.l	#1005,d2		Verifie la presence du fichier!
-	Rbsr	L_D_Open
+	Rjsr	L_D_Open
 	beq	JDisk
-	Rbsr	L_D_Close		Le ferme!
+	Rjsr	L_D_Close		Le ferme!
 ; Effacement des includes
 	lea	-2(a4),a0
 	Rjsr	L_Includes_Adr
@@ -1557,9 +1557,9 @@ Rn_NoF	moveq	#81,d0			Erreur normale!
 ; Il faut charger: verifie la presence du programme
 .Loadit	Rjsr	L_Dsk.PathIt
 	move.l	#1005,d2		Verifie la presence du fichier!
-	Rbsr	L_D_Open
+	Rjsr	L_D_Open
 	beq	JDisk
-	Rbsr	L_D_Close		Le ferme!
+	Rjsr	L_D_Close		Le ferme!
 ; Ouvre une nouvelle structure
 	moveq	#0,d0			Pas de buffer
 	Rjsr	L_Prg_NewStructure	Ouvre la structure

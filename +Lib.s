@@ -2708,7 +2708,8 @@ C_Lib
 ; Fini!
 .Skip	move.l	(sp)+,a6
 	tst.l	d3
-	Rbeq	L_DiskError
+	bne.s	*+8
+	Rjmp	L_DiskError
 	rts
 .Nil	dc.b	"NIL:",0
 	Even
@@ -3095,17 +3096,7 @@ AskD:	move.l	a0,HiChaine(a5)
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					SAUVE HUNK BANQUE D0
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	SHunk
-; - - - - - - - - - - - - -
-	movem.l	a0/d0/d2/d3,-(sp)
-	Rlea	L_NHunk,0
-	lsl.w	#2,d0
-	lea	-4(a0,d0.w),a0
-	move.l	a0,d2
-	moveq	#4,d3
-	Rjsr	L_D_Write
-	movem.l	(sp)+,a0/d0/d2/d3
-	rts
+	Lib_Empty			SHunk, now in src/lib/bankfiles.cpp
 ; - - - - - - - - - - - - -
 	Lib_Def	NHunk
 ; - - - - - - - - - - - - -
@@ -3118,427 +3109,41 @@ AskD:	move.l	a0,HiChaine(a5)
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					SAVE "Banque", n
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par	InSave2
-; - - - - - - - - - - - - -
-; Ouvre le fichier / Mode NEW
-	move.l	(a3)+,a2
-	Rbsr	L_NomDisc
-	move.l	#1006,d2
-	Rbsr	L_D_Open
-	Rbeq	L_DiskError
-; Va sauver la banque
-	move.l	d3,d0
-	Rjsr	L_Bnk.GetAdr
-	Rbeq	L_BkNoRes
-	Rbsr	L_Bnk.SaveA0
-; Ferme le fichier
-	Rbsr	L_D_Close
-	rts
+	Lib_Int	InSave2		src/lib/bankfiles.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					SAVE "banques"
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par	InSave1
-; - - - - - - - - - - - - -
-	move.l	d3,a2
-	Rbsr	L_NomDisc
-	move.l	#1006,d2
-	Rbsr	L_D_Open
-	Rbeq	L_DiskError
-	Rbsr	L_Bnk.SaveAll
-	Rbsr	L_D_Close
-	rts
+	Lib_Int	InSave1		src/lib/bankfiles.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 				Routine: Sauve toutes les banques
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	Bnk.SaveAll
-; - - - - - - - - - - - - -
-	movem.l	a2/d2/d3,-(sp)
-	moveq	#3,d0
-	Rbsr	L_SHunk
-	bne.s	.DErr
-; Nombre de banques
-; ~~~~~~~~~~~~~~~~~
-	moveq	#0,d3
-	move.l	Cur_Banks(a5),a0
-	move.l	(a0),d0
-	beq.s	.BNo
-.BCpt	move.l	d0,a0
-	addq.w	#1,d3
-	move.l	(a0),d0
-	bne.s	.BCpt
-.BNo	move.l	Buffer(a5),a2
-	move.w	d3,(a2)
-	move.l	a2,d2
-	moveq	#2,d3
-	Rbsr	L_D_Write
-	bne.s	.DErr
-; Boucle de sauvegarde
-	move.l	Cur_Banks(a5),a2
-	move.l	(a2),d2
-	beq.s	.SNo
-.SLoop	move.l	d2,a2
-	lea	8*3(a2),a0
-	Rbsr	L_Bnk.SaveA0
-	bne.s	.DErr
-	move.l	(a2),d2
-	bne.s	.SLoop
-.SNo	moveq	#0,d0
-	bra.s	.Out
-.DErr	moveq	#-1,d0
-.Out	movem.l	(sp)+,a2/d2/d3
-	rts
+	Lib_Int	Bnk.SaveAll		src/lib/bankfiles.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 				Routine: sauve les banques VIDES
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	Bnk.SaveVide
-; - - - - - - - - - - - - -
-	movem.l	a2/d2/d3,-(sp)
-	moveq	#3,d0
-	Rbsr	L_SHunk
-	bne.s	.Err
-	move.l	Buffer(a5),a0
-	clr.w	(a0)
-	move.l	a0,d2
-	moveq	#2,d3
-	Rbsr	L_D_Write
-	bne.s	.Err
-	moveq	#0,d0
-	bra.s	.Out
-.Err	moveq	#-1,d0
-.Out	movem.l	(sp)+,a2/d2/d3
-	rts
+	Lib_Int	Bnk.SaveVide		src/lib/bankfiles.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					Sauve la banque A0
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	Bnk.SaveA0
-; - - - - - - - - - - - - -
-	movem.l	a2/a3/d2-d4,-(sp)
-	move.l	a0,a2
-	move.w	-16+4(a2),d2		Flags
-	btst	#Bnk_BitBob,d2
-	bne.s	SB_Bob
-	btst	#Bnk_BitIcon,d2
-	bne.s	SB_Icon
-; Sauve une banque normale!
-; ~~~~~~~~~~~~~~~~~~~~~~~~~
-	moveq	#1,d0			AmBk
-	Rbsr	L_SHunk
-	bne	SB_Err
-	move.l	Buffer(a5),a0
-	move.w	-8*2+2(a2),(a0)		NUMERO.W
-	clr.w	2(a0)			0-> CHIP / 1-> FAST
-	btst	#Bnk_BitChip,d2
-	bne.s	.Chp
-	addq.w	#1,2(a0)
-.Chp	move.l	-8*3+4(a2),d4		Taille banque
-	subq.l	#8,d4			Moins header
-	move.l	d4,4(a0)		Puis LONGUEUR.L
-	btst	#Bnk_BitData,d2		Data / Work?
-	beq.s	.Wrk
-	bset	#7,4(a0)
-.Wrk	move.l	a0,d2
-	moveq	#8,d3
-	Rbsr	L_D_Write
-	bne	SB_Err
-	lea	-8(a2),a2		Pointe le nom
-	move.l	a2,d2
-	move.l	d4,d3
-	Rbsr	L_D_Write
-	bne.s	SB_Err
-	bra.s	SB_Ok
-;	Sauve une banque d'icones
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-SB_Icon	moveq	#4,d0			AmIc
-	bra.s	SB_Sp
-; 	Sauve une banque de sprites
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-SB_Bob	moveq	#2,d0			AmSp
-SB_Sp	Rbsr	L_SHunk
-	bne.s	SB_Err
-	move.l	a2,a0			Remet les sprites droit
-	Rjsr	L_Bnk.UnRev
-	move.l	a2,d2
-	moveq	#2,d3
-	Rbsr	L_D_Write
-	bne.s	SB_Err
-	move.l	Buffer(a5),a3
-	clr.l	(a3)
-	clr.l	4(a3)
-	clr.w	8(a3)
-	move.w	(a2)+,d4
-	subq.w	#1,d4
-	bmi.s	.NoSpr
-; Sprite vide
-.SS1:	move.l	(a2),d0
-	bne.s	.SS2
-	move.l	a3,d2
-	moveq	#10,d3
-	Rbsr	L_D_Write
-	bne.s	SB_Err
-	bra.s	.SS3
-; Un sprite
-.SS2	move.l	d0,a0
-	move.l	d0,d2
-	move.w	(a0)+,d3
-	mulu	(a0)+,d3
-	mulu	(a0)+,d3
-	lsl.w	#1,d3
-	add.l	#10,d3
-	Rbsr	L_D_Write
-	bne.s	SB_Err
-; Suivant
-.SS3	addq.l	#8,a2
-	dbra	d4,.SS1
-; Sauve la palette
-; ~~~~~~~~~~~~~~~~
-.NoSpr	move.l	a2,d2
-	moveq	#32*2,d3
-	Rbsr	L_D_Write
-	bne.s	SB_Err
-SB_Ok	moveq	#0,d0
-	bra.s	SB_Out
-SB_Err	moveq	#-1,d0
-SB_Out	movem.l	(sp)+,a2/a3/d2-d4
-	rts
+	Lib_Int	Bnk.SaveA0		src/lib/bankfiles.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					Load "Banque",n
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par	InLoad1
-; - - - - - - - - - - - - -
-	move.l	d3,-(a3)
-	move.l	#EntNul,d3
-	Rbra	L_Load0
+	Lib_Int	InLoad1		src/lib/bankfiles.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					Load "Banque"
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par	InLoad2
+	Lib_Int	InLoad2		src/lib/bankfiles.cpp
 ; - - - - - - - - - - - - -
-	cmp.l	#$10000,d3
-	Rbge	L_FonCall
-	Rbra	L_Load0
-; - - - - - - - - - - - - -
-	Lib_Def	Load0
-; - - - - - - - - - - - - -
-	move.l	(a3)+,a2
-	Rbsr	L_NomDisc
-	move.l	#1005,d2
-	Rbsr	L_D_Open
-	Rbeq	L_DiskError
-; Va charger!
-; ~~~~~~~~~~~
-	move.l	d3,d0
-	Rbsr	L_Bnk.Load
-	Rbsr	L_D_Close
-	Rjsr	L_Bnk.Change
-; Des erreurs?
-; ~~~~~~~~~~~~
-	tst.w	d0
-	Rbmi	L_DiskError
-	Rbne	L_OOfMem
-	rts
+	Lib_Empty			Load0, now in src/lib/bankfiles.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					Routine chargement de banque
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	Bnk.Load
-; - - - - - - - - - - - - -
-	movem.l	a2/a3/d2-d7,-(sp)
-	move.l	d0,d5
-; Charge l'entete de la banque (4 octets de debut!)
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	move.l	Buffer(a5),d2
-	moveq	#4,d3
-	Rbsr	L_D_Read
-	bne	LB_DErr
-	move.l	d2,a1
-	move.l	(a1),d1
-	Rlea	L_NHunk,0
-	moveq	#1,d0
-.NHu1	cmp.l	(a0)+,d1
-	beq.s	.NHu2
-	addq.l	#1,d0
-	tst.l	(a0)
-	bne.s	.NHu1
-	bra	LB_Pabank
-.NHu2	cmp.w	#4,d0				Icones
-	beq	LB_Icons
-	cmp.w	#3,d0				Multiples banques
-	beq	LB_Multiples
-	cmp.w	#2,d0				Sprites
-	beq	LB_Sprites
-; Une banque normale
-; ~~~~~~~~~~~~~~~~~~
-	move.l	Buffer(a5),d2			Charge l'entete
-	move.l	d2,a2
-	moveq	#8,d3
-	Rbsr	L_D_Read
-	bne	LB_DErr
-	move.l	d5,d3			Si negatif>>> par d�faut
-	bpl.s	.Skip1
-	moveq	#0,d3
-	move.w	(a2),d3
-	bne.s	.Skip1			Si pas de numero,
-	moveq	#5,d3			Numero 5 par defaut!
-.Skip1	move.l	d3,d0			Numero
-	moveq	#0,d1			Type de banque
-	move.l	4(a2),d3		Longueur
-	move.l	d3,d2
-	and.l	#$0FFFFFFF,d2
-	subq.l	#8,d2			Moins le nom!
-	tst.l	d3			Data ou Work?
-	bpl.s	.Skip2
-	bset	#Bnk_BitData,d1
-.Skip2	tst.w	2(a2)			Chip ou Fast?
-	bne.s	.Skip3
-	bset	#Bnk_BitChip,d1
-.Skip3	Rlea	L_Bnk_NoLoad,0
-	Rjsr	L_Bnk.Reserve
-	beq	LB_MErr
-; Charge la banque
-	move.l	a0,d2
-	subq.l	#8,d2
-	and.l	#$0FFFFFFF,d3
-	Rbsr	L_D_Read
-	beq	LB_Ok
-	bra	LB_DErr
-; Charge une banque d'icones
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~
-LB_Icons
-	moveq	#2,d3			Charge le nombre de sprites
-	move.l	Buffer(a5),d2
-	move.l	d2,a2
-	Rbsr	L_D_Read
-	bne	LB_DErr
-	move.w	(a2),d6
-; Overwrite ou append?
-	tst.w	d5
-	beq.s	.Over
-	Rjsr	L_Bnk.GetIcons
-	beq.s	.Over
-; Append
-	moveq	#1,d0
-	move.w	d6,d1
-	move.w	(a0),d5
-	add.w	d5,d1
-	bra.s	.Res
-; Overwrite
-.Over	moveq	#0,d0
-	move.w	d6,d1
-	clr.w	d5
-; Va reserver la place
-.Res	Rjsr	L_Bnk.ResIco
-	bne	LB_MErr
-	bra.s	LB_FIcons
-; Charge la banque de sprites
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~
-LB_Sprites
-	moveq	#2,d3			Charge le nombre de sprites
-	move.l	Buffer(a5),d2
-	move.l	d2,a2
-	Rbsr	L_D_Read
-	bne	LB_DErr
-	move.w	(a2),d6
-; Overwrite ou append?
-	tst.w	d5
-	beq.s	.Over
-	Rjsr	L_Bnk.GetBobs
-	beq.s	.Over
-; Append
-	moveq	#1,d0
-	move.w	d6,d1
-	move.w	(a0),d5
-	add.w	d5,d1
-	bra.s	.Res
-; Overwrite
-.Over	moveq	#0,d0
-	move.w	d6,d1
-	clr.w	d5
-; Va reserver la place
-.Res	Rjsr	L_Bnk.ResBob
-	bne	LB_MErr
-; Fin du chargement SPRITES/ICONES
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-LB_FIcons
-; Pointe le debut des nouveaux
-	lsl.w	#3,d5
-	lea	2(a0,d5.w),a2
-; Charge tous les sprites
-	subq.w	#1,d6
-	bmi.s	.LSSkip
-	move.l	Buffer(a5),a3
-.LSLoop	clr.l	(a2)+
-	clr.l	(a2)+
-	move.l	a3,d2
-	moveq	#10,d3
-	Rbsr	L_D_Read
-	bne	LB_DErr
-	move.w	(a3),d0
-	mulu	2(a3),d0
-	mulu	4(a3),d0
-	lsl.l	#1,d0
-	beq.s	.Rien
-	move.l	d0,d3
-	add.l	#10,d0
-	SyCall	MemChip
-	beq	LB_MErr
-	move.l	a0,-8(a2)		Poke le pointeur
-	clr.l	-4(a2)
-	move.l	(a3),(a0)+		TX/TY
-	move.w	4(a3),(a0)+
-	move.w	6(a3),(a0)		Plus de FLAGS!
-	and.w	#$3FFF,(a0)+
-	move.w	8(a3),(a0)+
-	move.l	a0,d2			Charge l'image
-	Rbsr	L_D_Read
-	bne	LB_DErr
-.Rien	dbra	d6,.LSLoop
-; Charge la palette
-.LSSkip	move.l	a2,d2
-	moveq	#32*2,d3
-	Rbsr	L_D_Read
-	bne	LB_DErr
-	bra	LB_Ok
-; Charge plusieurs banques
-; ~~~~~~~~~~~~~~~~~~~~~~~~~
-LB_Multiples
-	Rjsr	L_Bnk.EffAll
-	move.l	Buffer(a5),d2
-	move.l	d2,a2
-	moveq	#2,d3
-	Rbsr	L_D_Read
-	bne	LB_DErr
-	move.w	(a2),d2
-	beq.s	LB_Ok
-; Boucle de chargement
-.MLoop	move.l	#EntNul,d0
-	Rbsr	L_Bnk.Load
-	bne	LB_Out
-	subq.w	#1,d2
-	bne.s	.MLoop
-; Fin du chargement des banques
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-LB_Ok	moveq	#0,d0
-	bra.s	LB_Out
-; Erreur disque
-; ~~~~~~~~~~~~~
-LB_DErr	moveq	#-1,d0
-	bra.s	LB_Out
-; Out of mem
-; ~~~~~~~~~~
-LB_MErr	moveq	#-2,d0
-	bra.s	LB_Out
-; Pas une banque
-; ~~~~~~~~~~~~~~
-LB_Pabank
-	moveq	#-3,d0
-; Sortie
-; ~~~~~~
-LB_Out	movem.l	(sp)+,a2/a3/d2-d7
-	tst.w	d0
-	rts
+	Lib_Int	Bnk.Load		src/lib/bankfiles.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					PLOAD "prog",banque
@@ -3553,10 +3158,11 @@ LB_Out	movem.l	(sp)+,a2/a3/d2-d7
 	addq.w	#1,(sp)
 ; Nom disque
 .Pl3	move.l	(a3)+,a2
-	Rbsr	L_NomDisc
+	Rjsr	L_NomDisc
 	move.l	#1005,d2
-	Rbsr	L_D_Open
-	Rbeq	L_DiskError
+	Rjsr	L_D_Open
+	bne.s	*+8
+	Rjmp	L_DiskError
 ; Saute les premiers HUNKS!
 	bsr	GetH
 	cmp.l	#$3F3,d0
@@ -3580,15 +3186,17 @@ LB_Out	movem.l	(sp)+,a2/a3/d2-d7
 	Rbeq	L_OOfMem
 ; Charge!
 	move.l	a0,d2
-	Rbsr	L_D_Read
-	Rbne	L_DiskError
-	Rbsr	L_D_Close
+	Rjsr	L_D_Read
+	beq.s	*+8
+	Rjmp	L_DiskError
+	Rjsr	L_D_Close
 	rts
 ;	 ROUTINE
 GetH	move.l	Buffer(a5),d2
 	moveq	#4,d3
-	Rbsr	L_D_Read
-	Rbne	L_DiskError
+	Rjsr	L_D_Read
+	beq.s	*+8
+	Rjmp	L_DiskError
 	move.l	Buffer(a5),a0
 	move.l	(a0),d0
 	rts
@@ -3603,26 +3211,30 @@ GetH	move.l	Buffer(a5),d2
 	move.l	d0,-(sp)
 * Ouvre le fichier
 	move.l	(a3)+,a2
-	Rbsr	L_NomDisc
+	Rjsr	L_NomDisc
 	move.l	#1005,d2
-	Rbsr	L_D_Open
-	Rbeq	L_DiskError
+	Rjsr	L_D_Open
+	bne.s	*+8
+	Rjmp	L_DiskError
 * Trouve la taille du fichier!
 	moveq	#0,d2
 	moveq	#1,d3
-	Rbsr	L_D_Seek
-	Rbmi	L_DiskError
+	Rjsr	L_D_Seek
+	bpl.s	*+8
+	Rjmp	L_DiskError
 	moveq	#0,d2
 	moveq	#-1,d3
-	Rbsr	L_D_Seek
-	Rbmi	L_DiskError
+	Rjsr	L_D_Seek
+	bpl.s	*+8
+	Rjmp	L_DiskError
 * Charge!
 	move.l	d0,d3
 	move.l	(sp)+,d2
-	Rbsr	L_D_Read
-	Rbne	L_DiskError
+	Rjsr	L_D_Read
+	beq.s	*+8
+	Rjmp	L_DiskError
 * Ferme!
-	Rbsr	L_D_Close
+	Rjsr	L_D_Close
 	rts
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -3638,17 +3250,19 @@ GetH	move.l	Buffer(a5),d2
 	move.l	d0,-(sp)
 * Ouvre le fichier / Mode NEW
 	move.l	(a3)+,a2
-	Rbsr	L_NomDisc
+	Rjsr	L_NomDisc
 	move.l	#1006,d2
-	Rbsr	L_D_Open
-	Rbeq	L_DiskError
+	Rjsr	L_D_Open
+	bne.s	*+8
+	Rjmp	L_DiskError
 * Sauve!
 	move.l	(sp)+,d2
 	move.l	(sp)+,d3
-	Rbsr	L_D_Write
-	Rbne	L_DiskError
+	Rjsr	L_D_Write
+	beq.s	*+8
+	Rjmp	L_DiskError
 * Ferme!
-	Rbsr	L_D_Close
+	Rjsr	L_D_Close
 	rts
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -3683,10 +3297,11 @@ GetH	move.l	Buffer(a5),d2
 	move.l	d3,IffParam(a5)
 * Ouvre le fichier
 	move.l	(a3)+,a2
-	Rbsr	L_NomDisc
+	Rjsr	L_NomDisc
 	move.l	#1005,d2
-	Rbsr	L_D_Open
-	Rbeq	L_DiskError
+	Rjsr	L_D_Open
+	bne.s	*+8
+	Rjmp	L_DiskError
 * Lis un chunk image
 	Rbsr	L_SaveRegs
 	move.l	Handle(a5),d5
@@ -3694,7 +3309,7 @@ GetH	move.l	Buffer(a5),d2
 	Rbsr	L_IffForm
 	Rbsr	L_LoadRegs
 * Ferme le fichier
-	Rbsr	L_D_Close
+	Rjsr	L_D_Close
 * Ca y est!
 	rts
 
@@ -3840,19 +3455,22 @@ GetH	move.l	Buffer(a5),d2
 	move.l	(a3)+,IffParam(a5)
 * Ouvre le fichier
 	move.l	(a3)+,a2
-	Rbsr	L_NomDisc
+	Rjsr	L_NomDisc
 	move.l	#1005,d2
-	Rbsr	L_D_Open
-	Rbeq	L_DiskError
+	Rjsr	L_D_Open
+	bne.s	*+8
+	Rjmp	L_DiskError
 * Trouve la taille du fichier!
 	moveq	#0,d2
 	moveq	#1,d3
-	Rbsr	L_D_Seek
-	Rbmi	L_DiskError
+	Rjsr	L_D_Seek
+	bpl.s	*+8
+	Rjmp	L_DiskError
 	moveq	#0,d2
 	moveq	#-1,d3
-	Rbsr	L_D_Seek
-	Rbmi	L_DiskError
+	Rjsr	L_D_Seek
+	bpl.s	*+8
+	Rjmp	L_DiskError
 * Reserve un espace memoire
 	addq.l	#8,d0
 	Rjsr	L_ResTempBuffer
@@ -3865,7 +3483,7 @@ GetH	move.l	Buffer(a5),d2
 	move.w	#32767,d7
 	Rbsr	L_IffFormLoad
 * Ferme le ficher
-	Rbsr	L_D_Close
+	Rjsr	L_D_Close
 * Execute le fichier
 	move.l	TempBuffer(a5),a0
 	cmp.l	#"ILBM",8(a0)
@@ -3928,14 +3546,15 @@ GetH	move.l	Buffer(a5),d2
 	move.l	d3,d7
 * Ouvre le fichier / Mode NEW
 	move.l	(a3)+,a2
-	Rbsr	L_NomDisc
+	Rjsr	L_NomDisc
 	move.l	#1006,d2
-	Rbsr	L_D_Open
-	Rbeq	L_DiskError
+	Rjsr	L_D_Open
+	bne.s	*+8
+	Rjmp	L_DiskError
 * Sauve l'ecran
 	Rbsr	L_IffSaveScreen
 * Ferme
-	Rbsr	L_D_Close
+	Rjsr	L_D_Close
 	Rbsr	L_LoadRegs
 	rts
 
@@ -4030,7 +3649,8 @@ FInp2b 	move.l	d3,-(sp)
 	DosCall	_LVORead
 	tst.l	d0
 	Rbeq	L_EOFil
-	Rbmi	L_DiskError
+	bpl.s	*+8
+	Rjmp	L_DiskError
 	move.l	(sp)+,d3
 FInpX	Ret_String
 
@@ -4062,7 +3682,8 @@ GBy1a	move.l	FhA(a2),d1
 	DosCall	_LVORead
 	tst.l	d0
 	Rbeq	L_EOFil
-	Rbmi	L_DiskError
+	bpl.s	*+8
+	Rjmp	L_DiskError
 	move.l	(sp)+,a0
 	move.b	(a0),d0
 	bra.s	EByE
@@ -4083,7 +3704,8 @@ GBy3	move.l	a0,-(sp)
 	move.l	(sp)+,a0
 	tst.l	d0
 	Rbeq	L_EOFil
-	Rbmi	L_DiskError
+	bpl.s	*+8
+	Rjmp	L_DiskError
 	move.w	d0,6(a0)
 * Prend un caractere
 GBy4	move.w	4(a0),d0
@@ -4120,17 +3742,19 @@ EByE	movem.l	(sp)+,a0/a1/d1-d4
 	Lib_Par	InDirD
 ; - - - - - - - - - - - - -
 	move.l	d3,a2
-	Rbsr	L_NomDisc
+	Rjsr	L_NomDisc
 	Rbsr	L_LockGet
 	move.l	LockSave(a5),d1
 	move.l	Buffer(a5),d2
 	DosCall	_LVOExamine
 	move.l	d2,a0
 	tst.w	4(a0)
-	Rbmi	L_DiskError
+	bpl.s	*+8
+	Rjmp	L_DiskError
 	move.l	LockSave(a5),d0
 	Rjsr	L_AskDir2
-	Rbne	L_DiskError
+	beq.s	*+8
+	Rjmp	L_DiskError
 	Rbsr	L_LockFree
 	Rbsr	L_CopyPath
 	rts
@@ -4145,7 +3769,8 @@ EByE	movem.l	(sp)+,a0/a1/d1-d4
 * Si pas de path courant, demande le path reel
 	movem.l	a0/a1,-(sp)
 	Rjsr	L_AskDir
-	Rbne	L_DiskError
+	beq.s	*+8
+	Rjmp	L_DiskError
 	movem.l	(sp)+,a0/a1
 	move.l	Buffer(a5),a2
 	lea	384(a2),a2
@@ -4194,11 +3819,12 @@ FDi2	move.l	a1,HiChaine(a5)
 	Lib_Par	InKill
 ; - - - - - - - - - - - - -
 	move.l	d3,a2
-	Rbsr	L_NomDisc
+	Rjsr	L_NomDisc
 	move.l 	Name1(a5),d1
 	DosCall	_LVODeleteFile
 	tst.l	d0
-	Rbeq	L_DiskError
+	bne.s	*+8
+	Rjmp	L_DiskError
 	rts
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -4207,18 +3833,19 @@ FDi2	move.l	a1,HiChaine(a5)
 	Lib_Par	InRename
 ; - - - - - - - - - - - - -
 	move.l	d3,a2
-	Rbsr	L_NomDisc
+	Rjsr	L_NomDisc
 	move.l	Name1(a5),a0
 	move.l	Name2(a5),a1
 IRen1	move.b	(a0)+,(a1)+
 	bne.s	IRen1
 	move.l	(a3)+,a2
-	Rbsr	L_NomDisc
+	Rjsr	L_NomDisc
 	move.l	Name1(a5),d1
 	move.l	Name2(a5),d2
 	DosCall	_LVORename
 	tst.l	d0
-	Rbeq	L_DiskError
+	bne.s	*+8
+	Rjmp	L_DiskError
 	rts
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -4228,11 +3855,12 @@ IRen1	move.b	(a0)+,(a1)+
 ; - - - - - - - - - - - - -
 	Rbsr	L_LockFree
 	move.l	d3,a2
-	Rbsr	L_NomDisc
+	Rjsr	L_NomDisc
 	move.l	Name1(a5),d1
 	DosCall	_LVOCreateDir
 	tst.l	d0
-	Rbeq	L_DiskError
+	bne.s	*+8
+	Rjmp	L_DiskError
 	move.l	d0,LockSave(a5)
 	Rbsr	L_LockFree
 	rts
@@ -4271,7 +3899,8 @@ IRen1	move.b	(a0)+,(a1)+
 	move.l	d2,-(sp)
 	DosCall	_LVOInfo
 	tst.l	d0
-	Rbeq	L_DiskError
+	bne.s	*+8
+	Rjmp	L_DiskError
 	move.l	(sp)+,a0
 	move.l	12(a0),d3
 	sub.l	16(a0),d3
@@ -4287,7 +3916,7 @@ IRen1	move.b	(a0)+,(a1)+
 	Lib_Par	FnDiscInfo
 ; - - - - - - - - - - - - -
 	move.l	d3,a2
-	Rbsr	L_NomDisc
+	Rjsr	L_NomDisc
 	moveq	#126,d3
 	Rjsr	L_Demande
 	move.l	a0,-(sp)
@@ -4296,7 +3925,8 @@ IRen1	move.b	(a0)+,(a1)+
 	move.l	Buffer(a5),d2
 	DosCall	_LVOInfo
 	tst.l	d0
-	Rbeq	L_DiskError
+	bne.s	*+8
+	Rjmp	L_DiskError
 	Rbsr	L_LockFree
 	move.l	(sp),a0
 	addq.w	#2,a0
@@ -4357,7 +3987,8 @@ IRen1	move.b	(a0)+,(a1)+
 	moveq	#1,d3
 	DosCall	_LVORead
 	tst.l	d0
-	Rbmi	L_DiskError
+	bpl.s	*+8
+	Rjmp	L_DiskError
 	moveq	#0,d2
 	moveq	#0,d3
 	lea	DeFloat(a5),a0
@@ -4393,7 +4024,7 @@ IRen1	move.b	(a0)+,(a1)+
 ; - - - - - - - - - - - - -
 	Rbsr	L_DiskClear
 	move.l	d3,a2
-	Rbsr	L_NomDisc
+	Rjsr	L_NomDisc
 	move.l	(a3)+,d0
 	Rbsr	L_GetFile
 	Rbne	L_FilOO
@@ -4402,7 +4033,8 @@ IRen1	move.b	(a0)+,(a1)+
 	move.l	(sp)+,d2
 	DosCall	_LVOOpen
 	tst.l	d0
-	Rbeq	L_DiskError
+	bne.s	*+8
+	Rjmp	L_DiskError
 	move.l	d0,FhA(a2)		* Handle!
 	move.w	(sp)+,d0
 	move.b	d0,FhT(a2)		* Type
@@ -4450,7 +4082,8 @@ IRen1	move.b	(a0)+,(a1)+
 	moveq	#-1,d3
 	DosCall	_LVOSeek
 	tst.l	d0
-	Rbmi	L_DiskError
+	bpl.s	*+8
+	Rjmp	L_DiskError
 	rts
 ; - - - - - - - - - - - - -
 	Lib_Par	FnPof
@@ -4560,7 +4193,7 @@ IRen1	move.b	(a0)+,(a1)+
 	Rbsr	L_DiskClear
 	move.w	d0,-(sp)
 	move.l	d3,a2
-	Rbsr	L_NomDisc
+	Rjsr	L_NomDisc
 	move.l	(a3)+,d0
 	Rbsr	L_GetFile
 	Rbne	L_FilOO
@@ -4574,7 +4207,8 @@ IRen1	move.b	(a0)+,(a1)+
 	move.l	#1006,d2
 	DosCall	_LVOOpen
 	tst.l	d0
-	Rbeq	L_DiskError
+	bne.s	*+8
+	Rjmp	L_DiskError
 IOpr1	move.l	d0,FhA(a2)		* Handle!
 	move.l	d0,d1
 	move.w	(sp)+,d0
@@ -4607,7 +4241,8 @@ IGet2	move.l	a0,HiChaine(a5)
 	move.l	(sp),d1
 	DosCall	_LVORead
 	cmp.l	d0,d3
-	Rbne	L_DiskError
+	beq.s	*+8
+	Rjmp	L_DiskError
 	dbra	d4,IGet1
 	addq.l	#4,sp
 	rts
@@ -4638,7 +4273,8 @@ IPut2:  movem.l	a0/d1-d4,-(sp)
 	move.l	d4,d3
 	DosCall	_LVOWrite
 	cmp.l	d0,d3
-	Rbne	L_DiskError
+	beq.s	*+8
+	Rjmp	L_DiskError
 	movem.l	(sp)+,a0/d1-d4
         cmp.w	d3,d4
         bcc.s 	IPut4
@@ -4652,7 +4288,8 @@ IPut3:  move.b 	#32,(a1)+
 	movem.l	d1-d3,-(sp)
 	DosCall	_LVOWrite
 	cmp.l	d0,d3
-	Rbne	L_DiskError
+	beq.s	*+8
+	Rjmp	L_DiskError
 	movem.l	(sp)+,d1-d3
 IPut4	subq.w	#1,4(sp)
 	bne.s	IPut1
@@ -4739,7 +4376,8 @@ GP1	move.l	(sp),d1
 	move.l	#1005,d2
 	DosCall	_LVOOpen
 	move.l	d0,PrtHandle(a5)
-	Rbeq	L_DiskError
+	bne.s	*+8
+	Rjmp	L_DiskError
 ; Branche la routine de fermeture
 	lea	.Struc(pc),a1
 	lea	Sys_ClearRoutines(a5),a2
@@ -4794,7 +4432,8 @@ Ip2	sub.l	d2,a0
 	beq.s	Ip3
 	DosCall	_LVOWrite
 	tst.l	d0
-	Rbmi	L_DiskError
+	bpl.s	*+8
+	Rjmp	L_DiskError
 Ip3:	movem.l	(sp)+,a0-a2/d2-d7
 	rts
 
@@ -4928,7 +4567,7 @@ FDirV	Rbsr	L_FillFFree
 	Rbcc	L_FonCall
 	move.l	Name1(a5),a0
 	Rbsr	L_ChVerBuf2
-	Rbsr	L_Dsk.PathIt
+	Rjsr	L_Dsk.PathIt
 	Rbsr	L_LockGet
 .Vide	move.l	(a3)+,a2		Prend l'assign
 	move.w	(a2)+,d2
@@ -4953,7 +4592,7 @@ FDirV	Rbsr	L_FillFFree
 	clr.l	LockSave(a5)		Success: enleve le lock!
 	rts
 .Err	Rbsr	L_LockFree
-	Rbra	L_DiskError
+	Rjmp	L_DiskError
 ; Version 1.3: appelle la commande ASSIGN dans le directory C:
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .1_3	move.l	d3,-(a3)
@@ -4962,7 +4601,8 @@ FDirV	Rbsr	L_FillFFree
 	move.l	Name1(a5),a1
 	CoCopy
 	Rbsr	L_RExist
-	Rbeq	L_DiskError
+	bne.s	*+8
+	Rjmp	L_DiskError
 ; Pathname
 	move.l	Name1(a5),a0
 	clr.b	(a0)
@@ -4972,7 +4612,7 @@ FDirV	Rbsr	L_FillFFree
 	cmp.w	#108,d2
 	Rbcc	L_FonCall
 	Rbsr	L_ChVerBuf2
-	Rbsr	L_Dsk.PathIt
+	Rjsr	L_Dsk.PathIt
 	Rbsr	L_LockGet		Verifie le path
 	Rbsr	L_LockFree
 ; Nom
@@ -5002,8 +4642,9 @@ FDirV	Rbsr	L_FillFFree
 ; Appel de la fonction
 	lea	.AssC(pc),a0		Ouvre le NIL:
 	move.l	a0,d1
-	Rbsr	L_D_OpenD1
-	Rbeq	L_DiskError
+	Rjsr	L_D_OpenD1
+	bne.s	*+8
+	Rjmp	L_DiskError
 	move.l	Buffer(a5),d1		Execute >NIL: >NIL:
 	move.l	Handle(a5),d2
 	move.l	d2,d3
@@ -5011,9 +4652,10 @@ FDirV	Rbsr	L_FillFFree
 	move.l	DosBase(a5),a6
 	jsr	_LVOExecute(a6)
 	move.l	(sp)+,a6
-	Rbsr	L_D_Close
+	Rjsr	L_D_Close
 	tst.l	d0
-	Rbeq	L_DiskError
+	bne.s	*+8
+	Rjmp	L_DiskError
 	rts
 .AssI	dc.b	"c:assign",0
 .AssC	dc.b	"NIL:",0
@@ -5027,7 +4669,7 @@ FDirV	Rbsr	L_FillFFree
 	move.l	d3,a2
 	tst.w	(a2)
 	Rbeq	L_FnFalse
-	Rbsr	L_NomDisc
+	Rjsr	L_NomDisc
 	Rbsr	L_RExist
 	Ret_Int
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -5098,7 +4740,7 @@ FExF	moveq	#0,d3
 	clr.b	(a0)
 	move.l	Name2(a5),a0
 	clr.b	(a0)
-	Rbsr	L_Dsk.PathIt
+	Rjsr	L_Dsk.PathIt
 	Rbra	L_DirW2
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					DIR/w LDIR/W a$
@@ -5147,7 +4789,7 @@ FExF	moveq	#0,d3
 	clr.b	(a0)
 	move.l	Name2(a5),a0
 	clr.b	(a0)
-	Rbsr	L_Dsk.PathIt
+	Rjsr	L_Dsk.PathIt
 	Rbra	L_Dir2
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					DIR/LDIR a$
@@ -5191,7 +4833,8 @@ FExF	moveq	#0,d3
 ;	Boucle du directory
 DirLoop
 	Rbsr	L_FillNxt
-	Rbmi	L_DiskError
+	bpl.s	*+8
+	Rjmp	L_DiskError
 	beq	DirL5
 	cmp.w	#1,d0
 	beq.s	DirLoop
@@ -5305,7 +4948,8 @@ TTdiF:	moveq	#1,d0
 	moveq	#-2,d2
 	DosCall	_LVOLock
 	move.l	d0,d1
-	Rbeq	L_DiskError
+	bne.s	*+8
+	Rjmp	L_DiskError
 	move.l	d1,LockSave(a5)
 	rts
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -5791,87 +5435,17 @@ FssX	movem.l	(sp)+,a0-a4/d0-d7
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 				Routine: pointe le debut d'un nom de fichier
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	Dsk.DNom
-; - - - - - - - - - - - - -
-	move.l	a0,a1
-.FaL1	tst.b	(a0)+
-	bne.s	.FaL1
-	subq.l	#1,a0
-.FaL2	move.b	-(a0),d0
-	cmp.b	#"/",d0
-	beq.s	.FaL3
-	cmp.b	#":",d0
-	beq.s	.FaL3
-	cmp.l	a1,a0
-	bcc.s	.FaL2
-.FaL3	addq.l	#1,a0
-	rts
+	Lib_Int	Dsk.DNom		src/lib/dos.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					NAME1+PATHACT >>> NAME1
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	Dsk.PathIt
-; - - - - - - - - - - - - -
-	movem.l	a0-a1/d0-d1,-(sp)
-* Cherche un ":" dans le nom
-	move.l	Name1(a5),a0
-	cmp.b	#":",(a0)
-	beq.s	.Dp
-.Loop1	move.b	(a0)+,d0
-	beq.s	.NoDp
-	cmp.b	#":",d0
-	bne.s	.Loop1
-	bra.s	.Fini
-* Recopie � la fin du pathact
-.NoDp	move.l	PathAct(a5),a0
-.Loop2	tst.b	(a0)+
-	bne.s	.Loop2
-	move.l	Name1(a5),a1
-.Loop3	move.b	(a1)+,(a0)+
-	bne.s	.Loop3
-* Remet dans NAME1
-	move.l	PathAct(a5),a0
-	move.l	Name1(a5),a1
-.Loop4	move.b	(a0)+,(a1)+
-	bne.s	.Loop4
-	subq.l	#1,a1
-.Loop5	move.b	(a0)+,(a1)+
-	bne.s	.Loop5
-* Ok
-.Fini	movem.l	(sp)+,a0-a1/d0-d1
-	rts
-** Deux points au d�but
-.Dp	move.l	PathAct(a5),a1
-.Dpl1	tst.b	(a1)+
-	bne.s	.Dpl1
-	move.l	a1,d1
-.Dpl2	move.b	(a0)+,(a1)+
-	bne.s	.Dpl2
-	move.l	Name1(a5),a1
-	move.l 	PathAct(a5),a0
-.Dpl3	move.b	(a0)+,d0
-	beq.s	.Dpl4
-	cmp.b	#":",d0
-	beq.s	.Dpl4
-	move.b	d0,(a1)+
-	bra.s	.Dpl3
-.Dpl4	move.l	d1,a0
-.Dpl5	move.b	(a0)+,(a1)+
-	bne.s	.Dpl5
-	bra.s	.Fini
+	Lib_Int	Dsk.PathIt		src/lib/dos.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					COPIE LE NOM (a2) dans le buffer
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	NomDisc
-; - - - - - - - - - - - - -
-	move.w	(a2)+,d2
-	Rbeq	L_FonCall
-	cmp.w	#108,d2
-	Rbcc	L_FonCall
-	move.l	Name1(a5),a0
-	Rbsr	L_ChVerBuf2
-	Rbra	L_Dsk.PathIt
+	Lib_Int	NomDisc		src/lib/dos.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					NOMDIR: (a2) >>> Name1 / Name2
 ;	Met la racine en NAME1
@@ -5915,7 +5489,7 @@ NmD6	move.b	(a0)+,(a1)+
 	bne.s	NmD6
 	move.l	d3,a0
 	clr.b	(a0)
-NmDx	Rbra	L_Dsk.PathIt
+NmDx	Rjmp	L_Dsk.PathIt
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					FILTRE LES NOMS DISQUE
@@ -5988,74 +5562,17 @@ JokOUI:	moveq	#1,d0
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					ROUTINES DISQUE
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	D_Open
+	Lib_Int	D_Open		src/lib/dos.cpp
 ; - - - - - - - - - - - - -
-	move.l 	Name1(a5),d1
-	Rbra	L_D_OpenD1
+	Lib_Int	D_OpenD1		src/lib/dos.cpp
 ; - - - - - - - - - - - - -
-	Lib_Def	D_OpenD1
+	Lib_Int	D_Close		src/lib/dos.cpp
 ; - - - - - - - - - - - - -
-	move.l	a6,-(sp)
-	move.l	DosBase(a5),a6
-	jsr	_LVOOpen(a6)
-	move.l	(sp)+,a6
-	move.l	d0,Handle(a5)
-; Branche la routine de nettoyage en cas d'erreur
-	move.l	a2,-(sp)
-	lea	.Struc(pc),a1
-	lea	Sys_ErrorRoutines(a5),a2
-	SyCall	AddRoutine
-	lea	.Struc2(pc),a1
-	lea	Sys_ClearRoutines(a5),a2
-	SyCall	AddRoutine
-	move.l	(sp)+,a2
-	move.l	Handle(a5),d0
-	rts
-.Struc	dc.l	0
-	Rbra	L_D_Close
-.Struc2	dc.l	0
-	Rbra	L_D_Close
+	Lib_Int	D_Read		src/lib/dos.cpp
 ; - - - - - - - - - - - - -
-	Lib_Def	D_Close
+	Lib_Int	D_Write		src/lib/dos.cpp
 ; - - - - - - - - - - - - -
-	movem.l	d0/d1/a0/a1/a6,-(sp)
-	move.l	Handle(a5),d1
-	beq.s	.Skip
-	clr.l	Handle(a5)
-	move.l	DosBase(a5),a6
-	jsr	_LVOClose(a6)
-.Skip	movem.l	(sp)+,d0/d1/a0/a1/a6
-	rts
-; - - - - - - - - - - - - -
-	Lib_Def	D_Read
-; - - - - - - - - - - - - -
-	movem.l	d1/a0/a1/a6,-(sp)
-	move.l	Handle(a5),d1
-	move.l	DosBase(a5),a6
-	jsr	_LVORead(a6)
-	movem.l	(sp)+,d1/a0/a1/a6
-	cmp.l	d0,d3
-	rts
-; - - - - - - - - - - - - -
-	Lib_Def	D_Write
-; - - - - - - - - - - - - -
-	movem.l	d1/a0/a1/a6,-(sp)
-	move.l	Handle(a5),d1
-	move.l	DosBase(a5),a6
-	jsr	_LVOWrite(a6)
-	movem.l	(sp)+,d1/a0/a1/a6
-	cmp.l	d0,d3
-	rts
-; - - - - - - - - - - - - -
-	Lib_Def	D_Seek
-; - - - - - - - - - - - - -
-	move.l	Handle(a5),d1
-	move.l	a6,-(sp)
-	move.l	DosBase(a5),a6
-	jsr	_LVOSeek(a6)
-	move.l	(sp)+,a6
-	tst.l	d0
-	rts
+	Lib_Int	D_Seek		src/lib/dos.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					PSEL
@@ -6159,7 +5676,8 @@ FsApp3:	cmp.w	d4,d6
 	Rbsr	L_IffRead
 	beq.s	.Skip
 	cmp.l	#12,d0
-	Rbne	L_DiskError
+	beq.s	*+8
+	Rjmp	L_DiskError
 	move.l	d2,a0
 	move.l	(a0)+,d0
 	move.l	(a0)+,d2
@@ -6181,7 +5699,8 @@ FsApp3:	cmp.w	d4,d6
 	move.l	a1,d2
 	Rbsr	L_IffRead
 	cmp.l	d0,d3
-	Rbne	L_DiskError
+	beq.s	*+8
+	Rjmp	L_DiskError
 	add.l	d3,d6
 	addq.l	#1,d4
 	subq.l	#1,d7
@@ -6257,7 +5776,8 @@ FsApp3:	cmp.w	d4,d6
 	jsr	_LVORead(a6)
 	movem.l	(sp)+,a0/a1/a6/d1
 	tst.l	d0
-	Rbmi	L_DiskError
+	bpl.s	*+8
+	Rjmp	L_DiskError
 	rts
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					Seek pour IFF
@@ -6294,7 +5814,8 @@ FsApp3:	cmp.w	d4,d6
 	move.l	a0,d6
 	Rbsr	L_IffFormLoad
 	cmp.w	d0,d7
-	Rbne	L_DiskError
+	beq.s	*+8
+	Rjmp	L_DiskError
 	move.l	TempBuffer(a5),d6
 	Rbsr	L_IffFormPlay
 	moveq	#0,d0
@@ -6885,7 +6406,7 @@ ChCuOff		dc.b	27,"C0",0
 	Rbsr	L_SaveBODY
 .Fin	moveq	#-1,d3
 	moveq	#4,d2
-	Rbsr	L_D_Seek
+	Rjsr	L_D_Seek
 	subq.l	#8,d0
 	move.l	Buffer(a5),a1
 	move.l	d0,(a1)+
@@ -7009,8 +6530,9 @@ SBo1	move.w	EcNPlan(a2),d6
 	lea	EcLogic(a2),a0
 SBo2	move.l	(a0)+,d2
 	add.l	d4,d2
-	Rbsr	L_D_Write
-	Rbne	L_DiskError
+	Rjsr	L_D_Write
+	beq.s	*+8
+	Rjmp	L_DiskError
 	subq.w	#1,d6
 	bne.s	SBo2
 	add.l	d3,d4
@@ -7022,7 +6544,7 @@ SBc:	clr.l	(a1)+
 	Rbsr	L_SaveA1
 	moveq	#0,d2			* Position dans le fichier
 	moveq	#0,d3
-	Rbsr	L_D_Seek
+	Rjsr	L_D_Seek
 	move.l	d0,-(sp)
 	moveq	#0,d7
 	move.w	EcTy(a2),d6
@@ -7087,8 +6609,9 @@ SBc10	subq.w	#1,d3
 	move.l	a1,d3
 	sub.l	d2,d3
 	add.l	d3,d7
-	Rbsr	L_D_Write
-	Rbne	L_DiskError
+	Rjsr	L_D_Write
+	beq.s	*+8
+	Rjmp	L_DiskError
 * Encore une ligne?
 	add.l	d5,d4
 	subq.w	#1,d6
@@ -7103,24 +6626,26 @@ SBc10	subq.w	#1,d3
 	clr.b	(a1)
 	move.l	a1,d2
 	moveq	#1,d3
-	Rbsr	L_D_Write
-	Rbne	L_DiskError
+	Rjsr	L_D_Write
+	beq.s	*+8
+	Rjmp	L_DiskError
 	addq.l	#1,d7
 * Marque la longueur du chunk!
 SBc11	move.l	(sp)+,d2		* Debut du chunk
 	subq.l	#4,d2
 	moveq	#-1,d3
-	Rbsr	L_D_Seek
+	Rjsr	L_D_Seek
 	move.l	d0,-(sp)
 	move.l	Buffer(a5),a1		* Sauve la longueur
 	move.l	d7,(a1)
 	move.l	a1,d2
 	moveq	#4,d3
-	Rbsr	L_D_Write
-	Rbne	L_DiskError
+	Rjsr	L_D_Write
+	beq.s	*+8
+	Rjmp	L_DiskError
 	move.l	(sp)+,d2		* Remet a la fin
 	moveq	#-1,d3
-	Rbsr	L_D_Seek
+	Rjsr	L_D_Seek
 	rts
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -7132,8 +6657,9 @@ SBc11	move.l	(sp)+,d2		* Debut du chunk
 	move.l	a1,d3
 	sub.l	d2,d3
 	beq	.Skip
-	Rbsr	L_D_Write
-	Rbne	L_DiskError
+	Rjsr	L_D_Write
+	beq.s	*+8
+	Rjmp	L_DiskError
 .Skip	rts
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -11541,35 +11067,9 @@ FsBi2	move.l	(a2),d3
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 ; - - - - - - - - - - - - -
-	Lib_Def	DiskError
+	Lib_Int	DiskError		src/lib/dos.cpp
 ; - - - - - - - - - - - - -
-	move.l	a6,-(sp)
-	move.l	DosBase(a5),a6
-	jsr	_LVOIoErr(a6)
-	move.l	(sp)+,a6
-	Rbra	L_DiskErr
-; - - - - - - - - - - - - -
-	Lib_Def	DiskErr
-; - - - - - - - - - - - - -
-	lea	ErDisk(pc),a0
-	moveq	#-1,d1
-DiE1:	addq.l	#1,d1
-	move.w	(a0)+,d2
-	bmi.s	DiE2
-	cmp.w	d0,d2
-	bne.s	DiE1
-	add.w	#DEBase,d1
-	move.w	d1,d0
-	move.l	Fs_ErrPatch(a5),d3
-	Rbeq	L_GoError
-	move.l	d3,a0
-	jmp	(a0)
-DiE2:	moveq	#DEBase+15,d0
-	Rbra	L_GoError
-; Table des erreurs reconnues
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~
-ErDisk:	dc.w 203,204,205,210,213,214,216,218
-	dc.w 220,221,222,223,224,225,226,-1
+	Lib_Int	DiskErr		src/lib/dos.cpp
 
 ; - - - - - - - - - - - - -
 	Lib_Def	TypeMis
@@ -12860,7 +12360,7 @@ ChSTa:	dc.b 27,"T0",0
 	move.l	d3,a2
 	move.l	#256,d3			256 pour Param$
 	Rjsr	L_Demande
-	Rbsr	L_NomDisc
+	Rjsr	L_NomDisc
 ; Titre: AMOS Ascii Reader
 	moveq	#20,d0
 	Rjsr	L_Def_GetMessage
@@ -12868,23 +12368,25 @@ ChSTa:	dc.b 27,"T0",0
 	move.l	a0,-(a3)
 ; Ouvre le fichier
 	move.l	#1005,d2
-	Rbsr	L_D_Open
-	Rbeq	L_DiskError
+	Rjsr	L_D_Open
+	bne.s	*+8
+	Rjmp	L_DiskError
 ; Trouve la taille
 	moveq	#0,d2
 	moveq	#1,d3
-	Rbsr	L_D_Seek
+	Rjsr	L_D_Seek
 	moveq	#0,d2
 	moveq	#-1,d3
-	Rbsr	L_D_Seek
+	Rjsr	L_D_Seek
 	move.l	d0,d3
 	addq.l	#4,d0
 	Rjsr	L_ResTempBuffer
 	move.l	a0,d2
 ; Charge le fichier
-	Rbsr	L_D_Read
-	Rbne	L_DiskError
-	Rbsr	L_D_Close
+	Rjsr	L_D_Read
+	beq.s	*+8
+	Rjmp	L_DiskError
+	Rjsr	L_D_Close
 ; Pousse l'adresse
 	move.l	TempBuffer(a5),-(a3)
 	Rbra	L_IRText
@@ -16984,7 +16486,7 @@ Fs_NomDir
 .NmDx2
 ; Compute with default pathname
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	Rbsr	L_Dsk.PathIt
+	Rjsr	L_Dsk.PathIt
 	movem.l	(sp)+,a2/d2-d7
 	rts
 
@@ -17092,7 +16594,7 @@ Fs_GetInputs
 .Pat3	move.b	(a0)+,(a1)+
 	dbra	d0,.Pat3
 .Pat4	clr.b	(a1)+
-	Rbsr	L_Dsk.PathIt		Insere le PATH
+	Rjsr	L_Dsk.PathIt		Insere le PATH
 	move.l	Name1(a5),a0
 	move.l	Buffer(a5),a1
 	lea	512(a1),a1
