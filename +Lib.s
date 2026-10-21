@@ -3632,588 +3632,204 @@ FsApp3:	cmp.w	d4,d6
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					DEFAULT
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par	InDefault
-; - - - - - - - - - - - - -
-	Rjsr	L_DefRun1
-	Rjsr	L_ReCop
-	Rjsr	L_DefRun2
-	Rjsr	L_ReCop
-	move.w	#1,DefFlag(a5)
-	rts
+	Lib_Int	InDefault		src/lib/screens.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					CLS
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par	InCls0
+	Lib_Int	InCls0		src/lib/screens.cpp
 ; - - - - - - - - - - - - -
-	tst.w	ScOn(a5)
-	Rbeq	L_ScNOp
-	WiCall	ClsWi
-	rts
+	Lib_Int	InCls1		src/lib/screens.cpp
 ; - - - - - - - - - - - - -
-	Lib_Par	InCls1
+	Lib_Int	InCls5		src/lib/screens.cpp
 ; - - - - - - - - - - - - -
-	move.l	d3,d1
-	moveq	#0,d2
-	moveq	#0,d3
-	move.w	#10000,d4
-	move.w	d4,d0
-	Rbra	L_Cls5a
-; - - - - - - - - - - - - -
-	Lib_Par	InCls5
-; - - - - - - - - - - - - -
-	move.l	d3,d0
-	move.l	(a3)+,d4
-	move.l	(a3)+,d3
-	move.l	(a3)+,d2
-	move.l	(a3)+,d1
-	Rbra	L_Cls5a
-; - - - - - - - - - - - - -
-	Lib_Def	Cls5a
-; - - - - - - - - - - - - -
-	tst.w	ScOn(a5)
-	Rbeq	L_ScNOp
-	move.l	d0,d5
-	EcCall	ClsEc
-	rts
+	Lib_Empty			Cls5a, now in src/lib/screens.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					SCREEN HEIGHT
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par	FnScreenHeight0
+	Lib_Int	FnScreenHeight0		src/lib/screens.cpp
 ; - - - - - - - - - - - - -
-	Rbsr	L_GetScreen0
-	moveq	#0,d3
-	move.w	EcTy(a0),d3
-	Ret_Int
-; - - - - - - - - - - - - -
-	Lib_Par	FnScreenHeight1
-; - - - - - - - - - - - - -
-	move.l	d3,d1
-	Rbsr	L_CheckScreenNumber
-	EcCall	AdrEc
-	Rbeq	L_ScNOp
-	move.l	d0,a0
-	moveq	#0,d3
-	move.w	EcTy(a0),d3
-	Ret_Int
+	Lib_Int	FnScreenHeight1		src/lib/screens.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					SCREEN WIDTH
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par	FnScreenWidth0
+	Lib_Int	FnScreenWidth0		src/lib/screens.cpp
 ; - - - - - - - - - - - - -
-	Rbsr	L_GetScreen0
-	moveq	#0,d3
-	move.w	EcTx(a0),d3
-	Ret_Int
-; - - - - - - - - - - - - -
-	Lib_Par	FnScreenWidth1
-; - - - - - - - - - - - - -
-	move.l	d3,d1
-	Rbsr	L_CheckScreenNumber
-	EcCall	AdrEc
-	Rbeq	L_ScNOp
-	move.l	d0,a0
-	moveq	#0,d3
-	move.w	EcTx(a0),d3
-	Ret_Int
+	Lib_Int	FnScreenWidth1		src/lib/screens.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					SCREEN BASE
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par	FnScreenBase
-; - - - - - - - - - - - - -
-	Rbsr	L_GetScreen0
-	move.l	a0,d3
-	Ret_Int
+	Lib_Int	FnScreenBase		src/lib/screens.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					SCREEN COLOUR
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par	FnScreenColour
-; - - - - - - - - - - - - -
-	Rbsr	L_GetScreen0
-	moveq	#0,d3
-	move.w	EcNbCol(a0),d3
-	btst	#3,EcCon0(a0)
-	beq.s	.Skip
-	move.l	#4096,d3
-.Skip	Ret_Int
+	Lib_Int	FnScreenColour		src/lib/screens.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					SCREEN MODE
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par	FnScreenMode
+	Lib_Int	FnScreenMode		src/lib/screens.cpp
 ; - - - - - - - - - - - - -
-	Rbsr	L_GetScreen0
-	moveq	#0,d3
-	move.w	EcCon0(a0),d3
-	and.l	#$00008004,d3
-	rts
-; - - - - - - - - - - - - -
-	Lib_Def	GetScreen0
-; - - - - - - - - - - - - -
-	move.l	ScOnAd(a5),d0
-	Rbeq	L_ScNOp
-	move.l	d0,a0
-	rts
+	Lib_Empty			GetScreen0, now in src/lib/screens.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					DISPLAY INFOS
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par	FnDisplayHeight
+	Lib_Int	FnDisplayHeight		src/lib/screens.cpp
 ; - - - - - - - - - - - - -
-	EcCall	MaxRaw
-	move.l	d1,d3
-	Ret_Int
-; - - - - - - - - - - - - -
-	Lib_Par	FnNTSC
-; - - - - - - - - - - - - -
-	EcCall	CopForce
-	EcCall	NTSC
-	move.l	d1,d3
-	Ret_Int
+	Lib_Int	FnNTSC		src/lib/screens.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					=LOG BASE
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par	FnLogBase
-; - - - - - - - - - - - - -
-	move.l	ScOnAd(a5),d0
-	Rbeq	L_ScNOp
-	move.l	d0,a0
-	cmp.w	EcNPlan(a0),d3
-	Rbcc	L_FonCall
-	lsl.w	#2,d3
-	move.l	EcLogic(a0,d3.w),d3
-	Ret_Int
+	Lib_Int	FnLogBase		src/lib/screens.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					=PHY BASE(n)
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par	FnPhyBase
-; - - - - - - - - - - - - -
-	move.l	ScOnAd(a5),d0
-	Rbeq	L_ScNOp
-	move.l	d0,a0
-	cmp.w	EcNPlan(a0),d3
-	Rbcc	L_FonCall
-	lsl.w	#2,d3
-	move.l	EcPhysic(a0,d3.w),d3
-	Ret_Int
+	Lib_Int	FnPhyBase		src/lib/screens.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					DOUBLE BUFFER
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par	InDoubleBuffer
-; - - - - - - - - - - - - -
-	tst.w	ScOn(a5)
-	Rbeq	L_ScNOp
-	EcCall	Double
-	Rbne	L_EcWiErr
-	rts
+	Lib_Int	InDoubleBuffer		src/lib/screens.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					SCREEN SWAP
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par	InScreenSwap0
+	Lib_Int	InScreenSwap0		src/lib/screens.cpp
 ; - - - - - - - - - - - - -
-	tst.w	ScOn(a5)
-	Rbeq	L_ScNOp
-	EcCall	SwapScS
-	Rbne	L_EcWiErr
-	rts
-; - - - - - - - - - - - - -
-	Lib_Par	InScreenSwap1
-; - - - - - - - - - - - - -
-	move.l	d3,d1
-	Rbsr	L_CheckScreenNumber
-	EcCall	SwapSc
-	Rbne	L_EcWiErr
-	rts
+	Lib_Int	InScreenSwap1		src/lib/screens.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					DUAL PLAYFIELD n,m
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par	InDualPlayfield
-; - - - - - - - - - - - - -
-	move.l	d3,d1
-	Rbsr	L_CheckScreenNumber
-	move.l	d1,d2
-	move.l	(a3)+,d1
-	Rbsr	L_CheckScreenNumber
-	EcCall	SetDual
-	Rbne	L_EcWiErr
-	rts
+	Lib_Int	InDualPlayfield		src/lib/screens.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					DUAL PRIORITY
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par	InDualPriority
-; - - - - - - - - - - - - -
-	move.l	d3,d1
-	Rbsr	L_CheckScreenNumber
-	move.l	d1,d2
-	move.l	(a3)+,d1
-	Rbsr	L_CheckScreenNumber
-	EcCall	PriDual
-	Rbne	L_EcWiErr
-	rts
+	Lib_Int	InDualPriority		src/lib/screens.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					SCREEN CLONE n
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par	InScreenClone
-; - - - - - - - - - - - - -
-	tst.w	ScOn(a5)
-	Rbeq	L_ScNOp
-	move.l	d3,d1
-	Rbsr	L_CheckScreenNumber
-	EcCall	CCloEc
-	Rbne	L_EcWiErr
-	rts
+	Lib_Int	InScreenClone		src/lib/screens.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					SCREEN OPEN
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par	InScreenOpen
-; - - - - - - - - - - - - -
-	Rbsr	L_SaveRegs
-	move.l	d3,d5			* Mode
-	and.l	#$8004,d5
-* Ham?
-	move.l	(a3)+,d6
-	cmp.l	#4096,d6
-	bne.s	ScOo0
-	tst.w	d5			* Lowres only!
-	Rbmi	L_FonCall
-	moveq	#6,d4
-	or.w	#$0800,d5
-	moveq	#64,d6
-	bra.s	ScOo2
-* Nombre de couleurs-> plans
-ScOo0:	moveq	#1,d4			* Nb de plans
-	moveq	#2,d1
-ScOo1:	cmp.l	d1,d6
-	beq.s	ScOo2
-	lsl.w	#1,d1
-	addq.w	#1,d4
-	cmp.w	#7,d4
-	bcs.s	ScOo1
-IlNCo:	moveq	#5,d0			* Illegal number of colours
-	Rbra	L_EcWiErr
-ScOo2:	move.l	(a3)+,d3		* TY
-	move.l	(a3)+,d2		* TX
-	move.l	(a3)+,d1		* Numero
-	Rbsr	L_CheckScreenNumber
-	tst.w	d5			* Si HIRES, pas plus de 16 couleurs
-	bpl.s	ScOo3
-	cmp.w	#4,d4
-	Rbhi	L_FonCall
-ScOo3:	lea	DefPal(a5),a1
-	EcCall	Cree
-	Rbne	L_EcWiErr
-	move.l	a0,ScOnAd(a5)
-	move.w	EcNumber(a0),ScOn(a5)
-	addq.w	#1,ScOn(a5)
-* Fait flasher la couleur 3 (si plus de 2 couleurs)
-	cmp.w	#1,d4
-	beq.s	ScOo4
-	moveq	#3,d1
-	moveq	#46,d0
-	Rjsr	L_Sys_GetMessage
-	move.l	a0,a1
-	EcCall	Flash
-ScOo4	Rbsr	L_LoadRegs
-	rts
+	Lib_Int	InScreenOpen		src/lib/screens.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					SCREEN CLOSE n
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par	InScreenClose
-; - - - - - - - - - - - - -
-	move.l	d3,d1
-	Rbsr	L_CheckScreenNumber
-	EcCall	Del
-	Rbne	L_EcWiErr
-	clr.w	ScOn(a5)
-	clr.l	ScOnAd(a5)
-	cmp.l	#0,a0
-	beq.s	.Skip
-	move.w	EcNumber(a0),d0
-	cmp.w	#8,d0
-	bcc.s	.Skip
-	addq.w	#1,d0
-	move.w	d0,ScOn(a5)
-	move.l	a0,ScOnAd(a5)
-.Skip	rts
+	Lib_Int	InScreenClose		src/lib/screens.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					SCREEN DISPLAY
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par	InScreenDisplay
-; - - - - - - - - - - - - -
-	move.l	d3,d5
-	move.l	(a3)+,d4
-	move.l	(a3)+,d3
-	move.l	(a3)+,d2
-	move.l	(a3)+,d1
-	Rbsr	L_CheckScreenNumber
-	EcCall	AView
-	Rbne	L_EcWiErr
-	rts
+	Lib_Int	InScreenDisplay		src/lib/screens.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					SCREEN OFFSET
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par	InScreenOffset
-; - - - - - - - - - - - - -
-	tst.w	ScOn(a5)
-	Rbeq	L_ScNOp
-	move.l	(a3)+,d2
-	move.l	(a3)+,d1
-	Rbsr	L_CheckScreenNumber
-	EcCall	OffSet
-	Rbne	L_EcWiErr
-	rts
+	Lib_Int	InScreenOffset		src/lib/screens.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					SCREEN SHOW [n]
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par	InScreenShow0
+	Lib_Int	InScreenShow0		src/lib/screens.cpp
 ; - - - - - - - - - - - - -
-	moveq	#0,d2
-	Rbra	L_ScShHi0
-; - - - - - - - - - - - - -
-	Lib_Par	InScreenShow1
-; - - - - - - - - - - - - -
-	moveq	#0,d2
-	Rbra	L_ScShHi
+	Lib_Int	InScreenShow1		src/lib/screens.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					SCREEN HIDE [n]
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par	InScreenHide0
+	Lib_Int	InScreenHide0		src/lib/screens.cpp
 ; - - - - - - - - - - - - -
-	moveq	#-1,d2
-	Rbra	L_ScShHi0
+	Lib_Empty			ScShHi0, now in src/lib/screens.cpp
 ; - - - - - - - - - - - - -
-	Lib_Def	ScShHi0
+	Lib_Int	InScreenHide1		src/lib/screens.cpp
 ; - - - - - - - - - - - - -
-	moveq	#0,d3
-	move.w	ScOn(a5),d3
-	Rbeq	L_ScNOp
-	subq.w	#1,d3
-	Rbra	L_ScShHi
-; - - - - - - - - - - - - -
-	Lib_Par	InScreenHide1
-; - - - - - - - - - - - - -
-	moveq	#-1,d2
-	Rbra	L_ScShHi
-; - - - - - - - - - - - - -
-	Lib_Def	ScShHi
-; - - - - - - - - - - - - -
-	move.l	d3,d1
-	Rbsr	L_CheckScreenNumber
-	EcCall	EHide
-	Rbne	L_EcWiErr
-	rts
+	Lib_Empty			ScShHi, now in src/lib/screens.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					AUTO VIEW
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par	InAutoViewOn
+	Lib_Int	InAutoViewOn		src/lib/screens.cpp
 ; - - - - - - - - - - - - -
-	bset	#BitEcrans,ActuMask(a5)
-	rts
-; - - - - - - - - - - - - -
-	Lib_Par	InAutoViewOff
-; - - - - - - - - - - - - -
-	bclr	#BitEcrans,ActuMask(a5)
-	rts
+	Lib_Int	InAutoViewOff		src/lib/screens.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					VIEW
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par	InView
-; - - - - - - - - - - - - -
-	EcCall	CopMake
-	bclr	#BitEcrans,T_Actualise(a5)
-	rts
+	Lib_Int	InView		src/lib/screens.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					SCREEN TO FRONT [n]
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par	InScreenToFront0
+	Lib_Int	InScreenToFront0		src/lib/screens.cpp
 ; - - - - - - - - - - - - -
-	moveq	#0,d3
-	move.w	ScOn(a5),d3
-	Rbeq	L_ScNOp
-	subq.w	#1,d3
-	Rbra	L_InScreenToFront1
-; - - - - - - - - - - - - -
-	Lib_Par	InScreenToFront1
-; - - - - - - - - - - - - -
-	move.l	d3,d1
-	Rbsr	L_CheckScreenNumber
-	EcCall	First
-	Rbne	L_EcWiErr
-	rts
+	Lib_Int	InScreenToFront1		src/lib/screens.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					SCREEN TO BACK [n]
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par	InScreenToBack0
+	Lib_Int	InScreenToBack0		src/lib/screens.cpp
 ; - - - - - - - - - - - - -
-	moveq	#0,d3
-	move.w	ScOn(a5),d3
-	Rbeq	L_ScNOp
-	subq.w	#1,d3
-	Rbra	L_InScreenToBack1
-; - - - - - - - - - - - - -
-	Lib_Par InScreenToBack1
-; - - - - - - - - - - - - -
-	move.l	d3,d1
-	Rbsr	L_CheckScreenNumber
-	EcCall	Last
-	Rbne	L_EcWiErr
-	rts
+	Lib_Int	InScreenToBack1		src/lib/screens.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					SCREEN
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InScreen
+	Lib_Int	InScreen		src/lib/screens.cpp
 ; - - - - - - - - - - - - -
-	move.l	d3,d1
-	Rbsr	L_CheckScreenNumber
-	EcCall	Active
-	Rbne	L_EcWiErr
-	move.w	EcNumber(a0),d0
-	addq.w	#1,d0
-	move.w	d0,ScOn(a5)
-	move.l	a0,ScOnAd(a5)
-	rts
-; - - - - - - - - - - - - -
-	Lib_Par FnScreen
-; - - - - - - - - - - - - -
-	move.w	ScOn(a5),d3
-	subq.w	#1,d3
-	ext.l	d3
-	Ret_Int
+	Lib_Int	FnScreen		src/lib/screens.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					Fonctions resolutions
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par FnLaced
+	Lib_Int	FnLaced		src/lib/screens.cpp
 ; - - - - - - - - - - - - -
-	moveq	#4,d3
-	Ret_Int
+	Lib_Int	FnHires		src/lib/screens.cpp
 ; - - - - - - - - - - - - -
-	Lib_Par FnHires
-; - - - - - - - - - - - - -
-	move.l	#%1000000000000000,d3
-	Ret_Int
-; - - - - - - - - - - - - -
-	Lib_Par FnLowres
-; - - - - - - - - - - - - -
-	moveq	#0,d3
-	Ret_Int
+	Lib_Int	FnLowres		src/lib/screens.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 	Verification du parametre ecran D1
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	CheckScreenNumber
-; - - - - - - - - - - - - -
-	tst.b	Prg_Accessory(a5)
-	bne.s	.Skip
-	cmp.l	#8,d1
-	Rbcc	L_IllScN
-	rts
-.Skip	cmp.l	#10,d1
-	Rbcc	L_IllScN
-	rts
+	Lib_Empty			CheckScreenNumber, now in src/lib/screens.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					COLOUR n,xxx
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InColour
+	Lib_Int	InColour		src/lib/screens.cpp
 ; - - - - - - - - - - - - -
-	tst.w	ScOn(a5)
-	Rbeq	L_ScNOp
-	move.l	d3,d2
-	move.l	(a3)+,d1
-	EcCall	SCol
-	Rbne	L_EcWiErr
-	rts
-; - - - - - - - - - - - - -
-	Lib_Par FnColour
-; - - - - - - - - - - - - -
-	tst.w	ScOn(a5)
-	Rbeq	L_ScNOp
-	move.l	d3,d1
-	EcCall	GCol
-	Rbne	L_EcWiErr
-	move.l	d1,d3
-	Ret_Int
+	Lib_Int	FnColour		src/lib/screens.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					COLOUR BACK
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InColourBack
-; - - - - - - - - - - - - -
-	move.w	d3,ColBack(a5)
-	move.l	d3,d1
-	EcCall	SColB
-	rts
+	Lib_Int	InColourBack		src/lib/screens.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					GET ICON PALETTE
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InGetIconPalette0
+	Lib_Int	InGetIconPalette0		src/lib/screens.cpp
 ; - - - - - - - - - - - - -
-	moveq	#-1,d3
-	Rbra	L_InGetIconPalette1
-; - - - - - - - - - - - - -
-	Lib_Par InGetIconPalette1
-; - - - - - - - - - - - - -
-	Rjsr	L_Bnk.GetIcons
-	Rbeq	L_BkNoRes
-	move.w	(a0)+,d0
-	lsl.w	#3,d0
-	lea	0(a0,d0.w),a0
-	Rbra	L_GSPal
+	Lib_Int	InGetIconPalette1		src/lib/screens.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					GET SPRITE PALETTE
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InGetSpritePalette0
+	Lib_Int	InGetSpritePalette0		src/lib/screens.cpp
 ; - - - - - - - - - - - - -
-	moveq	#-1,d3
-	Rbra	L_InGetSpritePalette1
-; - - - - - - - - - - - - -
-	Lib_Par InGetSpritePalette1
-; - - - - - - - - - - - - -
-	Rjsr	L_Bnk.GetBobs
-	Rbeq	L_BkNoRes
-	move.w	(a0)+,d0
-	lsl.w	#3,d0
-	lea	0(a0,d0.w),a0
-	Rbra	L_GSPal
+	Lib_Int	InGetSpritePalette1		src/lib/screens.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					GET PALETTE
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InGetPalette1
+	Lib_Int	InGetPalette1		src/lib/screens.cpp
 ; - - - - - - - - - - - - -
-	move.l	d3,-(a3)
-	moveq	#-1,d3
-	Rbra	L_InGetPalette2
+	Lib_Int	InGetPalette2		src/lib/screens.cpp
 ; - - - - - - - - - - - - -
-	Lib_Par InGetPalette2
-; - - - - - - - - - - - - -
-	move.l	(a3)+,d1
-	Rbsr	L_GetEc
-	lea	EcPal(a0),a0
-	Rbra	L_GSPal
-; - - - - - - - - - - - - -
-	Lib_Def	GSPal
-; - - - - - - - - - - - - -
-	Rbsr	L_PalRout
-	EcCall	SPal
-	Rbne	L_EcWiErr
-	rts
+	Lib_Empty			GSPal, now in src/lib/screens.cpp
 ; - - - - - - - - - - - - -
 	Lib_Def	PalRout
 ; - - - - - - - - - - - - -
@@ -4236,716 +3852,225 @@ PalR2:	addq.l	#2,a0
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					FLASH OFF
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InFlashOff
-; - - - - - - - - - - - - -
-	tst.w	ScOn(a5)
-	Rbeq	L_ScNOp
-	EcCall	FlRaz
-	rts
+	Lib_Int	InFlashOff		src/lib/screens.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					FLASH n,xxx
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InFlash
-; - - - - - - - - - - - - -
-	tst.w	ScOn(a5)
-	Rbeq	L_ScNOp
-	move.l	d3,a2
-	move.w	(a2)+,d2
-	Rbsr	L_ChVerBuf
-	move.l	Buffer(a5),a1
-	move.l	(a3)+,d1
-	EcCall	Flash
-	Rbne	L_EcWiErr
-	rts
+	Lib_Int	InFlash		src/lib/screens.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					SHIFT OFF
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InShiftOff
-; - - - - - - - - - - - - -
-	tst.w	ScOn(a5)
-	Rbeq	L_ScNOp
-	EcCall	ShRaz
-	rts
+	Lib_Int	InShiftOff		src/lib/screens.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					SHIFT UP
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InShiftUp
+	Lib_Int	InShiftUp		src/lib/screens.cpp
 ; - - - - - - - - - - - - -
-	moveq	#0,d0
-	Rbra	L_ShD1
+	Lib_Int	InShiftDown		src/lib/screens.cpp
 ; - - - - - - - - - - - - -
-	Lib_Par InShiftDown
-; - - - - - - - - - - - - -
-	moveq	#1,d0
-	Rbra	L_ShD1
-; - - - - - - - - - - - - -
-	Lib_Def	ShD1
-; - - - - - - - - - - - - -
-	tst.w	ScOn(a5)
-	Rbeq	L_ScNOp
-	Rbsr	L_SaveRegs
-	move.l	d3,d6
-	move.l	d0,d5
-	move.l	(a3)+,d4
-	move.l	(a3)+,d3
-	bpl.s	ShD3
-	moveq	#1,d3
-ShD3:	move.l	(a3)+,d2
-	moveq	#1,d1
-	EcCall	Shift
-	Rbne	L_EcWiErr
-	Rbsr	L_LoadRegs
-	rts
+	Lib_Empty			ShD1, now in src/lib/screens.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					SET RAINBOW
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InSetRainbow6
+	Lib_Int	InSetRainbow6		src/lib/screens.cpp
 ; - - - - - - - - - - - - -
-	move.l	d3,-(a3)
-	moveq	#0,d3
-	Rbra	L_InSetRainbow7
-; - - - - - - - - - - - - -
-	Lib_Par InSetRainbow7
-; - - - - - - - - - - - - -
-	Rbsr	L_SaveRegs
-	move.l	d3,d7
-	move.l	(a3)+,d6
-	move.l	(a3)+,d5
-	move.l	(a3)+,d4
-	move.l	(a3)+,d2
-	cmp.l	#16,d2
-	Rbcs	L_FonCall
-	cmp.l	#32700,d2
-	Rbcc	L_FonCall
-	move.l	(a3)+,d3
-	Rbmi	L_FonCall
-	move.l	(a3)+,d1
-	cmp.l	#4,d1
-	Rbcc	L_FonCall
-	EcCall	RainSet
-	Rbmi	L_OOfMem
-	Rbne	L_FonCall
-	Rbsr	L_LoadRegs
-	rts
+	Lib_Int	InSetRainbow7		src/lib/screens.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					RAINBOW
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InRainbow
-; - - - - - - - - - - - - -
-	move.l	d3,d4
-	move.l	(a3)+,d3
-	move.l	(a3)+,d2
-	move.l	(a3)+,d1
-	EcCall	RainDo
-	Rbne	L_EcWiErr
-	rts
+	Lib_Int	InRainbow		src/lib/screens.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					RAINBOW DEL
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InRainbowDel0
+	Lib_Int	InRainbowDel0		src/lib/screens.cpp
 ; - - - - - - - - - - - - -
-	moveq	#-1,d3
-	Rbra	L_InRainbowDel1
-; - - - - - - - - - - - - -
-	Lib_Par InRainbowDel1
-; - - - - - - - - - - - - -
-	move.l	d3,d1
-	EcCall	RainDel
-	Rbne	L_EcWiErr
-	rts
+	Lib_Int	InRainbowDel1		src/lib/screens.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					=RAIN=
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InRain
+	Lib_Int	InRain		src/lib/screens.cpp
 ; - - - - - - - - - - - - -
-	move.l	(a3)+,d2
-	move.l	(a3)+,d1
-	EcCall	RainVar
-	Rbne	L_EcWiErr
-	and.w	#$0FFF,d3
-	move.w	d3,(a0)
-	rts
-; - - - - - - - - - - - - -
-	Lib_Par FnRain
-; - - - - - - - - - - - - -
-	move.l	d3,d2
-	move.l	(a3)+,d1
-	EcCall	RainVar
-	Rbne	L_EcWiErr
-	moveq	#0,d3
-	move.w	(a0),d3
-	Ret_Int
+	Lib_Int	FnRain		src/lib/screens.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					COPPER ON/OFF
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InCopOn
+	Lib_Int	InCopOn		src/lib/screens.cpp
 ; - - - - - - - - - - - - -
-	EcCalD	CopOnOff,-1
-	rts
-; - - - - - - - - - - - - -
-	Lib_Par InCopOff
-; - - - - - - - - - - - - -
-	EcCalD	CopOnOff,0
-	rts
+	Lib_Int	InCopOff		src/lib/screens.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					COPPER SWAP
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InCopSwap
-; - - - - - - - - - - - - -
-	EcCall	CopSwap
-	Rbne	L_CopErr
-	rts
+	Lib_Int	InCopSwap		src/lib/screens.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					COP RESET
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InCopReset
-; - - - - - - - - - - - - -
-	EcCall	CopReset
-	Rbne	L_CopErr
-	rts
+	Lib_Int	InCopReset		src/lib/screens.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					COP WAIT
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InCopWait2
+	Lib_Int	InCopWait2		src/lib/screens.cpp
 ; - - - - - - - - - - - - -
-	move.l	d3,-(a3)
-	moveq	#-1,d3
-	move.l	d3,-(a3)
-	Rbra	L_InCopWait4
-; - - - - - - - - - - - - -
-	Lib_Par InCopWait4
-; - - - - - - - - - - - - -
-	move.l	d3,d4
-	move.l	(a3)+,d3
-	move.l	(a3)+,d2
-	move.l	(a3)+,d1
-	EcCall	CopWait
-	Rbne	L_CopErr
-	rts
+	Lib_Int	InCopWait4		src/lib/screens.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					COP MOVE
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InCopMove
-; - - - - - - - - - - - - -
-	move.l	d3,d2
-	move.l	(a3)+,d1
-	EcCall	CopMove
-	Rbne	L_CopErr
-	rts
+	Lib_Int	InCopMove		src/lib/screens.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					COP MOVEL
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InCopMoveL
-; - - - - - - - - - - - - -
-	move.l	d3,d2
-	move.l	(a3)+,d1
-	EcCall	CopMoveL
-	Rbne	L_CopErr
-	rts
+	Lib_Int	InCopMoveL		src/lib/screens.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					=COP LOGIC
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par FnCopLogic
-; - - - - - - - - - - - - -
-	EcCall	CopBase
-	Rbne	L_CopErr
-	move.l	d1,d3
-	Ret_Int
+	Lib_Int	FnCopLogic		src/lib/screens.cpp
 
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					AUTOBACK n
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InAutoback
-; - - - - - - - - - - - - -
-	cmp.l	#3,d3
-	Rbcc	L_FonCall
-	move.l	ScOnAd(a5),d0
-	Rbeq	L_ScNOp
-	move.l	d0,a0
-	move.w	d3,EcAuto(a0)
-	rts
+	Lib_Int	InAutoback		src/lib/screens.cpp
 
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					PLOT x,y
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InPlot2
+	Lib_Int	InPlot2		src/lib/screens.cpp
 ; - - - - - - - - - - - - -
-	move.l	d3,d1
-	move.l	(a3)+,d0
-	Rbsr	L_GrXY
-	move.w	36(a1),d0
-	move.w	38(a1),d1
-	move.w	#WritePixel,d5
-	Rbsr	L_GfxFunc
-	rts
-; - - - - - - - - - - - - -
-	Lib_Par InPlot3
-; - - - - - - - - - - - - -
-	tst.w	ScOn(a5)
-	Rbeq	L_ScNOp
-	move.l	T_RastPort(a5),a1
-	move.l	d3,d0
-	Rbmi	L_FonCall
-	cmp.l	#EntNul,d0
-	beq.s	.Skip
-	GfxCa5	SetAPen
-.Skip	move.l	(a3)+,d1
-	move.l	(a3)+,d0
-	Rbsr	L_GrXY
-	move.w	36(a1),d0
-	move.w	38(a1),d1
-	move.w	#WritePixel,d5
-	Rbsr	L_GfxFunc
-	rts
+	Lib_Int	InPlot3		src/lib/screens.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					=POINT(x,y)
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par FnPoint
+	Lib_Int	FnPoint		src/lib/screens.cpp
 ; - - - - - - - - - - - - -
-	move.l	d3,d1
-	move.l	(a3)+,d0
-	Rbsr	L_RPoint
-	move.l	d0,d3
-	Ret_Int
-; - - - - - - - - - - - - -
-	Lib_Def	RPoint
-; - - - - - - - - - - - - -
-	Rbsr	L_GrXY
-	move.w	36(a1),d0
-	move.w	38(a1),d1
-	movem.l	a3-a6,-(sp)
-	move.l	T_GfxBase(a5),a6
-	jsr	ReadPixel(a6)
-	movem.l	(sp)+,a3-a6
-	rts
+	Lib_Empty			RPoint, now in src/lib/screens.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					DRAW
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InDrawTo
+	Lib_Int	InDrawTo		src/lib/screens.cpp
 ; - - - - - - - - - - - - -
-	move.l	d3,d1
-	move.l	(a3)+,d0
-	move.l	T_RastPort(a5),a1
-	move.w	#RDraw,d5
-	Rbsr	L_GfxFunc
-	rts
-; - - - - - - - - - - - - -
-	Lib_Par InDraw
-; - - - - - - - - - - - - -
-	move.l	(a3)+,d2
-	move.l	(a3)+,d1
-	move.l	(a3)+,d0
-	Rbsr	L_GrXY
-	move.l	d2,d0
-	move.l	d3,d1
-	move.w	#RDraw,d5
-	Rbsr	L_GfxFunc
-	rts
+	Lib_Int	InDraw		src/lib/screens.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					CIRCLE x,y,n
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InCircle
-; - - - - - - - - - - - - -
-	move.l	d3,d2
-	Rbls	L_FonCall
-	move.l	ScOnAd(a5),d0
-	Rbeq	L_ScNOp
-	move.l	d0,a0
-	tst.w	EcCon0(a0)
-	Rbpl	L_EllCir
-	lsl.w	#1,d2
-	Rbra	L_EllCir
+	Lib_Int	InCircle		src/lib/screens.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					ELIPSE
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InEllipse
+	Lib_Int	InEllipse		src/lib/screens.cpp
 ; - - - - - - - - - - - - -
-	tst.l	d3
-	Rbls	L_FonCall
-	move.l	(a3)+,d2
-	Rbls	L_FonCall
-	Rbra	L_EllCir
-; - - - - - - - - - - - - -
-	Lib_Def	EllCir
-; - - - - - - - - - - - - -
-	tst.w	ScOn(a5)
-	Rbeq	L_ScNOp
-	move.l	(a3)+,d1
-	move.l	(a3)+,d0
-	Rbsr	L_GrXY
-	move.w	36(a1),d0
-	move.w	38(a1),d1
-	move.w	#DrawEllipse,d5
-	Rbsr	L_GfxFunc
-	rts
+	Lib_Empty			EllCir, now in src/lib/screens.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 				XCURS / YCURS
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par FnXGr
+	Lib_Int	FnXGr		src/lib/screens.cpp
 ; - - - - - - - - - - - - -
-	tst.w	ScOn(a5)
-	Rbeq	L_ScNOp
-	move.l	T_RastPort(a5),a0
-	moveq	#0,d3
-	move.w	36(a0),d3
-	Ret_Int
-; - - - - - - - - - - - - -
-	Lib_Par FnYGr
-; - - - - - - - - - - - - -
-	tst.w	ScOn(a5)
-	Rbeq	L_ScNOp
-	move.l	T_RastPort(a5),a0
-	moveq	#0,d3
-	move.w	38(a0),d3
-	Ret_Int
+	Lib_Int	FnYGr		src/lib/screens.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					Gr Locate
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InGrLocate
-; - - - - - - - - - - - - -
-	tst.w	ScOn(a5)
-	Rbeq	L_ScNOp
-	move.l	d3,d1
-	move.l	(a3)+,d0
-	Rbsr	L_GrXY
-	rts
+	Lib_Int	InGrLocate		src/lib/screens.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					BOX x,y TO x,y
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InBox
-; - - - - - - - - - - - - -
-	tst.w	ScOn(a5)
-	Rbeq	L_ScNOp
-	move.l	(a3)+,d2
-	move.l	(a3)+,d1
-	move.l	(a3)+,d0
-	move.l	T_RastPort(a5),a1
-	move.l	Buffer(a5),a0
-	move.l	a0,a2
-	move.w	d0,36(a1)
-	move.w	d1,38(a1)
-	move.w	d0,(a2)+
-	move.w	d3,(a2)+
-	move.w	d2,(a2)+
-	move.w	d3,(a2)+
-	move.w	d2,(a2)+
-	move.w	d1,(a2)+
-	move.w	d0,(a2)+
-	move.w	d1,(a2)+
-	addq.w	#1,d1
-	cmp.w	d3,d1
-	bcc.s	IBx1
-	subq.w	#2,d1
-IBx1	moveq	#4,d0
-	move.w	#PolyDraw,d5
-	Rbsr	L_GfxFunc
-	rts
+	Lib_Int	InBox		src/lib/screens.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					Fonctions CLIP
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InClip0
+	Lib_Int	InClip0		src/lib/screens.cpp
 ; - - - - - - - - - - - - -
-	tst.w	ScOn(a5)
-	Rbeq	L_ScNOp
-	EcCalD	SetClip,-1
-	Rbne	L_FonCall
-	rts
-; - - - - - - - - - - - - -
-	Lib_Par InClip4
-; - - - - - - - - - - - - -
-	move.l	d3,d5
-	move.l	(a3)+,d4
-	move.l	(a3)+,d3
-	move.l	(a3)+,d2
-	moveq	#0,d1
-	tst.w	ScOn(a5)
-	Rbeq	L_ScNOp
-	EcCall	SetClip
-	Rbne	L_FonCall
-	rts
+	Lib_Int	InClip4		src/lib/screens.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					GET ROM FONTS
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InGetRomFonts
-; - - - - - - - - - - - - -
-	moveq	#1,d1
-	Rbra	L_Igf
+	Lib_Int	InGetRomFonts		src/lib/screens.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					GET DISC FONTS
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InGetDiscFonts
-; - - - - - - - - - - - - -
-	moveq	#2,d1
-	Rbra	L_Igf
+	Lib_Int	InGetDiscFonts		src/lib/screens.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					GET FONTS
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InGetFonts
+	Lib_Int	InGetFonts		src/lib/screens.cpp
 ; - - - - - - - - - - - - -
-	moveq	#3,d1
-	Rbra	L_Igf
-; - - - - - - - - - - - - -
-	Lib_Def	Igf
-; - - - - - - - - - - - - -
-	move.l	Buffer(a5),a1
-	EcCall	GFonts
-	Rbne	L_OOfMem
-	rts
+	Lib_Empty			Igf, now in src/lib/screens.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					=FONT$
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par FnFont
-; - - - - - - - - - - - - -
-	move.l	d3,d1
-	Rbmi	L_FonCall
-	EcCall	GFont
-	Rbmi	L_FftE
-	Rbne	L_Ret_ChVide
-	move.l	a0,a2
-	moveq	#40,d3
-	Rjsr	L_Demande
-	move.l	a1,-(sp)
-	move.w	#38,(a1)+
-	move.l	a1,a0
-	moveq	#37,d0
-Fft1:	move.b	#" ",(a0)+
-	dbra	d0,Fft1
-	lea	40(a1),a0
-	move.l	a0,HiChaine(a5)
-* Copie le nom
-	move.l	2(a2),a0
-Fft2:	move.b	(a0)+,(a1)+
-	bne.s	Fft2
-	move.b	#" ",-1(a1)
-* Taille des caracteres
-	move.l	(sp),a0
-	lea	30+2(a0),a0
-	moveq	#0,d0
-	move.w	6(a2),d0
-	Rjsr	L_LongToDec
-* Disque ou mem
-	move.l	(sp),a0
-	lea	34+2(a0),a0
-	lea	FtRom(pc),a1
-	cmp.w	#1,(a2)
-	beq.s	Fft3
-	lea	FtDisc(pc),a1
-Fft3:	move.b	(a1)+,(a0)+
-	bne.s	Fft3
-* Ramene la chaine!
-	move.l	(sp)+,d3
-	Ret_String
-FtRom:	dc.b 	"Rom ",0
-FtDisc:	dc.b	"Disc",0
-	even
+	Lib_Int	FnFont		src/lib/screens.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					SET FONT
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InSetFont
-; - - - - - - - - - - - - -
-	tst.w	ScOn(a5)
-	Rbeq	L_ScNOp
-	move.l	d3,d1
-	Rbmi	L_FonCall
-	EcCall	SFont
-	Rbmi	L_FftE
-	Rbne	L_FnfE
-	rts
+	Lib_Int	InSetFont		src/lib/screens.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					TEXT x,y,a$
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InText
-; - - - - - - - - - - - - -
-	tst.w	ScOn(a5)
-	Rbeq	L_ScNOp
-	move.l	(a3)+,d1
-	move.l	(a3)+,d0
-	Rbsr	L_GrXY
-	move.l	d3,a0
-	move.w	(a0)+,d0
-	tst.w	d0
-	beq.s	.Skip
-	moveq	#Text,d5
-	Rbsr	L_GfxFunc
-.Skip	rts
+	Lib_Int	InText		src/lib/screens.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					=TEXT BASE
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par FnTextBase
-; - - - - - - - - - - - - -
-	tst.w	ScOn(a5)
-	Rbeq	L_ScNOp
-	move.l	T_RastPort(a5),a1
-	moveq	#0,d3
-	move.w	62(a1),d3
-	Ret_Int
+	Lib_Int	FnTextBase		src/lib/screens.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					=TEXT LENGTH
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par FnTextLength
-; - - - - - - - - - - - - -
-	tst.w	ScOn(a5)
-	Rbeq	L_ScNOp
-	move.l	d3,a0
-	move.w	(a0)+,d0
-	move.l	T_RastPort(a5),a1
-	movem.l	a3-a6,-(sp)
-	move.l	T_GfxBase(a5),a6
-	jsr	TextLength(a6)
-	movem.l	(sp)+,a3-a6
-	move.l	d0,d3
-	Ret_Int
+	Lib_Int	FnTextLength		src/lib/screens.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					=TEXT STYLES
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par FnTextStyle
-; - - - - - - - - - - - - -
-	tst.w	ScOn(a5)
-	Rbeq	L_ScNOp
-	move.l	T_RastPort(a5),a1
-	moveq	#0,d3
-	move.b	56(a1),d3
-	Ret_Int
+	Lib_Int	FnTextStyle		src/lib/screens.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					SET TEXT n
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InSetText
-; - - - - - - - - - - - - -
-	tst.w	ScOn(a5)
-	Rbeq	L_ScNOp
-	move.l	T_RastPort(a5),a1
-	move.b	d3,56(a1)
-	rts
+	Lib_Int	InSetText		src/lib/screens.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					SET PATTERN n
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InSetPattern
-; - - - - - - - - - - - - -
-	tst.w	ScOn(a5)
-	Rbeq	L_ScNOp
-	move.l	d3,d1
-	EcCall	Pattern
-	Rbne	L_FonCall
-	rts
+	Lib_Int	InSetPattern		src/lib/screens.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					SET PAINT n
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InSetPaint
-; - - - - - - - - - - - - -
-	tst.w	ScOn(a5)
-	Rbeq	L_ScNOp
-	move.l	T_RastPort(a5),a1
-	move.w	32(a1),d0
-	bclr 	#3,d0
-	tst.l	d3
-	beq.s	ISpt
-	bset	#3,d0
-ISpt:	move.w	d0,32(a1)
-	rts
+	Lib_Int	InSetPaint		src/lib/screens.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					PAINT x,y[,mode]
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InPaint2
+	Lib_Int	InPaint2		src/lib/screens.cpp
 ; - - - - - - - - - - - - -
-	move.l	d3,-(a3)
-	moveq	#-1,d3
-	Rbra	L_InPaint3
-; - - - - - - - - - - - - -
-	Lib_Par InPaint3
-; - - - - - - - - - - - - -
-	tst.w	ScOn(a5)
-	Rbeq	L_ScNOp
-	moveq	#0,d1
-	Rbsr	L_GetRas
-	move.l	d3,d4
-	and.w	#$01,d4
-	move.l	(a3)+,d1
-	move.l	(a3)+,d0
-	Rbsr	L_RPoint
-	move.l	d0,d3
-	move.l	T_RastPort(a5),a1
-	move.w	36(a1),d1
-	move.w	38(a1),d2
-	move.l	Buffer(a5),d5
-	Rbsr	L_GfxPnt
-	Rbsr	L_FreeRas
-	rts
+	Lib_Int	InPaint3		src/lib/screens.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					BAR x,y TO x,y
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InBar
-; - - - - - - - - - - - - -
-	tst.w	ScOn(a5)
-	Rbeq	L_ScNOp
-	move.l	T_RastPort(a5),a1
-	move.l	(a3)+,d2
-	move.l	(a3)+,d1
-	move.l	(a3)+,d0
-	cmp.w	d0,d2
-	Rble	L_FonCall
-	cmp.w	d1,d3
-	Rble	L_FonCall
-	move.w	d0,36(a1)
-	move.w	d1,38(a1)
-	move.w	#RectFill,d5
-	Rbsr	L_GfxFunc
-	rts
+	Lib_Int	InBar		src/lib/screens.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					SET TEMPRAS n
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; - - - - - - - - - - - - -
-	Lib_Par InSetTempras1
+	Lib_Int	InSetTempras1		src/lib/screens.cpp
 ; - - - - - - - - - - - - -
-	cmp.l	#65536,d3
-	Rbcc	L_FonCall
-	cmp.l	#256,d3
-	Rbcs	L_FonCall
-	move.w	d3,RasSize(a5)
-	Rbra	L_InSetTempras0
+	Lib_Int	InSetTempras0		src/lib/screens.cpp
 ; - - - - - - - - - - - - -
-	Lib_Par InSetTempras0
-; - - - - - - - - - - - - -
-	clr.l	RasLock(a5)
-	rts
-; - - - - - - - - - - - - -
-	Lib_Par InSetTempras2
-; - - - - - - - - - - - - -
-	clr.l	RasLock(a5)
-	move.l	d3,d2
-	cmp.l	#65536,d2
-	Rbcc	L_FonCall
-	cmp.l	#256,d2
-	Rbcs	L_FonCall
-	move.l	(a3)+,d0
-	Rjsr	L_Bnk.OrAdr
-	move.w	d2,RasSize(a5)
-	move.l	d0,RasLock(a5)
-	rts
+	Lib_Int	InSetTempras2		src/lib/screens.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					Reserve le tempras
@@ -5007,1185 +4132,249 @@ FriRY:	move.l	RasLock(a5),a1
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					INK a,b,c
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InInk1
+	Lib_Int	InInk1		src/lib/screens.cpp
 ; - - - - - - - - - - - - -
-	move.l	d3,-(a3)
-	move.l	#EntNul,d3
-	move.l	d3,-(a3)
-	Rbra	L_InInk3
+	Lib_Int	InInk2		src/lib/screens.cpp
 ; - - - - - - - - - - - - -
-	Lib_Par InInk2
-; - - - - - - - - - - - - -
-	move.l	d3,-(a3)
-	move.l	#EntNul,d3
-	Rbra	L_InInk3
-; - - - - - - - - - - - - -
-	Lib_Par InInk3
-; - - - - - - - - - - - - -
-	tst.w	ScOn(a5)
-	Rbeq	L_ScNOp
-	move.l	T_RastPort(a5),a1
-	cmp.l	#EntNul,d3
-	beq.s	Iik0
-	move.b	d3,27(a1)
-Iik0:	move.l	(a3)+,d0
-	cmp.l	#EntNul,d0
-	beq.s	Iik1
-	GfxCa5	SetBPen
-Iik1:	move.l	(a3)+,d0
-	cmp.l	#EntNul,d0
-	beq.s	Iik2
-	GfxCa5	SetAPen
-Iik2:	rts
+	Lib_Int	InInk3		src/lib/screens.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					GR WRITING n
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InGrWriting
-; - - - - - - - - - - - - -
-	tst.w	ScOn(a5)
-	Rbeq	L_ScNOp
-	move.l	d3,d0
-	Rbmi	L_FonCall
-	move.l	T_RastPort(a5),a1
-	GfxCa5	SetDrMd
-	rts
+	Lib_Int	InGrWriting		src/lib/screens.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					SET LINE
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InSetLine
-; - - - - - - - - - - - - -
-	tst.w	ScOn(a5)
-	Rbeq	L_ScNOp
-	move.l	T_RastPort(a5),a0
-	move.w	d3,34(a0)
-	rts
+	Lib_Int	InSetLine		src/lib/screens.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					SLIDER
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InHSlider
+	Lib_Int	InHSlider		src/lib/screens.cpp
 ; - - - - - - - - - - - - -
-	Rbsr	L_GetSli
-	EcCall	HorSli
-	Rbne	L_FonCall
-	Rbsr	L_LoadRegs
-	rts
+	Lib_Int	InVSlider		src/lib/screens.cpp
 ; - - - - - - - - - - - - -
-	Lib_Par InVSlider
-; - - - - - - - - - - - - -
-	Rbsr	L_GetSli
-	EcCall	VerSli
-	Rbne	L_FonCall
-	Rbsr	L_LoadRegs
-	rts
-; - - - - - - - - - - - - -
-	Lib_Def	GetSli
-; - - - - - - - - - - - - -
-	Rbsr	L_SaveRegs
-	move.l	d3,d5
-	Rbmi	L_FonCall
-	move.l	(a3)+,d4
-	Rbmi	L_FonCall
-	move.l	(a3)+,d3
-	Rbmi	L_FonCall
-	move.l	(a3)+,d2
-	Rbmi	L_FonCall
-	move.l	(a3)+,d1
-	Rbmi	L_FonCall
-	move.l	(a3)+,d7
-	Rbmi	L_FonCall
-	move.l	(a3)+,d6
-	Rbmi	L_FonCall
-	sub.l	d6,d1
-	Rbls	L_FonCall
-	sub.l	d7,d2
-	Rbls	L_FonCall
-	rts
+	Lib_Empty			GetSli, now in src/lib/screens.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					SET SLIDER
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InSetSlider
-; - - - - - - - - - - - - -
-	Rbsr	L_SaveRegs
-	move.l	d3,d7
-	move.l	(a3)+,d6
-	move.l	(a3)+,d5
-	move.l	(a3)+,d4
-	move.l	(a3)+,d3
-	move.l	(a3)+,d2
-	move.l	(a3)+,d1
-	move.l	(a3)+,d0
-	EcCall	SetSli
-	Rbne	L_FonCall
-	Rbsr	L_LoadRegs
-	rts
+	Lib_Int	InSetSlider		src/lib/screens.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					DEF SCROLL
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InDefScroll
-; - - - - - - - - - - - - -
-	Rbsr	L_SaveRegs
-	move.l	d3,-(a3)
-	movem.l	(a3)+,d1-d7
-	tst.l	d7
-	Rbeq	L_FonCall
-	cmp.l	#NDScrolls,d7
-	Rbhi	L_FonCall
-	mulu	#6*2,d7
-	lea	DScrolls(a5),a1
-	add.w	d7,a1
-	movem.w	d1-d6,-(a1)
-	Rbsr	L_LoadRegs
-	rts
+	Lib_Int	InDefScroll		src/lib/screens.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					SCROLL n
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InScroll
+	Lib_Int	InScroll		src/lib/screens.cpp
 ; - - - - - - - - - - - - -
-	subq.l	#1,d3
-	cmp.l	#NDScrolls,d3
-	Rbcc	L_FonCall
-	mulu	#6*2,d3
-	lea	DScrolls(a5),a1
-	lea	0(a1,d3.w),a1
-	cmp.w	#$8000,(a1)
-	beq	ScNoDef
-* Gestion AUTOBACK scroll
-	move.l	ScOnAd(a5),a2
-	tst.w	EcAuto(a2)
-	bne.s	ScrF1
-	Rbsr	L_DoScroll
-	rts
-* Autoback!!
-ScrF1	movem.l	a1/a2,-(sp)
-	EcCall	AutoBack1
-	movem.l	(sp),a1/a2
-	btst	#BitDble,EcFlags(a2)
-	beq.s	ScrF2
-	Rbsr	L_DoScroll
-	EcCall	AutoBack2
-	movem.l	(sp),a1/a2
-	Rbsr	L_DoScroll
-	EcCall	AutoBack3
-ScrFX	movem.l	(sp)+,a1/a2
-	rts
-* Single buffer
-ScrF2	Rbsr	L_DoScroll
-	EcCall	AutoBack4
-	bra.s	ScrFX
-ScNoDef	moveq	#28,d0
-	Rbra	L_EcWiErr
-; - - - - - - - - - - - - -
-	Lib_Def	DoScroll
-; - - - - - - - - - - - - -
-	movem.l	d6/d7,-(sp)
-	move.w	(a1)+,d3
-	move.w	(a1)+,d2
-	move.w	(a1)+,d5
-	move.w	(a1)+,d4
-	move.w	(a1)+,d1
-	move.w	(a1)+,d0
-	add.w	d0,d2
-	add.w	d1,d3
-	move.l	#$CC,d6
-	move.l	a2,a0
-	move.l	a2,a1
-	add.l	#EcCurrent,a2
-	move.l	a2,SccEcO(a5)
-	move.l	a2,SccEcD(a5)
-	Rbsr	L_Sco0
-	movem.l	(sp)+,d6/d7
-	rts
+	Lib_Empty			DoScroll, now in src/lib/screens.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					SCREEN COPY
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InScreenCopy2
+	Lib_Int	InScreenCopy2		src/lib/screens.cpp
 ; - - - - - - - - - - - - -
-	move.l	d3,-(a3)
-	move.l	#$CC,d3
-	Rbra	L_InScreenCopy3
+	Lib_Int	InScreenCopy3		src/lib/screens.cpp
 ; - - - - - - - - - - - - -
-	Lib_Par InScreenCopy3
+	Lib_Int	InScreenCopy8		src/lib/screens.cpp
 ; - - - - - - - - - - - - -
-	move.l	(a3)+,d1
-	Rbsr	L_GetEc
-	move.l	d0,SccEcD(a5)
-	move.l	a0,a1
-* Adresse ecran 1
-	move.l	(a3)+,d1
-	Rbsr	L_GetEc
-	move.l	d0,SccEcO(a5)
-	movem.l	d5-d7,-(sp)
-	move.l	d3,d6
-	moveq	#0,d0
-	moveq	#0,d1
-	moveq	#0,d2
-	moveq	#0,d3
-	move.w	#10000,d4
-	move.w	#10000,d5
-	Rbsr	L_Sco0
-	movem.l	(sp)+,d5-d7
-	rts
-; - - - - - - - - - - - - -
-	Lib_Par InScreenCopy8
-; - - - - - - - - - - - - -
-	move.l	d3,-(a3)
-	move.l	#$CC,d3
-	Rbra	L_InScreenCopy9
-; - - - - - - - - - - - - -
-	Lib_Par InScreenCopy9
-; - - - - - - - - - - - - -
-* Adresse ecran 2
-	move.l	8(a3),d1
-	Rbsr	L_GetEc
-	move.l	d0,SccEcD(a5)
-	move.l	a0,a1
-* Adresse ecran 1
-	move.l	28(a3),d1
-	Rbsr	L_GetEc
-	move.l	d0,SccEcO(a5)
-* Prend les coordonnees
-	movem.l	d5-d7,-(sp)
-	move.l	d3,d6
-	move.l	(a3)+,d3
-	move.l	(a3)+,d2
-	addq.l	#4,a3
-	move.l	(a3)+,d5
-	move.l	(a3)+,d4
-	move.l	(a3)+,d1
-	move.l	(a3)+,d0
-	addq.l	#4,a3
-* Appelle la routine
-	Rbsr	L_Sco0
-	movem.l	(sp)+,d5-d7
-	rts
+	Lib_Int	InScreenCopy9		src/lib/screens.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					Routine SCREEN COPY
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	Sco0
-; - - - - - - - - - - - - -
-	movem.l	a3/a6,-(sp)
-	tst.w	d0
-	bpl.s	Sco1
-	sub.w	d0,d2
-	clr.w	d0
-Sco1:	tst.w	d1
-	bpl.s	Sco2
-	sub.w	d1,d3
-	clr.w	d1
-Sco2:	tst.w	d2
-	bpl.s	Sco3
-	sub.w	d2,d0
-	clr.w	d2
-Sco3:	tst.w	d3
-	bpl.s	Sco4
-	sub.w	d3,d1
-	clr.w	d3
-Sco4:	cmp.w	EcTx(a0),d0
-	bcc	ScoX
-	cmp.w	EcTy(a0),d1
-	bcc	ScoX
-	cmp.w	EcTx(a1),d2
-	bcc	ScoX
-	cmp.w	EcTy(a1),d3
-	bcc	ScoX
-
-	tst.w	d4
-	bmi	ScoX
-	cmp.w	EcTx(a0),d4
-	bls.s	Sco5
-	move.w	EcTx(a0),d4
-Sco5:	tst.w	d5
-	bmi	ScoX
-	cmp.w	EcTy(a0),d5
-	bls.s	Sco6
-	move.w	EcTy(a0),d5
-Sco6:	sub.w	d0,d4
-	bls	ScoX
-	sub.w	d1,d5
-	bls	ScoX
-
-	move.w	d2,d7
-	add.w	d4,d7
-	sub.w	EcTx(a1),d7
-	bls.s	Sco7
-	sub.w	d7,d4
-	bls	ScoX
-Sco7:	move.w	d3,d7
-	add.w	d5,d7
-	sub.w	EcTy(a1),d7
-	bls.s	Sco8
-	sub.w	d7,d5
-	bls.s	ScoX
-Sco8:	ext.l	d0
-	ext.l	d1
-	ext.l	d2
-	ext.l	d3
-	ext.l	d4
-	ext.l	d5
-; Cree des faux bitmaps
-	move.l	T_ChipBuf(a5),a2	Buffer en CHIP
-	lea	40(a2),a3
-	move.w	EcTLigne(a0),(a2)+
-	move.w	EcTLigne(a1),(a3)+
-	move.w	EcTy(a0),(a2)+
-	move.w	EcTy(a1),(a3)+
-	move.w	EcNPlan(a0),(a2)+
-	move.w	EcNPlan(a1),(a3)+
-	clr.w	(a2)+
-	clr.w	(a3)+
-	move.l	SccEcO(a5),a0
-	move.l	SccEcD(a5),a1
-	moveq	#5,d7
-.BM	move.l	(a0)+,(a2)+
-	move.l	(a1)+,(a3)+
-	dbra	d7,.BM
-; Appelle les routines
-	move.l	T_ChipBuf(a5),a0
-	lea	40(a0),a1
-	lea	40(a1),a2
-	move.l	T_EcVect(a5),a6
-	jsr	ScCpyW*4(a6)
-	beq.s	ScoX
-	moveq	#-1,d7
-	move.l	T_GfxBase(a5),a6
-	jsr	BltBitMap(a6)
-ScoX	movem.l	(sp)+,a3/a6
-	rts
+	Lib_Int	Sco0		src/lib/screens.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					=PHYSIC
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par FnPhysic0
+	Lib_Int	FnPhysic0		src/lib/screens.cpp
 ; - - - - - - - - - - - - -
-	moveq	#-1,d3
-	Ret_Int
-; - - - - - - - - - - - - -
-	Lib_Par FnPhysic1
-; - - - - - - - - - - - - -
-	bset	#31,d3
-	bset	#30,d3
-	Ret_Int
+	Lib_Int	FnPhysic1		src/lib/screens.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					=LOGIC
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par FnLogic0
+	Lib_Int	FnLogic0		src/lib/screens.cpp
 ; - - - - - - - - - - - - -
-	moveq	#-1,d3
-	bclr	#30,d3
-	Ret_Int
-; - - - - - - - - - - - - -
-	Lib_Par FnLogic1
-; - - - - - - - - - - - - -
-	bset	#31,d3
-	bclr	#30,d3
-	Ret_Int
+	Lib_Int	FnLogic1		src/lib/screens.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					APPEAR
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InAppear3
+	Lib_Int	InAppear3		src/lib/screens.cpp
 ; - - - - - - - - - - - - -
-	move.l	d3,-(a3)
-	moveq	#0,d3
-	Rbra	L_InAppear4
-; - - - - - - - - - - - - -
-	Lib_Par InAppear4
-; - - - - - - - - - - - - -
-	Rbsr	L_SaveRegs
-	move.l	d3,d6
-	Rbmi	L_FonCall
-	move.l	(a3)+,d7
-	Rbls	L_FonCall
-	move.l	(a3)+,d1
-	Rbsr	L_GetEc
-	move.l	(a3)+,d1
-	movem.l	a3-a6,-(sp)
-	move.l	a0,a3
-	move.l	d0,SccEcD(a5)
-	Rbsr	L_GetEc
-	move.l	a0,a2
-	move.l	d0,SccEcO(a5)
-	moveq	#0,d4
-	move.w	EcNPlan(a2),d0		* Nb max de plans
-	cmp.w	EcNPlan(a3),d0
-	bls.s	LAppa
-	move.w	EcNPlan(a3),d0
-LAppa	subq.w	#1,d0
-	move.w	d0,AppNPlan(a5)
-	move.w	EcTLigne(a2),d5		* Nb Max de pixels
-	mulu	EcTy(a2),d5
-	lsl.l	#3,d5
-	tst.l	d6
-	bne.s	LApp0
-	move.l	d5,d6
-LApp0	cmp.l	d6,d7
-	bcs.s	LApp1
-	sub.l	d6,d7
-	bra.s	LApp0
-* Boucle!
-LApp1	add.l	d7,d4
-	cmp.l	d5,d4
-	bcs.s	LApp2
-	sub.l	d5,d4
-LApp2
-* Point / Plot
-	move.l	d4,d0
-	lsr.l	#3,d0			* D0-> Adresse image source
-	move.l	d0,d1
-	divu	EcTLigne(a2),d1
-	move.w	d1,d2
-	cmp.w	EcTy(a3),d2
-	bcc.s	LApp5
-	move.w	EcTLigne(a3),d3
-	mulu	d3,d2
-	clr.w	d1
-	swap	d1
-	cmp.w	d3,d1
-	bcc.s	LApp5
-	add.l	d2,d1			* D1-> Adresse image dest
-	move.w	d4,d3
-	and.w	#$0007,d3
-	moveq	#7,d2
-	sub.w	d3,d2			* D2-> decalage bits
-	move.w	AppNPlan(a5),d3		* Nb max de plan
-	move.l	SccEcO(a5),a4
-	move.l	SccEcD(a5),a6
-LApp3	move.l	(a4)+,a0
-	move.l	(a6)+,a1
-	btst	d2,0(a0,d0.l)
-	bne.s	LApp4
-	bclr	d2,0(a1,d1.l)
-	dbra	d3,LApp3
-	bra.s	LApp5
-LApp4	bset	d2,0(a1,d1.l)
-	dbra	d3,LApp3
-* Encore?
-LApp5	subq.l	#1,d6
-	beq.s	LApp6
-	tst.b	T_Actualise(a5)
-	bpl.s	LApp1
-	movem.l a2-a3,-(sp)
-	movem.l	2*4(sp),a3-a6
-	Rjsr	L_Test_PaSaut
-	movem.l	(sp)+,a2-a3
-	bra.s	LApp1
-* A y est!
-LApp6	movem.l	(sp)+,a3-a6
-	Rbsr	L_LoadRegs
-	rts
+	Lib_Int	InAppear4		src/lib/screens.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					ZOOM
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InZoom
-; - - - - - - - - - - - - -
-		RsReset
-ZSpTablX	rs.l	1
-ZSpTablY	rs.l	1
-ZSpASrce	rs.l	1
-ZSpADest	rs.l	1
-ZSpDSrce	rs.l	1
-ZSpDDest	rs.l	1
-ZSpNPlan	rs.w	1
-ZSpSize		equ	__RS
-	Rbsr	L_SaveRegs
-	move.l	d3,-(a3)
-	movem.l	a3-a6,-(sp)
-	lea	-ZSpSize(sp),sp
-	move.l	9*4(a3),d1
-	Rbsr	L_GetEc
-	move.l	a0,a1			* Source
-	move.l	d0,ZSpASrce(sp)
-	move.l	4*4(a3),d1
-	Rbsr	L_GetEc
-	move.l	a0,a2			* Destination
-	move.l	d0,ZSpADest(sp)
-* Adresses des ecrans
-	move.w	EcNPlan(a1),d0
-	cmp.w	EcNPlan(a2),d0
-	bls.s	IZooD1
-	move.w	EcNPlan(a2),d0
-IZooD1	subq.w	#1,d0
-	move.w	d0,ZSpNPlan(sp)
-* Reserve le buffer 4k!
-	move.l	#4096,d0
-	SyCall	MemFast
-	Rbeq	L_OOfMem
-	move.l	a0,ZSpTablX(sp)
-* X3/X4/X2/X1
-	move.l	1*4(a3),d5
-	Rbmi	L_FonCall
-	cmp.w	EcTx(a2),d5
-	bhi	ZooF
-	move.l	3*4(a3),d4
-	cmp.l	d5,d4
-	bcc	ZooF
-	move.l	6*4(a3),d3
-	bmi	ZooF
-	cmp.w	EcTx(a1),d3
-	bhi	ZooF
-	move.l	8*4(a3),d2
-	cmp.l	d3,d2
-	bcc	ZooF
-	moveq	#0,d0			* Position en X
-	move.w	d2,d0
-	lsr.w	#3,d0
-	move.l	d0,ZSpDSrce(sp)
-	moveq	#7,d6
-	move.w	d2,d0
-	and.w	#$0007,d0
-	sub.w	d0,d6
-	move.w	d4,d0
-	lsr.w	#3,d0
-	move.l	d0,ZSpDDest(sp)
-	move.w	d4,d0
-	and.w	#$0007,d0
-	moveq	#7,d7
-	sub.w	d0,d7
-	bsr	ZooTab
-* Y3/Y4/Y2/Y1
-	move.l	0*4(a3),d5
-	bmi	ZooF
-	cmp.w	EcTy(a2),d5
-	bhi	ZooF
-	move.l	2*4(a3),d4
-	cmp.l	d5,d4
-	bcc	ZooF
-	move.l	5*4(a3),d3
-	bmi	ZooF
-	cmp.w	EcTy(a1),d3
-	bhi	ZooF
-	move.l	7*4(a3),d2
-	cmp.l	d3,d2
-	bcc	ZooF
-	move.w	d2,d0
-	mulu	EcTLigne(a1),d0
-	add.l	d0,ZSpDSrce(sp)
-	move.w	d4,d0
-	mulu	EcTLigne(a2),d0
-	add.l	d0,ZSpDDest(sp)
-	move.l	a0,ZSpTablY(sp)
-	bsr	ZooTab
-* Zoom / Reduce en Y
-	moveq	#0,d4
-	moveq	#0,d5
-	move.w	EcTLigne(a1),d4
-	move.w	EcTLigne(a2),d5
-	move.l	ZSpTablX(sp),a0
-	moveq	#0,d0
-	move.w	(a0)+,d0
-	beq.s	ZooD2
-	bmi	ZooX
-ZooD0	move.w	d0,d1
-	lsr.w	#3,d0
-	and.w	#7,d1
-	sub.w	d1,d6
-	bcc.s	ZooD1
-	addq.l	#1,d0
-	addq.w	#8,d6
-ZooD1	add.l	d0,ZSpDSrce(sp)
-ZooD2	move.w	ZSpNPlan(sp),d1
-	move.l	ZSpASrce(sp),a4
-	move.l	ZSpADest(sp),a5
-ZooD3	move.l	(a4)+,a2
-	move.l	(a5)+,a3
-	move.l	ZSpDSrce(sp),d2
-	move.l	ZSpDDest(sp),d3
-	move.l	ZSpTablY(sp),a1
-	move.w	(a1)+,d0
-* Boucle de pokage en Y
-ZooD4	bmi.s	ZooD9
-	mulu	d4,d0
-	add.l	d0,d2
-ZooD5	btst	d6,0(a2,d2.l)
-	beq.s	ZooD7
-	bset	d7,0(a3,d3.l)
-	add.l	d5,d3
-	move.w	(a1)+,d0
-	bne.s	ZooD4
-ZooD6	bset	d7,0(a3,d3.l)
-	add.l	d5,d3
-	move.w	(a1)+,d0
-	beq.s	ZooD6
-	bra.s	ZooD4
-ZooD7	bclr	d7,0(a3,d3.l)
-	add.l	d5,d3
-	move.w	(a1)+,d0
-	bne.s	ZooD4
-ZooD8	bclr	d7,0(a3,d3.l)
-	add.l	d5,d3
-	move.w	(a1)+,d0
-	beq.s	ZooD8
-	bra.s	ZooD4
-* Encore un plan?
-ZooD9	dbra	d1,ZooD3
-* Position en X suivante!
-	subq.w	#1,d7
-	bcc.s	ZooDA
-	moveq	#7,d7
-	addq.l	#1,ZSpDDest(sp)
-ZooDA	moveq	#0,d0
-	move.w	(a0)+,d0
-	beq.s	ZooD2
-	bpl.s	ZooD0
-* Fini! Youpi!
-ZooX	move.l	ZSpTablX(sp),a1
-	lea	ZSpSize(sp),sp
-	movem.l	(sp)+,a3-a6
-	lea	10*4(a3),a3
-	Rbsr	L_LoadRegs
-	move.l	#4096,d0
-	SyCall	MemFree
-	rts
-* FonCall!
-ZooF	move.l	ZSpTablX(sp),a1
-	move.l	#4096,d0
-	SyCall	MemFree
-	Rbra	L_FonCall
-
-;------ Fabrique la table de zoom
-*	D2= X1
-*	D3= X2
-*	D4= X3
-*	D5= X4
-*	A0= Table
-ZooTab	sub.w 	d2,d3
-	sub.w	d4,d5
-	cmp.w	d3,d5
-	bcc.s	ZooZ
-* Reduce!
-	moveq	#-1,d0
-	move.w	d3,d2
-	move.w	d3,d4
-	subq.w	#1,d4
-	subq.w	#1,d2
-ZooR1	addq.w	#1,d0
-	sub.w	d5,d4
-	bcc.s	ZooR2
-	add.w	d3,d4
-	move.w	d0,(a0)+
-	moveq	#0,d0
-ZooR2	dbra	d2,ZooR1
-	move.w	#-1,(a0)+
-	rts
-* Zoom
-ZooZ	clr.w	(a0)+
-	move.w	d5,d4
-	move.w	d5,d2
-	subq.w	#2,d2
-	bmi.s	ZooZ3
-	subq.w	#1,d5
-ZooZ1	sub.w	d3,d5
-	bcc.s	ZooZ2
-	add.w	d4,d5
-	move.w	#1,(a0)+
-	dbra	d2,ZooZ1
-	bra.s	ZooZ3
-ZooZ2	clr.w	(a0)+
-	dbra	d2,ZooZ1
-ZooZ3	move.w	#-1,(a0)+
-	rts
+	Lib_Int	InZoom		src/lib/screens.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					X HARD / YHARD
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par FnXHard1
+	Lib_Int	FnXHard1		src/lib/screens.cpp
 ; - - - - - - - - - - - - -
-	tst.w	ScOn(a5)
-	Rbeq	L_ScNOp
-	move.l	d3,d1
-	moveq	#0,d3
-	Rbra	L_XHr1
+	Lib_Int	FnXHard2		src/lib/screens.cpp
 ; - - - - - - - - - - - - -
-	Lib_Par FnXHard2
-; - - - - - - - - - - - - -
-	move.l	d3,d1
-	move.l	(a3)+,d3
-	addq.w	#1,d3
-	Rbra	L_XHr1
-; - - - - - - - - - - - - -
-	Lib_Def	XHr1
-; - - - - - - - - - - - - -
-	moveq	#0,d2
-	SyCall	XyHard
-	Rbne	L_EcWiErr
-	move.l	d1,d3
-	Ret_Int
+	Lib_Empty			XHr1, now in src/lib/screens.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					=YHARD
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par FnYHard1
+	Lib_Int	FnYHard1		src/lib/screens.cpp
 ; - - - - - - - - - - - - -
-	tst.w	ScOn(a5)
-	Rbeq	L_ScNOp
-	move.l	d3,d2
-	moveq	#0,d3
-	Rbra	L_YHr1
+	Lib_Int	FnYHard2		src/lib/screens.cpp
 ; - - - - - - - - - - - - -
-	Lib_Par FnYHard2
-; - - - - - - - - - - - - -
-	move.l	d3,d2
-	move.l	(a3)+,d3
-	addq.l	#1,d3
-	Rbra	L_YHr1
-; - - - - - - - - - - - - -
-	Lib_Def	YHr1
-; - - - - - - - - - - - - -
-	moveq	#0,d1
-	SyCall	XyHard
-	Rbne	L_EcWiErr
-	move.l	d2,d3
-	Ret_Int
+	Lib_Empty			YHr1, now in src/lib/screens.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					=X SCREEN
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par FnXScreen1
+	Lib_Int	FnXScreen1		src/lib/screens.cpp
 ; - - - - - - - - - - - - -
-	tst.w	ScOn(a5)
-	Rbeq	L_ScNOp
-	move.l	d3,d1
-	moveq	#0,d3
-	Rbra	L_XSc1
+	Lib_Int	FnXScreen2		src/lib/screens.cpp
 ; - - - - - - - - - - - - -
-	Lib_Par FnXScreen2
-; - - - - - - - - - - - - -
-	move.l	d3,d1
-	move.l	(a3)+,d3
-	addq.l	#1,d3
-	Rbra	L_XSc1
-; - - - - - - - - - - - - -
-	Lib_Def	XSc1
-; - - - - - - - - - - - - -
-	moveq	#0,d2
-	SyCall	XyScr
-	Rbne	L_EcWiErr
-	move.l	d1,d3
-	Ret_Int
+	Lib_Empty			XSc1, now in src/lib/screens.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					=YSCREEN
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par FnYScreen1
+	Lib_Int	FnYScreen1		src/lib/screens.cpp
 ; - - - - - - - - - - - - -
-	tst.w	ScOn(a5)
-	Rbeq	L_ScNOp
-	move.l	d3,d2
-	moveq	#0,d3
-	Rbra	L_YSc1
+	Lib_Int	FnYScreen2		src/lib/screens.cpp
 ; - - - - - - - - - - - - -
-	Lib_Par FnYScreen2
-; - - - - - - - - - - - - -
-	move.l	d3,d2
-	move.l	(a3)+,d3
-	addq.l	#1,d3
-	Rbra	L_YSc1
-; - - - - - - - - - - - - -
-	Lib_Def	YSc1
-; - - - - - - - - - - - - -
-	moveq	#0,d1
-	SyCall	XyScr
-	Rbne	L_EcWiErr
-	move.l	d2,d3
-	Ret_Int
+	Lib_Empty			YSc1, now in src/lib/screens.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					=X TEXT
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par FnXText
-; - - - - - - - - - - - - -
-	tst.w	ScOn(a5)
-	Rbeq	L_ScNOp
-	move.l	d3,d1
-	moveq	#0,d2
-	SyCall	XyWin
-	move.l	d1,d3
-	Ret_Int
+	Lib_Int	FnXText		src/lib/screens.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					=YTEXT
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par FnYText
-; - - - - - - - - - - - - -
-	tst.w	ScOn(a5)
-	Rbeq	L_ScNOp
-	move.l	d3,d2
-	moveq	#0,d1
-	SyCall	XyWin
-	move.l	d2,d3
-	Ret_Int
+	Lib_Int	FnYText		src/lib/screens.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					XYGRAPHIC
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par FnXGraphic
+	Lib_Int	FnXGraphic		src/lib/screens.cpp
 ; - - - - - - - - - - - - -
-	tst.w	ScOn(a5)
-	Rbeq	L_ScNOp
-	move.l	d3,d1
-	Rbmi	L_FonCall
-	WiCall	XGrWi
-	move.l	d1,d3
-	Ret_Int
-; - - - - - - - - - - - - -
-	Lib_Par FnYGraphic
-; - - - - - - - - - - - - -
-	tst.w	ScOn(a5)
-	Rbeq	L_ScNOp
-	move.l	d3,d1
-	Rbmi	L_FonCall
-	WiCall	YGrWi
-	move.l	d1,d3
-	Ret_Int
+	Lib_Int	FnYGraphic		src/lib/screens.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					RESERVE ZONES
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InReserveZone0
+	Lib_Int	InReserveZone0		src/lib/screens.cpp
 ; - - - - - - - - - - - - -
-	moveq	#0,d3
-	Rbra	L_InReserveZone1
-; - - - - - - - - - - - - -
-	Lib_Par InReserveZone1
-; - - - - - - - - - - - - -
-	move.l	d3,d1
-	Rbmi	L_FonCall
-	tst.w	ScOn(a5)
-	Rbeq	L_ScNOp
-	SyCall	ResZone
-	Rbne	L_OOfMem
-	rts
+	Lib_Int	InReserveZone1		src/lib/screens.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					RESET ZONE
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InResetZone0
+	Lib_Int	InResetZone0		src/lib/screens.cpp
 ; - - - - - - - - - - - - -
-	moveq	#0,d3
-	Rbra	L_InResetZone1
-; - - - - - - - - - - - - -
-	Lib_Par InResetZone1
-; - - - - - - - - - - - - -
-	move.l	d3,d1
-	Rbmi	L_FonCall
-	tst.w	ScOn(a5)
-	Rbeq	L_ScNOp
-	SyCall	RazZone
-	bne.s	.Err
-	rts
-.Err	moveq	#73,d0
-	Rbra	L_GoError
+	Lib_Int	InResetZone1		src/lib/screens.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					SET ZONE
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InSetZone
-; - - - - - - - - - - - - -
-	move.l	d3,d5
-	move.l	(a3)+,d4
-	move.l	(a3)+,d3
-	move.l	(a3)+,d2
-	move.l	(a3)+,d1
-	Rbls	L_FonCall
-	tst.w	ScOn(a5)
-	Rbeq	L_ScNOp
-	SyCall	SetZone
-	Rbne	L_FonCall
-	rts
+	Lib_Int	InSetZone		src/lib/screens.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					=ZONE
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par FnZone2
+	Lib_Int	FnZone2		src/lib/screens.cpp
 ; - - - - - - - - - - - - -
-	move.l	d3,d2
-	move.l	(a3)+,d1
-	moveq	#-1,d3
-	Rbra	L_FZo
+	Lib_Int	FnZone3		src/lib/screens.cpp
 ; - - - - - - - - - - - - -
-	Lib_Par FnZone3
-; - - - - - - - - - - - - -
-	move.l	d3,d2
-	move.l	(a3)+,d1
-	move.l	(a3)+,d3
-	Rbra	L_FZo
-; - - - - - - - - - - - - -
-	Lib_Def	FZo
-; - - - - - - - - - - - - -
-	addq.l	#1,d3
-	tst.w	ScOn(a5)
-	Rbeq	L_ScNOp
-	moveq	#8,d5			??? Nb d'ecrans
-	SyCall	ZoGr
-	tst.w	d0
-	Rbne	L_EcWiErr
-	move.l	d1,d3
-	Ret_Int
+	Lib_Empty			FZo, now in src/lib/screens.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					=HZONE
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par FnHZone2
+	Lib_Int	FnHZone2		src/lib/screens.cpp
 ; - - - - - - - - - - - - -
-	move.l	d3,d2
-	move.l	(a3)+,d1
-	moveq	#-1,d3
-	Rbra	L_FHZo
+	Lib_Int	FnHZone3		src/lib/screens.cpp
 ; - - - - - - - - - - - - -
-	Lib_Par FnHZone3
-; - - - - - - - - - - - - -
-	move.l	d3,d2
-	move.l	(a3)+,d1
-	move.l	(a3)+,d3
-	Rbra	L_FHZo
-; - - - - - - - - - - - - -
-	Lib_Def	FHZo
-; - - - - - - - - - - - - -
-	addq.l	#1,d3
-	tst.w	ScOn(a5)
-	Rbeq	L_ScNOp
-	moveq	#8,d5
-	SyCall	ZoHd			??? Nb d'ecrans
-	tst.w	d0
-	Rbne	L_EcWiErr
-	move.l	d1,d3
-	Ret_Int
+	Lib_Empty			FHZo, now in src/lib/screens.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					=SCIn
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par FnScIn2
+	Lib_Int	FnScIn2		src/lib/screens.cpp
 ; - - - - - - - - - - - - -
-	move.l	d3,d2
-	move.l	(a3)+,d1
-	moveq	#-1,d3
-	Rbra	L_ScIn
+	Lib_Int	FnScIn3		src/lib/screens.cpp
 ; - - - - - - - - - - - - -
-	Lib_Par FnScIn3
-; - - - - - - - - - - - - -
-	move.l	d3,d2
-	move.l	(a3)+,d1
-	move.l	(a3)+,d3
-	Rbra	L_ScIn
-; - - - - - - - - - - - - -
-	Lib_Def	ScIn
-; - - - - - - - - - - - - -
-	addq.l	#1,d3
-	tst.w	ScOn(a5)
-	Rbeq	L_ScNOp
-	moveq	#8,d4			??? Nb d'ecrans
-	SyCall	ScIn
-	Rbne	L_EcWiErr
-	move.l	d1,d3
-	Ret_Int
+	Lib_Empty			ScIn, now in src/lib/screens.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					=MOUSE SCREEN
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par FnMouseScreen
-; - - - - - - - - - - - - -
-	tst.w	ScOn(a5)
-	Rbeq	L_ScNOp
-	SyCall	XyMou
-	moveq	#0,d3
-	moveq	#8,d4			??? Nb d'ecrans
-	SyCall	ScIn
-	move.l	d1,d3
-	Ret_Int
+	Lib_Int	FnMouseScreen		src/lib/screens.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					=MOUSEZONE
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par FnMouseZone
-; - - - - - - - - - - - - -
-	tst.w	ScOn(a5)
-	Rbeq	L_ScNOp
-	SyCall	XyMou
-	moveq	#0,d3
-	moveq	#8,d5			??? Nb d'ecrans
-	SyCall	ZoHd
-	move.l	d1,d3
-	Ret_Int
+	Lib_Int	FnMouseZone		src/lib/screens.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					GET CBLOCK
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InGetCBlock
-; - - - - - - - - - - - - -
-	move.l	d3,d4
-	move.l	(a3)+,d3
-	move.l	(a3)+,d2
-	move.l	(a3)+,d1
-	move.l	(a3)+,d5
-	Rbeq	L_BFonCall
-	cmp.l	#65536,d5
-	Rbcc	L_BFonCall
-	EcCall	CBlGet
-	Rbne	L_EcWiErr
-	rts
+	Lib_Int	InGetCBlock		src/lib/screens.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					PUT CBLOCK n
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InPutCBlock1
+	Lib_Int	InPutCBlock1		src/lib/screens.cpp
 ; - - - - - - - - - - - - -
-	move.l	d3,-(a3)
-	moveq	#-1,d3
-	move.l	d3,-(a3)
-	Rbra	L_InPutCBlock3
-; - - - - - - - - - - - - -
-	Lib_Par InPutCBlock3
-; - - - - - - - - - - - - -
-	move.l	d3,d2
-	move.l	(a3)+,d1
-	move.l	(a3)+,d5
-	Rbeq	L_BFonCall
-	cmp.l	#65536,d5
-	Rbcc	L_BFonCall
-	EcCall	CBlPut
-	Rbne	L_EcWiErr
-	rts
+	Lib_Int	InPutCBlock3		src/lib/screens.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					DEL CBLOCK
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InDelCBlock0
+	Lib_Int	InDelCBlock0		src/lib/screens.cpp
 ; - - - - - - - - - - - - -
-	EcCall	CBlRaz
-	rts
-; - - - - - - - - - - - - -
-	Lib_Par InDelCBlock1
-; - - - - - - - - - - - - -
-	move.l	d3,d5
-	Rbeq	L_BFonCall
-	cmp.l	#65536,d5
-	Rbcc	L_BFonCall
-	EcCall	CBlDel
-	Rbne	L_EcWiErr
-	rts
+	Lib_Int	InDelCBlock1		src/lib/screens.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					GET BLOCK
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InGetBlock5
+	Lib_Int	InGetBlock5		src/lib/screens.cpp
 ; - - - - - - - - - - - - -
-	move.l	d3,-(a3)
-	moveq	#0,d3
-	Rbra	L_InGetBlock6
-; - - - - - - - - - - - - -
-	Lib_Par InGetBlock6
-; - - - - - - - - - - - - -
-	move.l	d3,d0
-	move.l	(a3)+,d5
-	move.l	(a3)+,d4
-	move.l	(a3)+,d3
-	move.l	(a3)+,d2
-	move.l	(a3)+,d1
-	Rbeq	L_BFonCall
-	cmp.l	#65536,d1
-	Rbcc	L_BFonCall
-	move.l	d6,-(sp)
-	move.l	d0,d6
-	EcCall	BlGet
-	movem.l	(sp)+,d6
-	Rbne	L_EcWiErr
-	rts
+	Lib_Int	InGetBlock6		src/lib/screens.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					PUT BLOCK
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InPutBlock1
+	Lib_Int	InPutBlock1		src/lib/screens.cpp
 ; - - - - - - - - - - - - -
-	move.l	d3,-(a3)
-	move.l	#EntNul,d3
-	move.l	d3,-(a3)
-	move.l	d3,-(a3)
-	move.l	d3,-(a3)
-	Rbra	L_InPutBlock5
+	Lib_Int	InPutBlock3		src/lib/screens.cpp
 ; - - - - - - - - - - - - -
-	Lib_Par InPutBlock3
+	Lib_Int	InPutBlock4		src/lib/screens.cpp
 ; - - - - - - - - - - - - -
-	move.l	d3,-(a3)
-	move.l	#EntNul,d3
-	move.l	d3,-(a3)
-	Rbra	L_InPutBlock5
-; - - - - - - - - - - - - -
-	Lib_Par InPutBlock4
-; - - - - - - - - - - - - -
-	move.l	d3,-(a3)
-	move.l	#EntNul,d3
-	Rbra	L_InPutBlock5
-; - - - - - - - - - - - - -
-	Lib_Par InPutBlock5
-; - - - - - - - - - - - - -
-	move.l	d3,d5
-	move.l	(a3)+,d4
-	move.l	(a3)+,d3
-	move.l	(a3)+,d2
-	move.l	(a3)+,d1
-	tst.l	d1
-	Rbeq	L_BFonCall
-	cmp.l	#65536,d1
-	Rbcc	L_BFonCall
-	move.l	Buffer(a5),a1
-	EcCall	BlPut
-	Rbne	L_EcWiErr
-	rts
+	Lib_Int	InPutBlock5		src/lib/screens.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					DEL BLOC
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InDelBlock0
+	Lib_Int	InDelBlock0		src/lib/screens.cpp
 ; - - - - - - - - - - - - -
-	EcCall	BlRaz
-	rts
-; - - - - - - - - - - - - -
-	Lib_Par InDelBlock1
-; - - - - - - - - - - - - -
-	move.l	d3,d1
-	Rbeq	L_BFonCall
-	cmp.l	#65536,d1
-	Rbcc	L_BFonCall
-	EcCall	BlDel
-	Rbne	L_EcWiErr
-	rts
+	Lib_Int	InDelBlock1		src/lib/screens.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					Bloc Reverse
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InHRevBlock
+	Lib_Int	InHRevBlock		src/lib/screens.cpp
 ; - - - - - - - - - - - - -
-	move.w	#%1000000000000000,d2
-	Rbra	L_Rev
+	Lib_Int	InVRevBlock		src/lib/screens.cpp
 ; - - - - - - - - - - - - -
-	Lib_Par InVRevBlock
-; - - - - - - - - - - - - -
-	move.w	#%0100000000000000,d2
-	Rbra	L_Rev
-; - - - - - - - - - - - - -
-	Lib_Def	Rev
-; - - - - - - - - - - - - -
-	move.l	d3,d1
-	EcCall	BlRev
-	Rbne	L_EcWiErr
-	rts
+	Lib_Empty			Rev, now in src/lib/screens.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					Routine: set XY curseur
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	GrXY
-; - - - - - - - - - - - - -
-	move.l	T_RastPort(a5),a1
-	cmp.l	#EntNul,d1
-	beq.s	GrXy1
-	move.w	d1,38(a1)
-GrXy1:	cmp.l	#EntNul,d0
-	beq.s	GrXy2
-	move.w	d0,36(a1)
-GrXy2:	rts
+	Lib_Empty			GrXY, now in src/lib/screens.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					Routines d'appel GFX avec AUTOBACK
@@ -6240,102 +4429,33 @@ GfxF2	jsr	(a3)
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					Routine: #ecran D1 >>> adresse D0
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	GetEc
-; - - - - - - - - - - - - -
-	tst.l	d1
-	bmi.s	GtE1
-* >0 , <8
-	cmp.l	#8,d1
-	Rbcc	L_FonCall
-	EcCall	AdrEc
-	Rbeq	L_ScNOp
-	move.l	d0,a0
-	add.l	#EcLogic,d0
-	rts
-* <0
-GtE1	tst.w	d1
-	bpl.s	GtE2
-	move.l	ScOnAd(a5),d0
-	Rbeq	L_ScNOp
-	move.l	d0,a0
-	bra.s	GtE3
-GtE2	cmp.w	#8,d1
-	Rbcc	L_FonCall
-	EcCall	AdrEc
-	Rbeq	L_ScNOp
-	move.l	d0,a0
-GtE3	btst	#30,d1
-	bne.s	GtE4
-	add.l	#EcLogic,d0
-	rts
-GtE4	add.l	#EcPhysic,d0
-	rts
+	Lib_Int	GetEc		src/lib/screens.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					CLOSE WORKBENCH
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InCloseWorkbench
-; - - - - - - - - - - - - -
-	tst.b	PI_AllowWB(a5)
-	beq.s	.Skip
-	Rbsr	L_WB_Close
-.Skip	rts
+	Lib_Int	InCloseWorkbench		src/lib/screens.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					AMOS TO FRONT / BACK
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InAmosToFront
+	Lib_Int	InAmosToFront		src/lib/screens.cpp
 ; - - - - - - - - - - - - -
-	EcCalD	AMOS_WB,1
-	rts
+	Lib_Int	InAmosToBack		src/lib/screens.cpp
 ; - - - - - - - - - - - - -
-	Lib_Par InAmosToBack
+	Lib_Int	FnAmosHere		src/lib/screens.cpp
 ; - - - - - - - - - - - - -
-	EcCalD	AMOS_WB,0
-	rts
+	Lib_Int	InAmosLock		src/lib/screens.cpp
 ; - - - - - - - - - - - - -
-	Lib_Par FnAmosHere
-; - - - - - - - - - - - - -
-	EcCalD	AMOS_WB,-1
-	move.l	d1,d3
-	Ret_Int
-; - - - - - - - - - - - - -
-	Lib_Par InAmosLock
-; - - - - - - - - - - - - -
-	EcCalD	AMOS_WB,1
-	move.w	#-1,T_NoFlip(a5)
-	rts
-; - - - - - - - - - - - - -
-	Lib_Par InAmosUnlock
-; - - - - - - - - - - - - -
-	clr.w	T_NoFlip(a5)
-	rts
+	Lib_Int	InAmosUnlock		src/lib/screens.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					Routine: ferme le WB
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	WB_Close
-; - - - - - - - - - - - - -
-	tst.b	WB_Closed(a5)
-	bne.s	.Skip
-	move.l	a6,-(sp)
-	bclr	#WFlag_WBClosed,T_WFlags(a5)
-	move.l	T_IntBase(a5),a6
-	jsr	-78(a6)
-	move.b	d0,WB_Closed(a5)
-	beq.s	.Skup
-	bset	#WFlag_WBClosed,T_WFlags(a5)
-.Skup	move.l	(sp)+,a6
-.Skip	rts
+	Lib_Int	WB_Close		src/lib/screens.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					Reouvre le WB
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	WB_Open
-; - - - - - - - - - - - - -
-	move.l	a6,-(sp)
-	move.l	T_IntBase(a5),a6
-	jsr	-210(a6)
-	move.l	(sp)+,a6
-	rts
+	Lib_Int	WB_Open		src/lib/screens.cpp
 
 
 
