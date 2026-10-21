@@ -22,6 +22,14 @@ screenshot in build/test-run/<name>/timeout.png.
                              record new golden results
   run.py NAME...             run only these tests
 
+Editor tests: a test whose first line is "Rem EDITOR" checks what the
+editor shows. It runs without prologue and epilogue and must end with a
+syntax error, which makes AMOS open the editor on the listing. The harness
+waits for the screen to settle and takes a few screenshots. The golden
+result is <name>.png plus <name>_mask.png, the pixels that changed between
+the screenshots (the cursor blinks), which the comparison ignores. Only
+the top of the display is compared (EDITOR_AREA): keep the listing short.
+
 Needs fs-uae, Xvfb, scrot, the Kickstart ROM with its rom.key and the
 Workbench directory drive (see --kickstart, --rom-key and --workbench).
 """
@@ -37,6 +45,8 @@ import time
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT, 'tools'))
+
+from PIL import Image, ImageChops, ImageFilter  # noqa: E402
 
 import amostok  # noqa: E402
 import uaem     # noqa: E402
@@ -104,6 +114,8 @@ base_dir = {base}
 fullscreen = 0
 automatic_input_grab = 0
 initial_input_grab = 0
+governor_warning = 0
+notification_duration = 1
 '''
 
 _display_lock = threading.Lock()
@@ -160,8 +172,77 @@ def prepare(amos_tree, kickstart, rom_key):
     return amos, os.path.join(kickdir, os.path.basename(kickstart))
 
 
+EDITOR_SHOTS = 6
+# The part of the X screen compared: the AMOS display above the FS-UAE
+# notifications that stay in the bottom left corner
+EDITOR_AREA = (320, 268, 960, 700)
+
+
+def is_editor_test(name):
+    with open(os.path.join(TESTS, name + '.asc'), encoding='latin-1') as f:
+        return f.readline().strip().lower() == 'rem editor'
+
+
+def screenshot(env, path):
+    subprocess.run(['scrot', '-o', path], env=env, stdout=subprocess.DEVNULL,
+                   stderr=subprocess.DEVNULL, check=True)
+    image = Image.open(path).convert('RGB').crop(EDITOR_AREA)
+    image.save(path)
+    return image
+
+
+def changed_pixels(a, b):
+    return sum(1 for v in ImageChops.difference(a, b).convert('L').getdata() if v)
+
+
+def editor_shots(env, base, deadline):
+    """Wait until the editor screen is still but for the cursor, then take
+    EDITOR_SHOTS screenshots. Returns their paths, or None on timeout."""
+    previous, quiet = None, 0
+    while time.time() < deadline:
+        time.sleep(1)
+        shot = screenshot(env, os.path.join(base, 'settle.png'))
+        quiet = quiet + 1 if previous and changed_pixels(previous, shot) < 400 else 0
+        previous = shot
+        if quiet >= 3:
+            paths = []
+            for i in range(EDITOR_SHOTS):
+                paths.append(os.path.join(base, f'shot{i}.png'))
+                screenshot(env, paths[-1])
+                time.sleep(0.4)
+            return paths
+    return None
+
+
+def record_editor(name, shots):
+    images = [Image.open(p).convert('RGB') for p in shots]
+    mask = Image.new('L', images[0].size, 0)
+    for image in images[1:]:
+        diff = ImageChops.difference(images[0], image).convert('L').point(lambda v: 255 if v else 0)
+        mask = ImageChops.lighter(mask, diff)
+    mask = mask.filter(ImageFilter.MaxFilter(5))
+    images[0].save(os.path.join(GOLDEN, name + '.png'))
+    mask.save(os.path.join(GOLDEN, name + '_mask.png'))
+
+
+def compare_editor(name, shots):
+    golden = Image.open(os.path.join(GOLDEN, name + '.png')).convert('RGB')
+    mask = Image.open(os.path.join(GOLDEN, name + '_mask.png')).convert('L')
+    keep = mask.point(lambda v: 0 if v else 255)
+    best = None
+    for path in shots:
+        diff = ImageChops.difference(golden, Image.open(path).convert('RGB')).convert('L')
+        diff = ImageChops.multiply(diff.point(lambda v: 255 if v else 0), keep)
+        count = sum(1 for v in diff.getdata() if v)
+        best = count if best is None else min(best, count)
+        if not count:
+            return []
+    return [f'screen differs ({best} pixels, see build/test-run/{name}/shot0.png)']
+
+
 def run_test(name, tables, amos, kickstart, workbench, timeout, visible):
-    """Boot an emulator for one test. Returns (finished, seconds, out dir)."""
+    """Boot an emulator for one test. Returns (finished, seconds, out dir,
+    screenshots of an editor test)."""
     base = os.path.join(RUN, name)
     hd = os.path.join(base, 'hd')
     out = os.path.join(hd, 'out')
@@ -175,7 +256,11 @@ def run_test(name, tables, amos, kickstart, workbench, timeout, visible):
     if body.lower().startswith('set double precision'):
         head, _, body = body.partition('\n')
         head += '\n'
-    listing = head + PROLOGUE.format(name=name) + body.rstrip('\n') + '\n' + EPILOGUE
+    editor = is_editor_test(name)
+    if editor:
+        listing = body
+    else:
+        listing = head + PROLOGUE.format(name=name) + body.rstrip('\n') + '\n' + EPILOGUE
     amostok.tokenize_program(listing, tables).save(os.path.join(hd, name + '.AMOS'))
     with open(os.path.join(hd, 'S', 'startup-sequence'), 'w', encoding='latin-1') as f:
         f.write(STARTUP.format(name=name))
@@ -191,12 +276,18 @@ def run_test(name, tables, amos, kickstart, workbench, timeout, visible):
     if not visible:
         xvfb, env['DISPLAY'] = start_xvfb()
     start = time.time()
+    shots = None
     try:
         with open(os.path.join(base, 'fs-uae.log'), 'w') as log:
             proc = subprocess.Popen(['fs-uae', config], stdout=log, stderr=subprocess.STDOUT,
                                     env=env, start_new_session=True)
             done = os.path.join(out, 'DONE')
             try:
+                if editor:
+                    if not xvfb:
+                        raise RuntimeError('editor tests need the virtual display')
+                    shots = editor_shots(env, base, start + timeout)
+                    return shots is not None, time.time() - start, out, shots
                 while time.time() - start < timeout:
                     if os.path.exists(done) or proc.poll() is not None:
                         break
@@ -210,7 +301,7 @@ def run_test(name, tables, amos, kickstart, workbench, timeout, visible):
     finally:
         if xvfb:
             stop(xvfb)
-    return os.path.exists(os.path.join(out, 'DONE')), time.time() - start, out
+    return os.path.exists(os.path.join(out, 'DONE')), time.time() - start, out, shots
 
 
 def outputs(directory, name):
@@ -270,7 +361,7 @@ def main():
                                      args.workbench, args.timeout, args.visible)
                    for name in tests}
         for name in tests:
-            finished, seconds, out = futures[name].result()
+            finished, seconds, out, shots = futures[name].result()
             if not finished:
                 failed += 1
                 print(f'{name}: TIMEOUT after {seconds:.0f}s, see '
@@ -280,12 +371,16 @@ def main():
                 for f in outputs(GOLDEN, name).values():
                     os.remove(f)
                 os.makedirs(GOLDEN, exist_ok=True)
+                if shots:
+                    record_editor(name, shots)
+                    print(f'{name}: recorded the editor screen ({seconds:.0f}s)')
+                    continue
                 got = outputs(out, name)
                 for f, path in got.items():
                     shutil.copy(path, os.path.join(GOLDEN, f))
                 print(f'{name}: recorded {len(got)} files ({seconds:.0f}s)')
                 continue
-            problems = compare(name, out)
+            problems = compare_editor(name, shots) if shots else compare(name, out)
             failed += bool(problems)
             status = 'ok' if not problems else 'FAIL: ' + ', '.join(problems)
             print(f'{name}: {status} ({seconds:.0f}s)')

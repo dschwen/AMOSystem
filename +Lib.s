@@ -13579,257 +13579,75 @@ ChSTa:	dc.b 27,"T0",0
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					FREE
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par FnFree
-; - - - - - - - - - - - - -
-	moveq	#-100,d3
-	Rjsr	L_Menage
-	move.l	TabBas(a5),d3
-	sub.l	HiChaine(a5),d3
-	Ret_Int
+	Lib_Int	FnFree		src/lib/strings.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					=INKEY$
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par FnInkey
-; - - - - - - - - - - - - -
-	SyCall	Inkey
-	tst.l	d1
-	Rbeq	L_Ret_ChVide
-	move.w	d1,d2
-	swap	d1
-	move.w	d1,SScan(a5)
-	moveq	#2,d3
-	Rjsr	L_Demande
-	move.w	#1,(a0)+
-	move.b	d2,(a0)+
-	addq.l	#1,a0
-	move.l	a0,HiChaine(a5)
-	move.l	a1,d3
-	Ret_String
+	Lib_Int	FnInkey		src/lib/keyboard.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					=SCANCODE
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par FnScancode
-; - - - - - - - - - - - - -
-	moveq	#0,d3
-	move.b	SScan+1(a5),d3
-	clr.b	SScan+1(a5)
-	Ret_Int
+	Lib_Int	FnScancode		src/lib/keyboard.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					=SCANSHIFT
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par FnScanshift
-; - - - - - - - - - - - - -
-	moveq	#0,d3
-	move.b	SScan(a5),d3
-	clr.b	SScan(a5)
-	Ret_Int
+	Lib_Int	FnScanshift		src/lib/keyboard.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					=KEY STATE(n)
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par FnKeyState
-; - - - - - - - - - - - - -
-	cmp.l	#128,d3
-	Rbcc	L_FonCall
-	move.l	d3,d1
-	SyCall	Instant
-	move.l	d1,d3
-	Ret_Int
+	Lib_Int	FnKeyState		src/lib/keyboard.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					=KEY SHIFT
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par FnKeyShift
-; - - - - - - - - - - - - -
-	SyCall	Shifts
-	move.l	d1,d3
-	Ret_Int
+	Lib_Int	FnKeyShift		src/lib/keyboard.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					=JOY(n)
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par FnJoy
+	Lib_Int	FnJoy		src/lib/keyboard.cpp
 ; - - - - - - - - - - - - -
-	cmp.l	#1,d3
-	Rbhi	L_FonCall
-	move.l	d3,d1
-	SyCall	Joy
-	move.l	d1,d3
-	Ret_Int
+	Lib_Int	FnJup		src/lib/keyboard.cpp
 ; - - - - - - - - - - - - -
-	Lib_Par FnJup
+	Lib_Int	FnJdown		src/lib/keyboard.cpp
 ; - - - - - - - - - - - - -
-	Rbsr	L_FJ
-	btst	#0,d1
-	Rbeq	L_FnFalse
-	Rbra	L_FnTrue
+	Lib_Int	FnJleft		src/lib/keyboard.cpp
 ; - - - - - - - - - - - - -
-	Lib_Par FnJdown
+	Lib_Int	FnJright		src/lib/keyboard.cpp
 ; - - - - - - - - - - - - -
-	Rbsr	L_FJ
-	btst	#1,d1
-	Rbeq	L_FnFalse
-	Rbra	L_FnTrue
+	Lib_Int	FnFire		src/lib/keyboard.cpp
 ; - - - - - - - - - - - - -
-	Lib_Par FnJleft
-; - - - - - - - - - - - - -
-	Rbsr	L_FJ
-	btst	#2,d1
-	Rbeq	L_FnFalse
-	Rbra	L_FnTrue
-; - - - - - - - - - - - - -
-	Lib_Par FnJright
-; - - - - - - - - - - - - -
-	Rbsr	L_FJ
-	btst	#3,d1
-	Rbeq	L_FnFalse
-	Rbra	L_FnTrue
-; - - - - - - - - - - - - -
-	Lib_Par FnFire
-; - - - - - - - - - - - - -
-	Rbsr	L_FJ
-	btst	#4,d1
-	Rbeq	L_FnFalse
-	Rbra	L_FnTrue
-; - - - - - - - - - - - - -
-	Lib_Def	FJ
-; - - - - - - - - - - - - -
-	cmp.l	#1,d3
-	Rbhi	L_FonCall
-	move.l	d3,d1
-	SyCall	Joy
-	rts
+	Lib_Empty			FJ, now in src/lib/keyboard.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					PUTKEY
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InPutKey
-; - - - - - - - - - - - - -
-	move.l	d3,a2
-	move.w	(a2)+,d2
-	cmp.w	#64,d2
-	Rbcc	L_StooLong
-	Rbsr	L_ChVerBuf
-	move.l	Buffer(a5),a1
-	SyCall	PutKey
-	rts
+	Lib_Int	InPutKey		src/lib/keyboard.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					CLEARKEY
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InClearKey
-; - - - - - - - - - - - - -
-	SyCall	ClearKey
-	rts
+	Lib_Int	InClearKey		src/lib/keyboard.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					KEY$()
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InKeyD
+	Lib_Int	InKeyD		src/lib/keyboard.cpp
 ; - - - - - - - - - - - - -
-	move.l	d3,a2
-	move.w	(a2)+,d2
-	Rbsr	L_ChVerBuf
-	move.l	Buffer(a5),a1
-	move.l	(a3)+,d1
-	subq.l	#1,d1
-	cmp.l	#20,d1
-	Rbcc	L_FonCall
-	SyCall	SetFunk
-	rts
-; - - - - - - - - - - - - -
-	Lib_Par FnKeyD
-; - - - - - - - - - - - - -
-	move.l	d3,d1
-	subq.l	#1,d1
-	cmp.l	#20,d1
-	Rbcc	L_FonCall
-	move.l	Buffer(a5),a2
-	bsr.s	SsGtKy
-	Rbra	L_Str2Chaine
-;	Routine
-; ~~~~~~~~~~~~~
-SsGtKy:	movem.l	d0-d2/a0-a2,-(sp)
-	SyCall	GetFunk
-	moveq	#0,d3
-SGk0:	clr.b	(a2)
-	move.b	(a0)+,d0
-	beq.s	SGkX
-	cmp.b	#13,d0			* RETURN
-	beq.s	SGk2
-	cmp.b	#"'",d0			* REM
-	beq.s	SGk0
-	cmp.b	#1,d0			* SCAN CODE
-	beq.s	SGk4
-	cmp.b	#32,d0
-	bcc.s	SGk1
-	moveq	#".",d0
-SGk1:	move.b	d0,(a2)+
-	addq.w	#1,d3
-	bra.s	SGk0
-SGk2:	move.b	#"`",d0
-	cmp.b	#10,(a0)+
-	beq.s	SGk1
-	subq.l	#1,a1
-	bra.s	SGk1
-SGk4:	addq.l	#3,a1
-	bra.s	SGk0
-SGkX:	movem.l	(sp)+,d0-d2/a0-a2
-	rts
+	Lib_Int	FnKeyD		src/lib/keyboard.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					=SCAN$()
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par FnScan1
+	Lib_Int	FnScan1		src/lib/keyboard.cpp
 ; - - - - - - - - - - - - -
-	move.l	d3,-(a3)
-	moveq	#0,d3
-	Rbra	L_FnScan2
-; - - - - - - - - - - - - -
-	Lib_Par FnScan2
-; - - - - - - - - - - - - -
-	move.l	d3,d4
-	move.l	(a3)+,d5
-	cmp.l	#256,d5
-	Rbcc	L_FonCall
-	cmp.l	#256,d4
-	Rbcc	L_FonCall
-	moveq	#4,d3
-	Rjsr	L_Demande
-	move.w	d3,(a0)+
-	move.b	#1,(a0)+
-	move.b	d4,(a0)+
-	move.b	d5,(a0)+
-	move.b	#0,(a0)+
-	move.l	a0,HiChaine(a5)
-	move.l	a1,d3
-	Ret_String
+	Lib_Int	FnScan2		src/lib/keyboard.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					=INSTR
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par FnInstr2
+	Lib_Int	FnInstr2		src/lib/strings.cpp
 ; - - - - - - - - - - - - -
-        moveq 	#0,d2
-        move.l 	d3,a2
-        move.w 	(a2)+,d2
-        moveq 	#0,d1
-        move.l 	(a3)+,a1
-        move.w 	(a1)+,d1
-        moveq 	#0,d4
-	Rbsr 	L_InstrFind
-	Ret_Int
-; - - - - - - - - - - - - -
-	Lib_Par FnInstr3
-; - - - - - - - - - - - - -
-        move.l 	d3,d4
-        Rbmi 	L_FonCall
-        moveq 	#0,d2
-        move.l 	(a3)+,a2
-        move.w 	(a2)+,d2
-        moveq 	#0,d1
-        move.l 	(a3)+,a1
-        move.w 	(a1)+,d1
-	Rbsr 	L_InstrFind
-	Ret_Int
+	Lib_Int	FnInstr3		src/lib/strings.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					ROUTINE INSTRFIND
@@ -13837,66 +13655,17 @@ SGkX:	movem.l	(sp)+,d0-d2/a0-a2
 ;       INSTR FIND: trouve une sous chaine dans une chaine a partir de d4
 ;       routine appelee par - chaine et INSTR
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InstrFind
-; - - - - - - - - - - - - -
-	move.l	a3,-(sp)
-        tst.l 	d2
-        beq.s 	.if11
-        tst.l 	d4
-        beq.s 	.if1
-        subq.l 	#1,d4
-.if1	add.l 	d4,a1         ;situe dans la chaine
-.if3	clr 	d3
-.if4	move.l 	a2,a3
-        addq 	#1,d4
-        cmp 	d1,d4
-        bhi.s 	.if11
-        cmpm.b 	(a1)+,(a3)+
-        bne.s 	.if4
-        move.l	a1,a0
-        move 	d4,d0
-.if5	addq 	#1,d3
-        cmp 	d2,d3
-        bcc.s 	.if10
-        addq 	#1,d0
-        cmp 	d1,d0
-        bhi.s 	.if11
-        cmpm.b 	(a0)+,(a3)+
-        beq.s 	.if5
-        bra.s 	.if3
-.if10	move.l	(sp)+,a3
-        move.l 	d4,d3                  ;trouve!
-        rts
-.if11	move.l	(sp)+,a3
-        moveq 	#0,d3
-        rts
+	Lib_Int	InstrFind		src/lib/strings.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					=FLIP$
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par FnFlip
-; - - - - - - - - - - - - -
-	move.l	d3,a2
-	move.w	(a2)+,d2
-        Rbeq 	L_Ret_ChVide
-	move.l	d2,d3
-	Rjsr 	L_Demande
-	move.w	d2,(a0)+
-        add.l 	d2,a2
-Flp1:   move.b 	-(a2),(a0)+
-	subq.l	#1,d2
-	bne.s	Flp1
-	Rbra	L_FinBin
+	Lib_Int	FnFlip		src/lib/strings.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					LEN
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par FnLen
-; - - - - - - - - - - - - -
-	move.l	d3,a2
-	moveq	#0,d3
-	move.w	(a2)+,d3
-	Ret_Int
+	Lib_Int	FnLen		src/lib/strings.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					=SPACE$
@@ -13912,253 +13681,68 @@ Flp1:   move.b 	-(a2),(a0)+
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					=CHR$()
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par FnChr
-; - - - - - - - - - - - - -
-	move.l 	d3,d2
-	cmp.l 	#$100,d3
-	Rbcs	L_FinChr
-        Rbra 	L_FonCall
+	Lib_Int	FnChr		src/lib/strings.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					=TAB$
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par FnTab
-; - - - - - - - - - - - - -
-	moveq	#9,d2
-	Rbra	L_FinChr
+	Lib_Int	FnTab		src/lib/strings.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					=Cleft$
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par FnCleft
-; - - - - - - - - - - - - -
-	moveq	#29,d2
-	Rbra	L_FinChr
+	Lib_Int	FnCleft		src/lib/strings.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					=Cright
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par FnCright
-; - - - - - - - - - - - - -
-	moveq	#28,d2
-	Rbra	L_FinChr
+	Lib_Int	FnCright		src/lib/strings.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					=Cup
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par FnCup
-; - - - - - - - - - - - - -
-	moveq	#30,d2
-	Rbra	L_FinChr
+	Lib_Int	FnCup		src/lib/strings.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					=Cdown
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par FnCdown
+	Lib_Int	FnCdown		src/lib/strings.cpp
 ; - - - - - - - - - - - - -
-	moveq	#31,d2
-	Rbra	L_FinChr
-; - - - - - - - - - - - - -
-	Lib_Def	FinChr
-; - - - - - - - - - - - - -
-        moveq 	#2,d3
-	Rjsr 	L_Demande
-        move.w 	#1,(a0)+
-        move.b 	d2,(a0)
-	addq.w	#2,a0
-        move.l 	a0,HiChaine(a5)
-	move.l 	a1,d3
-	Ret_String
+	Lib_Empty			FinChr, now in src/lib/strings.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					=PAPER$=PEN$
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par FnPenD
+	Lib_Int	FnPenD		src/lib/strings.cpp
 ; - - - - - - - - - - - - -
-	lea	L144a(pc),a2
-	Rbra	L_FPn
-L144a	dc.b 	27,"P0",0
-	even
+	Lib_Int	FnPaperD		src/lib/strings.cpp
 ; - - - - - - - - - - - - -
-	Lib_Par FnPaperD
-; - - - - - - - - - - - - -
-	lea	L145a(pc),a2
-	Rbra	L_FPn
-L145a	dc.b 	27,"B0",0
-	even
-; - - - - - - - - - - - - -
-	Lib_Def	FPn
-; - - - - - - - - - - - - -
-	cmp.l	#32,d3
-	Rbcc	L_WFonCall
-	add.b	#"0",d3
-	move.b	d3,2(a2)
-	moveq	#4,d3
-	Rjsr	L_Demande
-	move.w	#3,(a0)+
-	move.l	(a2)+,(a0)+
-	move.l	a0,HiChaine(a5)
-	move.l	a1,d3
-	Ret_String
+	Lib_Empty			FPn, now in src/lib/strings.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					AT(x,y)
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par FnAt
-; - - - - - - - - - - - - -
-	move.l	d3,d2
-	moveq	#0,d3
-	moveq	#0,d4
-	moveq	#0,d1
-	cmp.l	#EntNul,d2
-	beq.s	FnAt1
-	cmp.l	#255-48,d2
-	Rbhi	L_WFonCall
-	move.w	d2,d1
-	moveq	#3,d3
-	bset	#1,d4
-FnAt1:	moveq	#0,d0
-	move.l	(a3)+,d2
-	cmp.l	#EntNul,d2
-	beq.s	FnAt2
-	cmp.l	#255-48,d2
-	Rbhi	L_WFonCall
-	move.w	d2,d0
-	addq.l	#3,d3
-	bset	#0,d4
-FnAt2:	tst.w	d4
-	Rbeq	L_Ret_ChVide
-	Rjsr	L_Demande
-	move.w	d3,(a0)+
-	btst	#0,d4
-	beq.s	FnAt3
-	add.w	#"0",d0
-	move.b	#27,(a0)+
-	move.b	#"X",(a0)+
-	move.b	d0,(a0)+
-FnAt3:	btst	#1,d4
-	beq.s	FnAt4
-	add.w	#"0",d1
-	move.b	#27,(a0)+
-	move.b	#"Y",(a0)+
-	move.b	d1,(a0)+
-FnAt4:	Rbra	L_FinBin
+	Lib_Int	FnAt		src/lib/strings.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					=CMOVE$
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par FnCMoveD
-; - - - - - - - - - - - - -
-	move.l	d3,d2
-	moveq	#0,d3
-	moveq	#0,d4
-	moveq	#0,d1
-	tst.l	d2
-	beq.s	FnCMv1
-	cmp.l	#EntNul,d2
-	beq.s	FnCMv1
-	cmp.l	#128,d2
-	Rbge	L_WFonCall
-	cmp.l	#-128,d2
-	Rble	L_WFonCall
-	move.w	d2,d1
-	moveq	#3,d3
-	bset	#1,d4
-FnCMv1:	moveq	#0,d0
-	move.l	(a3)+,d2
-	beq.s	FnCMv2
-	cmp.l	#EntNul,d2
-	beq.s	FnCMv2
-	cmp.l	#128,d2
-	Rbge	L_WFonCall
-	cmp.l	#-128,d2
-	Rble	L_WFonCall
-	move.w	d2,d0
-	addq.l	#3,d3
-	bset	#0,d4
-FnCMv2:	tst.w	d4
-	Rbeq	L_Ret_ChVide
-	Rjsr	L_Demande
-	move.w	d3,(a0)+
-	btst	#0,d4
-	beq.s	FnCMv3
-	move.b	#27,(a0)+
-	move.b	#"N",(a0)+
-	add.b	#128,d0
-	move.b	d0,(a0)+
-FnCMv3:	btst	#1,d4
-	beq.s	FnCMv4
-	move.b	#27,(a0)+
-	move.b	#"O",(a0)+
-	add.b	#128,d1
-	move.b	d1,(a0)+
-FnCMv4:	Rbra	L_FinBin
+	Lib_Int	FnCMoveD		src/lib/strings.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					=REPEAT$
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par FnRepeat
-; - - - - - - - - - - - - -
-	tst.l	d3
-	Rbeq	L_WFonCall
-	cmp.l	#207,d3
-	Rbcc	L_WFonCall
-	lea	ChRpt(pc),a0
-	Rbra	L_FinRpt
-ChRpt:	dc.b 	27,"R0",0,27,"R0",0
-	even
+	Lib_Int	FnRepeat		src/lib/strings.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					=BORDER$
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par FnBorderD
-; - - - - - - - - - - - - -
-	tst.l	d3
-	Rbeq	L_WFonCall
-	cmp.l	#16,d3
-	Rbcc	L_WFonCall
-	lea	ChSur(pc),a0
-	Rbra	L_FinRpt
-ChSur:	dc.b 	27,"E0",0,27,"E0",0
-	even
+	Lib_Int	FnBorderD		src/lib/strings.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					=ZONE$
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par FnZoneD
-; - - - - - - - - - - - - -
-	tst.l	d3
-	Rbeq	L_WFonCall
-	cmp.l	#255-48,d3
-	Rbcc	L_WFonCall
-	lea	ChZon(pc),a0
-	Rbra	L_FinRpt
-ChZon:	dc.b 	27,"Z0",0,27,"Z0",0
-	even
+	Lib_Int	FnZoneD		src/lib/strings.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					Routine Zone/Border
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	FinRpt
-; - - - - - - - - - - - - -
-	add.b	#"0",d3
-	move.b	d3,6(a0)
-	move.l	(a3)+,a2
-	moveq	#0,d2
-	move.w	(a2)+,d2
-	move.l	a3,-(sp)
-	move.l	a0,a3
-	move.l	d2,d3
-	addq.l	#6,d3
-	Rjsr	L_Demande
-	move.w	d3,(a0)+
-FnR1:	move.b	(a3)+,(a0)+
-	bne.s	FnR1
-	tst.b	-(a0)
-	subq.w	#1,d2
-	bmi.s	FnR3
-FnR2:	move.b	(a2)+,(a0)+
-	dbra	d2,FnR2
-FnR3:	move.b	(a3)+,(a0)+
-	bne.s	FnR3
-	tst.b	-(a0)
-	move.l	(sp)+,a3
-	Rbra	L_FinBin
+	Lib_Empty			FinRpt, now in src/lib/strings.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					=LOWER$
@@ -14173,61 +13757,23 @@ FnR3:	move.b	(a3)+,(a0)+
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					=ASC
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par FnAsc
-; - - - - - - - - - - - - -
-	move.l 	d3,a2
-        moveq 	#0,d3
-        move.w 	(a2)+,d0
-        beq.s 	L91a
-        move.b 	(a2),d3
-L91a:   Ret_Int
+	Lib_Int	FnAsc		src/lib/strings.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					=BIN$()
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par FnBin1
+	Lib_Int	FnBin1		src/lib/strings.cpp
 ; - - - - - - - - - - - - -
-	move.l 	d3,d1
-        moveq 	#-1,d2
-        moveq 	#33,d3
-	Rbra 	L_BinHex
-; - - - - - - - - - - - - -
-	Lib_Par FnBin2
-; - - - - - - - - - - - - -
-    	move.l 	d3,d2
-        move.l 	(a3)+,d1
-        moveq 	#33,d3
-	Rbra 	L_BinHex
+	Lib_Int	FnBin2		src/lib/strings.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					=HEX$
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par FnHex1
+	Lib_Int	FnHex1		src/lib/strings.cpp
 ; - - - - - - - - - - - - -
-        move.l 	d3,d1
-        moveq 	#-1,d2
-        moveq 	#9,d3
-	Rbra 	L_BinHex
+	Lib_Int	FnHex2		src/lib/strings.cpp
 ; - - - - - - - - - - - - -
-	Lib_Par FnHex2
-; - - - - - - - - - - - - -
-        move.l 	d3,d2
-        move.l 	(a3)+,d1
-        moveq 	#9,d3
-	Rbra	L_BinHex
-; - - - - - - - - - - - - -
-	Lib_Def	BinHex
-; - - - - - - - - - - - - -
-	Rjsr 	L_Demande
-	addq.l	#2,a0
-        move.l 	d1,d0
-        exg 	d2,d3
-        cmp 	#9,d2
-        bne.s 	hx3
-	Rjsr 	L_LongToHex
-        Rbra 	L_FinBin
-hx3:    Rjsr 	L_LongToBin
-	Rbra	L_FinBin
+	Lib_Empty			BinHex, now in src/lib/strings.cpp
 
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -25664,71 +25210,12 @@ mdx:    dc.l 	1000000000,100000000,10000000,1000000
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					Conversion D0.l >>> Ascii hex
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	LongToHex
-; - - - - - - - - - - - - -
-	move.b 	#"$",(a0)+
-        tst.l 	d3
-        bmi.s 	ha0
-        neg.l 	d3
-        add.l	 #8,d3
-ha0:    clr 	d4
-        move 	#7,d2
-ha1:    rol.l 	#4,d0
-        move.b	d0,d1
-        and.b 	#$0f,d1
-        cmp.b 	#10,d1
-        bcs.s 	ha2
-        add.b 	#7,d1
-ha2:    tst.l 	d3
-        beq.s 	ha4
-        bpl.s 	ha3
-        tst 	d4
-        bne.s 	ha4
-        tst 	d2
-        beq.s 	ha4
-        tst.b 	d1
-        beq.s 	ha5
-        moveq 	#1,d4
-        bra.s 	ha4
-ha3:    subq.l 	#1,d3
-        bra.s	ha5
-ha4:    add 	#48,d1
-        move.b 	d1,(a0)+
-ha5:    dbra 	d2,ha1
-        rts
+	Lib_Int	LongToHex		src/lib/convert.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					Conversion D0.l >>> Binaire Ascii
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	LongToBin
-; - - - - - - - - - - - - -
-	move.b 	#"%",(a0)+
-        tst.l 	d3
-        bmi.s 	hb0
-        neg.l 	d3
-        add.l 	#32,d3
-hb0:    clr 	d4
-        moveq 	#31,d2
-hb1:    clr 	d1
-        roxl.l 	#1,d0
-        addx.b 	d1,d1
-        tst.l 	d3            ;si d3<0: representation PROPORTIONNELLE
-        beq.s 	hb3
-        bpl.s 	hb2
-        tst 	d4
-        bne.s 	hb3
-        tst 	d2
-        beq.s 	hb3
-        tst.b 	d1
-        beq.s 	hb4
-        moveq 	#1,d4
-        bra.s	hb3
-hb2:    subq.l 	#1,d3
-        bra.s	hb4
-hb3:    add.b 	#48,d1
-        move.b 	d1,(a0)+
-hb4:    dbra 	d2,hb1
-        rts
+	Lib_Int	LongToBin		src/lib/convert.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 	FFP single precision to IEEE single precision

@@ -34,4 +34,42 @@ inline uint32_t str_finish(uint8_t *s, uint8_t *end)
     return address(s);
 }
 
+// L_MCSuit: a new string holding len characters from data (len > 0)
+inline uint32_t str_from(const void *data, uint16_t len)
+{
+    uint8_t *s = str_alloc(len);
+    poke_w(s, len);
+    const uint8_t *from = static_cast<const uint8_t *>(data);
+    uint8_t *to = s + 2;
+    for (uint16_t i = 0; i < len; i++)
+        *to++ = *from++;
+    idata().HiChaine = (address(to) + 1) & ~1u;
+    return address(s);
+}
+
+// L_Str2Chaine: a new string from a zero-terminated one
+inline uint32_t str_from_cstr(const char *text)
+{
+    uint32_t len = 0;
+    while (text[len])
+        len++;
+    return len ? str_from(text, static_cast<uint16_t>(len)) : str_empty();
+}
+
+// L_ChVerBuf: copy of string s into Buffer, zero-terminated, at most 510
+// characters. Returns Buffer.
+inline char *str_to_buffer(const uint8_t *s)
+{
+    char *buffer = ptr<char>(idata().Buffer);
+    uint16_t len = str_len(s);
+    if (len > 510)
+        len = 510;
+    const uint8_t *from = str_chars(s);
+    char *to = buffer;
+    for (uint16_t i = 0; i < len; i++)
+        *to++ = *from++;
+    *to = 0;
+    return buffer;
+}
+
 } // namespace amos

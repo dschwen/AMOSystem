@@ -54,7 +54,7 @@ AMOSPro.Lib is loaded raw, so the code of a routine that moves out of it is
 linked into the AMOSPro program instead:
 
 1. In `+Lib.s`/`+ILib.s`, replace the routine's `Lib_Par`/`Lib_Def` and its
-   body with `Lib_Int Name`. The routine keeps its number. A helper routine
+   body with `Lib_Int Name` (`tools/move_to_cpp.py` does this). The routine keeps its number. A helper routine
    that nothing else uses any more becomes `Lib_Empty`, which keeps the
    numbering. `tools/make_labels.py` lists every `Lib_Int` in
    `+Internal_Jumps.s` (`AMOSJmps`), and `Library_Patch` writes the address
@@ -96,8 +96,20 @@ through into a `Lib_Int`.
   the assembler.
 - Interrupt code must not use `CCall`/`amos_ctx`.
 
-Converted so far: `Abs` and `Sgn` (integer paths), `Upper$`, `Lower$`,
-`Space$`, `String$`, `Locate`.
+Routines that other assembler code calls with registers (`L_InstrFind`,
+`L_LongToHex`...) get a hand-written `LibRoutine` entry in the glue that
+keeps the registers the assembler version kept.
+
+Converted so far: the integer paths of `Abs` and `Sgn`, the string
+functions of `String.s` (except `Left$`/`Mid$`/`Right$`, `Str$` and `Val`,
+which are in `+ILib.s`), the keyboard and joystick functions, `Locate`.
+
+### Deliberate differences from the original
+
+- `Flip$` took its length from a register whose high word was not cleared.
+  Depending on what ran before, it failed with "out of string space"
+  (error 11). It now always works; `tests/golden/strings.txt` has the
+  corrected line.
 
 ## Assembler compatibility notes
 
@@ -142,6 +154,12 @@ tree sits on a read-only drive, and the Workbench drive provides `C:`, `Libs:`
 and the rest. Results go to channel 1 (`Print #1,...`) or to IFF files
 (`Save Iff "AMOSTEST:out/<name>_1.iff"`). Everything is compared byte for byte
 with `tests/golden/`, which was recorded with the original binaries.
+
+Editor tests (first line `Rem EDITOR`) check what the editor displays: the
+listing ends with a syntax error, AMOS opens the editor on it, and the
+harness compares screenshots with `tests/golden/<name>.png`, ignoring the
+pixels that change while it watches (the cursor). `editor_listing` covers
+the detokenizer.
 
 Things to know when writing tests:
 - A syntax error drops AMOS into the editor. The test then times out, and

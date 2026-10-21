@@ -46,7 +46,7 @@ def lint(paths, internals):
     the next routine instead). Returns a list of error messages."""
     errors = []
     for path in paths:
-        previous = None         # last instruction line before this one
+        previous = None         # last instruction line before this one (data skipped)
         with open(path, encoding='latin-1') as f:
             for lineno, line in enumerate(f, 1):
                 m = RBRANCH_RE.match(line)
@@ -60,7 +60,7 @@ def lint(paths, internals):
                                   f'through into Lib_Int {m.group(2)}')
                 code = line.split(';')[0].rstrip()
                 if code.strip() and not code.lstrip().startswith('*') and code[:1] in (' ', '\t') \
-                        and not re.match(r'^\s+(even|cnop|ifeq|ifne|ifd|ifnd|else|endc)\b', code, re.I):
+                        and not re.match(r'^\s+(even|cnop|ifeq|ifne|ifd|ifnd|else|endc|dc(\.[bwl])?|ds(\.[bwl])?|dcb(\.[bwl])?)\b', code, re.I):
                     previous = (lineno, code)
     return errors
 
