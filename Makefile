@@ -3,23 +3,28 @@
 #   make          assemble everything into build/
 #   make dist     build/dist/AMOS: the shipped AMOS tree with the freshly
 #                 built binaries copied over the prebuilt ones
-#   make verify   compare the built binaries with the prebuilt ones in AMOS/
+#   make verify   compare the binaries that are still pure assembler with the
+#                 prebuilt ones in AMOS/
 #   make test     run the AMOS test programs in FS-UAE (tests/run.py)
 #   make install-hd
 #                 replace the AMOS Pro binaries on the FS-UAE Workbench drive
 #                 (HD=...), backing up the originals to HD_BACKUP
 #   make clean
 #
-# Needs vasmm68k_mot and m68k-amigaos-objdump from the Amiga cross toolchain
-# (https://github.com/AmigaPorts/m68k-amigaos-gcc) and python3.
+# Needs vasmm68k_mot, m68k-amigaos-gcc/g++ and m68k-amigaos-objdump from the
+# Amiga cross toolchain (https://github.com/AmigaPorts/m68k-amigaos-gcc) and
+# python3.
 
 AMIGA_PREFIX ?= /opt/amiga
 export PATH := $(AMIGA_PREFIX)/bin:$(PATH)
 
 VASM    := vasmm68k_mot
+CC      := m68k-amigaos-gcc
+CXX     := m68k-amigaos-g++
 PYTHON  := python3
 BUILD   := build
 GEN     := $(BUILD)/gen
+OBJ     := $(BUILD)/obj
 CI      := $(BUILD)/ci
 DIST    := $(BUILD)/dist/AMOS
 
@@ -28,6 +33,40 @@ DIST    := $(BUILD)/dist/AMOS
 INCLUDES := -I$(CI) -I. -I$(GEN) -Iincludes -Iextensions
 ASFLAGS  := -quiet -devpac -nosym -DEzFlag=0 $(INCLUDES)
 EXEFLAGS := $(ASFLAGS) -Fhunkexe -kick1hunks
+OBJFLAGS := $(ASFLAGS) -Fhunk -kick1hunks
+
+# C++ for the converted parts. 68000 code, no exceptions or RTTI, no C
+# library startup: the code runs inside AMOS, called through asm glue.
+CPUFLAGS := -m68000
+CXXFLAGS := $(CPUFLAGS) -Os -std=c++20 -fomit-frame-pointer -fno-exceptions -fno-rtti \
+            -ffreestanding -fno-threadsafe-statics -Wall -Wextra -Werror -Isrc -MMD -MP
+# libgcc for the arithmetic helpers, with libnix13 (Kickstart 1.3 compatible)
+# supplying the ones this toolchain's libgcc leaves out (__divsi3...)
+LDFLAGS  := $(CPUFLAGS) -nostdlib -nostartfiles
+LDLIBS   := -L$(AMIGA_PREFIX)/m68k-amigaos/libnix/lib -lgcc -lnix13 -lgcc
+
+# C++ and assembler sources of the converted parts, one directory per
+# program they are linked into; src/common is linked into all of them.
+#   src/lib      routines moved out of AMOSPro.Lib   -> AMOSPro
+#   src/main     the main program                    -> AMOSPro
+#   src/w        AMOS.library
+#   src/editor   AMOSPro_Editor
+#   src/monitor  AMOSPro_Monitor
+src_objs = $(strip $(patsubst %.s,$(OBJ)/%.o,$(sort $(wildcard $(addsuffix /*.s,$(1))))) \
+           $(patsubst %.cpp,$(OBJ)/%.o,$(sort $(wildcard $(addsuffix /*.cpp,$(1))))))
+OBJ_AMOSPRO := $(call src_objs,src/lib src/main)
+OBJ_W       := $(call src_objs,src/w)
+OBJ_EDITOR  := $(call src_objs,src/editor)
+OBJ_MONITOR := $(call src_objs,src/monitor)
+OBJ_COMMON  := $(call src_objs,src/common)
+COMMON_LIB  := $(OBJ)/libcommon.a
+ALL_CXX     := $(shell find src -name '*.cpp')
+
+# link_program(output, linker script, objects): link, then mark chip hunks
+define link_program
+	$(CC) $(LDFLAGS) -T $(2) -Wl,-Map,$(1).map -o $(1) $(3) $(COMMON_LIB) $(LDLIBS)
+	$(PYTHON) tools/chiphunks.py $(1) $(1).map
+endef
 
 # The generated headers carry a fixed date so that builds are reproducible
 STAMP := 01-01-2026 00:00:00
@@ -84,21 +123,55 @@ PREREQ := $(LIB_GEN) $(CI)/.stamp $(COMMON_SRC)
 
 # ---- binaries -----------------------------------------------------------------
 
-$(BUILD)/AMOSPro: +B.s +Verif.s $(PREREQ)
-	$(VASM) $(EXEFLAGS) -o $@ $<
+# Programs: the assembler source becomes one object, linked with the C++ of
+# its src/ directory. The linker scripts keep the hunk order the assembler
+# code depends on.
+$(OBJ)/src/%.o: src/%.s $(wildcard src/*.i)
+	@mkdir -p $(dir $@)
+	$(VASM) $(OBJFLAGS) -Isrc -o $@ $<
+
+$(OBJ)/src/%.o: src/%.cpp
+	@mkdir -p $(dir $@)
+	$(CXX) $(CXXFLAGS) -c -o $@ $<
+
+$(COMMON_LIB): $(OBJ_COMMON)
+	@mkdir -p $(dir $@)
+	rm -f $@
+	$(if $^,m68k-amigaos-ar rcs $@ $^,m68k-amigaos-ar rcs $@)
+
+-include $(ALL_CXX:%.cpp=$(OBJ)/%.d)
+
+$(OBJ)/B.o: +B.s +Verif.s $(PREREQ)
+	@mkdir -p $(dir $@)
+	$(VASM) $(OBJFLAGS) -o $@ $<
+
+$(BUILD)/AMOSPro: $(OBJ)/B.o $(OBJ_AMOSPRO) $(COMMON_LIB) link/amospro.ld tools/chiphunks.py
+	$(call link_program,$@,link/amospro.ld,$(OBJ)/B.o $(OBJ_AMOSPRO))
 
 # AMOS.library was built with GenIm2, which matches symbols without case
-$(BUILD)/AMOS.library: +W.s $(PREREQ) $(wildcard bin/*)
-	$(VASM) $(EXEFLAGS) -nocase -o $@ $<
+$(OBJ)/W.o: +W.s $(PREREQ) $(wildcard bin/*)
+	@mkdir -p $(dir $@)
+	$(VASM) $(OBJFLAGS) -nocase -o $@ $<
+
+$(BUILD)/AMOS.library: $(OBJ)/W.o $(OBJ_W) $(COMMON_LIB) link/module.ld tools/chiphunks.py
+	$(call link_program,$@,link/module.ld,$(OBJ)/W.o $(OBJ_W))
 
 $(BUILD)/AMOSPro.Lib: +Lib.s +ILib.s $(PREREQ) $(TOKTAB) bin/+Dialog_Funcs.bin
 	$(VASM) $(EXEFLAGS) -o $@ $<
 
-$(BUILD)/AMOSPro_Editor: +Edit.s $(PREREQ)
-	$(VASM) $(EXEFLAGS) -o $@ $<
+$(OBJ)/Edit.o: +Edit.s $(PREREQ)
+	@mkdir -p $(dir $@)
+	$(VASM) $(OBJFLAGS) -o $@ $<
 
-$(BUILD)/AMOSPro_Monitor: +Monitor.s $(PREREQ)
-	$(VASM) $(EXEFLAGS) -o $@ $<
+$(BUILD)/AMOSPro_Editor: $(OBJ)/Edit.o $(OBJ_EDITOR) $(COMMON_LIB) link/module.ld tools/chiphunks.py
+	$(call link_program,$@,link/module.ld,$(OBJ)/Edit.o $(OBJ_EDITOR))
+
+$(OBJ)/Monitor.o: +Monitor.s $(PREREQ)
+	@mkdir -p $(dir $@)
+	$(VASM) $(OBJFLAGS) -o $@ $<
+
+$(BUILD)/AMOSPro_Monitor: $(OBJ)/Monitor.o $(OBJ_MONITOR) $(COMMON_LIB) link/module.ld tools/chiphunks.py
+	$(call link_program,$@,link/module.ld,$(OBJ)/Monitor.o $(OBJ_MONITOR))
 
 $(BUILD)/AMOSPro_IOPorts.Lib: extensions/+IO_Ports.s $(GEN)/+IO_Ports_Size.s $(PREREQ)
 	$(VASM) $(EXEFLAGS) -o $@ $<
@@ -119,9 +192,15 @@ dist: all
 	cp -a AMOS $(DIST)
 	$(foreach b,$(BINARIES),cp $(b) $(DIST)/$(subst AMOS/,,$(call reference,$(notdir $(b))));)
 
+# Programs with C++ in them no longer match the prebuilt binaries
+CONVERTED := $(BUILD)/AMOSPro $(BUILD)/AMOSPro.Lib \
+             $(if $(OBJ_W),$(BUILD)/AMOS.library) $(if $(OBJ_EDITOR),$(BUILD)/AMOSPro_Editor) \
+             $(if $(OBJ_MONITOR),$(BUILD)/AMOSPro_Monitor)
+VERIFY := $(filter-out $(CONVERTED) %_Config,$(BINARIES))
+
 verify: all
 	@status=0; \
-	for b in $(filter-out %_Config,$(BINARIES)); do \
+	for b in $(VERIFY); do \
 		n=$$(basename $$b); \
 		case $$n in AMOSPro) r=AMOS/AMOSPro;; *) r=AMOS/APSystem/$$n;; esac; \
 		$(PYTHON) tools/bincmp.py $$r $$b || status=1; \

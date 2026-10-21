@@ -23,6 +23,55 @@ make dist       # build/dist/AMOS: the AMOS tree with the new binaries
 
 Generated files go to `build/gen`; nothing is written into the source tree.
 
+## How the programs are linked
+
+Each program is assembled to an object with vasm and linked with
+`m68k-amigaos-ld` (through gcc) together with the C++ of its `src/`
+directory:
+
+| program | assembler | C++ / glue | linker script |
+|---|---|---|---|
+| AMOSPro | `+B.s` (+ `+Verif.s`) | `src/lib`, `src/main` | `link/amospro.ld` |
+| AMOS.library | `+W.s` | `src/w` | `link/module.ld` |
+| AMOSPro_Editor | `+Edit.s` | `src/editor` | `link/module.ld` |
+| AMOSPro_Monitor | `+Monitor.s` | `src/monitor` | `link/module.ld` |
+
+`src/common` is an archive linked into all of them. The linker scripts keep
+the assembler code in the first hunk: it holds the entry point or entry
+table. AMOSPro's init hunk `I` must come second, because `Init_Fin` frees it.
+This `ld` writes no memory flags, so `tools/chiphunks.py` marks the
+`.datachip`/`.bsschip` hunks as chip memory after linking, using the map
+file. AMOSPro.Lib and the extensions are still assembled directly. AMOSPro
+loads them raw and patches them, and they cannot contain linked code.
+
+C++ is compiled for the 68000 with `-Os`, without exceptions, RTTI or a C
+library startup. libgcc and libnix13 supply arithmetic helpers such as
+`__divsi3`.
+
+## Moving an AMOSPro.Lib routine to C++
+
+AMOSPro.Lib is loaded raw, so the code of a routine that moves out of it is
+linked into the AMOSPro program instead:
+
+1. In `+Lib.s`/`+ILib.s`, replace the routine's `Lib_Par`/`Lib_Def` and its
+   body with `Lib_Int Name`. The routine keeps its number.
+   `tools/make_labels.py` lists every `Lib_Int` in `+Internal_Jumps.s`
+   (`AMOSJmps`), and `Library_Patch` writes the address from that list into
+   the jump table at start-up.
+2. Write the entry point in `src/lib/*_glue.s` with the macros in
+   `src/glue.i`. `LibEntry` is for instructions and functions: it puts the
+   `"GetP"` placeholder in front of the label, which `Library_GetParams`
+   replaces with the call to the parameter collector. `LibRoutine` is for
+   routines called with `Rjsr`/`JJsr`. The glue moves the AMOS registers onto
+   the C stack, calls the C++ function, and puts the result back in d3/d2.
+3. Implement the routine in `src/lib/*.cpp` as an `extern "C"` function.
+
+`make_labels.py` refuses two things the loader cannot handle: a
+PC-relative `Rbsr`/`Rbra`/`Rbcc` to a `Lib_Int` routine (it cannot reach the
+program, so use `Rjsr`/`Rjmp`), and code in the library that could fall
+through into a `Lib_Int`. Converted so far: the integer paths of `Abs` and
+`Sgn` (`src/lib/maths.cpp`).
+
 ## Assembler compatibility notes
 
 - `+W.s` (AMOS.library) was built with GenIm2, which matches symbols without
@@ -35,7 +84,9 @@ Generated files go to `build/gen`; nothing is written into the source tree.
 
 ## Verification
 
-`tools/bincmp.py` compares hunk files semantically. It accepts the encoding
+`tools/bincmp.py` compares hunk files semantically. `make verify` covers
+the programs that are still pure assembler: AMOSPro and AMOSPro.Lib differ
+from the originals now, and the emulator tests are what checks them. It accepts the encoding
 choices on which GenAm and vasm differ (`andi` vs `and #imm`, the order of `exg`
 operands, padding, memory flags in the hunk id, reloc order) and reports
 everything else. All nine programs and libraries are equivalent to the

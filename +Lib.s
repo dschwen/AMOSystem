@@ -1764,12 +1764,7 @@ C_Lib
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					SGN (fmath)
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par FnSgn			Integer
-; - - - - - - - - - - - - -
-	tst.l	d3
-	Rbmi	L_FnTrue
-	Rbne	L_FnOne
-	rts
+	Lib_Int FnSgn			Integer: src/lib/maths.cpp
 ; - - - - - - - - - - - - -
 	Lib_Def	FnSgnF			Float / Double
 ; - - - - - - - - - - - - -
@@ -1805,12 +1800,7 @@ C_Lib
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					ABS (FMath)
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par FnAbs			Integer
-; - - - - - - - - - - - - -
-	tst.l	d3
-	bpl.s	.Skip
-	neg.l	d3
-.Skip	rts
+	Lib_Int FnAbs			Integer: src/lib/maths.cpp
 ; - - - - - - - - - - - - -
 	Lib_Def FnAbsF			Float + DFloat
 ; - - - - - - - - - - - - -

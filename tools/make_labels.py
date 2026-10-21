@@ -20,6 +20,11 @@ import sys
 import time
 
 MACRO_RE = re.compile(r'^\s+(Lib_(?:Ini|Def|Par|Int|Empty|Ext|End|Pos))\b[ \t]*([^\s;]*)')
+# PC-relative branches between library routines, patched by the loader
+RBRANCH_RE = re.compile(r'^\S*\s+(Rb(?:ra|sr|eq|ne|cs|cc|lt|ge|ls|hi|le|pl|mi))\s+L_([\w.]+)')
+# Last instruction of code that cannot fall through into the next routine
+NO_FALL_RE = re.compile(r'^\S*\s+(rts|rte|bra(\.[sbwl])?|jmp|illegal|Rbra|Rjmp|Rjmpt|RjmptR|Ljmp|'
+                        r'JJmp|JJmpR|Ijmp|IjmpR|Ret_Int|Ret_Float|Ret_String|Lib_\w+)\b', re.I)
 RULE = '; ' + '~' * 67 + '\n'
 
 
@@ -31,6 +36,32 @@ def label_line(name, value):
     label = f'L_{name}:'
     tabs = max(1, (24 - len(label) + 7) // 8)
     return f'{label}' + '\t' * tabs + f'set\t{value}\n'
+
+
+def lint(paths, internals):
+    """Library code may not branch PC-relative to a Lib_Int routine (it lives
+    outside the library, out of reach of a 16-bit branch), and no code may
+    fall through into one (a Lib_Int has no body, so the code would run into
+    the next routine instead). Returns a list of error messages."""
+    errors = []
+    for path in paths:
+        previous = None         # last instruction line before this one
+        with open(path, encoding='latin-1') as f:
+            for lineno, line in enumerate(f, 1):
+                m = RBRANCH_RE.match(line)
+                if m and m.group(2) in internals:
+                    errors.append(f'{path}:{lineno}: {m.group(1)} to Lib_Int routine '
+                                  f'{m.group(2)}; use Rjsr/Rjmp')
+                m = MACRO_RE.match(line)
+                if m and m.group(1) == 'Lib_Int' and previous is not None \
+                        and not NO_FALL_RE.match(previous[1]):
+                    errors.append(f'{path}:{lineno}: code at line {previous[0]} may fall '
+                                  f'through into Lib_Int {m.group(2)}')
+                code = line.split(';')[0].rstrip()
+                if code.strip() and not code.lstrip().startswith('*') and code[:1] in (' ', '\t') \
+                        and not re.match(r'^\s+(even|cnop|ifeq|ifne|ifd|ifnd|else|endc)\b', code, re.I):
+                    previous = (lineno, code)
+    return errors
 
 
 class Numberer:
@@ -84,6 +115,10 @@ def main():
     main_rule = '; ' + '~' * 68 + '\n'
     n.scan(os.path.join(args.src, '+Lib.s'))
     lib_size = n.count
+    errors = lint([os.path.join(args.src, '+ILib.s'), os.path.join(args.src, '+Lib.s')],
+                  set(n.internals))
+    if errors:
+        sys.exit('\n'.join(errors))
 
     def write(name, text):
         with open(os.path.join(args.out, name), 'w', encoding='latin-1') as f:
