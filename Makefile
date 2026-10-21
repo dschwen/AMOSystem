@@ -4,6 +4,10 @@
 #   make dist     build/dist/AMOS: the shipped AMOS tree with the freshly
 #                 built binaries copied over the prebuilt ones
 #   make verify   compare the built binaries with the prebuilt ones in AMOS/
+#   make test     run the AMOS test programs in FS-UAE (tests/run.py)
+#   make install-hd
+#                 replace the AMOS Pro binaries on the FS-UAE Workbench drive
+#                 (HD=...), backing up the originals to HD_BACKUP
 #   make clean
 #
 # Needs vasmm68k_mot and m68k-amigaos-objdump from the Amiga cross toolchain
@@ -48,7 +52,7 @@ REFERENCE_AMOSPro_Interpreter_Config := AMOSPro_Interpreter_Config
 REFERENCE_DEFAULT                     = APSystem/$(1)
 reference = AMOS/$(or $(REFERENCE_$(1)),$(call REFERENCE_DEFAULT,$(1)))
 
-.PHONY: all dist verify clean
+.PHONY: all dist verify test test-reference install-hd clean
 .SECONDARY:
 .DELETE_ON_ERROR:
 
@@ -127,6 +131,20 @@ verify: all
 	cmp $(BUILD)/AMOSPro_Interpreter_Config AMOS/AMOSPro_Interpreter_Config \
 		&& echo "$(BUILD)/AMOSPro_Interpreter_Config: identical" || status=1; \
 	exit $$status
+
+test: dist
+	$(PYTHON) tests/run.py
+
+test-reference:
+	$(PYTHON) tests/run.py --reference
+
+# The FS-UAE directory drive with an installed AMOS Pro. Only programs and
+# libraries are replaced; configs (which hold user settings) are left alone.
+HD        ?= ../Minimal Workbench v3.1
+HD_BACKUP ?= ../AMOS_Pro-original-binaries
+
+install-hd: all
+	$(PYTHON) tools/install_hd.py --build $(BUILD) --hd "$(HD)" --backup "$(HD_BACKUP)"
 
 clean:
 	rm -rf $(BUILD)

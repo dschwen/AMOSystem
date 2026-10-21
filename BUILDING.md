@@ -46,3 +46,48 @@ Three source fixes were needed:
 - `+Edit.s`: `cmp.s` is now `cmp.b`.
 - `+Editor_Config.s`: the `ç`/`©` bytes in two strings had been replaced by
   U+FFFD in an earlier re-encoding of the repository, and are restored.
+
+## Tests in the emulator
+
+```
+make test             # build/dist against the golden results
+make test-reference   # the prebuilt binaries in AMOS/ against the same goldens
+python3 tests/run.py --reference --update-golden [NAME...]   # record goldens
+python3 tests/run.py --amos-tree "../Minimal Workbench v3.1/AMOS_Pro"
+```
+
+Each `tests/amos/<name>.asc` is a plain-text AMOS listing. `tests/run.py`
+tokenizes it with `tools/amostok.py`, adds a prologue that opens
+`AMOSTEST:out/<name>.txt` as channel 1 and an epilogue that ends with
+`System`, and boots one FS-UAE per test from a generated boot drive. The AMOS
+tree sits on a read-only drive, and the Workbench drive provides `C:`, `Libs:`
+and the rest. Results go to channel 1 (`Print #1,...`) or to IFF files
+(`Save Iff "AMOSTEST:out/<name>_1.iff"`). Everything is compared byte for byte
+with `tests/golden/`, which was recorded with the original binaries.
+
+Things to know when writing tests:
+- A syntax error drops AMOS into the editor. The test then times out, and
+  `build/test-run/<name>/timeout.png` shows the editor with the cursor on the
+  error.
+- Run-time errors are logged as `ERROR <n>` and the test carries on
+  (`Resume Next`).
+- Procedure names must not collide with keywords (`Say`, for instance).
+- `Rnd` is not reproducible, even after `Randomize`.
+
+Requirements: fs-uae, Xvfb, scrot, python3 with Pillow, the A1200 Kickstart
+3.1 ROM (`../FS-UAE/Kickstarts`) with its `rom.key` (the ROM is
+Cloanto-encrypted; the key comes from `Devs/Kickstarts` on the Workbench
+drive), and the Workbench directory drive `../Minimal Workbench v3.1`.
+fs-uae runs in a non-cycle-exact, maximum-speed CPU mode without sound. A test
+takes about 2 seconds, and four run in parallel.
+
+Other tools:
+- `tools/amostok.py detok|tok|check`: the tokenizer and detokenizer.
+  `check` round-trips programs: 45807 of the 45818 lines in the shipped
+  `.AMOS` files are reproduced exactly. The other 11 come from programs saved
+  by older AMOS versions.
+- `tools/ilbm2png.py`: view an IFF screenshot.
+- `tools/uaem.py`: write the `.uaem` sidecar files of FS-UAE directory drives.
+- `make install-hd`: put the built binaries into the AMOS Pro on the Workbench
+  drive. The originals are backed up to `../AMOS_Pro-original-binaries`, and
+  the config files are left alone.

@@ -1,0 +1,19 @@
+ 1 2 3 4 5
+ 10 7 4 1
+ 1 2 3 4
+ 1 2 3
+not two
+two
+not two
+block if
+g2
+g3
+ 9 100
+onetwo
+ 35
+ 1 2 3 4
+text
+ 49
+say proc
+ 720
+ 6
