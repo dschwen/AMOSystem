@@ -36,7 +36,7 @@ directory:
 | AMOSPro_Editor | `+Edit.s` | `src/editor` | `link/module.ld` |
 | AMOSPro_Monitor | `+Monitor.s` | `src/monitor` | `link/module.ld` |
 
-`src/common` is an archive linked into all of them. The linker scripts keep
+`src/core` (the C++/assembler bridge) is an archive linked into all of them. The linker scripts keep
 the assembler code in the first hunk: it holds the entry point or entry
 table. AMOSPro's init hunk `I` must come second, because `Init_Fin` frees it.
 This `ld` writes no memory flags, so `tools/chiphunks.py` marks the
@@ -54,23 +54,50 @@ AMOSPro.Lib is loaded raw, so the code of a routine that moves out of it is
 linked into the AMOSPro program instead:
 
 1. In `+Lib.s`/`+ILib.s`, replace the routine's `Lib_Par`/`Lib_Def` and its
-   body with `Lib_Int Name`. The routine keeps its number.
-   `tools/make_labels.py` lists every `Lib_Int` in `+Internal_Jumps.s`
-   (`AMOSJmps`), and `Library_Patch` writes the address from that list into
-   the jump table at start-up.
+   body with `Lib_Int Name`. The routine keeps its number. A helper routine
+   that nothing else uses any more becomes `Lib_Empty`, which keeps the
+   numbering. `tools/make_labels.py` lists every `Lib_Int` in
+   `+Internal_Jumps.s` (`AMOSJmps`), and `Library_Patch` writes the address
+   from that list into the jump table at start-up.
 2. Write the entry point in `src/lib/*_glue.s` with the macros in
-   `src/glue.i`. `LibEntry` is for instructions and functions: it puts the
-   `"GetP"` placeholder in front of the label, which `Library_GetParams`
-   replaces with the call to the parameter collector. `LibRoutine` is for
-   routines called with `Rjsr`/`JJsr`. The glue moves the AMOS registers onto
-   the C stack, calls the C++ function, and puts the result back in d3/d2.
+   `src/glue.i`. For an instruction or function this is one line,
+   `LibCall Name,_c_function,params,Int|Float|String|None`: the parameters
+   go to the C function as 32-bit values (a string as the address of its
+   length word), and its return value becomes the AMOS result.
 3. Implement the routine in `src/lib/*.cpp` as an `extern "C"` function.
 
 `make_labels.py` refuses two things the loader cannot handle: a
 PC-relative `Rbsr`/`Rbra`/`Rbcc` to a `Lib_Int` routine (it cannot reach the
 program, so use `Rjsr`/`Rjmp`), and code in the library that could fall
-through into a `Lib_Int`. Converted so far: the integer paths of `Abs` and
-`Sgn` (`src/lib/maths.cpp`).
+through into a `Lib_Int`.
+
+### The C++ side (`src/core/amos.h`)
+
+- `amos::idata()` is the interpreter data above a5 (`IData`), and
+  `amos::wdata()` the AMOS.library data below it (`WData`, the `T_` fields
+  without the prefix). `tools/gen_layout.py` generates these and every other
+  RS structure of `+Equ.s`/`+CEqu.s`/`+WEqu.s` (`Screen`, `Bob`, `Window`,
+  `Program`...) into `build/gen/core/layout.h`. vasm computes the offsets,
+  and a `static_assert` checks each field. The header also has the
+  AMOS.library function numbers (`amos::sy::WaitVbl`, `amos::wi::Locate`...).
+  `build/gen/lib_routines.h` has the routine numbers (`amos::L_Demande`).
+- The glue saves the interpreter registers (d6-d7/a3-a6) in `amos_ctx` on
+  every entry into C++. Calls back into the assembler run with them:
+  `lib_call(L_x, regs)` (`JJsr`), `sy_call`/`ec_call`/`wi_call`
+  (`SyCall`/`EcCall`/`WiCall`) with d0-d5/a0-a2 in an `amos::Regs`.
+- `error(n)`, `fon_call()` and `lib_jump(L_x, d0)` raise errors. They do not
+  return: the interpreter resets its stack.
+- Strings (`src/lib/strings.h`): `str_alloc` (`L_Demande`), `str_finish`
+  (`L_FinBin`), `str_empty`.
+- Calls back into the assembler may not return either. Errors reset the
+  stack, and a full string space restarts the whole instruction after the
+  garbage collection. So no C++ object with a destructor may be alive across
+  such a call, and side effects belong after the string allocation, as in
+  the assembler.
+- Interrupt code must not use `CCall`/`amos_ctx`.
+
+Converted so far: `Abs` and `Sgn` (integer paths), `Upper$`, `Lower$`,
+`Space$`, `String$`, `Locate`.
 
 ## Assembler compatibility notes
 

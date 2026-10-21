@@ -13263,15 +13263,7 @@ WnSCu1:	move.l	(a3)+,d1
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					LOCATE
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InLocate
-; - - - - - - - - - - - - -
-	tst.w	ScOn(a5)
-	Rbeq	L_ScNOp
-	move.l	d3,d2
-	move.l	(a3)+,d1
-	WiCall	Locate
-	Rbne	L_EcWiErr
-	rts
+	Lib_Int InLocate		src/lib/windows.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					CENTRE
@@ -13909,39 +13901,13 @@ Flp1:   move.b 	-(a2),(a0)+
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					=SPACE$
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par FnSpace
-; - - - - - - - - - - - - -
-        move.w 	#$2020,d1
-	Rbra 	L_RString
+	Lib_Int FnSpace			src/lib/strings.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					=STRING$
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par FnString
+	Lib_Int FnString		src/lib/strings.cpp
 ; - - - - - - - - - - - - -
-        move.l 	(a3)+,a2
-        move.w 	(a2)+,d2
-        bne.s 	L88a
-        moveq 	#0,d3
-        Rbra 	L_RString
-L88a:   move.b 	(a2),d1
-        lsl.w 	#8,d1
-        move.b 	(a2),d1
-	Rbra	L_RString
-; - - - - - - - - - - - - -
-	Lib_Def	RString
-; - - - - - - - - - - - - -
-        tst.l 	d3
-        Rbmi 	L_FonCall
-	Rjsr 	L_Demande
-        move.w 	d3,(a0)+
-        beq.s 	L89c
-        subq.w 	#1,d3
-        lsr.w 	#1,d3
-L89b:   move.w 	d1,(a0)+
-        dbra 	d3,L89b
-L89c:   move.l 	a0,HiChaine(a5)
-	move.l 	a1,d3
-	Ret_String
+	Lib_Empty			RString, now in src/lib/strings.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					=CHR$()
@@ -14197,48 +14163,12 @@ FnR3:	move.b	(a3)+,(a0)+
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					=LOWER$
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par FnLower
-; - - - - - - - - - - - - -
-	move.l	d3,a2
-	moveq	#0,d2
-	move.w	(a2)+,d2
-        move.l 	d2,d3
-        Rbeq 	L_Ret_ChVide
-        Rjsr 	L_Demande         ;meme taille de chaine
-        move.w 	d3,(a0)+
-        subq 	#1,d3
-fnup1:  move.b 	(a2)+,d0
-        cmp.b 	#"A",d0
-        bcs.s 	fnup2
-        cmp.b 	#"Z",d0
-        bhi.s 	fnup2
-        add.b 	#$20,d0
-fnup2:  move.b 	d0,(a0)+
-        dbra 	d3,fnup1
-        Rbra 	L_FinBin
+	Lib_Int FnLower			src/lib/strings.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					=UPPER$
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par FnUpper
-; - - - - - - - - - - - - -
-	move.l	d3,a2
-	moveq	#0,d2
-	move.w	(a2)+,d2
-        move.l 	d2,d3
-        Rbeq 	L_Ret_ChVide
-        Rjsr 	L_Demande
-        move.w 	d3,(a0)+
-        subq 	#1,d3
-fnlw1:  move.b 	(a2)+,d0
-        cmp.b 	#"a",d0
-        bcs.s 	fnlw2
-        cmp.b 	#"z",d0
-        bhi.s	fnlw2
-        sub.b 	#$20,d0
-fnlw2:  move.b 	d0,(a0)+
-        dbra 	d3,fnlw1
-        Rbra 	L_FinBin
+	Lib_Int FnUpper			src/lib/strings.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					=ASC

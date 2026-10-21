@@ -39,26 +39,27 @@ OBJFLAGS := $(ASFLAGS) -Fhunk -kick1hunks
 # library startup: the code runs inside AMOS, called through asm glue.
 CPUFLAGS := -m68000
 CXXFLAGS := $(CPUFLAGS) -Os -std=c++20 -fomit-frame-pointer -fno-exceptions -fno-rtti \
-            -ffreestanding -fno-threadsafe-statics -Wall -Wextra -Werror -Isrc -MMD -MP
+            -ffreestanding -fno-threadsafe-statics -Wall -Wextra -Werror -Isrc -I$(GEN) -MMD -MP
 # libgcc for the arithmetic helpers, with libnix13 (Kickstart 1.3 compatible)
 # supplying the ones this toolchain's libgcc leaves out (__divsi3...)
 LDFLAGS  := $(CPUFLAGS) -nostdlib -nostartfiles
 LDLIBS   := -L$(AMIGA_PREFIX)/m68k-amigaos/libnix/lib -lgcc -lnix13 -lgcc
 
 # C++ and assembler sources of the converted parts, one directory per
-# program they are linked into; src/common is linked into all of them.
+# program they are linked into; src/core is linked into all of them.
 #   src/lib      routines moved out of AMOSPro.Lib   -> AMOSPro
 #   src/main     the main program                    -> AMOSPro
 #   src/w        AMOS.library
 #   src/editor   AMOSPro_Editor
 #   src/monitor  AMOSPro_Monitor
+#   src/core     the C++/asm bridge and data layout (an archive)
 src_objs = $(strip $(patsubst %.s,$(OBJ)/%.o,$(sort $(wildcard $(addsuffix /*.s,$(1))))) \
            $(patsubst %.cpp,$(OBJ)/%.o,$(sort $(wildcard $(addsuffix /*.cpp,$(1))))))
 OBJ_AMOSPRO := $(call src_objs,src/lib src/main)
 OBJ_W       := $(call src_objs,src/w)
 OBJ_EDITOR  := $(call src_objs,src/editor)
 OBJ_MONITOR := $(call src_objs,src/monitor)
-OBJ_COMMON  := $(call src_objs,src/common)
+OBJ_COMMON  := $(call src_objs,src/core)
 COMMON_LIB  := $(OBJ)/libcommon.a
 ALL_CXX     := $(shell find src -name '*.cpp')
 
@@ -72,7 +73,7 @@ endef
 STAMP := 01-01-2026 00:00:00
 
 LIB_GEN := $(GEN)/+LEqu.s $(GEN)/+Internal_Jumps.s $(GEN)/+Lib_Size.s \
-           $(GEN)/+ILib_Size.s $(GEN)/+ILib_Functions.s
+           $(GEN)/+ILib_Size.s $(GEN)/+ILib_Functions.s $(GEN)/lib_routines.h
 TOKTAB  := $(GEN)/+Toktab_Verif.Bin
 EXTENSIONS := Music Compact Request IO_Ports
 EXT_GEN := $(foreach e,$(EXTENSIONS),$(GEN)/+$(e)_Size.s $(GEN)/+$(e)_Labels.s)
@@ -102,6 +103,13 @@ all: $(BINARIES)
 $(LIB_GEN) &: +ILib.s +Lib.s tools/make_labels.py | $(GEN)
 	$(PYTHON) tools/make_labels.py --src . --out $(GEN) --stamp '$(STAMP)'
 
+# The C++ view of the assembler data structures
+CXX_GEN := $(GEN)/core/layout.h $(GEN)/lib_routines.h
+
+$(GEN)/core/layout.h: +Equ.s +CEqu.s +WEqu.s tools/gen_layout.py $(LIB_GEN) $(CI)/.stamp
+	@mkdir -p $(dir $@)
+	$(PYTHON) tools/gen_layout.py --out $@ --vasm $(VASM) -DEzFlag=0 $(INCLUDES)
+
 $(TOKTAB): +Lib.s tools/make_toktable.py | $(GEN)
 	$(PYTHON) tools/make_toktable.py $< $@
 
@@ -130,7 +138,7 @@ $(OBJ)/src/%.o: src/%.s $(wildcard src/*.i)
 	@mkdir -p $(dir $@)
 	$(VASM) $(OBJFLAGS) -Isrc -o $@ $<
 
-$(OBJ)/src/%.o: src/%.cpp
+$(OBJ)/src/%.o: src/%.cpp $(CXX_GEN)
 	@mkdir -p $(dir $@)
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
 
