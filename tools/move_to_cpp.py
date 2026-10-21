@@ -8,6 +8,11 @@ and becomes "Lib_Int NAME", which keeps its number; the code then has to
 be linked into AMOSPro (src/lib). Routines given with -e become Lib_Empty:
 helpers that nothing calls any more. A body ends at the next Lib_ macro,
 not counting the comment lines in front of it.
+
+Then every PC-relative R-branch to a Lib_Int routine (which the loader
+cannot patch: the routine is outside the library) is rewritten:
+Rbsr/Rbra become Rjsr/Rjmp, and a conditional Rbcc becomes the opposite
+short branch over an Rjmp.
 """
 
 import argparse
@@ -34,6 +39,35 @@ def end_of(lines, start):
     while i > start + 1 and (not lines[i - 1].strip() or lines[i - 1].lstrip().startswith(';')):
         i -= 1
     return i
+
+
+RBRANCH_RE = re.compile(r'^(\S*)(\s+)Rb(ra|sr|eq|ne|cs|cc|lt|ge|ls|hi|le|pl|mi)(\s+)L_([\w.]+)(.*)$')
+OPPOSITE = {'eq': 'ne', 'ne': 'eq', 'cs': 'cc', 'cc': 'cs', 'lt': 'ge', 'ge': 'lt',
+            'ls': 'hi', 'hi': 'ls', 'le': 'gt', 'pl': 'mi', 'mi': 'pl'}
+
+
+def internals(contents):
+    return {m.group(2) for lines in contents.values() for line in lines
+            if (m := MACRO_RE.match(line)) and m.group(1) == 'Int'}
+
+
+def fix_branches(lines, targets):
+    out = []
+    for line in lines:
+        m = RBRANCH_RE.match(line)
+        if not m or m.group(5) not in targets:
+            out.append(line)
+            continue
+        label, sp, cond, sp2, name, rest = m.groups()
+        if cond == 'sr':
+            out.append(f'{label}{sp}Rjsr{sp2}L_{name}{rest}')
+        elif cond == 'ra':
+            out.append(f'{label}{sp}Rjmp{sp2}L_{name}{rest}')
+        else:
+            # Rjmp is 6 bytes once patched: skip it with a short branch
+            out.append(f'{label}{sp}b{OPPOSITE[cond]}.s\t*+8{rest}')
+            out.append(f'\tRjmp\tL_{name}')
+    return out
 
 
 def main():
@@ -63,6 +97,9 @@ def main():
         else:
             new = f'\tLib_Int\t{name}\t\t{args.where}'
         lines[i:j] = [new]
+    targets = internals(contents)
+    for f in contents:
+        contents[f] = fix_branches(contents[f], targets)
     for f, lines in contents.items():
         with open(f'{args.src}/{f}', 'w', encoding='latin-1') as fh:
             fh.write('\n'.join(lines))

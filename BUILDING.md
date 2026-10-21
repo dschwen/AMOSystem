@@ -89,6 +89,9 @@ through into a `Lib_Int`.
   return: the interpreter resets its stack.
 - Strings (`src/lib/strings.h`): `str_alloc` (`L_Demande`), `str_finish`
   (`L_FinBin`), `str_empty`.
+- A call into the assembler restores `amos_ctx` afterwards. Extension
+  code, for one, changes a3 without restoring it, as the original callers
+  saved all registers.
 - Calls back into the assembler may not return either. Errors reset the
   stack, and a full string space restarts the whole instruction after the
   garbage collection. So no C++ object with a destructor may be alive across
@@ -97,12 +100,17 @@ through into a `Lib_Int`.
 - Interrupt code must not use `CCall`/`amos_ctx`.
 
 Routines that other assembler code calls with registers (`L_InstrFind`,
-`L_LongToHex`...) get a hand-written `LibRoutine` entry in the glue that
-keeps the registers the assembler version kept.
+`Bnk.GetAdr`...) keep a register entry. `RegRoutine Name,_c_function` hands
+the C function all of d0-d7/a0-a2 in a `RegFrame` to read and change, and
+sets the condition codes from its return value for callers that branch on
+them. `move_to_cpp.py` also turns the library's PC-relative `Rbsr`/`Rbra`/
+`Rbcc` to converted routines into `Rjsr`/`Rjmp`.
 
 Converted so far: the integer paths of `Abs` and `Sgn`, the string
 functions of `String.s` (except `Left$`/`Mid$`/`Right$`, `Str$` and `Val`,
-which are in `+ILib.s`), the keyboard and joystick functions, `Locate`.
+which are in `+ILib.s`), the keyboard and joystick functions, `Locate`,
+the banks (`Bnk.*`, the bank instructions) and lists (`Lst.*` of `+B.s`),
+the number to text conversions.
 
 ### Deliberate differences from the original
 

@@ -77,6 +77,23 @@ Ret_Float	MACRO
 		moveq	#1,d2
 		rts
 		ENDM
+; RegRoutine Name,cfunction
+;
+; A routine the assembler calls with registers: uint32_t cfunction(RegFrame
+; *r) gets d0-d7/a0-a2 in r and changes them there; they are reloaded on
+; return. The condition codes come from its return value (tst.l), for the
+; callers that branch on them.
+RegRoutine	MACRO
+		LibRoutine \1
+		movem.l	d0-d7/a0-a2,-(sp)
+		pea	(sp)
+		CCall	\2
+		addq.l	#4,sp
+		tst.l	d0
+		movem.l	(sp)+,d0-d7/a0-a2
+		rts
+		ENDM
+
 Ret_None	MACRO
 		rts
 		ENDM

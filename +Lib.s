@@ -2181,342 +2181,115 @@ InWait	tst.l	d3
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					LISTBANK
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InListBank
-; - - - - - - - - - - - - -
-	moveq	#0,d5			Valeur minimum du numero
-.Loop	Rbsr	L_Bnk.List
-	beq.s	.Out
-	move.b	#13,(a1)+
-	move.b	#10,(a1)+
-	clr.b	(a1)
-	Rbsr	L_ImpChaine
-	bra.s	.Loop
-.Out	rts
+	Lib_Int	InListBank		src/lib/banks.cpp
 
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					ERASE n
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par	InErase
-; - - - - - - - - - - - - -
-	move.l	d3,d0
-	Rbsr	L_Bnk.Eff
-	Rjmp	L_Bnk.Change
+	Lib_Int	InErase		src/lib/banks.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					ERASE TEMP
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InEraseTemp
-; - - - - - - - - - - - - -
-	Rbsr	L_Bnk.EffTemp
-	Rjmp	L_Bnk.Change
+	Lib_Int	InEraseTemp		src/lib/banks.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					ERASE ALL
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InEraseAll
-; - - - - - - - - - - - - -
-	Rbsr	L_Bnk.EffAll
-	Rjmp	L_Bnk.Change
+	Lib_Int	InEraseAll		src/lib/banks.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					BANK SWAP a,b
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par	InBankSwap
-; - - - - - - - - - - - - -
-	move.l	(a3)+,d0		Banque "b"
-	Rble	L_FonCall
-	cmp.l	#$10000,d0
-	Rbge	L_FonCall
-	move.l	d0,d2
-	Rbsr	L_Bnk.GetAdr
-	move.l	a1,a2
-	move.l	d3,d0			Banque "a"
-	Rble	L_FonCall
-	cmp.l	#$10000,d0
-	Rbge	L_FonCall
-	Rbsr	L_Bnk.GetAdr
-	move.l	a0,a1
-	move.l	a1,d0
-	beq.s	.B1Null
-	move.l	a2,d0
-	beq.s	.B2Null
-; Veritable swap, des numeros seulement
-	move.l	-16(a2),d0
-	move.l	-16(a1),-16(a2)
-	move.l	d0,-16(a1)
-	bra.s	.Chg
-; Banque 2 vide: changement de numero de la banque 1
-.B2Null	move.l	d2,-16(a1)
-	bra.s	.Chg
-; Banque 1 vide: changement de numero de la banque 2
-.B1Null	move.l	d3,-16(a2)
-; Envoie les changements
-.Chg	Rjmp	L_Bnk.Change
+	Lib_Int	InBankSwap		src/lib/banks.cpp
 
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					=BSTART()
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par	FnBStart
-; - - - - - - - - - - - - -
-	Rjsr	L_Bnk.PrevProgram
-	Rbeq	L_BkNoRes
-	move.l	d3,d0
-	Rbsr	L_Bnk.GetAdr
-	Rjsr	L_Bnk.CurProgram
-	move.l	a1,d3
-	Rbeq	L_BkNoRes
-	Ret_Int
+	Lib_Int	FnBStart		src/lib/banks.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					=BLENGTH()
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par	FnBLength
-; - - - - - - - - - - - - -
-	move.l	d3,d0
-	moveq	#0,d3
-	Rjsr	L_Bnk.PrevProgram
-	beq.s	.Skip
-	Rbsr	L_Bnk.GetAdr
-	beq.s	.Skip
-	move.l	-8*3+4(a1),d3
-	sub.l	#2*8,d3
-	btst	#Bnk_BitBob,d0
-	bne.s	.BB
-	btst	#Bnk_BitIcon,d0
-	beq.s	.Skip
-.BB	moveq	#0,d3
-	move.w	(a1),d3
-.Skip	Rjsr	L_Bnk.CurProgram
-	Ret_Int
+	Lib_Int	FnBLength		src/lib/banks.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					BGRAB
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par	InBGrab
-; - - - - - - - - - - - - -
-; Efface la banque destination
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	move.l	d3,d0
-	Rble	L_FonCall
-	Rbsr	L_Bnk.Eff
-; Demenage la banque source
-; ~~~~~~~~~~~~~~~~~~~~~~~~~
-	Rjsr	L_Bnk.PrevProgram
-	beq.s	.Err
-	move.l	d3,d0
-	Rbsr	L_Bnk.GetAdr
-	beq.s	.Err
-	lea	-3*8(a1),a1		Enleve de la liste origine
-	move.l	Cur_Banks(a5),a0
-	Rjsr	L_Lst.Remove
-	Rjsr	L_Bnk.CurProgram	Remet dans la liste destination
-	move.l	Cur_Banks(a5),a0
-	Rjsr	L_Lst.Insert
-	Rjmp	L_Bnk.Change
-.Err	Rjsr	L_Bnk.CurProgram
-	Rjsr	L_Bnk.Change
-	Rbra	L_BkNoRes
+	Lib_Int	InBGrab		src/lib/banks.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					BSEND bank
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par	InBSend
-; - - - - - - - - - - - - -
-; Efface la banque destination
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	move.l	d3,d0
-	Rble	L_FonCall
-	Rjsr	L_Bnk.PrevProgram
-	Rbeq	L_FonCall
-	Rbsr	L_Bnk.Eff
-; Demenage la banque
-; ~~~~~~~~~~~~~~~~~~
-	Rjsr	L_Bnk.CurProgram
-	move.l	d3,d0
-	Rbsr	L_Bnk.GetAdr
-	beq.s	.Ok
-	lea	-3*8(a1),a1		Enleve de la liste actuelle
-	move.l	Cur_Banks(a5),a0
-	Rjsr	L_Lst.Remove
-	Rjsr	L_Bnk.PrevProgram	Remet dans la liste destination
-	move.l	Cur_Banks(a5),a0
-	Rjsr	L_Lst.Insert
-	Rjsr	L_Bnk.CurProgram
-.Ok	Rjmp	L_Bnk.Change
+	Lib_Int	InBSend		src/lib/banks.cpp
 
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					INS BOB / INS SPRITE
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par	InInsSprite
-; - - - - - - - - - - - - -
-	Rbsr	L_Bnk.GetBobs
-	Rbeq	L_BkNoRes
-	move.l	d3,d0
-	Rble	L_FonCall
-	Rbsr	L_Bnk.InsBob
-	Rjsr	L_Bnk.Change
-	Rbne	L_OOfMem
-	rts
+	Lib_Int	InInsSprite		src/lib/banks.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					INS ICON
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par	InInsIcon
-; - - - - - - - - - - - - -
-	Rbsr	L_Bnk.GetIcons
-	Rbeq	L_BkNoRes
-	move.l	d3,d0
-	Rble	L_FonCall
-	Rbsr	L_Bnk.InsBob
-	Rjsr	L_Bnk.Change
-	Rbne	L_OOfMem
-	rts
+	Lib_Int	InInsIcon		src/lib/banks.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					DEL ICON
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par	InDelIcon1
+	Lib_Int	InDelIcon1		src/lib/banks.cpp
 ; - - - - - - - - - - - - -
-	move.l	d3,-(a3)
-	Rbra	L_InDelIcon2
-; - - - - - - - - - - - - -
-	Lib_Par	InDelIcon2
-; - - - - - - - - - - - - -
-	Rbsr	L_Bnk.GetIcons
-	Rbeq	L_BkNoRes
-	Rbra	L_IDIc3
+	Lib_Int	InDelIcon2		src/lib/banks.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					DEL SPRITE
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par	InDelSprite1
+	Lib_Int	InDelSprite1		src/lib/banks.cpp
 ; - - - - - - - - - - - - -
-	move.l	d3,-(a3)
-	Rbra	L_InDelSprite2
+	Lib_Int	InDelSprite2		src/lib/banks.cpp
 ; - - - - - - - - - - - - -
-	Lib_Par	InDelSprite2
-; - - - - - - - - - - - - -
-	Rbsr	L_Bnk.GetBobs
-	Rbeq	L_BkNoRes
-	Rbra	L_IDIc3
-; - - - - - - - - - - - - -
-	Lib_Def	IDIc3
-; - - - - - - - - - - - - -
-	move.l	(a3)+,d1
-	Rble	L_FonCall
-	move.l	d3,d0
-	Rble	L_FonCall
-	cmp.l	d1,d0
-	Rbhi	L_FonCall
-	Rbsr	L_Bnk.DelBob
-	Rjmp	L_Bnk.Change
+	Lib_Empty			IDIc3, now in src/lib/banks.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					RESERVE AS WORK
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par	InResWork
-; - - - - - - - - - - - - -
-	Rlea	L_BkWrk,0
-	moveq	#0,d1
-	Rbra	L_RsBqX
+	Lib_Int	InResWork		src/lib/banks.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					RESERVE AS CHIP WORK
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par	InResChipWork
-; - - - - - - - - - - - - -
-	Rlea	L_BkWrk,0
-	moveq	#(1<<Bnk_BitChip),d1
-	Rbra	L_RsBqX
+	Lib_Int	InResChipWork		src/lib/banks.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					RESERVE AS DATA
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par	InResData
-; - - - - - - - - - - - - -
-	Rlea	L_BkDat,0
-	moveq	#(1<<Bnk_BitData),d1
-	Rbra	L_RsBqX
+	Lib_Int	InResData		src/lib/banks.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					RESERVE AS CHIPDATA
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par	InResChipData
+	Lib_Int	InResChipData		src/lib/banks.cpp
 ; - - - - - - - - - - - - -
-	Rlea	L_BkDat,0
-	moveq	#(1<<Bnk_BitData)+(1<<Bnk_BitChip),d1
-	Rbra	L_RsBqX
-; - - - - - - - - - - - - -
-	Lib_Def	RsBqX
-; - - - - - - - - - - - - -
-	move.l	d3,d2
-	Rble	L_FonCall
-	move.l	(a3)+,d0
-	Rble	L_FonCall
-	cmp.l	#$10000,d0
-	Rbge	L_FonCall
-	Rbsr	L_Bnk.Reserve
-	Rbeq	L_OOfMem
-	Rjmp	L_Bnk.Change
+	Lib_Empty			RsBqX, now in src/lib/banks.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					BANK SCHRINK
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par	InBankSchrink
-; - - - - - - - - - - - - -
-	move.l	d3,d1
-	move.l	(a3)+,d0
-	Rbsr	L_Bnk.Schrink
-	Rbne	L_GoError
-	rts
+	Lib_Int	InBankSchrink		src/lib/banks.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					=START()
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par	FnStart
-; - - - - - - - - - - - - -
-	move.l	d3,d0
-	Rbsr	L_Bnk.GetAdr
-	Rbeq	L_BkNoRes
-	move.l	a1,d3
-	Ret_Int
+	Lib_Int	FnStart		src/lib/banks.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					=LENGTH()
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par	FnLength
-; - - - - - - - - - - - - -
-	move.l	d3,d0
-	moveq	#0,d3
-	Rbsr	L_Bnk.GetAdr
-	beq.s	.Skip
-	move.l	-8*3+4(a1),d3
-	sub.l	#2*8,d3
-	btst	#Bnk_BitBob,d0
-	bne.s	.BB
-	btst	#Bnk_BitIcon,d0
-	beq.s	.Skip
-.BB	moveq	#0,d3
-	move.w	(a1),d3
-.Skip	Ret_Int
+	Lib_Int	FnLength		src/lib/banks.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					CHIPFREE
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par FnChipFree
-; - - - - - - - - - - - - -
-	move.l	#Chip,d1
-	Rbra	L_FFree
+	Lib_Int	FnChipFree		src/lib/banks.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					=FASTFREE
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par FnFastFree
+	Lib_Int	FnFastFree		src/lib/banks.cpp
 ; - - - - - - - - - - - - -
-	move.l	#Fast,d1
-	Rbra	L_FFree
-; - - - - - - - - - - - - -
-	Lib_Def	FFree
-; - - - - - - - - - - - - -
-	move.l	a6,-(sp)
-	move.l	$4.w,a6
-	jsr	_LVOAvailMem(a6)
-	move.l	(sp)+,a6
-	move.l	d0,d3
-	Ret_Int
+	Lib_Empty			FFree, now in src/lib/banks.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					TRANSFERT DE MEMOIRE
@@ -2631,7 +2404,7 @@ triup	lsr.l 	#2,d0
 	move.l	d3,d4
 	move.l	(a3)+,d2
 	move.l	(a3)+,d0
-	Rbsr	L_Bnk.OrAdr
+	Rjsr	L_Bnk.OrAdr
 	Rbsr	L_FillBis
 	rts
 ; - - - - - - - - - - - - -
@@ -2666,7 +2439,7 @@ fil4:  	rts
 	Rbsr	L_ChVerBuf
         move.l 	(a3)+,d4     	;adresse de fin
 	move.l	(a3)+,d0
-	Rbsr	L_Bnk.OrAdr	;adresse de recherche
+	Rjsr	L_Bnk.OrAdr	;adresse de recherche
         subq.w	#1,d2
         bcs.s 	ht3           	;si chaine nulle: ramene zero!
         move.l 	Buffer(a5),d3
@@ -3826,7 +3599,7 @@ AskD:	move.l	a0,HiChaine(a5)
 	Rbeq	L_DiskError
 ; Va sauver la banque
 	move.l	d3,d0
-	Rbsr	L_Bnk.GetAdr
+	Rjsr	L_Bnk.GetAdr
 	Rbeq	L_BkNoRes
 	Rbsr	L_Bnk.SaveA0
 ; Ferme le fichier
@@ -4093,7 +3866,7 @@ SB_Out	movem.l	(sp)+,a2/a3/d2-d4
 	bne.s	.Skip3
 	bset	#Bnk_BitChip,d1
 .Skip3	Rlea	L_Bnk_NoLoad,0
-	Rbsr	L_Bnk.Reserve
+	Rjsr	L_Bnk.Reserve
 	beq	LB_MErr
 ; Charge la banque
 	move.l	a0,d2
@@ -4114,7 +3887,7 @@ LB_Icons
 ; Overwrite ou append?
 	tst.w	d5
 	beq.s	.Over
-	Rbsr	L_Bnk.GetIcons
+	Rjsr	L_Bnk.GetIcons
 	beq.s	.Over
 ; Append
 	moveq	#1,d0
@@ -4127,7 +3900,7 @@ LB_Icons
 	move.w	d6,d1
 	clr.w	d5
 ; Va reserver la place
-.Res	Rbsr	L_Bnk.ResIco
+.Res	Rjsr	L_Bnk.ResIco
 	bne	LB_MErr
 	bra.s	LB_FIcons
 ; Charge la banque de sprites
@@ -4142,7 +3915,7 @@ LB_Sprites
 ; Overwrite ou append?
 	tst.w	d5
 	beq.s	.Over
-	Rbsr	L_Bnk.GetBobs
+	Rjsr	L_Bnk.GetBobs
 	beq.s	.Over
 ; Append
 	moveq	#1,d0
@@ -4155,7 +3928,7 @@ LB_Sprites
 	move.w	d6,d1
 	clr.w	d5
 ; Va reserver la place
-.Res	Rbsr	L_Bnk.ResBob
+.Res	Rjsr	L_Bnk.ResBob
 	bne	LB_MErr
 ; Fin du chargement SPRITES/ICONES
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -4202,7 +3975,7 @@ LB_FIcons
 ; Charge plusieurs banques
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~
 LB_Multiples
-	Rbsr	L_Bnk.EffAll
+	Rjsr	L_Bnk.EffAll
 	move.l	Buffer(a5),d2
 	move.l	d2,a2
 	moveq	#2,d3
@@ -4273,7 +4046,7 @@ LB_Out	movem.l	(sp)+,a2/a3/d2-d7
 	bset	#Bnk_BitChip,d1
 .Plo1	move.l	d3,d2			Longueur
 	Rlea	L_BkAsm,0
-	Rbsr	L_Bnk.Reserve
+	Rjsr	L_Bnk.Reserve
 	Rjsr	L_Bnk.Change
 	Rbeq	L_OOfMem
 ; Charge!
@@ -4297,7 +4070,7 @@ GetH	move.l	Buffer(a5),d2
 	Lib_Par	InBload
 ; - - - - - - - - - - - - -
 	move.l	d3,d0
-	Rbsr	L_Bnk.OrAdr
+	Rjsr	L_Bnk.OrAdr
 	move.l	d0,-(sp)
 * Ouvre le fichier
 	move.l	(a3)+,a2
@@ -4330,7 +4103,7 @@ GetH	move.l	Buffer(a5),d2
 ; - - - - - - - - - - - - -
 	move.l	d3,-(sp)
 	move.l	(a3)+,d0
-	Rbsr	L_Bnk.OrAdr
+	Rjsr	L_Bnk.OrAdr
 	sub.l	d0,(sp)
 	Rbls	L_FonCall
 	move.l	d0,-(sp)
@@ -4426,13 +4199,13 @@ GetH	move.l	Buffer(a5),d2
 	cmp.l	#1024,d6
 	bcc.s	.PaBk
 	move.l	d6,d0		Efface l'ancienne
-	Rbsr	L_Bnk.Eff
+	Rjsr	L_Bnk.Eff
 	Rbsr	L_IffFormSize	Demande la taille
 	move.l	d0,d2		Longueur
 	moveq	#0,d1		Flags= WORK / FAST
 	move.l	d6,d0		Numero
 	Rlea	L_BkIff,0
-	Rbsr	L_Bnk.Reserve
+	Rjsr	L_Bnk.Reserve
 	Rjsr	L_Bnk.Change
 	Rbeq	L_OOfMem
 	move.l	a0,d6
@@ -4489,7 +4262,7 @@ GetH	move.l	Buffer(a5),d2
 	cmp.l	#32768,d7
 	Rbcc	L_FonCall
 	move.l	(a3)+,d0
-	Rbsr	L_Bnk.OrAdr
+	Rjsr	L_Bnk.OrAdr
 	move.l	d0,d6
 	Rbsr	L_IffFormPlay
 	move.l	d6,d3
@@ -4514,7 +4287,7 @@ GetH	move.l	Buffer(a5),d2
 	cmp.l	#32768,d7
 	Rbcc	L_FonCall
 	move.l	(a3)+,d0
-	Rbsr	L_Bnk.OrAdr
+	Rjsr	L_Bnk.OrAdr
 	move.l	d0,d6
 	bset	#30,d7
 	Rbsr	L_IffFormPlay
@@ -7904,180 +7677,51 @@ SBc11	move.l	(sp)+,d2		* Debut du chunk
 ;	OUT	BEQ Pas trouve, BNE Trouve, D0=Flags / A1=Adresse
 ;	Ne pas changer sans voir GETBOB / GETICON
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	Bnk.GetAdr
-; - - - - - - - - - - - - -
-	move.l	Cur_Banks(a5),a0
-	move.l	(a0),d1
-	beq.s	.Nof
-.Loop	move.l	d1,a1
-	cmp.l	8(a1),d0
-	beq.s	.Fnd
-	move.l	(a1),d1
-	bne.s	.Loop
-.Nof	sub.l	a1,a1
-	move.l	a1,a0
-	rts
-.Fnd	move.w	8+4(a1),d0
-	lea	8*3(a1),a0
-	move.l	a0,a1
-	move.w	#%00000,CCR
-	rts
+	Lib_Int	Bnk.GetAdr		src/lib/banks.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					TROUVE ADRESSE BANQUE SPRITES
 ;	OUT	BNE trouve A0/A1=adresse (D0/D1 inchanges)
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	Bnk.GetBobs
-; - - - - - - - - - - - - -
-	movem.l	d0/d1,-(sp)
-	moveq	#1,d0
-	Rbsr	L_Bnk.GetAdr
-	beq.s	.Nof
-	btst	#Bnk_BitBob,d0
-.Nof	movem.l	(sp)+,d0/d1
-	rts
+	Lib_Int	Bnk.GetBobs		src/lib/banks.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					TROUVE L'ADRESSE BANQUE ICONES
 ;	OUT	D0/A0/A1=	adresse
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	Bnk.GetIcons
-; - - - - - - - - - - - - -
-	movem.l	d0/d1,-(sp)
-	moveq	#2,d0
-	Rbsr	L_Bnk.GetAdr
-	beq.s	.Nof
-	btst	#Bnk_BitIcon,d0
-.Nof	movem.l	(sp)+,d0/d1
-	rts
+	Lib_Int	Bnk.GetIcons		src/lib/banks.cpp
 
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					EFFACEMENT BANQUE D0
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	Bnk.Eff
-; - - - - - - - - - - - - -
-	movem.l	d0-d2/a0-a2,-(sp)
-; Trouve l'adresse
-	Rbsr	L_Bnk.GetAdr
-	beq.s	.Out
-; Appelle la routine d'effacement
-	Rbsr	L_Bnk.EffA0
-; Fin de l'effacement des banques
-.Out	movem.l	(sp)+,a0-a2/d0-d2
-	rts
+	Lib_Int	Bnk.Eff		src/lib/banks.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					EFFACEMENT BANQUE A0=Adresse
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	Bnk.EffA0
-; - - - - - - - - - - - - -
-	move.w	-16+4(a0),d0
-	btst	#Bnk_BitIcon,d0
-	bne.s	.Spr
-	btst	#Bnk_BitBob,d0
-	beq.s	.Nor
-; Une banque de Sprites / Icones
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.Spr	movem.l	a0/a2/d2,-(sp)
-	move.l	a0,a2
-; Efface les sprites
-	move.w	(a2)+,d2		Nombre de bobs
-	subq.w	#1,d2
-	bmi.s	.Skip
-.Loop	move.l	a2,a0			Va effacer la definition
-	Rbsr	L_Bnk.EffBobA0
-	addq.l	#8,a2
-	dbra	d2,.Loop
-.Skip	movem.l	(sp)+,a0/a2/d2		Recharge les pointeurs zone de def
-; Une banque normale
-; ~~~~~~~~~~~~~~~~~~
-.Nor	clr.l	-8(a0)			Efface le NOM de la banque
-	clr.l	-8+4(a0)
-	lea	-8*3(a0),a1		Pointe le debut dans la liste
-	move.l	Cur_Banks(a5),a0
-	Rjmp	L_Lst.Del
+	Lib_Int	Bnk.EffA0		src/lib/banks.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					EFFACEMENT BOBS/ICONS A0=Adresse
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	Bnk.EffBobA0
-; - - - - - - - - - - - - -
-	movem.l	a0/a1/a2/d0/d1,-(sp)
-	move.l	a0,a2
-; Efface le bob
-	move.l	(a2),d1
-	beq.s	.No1
-	move.l	d1,a1
-	move.w	(a1),d0
-	mulu	2(a1),d0
-	lsl.l	#1,d0
-	mulu	4(a1),d0
-	add.l	#10,d0
-	SyCall	MemFree
-; Efface le masque
-.No1	move.l	4(a2),d1
-	ble.s	.No2
-	move.l	d1,a1
-	move.l	(a1),d0
-	SyCall	MemFree
-.No2	clr.l	(a2)+
-	clr.l	(a2)+
-	movem.l	(sp)+,a0/a1/a2/d0/d1
-	rts
+	Lib_Int	Bnk.EffBobA0		src/lib/banks.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					EFFACEMENT TOUTES LES BANQUES
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	Bnk.EffAll
-; - - - - - - - - - - - - -
-	movem.l	a2/d2,-(sp)
-	move.l	Cur_Banks(a5),a2
-	move.l	(a2),d2
-	beq.s	.Out
-.Loop	move.l	d2,a2
-	move.l	(a2),d2
-	lea	8*3(a2),a0
-	Rbsr	L_Bnk.EffA0
-	tst.l	d2
-	bne.s	.Loop
-.Out	movem.l	(sp)+,a2/d2
-	rts
+	Lib_Int	Bnk.EffAll		src/lib/banks.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					EFFACEMENT TOUTES BANQUES TEMP
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	Bnk.EffTemp
-; - - - - - - - - - - - - -
-	movem.l	a2/d2,-(sp)
-	move.l	Cur_Banks(a5),a2
-	move.l	(a2),d2
-	beq.s	.Out
-.Loop	move.l	d2,a2
-	move.l	(a2),d2
-	move.w	8+4(a2),d0
-	btst	#Bnk_BitData,d0
-	bne.s	.Skip
-	lea	8*3(a2),a0
-	Rbsr	L_Bnk.EffA0
-.Skip	tst.l	d2
-	bne.s	.Loop
-.Out	movem.l	(sp)+,a2/d2
-	rts
+	Lib_Int	Bnk.EffTemp		src/lib/banks.cpp
 
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					ADRESS OR BANK
 ;	D0>>>D0
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	Bnk.OrAdr
-; - - - - - - - - - - - - -
-	cmp.l	#1024,d0
-	bge.s	.Skip
-	Rbsr	L_Bnk.GetAdr
-	Rbeq	L_BkNoRes
-	move.l	a0,d0
-.Skip	move.l	d0,a0
-	rts
+	Lib_Int	Bnk.OrAdr		src/lib/banks.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					TROUVE L'ADRESSE BOB D0>A0
@@ -8085,20 +7729,7 @@ SBc11	move.l	(sp)+,d2		* Debut du chunk
 ;	OUT	A0/D0	Adresse (BNE)
 ;		D1	Max de bobs
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	Bnk.AdBob
-; - - - - - - - - - - - - -
-	moveq	#0,d1
-	Rbsr	L_Bnk.GetBobs
-	beq.s	.Rien
-	move.w	(a1),d1
-	cmp.w	d1,d0
-	bhi.s	.Rien
-	lsl.w	#3,d0
-	lea	-8+2(a1,d0.w),a0
-	bra.s	.Out
-.Rien	sub.l	a0,a0
-.Out	move.l	a0,d0
-	rts
+	Lib_Int	Bnk.AdBob		src/lib/banks.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					ADRESSE ICONE
@@ -8106,20 +7737,7 @@ SBc11	move.l	(sp)+,d2		* Debut du chunk
 ;	OUT	A0/D0	Adresse (BNE)
 ;		D1	Max de bobs
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	Bnk.AdIcon
-; - - - - - - - - - - - - -
-	moveq	#0,d1
-	Rbsr	L_Bnk.GetIcons
-	beq.s	.Rien
-	move.w	(a1),d1
-	cmp.w	d1,d0
-	bhi.s	.Rien
-	lsl.w	#3,d0
-	lea	-8+2(a1,d0.w),a0
-	bra.s	.Out
-.Rien	sub.l	a0,a0
-.Out	move.l	a0,d0
-	rts
+	Lib_Int	Bnk.AdIcon		src/lib/banks.cpp
 
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -8128,21 +7746,11 @@ SBc11	move.l	(sp)+,d2		* Debut du chunk
 ;	D1= 	Nombre de sprites/icons
 ;	Retour: A0= Debut banque A1= ancienne bank
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	Bnk.ResIco
-; - - - - - - - - - - - - -
-	movem.l	d2-d7/a2-a3,-(sp)
-	Rbsr	L_Bnk.GetIcons
-	moveq	#(1<<Bnk_BitIcon)+(1<<Bnk_BitData),d2
-	Rbra	L_Bnk.Ric2
+	Lib_Int	Bnk.ResIco		src/lib/banks.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					BOBS
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	Bnk.ResBob
-; - - - - - - - - - - - - -
-	movem.l	d2-d7/a2-a3,-(sp)
-	Rbsr	L_Bnk.GetBobs
-	moveq	#(1<<Bnk_BitBob)+(1<<Bnk_BitData),d2
-	Rbra	L_Bnk.Ric2
+	Lib_Int	Bnk.ResBob		src/lib/banks.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; Entree 2
 ;	A1=	Banque origine (si definie)
@@ -8150,149 +7758,16 @@ SBc11	move.l	(sp)+,d2		* Debut du chunk
 ;	D1=	Nombre
 ;	D2=	Flags
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	Bnk.Ric
+	Lib_Int	Bnk.Ric		src/lib/banks.cpp
 ; - - - - - - - - - - - - -
-	movem.l	d2-d7/a2-a3,-(sp)
-	Rbra	L_Bnk.Ric2
-; - - - - - - - - - - - - -
-	Lib_Def	Bnk.Ric2
-; - - - - - - - - - - - - -
-	move.w	d2,d4
-	moveq	#0,d3
-	move.w	d1,d3
-	move.l	d0,d2
-	move.l	a1,a3
-; Reserve une nouvelle table de pointeurs
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	move.l	d3,d0
-	lsl.l	#3,d0
-	add.l	#8*2+2+64,d0
-	move.l	Cur_Banks(a5),a0
-	Rjsr	L_Lst.New
-	beq	.Err
-	lea	8(a1),a2
-; Entete de la banque
-; ~~~~~~~~~~~~~~~~~~~
-	moveq	#1,d0			Numero (1 ou 2)
-	Rlea	L_BkSpr,0
-	btst	#Bnk_BitIcon,d4
-	beq.s	.Pai
-	moveq	#2,d0
-	Rlea	L_BkIco,0
-.Pai	move.l	d0,(a2)+		Numero
-	move.w	d4,(a2)+		Flag
-	clr.w	(a2)+			Vide!
-	move.l	(a0)+,(a2)+		Nom
-	move.l	(a0)+,(a2)+
-	move.l	a2,a1
-; Recopier l'ancienne banque?
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	move.w	d3,(a1)+		Nombre de bobs
-	tst.w	d2			Negatif>>> copie la palette
-	bmi.s	.ECop
-	beq	.PaCopy
-	move.l	a3,d0
-	beq.s	.PaCopy
-	move.l	a3,a0
-	move.w	(a0)+,d0
-	cmp.w	d3,d0			Moins de bobs dans la nouvelle?
-	bls.s	.Paplu
-	move.w	d3,d0
-.Paplu	subq.w	#1,d0			Copie des bobs
-	bmi.s	.ECop
-.BCop	move.l	(a0),(a1)+		Efface leur origine,
-	clr.l	(a0)+			car la banque sera effacee!
-	move.l	(a0),(a1)+
-	clr.l	(a0)+
-	dbra	d0,.BCop
-.ECop	move.w	(a3),d0			Copie de la palette
-	lsl.w	#3,d0
-	lea	2(a3,d0.w),a0
-	bra.s	.PPal
-; Pas de recopie de l'ancienne banque
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.PaCopy	lea	DefPal(a5),a0
-	move.l	ScOnAd(a5),d0
-	beq.s	.PPal
-	move.l	d0,a0
-	lea	EcPal(a0),a0
-.PPal	move.w	d3,d1
-	lsl.w	#3,d1
-	lea	2(a2,d1.w),a1
-	moveq	#32-1,d0
-.CPal	move.w	(a0)+,(a1)+
-	dbra	d0,.CPal
-; Efface l'ancienne banque
-; ~~~~~~~~~~~~~~~~~~~~~~~~
-.EBank	tst.w	d2
-	bmi.s	.Paeff
-	move.l	a3,d0
-	beq.s	.Paeff
-	move.l	d0,a0
-	Rbsr	L_Bnk.EffA0
-.Paeff
-; Pas d'erreur
-; ~~~~~~~~~~~~
-	move.l	a2,a0
-	move.l	a3,a1
-	moveq	#0,d0
-	bra.s	.Out
-; Out of mem!
-; ~~~~~~~~~~~
-.Err	sub.l	a0,a0
-	moveq	#-1,d0
-; Sortie, envoie l'adresse des bobs � la trappe
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.Out	movem.l	(sp)+,d2-d7/a2-a3
-	tst.w	d0
-	rts
+	Lib_Empty			Bnk.Ric2, now in src/lib/banks.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					Routine Bank Schrink
 ;	D0=	Bank Number
 ;	D1=	New size
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	Bnk.Schrink
-; - - - - - - - - - - - - -
-	movem.l	a2/d2-d5,-(sp)
-	move.l	d1,d3
-	ble.s	.Fonc
-	Rbsr	L_Bnk.GetAdr
-	beq.s	.Nores
-	btst	#Bnk_BitBob,d0		Pas une banque de bobs!
-	bne.s	.Fonc
-	btst	#Bnk_BitIcon,d0
-	bne.s	.Fonc
-	lea	-8*3(a1),a2
-	move.l	4(a2),d2		Verifie la longueur!
-	addq.l	#8,d2			Taille reservation
-	add.l	#3*8,d3			Taille nouvelle reservation
-	cmp.l	d2,d3
-	bgt.s	.Fonc
-; Fait la relocation!
-	movem.l	(a2),d4/d5
-	move.l	a6,-(sp)
-	move.l	$4.w,a6
-	jsr	_LVOForbid(a6)
-	move.l	a2,a1
-	move.l	d2,d0
-	jsr	_LVOFreeMem(a6)
-	move.l	a2,a1
-	move.l	d3,d0
-	jsr	_LVOAllocAbs(a6)
-	jsr	_LVOPermit(a6)
-	move.l	(sp)+,a6
-	movem.l	d4/d5,(a2)
-; Change la taille
-	subq.l	#8,d3
-	move.l	d3,4(a2)
-	moveq	#0,d0
-.Out	movem.l	(sp)+,a2/d2-d5
-	rts
-.Fonc	moveq	#23,d0
-	bra.s	.Out
-.Nores	moveq	#36,d0
-	bra.s	.Out
+	Lib_Int	Bnk.Schrink		src/lib/banks.cpp
 
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -8303,55 +7778,7 @@ SBc11	move.l	(sp)+,d2		* Debut du chunk
 ;		BNE	Out of mem!
 ;		A0	Adresse Nouvelle Structure
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	Bnk.InsBob
-; - - - - - - - - - - - - -
-	movem.l	d2-d4/a2,-(sp)
-	move.l	d0,d3
-	move.l	a0,a1
-; Agrandi la banque d'une unite
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	moveq	#-1,d0			Garder l'ancienne, ne pas copier
-	move.w	(a1),d1
-	addq.w	#1,d1			Un bob de plus
-	move.w	-16+4(a1),d2		Flag de la banque
-	Rbsr	L_Bnk.Ric
-	bne.s	.Out
-	move.l	a1,a2
-; Recopie l'ancienne dans la nouvelle, en faisant un trou!
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	addq.l	#2,a0
-	move.w	(a1)+,d1
-	subq.w	#1,d1
-	moveq	#1,d0
-	moveq	#0,d4
-.Copy	cmp.w	d0,d3
-	bne.s	.Old
-	move.l	a0,d4
-	addq.l	#8,a0
-	addq.w	#1,d1
-	bra.s	.Skip
-.Old	move.l	(a1),(a0)+
-	clr.l	(a1)+
-	move.l	(a1),(a0)+
-	clr.l	(a1)+
-.Skip	addq.w	#1,d0
-	dbra	d1,.Copy
-	tst.l	d4
-	bne.s	.Skup
-	move.l	a0,d4
-.Skup
-; Efface l'ancienne
-; ~~~~~~~~~~~~~~~~~
-	move.l	a2,a0
-	Rbsr	L_Bnk.EffA0
-	moveq	#0,d0
-	move.l	d4,a0
-	bra.s	.Out
-; Out of mem
-; ~~~~~~~~~~
-.Err	moveq	#-1,d0
-.Out	movem.l	(sp)+,a2/d2-d4
-	rts
+	Lib_Int	Bnk.InsBob		src/lib/banks.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					DELETION BOB / ICON
@@ -8359,96 +7786,12 @@ SBc11	move.l	(sp)+,d2		* Debut du chunk
 ;		D1=	Numero2 Bob/Icon
 ;		A0=	Adresse Banque Origine
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	Bnk.DelBob
-; - - - - - - - - - - - - -
-	movem.l	a2/d2-d4,-(sp)
-	move.l	d0,d3
-	move.l	d1,d4
-	move.l	a0,a1
-	move.l	a1,a2
-; Efface les bobs / Compte le nombre restant
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	move.w	(a0)+,d0		Compteur DBRA
-	subq.w	#1,d0
-	bmi.s	.DBank
-	moveq	#0,d1			Nombre de bobs restant
-	moveq	#1,d2			Numero du bob courant
-.ELoop	cmp.l	d3,d2
-	blt.s	.ESkip
-	cmp.l	d4,d2
-	bgt.s	.ESkip
-	Rbsr	L_Bnk.EffBobA0
-	bra.s	.ESkup
-.ESkip	addq.w	#1,d1
-.ESkup	addq.l	#8,a0
-	addq.w	#1,d2
-	dbra	d0,.ELoop
-; Plus de bobs >>> efface la banque!
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	tst.w	d1
-	beq.s	.DBank
-; Reduit la banque
-; ~~~~~~~~~~~~~~~~
-	moveq	#-1,d0			Garder l'ancienne
-;					D1= nombre de bobs
-	move.w	-16+4(a1),d2		Flag de la banque
-	Rbsr	L_Bnk.Ric
-	bne.s	.Out
-	move.l	a1,a2
-; Recopie uniquement les bobs conserves
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	move.w	(a1)+,d0
-	subq.w	#1,d0
-	addq.l	#2,a0
-	moveq	#1,d1
-.CLoop	cmp.l	d3,d1
-	blt.s	.CCopy
-	cmp.l	d4,d1
-	ble.s	.CSkip
-.CCopy	move.l	(a1),(a0)+
-	move.l	4(a1),(a0)+
-.CSkip	clr.l	(a1)+
-	clr.l	(a1)+
-	addq.w	#1,d1
-	dbra	d0,.CLoop
-; Efface la banque
-; ~~~~~~~~~~~~~~~~
-.DBank	move.l	a2,a0
-	Rbsr	L_Bnk.EffA0
-; Sortie
-; ~~~~~~
-.Out	moveq	#0,d0
-	movem.l	(sp)+,a2/d2-d4
-	rts
+	Lib_Int	Bnk.DelBob		src/lib/banks.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					REMET LES BOBS DROITS BANQUE A0
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	Bnk.UnRev
-; - - - - - - - - - - - - -
-	movem.l	d0-d7/a0-a6,-(sp)
-	move.l	a0,a2
-	move.w	(a2)+,d2
-	subq.w	#1,d2
-	bmi.s	.URbx
-; Va retourner
-; ~~~~~~~~~~~~
-.URb1	move.l	a2,a1
-	moveq	#0,d1
-	EcCall	DoRev
-; Remet le point chaud, si negatif!!!
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	move.l	(a2),d0
-	beq.s	.URb2
-	move.l	d0,a0
-	move.w	6(a0),d0
-	lsl.w	#2,d0
-	asr.w	#2,d0
-	move.w	d0,6(a0)
-.URb2	lea	8(a2),a2
-	dbra	d2,.URb1
-.URbx	movem.l	(sp)+,d0-d7/a0-a6
-	rts
+	Lib_Int	Bnk.UnRev		src/lib/banks.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					RESERVE BANK
@@ -8457,145 +7800,23 @@ SBc11	move.l	(sp)+,d2		* Debut du chunk
 ;	D2= 	Longueur
 ;	A0=	Nom de la banque
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	Bnk.Reserve
-; - - - - - - - - - - - - -
-	movem.l	a2/d2-d5,-(sp)
-	moveq	#0,d4
-	move.w	d0,d4
-	move.l	d1,d5
-	move.l	a0,a2
-; Efface la banque si d�ja d�finie
-	move.l	d4,d0
-	Rbsr	L_Bnk.GetAdr
-	beq.s	.Pares
-	Rbsr	L_Bnk.EffA0
-.Pares
-; Reserve
-	add.l	#16,d2			Flags + Nom
-	move.l	d2,d0
-	move.l	#Public|Clear,d1
-	btst	#Bnk_BitChip,d5
-	beq.s	.SkipC
-	move.l	#Public|Clear|Chip,d1
-.SkipC	move.l	Cur_Banks(a5),a0
-	Rjsr	L_Lst.Cree
-	beq.s	.Err
-; Poke les entetes
-	addq.l	#8,a1
-	move.l	d4,(a1)+
-	move.w	d5,(a1)+
-	clr.w	(a1)+
-; Poke le nom
-	moveq	#7,d0
-.Loo	move.b	(a2)+,(a1)+
-	dbra	d0,.Loo
-; Ok!
-	move.l	a1,a0
-	move.l	a0,d0
-	bra.s	.Out
-.Err	moveq	#0,d0
-.Out	movem.l	(sp)+,a2/d2-d5
-	rts
+	Lib_Int	Bnk.Reserve		src/lib/banks.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					CALCULE LA TAILLE DES BANQUES
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	Bnk.GetLength
-; - - - - - - - - - - - - -
-	movem.l	a2/d3-d7,-(sp)
-	moveq	#0,d7			Taille globale
-	moveq	#0,d6			Taille icons
-	moveq	#0,d5			Taille bobs
-	move.l	Cur_Banks(a5),a1
-	bra.s	.Next
-; Boucle d'exploration
-.Loop	move.l	d1,a1
-	lea	3*8(a1),a0
-	Rbsr	L_Bnk.Length
-	move.w	8+4(a1),d1
-	btst	#Bnk_BitBob,d1
-	bne.s	.BB
-	btst	#Bnk_BitIcon,d1
-	bne.s	.II
-	add.l	d0,d7			Plus normal
-	bra.s	.Next
-.BB	add.l	d0,d5			Plus Objects
-	bra.s	.Next
-.II	add.l	d0,d6			Plus Icons
-; Banque suivante
-.Next	move.l	(a1),d1
-	bne.s	.Loop
-; Termine!
-	move.l	d5,d1
-	move.l	d6,d2
-	move.l	d7,d0
-	movem.l	(sp)+,a2/d3-d7
-	rts
+	Lib_Int	Bnk.GetLength		src/lib/banks.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 	CALCULE LA TAILLE D'UNE BANQUE
 ;	A0= banque
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	Bnk.Length
-; - - - - - - - - - - - - -
-	movem.l	a0-a1/d1-d2,-(sp)
-	move.w	-8*2+4(a0),d0
-	btst	#Bnk_BitBob,d0
-	bne.s	.BB
-	btst	#Bnk_BitIcon,d0
-	bne.s	.BB
-	move.l	-8*3+4(a0),d0
-	sub.l	#16,d0
-	bra.s	.BBOut
-; Une banque de bobs / icones
-.BB	move.l	-8*3+4(a0),d0
-	sub.l	#16,d0
-	move.w	(a0)+,d1
-	subq.w	#1,d1
-	bmi.s	.BBOut
-.BBLoop	move.l	(a0),d2
-	beq.s	.BBNext
-	move.l	d2,a1
-	move.w	(a1)+,d2		SX
-	mulu	(a1)+,d2		SY
-	mulu	(a1)+,d2		NPlan
-	lsl.l	#1,d2			En mots
-	add.l	d2,d0
-.BBNext	addq.l	#8,a0
-	dbra	d1,.BBLoop
-.BBOut	movem.l	(sp)+,a0-a1/d1-d2
-	rts
+	Lib_Int	Bnk.Length		src/lib/banks.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 	CHANGEMENT DANS LES BANQUES
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	Bnk.Change
-; - - - - - - - - - - - - -
-	movem.l	a0-a3/d0-d7,-(sp)
-; Appelle les extensions
-; ~~~~~~~~~~~~~~~~~~~~~~
-	lea	ExtAdr(a5),a0
-	moveq	#26-1,d0
-.ELoop	move.l	12(a0),d1
-	beq.s	.ESkip
-	move.l	d1,a1
-	movem.l	a0/d0,-(sp)
-	move.l	d1,a1
-	move.l	Cur_Banks(a5),a0
-	move.l	(a0),a0
-	jsr	(a1)
-	movem.l	(sp)+,a0/d0
-.ESkip	lea	16(a0),a0
-	dbra	d0,.ELoop
-; Recherche la banque de sprites
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	Rbsr	L_Bnk.GetBobs
-	SyCall	SetSpBank
-; Ok!
-; ~~~
-	movem.l	(sp)+,a0-a3/d0-d7
-	tst.w	d0
-	rts
+	Lib_Int	Bnk.Change		src/lib/banks.cpp
 
 
 
@@ -8603,73 +7824,7 @@ SBc11	move.l	(sp)+,d2		* Debut du chunk
 ; 					Routine LISTBANK
 ;	Ecrit la definition dans un buffer
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	Bnk.List
-; - - - - - - - - - - - - -
-	movem.l	d1-d4/a2,-(sp)
-; Trouve la bonne banque, dans l'ordre
-	move.l	#65536,d1
-	move.l	Cur_Banks(a5),a0
-	bra.s	.B2
-.B1	move.l	d0,a0
-	cmp.l	8(a0),d5
-	bcc.s	.B2
-	cmp.l	8(a0),d1
-	bcs.s	.B2
-	move.l	a0,a2
-	move.l	8(a0),d1
-.B2	move.l	(a0),d0
-	bne.s	.B1
-	cmp.l	#65536,d1
-	beq	.Vide
-	move.l	d1,d5
-; Numero de la banque
-	move.l	8(a2),d0
-	move.l	Buffer(a5),a0
-	cmp.w	#10,d0
-	bcc.s	.Skip1
-	move.b	#" ",(a0)+
-.Skip1	Rjsr	L_LongToDec
-	move.b	#" ",(a0)+
-	move.b	#"-",(a0)+
-	move.b	#" ",(a0)+
-; Nom de la banque
-	moveq	#7,d0
-	lea	16(a2),a1
-.Loop1	move.b	(a1)+,(a0)+
-	dbra	d0,.Loop1
-	move.b	#" ",(a0)+
-; Start
-	move.b	#"S",(a0)+
-	move.b	#":",(a0)+
-	move.b	#" ",(a0)+
-	move.l	a2,d0
-	add.l	#8*3,d0
-	moveq	#8,d3
-	Rjsr	L_LongToHex
-	move.b	#" ",(a0)+
-; Length
-	move.l	4(a2),d0
-	sub.l	#2*8,d0
-	move.w	8+4(a2),d1
-	btst	#Bnk_BitBob,d1
-	bne.s	.BB
-	btst	#Bnk_BitIcon,d1
-	beq.s	.Skip2
-.BB	moveq	#0,d0
-	move.w	8*3(a2),d0
-.Skip2	move.b	#"L",(a0)+
-	move.b	#":",(a0)+
-	move.b	#" ",(a0)+
-	Rjsr	L_LongToDec
-; Ok!
-	clr.b	(a0)
-	move.l	a0,a1
-	move.l	Buffer(a5),a0
-	moveq	#1,d0
-	bra.s	.Out
-.Vide	moveq	#0,d0
-.Out	movem.l	(sp)+,d1-d4/a2
-	rts
+	Lib_Empty			Bnk.List, now in src/lib/banks.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					TRUE / FALSE / ONE
@@ -9235,7 +8390,7 @@ ScOo4	Rbsr	L_LoadRegs
 ; - - - - - - - - - - - - -
 	Lib_Par InGetIconPalette1
 ; - - - - - - - - - - - - -
-	Rbsr	L_Bnk.GetIcons
+	Rjsr	L_Bnk.GetIcons
 	Rbeq	L_BkNoRes
 	move.w	(a0)+,d0
 	lsl.w	#3,d0
@@ -9251,7 +8406,7 @@ ScOo4	Rbsr	L_LoadRegs
 ; - - - - - - - - - - - - -
 	Lib_Par InGetSpritePalette1
 ; - - - - - - - - - - - - -
-	Rbsr	L_Bnk.GetBobs
+	Rjsr	L_Bnk.GetBobs
 	Rbeq	L_BkNoRes
 	move.w	(a0)+,d0
 	lsl.w	#3,d0
@@ -10007,7 +9162,7 @@ ISpt:	move.w	d0,32(a1)
 	cmp.l	#256,d2
 	Rbcs	L_FonCall
 	move.l	(a3)+,d0
-	Rbsr	L_Bnk.OrAdr
+	Rjsr	L_Bnk.OrAdr
 	move.w	d2,RasSize(a5)
 	move.l	d0,RasLock(a5)
 	rts
@@ -11842,7 +10997,7 @@ InMva1:	cmp.l	d0,d6			* Nombre autorise
 	moveq	#0,d7
 	moveq	#4,d0
 	move.l	a1,a2
-	Rbsr	L_Bnk.GetAdr
+	Rjsr	L_Bnk.GetAdr
 	move.l	a2,a1
 	beq.s	InMb1
 	move.l	-8(a0),d0
@@ -12610,19 +11765,19 @@ FHc1	move.w	d3,d1
 ; - - - - - - - - - - - - -
 	move.l	(a3),d0
 	Rble	L_FonCall
-	Rbsr	L_Bnk.AdBob
+	Rjsr	L_Bnk.AdBob
 	beq.s	.New
 	move.l	a0,a2
-	Rbsr	L_Bnk.EffBobA0
+	Rjsr	L_Bnk.EffBobA0
 	bra.s	.Suite
 ; Appelle l'agrandissement (soit pas banque, soit trop grand)
 .New	moveq	#1,d0			Recopier l'ancienne!
 	move.l	(a3),d1			Taille nouvelle banque
-	Rbsr	L_Bnk.ResBob
+	Rjsr	L_Bnk.ResBob
 	Rbne	L_OOfMem
 	Rjsr	L_Bnk.Change		Changement de banque
 	move.l	(a3),d0			Adresse du nouveau bob
-	Rbsr	L_Bnk.AdBob
+	Rjsr	L_Bnk.AdBob
 	Rbeq	L_FonCall
 	move.l	a0,a2
 .Suite	addq.l	#4,a3
@@ -12660,19 +11815,19 @@ FHc1	move.w	d3,d1
 ; - - - - - - - - - - - - -
 	move.l	(a3),d0
 	Rble	L_FonCall
-	Rbsr	L_Bnk.AdIcon
+	Rjsr	L_Bnk.AdIcon
 	beq.s	.New
 	move.l	a0,a2
-	Rbsr	L_Bnk.EffBobA0
+	Rjsr	L_Bnk.EffBobA0
 	bra.s	.Suite
 ; Appelle l'agrandissement (soit pas banque, soit trop grand)
 .New	moveq	#1,d0			Recopier la banque
 	move.l	(a3),d1			Adresse nouvel icone
-	Rbsr	L_Bnk.ResIco
+	Rjsr	L_Bnk.ResIco
 	Rbne	L_OOfMem
 	Rjsr	L_Bnk.Change
 	move.l	(a3),d0
-	Rbsr	L_Bnk.AdIcon
+	Rjsr	L_Bnk.AdIcon
 	Rbeq	L_FonCall
 	move.l	a0,a2
 .Suite	addq.l	#4,a3
@@ -12813,7 +11968,7 @@ FsBi2	move.l	(a2),d3
 	and.l	#$3FFF,d1
 	Rbeq	L_FonCall
 	move.l	d1,d0
-	Rbsr	L_Bnk.AdBob
+	Rjsr	L_Bnk.AdBob
 	Rbeq	L_AdBErr
 	move.l	a0,a2
 	move.w	d1,d5
@@ -12825,7 +11980,7 @@ FsBi2	move.l	(a2),d3
 	and.l	#$3FFF,d1
 	Rbeq	L_FonCall
 	move.l	d1,d0
-	Rbsr	L_Bnk.AdIcon
+	Rjsr	L_Bnk.AdIcon
 	Rbeq	L_AdBErr
 	move.l	a0,a2
 	move.w	d1,d5
@@ -14412,7 +13567,7 @@ ChSTa:	dc.b 27,"T0",0
 	Rbeq	L_Dia_GetDefault
 ; Une banque normale
 	move.l	a3,-(sp)
-	Rbsr	L_Bnk.GetAdr
+	Rjsr	L_Bnk.GetAdr
 	Rbeq	L_BkNoRes
 	cmp.l	#"Reso",-8(a0)
 	Rbne	L_BkNoRes
@@ -14877,7 +14032,7 @@ OMnEx:	movem.l	(sp)+,d0/a1
 	moveq	#(1<<Bnk_BitData),d1	Flags DATA, FAST
 	move.l	(sp)+,d2		Longueur
 	Rlea	L_BkMenu,0
-	Rbsr	L_Bnk.Reserve
+	Rjsr	L_Bnk.Reserve
 	move.l	a0,a1
 	Rbeq	L_OOfMem
 	Rjsr	L_Bnk.Change
@@ -14964,7 +14119,7 @@ MnLgRX	rts
 	tst.w	ScOn(a5)
 	Rbeq	L_ScNOp
 	move.l	d3,d0
-	Rbsr	L_Bnk.GetAdr
+	Rjsr	L_Bnk.GetAdr
 	Rbeq	L_BkNoRes
 	move.l	a0,d3
 	move.l	-8(a0),d0
@@ -25151,61 +24306,12 @@ NoPac	moveq	#0,d0
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ;	LONGDEC (Long>decimal, signe eventuel, proportionel)
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	LongToDec
-; - - - - - - - - - - - - -
-	movem.l	a1/d1-d4,-(sp)
-	moveq	#-1,d3
-	moveq	#0,d4
-	Rbsr	L_LongToAsc
-	movem.l	(sp)+,a1/d1-d4
-	rts
+	Lib_Int	LongToDec		src/lib/convert.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					Conversion LONG (D0) >>> Ascii (a0)
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	LongToAsc
-; - - - - - - - - - - - - -
-	movem.l	a1,-(sp)
-	tst.l 	d0
-        bpl.s	hexy
-        move.b 	#"-",(a0)+
-        neg.l 	d0
-        bra.s 	hexz
-hexy:   tst 	d4
-        beq.s 	hexz
-        move.b 	#32,(a0)+
-hexz:   tst.l 	d3
-        bmi.s 	hexv
-        neg.l 	d3
-        add.l 	#10,d3
-hexv:   move.l 	#9,d4
-        lea 	mdx(pc),a1
-hxx0:   move.l 	(a1)+,d1     ;table des multiples de dix
-        move.b 	#$ff,d2
-hxx1:   addq.b 	#1,d2
-        sub.l 	d1,d0
-        bcc.s 	hxx1
-        add.l 	d1,d0
-        tst.l 	d3
-        beq.s 	hxx4
-        bpl.s 	hxx3
-        btst 	#31,d4
-        bne.s 	hxx4
-        tst 	d4
-        beq.s 	hxx4
-        tst.b 	d2
-        beq.s 	hxx5
-        bset 	#31,d4
-        bra.s 	hxx4
-hxx3:   subq.l 	#1,d3
-        bra.s 	hxx5
-hxx4:   add 	#48,d2
-        move.b 	d2,(a0)+
-hxx5:   dbra 	d4,hxx0
-	move.l	(sp)+,a1
-        rts
-mdx:    dc.l 	1000000000,100000000,10000000,1000000
-        dc.l 	100000,10000,1000,100,10,1,0
+	Lib_Int	LongToAsc		src/lib/convert.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					Conversion D0.l >>> Ascii hex

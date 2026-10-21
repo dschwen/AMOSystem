@@ -28,3 +28,6 @@
 		move.l	d0,a0
 		move.l	(sp)+,a1
 		rts
+
+		RegRoutine LongToAsc,_lib_long_to_asc
+		RegRoutine LongToDec,_lib_long_to_dec

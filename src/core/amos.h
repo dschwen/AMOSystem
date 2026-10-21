@@ -3,7 +3,9 @@
 // The glue (src/glue.i, CCall) saves the interpreter registers d6-d7/a3-a6
 // in amos_ctx on every entry into C++ and reloads them on the way out, so
 // C++ always sees the current a5 data zone, a3 parameter stack and a6
-// program pointer, and calls back into the assembler run with them.
+// program pointer, and calls back into the assembler run with them. A call
+// into the assembler leaves amos_ctx as it was: what the callee does to
+// those registers does not come back.
 //
 // Rules for C++ that calls back into the assembler:
 // - A library routine may not return: errors reset the stack to the
@@ -31,6 +33,12 @@ struct Ctx {
 // The scratch registers of a call into the assembler
 struct Regs {
     uint32_t d[6];      // d0-d5
+    uint32_t a[3];      // a0-a2
+};
+
+// The registers of a RegRoutine (src/glue.i), changed in place
+struct RegFrame {
+    uint32_t d[8];      // d0-d7
     uint32_t a[3];      // a0-a2
 };
 
