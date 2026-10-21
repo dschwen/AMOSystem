@@ -50,7 +50,8 @@ CCall		MACRO
 ; The whole entry of an instruction or function Name implemented by the C
 ; function cfunction(p1, ..., pn): it gets the n parameters as 32-bit
 ; values (strings as the address of their length word), and its return
-; value becomes the result. result is Int, Float, String or None.
+; value becomes the result. result is Int, Float, String, None or Double
+; (a 64-bit value for d3/d4: a float in either precision).
 LibCall		MACRO
 		LibEntry \1
 		IFNE	\3
@@ -66,11 +67,18 @@ LibCall		MACRO
 		IFNC	"\4","None"
 		move.l	d0,d3
 		ENDC
+		IFC	"\4","Double"
+		move.l	d1,d4
+		ENDC
 		Ret_\4
 		ENDM
 
 Ret_Int		MACRO
 		moveq	#0,d2
+		rts
+		ENDM
+Ret_Double	MACRO
+		moveq	#1,d2
 		rts
 		ENDM
 Ret_Float	MACRO

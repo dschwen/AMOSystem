@@ -1742,24 +1742,11 @@ C_Lib
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					ERRN
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par FnErrn
-; - - - - - - - - - - - - -
-	moveq	#0,d3
-	move.w	ErrorOn(a5),d3
-	beq.s	.Skip
-	subq.w	#1,d3
-.Skip	Ret_Int
+	Lib_Int	FnErrn		src/lib/system.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					=ERR$(b)
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par	FnErrD
-; - - - - - - - - - - - - -
-	move.l	d3,d0
-	addq.l	#1,d0
-	move.l	Ed_RunMessages(a5),a0
-	Rjsr	L_GetMessage
-	move.l	a0,a2
-	Rbra	L_Mes2Chaine
+	Lib_Int	FnErrD		src/lib/system.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					SGN (fmath)
@@ -1775,17 +1762,7 @@ C_Lib
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					=STR$ (fmath)
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par FnStrE			ENTIER
-; - - - - - - - - - - - - -
-	move.l 	d3,d2
-        moveq	#16,d3
-        Rjsr 	L_Demande
-        lea 	2(a0),a0
-        move.l 	d2,d0
-	moveq	#-1,d3         		;proportionnel
-	moveq 	#1,d4         		;avec signe
-        Rjsr 	L_LongToAsc	      	;fait la conversion
-        Rbra 	L_FinBin
+	Lib_Int	FnStrE		src/lib/system.cpp
 ; - - - - - - - - - - - - -
 	Lib_Def FnStrF			FLOAT/DOUBLE
 ; - - - - - - - - - - - - -
@@ -1929,253 +1906,95 @@ C_Lib
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					RADIUS
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InRadian
-; - - - - - - - - - - - - -
-	clr.w	Angle(a5)
-	rts
+	Lib_Int	InRadian		src/lib/system.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					DEGREE
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InDegree
-; - - - - - - - - - - - - -
-	move.w	#-1,Angle(a5)
-	rts
+	Lib_Int	InDegree		src/lib/system.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					FIX
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par	InFix
-; - - - - - - - - - - - - -
-        tst.l 	d3
-        bmi.s 	.ifx2
-        clr 	ExpFlg(a5)
-.ifx0   cmp.l 	#16,d3
-        bcs.s 	.ifx1
-        move 	#-1,d3
-.ifx1   move 	d3,FixFlg(a5)
-	bra.s	.Ret
-.ifx2   neg.l 	d3
-        move.w 	#1,ExpFlg(a5)
-        bra.s 	.ifx0
-.Ret	rts
+	Lib_Int	InFix		src/lib/system.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					RND
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par	FnRnd
-; - - - - - - - - - - - - -
-	tst.l	d3
-	bne.s	Rnd1
-* Ramene le dernier
-	move.l	OldRnd(a5),d3
-	Ret_Int
-* Calcule!
-Rnd1	moveq	#0,d2
-	tst.l	d3
-	bmi.s	Rnd0
-	moveq	#-1,d2
-	bra.s	Rnd0a
-Rnd0	neg.l	d3
-Rnd0a	move.l	#$FFFFFF,d4
-	moveq	#23,d0
-Rnd2	lsr.l	#1,d4
-	cmp.l	d3,d4
-	dbcs	d0,Rnd2
-	roxl.l	#1,d4
-Rnd4	bsr	RRnd
-	move.w	$dff006,d0
-	and.w	d2,d0
-	add.w	d0,d1
-	and.l	d4,d1
-	cmp.l	d3,d1
-	bhi.s	Rnd4
-	move.l	d1,OldRnd(a5)
-	move.l	d1,d3
-	Ret_Int
-RRnd:	movem.l	d2-d3,-(sp)
-	move.l 	Seed(a5),d3
-	move.l	#$bb40e62d,d2
-	Rbsr	L_Mulu32
-	addq.l	#1,d1
-	move.l	d1,Seed(a5)
-	lsr.l	#8,d1
-	movem.l	(sp)+,d2-d3
-	rts
+	Lib_Int	FnRnd		src/lib/system.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					MULTIPLICATION 32 BITS
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	Mulu32
-; - - - - - - - - - - - - -
-	move d2,d1
-        mulu d3,d1
-        swap d2
-        move d2,d0
-        mulu d3,d0
-        swap d0
-        add.l d0,d1
-        swap d3
-        move d2,d0
-        mulu d3,d0
-        swap d2
-        move d2,d0
-        mulu d3,d0
-        swap d0
-        add.l d0,d1
-	rts
+	Lib_Int	Mulu32		src/lib/system.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					RANDOMIZE
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par	InRandom
-; - - - - - - - - - - - - -
-	move.l	d3,Seed(a5)
-	rts
+	Lib_Int	InRandom		src/lib/system.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					TIMER=
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par	InTimer
-; - - - - - - - - - - - - -
-	move.l	d3,T_VblTimer(a5)
-	rts
+	Lib_Int	InTimer		src/lib/system.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					=TIMER
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par	FnTimer
-; - - - - - - - - - - - - -
-	move.l	T_VblTimer(a5),d3
-	Ret_Int
+	Lib_Int	FnTimer		src/lib/system.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					=PI#
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par FnPi
-; - - - - - - - - - - - - -
-	move.l	ValPi(a5),d3
-	move.l	ValPi+4(a5),d4
-	Ret_Float
+	Lib_Int	FnPi		src/lib/system.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					WAIT
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par	InWait
-; - - - - - - - - - - - - -
-InWait	tst.l	d3
-	Rbmi	L_FonCall
-	beq.s	.Event
-	Rbsr	L_Wait_Normal
-	bra.s	.Ret
-.Event	Rbsr	L_Wait_Event
-.Ret	rts
+	Lib_Int	InWait		src/lib/system.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					Wait avec branchement
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def Wait_Normal
-; - - - - - - - - - - - - -
-	add.l	T_VblCount(a5),d3
-.Loop	cmp.l	T_VblCount(a5),d3
-	bls.s	.Ok
-	move.l	d3,-(sp)
-	Rjsr	L_Sys_WaitMul
-	Rjsr	L_Test_Normal
-	move.l	(sp)+,d3
-	bra.s	.Loop
-.Ok	rts
+	Lib_Empty			Wait_Normal, now in src/lib/system.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					Wait sans branchement (extensions)
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	WaitRout
-; - - - - - - - - - - - - -
-	add.l	T_VblCount(a5),d3
-.Loop	cmp.l	T_VblCount(a5),d3
-	bls.s	.Exit
-	move.l	d3,-(sp)
-	Rjsr	L_Test_PaSaut
-	move.l	(sp)+,d3
-	bra.s	.Loop
-.Exit	rts
+	Lib_Int	WaitRout		src/lib/system.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					Wait Event
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	Wait_Event
-; - - - - - - - - - - - - -
-.Loop	Rjsr	L_Sys_WaitMul
-	Rjsr	L_Test_Normal
-	bra.s	.Loop
+	Lib_Empty			Wait_Event, now in src/lib/system.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					Multi Wait
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InMWait
-; - - - - - - - - - - - - -
-	Rjsr	L_Sys_WaitMul
-	Rjsr	L_Test_Normal
-	rts
+	Lib_Int	InMWait		src/lib/system.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					Wait VBL
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InWtVbl
-; - - - - - - - - - - - - -
-	SyCall	WaitVbl
-	Rjsr	L_Test_Normal
-	rts
+	Lib_Int	InWtVbl		src/lib/system.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					Wait Key
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InWtKy
-; - - - - - - - - - - - - -
-.Loop	SyCall	Inkey
-
-	IFNE	Debug>1
-	btst	#6,$BFE001
-	bne.s	.skip
-	moveq	#25,d2
-.wt	SyCall	WaitVbl
-	dbra	d2,.wt
-	Rjsr	L_BugBug
-.skip
-	ENDC
-	tst.l	d1
-	bne.s	.Ok
-	Rjsr	L_Sys_WaitMul
-	Rjsr	L_Test_Normal
-	bra.s	.Loop
-.Ok	rts
+	Lib_Int	InWtKy		src/lib/system.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					KEY SPEED delai,vitesse
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par	InKeySpeed
-; - - - - - - - - - - - - -
-	move.l	d3,d2
-	Rbmi	L_FonCall
-	move.l	(a3)+,d1
-	Rbmi	L_FonCall
-	move.l	Buffer(a5),a1
-	SyCall	KeySpeed
-	rts
+	Lib_Int	InKeySpeed		src/lib/system.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					PARAM string
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par FnParamS
-; - - - - - - - - - - - - -
-	move.l	ParamC(a5),d3
-	Ret_String
+	Lib_Int	FnParamS		src/lib/system.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					PARAM entier
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par FnParamE
-; - - - - - - - - - - - - -
-	move.l	ParamE(a5),d3
-	Ret_Int
+	Lib_Int	FnParamE		src/lib/system.cpp
 
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -2295,367 +2114,77 @@ InWait	tst.l	d3
 ; 					TRANSFERT DE MEMOIRE
 ;	A0>A1, D0 octets
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	TransMem
-; - - - - - - - - - - - - -
-	move.w 	d0,d1
-
-	move.w	a0,d2
-	btst	#0,d2
-	bne.s	trimp
-	move.w	a1,d2
-	btst	#0,d2
-	bne.s	trimp
-	btst	#0,d0
-	bne.s	trimp
-
-* Copy rapide
-	and.w	#$0F,d1
-        cmp.l 	a0,a1
-        bcs.s 	trsmm
-; a1>a0: remonter le programme
-        add.l 	d0,a0
-        add.l 	d0,a1
-        movem.l a0/a1,-(sp)
-        lsr.l 	#4,d0         ;nombre de mots longs
-        beq.s 	trsmm2
-trsmm1: move.l 	-(a0),-(a1)
-	move.l 	-(a0),-(a1)
-	move.l 	-(a0),-(a1)
-	move.l 	-(a0),-(a1)  ;transfert mots longs
-	subq.l	#1,d0
-	bne.s	trsmm1
-trsmm2: subq.w 	#1,d1
-        bmi.s 	trsmm3b
-trsmm3: move.b 	-(a0),-(a1)  ;transfert octets
-	dbra	d1,trsmm3
-trsmm3b:movem.l	(sp)+,a0/a1 ;pointe la fin des zones
-        rts
-; a0<a1: descendre le programme
-trsmm:  lsr.l 	#4,d0
-        beq.s 	trsmm5
-trsmm4: move.l 	(a0)+,(a1)+
-	move.l	(a0)+,(a1)+
-	move.l	(a0)+,(a1)+
-	move.l	(a0)+,(a1)+
-	subq.l	#1,d0
-	bne.s	trsmm4
-trsmm5: subq.w	#1,d1
-        bmi.s 	trsmm7
-trsmm6: move.b 	(a0)+,(a1)+
-	dbra	d1,trsmm6
-trsmm7: rts
-
-* Copie lente
-trimp	and.w	#$03,d1
-	cmp.l 	a0,a1
-        bcs.s 	triup
-; a1>a0: remonter le programme
-        add.l 	d0,a0
-        add.l 	d0,a1
-        movem.l a0/a1,-(sp)
-        lsr.l 	#2,d0
-        beq.s 	trsmm2
-.trsmm1 move.b 	-(a0),-(a1)
-	move.b 	-(a0),-(a1)
-	move.b 	-(a0),-(a1)
-	move.b 	-(a0),-(a1)
-	subq.l	#1,d0
-	bne.s	.trsmm1
-.trsmm2 subq.w 	#1,d1
-        bmi.s 	.trsmm3b
-.trsmm3 move.b 	-(a0),-(a1)
-	dbra	d1,.trsmm3
-.trsmm3b
-	movem.l	(sp)+,a0/a1
-        rts
-; Vers le bas
-triup	lsr.l 	#2,d0
-        beq.s 	.trsmm5
-.trsmm4 move.b 	(a0)+,(a1)+
-	move.b	(a0)+,(a1)+
-	move.b	(a0)+,(a1)+
-	move.b	(a0)+,(a1)+
-	subq.l	#1,d0
-	bne.s	.trsmm4
-.trsmm5 subq.w	#1,d1
-        bmi.s 	.trsmm7
-.trsmm6 move.b 	(a0)+,(a1)+
-	dbra	d1,.trsmm6
-.trsmm7 rts
+	Lib_Int	TransMem		src/lib/memory.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					COPY
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par	InCopy
-; - - - - - - - - - - - - -
-	move.l	d3,a1
-	move.l	(a3)+,d0
-	move.l	(a3)+,a0
-	sub.l	a0,d0
-	Rbls	L_FonCall
-	Rbsr	L_TransMem
-	rts
+	Lib_Int	InCopy		src/lib/memory.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					FILL
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par	InFill
+	Lib_Int	InFill		src/lib/memory.cpp
 ; - - - - - - - - - - - - -
-	move.l	d3,d4
-	move.l	(a3)+,d2
-	move.l	(a3)+,d0
-	Rjsr	L_Bnk.OrAdr
-	Rbsr	L_FillBis
-	rts
-; - - - - - - - - - - - - -
-	Lib_Def	FillBis
-; - - - - - - - - - - - - -
-	sub.l 	a0,d2
-        Rbcs 	L_FonCall
-        move.w 	d2,d1
-        lsr.l 	#4,d2         	;travaille par mot long
-        beq.s 	fil2
-	subq.w	#1,d2
-fil1:   move.l 	d4,(a0)+
-	move.l	d4,(a0)+
-	move.l	d4,(a0)+
-	move.l	d4,(a0)+
-	dbra	d2,fil1
-fil2:   and 	#$000F,d1
-        beq.s 	fil4
-	subq.w	#1,d1
-fil3:   rol.l 	#8,d4
-        move.b 	d4,(a0)+
-	dbra	d1,fil3
-fil4:  	rts
+	Lib_Empty			FillBis, now in src/lib/memory.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					HUNT
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par	FnHunt
-; - - - - - - - - - - - - -
-	move.l	d3,a2
-	move.w	(a2)+,d2
-	Rbsr	L_ChVerBuf
-        move.l 	(a3)+,d4     	;adresse de fin
-	move.l	(a3)+,d0
-	Rjsr	L_Bnk.OrAdr	;adresse de recherche
-        subq.w	#1,d2
-        bcs.s 	ht3           	;si chaine nulle: ramene zero!
-        move.l 	Buffer(a5),d3
-        subq.l 	#1,a0
-ht1:    addq.l 	#1,a0        	;passe a l'octet suivant
-        move.l 	a0,a1
-        cmp.l 	d4,a0         	;pas trouve!
-        bcc.s 	ht3
-        move.l 	d3,a2        	;pointe la chaine recherchee
-        move.w 	d2,d1
-ht2:    cmpm.b 	(a2)+,(a1)+
-        bne.s 	ht1
-        dbra 	d1,ht2
-        move.l 	a0,d3        	;TROUVE!
-	bra.s	ht4
-ht3:    moveq	#0,d3
-ht4	Ret_Int
+	Lib_Int	FnHunt		src/lib/memory.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					=AREG=
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par	InAReg
+	Lib_Int	InAReg		src/lib/memory.cpp
 ; - - - - - - - - - - - - -
-	moveq	#7,d0
-	moveq	#8,d1
-	move.l	(a3)+,d2
-	Rbra	L_IReg
-; - - - - - - - - - - - - -
-	Lib_Par	FnAReg
-; - - - - - - - - - - - - -
-	moveq	#7,d0
-	moveq	#8,d1
-	move.l	d3,d2
-	Rbra	L_FReg
+	Lib_Int	FnAReg		src/lib/memory.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					=DREG=
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par	InDReg
+	Lib_Int	InDReg		src/lib/memory.cpp
 ; - - - - - - - - - - - - -
-	moveq	#8,d0
-	moveq	#0,d1
-	move.l	(a3)+,d2
-	Rbra	L_IReg
-; - - - - - - - - - - - - -
-	Lib_Par	FnDReg
-; - - - - - - - - - - - - -
-	moveq	#8,d0
-	moveq	#0,d1
-	move.l	d3,d2
-	Rbra	L_FReg
+	Lib_Int	FnDReg		src/lib/memory.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					Routines AREG / DREG
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	IReg
+	Lib_Empty			IReg, now in src/lib/memory.cpp
 ; - - - - - - - - - - - - -
-	Rbsr	L_RReg
-	move.l	d3,(a0)
-	rts
+	Lib_Empty			FReg, now in src/lib/memory.cpp
 ; - - - - - - - - - - - - -
-	Lib_Def	FReg
-; - - - - - - - - - - - - -
-	Rbsr	L_RReg
-	move.l	(a0),d3
-	Ret_Int
-; - - - - - - - - - - - - -
-	Lib_Def	RReg
-; - - - - - - - - - - - - -
-	cmp.l	d0,d2
-	Rbcc	L_FonCall
-	add.w	d1,d2
-	lsl.w	#2,d2
-	lea	CallReg(a5),a0
-	lea	0(a0,d2.w),a0
-	rts
+	Lib_Empty			RReg, now in src/lib/memory.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					POKEDOKELOKE ameliores
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par	InPoke
+	Lib_Int	InPoke		src/lib/memory.cpp
 ; - - - - - - - - - - - - -
-	move.l	(a3)+,a0
-	move.b	d3,(a0)
-	rts
+	Lib_Int	InDoke		src/lib/memory.cpp
 ; - - - - - - - - - - - - -
-	Lib_Par	InDoke
-; - - - - - - - - - - - - -
-	move.l	(a3)+,d0
-	move.l	d0,a0
-	btst	#0,d0
-	bne.s	.Skip
-	move.w	d3,(a0)
-	rts
-.Skip	move.b	d3,1(a0)
-	lsr.w	#8,d3
-	move.b	d3,(a0)
-	rts
-; - - - - - - - - - - - - -
-	Lib_Par	InLoke
-; - - - - - - - - - - - - -
-	move.l	(a3)+,d0
-	move.l	d0,a0
-	btst	#0,d0
-	bne.s	.Skip
-	move.l	d3,(a0)
-	rts
-.Skip	addq.l	#4,a0
-	move.b	d3,-(a0)
-	ror.l	#8,d3
-	move.b	d3,-(a0)
-	ror.l	#8,d3
-	move.b	d3,-(a0)
-	ror.w	#8,d3
-	move.b	d3,-(a0)
-	rts
+	Lib_Int	InLoke		src/lib/memory.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					PEEKDEEKLEEK ameliores
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par	FnPeek
+	Lib_Int	FnPeek		src/lib/memory.cpp
 ; - - - - - - - - - - - - -
-	move.l	d3,a0
-	moveq	#0,d3
-	move.b	(a0),d3
-	Ret_Int
+	Lib_Int	FnDeek		src/lib/memory.cpp
 ; - - - - - - - - - - - - -
-	Lib_Par	FnDeek
-; - - - - - - - - - - - - -
-	move.l	d3,a0
-	btst	#0,d3
-	bne.s	.Skip
-	moveq	#0,d3
-	move.w	(a0),d3
-	rts
-.Skip	moveq	#0,d3
-	move.b	(a0)+,d3
-	lsl.w	#8,d3
-	move.b	(a0),d3
-	rts
-; - - - - - - - - - - - - -
-	Lib_Par	FnLeek
-; - - - - - - - - - - - - -
-	move.l	d3,a0
-	btst	#0,d3
-	bne.s	.Skip
-	move.l	(a0),d3
-	rts
-.Skip	move.b	(a0)+,d3
-	rol.w	#8,d3
-	move.b	(a0)+,d3
-	rol.l	#8,d3
-	move.b	(a0)+,d3
-	rol.l	#8,d3
-	move.b	(a0)+,d3
-	rts
+	Lib_Int	FnLeek		src/lib/memory.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					POKE$
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par	InPokeD
-; - - - - - - - - - - - - -
-	move.l	d3,a2
-	move.l	(a3)+,a0
-	move.w	(a2)+,d2
-	beq.s	.Skip
-.Loop	move.b	(a2)+,(a0)+
-	subq.w	#1,d2
-	bne.s	.Loop
-.Skip	rts
+	Lib_Int	InPokeD		src/lib/memory.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					=PEEK$
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par	FnPeekD2
+	Lib_Int	FnPeekD2		src/lib/memory.cpp
 ; - - - - - - - - - - - - -
-	moveq	#-1,d2
-	Rbra	L_FPeekD
+	Lib_Int	FnPeekD3		src/lib/memory.cpp
 ; - - - - - - - - - - - - -
-	Lib_Par	FnPeekD3
-; - - - - - - - - - - - - -
-	moveq	#-1,d2
-	move.l	d3,a0
-	move.l	(a3)+,d3
-	move.w	(a0)+,d0
-	Rbeq	L_FPeekD
-	moveq	#0,d2
-	move.b	(a0),d2
-	Rbra	L_FPeekD
-; - - - - - - - - - - - - -
-	Lib_Par	FPeekD
-; - - - - - - - - - - - - -
-	move.l	d3,d4
-	cmp.l	#String_Max,d4
-	bcs.s	.Ln
-	move.w	#String_Max,d4
-.Ln	move.l	(a3)+,a2
-	move.l	a2,a0
-; Compte le nombre de caracteres
-	moveq	#-1,d3
-.Cnt	addq.l	#1,d3
-	cmp.w	d4,d3
-	bcc.s	.COut
-	move.b	(a0)+,d0
-	tst.l	d2
-	bmi.s	.Cnt
-	cmp.b	d0,d2
-	bne.s	.Cnt
-.COut	tst.l	d3
-	Rbeq	L_Ret_ChVide
-	Rjsr	L_Demande
-	move.w	d3,(a0)+
-	move.l	d3,d0
-	move.l	a1,d3
-.Copy	move.b	(a2)+,(a0)+
-	subq.w	#1,d0
-	bne.s	.Copy
-	Rbra	L_Set_HiChaine
+	Lib_Empty			FPeekD, now in src/lib/memory.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					Routine LIB CLOSE ALL
@@ -4747,7 +4276,7 @@ IRen1	move.b	(a0)+,(a1)+
 	move.l	12(a0),d3
 	sub.l	16(a0),d3
 	move.l	20(a0),d2
-	Rbsr	L_Mulu32
+	Rjsr	L_Mulu32
 	move.l	d1,d3
 	Rbsr	L_LockFree
 	Ret_Int
@@ -4775,7 +4304,7 @@ IRen1	move.b	(a0)+,(a1)+
 	move.l	12(a2),d3
 	sub.l	16(a2),d3
 	move.l	20(a2),d2
-	Rbsr	L_Mulu32
+	Rjsr	L_Mulu32
 	move.l	d1,d3
 	moveq	#0,d2
 	move.l	28(a2),d0
