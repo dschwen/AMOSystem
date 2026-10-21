@@ -2189,40 +2189,16 @@ C_Lib
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					Routine LIB CLOSE ALL
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	Lib.Close
-; - - - - - - - - - - - - -
-	moveq	#Lib_Max,d2
-.Loop	move.l	d2,d0
-	Rbsr	L_Lib.CloseD0
-	dbra	d2,.Loop
-	rts
+	Lib_Int	Lib.Close		src/lib/devices.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					Routine Lib Close D0
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	Lib.CloseD0
-; - - - - - - - - - - - - -
-	Rbsr	L_Lib.GetA2
-	move.l	(a2),d0
-	beq.s	.Skip
-	clr.l	(a2)
-	move.l	d0,a1
-	move.l	a6,-(sp)
-	move.l	$4.w,a6
-	jsr	_LVOCloseLibrary(a6)
-	move.l	(sp)+,a6
-.Skip	rts
+	Lib_Int	Lib.CloseD0		src/lib/devices.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					Retourne l'adresse de la librarie
 ;	D0=	Numero canal
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	Lib.GetA2
-; - - - - - - - - - - - - -
-	cmp.l	#Lib_Max,d0
-	Rbhi	L_FonCall
-	lsl.w	#2,d0
-	lea	Lib_List(a5),a2
-	add.w	d0,a2
-	rts
+	Lib_Int	Lib.GetA2		src/lib/devices.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					Appel librarie A0 / D3=fonction
@@ -2267,48 +2243,14 @@ C_Lib
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					LIB OPEN canal,"lib",flags
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par	InLibOpen
-; - - - - - - - - - - - - -
-	move.l	(a3)+,a2
-	move.w	(a2)+,d2
-	Rbeq	L_FonCall
-	Rbsr	L_ChVerBuf
-	move.l	Buffer(a5),a1
-	move.l	(a3)+,d0
-	Rbsr	L_Lib.GetA2
-	tst.l	(a2)
-	bne.s	.Err0
-	move.l	d3,d0
-	move.l	a6,-(sp)
-	move.l	$4.w,a6
-	jsr	_LVOOpenLibrary(a6)
-	move.l	(sp)+,a6
-	tst.l	d0
-	beq.s	.Err1
-	move.l	d0,(a2)
-; Branche la routine de fermeture
-	lea	.Struc(pc),a1
-	lea	Sys_ClearRoutines(a5),a2
-	SyCall	AddRoutine
-	rts
-.Err0	move.w	#168,d0			Lib already opened
-	Rbra	L_GoError
-.Err1	move.w	#170,d0			Cant open library
-	Rbra	L_GoError
-.Struc	dc.l	0			Structure pour CLEARVAR
-	Rbra	L_Lib.Close
+	Lib_Int	InLibOpen		src/lib/devices.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					LIB CLOSE [n]
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InLibClose0
+	Lib_Int	InLibClose0		src/lib/devices.cpp
 ; - - - - - - - - - - - - -
-	Rbra	L_Lib.Close
-; - - - - - - - - - - - - -
-	Lib_Par	InLibClose1
-; - - - - - - - - - - - - -
-	move.l	d3,d0
-	Rbra	L_Lib.CloseD0
+	Lib_Int	InLibClose1		src/lib/devices.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					=LIB CALL lib,function
@@ -2316,7 +2258,7 @@ C_Lib
 	Lib_Par	FnLibCall
 ; - - - - - - - - - - - - -
 	move.l	(a3)+,d0
-	Rbsr	L_Lib.GetA2
+	Rjsr	L_Lib.GetA2
 	move.l	(a2),a0
 	bne.s	.Ok
 	move.w	#169,d0			Library not opened
@@ -2326,26 +2268,14 @@ C_Lib
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					=LIB BASE
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par	FnLibBase
-; - - - - - - - - - - - - -
-	move.l	d3,d0
-	Rbsr	L_Lib.GetA2
-	move.l	(a2),d3
-	Ret_Int
+	Lib_Int	FnLibBase		src/lib/devices.cpp
 
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					Routine dev: pointe le dev en A2
 ;	D0= numero canal
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	Dev.GetA2
-; - - - - - - - - - - - - -
-	cmp.l	#Dev_Max,d0
-	Rbhi	L_FonCall
-	mulu	#12,d0
-	lea	Dev_List(a5),a2
-	add.l	d0,a2
-	rts
+	Lib_Int	Dev.GetA2		src/lib/devices.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					Routine: Ouvre un device
 ;	A0=	nom
@@ -2357,565 +2287,112 @@ C_Lib
 ;	D4=	Number of errors
 ;	D5=	Flags dans structure IO
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	Dev.Open
-; - - - - - - - - - - - - -
-	movem.l	a0/d0/d1/d2,-(sp)
-	tst.b	8(a2)
-	bne	.AOp
-; Branche la routine de fermeture
-	movem.l	a0-a2/d0-d1,-(sp)
-	lea	.Struc(pc),a1
-	lea	Sys_ClearRoutines(a5),a2
-	SyCall	AddRoutine
-	movem.l	(sp)+,a0-a2/d0-d1
-; Store error data
-	clr.b	9(a2)
-	move.b	d3,10(a2)
-	move.b	d4,11(a2)
-; Opens communication port
-	clr.l	-(sp)
-	clr.l	-(sp)
-	Rbsr	L_CreatePort
-	addq.l	#8,sp
-	move.l	d0,4(a2)
-	beq	.Err
-; Opens IO structure
-	move.l	(sp),-(sp)
-	move.l	d0,-(sp)
-	Rbsr	L_CreateExtIO
-	addq.l	#8,sp
-	move.l	d0,(a2)
-	beq.s	.Err
-; Des flags?
-	move.l	d0,a1
-	tst.l	d5
-	beq.s	.Paf
-	swap	d5
-	lea	0(a1,d5.w),a0
-	swap	d5
-	move.b	d5,(a0)
-; Ouvre le device
-.Paf	move.l	12(sp),a0
-	move.l	4(sp),d0
-	move.l	8(sp),d1
-	move.l	a6,-(sp)
-	move.l	$4.w,a6
-	jsr	_LVOOpenDevice(a6)
-	move.l	(sp)+,a6
-	tst.l	d0
-	bne.s	.Err
-	move.b	#1,8(a2)
-	lea	16(sp),sp
-	rts
-.Err	move.w	d0,-(sp)
-	Rbsr	L_Dev.CloseA2
-	move.w	(sp)+,d0
-	Rbra	L_Dev.Error
-.AOp	move.w	#140,d0
-	Rbra	L_GoError
-.Struc	dc.l	0			Structure pour CLEARVAR
-	Rbra	L_Dev.Close
+	Lib_Int	Dev.Open		src/lib/devices.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					Routine Device Close All
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	Dev.Close
-; - - - - - - - - - - - - -
-	move.l	d2,-(sp)
-	moveq	#Dev_Max,d2
-.Loop	move.l	d2,d0
-	Rbsr	L_Dev.GetA2
-	Rbsr	L_Dev.CloseA2
-	subq.w	#1,d2
-	bpl.s	.Loop
-	move.l	(sp)+,d2
-	rts
+	Lib_Int	Dev.Close		src/lib/devices.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					Routine: ferme un device
 ;	A2=	Pointeur structure
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	Dev.CloseA2
-; - - - - - - - - - - - - -
-	movem.l	a0-a1/d0-d1/a6,-(sp)
-	move.l	$4.w,a6
-; AbortIO
-	Rbsr	L_Dev.AbortIO
-; Close the device
-.Skip1	tst.b	8(a2)
-	beq.s	.Skip2
-	clr.b	8(a2)
-	move.l	(a2),a1
-	jsr	_LVOCloseDevice(a6)
-; Delete IO structure
-.Skip2	tst.l	(a2)
-	beq.s	.Skip3
-	move.l	(a2),-(sp)
-	clr.l	(a2)
-	Rbsr	L_DeleteExtIO
-	addq.l	#4,sp
-; Remove message port
-.Skip3	tst.l	4(a2)
-	beq.s	.Skip4
-	move.l	4(a2),-(sp)
-	clr.l	4(a2)
-	Rbsr	L_DeletePort
-	addq.l	#4,sp
-.Skip4	movem.l	(sp)+,d0-d1/a0-a1/a6
-	rts
+	Lib_Int	Dev.CloseA2		src/lib/devices.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					Routine: retourne l'adresse IO
 ;	A2= pointeur device
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	Dev.GetIO
-; - - - - - - - - - - - - -
-	tst.b	8(a2)
-	beq.s	.Err
-	move.l	(a2),a1
-	rts
-.Err	move.w	#141,d0			Device not opened
-	Rbra	L_GoError
+	Lib_Int	Dev.GetIO		src/lib/devices.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					Routine: SEND
 ;	A2= 	Base device
 ;	D0=	Numero fonction
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	Dev.SendIO
-; - - - - - - - - - - - - -
-	Rbsr	L_Dev.GetIO
-	move.l	a6,-(sp)
-	move.l	$4.w,a6
-	movem.l	a1/d0,-(sp)
-	cmp.b	#2,9(a2)		Une fonction deja utilisee?
-	bne.s	.Skip
-	jsr	_LVOWaitIO(a6)
-	movem.l	(sp),a1/d0
-.Skip	move.w	d0,28(a1)		IO_COMMAND
-	jsr	_LVOSendIO(a6)
-	movem.l	(sp)+,a1/d1
-	move.l	(sp)+,a6
-	move.b	#2,9(a2)		Une fonction lancee, non stoppee...
-	rts
+	Lib_Int	Dev.SendIO		src/lib/devices.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					Routine DO
 ;	A2= 	Base device
 ;	D0=	Numero fonction
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	Dev.DoIO
-; - - - - - - - - - - - - -
-	Rbsr	L_Dev.GetIO
-	move.l	a6,-(sp)
-	move.l	$4.w,a6
-	movem.l	a1/d0,-(sp)
-	cmp.b	#2,9(a2)		Une fonction deja utilisee?
-	bne.s	.Skip
-	jsr	_LVOWaitIO(a6)
-	movem.l	(sp),a1/d0
-.Skip	move.w	d0,28(a1)		IO_COMMAND
-	jsr	_LVODoIO(a6)
-	movem.l	(sp)+,a1/d1
-	move.l	(sp)+,a6
-	move.b	#1,9(a2)		Une fonction faite!
-	tst.w	d0
-	Rbne	L_Dev.Error
-	rts
+	Lib_Int	Dev.DoIO		src/lib/devices.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					Routine Check io
 ;	A2= 	Base device
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	Dev.CheckIO
-; - - - - - - - - - - - - -
-	Rbsr	L_Dev.GetIO
-	tst.b	9(a2)			Une fonction deja effectuee?
-	bne.s	.Deja
-	moveq	#-1,d0			Simule le TRUE
-	rts
-.Deja	movem.l	a1/a6,-(sp)
-	move.l	$4.w,a6
-	jsr	_LVOCheckIO(a6)
-	movem.l	(sp)+,a1/a6
-	rts
+	Lib_Int	Dev.CheckIO		src/lib/devices.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					Abort IO
 ;	A2=	Base device
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	Dev.AbortIO
-; - - - - - - - - - - - - -
-	movem.l	a1/a6,-(sp)
-	move.l	$4.w,a6
-	tst.b	8(a2)
-	beq.s	.Skip
-	tst.b	9(a2)
-	beq.s	.Skip
-;	move.l	(a2),a1
-;	jsr	_LVOCheckIO(a6)
-;	tst.l	d0
-;	bne.s	.Skip
-	move.l	(a2),a1
-	jsr	_LVOAbortIO(a6)
-	move.l	(a2),a1
-	jsr	_LVOWaitIO(a6)
-.Skip	movem.l	(sp)+,a1/a6
-	rts
+	Lib_Int	Dev.AbortIO		src/lib/devices.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					Appel des erreurs device
 ;	D0=	Erreur Device
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	Dev.Error
-; - - - - - - - - - - - - -
-	move.w	d0,d1
-	bpl.s	.DErr
-; Erreur IO
-	move.w	#142,d0		Cannot be opened
-	cmp.w	#-1,d1
-	Rbeq	L_GoError
-	move.w	#143,d0		Command not supported
-	cmp.w	#-3,d1
-	Rbeq	L_GoError
-	move.w	#144,d0		Device error
-	Rbra	L_GoError
-; Erreur device
-.DErr	moveq	#0,d1
-	move.b	11(a2),d1
-	cmp.w	d1,d0
-	bhi.s	.Gen
-	move.b	10(a2),d1
-	add.w	d1,d0
-	subq.w	#1,d0
-	Rbra	L_GoError
-.Gen	move.w	#144,d0
-	Rbra	L_GoError
+	Lib_Int	Dev.Error		src/lib/devices.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					DEVICE OPEN c,n$,l,unit,flags
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par	InDevOpen
-; - - - - - - - - - - - - -
-	move.l	2*4(a3),a2		Chaine
-	move.w	(a2)+,d2
-	Rbeq	L_FonCall
-	Rbsr	L_ChVerBuf
-	move.l	Buffer(a5),a0
-	move.l	3*4(a3),d0
-	Rbsr	L_Dev.GetA2
-	move.l	d3,d2			Flags
-	move.l	(a3)+,d1		Unit
-	move.l	(a3)+,d0		Length
-	Rble	L_FonCall
-	addq.l	#8,a3
-	move.w	#145,d3			1 seul message d'erreur
-	moveq	#1,d4
-	moveq	#0,d5
-	Rbra	L_Dev.Open
+	Lib_Int	InDevOpen		src/lib/devices.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					DEVICE CLOSE
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InDevClose0
-; - - - - - - - - - - - - -
-	Rbra	L_Dev.Close
+	Lib_Int	InDevClose0		src/lib/devices.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					DEVICE CLOSE D
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par	InDevClose1
-; - - - - - - - - - - - - -
-	move.l	d3,d0
-	Rbsr	L_Dev.GetA2
-	Rbra	L_Dev.CloseA2
+	Lib_Int	InDevClose1		src/lib/devices.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					=DEV BASE(n)
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par	FnDevBase
-; - - - - - - - - - - - - -
-	move.l	d3,d0
-	Rbsr	L_Dev.GetA2
-	move.l	(a2),d3
-	Ret_Int
+	Lib_Int	FnDevBase		src/lib/devices.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					DEV DO dev,command
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par	InDevDo
-; - - - - - - - - - - - - -
-	move.l	(a3)+,d0
-	Rbsr	L_Dev.GetA2
-	move.l	d3,d0
-	Rbra	L_Dev.DoIO
+	Lib_Int	InDevDo		src/lib/devices.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					DEV SEND dev,command
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par	InDevSend
-; - - - - - - - - - - - - -
-	move.l	(a3)+,d0
-	Rbsr	L_Dev.GetA2
-	move.l	d3,d0
-	Rbra	L_Dev.SendIO
+	Lib_Int	InDevSend		src/lib/devices.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					DEV ABORT dev
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par	InDevAbort
-; - - - - - - - - - - - - -
-	move.l	d3,d0
-	Rbsr	L_Dev.GetA2
-	Rbra	L_Dev.AbortIO
+	Lib_Int	InDevAbort		src/lib/devices.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					=DEV CHECK(dev)
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par	FnDevCheck
-; - - - - - - - - - - - - -
-	move.l	d3,d0
-	Rbsr	L_Dev.GetA2
-	Rbsr	L_Dev.CheckIO
-	move.l	d0,d3
-	Ret_Int
+	Lib_Int	FnDevCheck		src/lib/devices.cpp
 
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					EXEC "Program Name"
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par	InExec
-; - - - - - - - - - - - - -
-	move.l	d3,a2
-	move.w	(a2)+,d2
-	Rbeq	L_FonCall
-	Rbsr	L_ChVerBuf
-	move.l	a6,-(sp)
-; Ouvre le device
-	lea	.Nil(pc),a1
-	move.l	a1,d1
-	move.l	DosBase(a5),a6
-	move.l	#1005,d2
-	jsr	_LVOOpen(a6)
-	move.l	d0,d5
-; Appelle le programme
-	move.l	Buffer(a5),d1
-	move.l	d5,d2
-	move.l	d5,d3
-	move.l	DosBase(a5),a6
-	jsr	_LVOExecute(a6)
-; Ferme le device
-	move.l	d0,d3
-	move.l	d5,d1
-	jsr	_LVOClose(a6)
-; Fini!
-.Skip	move.l	(sp)+,a6
-	tst.l	d3
-	bne.s	*+8
-	Rjmp	L_DiskError
-	rts
-.Nil	dc.b	"NIL:",0
-	Even
+	Lib_Int	InExec		src/lib/devices.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					CODE AMIGA.LIB
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	CreatePort
+	Lib_Int	CreatePort		src/lib/devices.cpp
 ; - - - - - - - - - - - - -
-	move.l	#_CreatePort-_AmigaJmp,d0
-	Rbra	L_AmigaLib
+	Lib_Int	DeletePort		src/lib/devices.cpp
 ; - - - - - - - - - - - - -
-	Lib_Def	DeletePort
+	Lib_Int	CreateExtIO		src/lib/devices.cpp
 ; - - - - - - - - - - - - -
-	move.l	#_DeletePort-_AmigaJmp,d0
-	Rbra	L_AmigaLib
+	Lib_Int	DeleteExtIO		src/lib/devices.cpp
 ; - - - - - - - - - - - - -
-	Lib_Def	CreateExtIO
-; - - - - - - - - - - - - -
-	move.l	#_CreateExtIO-_AmigaJmp,d0
-	Rbra	L_AmigaLib
-; - - - - - - - - - - - - -
-	Lib_Def	DeleteExtIO
-; - - - - - - - - - - - - -
-	move.l	#_DeleteExtIO-_AmigaJmp,d0
-	Rbra	L_AmigaLib
-; - - - - - - - - - - - - -
-	Lib_Def	AmigaLib
-; - - - - - - - - - - - - -
-_AmigaJmp
-	jmp	_AmigaJmp(pc,d0.l)
-_CreatePort
-	MOVEM.L	D2-7/A2,-(A7)
-	MOVE.L	$20(A7),D4
-	MOVE.B	$27(A7),D3
-	MOVE.L	#$FFFFFFFF,-(A7)
-	BSR	L7C7DB14
-	MOVE.L	D0,D5
-	MOVE.L	D5,D6
-	MOVEQ	#-1,D2
-	CMP.L	D5,D2
-	ADDQ.L	#4,A7
-	BNE.S	L7C7D97A
-	MOVEQ	#0,D0
-	BRA	L7C7D9E6
-
-L7C7D97A	MOVE.L	#$10001,-(A7)
-	PEA	$22.W
-	BSR	L7C7DAD0
-	MOVEA.L	D0,A2
-	EXG	D7,A2
-	TST.L	D7
-	EXG	D7,A2
-	ADDQ.L	#8,A7
-	BNE.S	L7C7D9A4
-	MOVE.L	D6,-(A7)
-	BSR	L7C7DB28
-	MOVEQ	#0,D0
-	ADDQ.L	#4,A7
-	BRA.S	L7C7D9E6
-L7C7D9A4	MOVE.L	D4,$A(A2)
-	MOVE.B	D3,9(A2)
-	MOVE.B	#4,8(A2)
-	CLR.B	$E(A2)
-	MOVE.B	D6,$F(A2)
-	CLR.L	-(A7)
-	BSR	L7C7DB00
-	MOVE.L	D0,$10(A2)
-	TST.L	D4
-	ADDQ.L	#4,A7
-	BEQ.S	L7C7D9D8
-	MOVE.L	A2,-(A7)
-	BSR	L7C7DB3C
-	ADDQ.L	#4,A7
-	BRA.S	L7C7D9E4
-L7C7D9D8	PEA	$14(A2)
-	BSR	_NewList
-	ADDQ.L	#4,A7
-L7C7D9E4	MOVE.L	A2,D0
-L7C7D9E6	MOVEM.L	(A7)+,D2-7/A2
-	RTS
-
-_DeletePort
-	MOVEM.L	D2/A2,-(A7)
-	MOVEA.L	$C(A7),A2
-	TST.L	$A(A2)
-	BEQ.S	L7C7DA04
-	MOVE.L	A2,-(A7)
-	BSR	L7C7DB50
-	ADDQ.L	#4,A7
-L7C7DA04	MOVE.B	#$FF,8(A2)
-	MOVEQ	#-1,D2
-	MOVE.L	D2,$14(A2)
-	MOVEQ	#0,D2
-	MOVE.B	$F(A2),D2
-	MOVE.L	D2,-(A7)
-	BSR	L7C7DB28
-	PEA	$22.W
-	MOVE.L	A2,-(A7)
-	BSR	L7C7DAE8
-	LEA	$C(A7),A7
-	MOVEM.L	(A7)+,D2/A2
-	RTS
-_CreateExtIO
-	MOVEM.L	D2-4,-(A7)
-	MOVE.L	$10(A7),D2
-	MOVE.L	$14(A7),D3
-	TST.L	D2
-	BNE.S	L7C7DA54
-	MOVEQ	#0,D0
-	BRA.S	L7C7DA82
-L7C7DA54	MOVE.L	#$10001,-(A7)
-	MOVE.L	D3,-(A7)
-	BSR	L7C7DAD0
-	MOVEA.L	D0,A0
-	EXG	D4,A0
-	TST.L	D4
-	EXG	D4,A0
-	ADDQ.L	#8,A7
-	BNE.S	L7C7DA72
-	MOVEQ	#0,D0
-	BRA.S	L7C7DA82
-L7C7DA72	MOVE.B	#5,8(A0)
-	MOVE.W	D3,$12(A0)
-	MOVE.L	D2,$E(A0)
-	MOVE.L	A0,D0
-L7C7DA82	MOVEM.L	(A7)+,D2-4
-	RTS
-
-_DeleteExtIO
-	MOVEM.L	D2-3,-(A7)
-	MOVEA.L	$C(A7),A0
-	EXG	D3,A0
-	TST.L	D3
-	EXG	D3,A0
-	BEQ	L7C7DABE
-	MOVE.B	#$FF,8(A0)
-	MOVEQ	#-1,D2
-	MOVE.L	D2,$14(A0)
-	MOVEQ	#-1,D2
-	MOVE.L	D2,$18(A0)
-	MOVEQ	#0,D2
-	MOVE.W	$12(A0),D2
-	MOVE.L	D2,-(A7)
-	MOVE.L	A0,-(A7)
-	BSR	L7C7DAE8
-	ADDQ.L	#8,A7
-L7C7DABE	MOVEM.L	(A7)+,D2-3
-	RTS
-L7C7DAD0
-	MOVE.L	A6,-(A7)
-	MOVEA.L	$4.w,A6
-	MOVEM.L	8(A7),D0-1
-	JSR	-$C6(A6)
-	MOVEA.L	(A7)+,A6
-	RTS
-L7C7DAE8
-	MOVE.L	A6,-(A7)
-	MOVEA.L	$4.w,A6
-	MOVEA.L	8(A7),A1
-	MOVE.L	$C(A7),D0
-	JSR	-$D2(A6)
-	MOVEA.L	(A7)+,A6
-	RTS
-L7C7DB00
-	MOVE.L	A6,-(A7)
-	MOVEA.L	$4.w,A6
-	MOVEA.L	8(A7),A1
-	JSR	-$126(A6)
-	MOVEA.L	(A7)+,A6
-	RTS
-L7C7DB14
-	MOVE.L	A6,-(A7)
-	MOVEA.L	$4.w,A6
-	MOVE.L	8(A7),D0
-	JSR	-$14A(A6)
-	MOVEA.L	(A7)+,A6
-	RTS
-L7C7DB28
-	MOVE.L	A6,-(A7)
-	MOVEA.L	$4.w,A6
-	MOVE.L	8(A7),D0
-	JSR	-$150(A6)
-	MOVEA.L	(A7)+,A6
-	RTS
-L7C7DB3C
-	MOVE.L	A6,-(A7)
-	MOVEA.L	$4.w,A6
-	MOVEA.L	8(A7),A1
-	JSR	-$162(A6)
-	MOVEA.L	(A7)+,A6
-	RTS
-L7C7DB50
-	MOVE.L	A6,-(A7)
-	MOVEA.L	$4.w,A6
-	MOVEA.L	8(A7),A1
-	JSR	-$168(A6)
-	MOVEA.L	(A7)+,A6
-	RTS
-_NewList
-	move.l	4(a7),a0
-	move.l	a0,(a0)
-	addq.l	#4,(a0)
-	clr.l	4(a0)
-	move.l	a0,8(a0)
-	rts
+	Lib_Empty			AmigaLib, now in src/lib/devices.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					Entete des banques
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

@@ -90,3 +90,51 @@ _lib_close_all_on_clear
 		dc.l	0
 		CCall	_lib_close_all
 		rts
+
+; Libraries and devices (lib/devices.cpp). The amiga.lib routines take
+; their arguments on the stack, the C way.
+		LibRoutine CreatePort
+		jmp	_lib_create_port
+		LibRoutine DeletePort
+		jmp	_lib_delete_port
+		LibRoutine CreateExtIO
+		jmp	_lib_create_ext_io
+		LibRoutine DeleteExtIO
+		jmp	_lib_delete_ext_io
+		RegRoutine Lib.Close,_lib_lib_close
+		RegRoutine Lib.CloseD0,_lib_lib_close_d0
+		RegRoutine Lib.GetA2,_lib_lib_get_a2
+		RegRoutine Dev.GetA2,_lib_dev_get_a2
+		RegRoutine Dev.Open,_lib_dev_open
+		RegRoutine Dev.Close,_lib_dev_close
+		RegRoutine Dev.CloseA2,_lib_dev_close_a2
+		RegRoutine Dev.GetIO,_lib_dev_get_io
+		RegRoutine Dev.SendIO,_lib_dev_send_io
+		RegRoutine Dev.DoIO,_lib_dev_do_io
+		RegRoutine Dev.CheckIO,_lib_dev_check_io
+		RegRoutine Dev.AbortIO,_lib_dev_abort_io
+		RegRoutine Dev.Error,_lib_dev_error
+		LibCall	InLibOpen,_lib_in_lib_open,3,None		LIB OPEN n,a$,v
+		LibCall	InLibClose0,_lib_in_lib_close0,0,None		LIB CLOSE
+		LibCall	InLibClose1,_lib_in_lib_close1,1,None		LIB CLOSE n
+		LibCall	FnLibBase,_lib_fn_lib_base,1,Int		=LIB BASE(n)
+		LibCall	InDevOpen,_lib_in_dev_open,5,None		DEV OPEN n,a$,l,u,f
+		LibCall	InDevClose0,_lib_in_dev_close0,0,None		DEV CLOSE
+		LibCall	InDevClose1,_lib_in_dev_close1,1,None		DEV CLOSE n
+		LibCall	FnDevBase,_lib_fn_dev_base,1,Int		=DEV BASE(n)
+		LibCall	InDevDo,_lib_in_dev_do,2,None			DEV DO n,c
+		LibCall	InDevSend,_lib_in_dev_send,2,None		DEV SEND n,c
+		LibCall	InDevAbort,_lib_in_dev_abort,1,None		DEV ABORT n
+		LibCall	FnDevCheck,_lib_fn_dev_check,1,Int		=DEV CHECK(n)
+		LibCall	InExec,_lib_in_exec,1,None			EXEC a$
+
+		xdef	_lib_close_libs_on_clear
+		xdef	_lib_close_devs_on_clear
+_lib_close_libs_on_clear
+		dc.l	0
+		CCall	_lib_close_libs
+		rts
+_lib_close_devs_on_clear
+		dc.l	0
+		CCall	_lib_close_devs
+		rts
