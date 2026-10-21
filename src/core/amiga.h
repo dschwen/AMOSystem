@@ -2,6 +2,8 @@
 // library startup, so the library bases are read where AMOS keeps them.
 #pragma once
 
+#include <stdint.h>
+
 #define EXEC_BASE_NAME (*reinterpret_cast<struct Library **>(4))
 #include <proto/exec.h>
 

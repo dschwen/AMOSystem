@@ -40,3 +40,53 @@ _lib_close_on_clear
 		LibCall	InSave1,_lib_in_save1,1,None		SAVE "file"
 		LibCall	InLoad1,_lib_in_load1,1,None		LOAD "file"
 		LibCall	InLoad2,_lib_in_load2,2,None		LOAD "file",n
+
+; File channels and disk instructions (lib/files.cpp)
+		RegRoutine GetFile,_lib_get_file
+		RegRoutine Cloa1,_lib_cloa1
+		RegRoutine CloAll,_lib_clo_all
+		RegRoutine GetByte,_lib_get_byte
+		RegRoutine EndByte,_lib_end_byte
+		RegRoutine RExist,_lib_rexist
+		RegRoutine NoReq,_lib_no_req
+		RegRoutine YesReq,_lib_yes_req
+		RegRoutine LockGet,_lib_lock_get
+		RegRoutine LockFree,_lib_lock_free
+		RegRoutine CopyPath,_lib_copy_path
+		LibCall	InSetInput,_lib_in_set_input,2,None		SET INPUT a,b
+		LibCall	FnInputD1,_lib_fn_input1,1,String		=INPUT$(n)
+		LibCall	FnInputD2,_lib_fn_input2,2,String		=INPUT$(#f,n)
+		LibCall	InDirD,_lib_in_dir,1,None			DIR$=a$
+		LibCall	FnDirD,_lib_fn_dir,0,String			=DIR$
+		LibCall	InParent,_lib_in_parent,0,None			PARENT
+		LibCall	InKill,_lib_in_kill,1,None			KILL a$
+		LibCall	InRename,_lib_in_rename,2,None			RENAME a$ TO b$
+		LibCall	InMkDir,_lib_in_mkdir,1,None			MKDIR a$
+		LibCall	FnDrive,_lib_fn_drive,1,Int			=DRIVE(a$)
+		LibCall	FnDFree,_lib_fn_dfree,0,Int			=DFREE
+		LibCall	FnDiscInfo,_lib_fn_disc_info,1,String		=DISC INFO$(a$)
+		LibCall	FnPort,_lib_fn_port,1,Int			=PORT(f)
+		LibCall	InOpenPort,_lib_in_open_port,2,None		OPEN PORT f,a$
+		LibCall	InOpenOut,_lib_in_open_out,2,None		OPEN OUT f,a$
+		LibCall	InOpenIn,_lib_in_open_in,2,None			OPEN IN f,a$
+		LibCall	FnLof,_lib_fn_lof,1,Int				=LOF(f)
+		LibCall	InPof,_lib_in_pof,2,None			POF(f)=n
+		LibCall	FnPof,_lib_fn_pof,1,Int				=POF(f)
+		LibCall	FnEof,_lib_fn_eof,1,Int				=EOF(f)
+		LibCall	InClose1,_lib_in_close1,1,None			CLOSE f
+		LibCall	InClose0,_lib_in_close0,0,None			CLOSE
+		LibCall	InOpenRandom,_lib_in_open_random,2,None		OPEN RANDOM f,a$
+		LibCall	InAppend,_lib_in_append,2,None			APPEND f,a$
+		LibCall	InGet,_lib_in_get,2,None			GET f,n
+		LibCall	InPut,_lib_in_put,2,None			PUT f,n
+		LibCall	FnExist,_lib_fn_exist,1,Int			=EXIST(a$)
+		LibCall	InPLoad,_lib_in_pload,2,None			PLOAD a$,n
+		LibCall	InBload,_lib_in_bload,2,None			BLOAD a$,a
+		LibCall	InBSave,_lib_in_bsave,3,None			BSAVE a$,s TO e
+
+; Closes all the channels when the program is cleared
+		xdef	_lib_close_all_on_clear
+_lib_close_all_on_clear
+		dc.l	0
+		CCall	_lib_close_all
+		rts

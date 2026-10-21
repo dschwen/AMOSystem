@@ -3075,22 +3075,7 @@ hx5:    move.l 	d0,HiChaine(a5)
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ;			Demande l'espace chaine, positionne Hichaine
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	AskD3
-; - - - - - - - - - - - - -
-	tst.l	d3
-	Rbeq	L_FonCall
-	Rbmi	L_FonCall
-	Rjsr	L_Demande
-	move.l	d3,d2
-	move.l	a1,d3
-	lea	2(a0,d2.l),a0
-	btst	#0,d2
-	beq.s	AskD
-	addq.l	#1,a0
-AskD:	move.l	a0,HiChaine(a5)
-	move.l	a1,a0
-	move.w	d2,(a1)+
-	rts
+	Lib_Empty			AskD3, now in src/lib/files.cpp
 
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -3148,122 +3133,17 @@ AskD:	move.l	a0,HiChaine(a5)
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					PLOAD "prog",banque
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par	InPLoad
-; - - - - - - - - - - - - -
-	clr.w	-(sp)
-	move.l	d3,d4			Numero <0 => charge en CHIP RAM
-	Rbeq	L_FonCall
-	bpl.s	.Pl3
-	neg.l	d4
-	addq.w	#1,(sp)
-; Nom disque
-.Pl3	move.l	(a3)+,a2
-	Rjsr	L_NomDisc
-	move.l	#1005,d2
-	Rjsr	L_D_Open
-	bne.s	*+8
-	Rjmp	L_DiskError
-; Saute les premiers HUNKS!
-	bsr	GetH
-	cmp.l	#$3F3,d0
-	Rbne	L_DiForm
-.Plo0	bsr	GetH
-	cmp.l	#$3E9,d0
-	bne.s	.Plo0
-	bsr	GetH
-	lsl.l	#2,d0
-	move.l	d0,d3
-; Reserve la banque
-	move.l	d4,d0			Numero
-	moveq	#(1<<Bnk_BitData),d1	Type
-	tst.w	(sp)+
-	beq.s	.Plo1
-	bset	#Bnk_BitChip,d1
-.Plo1	move.l	d3,d2			Longueur
-	Rlea	L_BkAsm,0
-	Rjsr	L_Bnk.Reserve
-	Rjsr	L_Bnk.Change
-	Rbeq	L_OOfMem
-; Charge!
-	move.l	a0,d2
-	Rjsr	L_D_Read
-	beq.s	*+8
-	Rjmp	L_DiskError
-	Rjsr	L_D_Close
-	rts
-;	 ROUTINE
-GetH	move.l	Buffer(a5),d2
-	moveq	#4,d3
-	Rjsr	L_D_Read
-	beq.s	*+8
-	Rjmp	L_DiskError
-	move.l	Buffer(a5),a0
-	move.l	(a0),d0
-	rts
+	Lib_Int	InPLoad		src/lib/files.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					BLOAD "fichier",adresse
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par	InBload
-; - - - - - - - - - - - - -
-	move.l	d3,d0
-	Rjsr	L_Bnk.OrAdr
-	move.l	d0,-(sp)
-* Ouvre le fichier
-	move.l	(a3)+,a2
-	Rjsr	L_NomDisc
-	move.l	#1005,d2
-	Rjsr	L_D_Open
-	bne.s	*+8
-	Rjmp	L_DiskError
-* Trouve la taille du fichier!
-	moveq	#0,d2
-	moveq	#1,d3
-	Rjsr	L_D_Seek
-	bpl.s	*+8
-	Rjmp	L_DiskError
-	moveq	#0,d2
-	moveq	#-1,d3
-	Rjsr	L_D_Seek
-	bpl.s	*+8
-	Rjmp	L_DiskError
-* Charge!
-	move.l	d0,d3
-	move.l	(sp)+,d2
-	Rjsr	L_D_Read
-	beq.s	*+8
-	Rjmp	L_DiskError
-* Ferme!
-	Rjsr	L_D_Close
-	rts
+	Lib_Int	InBload		src/lib/files.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					BSAVE  "fichier",ad to fin
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par	InBSave
-; - - - - - - - - - - - - -
-	move.l	d3,-(sp)
-	move.l	(a3)+,d0
-	Rjsr	L_Bnk.OrAdr
-	sub.l	d0,(sp)
-	Rbls	L_FonCall
-	move.l	d0,-(sp)
-* Ouvre le fichier / Mode NEW
-	move.l	(a3)+,a2
-	Rjsr	L_NomDisc
-	move.l	#1006,d2
-	Rjsr	L_D_Open
-	bne.s	*+8
-	Rjmp	L_DiskError
-* Sauve!
-	move.l	(sp)+,d2
-	move.l	(sp)+,d3
-	Rjsr	L_D_Write
-	beq.s	*+8
-	Rjmp	L_DiskError
-* Ferme!
-	Rjsr	L_D_Close
-	rts
+	Lib_Int	InBSave		src/lib/files.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					IFF MASK a%
@@ -3332,7 +3212,7 @@ GetH	move.l	Buffer(a5),d2
 	move.l	(a3)+,d6
 	Rbmi	L_FonCall
 	move.l	(a3)+,d0
-	Rbsr	L_GetFile
+	Rjsr	L_GetFile
 	Rbeq	L_FilNO
 	btst	#2,FhT(a2)
 	Rbne	L_FilTM
@@ -3377,7 +3257,7 @@ GetH	move.l	Buffer(a5),d2
 	cmp.l	#32768,d7
 	Rbcc	L_FonCall
 	move.l	(a3)+,d0
-	Rbsr	L_GetFile
+	Rjsr	L_GetFile
 	Rbeq	L_FilNO
 	btst	#2,FhT(a2)
 	Rbne	L_FilTM
@@ -3562,778 +3442,163 @@ GetH	move.l	Buffer(a5),d2
 ; 					TROUVE LE DESCRIPTEUR FICHIER
 ;					D0= numero
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	GetFile
-; - - - - - - - - - - - - -
-	cmp.l	#10,d0
-	Rbcc	L_FonCall
-	subq.l	#1,d0
-	Rbmi	L_FonCall
-	mulu	#TFiche,d0
-	lea	Fichiers(a5),a2
-	add.w	d0,a2
-	move.l	FhA(a2),d1
-	rts
+	Lib_Int	GetFile		src/lib/files.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					NETTOIE LE DESCRIPTEUR FICHIER
 ;					A2 descripteur
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	FiClean
-; - - - - - - - - - - - - -
-	movem.l	a0/d0,-(sp)
-	move.l	a2,a0
-	moveq	#TFiche-1,d0
-Ficl	clr.b	(a0)+
-	dbra	d0,Ficl
-	movem.l	(sp)+,a0/d0
-	rts
+	Lib_Empty			FiClean, now in src/lib/files.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					SET INPUT
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par	InSetInput
-; - - - - - - - - - - - - -
-	lsl.w	#8,d3
-	move.l	(a3)+,d0
-	cmp.l	#256,d0
-	Rbcc	L_FonCall
-	or.w	d3,d0
-	move.w	d0,ChrInp(a5)
-	rts
+	Lib_Int	InSetInput		src/lib/files.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					=INPUT$(n)
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par	FnInputD1
-; - - - - - - - - - - - - -
-	Rbsr	L_AskD3
-	tst.w	d2
-	beq.s	FInp1b
-FInp1a:	Rjsr	L_Test_PaSaut
-	movem.l	a1/d2/d3,-(sp)
-	SyCall	Inkey
-	movem.l	(sp)+,a1/d2/d3
-	tst.l	d1
-	beq.s	FInp1a
-	cmp.b	#32,d1
-	bcs.s	FInp1a
-	move.b	d1,(a1)+
-	subq.w	#1,d2
-	bne.s	FInp1a
-FInp1b:	Ret_String
+	Lib_Int	FnInputD1		src/lib/files.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					=INPUT$(#1,2)
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par	FnInputD2
-; - - - - - - - - - - - - -
-	move.l	(a3)+,d0
-	Rbsr	L_GetFile
-	Rbeq	L_FilNO
-	Rbsr	L_AskD3
-	tst.w	d2
-	beq	FInp1b
-	btst	#1,FhT(a2)
-	Rbeq	L_FilTM
-	btst	#2,FhT(a2)
-	beq.s	FInp2b
-* Port E/S
-FInp2a	Rbsr	L_GetByte
-	move.b	d0,(a1)+
-	subq.w	#1,d2
-	bne.s	FInp2a
-	bra.s	FInpX
-* Disque
-FInp2b 	move.l	d3,-(sp)
-	addq.l	#2,d3
-	exg	d2,d3
-	move.l	FhA(a2),d1
-	DosCall	_LVORead
-	tst.l	d0
-	Rbeq	L_EOFil
-	bpl.s	*+8
-	Rjmp	L_DiskError
-	move.l	(sp)+,d3
-FInpX	Ret_String
+	Lib_Int	FnInputD2		src/lib/files.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					ENTREE UN BYTE DANS UN FICHIER
 ;					A2= Descripteur
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	GetByte
-; - - - - - - - - - - - - -
-	movem.l	a0/a1/d1-d4,-(sp)
-	btst	#1,FhT(a2)
-	Rbeq	L_FilTM
-	btst	#2,FhT(a2)
-	beq.s	GBy2
-* PORT--> Attend un caractere en gerant les interruptions...
-GBy1	move.l	FhA(a2),d1
-	moveq	#50,d2
-	DosCall	_LVOWaitForChar
-	tst.l	d0
-	bne.s	GBy1a
-	Rjsr	L_Test_PaSaut
-	bra.s	GBy1
-GBy1a	move.l	FhA(a2),d1
-	lea	DeFloat(a5),a0
-	addq.l	#8,a0
-	move.l	a0,d2
-	move.l	a0,-(sp)
-	moveq	#1,d3
-	DosCall	_LVORead
-	tst.l	d0
-	Rbeq	L_EOFil
-	bpl.s	*+8
-	Rjmp	L_DiskError
-	move.l	(sp)+,a0
-	move.b	(a0),d0
-	bra.s	EByE
-* Va prendre le caractere
-GBy2	move.l	FhA(a2),d1
-	lea	DeFloat(a5),a0
-	cmp.l	(a0),d1
-	beq.s	GBy4
-* Charge 64 caracteres
-GBy3	move.l	a0,-(sp)
-	move.l	d1,(a0)
-	clr.w	4(a0)
-	clr.w	6(a0)
-	move.l	a0,d2
-	addq.l	#8,d2
-	moveq	#32-8,d3
-	DosCall	_LVORead
-	move.l	(sp)+,a0
-	tst.l	d0
-	Rbeq	L_EOFil
-	bpl.s	*+8
-	Rjmp	L_DiskError
-	move.w	d0,6(a0)
-* Prend un caractere
-GBy4	move.w	4(a0),d0
-	cmp.w	6(a0),d0
-	bcc.s	GBy3
-	addq.w	#1,4(a0)
-	move.b	8(a0,d0.w),d0
-EByE	movem.l	(sp)+,a0/a1/d1-d4
-	rts
+	Lib_Int	GetByte		src/lib/files.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					FIN DE GETBYTE
 ;					A2= Descripteur
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	EndByte
-; - - - - - - - - - - - - -
-	movem.l	a0/a1/d1-d4,-(sp)
-	lea	DeFloat(a5),a0
-	move.l	(a0),d1
-	beq.s	.EBye
-	clr.l	(a0)
-	move.w	4(a0),d2
-	sub.w	6(a0),d2
-	beq.s	.EBye
-	ext.l	d2
-	moveq	#0,d3
-	DosCall	_LVOSeek
-	tst.l	d0
-.EBye	movem.l	(sp)+,a0/a1/d1-d4
-	rts
+	Lib_Int	EndByte		src/lib/files.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					=DIR$=
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par	InDirD
+	Lib_Int	InDirD		src/lib/files.cpp
 ; - - - - - - - - - - - - -
-	move.l	d3,a2
-	Rjsr	L_NomDisc
-	Rbsr	L_LockGet
-	move.l	LockSave(a5),d1
-	move.l	Buffer(a5),d2
-	DosCall	_LVOExamine
-	move.l	d2,a0
-	tst.w	4(a0)
-	bpl.s	*+8
-	Rjmp	L_DiskError
-	move.l	LockSave(a5),d0
-	Rjsr	L_AskDir2
-	beq.s	*+8
-	Rjmp	L_DiskError
-	Rbsr	L_LockFree
-	Rbsr	L_CopyPath
-	rts
-; - - - - - - - - - - - - -
-	Lib_Par	FnDirD
-; - - - - - - - - - - - - -
-	moveq	#126,d3
-	Rjsr	L_Demande
-	move.l	PathAct(a5),a2
-	tst.b	(a2)
-	bne.s	.Skip
-* Si pas de path courant, demande le path reel
-	movem.l	a0/a1,-(sp)
-	Rjsr	L_AskDir
-	beq.s	*+8
-	Rjmp	L_DiskError
-	movem.l	(sp)+,a0/a1
-	move.l	Buffer(a5),a2
-	lea	384(a2),a2
-* Copie
-.Skip	clr.w	(a1)+
-FDi1	move.b	(a2)+,(a1)+
-	bne.s	FDi1
-	move.l	a1,d0
-	sub.l	a0,d0
-	btst	#0,d0
-	beq.s	FDi2
-	addq.l	#1,a1
-FDi2	move.l	a1,HiChaine(a5)
-	subq.w	#3,d0
-	move.w	d0,(a0)
-	move.l	a0,d3
-	Ret_String
+	Lib_Int	FnDirD		src/lib/files.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					PARENT
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par	InParent
-; - - - - - - - - - - - - -
-	move.l	PathAct(a5),a0
-	tst.b	(a0)
-	bne.s	.Loop
-	Rjsr	L_AskDir
-	Rbsr	L_CopyPath
-	move.l	PathAct(a5),a0
-.Loop	tst.b	(a0)+
-	bne.s	.Loop
-	subq.l	#1,a0
-	cmp.b	#"/",-(a0)
-	bne.s	.Out
-.Loop1	move.b	-(a0),d0
-	cmp.b	#"/",d0
-	beq.s	.Skip1
-	cmp.b	#":",d0
-	bne.s	.Loop1
-.Skip1	clr.b	1(a0)
-.Out	rts
+	Lib_Int	InParent		src/lib/files.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					KILL a$
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par	InKill
-; - - - - - - - - - - - - -
-	move.l	d3,a2
-	Rjsr	L_NomDisc
-	move.l 	Name1(a5),d1
-	DosCall	_LVODeleteFile
-	tst.l	d0
-	bne.s	*+8
-	Rjmp	L_DiskError
-	rts
+	Lib_Int	InKill		src/lib/files.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					RENAME a$ TO b$
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par	InRename
-; - - - - - - - - - - - - -
-	move.l	d3,a2
-	Rjsr	L_NomDisc
-	move.l	Name1(a5),a0
-	move.l	Name2(a5),a1
-IRen1	move.b	(a0)+,(a1)+
-	bne.s	IRen1
-	move.l	(a3)+,a2
-	Rjsr	L_NomDisc
-	move.l	Name1(a5),d1
-	move.l	Name2(a5),d2
-	DosCall	_LVORename
-	tst.l	d0
-	bne.s	*+8
-	Rjmp	L_DiskError
-	rts
+	Lib_Int	InRename		src/lib/files.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					MAKEDIR a$
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par	InMkDir
-; - - - - - - - - - - - - -
-	Rbsr	L_LockFree
-	move.l	d3,a2
-	Rjsr	L_NomDisc
-	move.l	Name1(a5),d1
-	DosCall	_LVOCreateDir
-	tst.l	d0
-	bne.s	*+8
-	Rjmp	L_DiskError
-	move.l	d0,LockSave(a5)
-	Rbsr	L_LockFree
-	rts
+	Lib_Int	InMkDir		src/lib/files.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					=DRIVE(a$)
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par	FnDrive
-; - - - - - - - - - - - - -
-	move.l	d3,a2
-	move.w	(a2)+,d2
-	cmp.b	#":",-1(a2,d2.w)
-	Rbne	L_FnFalse
-	Rbsr	L_ChVerBuf
-	move.l	Buffer(a5),d1
-	Rbsr	L_NoReq
-	DosCall	_LVODeviceProc
-	Rbsr	L_YesReq
-	tst.l	d0
-	Rbeq	L_FnFalse
-	Rbra	L_FnTrue
+	Lib_Int	FnDrive		src/lib/files.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					=DFREE
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par	FnDFree
-; - - - - - - - - - - - - -
-	move.l	PathAct(a5),a0
-	move.l	Name1(a5),a1
-	CoCopy
-	Rbsr	L_LockGet
-	move.l	Buffer(a5),d2
-	addq.l	#4,d2
-	lsr.l	#2,d2
-	lsl.l	#2,d2
-	move.l	d2,-(sp)
-	DosCall	_LVOInfo
-	tst.l	d0
-	bne.s	*+8
-	Rjmp	L_DiskError
-	move.l	(sp)+,a0
-	move.l	12(a0),d3
-	sub.l	16(a0),d3
-	move.l	20(a0),d2
-	Rjsr	L_Mulu32
-	move.l	d1,d3
-	Rbsr	L_LockFree
-	Ret_Int
+	Lib_Int	FnDFree		src/lib/files.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					=DISC INFO$
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par	FnDiscInfo
-; - - - - - - - - - - - - -
-	move.l	d3,a2
-	Rjsr	L_NomDisc
-	moveq	#126,d3
-	Rjsr	L_Demande
-	move.l	a0,-(sp)
-	Rbsr	L_LockGet
-	move.l	LockSave(a5),d1
-	move.l	Buffer(a5),d2
-	DosCall	_LVOInfo
-	tst.l	d0
-	bne.s	*+8
-	Rjmp	L_DiskError
-	Rbsr	L_LockFree
-	move.l	(sp),a0
-	addq.w	#2,a0
-	move.l	Buffer(a5),a2
-	move.l	12(a2),d3
-	sub.l	16(a2),d3
-	move.l	20(a2),d2
-	Rjsr	L_Mulu32
-	move.l	d1,d3
-	moveq	#0,d2
-	move.l	28(a2),d0
-	beq.s	.skip
-	lsl.l	#2,d0
-	move.l	d0,a2
-	move.l	$28(a2),d0
-	beq.s	.skip
-	lsl.l	#2,d0
-	move.l	d0,a2
-	addq.l	#1,a2
-.loop	addq.w	#1,d2
-	move.b	(a2)+,(a0)+
-	bne.s	.loop
-	move.b	#":",-1(a0)
-.skip	move.l	a0,a1
-	moveq	#9,d0
-.loop1	move.b	#32,(a1)+
-	dbra	d0,.loop1
-	add.w	#10,d2
-	move.l	d3,d0
-	Rjsr	L_LongToDec
-	move.l	(sp)+,a0
-	move.w	d2,(a0)
-	move.l	a0,d3
-	addq.w	#1,d2
-	and.w	#$FFFE,d2
-	lea	2(a0,d2.w),a0
-	move.l	a0,HiChaine(a5)
-	Ret_String
+	Lib_Int	FnDiscInfo		src/lib/files.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					PORT(n)
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par	FnPort
-; - - - - - - - - - - - - -
-	move.l	d3,d0
-	Rbsr	L_GetFile
-	Rbeq	L_FilNO
-	btst	#2,FhT(a2)
-	Rbeq	L_FilTM
-	moveq	#50,d2
-	DosCall	_LVOWaitForChar
-	tst.l	d0
-	Rbeq	L_FnTrue
-* Va prendre le caractere
-	move.l	FhA(a2),d1
-	lea	DeFloat(a5),a0
-	move.l	a0,d2
-	moveq	#1,d3
-	DosCall	_LVORead
-	tst.l	d0
-	bpl.s	*+8
-	Rjmp	L_DiskError
-	moveq	#0,d2
-	moveq	#0,d3
-	lea	DeFloat(a5),a0
-	move.b	(a0),d3
-	Ret_Int
+	Lib_Int	FnPort		src/lib/files.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					OPEN PORT
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par	InOpenPort
-; - - - - - - - - - - - - -
-	move.w	#%111,-(sp)
-	move.l	#1005,-(sp)
-	Rbra	L_OpIn
+	Lib_Int	InOpenPort		src/lib/files.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					OPEN OUT
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par	InOpenOut
-; - - - - - - - - - - - - -
-	move.w	#%001,-(sp)
-	move.l	#1006,-(sp)
-	Rbra	L_OpIn
+	Lib_Int	InOpenOut		src/lib/files.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					OPEN IN
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par	InOpenIn
+	Lib_Int	InOpenIn		src/lib/files.cpp
 ; - - - - - - - - - - - - -
-	move.w	#%010,-(sp)
-	move.l	#1005,-(sp)		* Mode OLD
-	Rbra	L_OpIn
-; - - - - - - - - - - - - -
-	Lib_Def	OpIn
-; - - - - - - - - - - - - -
-	Rbsr	L_DiskClear
-	move.l	d3,a2
-	Rjsr	L_NomDisc
-	move.l	(a3)+,d0
-	Rbsr	L_GetFile
-	Rbne	L_FilOO
-	Rbsr	L_FiClean
-	move.l	Name1(a5),d1
-	move.l	(sp)+,d2
-	DosCall	_LVOOpen
-	tst.l	d0
-	bne.s	*+8
-	Rjmp	L_DiskError
-	move.l	d0,FhA(a2)		* Handle!
-	move.w	(sp)+,d0
-	move.b	d0,FhT(a2)		* Type
-	rts
+	Lib_Empty			OpIn, now in src/lib/files.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 	Branche la structure CLEARVAR pour le disque
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	DiskClear
-; - - - - - - - - - - - - -
-	movem.l	d0-d2/a0-a2,-(sp)
-	lea	.Struc(pc),a1
-	lea	Sys_ClearRoutines(a5),a2
-	SyCall	AddRoutine
-	movem.l	(sp)+,d0-d2/a0-a2
-	rts
-.Struc	dc.l	0
-	Rbra	L_CloAll
+	Lib_Empty			DiskClear, now in src/lib/files.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					=LOF(n)
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par	FnLof
-; - - - - - - - - - - - - -
-	move.l	d3,d0
-	Rbsr	L_RLof
-	moveq	#0,d2			* Seek --> fin
-	moveq	#1,d3
-	DosCall	_LVOSeek
-	move.l	FhA(a2),d1
-	move.l	d0,d2			* Seek --> debut!
-	moveq	#-1,d3
-	DosCall	_LVOSeek
-	move.l	d0,d3
-	Ret_Int
+	Lib_Int	FnLof		src/lib/files.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					=POF(n)=
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par	InPof
+	Lib_Int	InPof		src/lib/files.cpp
 ; - - - - - - - - - - - - -
-	move.l	(a3)+,d0
-	Rbsr	L_RLof
-	move.l	d3,d2
-	Rbmi	L_FonCall
-	moveq	#-1,d3
-	DosCall	_LVOSeek
-	tst.l	d0
-	bpl.s	*+8
-	Rjmp	L_DiskError
-	rts
-; - - - - - - - - - - - - -
-	Lib_Par	FnPof
-; - - - - - - - - - - - - -
-	move.l	d3,d0
-	Rbsr	L_RLof
-	moveq	#0,d2
-	moveq	#0,d3
-	DosCall	_LVOSeek
-	move.l	d0,d3
-	Ret_Int
+	Lib_Int	FnPof		src/lib/files.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					EOF(n) illegal a refaire
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par	FnEof
-; - - - - - - - - - - - - -
-	move.l	d3,d0
-	Rbsr	L_RLof
-	moveq	#0,d2			* Seek --> fin
-	moveq	#1,d3
-	DosCall	_LVOSeek
-	move.l	d0,d4
-	move.l	FhA(a2),d1
-	move.l	d0,d2			* Seek --> debut!
-	moveq	#-1,d3
-	DosCall	_LVOSeek
-	cmp.l	d0,d4
-	Rbcs	L_FnFalse
-	Rbra	L_FnTrue
+	Lib_Int	FnEof		src/lib/files.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					Routine POFLOFEOF
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	RLof
-; - - - - - - - - - - - - -
-	Rbsr	L_GetFile
-	Rbeq	L_FilNO
-	btst	#2,FhT(a2)
-	Rbne	L_FilTM
-	rts
+	Lib_Empty			RLof, now in src/lib/files.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					CLOSE [n]
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par	InClose1
+	Lib_Int	InClose1		src/lib/files.cpp
 ; - - - - - - - - - - - - -
-	move.l	d3,d0
-	Rbsr	L_GetFile
-	Rbeq	L_FilNO
-	Rbsr	L_Cloa1
-	rts
-; - - - - - - - - - - - - -
-	Lib_Par	InClose0
-; - - - - - - - - - - - - -
-	Rbsr	L_CloAll
-	rts
+	Lib_Int	InClose0		src/lib/files.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					Routine CLOSE
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	CloAll
+	Lib_Int	CloAll		src/lib/files.cpp
 ; - - - - - - - - - - - - -
-	lea	Fichiers(a5),a2
-	moveq	#NFiche-1,d2
-.Loop	Rbsr	L_Cloa1
-	lea	TFiche(a2),a2
-	dbra	d2,.Loop
-	rts
-; - - - - - - - - - - - - -
-	Lib_Def	Cloa1
-; - - - - - - - - - - - - -
-	move.l	FhA(a2),d1		* Fichier
-	beq.s	.Skip
-	clr.l	FhA(a2)
-	DosCall	_LVOClose
-	move.l	FhF(a2),d0		* Field
-	beq.s	.Skip
-	move.l	d0,a1
-	clr.l	FhF(a2)
-	move.w	(a1),d0
-	mulu	#6,d0
-	addq.l	#8,d0
-	SyCall	MemFree
-.Skip	rts
+	Lib_Int	Cloa1		src/lib/files.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					OPEN RANDOM
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par	InOpenRandom
-; - - - - - - - - - - - - -
-	move.w	#$80,d0
-	Rbsr	L_RanApp
-	rts
+	Lib_Int	InOpenRandom		src/lib/files.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					APPEND canal,nom
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par	InAppend
+	Lib_Int	InAppend		src/lib/files.cpp
 ; - - - - - - - - - - - - -
-	move.w	#%001,d0
-	Rbsr	L_RanApp
-	moveq	#0,d2
-	moveq	#1,d3
-	DosCall	_LVOSeek
-	rts
-; - - - - - - - - - - - - -
-	Lib_Def	RanApp
-; - - - - - - - - - - - - -
-	Rbsr	L_DiskClear
-	move.w	d0,-(sp)
-	move.l	d3,a2
-	Rjsr	L_NomDisc
-	move.l	(a3)+,d0
-	Rbsr	L_GetFile
-	Rbne	L_FilOO
-	Rbsr	L_FiClean
-	move.l	Name1(a5),d1		* Essaie en OLD
-	move.l	#1005,d2
-	DosCall	_LVOOpen
-	tst.l	d0
-	bne.s	IOpr1
-	move.l	Name1(a5),d1		* NEW!
-	move.l	#1006,d2
-	DosCall	_LVOOpen
-	tst.l	d0
-	bne.s	*+8
-	Rjmp	L_DiskError
-IOpr1	move.l	d0,FhA(a2)		* Handle!
-	move.l	d0,d1
-	move.w	(sp)+,d0
-	move.b	d0,FhT(a2)		* Type
-	rts
+	Lib_Empty			RanApp, now in src/lib/files.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					GET #n,vv
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par	InGet
-; - - - - - - - - - - - - -
-	Rbsr	L_GetPut
-	cmp.l	d3,d4
-	Rbcc	L_EOFil
-	move.l	d1,-(sp)
-	move.w	(a2),d4
-	subq.w	#1,d4
-	lea	8(a2),a2
-IGet1	moveq	#0,d3
-	move.w	(a2)+,d3
-	Rjsr	L_DDemande
-	move.l	(a2)+,a1
-	move.l	a0,(a1)
-	move.w	d3,(a0)+
-	move.l	a0,d2
-	add.w	d3,a0
-	btst	#0,d3
-	beq.s	IGet2
-	addq.l	#1,a0
-IGet2	move.l	a0,HiChaine(a5)
-	move.l	(sp),d1
-	DosCall	_LVORead
-	cmp.l	d0,d3
-	beq.s	*+8
-	Rjmp	L_DiskError
-	dbra	d4,IGet1
-	addq.l	#4,sp
-	rts
+	Lib_Int	InGet		src/lib/files.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					PUT
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par	InPut
-; - - - - - - - - - - - - -
- 	Rbsr	L_GetPut
-	cmp.l	d3,d4
-	Rbhi	L_EOFil
-	move.w	(a2),-(sp)
-	move.l	a2,-(sp)
-	lea	8(a2),a2
-IPut1:  moveq	#0,d3
-	move.w	(a2)+,d3
-	move.l	(a2)+,a0
-        move.l 	(a0),a0
-        moveq	#0,d4
-        move.w 	(a0)+,d4
-        cmp.w	d3,d4
-        beq.s 	IPut2
-        bcs.s 	IPut2
-        move.w 	d3,d4
-IPut2:  movem.l	a0/d1-d4,-(sp)
-	move.l	a0,d2
-	move.l	d4,d3
-	DosCall	_LVOWrite
-	cmp.l	d0,d3
-	beq.s	*+8
-	Rjmp	L_DiskError
-	movem.l	(sp)+,a0/d1-d4
-        cmp.w	d3,d4
-        bcc.s 	IPut4
-        sub.l 	d4,d3
-        Rjsr 	L_DDemande
-        move.w 	d3,d0
-	subq.w	#1,d0
-IPut3:  move.b 	#32,(a1)+
-	dbra	d0,IPut3
-	move.l	a0,d2
-	movem.l	d1-d3,-(sp)
-	DosCall	_LVOWrite
-	cmp.l	d0,d3
-	beq.s	*+8
-	Rjmp	L_DiskError
-	movem.l	(sp)+,d1-d3
-IPut4	subq.w	#1,4(sp)
-	bne.s	IPut1
-* Taille augmente?
-	move.l	(sp)+,a2
-	addq.l	#2,sp
-	moveq	#0,d2
-	moveq	#0,d3
-	DosCall	_LVOSeek
-	cmp.l	4(a2),d0
-	bls.s	.Skip
-	move.l	d0,4(a2)
-.Skip	rts
+	Lib_Int	InPut		src/lib/files.cpp
 
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					ROUTINE GET ET PUT
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	GetPut
-; - - - - - - - - - - - - -
-	move.l	d3,d4
-	subq.w	#1,d4
-	cmp.l	#65500,d4
-	Rbcc	L_FonCall
-	move.l	(a3)+,d0
-	Rbsr	L_GetFile
-	Rbeq	L_FilNO
-	move.l	d1,-(sp)
-	tst.b	FhT(a2)
-	Rbpl	L_FilTM
-	move.l	FhF(a2),a2
-	mulu	2(a2),d4
-	move.l	4(a2),d3
-	move.l	d4,d2
-	cmp.l	d3,d4
-	bls.s	GP1
-	move.l	d3,d2
-GP1	move.l	(sp),d1
-	moveq	#-1,d3
-	movem.l	d3/d4,-(sp)
-	DosCall	_LVOSeek
-	movem.l	(sp)+,d3/d4
-	move.l	(sp)+,d1
-	rts
+	Lib_Empty			GetPut, now in src/lib/files.cpp
 
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -4500,7 +3765,7 @@ Ip3:	movem.l	(sp)+,a0-a2/d2-d7
 	Rbne	L_FonCall
 	move.l	d3,a2
 	Rbsr	L_NomDir
-	Rbsr	L_LockGet
+	Rjsr	L_LockGet
 	move.w	#1,FillF32(a5)
 	clr.w	DirComp(a5)
 	move.w	DirLNom(a5),FillFSize(a5)
@@ -4559,7 +3824,7 @@ FDirV	Rbsr	L_FillFFree
 	beq.s	.1_3
 ; WB2.0, appel direct de l'instruction ASSIGN
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	Rbsr	L_LockFree		Plus de LOCK
+	Rjsr	L_LockFree		Plus de LOCK
 	move.l	d3,a2
 	move.w	(a2)+,d2
 	beq.s	.Vide
@@ -4568,7 +3833,7 @@ FDirV	Rbsr	L_FillFFree
 	move.l	Name1(a5),a0
 	Rbsr	L_ChVerBuf2
 	Rjsr	L_Dsk.PathIt
-	Rbsr	L_LockGet
+	Rjsr	L_LockGet
 .Vide	move.l	(a3)+,a2		Prend l'assign
 	move.w	(a2)+,d2
 	Rbeq	L_FonCall
@@ -4591,7 +3856,7 @@ FDirV	Rbsr	L_FillFFree
 	beq.s	.Err
 	clr.l	LockSave(a5)		Success: enleve le lock!
 	rts
-.Err	Rbsr	L_LockFree
+.Err	Rjsr	L_LockFree
 	Rjmp	L_DiskError
 ; Version 1.3: appelle la commande ASSIGN dans le directory C:
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -4600,7 +3865,7 @@ FDirV	Rbsr	L_FillFFree
 	lea	.AssI(pc),a0
 	move.l	Name1(a5),a1
 	CoCopy
-	Rbsr	L_RExist
+	Rjsr	L_RExist
 	bne.s	*+8
 	Rjmp	L_DiskError
 ; Pathname
@@ -4613,8 +3878,8 @@ FDirV	Rbsr	L_FillFFree
 	Rbcc	L_FonCall
 	Rbsr	L_ChVerBuf2
 	Rjsr	L_Dsk.PathIt
-	Rbsr	L_LockGet		Verifie le path
-	Rbsr	L_LockFree
+	Rjsr	L_LockGet		Verifie le path
+	Rjsr	L_LockFree
 ; Nom
 .Vide2	move.l	Buffer(a5),a2
 	lea	.AssI(pc),a0		Command ASSIGN
@@ -4664,62 +3929,20 @@ FDirV	Rbsr	L_FillFFree
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					=EXIST("name")
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par	FnExist
-; - - - - - - - - - - - - -
-	move.l	d3,a2
-	tst.w	(a2)
-	Rbeq	L_FnFalse
-	Rjsr	L_NomDisc
-	Rbsr	L_RExist
-	Ret_Int
+	Lib_Int	FnExist		src/lib/files.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					ROUTINE EXIST
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	RExist
-; - - - - - - - - - - - - -
-	Rbsr	L_NoReq
-	move.l 	Name1(a5),d1
-	DosCall	_LVOLock
-	Rbsr	L_YesReq
-	move.l	d0,d1
-	beq.s	FExF
-	DosCall	_LVOUnLock
-	moveq	#-1,d3
-	rts
-FExF	moveq	#0,d3
-	rts
+	Lib_Int	RExist		src/lib/files.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					PLUS DE REQUESTER
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	NoReq
-; - - - - - - - - - - - - -
-	movem.l	a0-a1/a6/d0-d1,-(sp)
-	move.l	$4.w,a6
-	sub.l	a1,a1
-	jsr	FindTask(a6)
-	move.l	d0,a0
-	cmp.l	#-1,$b8(a0)
-	beq.s	.Skip
-	move.l	$b8(a0),ReqSave(a5)
-	move.l	#-1,$b8(a0)
-.Skip	movem.l	(sp)+,a0-a1/a6/d0-d1
-	rts
+	Lib_Int	NoReq		src/lib/files.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					REMET LE REQUESTER
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	YesReq
-; - - - - - - - - - - - - -
-	movem.l	a0-a1/a6/d0-d1,-(sp)
-	move.l	$4.w,a6
-	sub.l	a1,a1
-	jsr	FindTask(a6)
-	move.l	d0,a0
-	cmp.l	#-1,$b8(a0)
-	bne.s	.Skip
-	move.l	ReqSave(a5),$b8(a0)
-.Skip	movem.l	(sp)+,a0-a1/a6/d0-d1
-	rts
+	Lib_Int	YesReq		src/lib/files.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					DIR/W LDIR/W
@@ -4941,29 +4164,11 @@ TTdiF:	moveq	#1,d0
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					Trouve le lock NAME1
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	LockGet			Egalement LockGet
-; - - - - - - - - - - - - -
-	move.l	Name1(a5),d1
-	Rbsr	L_LockFree
-	moveq	#-2,d2
-	DosCall	_LVOLock
-	move.l	d0,d1
-	bne.s	*+8
-	Rjmp	L_DiskError
-	move.l	d1,LockSave(a5)
-	rts
+	Lib_Int	LockGet		src/lib/files.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					ENLEVE LE LOCK COURANT
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	LockFree
-; - - - - - - - - - - - - -
-	movem.l	d0-d2/a0-a2,-(sp)
-	move.l	LockSave(a5),d1
-	beq.s	.Skip
-	DosCall	_LVOUnLock
-	clr.l	LockSave(a5)
-.Skip	movem.l	(sp)+,d0-d2/a0-a2
-	rts
+	Lib_Int	LockFree		src/lib/files.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					FILL FILL
@@ -5097,7 +4302,7 @@ FfDeb	Rbsr	L_FillFFree
 	SyCall	AddRoutine
 	movem.l	(sp)+,a0-a2/d0-d1
 * Trouve le nom du disque
-	Rbsr	L_LockGet
+	Rjsr	L_LockGet
 	move.l	Buffer(a5),d2
 	DosCall	_LVOExamine
 	move.l	Buffer(a5),a0
@@ -5109,7 +4314,7 @@ FlF1	move.b	(a0)+,(a1)+
 	bne.s	FlF1
 	move.l	d3,a0
 	clr.b	(a0)
-FlF2	Rbsr	L_LockGet
+FlF2	Rjsr	L_LockGet
 	Rjsr	L_AskDir2
 	clr.l	LockSave(a5)
 	move.l	#6+4+128,d0
@@ -5125,7 +4330,7 @@ FlF2	Rbsr	L_LockGet
 FlF3	move.b	(a0)+,(a1)+
 	bne.s	FlF3
 * Saute le nom du disque...
-	Rbsr	L_LockGet
+	Rjsr	L_LockGet
 	move.l	LockSave(a5),d1
 	move.l	Buffer(a5),d2
 	DosCall	_LVOExamine
@@ -5188,7 +4393,7 @@ FfErr	moveq	#-1,d0
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 	Lib_Def	FillFFree
 ; - - - - - - - - - - - - -
-	Rbsr	L_LockFree
+	Rjsr	L_LockFree
 	move.l	BufFillF(a5),d1
 	beq.s	FFr2
 FFr1	move.l	d1,a1
@@ -5714,7 +4919,7 @@ FsApp3:	cmp.w	d4,d6
 	Rbsr	L_IffSeek
 	addq.l	#1,d4
 	subq.l	#1,d7
-	bne.s	.Loop
+	bne	.Loop
 .End	move.l	d4,d0
 	movem.l	(sp)+,a0-a1/d1-d4/d7
 	rts
@@ -11052,14 +10257,7 @@ FsBi2	move.l	(a2),d3
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 	Routine, copie le path dans PATHACT
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	CopyPath
-; - - - - - - - - - - - - -
-	move.l	Buffer(a5),a0
-	lea	384(a0),a0
-	move.l	PathAct(a5),a1
-.Loop	move.b	(a0)+,(a1)+
-	bne.s	.Loop
-	rts
+	Lib_Int	CopyPath		src/lib/files.cpp
 
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -15555,7 +14753,7 @@ MnKet3	move.w	d7,(a1)+
 
 ; Init de Fill-File
 ; ~~~~~~~~~~~~~~~~~
-	Rbsr	L_NoReq				No more requester
+	Rjsr	L_NoReq				No more requester
 	move.l	PathAct(a5),a0			Path par defaut
 	tst.b	(a0)				Si non defini
 	bne.s	.SkipP
@@ -16104,7 +15302,7 @@ Fs_Close
 	bsr	Fs_Store
 ; Remet le requester
 ; ~~~~~~~~~~~~~~~~~~
-	Rbsr	L_YesReq
+	Rjsr	L_YesReq
 ; Enleve le patch erreurs
 ; ~~~~~~~~~~~~~~~~~~~~~~~
 	clr.l	Fs_ErrPatch(a5)
@@ -16390,7 +15588,7 @@ Fs_First
 	bsr	Fs_NomDir		Name >>> Name1 / Name2
 	bsr	Fs_FindStore		Deja trouve?
 	bne.s	.Dejalu
-	Rbsr	L_LockGet			Find a lock
+	Rjsr	L_LockGet			Find a lock
 	Rbsr	L_FillFirst		Get names
 	bsr	FsI_SliStore
 	move.b	#1,Fs_DirOn(a4)
