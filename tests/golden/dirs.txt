@@ -1,0 +1,28 @@
+[*sub                                  ]
+[ file1.txt                    12      ]
+[ file2.txt                    22      ]
+[ file3.txt                    32      ]
+[ file4.txt                    42      ]
+[ file5.txt                    52      ]
+[ info.info                    0       ]
+[ Other.abk                    0       ]
+[*sub                                  ]
+[ file1.txt                    12      ]
+[ file2.txt                    22      ]
+[ file3.txt                    32      ]
+[ file4.txt                    42      ]
+[ file5.txt                    52      ]
+ERROR  23
+[*sub                        ]
+[ file1.txt          12      ]
+[ file2.txt          22      ]
+[ file3.txt          32      ]
+[ file4.txt          42      ]
+[ file5.txt          52      ]
+[ Other.abk          0       ]
+
+ERROR  23
+ERROR  23
+ERROR  23
+[ Ram Disk:                            ]
+end

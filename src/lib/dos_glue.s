@@ -138,3 +138,38 @@ _lib_close_devs_on_clear
 		dc.l	0
 		CCall	_lib_close_devs
 		rts
+
+; Directories (lib/dirs.cpp)
+		RegRoutine FillAll,_lib_fill_all
+		RegRoutine FillGet,_lib_fill_get
+		RegRoutine FillDev,_lib_fill_dev
+		RegRoutine FillFirst,_lib_fill_first
+		RegRoutine FillNxt,_lib_fill_nxt
+		RegRoutine FillFFree,_lib_fill_ffree
+		RegRoutine FillSort,_lib_fill_sort
+		RegRoutine FillFPoke,_lib_fill_fpoke
+		RegRoutine FfComp,_lib_ff_comp
+		RegRoutine FfComp2,_lib_ff_comp2
+		RegRoutine FillFFind,_lib_fill_ffind
+		RegRoutine NomDir,_lib_nom_dir
+		RegRoutine Joker,_lib_joker
+		LibCall	InDir0,_lib_in_dir0,0,None			DIR
+		LibCall	InLDir0,_lib_in_ldir0,0,None			LDIR
+		LibCall	InDir1,_lib_in_dir1,1,None			DIR a$
+		LibCall	InLDir1,_lib_in_ldir1,1,None			LDIR a$
+		LibCall	InDirW0,_lib_in_dirw0,0,None			DIR/W
+		LibCall	InLDirW0,_lib_in_ldirw0,0,None			LDIR/W
+		LibCall	InDirW1,_lib_in_dirw1,1,None			DIR/W a$
+		LibCall	InLDirW1,_lib_in_ldirw1,1,None			LDIR/W a$
+		LibCall	InSetDir1,_lib_in_set_dir1,1,None		SET DIR n
+		LibCall	InSetDir2,_lib_in_set_dir2,2,None		SET DIR n,a$
+		LibCall	FnDirFirst,_lib_fn_dir_first,1,String		=DIR FIRST$(a$)
+		LibCall	FnFillNext,_lib_fn_fill_next,0,String		=DIR NEXT$
+		LibCall	FnDevFirst,_lib_fn_dev_first,1,String		=DEV FIRST$(a$)
+		LibCall	FnPrgFirst,_lib_fn_dev_first,1,String		=PRG FIRST$(a$)
+
+		xdef	_lib_fill_free_on_clear
+_lib_fill_free_on_clear
+		dc.l	0
+		CCall	_lib_fill_free
+		rts

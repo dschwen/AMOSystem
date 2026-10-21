@@ -3182,115 +3182,28 @@ Ip3:	movem.l	(sp)+,a0-a2/d2-d7
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					SET DIR A,[a$]
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par	InSetDir2
+	Lib_Int	InSetDir2		src/lib/dirs.cpp
 ; - - - - - - - - - - - - -
-	move.l	d3,a2
-	cmp.l	#EntNul,a2
-	beq.s	.Skip
-	move.w	(a2)+,d2
-	cmp.w	#106,d2
-	Rbcc	L_StooLong
-	move.l	DirFNeg(a5),a0
-	Rbsr	L_ChVerBuf2
-.Skip	move.l	(a3)+,d3
-	Rbra	L_InSetDir1
-; - - - - - - - - - - - - -
-	Lib_Par	InSetDir1
-; - - - - - - - - - - - - -
-	cmp.l	#EntNul,d3
-	beq.s	.Skip
-	and.l	#$FFFFFFFE,d3
-	Rbeq	L_FonCall
-	cmp.l	#106,d3
-	Rbcc	L_FonCall
-	move.w	d3,DirLNom(a5)
-.Skip	rts
+	Lib_Int	InSetDir1		src/lib/dirs.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					=DEV FIRST$
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par	FnPrgFirst
+	Lib_Int	FnPrgFirst		src/lib/dirs.cpp
 ; - - - - - - - - - - - - -
-	Rlea	L_FillDev,0
-	move.l	a0,-(sp)
-	Rbra	L_DevAcc
+	Lib_Int	FnDevFirst		src/lib/dirs.cpp
 ; - - - - - - - - - - - - -
-	Lib_Par	FnDevFirst
-; - - - - - - - - - - - - -
-	Rlea	L_FillDev,0
-	move.l	a0,-(sp)
-	Rbra	L_DevAcc
-; - - - - - - - - - - - - -
-	Lib_Def	DevAcc
-; - - - - - - - - - - - - -
-	tst.l	Patch_Errors(a5)		Monitor present?
-	Rbne	L_FonCall
-	move.l	d3,a2
-	Rbsr	L_NomDir
-	move.w	#1,FillF32(a5)
-	clr.w	DirComp(a5)
-	move.w	DirLNom(a5),FillFSize(a5)
-	move.l	(sp)+,a0
-	jsr	(a0)
-	Rbra	L_FnFillNext
+	Lib_Empty			DevAcc, now in src/lib/dirs.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					=DIR FIRST("filter")
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par	FnDirFirst
-; - - - - - - - - - - - - -
-	tst.l	Patch_Errors(a5)		Monitor present?
-	Rbne	L_FonCall
-	move.l	d3,a2
-	Rbsr	L_NomDir
-	Rjsr	L_LockGet
-	move.w	#1,FillF32(a5)
-	clr.w	DirComp(a5)
-	move.w	DirLNom(a5),FillFSize(a5)
-	Rbsr	L_FillAll
-	Rbsr	L_FillSort
-	Rbra	L_FnFillNext
+	Lib_Int	FnDirFirst		src/lib/dirs.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					=DIR NEXT$
 ;					=ACC NEXT$
 ;					=DEV NEXT$
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par	FnFillNext
-; - - - - - - - - - - - - -
-	tst.l	Patch_Errors(a5)		Monitor present?
-	Rbne	L_FonCall
-	move.w	PosFillF(a5),d0
-	Rbsr	L_FillGet
-	beq.s	FDirV
-	lea	6(a0),a2
-	addq.w	#1,PosFillF(a5)
-	move.w	FillFSize(a5),d3
-	ext.l	d3
-	move.w	d3,d2
-	addq.l	#8,d3
-	Rjsr	L_DDemande
-	move.l	a0,-(sp)
-	move.w	d3,(a1)+
-	lea	2(a0,d3.w),a0
-	move.l	a0,HiChaine(a5)
-	lea	4(a2),a0
-	subq.w	#1,d2
-FDirN1	move.b	(a0)+,(a1)+
-	dbra	d2,FDirN1
-	moveq	#7,d1
-FDirN2	move.b	#" ",(a1)+
-	dbra	d1,FDirN2
-	lea	-8(a1),a0
-	cmp.b	#"*",4(a2)
-	beq.s	FDirN3
-	move.l	(a2),d0
-	bmi.s	FDirN3
-	Rjsr	L_LongToDec
-FDirN3	move.l	(sp)+,d3
-	Ret_String
-* Enleve le buffer--> vide!
-FDirV	Rbsr	L_FillFFree
-	move.l	ChVide(a5),d3
-	Ret_String
+	Lib_Int	FnFillNext		src/lib/dirs.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					ASSIGN "name" TO "pathname"
@@ -3424,218 +3337,46 @@ FDirV	Rbsr	L_FillFFree
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					DIR/W LDIR/W
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InLDirW0
+	Lib_Int	InLDirW0		src/lib/dirs.cpp
 ; - - - - - - - - - - - - -
-	move.w	#1,ImpFlg(a5)
-	Rbra	L_DirW0a
+	Lib_Int	InDirW0		src/lib/dirs.cpp
 ; - - - - - - - - - - - - -
-	Lib_Par InDirW0
-; - - - - - - - - - - - - -
-	clr.w	ImpFlg(a5)
-	Rbra	L_DirW0a
-; - - - - - - - - - - - - -
-	Lib_Def	DirW0a
-; - - - - - - - - - - - - -
-	move.l	Name1(a5),a0
-	clr.b	(a0)
-	move.l	Name2(a5),a0
-	clr.b	(a0)
-	Rjsr	L_Dsk.PathIt
-	Rbra	L_DirW2
+	Lib_Empty			DirW0a, now in src/lib/dirs.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					DIR/w LDIR/W a$
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par	InLDirW1
+	Lib_Int	InLDirW1		src/lib/dirs.cpp
 ; - - - - - - - - - - - - -
-	move.w	#1,ImpFlg(a5)
-	Rbra	L_DirW1a
+	Lib_Int	InDirW1		src/lib/dirs.cpp
 ; - - - - - - - - - - - - -
-	Lib_Par	InDirW1
+	Lib_Empty			DirW1a, now in src/lib/dirs.cpp
 ; - - - - - - - - - - - - -
-	clr.w	ImpFlg(a5)
-	Rbra	L_DirW1a
-; - - - - - - - - - - - - -
-	Lib_Def	DirW1a
-; - - - - - - - - - - - - -
-	move.l	d3,a2
-	Rbsr	L_NomDir
-	Rbra	L_DirW2
-; - - - - - - - - - - - - -
-	Lib_Def	DirW2
-; - - - - - - - - - - - - -
-	move.w	#1,DirComp(a5)
-	move.l	ScOnAd(a5),a0
-	move.l	EcWindow(a0),a0
-	move.w	WiTx(a0),d0
-	lsr.w	#1,d0
-	move.w	d0,FillFSize(a5)
-	Rbra	L_Dir3
+	Lib_Empty			DirW2, now in src/lib/dirs.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					DIR / LDIR
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InLDir0
+	Lib_Int	InLDir0		src/lib/dirs.cpp
 ; - - - - - - - - - - - - -
-	move.w	#1,ImpFlg(a5)
-	Rbra	L_Dir0a
+	Lib_Int	InDir0		src/lib/dirs.cpp
 ; - - - - - - - - - - - - -
-	Lib_Par InDir0
-; - - - - - - - - - - - - -
-	clr.w	ImpFlg(a5)
-	Rbra	L_Dir0a
-; - - - - - - - - - - - - -
-	Lib_Def	Dir0a
-; - - - - - - - - - - - - -
-	move.l	Name1(a5),a0
-	clr.b	(a0)
-	move.l	Name2(a5),a0
-	clr.b	(a0)
-	Rjsr	L_Dsk.PathIt
-	Rbra	L_Dir2
+	Lib_Empty			Dir0a, now in src/lib/dirs.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					DIR/LDIR a$
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par	InLDir1
+	Lib_Int	InLDir1		src/lib/dirs.cpp
 ; - - - - - - - - - - - - -
-	move.w	#1,ImpFlg(a5)
-	Rbra	L_Dir1a
+	Lib_Int	InDir1		src/lib/dirs.cpp
 ; - - - - - - - - - - - - -
-	Lib_Par	InDir1
+	Lib_Empty			Dir1a, now in src/lib/dirs.cpp
 ; - - - - - - - - - - - - -
-	clr.w	ImpFlg(a5)
-	Rbra	L_Dir1a
+	Lib_Empty			Dir2, now in src/lib/dirs.cpp
 ; - - - - - - - - - - - - -
-	Lib_Def	Dir1a
-; - - - - - - - - - - - - -
-	move.l	d3,a2
-	Rbsr	L_NomDir
-	Rbra	L_Dir2
-; - - - - - - - - - - - - -
-	Lib_Def	Dir2
-; - - - - - - - - - - - - -
-	clr.w	DirComp(a5)
-	move.w	DirLNom(a5),FillFSize(a5)
-	Rbra	L_Dir3
-; - - - - - - - - - - - - -
-	Lib_Def	Dir3
-; - - - - - - - - - - - - -
-	move.w	#1,FillF32(a5)
-	clr.l	DirLong(a5)
-	Rbsr	L_FillFirst
-	moveq	#17,d0
-	Rjsr	L_Def_GetMessage
-	Rbsr	L_ImpChaine
-	move.l	BufFillF(a5),a0
-	lea	6+4(a0),a0
-	Rbsr	L_ImpChaine
-	lea	ChRet(pc),a0
-	Rbsr	L_ImpChaine
-
-;	Boucle du directory
-DirLoop
-	Rbsr	L_FillNxt
-	bpl.s	*+8
-	Rjmp	L_DiskError
-	beq	DirL5
-	cmp.w	#1,d0
-	beq.s	DirLoop
-	lea	6(a0),a2
-	tst.w	DirComp(a5)
-	beq.s	DirL0
-* Affichage condense!
-	lea	4(a2),a0
-	Rbsr	L_ImpChaine
-	bra.s	DirL3
-* Affichage normal
-DirL0:	cmp.b	#"*",4(a2)
-	bne.s	DirL1
-* Directory
-	moveq	#16,d0
-	Rjsr	L_Def_GetMessage
-	Rbsr	L_ImpChaine
-	lea	5(a2),a0
-	Rbsr	L_ImpChaine
-	bra.s	DirL2
-* Fichier normal
-DirL1:	lea	ChDir4(pc),a0
-	Rbsr	L_ImpChaine
-	lea	5(a2),a0
-	Rbsr	L_ImpChaine
-	lea	ChDir5(pc),a0
-	Rbsr	L_ImpChaine
-	move.l	Name1(a5),a0
-	move.l	(a2),d0
-	and.l	#$00FFFFFF,d0
-	add.l	d0,DirLong(a5)
-	Rjsr	L_LongToDec
-	clr.b	(a0)
-	move.l	Name1(a5),a0
-	Rbsr	L_ImpChaine
-* Encore un?
-DirL2:	lea	ChRet(pc),a0
-	Rbsr	L_ImpChaine
-DirL3:	Rbsr	L_TTDir
-	beq	DirLoop
-* Message de fin
-DirL5:	tst	DirComp(a5)
-	beq.s	DirL6
-	lea	ChRet(pc),a0
-	Rbsr	L_ImpChaine
-	bra.s	DirL7
-DirL6:	move.l	Buffer(a5),a0
-	move.l	DirLong(a5),d0
-	Rjsr	L_LongToDec
-	clr.b	(a0)
-	move.l	Buffer(a5),a0
-	Rbsr	L_ImpChaine
-	moveq	#19,d0
-	Rjsr	L_Def_GetMessage
-	Rbsr	L_ImpChaine
-* Va liberer la memoire FILL FILE
-DirL7:	Rbsr	L_FillFFree
-	rts
-ChDir1a	dc.b 	26,13,0
-ChDir2	dc.b 	" ",0
-ChDir4 	dc.b 	"  ",0
-ChDir5	dc.b 	" ",0
-ChRet	dc.b 	13,10,0
-	even
+	Lib_Empty			Dir3, now in src/lib/dirs.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					Test touches dir
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	TTDir
-; - - - - - - - - - - - - -
-	Rjsr	L_Test_PaSaut
-	SyCall	Inkey			* SPACE/ESC?
-	tst.l	d1
-	beq.s	TTdiC
-	cmp.b	#" ",d1
-	beq.s	TTdiW
-	swap 	d1
-	cmp.b	#$45,d1
-	beq.s	TTdiF
-TTdiC:	SyCall	Shifts			* CONTROL?
-	and.w	#%00001000,d1
-	beq.s	TTdiX
-	move.w	#25,-(sp)
-TTdiL:	Rjsr	L_Test_PaSaut
-	SyCall	WaitVbl
-	subq.w	#1,(sp)
-	bne.s	TTdiL
-	addq.l	#2,sp
-TTdiX:	moveq	#0,d0
-	rts
-* Boucle d'attente
-TTdiW:	Rjsr	L_Test_PaSaut
-	SyCall	Inkey
-	tst.l	d1
-	beq.s	TTdiW
-	swap	d1
-	cmp.b	#$45,d1
-	bne.s	TTdiX
-* Fin du directory!
-TTdiF:	moveq	#1,d0
-	rts
+	Lib_Empty			TTDir, now in src/lib/dirs.cpp
 
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -3650,463 +3391,51 @@ TTdiF:	moveq	#1,d0
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					FILL FILL
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	FillAll
-; - - - - - - - - - - - - -
-	Rbsr	L_FillFirst
-FlAl1	Rbsr	L_FillNxt
-	bmi.s	FlAl2
-	bne.s	FlAl1
-FlAl2	rts
+	Lib_Int	FillAll		src/lib/dirs.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					Retourne le nom selectionne d0->A0
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	FillGet
-; - - - - - - - - - - - - -
-	movem.l	d1/d2,-(sp)
-	move.l	BufFillF(a5),d2
-	beq.s	FlGNo
-	move.l	d2,a0
-	moveq	#-1,d1
-FlG0	move.l	(a0),d2
-	beq.s	FlGNo
-	move.l	d2,a0
-	addq.w	#1,d1
-	cmp.w	d0,d1
-	bne.s	FlG0
-	movem.l	(sp)+,d1/d2
-	moveq	#-1,d0
-	rts
-FlGNo	movem.l	(sp)+,d1/d2
-	moveq	#0,d0
-	rts
+	Lib_Int	FillGet		src/lib/dirs.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					Routine: FILL FILE DEVICES
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	FillDev
-; - - - - - - - - - - - - -
-	movem.l	d0-d7/a0-a6,-(sp)
-	bsr	FfDeb
-; Cherche les devices
-	move.l	$4,a6
-	jsr	Forbid(a6)
-	move.l	DosBase(a5),a3
-	move.l	34(a3),a3
-	move.l	24(a3),d0
-	lsl.l	#2,d0
-	move.l	d0,a3
-	move.l	4(a3),d0
-	lsl.l	#2,d0
-	move.l	d0,a3
-* Boucle d'exploration
-FDev1	tst.l	8(a3)
-	beq.s	FDev5
-
-; Prend le filtre...
-	move.l	Name1(a5),a0
-	move.b	(a0),d0
-	cmp.b	#"a",d0
-	bcs.s	.Maj
-	cmp.b	#"z",d0
-	bhi.s	.Maj
-	sub.b	#$20,d0
-.Maj	cmp.b	#"D",d0			Un device?
-	bne.s	.PaD
-	tst.l	4(a3)
-	beq.s	.Ok
-	bra.s	FDev5
-.PaD	cmp.b	#"A",d0			Un assign?
-	bne.s	.Ok
-	tst.l	4(a3)
-	beq.s	FDev5
-
-.Ok	move.l	40(a3),d0
-	beq.s	FDev5
-	lsl.l	#2,d0
-	move.l	d0,a0
-	move.b	(a0)+,d0
-	ext.w	d0
-	move.l	Buffer(a5),a2
-	lea	8(a2),a1
-	subq.w	#1,d0
-	bmi.s	FDev5
-FDev2	move.b	(a0)+,(a1)+
-	dbra	d0,FDev2
-	move.b	#":",(a1)+
-FDev3	clr.b	(a1)
-* Filtre
-	move.l	Name2(a5),a0		* Filtre POSITIF
-	tst.b	(a0)
-	beq.s	FDev4
-	lea	8(a2),a1
-	Rbsr	L_Joker
-	beq.s	FDev5
-* Poke dans la liste
-FDev4	move.l	#-1,124(a2)
-	moveq	#" ",d2
-	Rbsr	L_FillFPoke
-* Device suivant
-FDev5	move.l	(a3),d0
-	lsl.l	#2,d0
-	move.l	d0,a3
-	bne	FDev1
-* C'est fini!
-	jsr	Permit(a6)
-	Rbsr	L_FillSort
-	movem.l	(sp)+,d0-d7/a0-a6
-	rts
-; Enleve l'ancien buffer -si present-
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-FfDeb	Rbsr	L_FillFFree
-* Premier faux fichier
-	move.l	Buffer(a5),a2
-	clr.w	8(a2)
-	clr.l	124(a2)
-	moveq	#0,d2
-	Rbsr	L_FillFPoke
-	clr.w	FillFNb(a5)
-	rts
+	Lib_Int	FillDev		src/lib/dirs.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					Cree le buffer fill files
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	FillFirst
-; - - - - - - - - - - - - -
-* Enleve l'ancien buffer -si present-, reserve le nouveau
-	Rbsr	L_FillFFree
-* Branche la routine sur la liste CLEARVAR
-	movem.l	a0-a2/d0-d1,-(sp)
-	lea	FlFStru(pc),a1
-	lea	Sys_ClearRoutines(a5),a2
-	SyCall	AddRoutine
-	movem.l	(sp)+,a0-a2/d0-d1
-* Trouve le nom du disque
-	Rjsr	L_LockGet
-	move.l	Buffer(a5),d2
-	DosCall	_LVOExamine
-	move.l	Buffer(a5),a0
-	tst.w	4(a0)			* Si FICHIER-> filtre
-	bpl.s	FlF2
-	move.l	d3,a0
-	move.l	Name2(a5),a1
-FlF1	move.b	(a0)+,(a1)+
-	bne.s	FlF1
-	move.l	d3,a0
-	clr.b	(a0)
-FlF2	Rjsr	L_LockGet
-	Rjsr	L_AskDir2
-	clr.l	LockSave(a5)
-	move.l	#6+4+128,d0
-	move.l	d0,d1
-	SyCall	MemFastClear
-	Rbeq	L_OOfMem
-	move.l	a0,BufFillF(a5)
-	move.l	a0,a1
-	move.w	d1,4(a1)
-	lea	6+4(a1),a1
-	move.l	Buffer(a5),a0
-	lea	384(a0),a0
-FlF3	move.b	(a0)+,(a1)+
-	bne.s	FlF3
-* Saute le nom du disque...
-	Rjsr	L_LockGet
-	move.l	LockSave(a5),d1
-	move.l	Buffer(a5),d2
-	DosCall	_LVOExamine
-	rts
-* Structure pour clearvar
-FlFStru	dc.l	0
-	Rbra	L_FillFFree
+	Lib_Int	FillFirst		src/lib/dirs.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					Boucle de recherche des fichiers
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	FillNxt
-; - - - - - - - - - - - - -
-	move.l	LockSave(a5),d1
-	move.l	Buffer(a5),a2
-	move.l	a2,d2
-	DosCall	_LVOExNext
-	tst.l	d0
-	beq	FfFini
-* Filtre les noms, si pas directory...
-	tst.w	4(a2)
-	bpl.s	Ff6b
-	move.l	DirFNeg(a5),a0		* Filtre NEGATIF
-	tst.b	(a0)
-	beq.s	Ff6
-	lea	8(a2),a1
-	Rbsr	L_Joker
-	bne.s	Ff8
-Ff6:	move.l	Name2(a5),a0		* Filtre POSITIF
-	tst.b	(a0)
-	beq.s	Ff6a
-	lea	8(a2),a1
-	Rbsr	L_Joker
-	beq.s	Ff8
-Ff6a	moveq	#" ",d2
-	bra.s	Ff7
-* Une *
-Ff6b	moveq	#"*",d2
-* Poke dans le buffer
-Ff7	Rbsr	L_FillFPoke
-	beq.s	FfFini
-* OK! Ramene le nom = A0 / D0>0
-	move.l	d0,a0
-	moveq	#2,d0
-	rts
-* Pas filtre!
-Ff8	moveq	#1,d0
-	rts
-;	Plus de nom. D0=0 fin / D0<0 erreur
-FfFini	DosCall	_LVOIoErr
-	cmp.w	#232,d0
-	bne.s	FfErr
-	moveq	#0,d0
-	rts
-FfErr	moveq	#-1,d0
-	rts
+	Lib_Int	FillNxt		src/lib/dirs.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					Lebere les buffers fill file
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	FillFFree
-; - - - - - - - - - - - - -
-	Rjsr	L_LockFree
-	move.l	BufFillF(a5),d1
-	beq.s	FFr2
-FFr1	move.l	d1,a1
-	move.l	(a1),d1
-	move.w	4(a1),d0
-	ext.l	d0
-	SyCall	MemFree
-	tst.l	d1
-	bne.s	FFr1
-	clr.l	BufFillF(a5)
-	clr.w	FillFNb(a5)
-	clr.w	PosFillF(a5)
-	clr.b	FillFSorted(a5)
-FFr2	rts
+	Lib_Int	FillFFree		src/lib/dirs.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					Trie le buffer fill file
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	FillSort
-; - - - - - - - - - - - - -
-	movem.l	a0-a4/d0-d7,-(sp)
-Fss1	moveq	#0,d7
-	move.l	BufFillF(a5),d0
-	beq.s	FssX
-	move.l	d0,a0
-	move.l	(a0),d0
-	beq.s	FssX
-	move.l	d0,a1
-	bra.s	Fss4
-* Compare les chaines
-Fss2	move.l	d0,a1
-	lea	10(a0),a3
-	lea	10(a1),a4
-Fss3	move.b	(a4)+,d0
-	Rbsr	L_MajD0
-	cmp.b	#"*",d0
-	bne.s	Fss3a
-	moveq	#1,d0
-Fss3a	move.b	d0,d1
-	move.b	(a3)+,d0
-	Rbsr	L_MajD0
-	cmp.b	#"*",d0
-	bne.s	Fss3b
-	moveq	#1,d0
-Fss3b	move.b	d0,d2
-	or.b	d1,d2
-	beq.s	Fss4
-	cmp.b	d0,d1
-	beq.s	Fss3
-	bhi.s	Fss4
-* Echange
-	move.l	(a1),(a0)
-	move.l	a0,(a1)
-	move.l	a1,(a2)
-	addq.w	#1,d7
-	exg.l	a0,a1
-* La chaine suivante?
-Fss4	move.l	a0,a2
-	move.l	a1,a0
-	move.l	(a0),d0
-	bne.s	Fss2
-* Encore une fois?
-	tst.w	d7
-	bne.s	Fss1
-* Ca y est!
-FssX	movem.l	(sp)+,a0-a4/d0-d7
-	rts
+	Lib_Int	FillSort		src/lib/dirs.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					Poke dans le buffer sans classement
 ;					D2= Premier caractere
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	FillFPoke
-; - - - - - - - - - - - - -
-	movem.l	a2-a3/d2-d4,-(sp)
-	move.w	#-1,FillFPosPoke(a5)	Rien de poke!
-	move.w	FillFSize(a5),d0	Longueur maxi
-	tst.w	FillF32(a5)
-	bne.s	.Skip
-	lea	8(a2),a0		Si pas de 32, longueur r�elle!
-.Long	tst.b	(a0)+
-	bne.s	.Long
-	sub.l	a2,a0
-	move.l	a0,d0
-.Skip	add.w	#4+2+4+2,d0
-	ext.l	d0
-	move.l	d0,d1
-	SyCall	MemFastClear
-	beq.s	.Out
-	move.l	a0,a1
-	move.w	d1,4(a1)
-	move.l	a1,a3
-; Recopie du nom, en le tronquant.
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	lea	6(a1),a1
-	move.l	124(a2),(a1)+
-	move.w	FillFSize(a5),d1
-	subq.w	#2,d1
-	move.b	d2,(a1)+
-	lea 	8(a2),a0
-.pfD    move.b 	(a0)+,(a1)+
-	beq.s	.pfE
-        dbra 	d1,.pfD
-	bra.s	.pfG
-.pfE:	tst.w	FillF32(a5)
-	beq.s	.pfG
-	subq.l	#1,a1
-.pfF:	move.b	#" ",(a1)+
-	dbra	d1,.pfF
-; Insert le nom dans la liste.
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.pfG:	addq.w	#1,FillFNb(a5)
-	move.l	BufFillF(a5),d2
-	bne.s	.pfA
-	move.l	a3,BufFillF(a5)
-	bra.s	.Out
-; Faut-il classer dans la foulee (pour file selector)
-.pfA	tst.b	FillFSorted(a5)
-	bne.s	.Classe
-; Non classe, met � la fin...
-.pfB	move.l	d2,a2
-	move.l	(a2),d2
-	bne.s	.pfB
-	moveq	#-1,d3
-	bra.s	.Ins
-; Classe: trouve le bon endroit
-.Classe	move.l	d2,a2
-	moveq	#-1,d3			Compte la position d'insertion
-.Cla	addq.w	#1,d3
-	move.l	(a2),d2
-	beq.s	.Ins
-	exg	d2,a2
-	Rbsr	L_FfComp
-	bne.s	.Cla
-	move.l	d2,a2
-; Insere dans la liste...
-.Ins	move.l	(a2),(a3)
-	move.l	a3,(a2)
-	move.w	d3,FillFPosPoke(a5)
-.Out	move.l	a3,d0
-.Err	movem.l	(sp)+,a2-a3/d2-d4
-	rts
+	Lib_Int	FillFPoke		src/lib/dirs.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					Routine, compare A0 a A1
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	FfComp
+	Lib_Int	FfComp		src/lib/dirs.cpp
 ; - - - - - - - - - - - - -
-	lea	10(a2),a0
-	lea	10(a3),a1
-	Rbra	L_FfComp2
-; - - - - - - - - - - - - -
-	Lib_Def	FfComp2
-; - - - - - - - - - - - - -
-.Fss3	move.b	(a1)+,d0
-	Rbsr	L_MajD0
-	cmp.b	#"*",d0
-	bne.s	.Fss3a
-	moveq	#1,d0
-.Fss3a	move.b	d0,d1
-	move.b	(a0)+,d0
-	Rbsr	L_MajD0
-	cmp.b	#"*",d0
-	bne.s	.Fss3b
-	moveq	#1,d0
-.Fss3b	cmp.b	d0,d1
-	bhi.s	.Fss4
-	bne.s	.Fss5
-	tst.b	d0
-	bne.s	.Fss3
-.Fss5	move.w	#%00100,CCR		BEQ
-	rts
-.Fss4	move.w	#%00000,CCR		BNE
-	rts
+	Lib_Int	FfComp2		src/lib/dirs.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 	Trouve la position de la chaine A0 dans la liste,
 ;	a partir de #D0. D1= mode de recherche
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	FillFFind
-; - - - - - - - - - - - - -
-	movem.l	a2/a3/d2/d3,-(sp)
-	move.l	a0,a3
-; Localise le debut demande
-	moveq	#0,d3
-	move.l	BufFillF(a5),d2
-	beq.s	.Exit
-	move.l	d2,a2			Saute le pathname
-	move.l	(a2),d2
-	beq.s	.Exit
-.Lp1	move.l	d2,a2
-	cmp.w	d0,d3
-	bcc.s	.Rech
-	addq.w	#1,d3
-	move.l	(a2),d2
-	bne.s	.Lp1
-	moveq	#-1,d3
-	bra.s	.Exit
-; Boucle de recherche
-.Rech	tst.b	FillFSorted(a5)
-	bne.s	.Loop2
-; Recherche dans liste non triee
-.Loop1	move.l	d2,a2
-	lea	10(a2),a1
-	move.l	a3,a0
-.Fss3	move.b	(a1)+,d0
-	Rbsr	L_MajD0
-	cmp.b	#"*",d0
-	bne.s	.Fss3a
-	moveq	#1,d0
-.Fss3a	move.b	d0,d1
-	move.b	(a0)+,d0
-	beq.s	.Exit
-	Rbsr	L_MajD0
-	cmp.b	#"*",d0
-	bne.s	.Fss3b
-	moveq	#1,d0
-.Fss3b	cmp.b	d0,d1
-	beq.s	.Fss3
-	addq.w	#1,d3
-	move.l	(a2),d2
-	bne.s	.Loop1
-	moveq	#-1,d3
-	bra.s	.Exit
-; Recherche dans liste triee
-.Loop2	move.l	d2,a2
-	lea	10(a2),a1
-	move.l	a3,a0
-	Rbsr	L_FfComp2
-	bne.s	.Exit
-	addq.w	#1,d3
-	move.l	(a2),d2
-	bne.s	.Loop2
-	moveq	#-1,d3
-; Ok, position trouvee
-.Exit	move.l	d3,d0
-	movem.l	(sp)+,a2/a3/d2/d3
-	rts
+	Lib_Int	FillFFind		src/lib/dirs.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					ROUTINES DISQUE
@@ -4133,113 +3462,12 @@ FssX	movem.l	(sp)+,a0-a4/d0-d7
 ;	Met la racine en NAME1
 ;	Met le filtre en NAME2
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	NomDir
-; - - - - - - - - - - - - -
-	move.w	(a2)+,d2
-	cmp.w	#256,d2
-	Rbcc	L_StooLong
-	moveq	#0,d4
-NDir:	move.l	Name1(a5),a0
-	clr.b	(a0)
-	move.l	Name2(a5),a1
-	clr.b	(a1)
-	moveq	#-1,d1
-	move.l	a0,d3
-NmD1	addq.w	#1,d1
-	cmp.w	d1,d2
-	beq.s	NmD5
-	move.b	(a2)+,d0
-	move.b	d0,(a0)+
-	clr.b	(a0)
-	cmp.b	#"*",d0
-	beq.s	NmD2
-	cmp.b	#"?",d0
-	bne.s	NmD3
-NmD2	bset	#0,d4
-NmD3	cmp.b	#":",d0
-	beq.s	NmD4
-	cmp.b	#"/",d0
-	bne.s	NmD1
-NmD4	bclr	#0,d4
-	Rbne	L_FonCall
-	move.l	a0,d3
-	bra.s	NmD1
-NmD5	tst.w	d4
-	beq.s	NmDx
-	move.l	d3,a0
-NmD6	move.b	(a0)+,(a1)+
-	bne.s	NmD6
-	move.l	d3,a0
-	clr.b	(a0)
-NmDx	Rjmp	L_Dsk.PathIt
+	Lib_Int	NomDir		src/lib/dirs.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					FILTRE LES NOMS DISQUE
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	Joker
-; - - - - - - - - - - - - -
-	move.l	a0,d2
-	move.l	a1,d3
-JokLoop	move.b	(a1)+,d1
-	beq.s	JokX
-JokL0	move.b	(a0)+,d0
-	beq.s	JokNON
-	cmp.b	#"/",d0
-	beq.s	ReJok
-	cmp.b	#"?",d0
-	beq.s	JokC
-	cmp.b	#".",d0
-	beq.s	JokD
-	cmp.b	#"*",d0
-	beq.s	JokE
-* Veut une lettre normale!
-	cmp.b	#"a",d0
-	bcs.s	JokA
-	cmp.b	#"z",d0
-	bhi.s	JokA
-	sub.b	#"a"-"A",d0
-JokA:	cmp.b	#"a",d1
-	bcs.s	JokB
-	cmp.b	#"z",d1
-	bhi.s	JokB
-	sub.b	#"a"-"A",d1
-JokB:	cmp.b	d0,d1
-	beq.s	JokLoop
-	bra.s	ReJok
-* N'importe quelle lettre!
-JokC:	cmp.b 	#".",d1
-	bne.s	JokLoop
-	bra.s	ReJok
-* Un Point!
-JokD:	cmp.b	#".",d1
-	beq.s	JokLoop
-	bra.s	ReJok
-* Une etoile
-JokE:	cmp.b	#"*",(a0)
-	beq.s	JokOUI
-JokF:	cmp.b	#".",d1
-	beq.s	JokL0
-	move.b	(a1)+,d1
-	bne.s	JokF
-* Fin du mot sur le disque
-JokX:	move.b	(a0)+,d0
-	beq.s	JokOUI
-	cmp.b	#"/",d0
-	beq.s	JokOUI
-* Recommence!
-ReJok:	move.l	d2,a0
-	move.l	d3,a1
-ReJ:	move.b	(a0)+,d0
-	beq.s	JokNON
-	cmp.b	#"/",d0
-	bne.s	ReJ
-	move.l	a0,d2
-	bra	JokLoop
-* Reponses...
-JokNON:	moveq	#0,d0
-	rts
-JokOUI:	moveq	#1,d0
-	rts
+	Lib_Int	Joker		src/lib/dirs.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					ROUTINES DISQUE
@@ -14236,7 +13464,7 @@ MnKet3	move.w	d7,(a1)+
 	bne.s	.SkipP
 	Rjsr	L_AskDir			Le demande
 	Rjsr	L_CopyPath
-.SkipP	Rbsr	L_FillFFree			FillFree
+.SkipP	Rjsr	L_FillFFree			FillFree
 	move.l	Fs_Variables(a4),a0
 	move.w	#64,FillFSize(a5)		Taille maxi
 	clr.w	FillF32(a5)			Pas de 32
@@ -14301,13 +13529,13 @@ Fs_Help	bsr	Fs_GetFName
 	move.l	FsV_PList(a2),d0
 	addq.l	#1,d0
 	move.l	a0,-(sp)
-	Rbsr	L_FillFFind
+	Rjsr	L_FillFFind
 	move.l	(sp)+,a0
 	tst.w	d0
 	bpl.s	.S0
 	moveq	#0,d0
 ; SORT en route
-.Sl	Rbsr	L_FillFFind		Va chercher
+.Sl	Rjsr	L_FillFFind		Va chercher
 	tst.w	d0
 	bmi.s	.S3
 .S0	add.w	FsV_Ty+2(a2),d0
@@ -14443,7 +13671,7 @@ Fs_Cancel
 Fs_Sort	move.l	Fs_Variables(a4),a0
 	tst.l	FsV_Sort(a0)
 	beq.s	.Skip
-	Rbsr	L_FillSort
+	Rjsr	L_FillSort
 	move.b	#-1,FillFSorted(a5)
 	bsr	FsI_AffF
 .Skip	rts
@@ -14474,7 +13702,7 @@ Fs_StoreList
 	clr.b	8(a3)
 	moveq	#" ",d2
 	move.l	a3,a2
-	Rbsr	L_FillFPoke
+	Rjsr	L_FillFPoke
 	clr.w	FillFNb(a5)		RAZ nombre de fichiers
 ; Explore la liste.
 	move.l	Fs_Liste(a5),d2
@@ -14509,7 +13737,7 @@ Fs_StoreList
 	move.l	d0,124(a3)		Adresse de la structure
 	moveq	#" ",d2			Va poker le nom dans la liste
 	move.l	a3,a2
-	Rbsr	L_FillFPoke
+	Rjsr	L_FillFPoke
 	move.l	(sp)+,a2
 	move.l	(a2),d2
 	bne.s	.Loop
@@ -14567,7 +13795,7 @@ Fs_Dev	move.w	d1,-(sp)
 	move.l	Name2(a5),a0
 	clr.b	(a0)
 	bsr	Fs_New
-	Rbsr	L_FillDev
+	Rjsr	L_FillDev
 	move.w	(sp)+,d0
 	move.b	d0,Fs_DevFlag(a4)
 	bsr	FsI_AffF
@@ -14582,7 +13810,7 @@ Fs_Name	move.l	#Fs_ChannelN,d0		Demande la position dans la liste
 	Rbsr	L_Dia_GetValue
 	move.l	d1,d0
 	move.l	d1,d2
-	Rbsr	L_FillGet
+	Rjsr	L_FillGet
 	bne.s	.Quoi
 	rts
 ; Un fichier? Un directory? Un device?
@@ -14883,14 +14111,14 @@ Fs_Store
 	move.l	Name2(a5),a0		Copy le filtre
 .Cop2	move.b	(a0)+,(a1)+
 	bne.s	.Cop2
-.Exit	Rbsr	L_FillFFree		Enleve le lock!
+.Exit	Rjsr	L_FillFFree		Enleve le lock!
 	rts
 
 ; Branche le directory D0 sur le directory courant
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Fs_Branch
 	move.l	d0,-(sp)		Enleve la liste precedente
-	Rbsr	L_FillFFree
+	Rjsr	L_FillFFree
 	move.l	(sp)+,d0
 	move.l	d0,a0
 	addq.l	#8,a0
@@ -15045,7 +14273,7 @@ Fs_IllDName
 
 ; Effacement de tous les noms de l'�cran
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Fs_New	Rbsr	L_FillFFree
+Fs_New	Rjsr	L_FillFFree
 	clr.b	Fs_DirOn(a4)
 	move.w	#-1,Fs_Click(a4)
 	move.l	Fs_Variables(a4),a0
@@ -15066,7 +14294,7 @@ Fs_First
 	bsr	Fs_FindStore		Deja trouve?
 	bne.s	.Dejalu
 	Rjsr	L_LockGet			Find a lock
-	Rbsr	L_FillFirst		Get names
+	Rjsr	L_FillFirst		Get names
 	bsr	FsI_SliStore
 	move.b	#1,Fs_DirOn(a4)
 	rts
@@ -15080,7 +14308,7 @@ Fs_First
 Fs_Next	tst.b	Fs_DirOn(a4)
 	beq.s	.Skip
 	clr.b	Fs_DirOn(a4)
-	Rbsr	L_FillNxt
+	Rjsr	L_FillNxt
 	ble.s	.Fini
 	move.b	#1,Fs_DirOn(a4)
 .Fini	cmp.w	#1,d0
@@ -15456,7 +14684,7 @@ FsI_Quit
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Fs_GetName
 	move.l	d4,d0
-	Rbsr	L_FillGet
+	Rjsr	L_FillGet
 	tst.w	d0
 	beq.s	.Skip
 	lea	6+4(a0),a1

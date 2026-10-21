@@ -353,7 +353,12 @@ extern "C" uint32_t lib_yes_req(RegFrame &)
     return 0;
 }
 
-extern "C" uint32_t lib_lock_get(RegFrame &r) { return r.d[1] = static_cast<uint32_t>(lock_get()); }
+// LockGet: out: d0 = d1 = the lock (also in LockSave)
+extern "C" uint32_t lib_lock_get(RegFrame &r)
+{
+    r.d[2] = static_cast<uint32_t>(ACCESS_READ);
+    return r.d[0] = r.d[1] = static_cast<uint32_t>(lock_get());
+}
 
 extern "C" uint32_t lib_lock_free(RegFrame &)
 {
