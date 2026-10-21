@@ -576,8 +576,8 @@ Ed1	EdT	1,<Link cursor movement: please click on the window to link...>
 	EdT	19,<Cancel>
 	EdT	20,<Quit AMOS Professional. Are you sure?>
 	EdT	21,<AMOS Professional>
-	EdT	22,<By Franï¿½ois Lionet>
-	EdT	23,<ï¿½ 1992 Europress Software Ltd.>
+	EdT	22,<By François Lionet>
+	EdT	23,<© 1992 Europress Software Ltd.>
 	EdT	24,< extensions loaded.>
 	EdT	25,<New all hidden programs. Are you sure?>
 	EdT	26,<Search>

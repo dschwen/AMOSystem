@@ -14472,7 +14472,7 @@ Tkl1a	move.b	(a0)+,d0		* ? PRINT / ? PRINT #
 	beq.s	Tkl1b
 	cmp.b	#"#",d0
 	beq.s	Tkl1c
-	cmp.s	#" ",d0
+	cmp.b	#" ",d0
 	beq.s	Tkl1a
 Tkl1b	move.w	#_TkPr,d4
 	bra	TkKt0
