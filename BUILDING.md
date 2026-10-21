@@ -118,6 +118,11 @@ the number to text conversions.
   Depending on what ran before, it failed with "out of string space"
   (error 11). It now always works; `tests/golden/strings.txt` has the
   corrected line.
+- `Dir`/`Dir First$` on a file name relative to the current directory: the
+  assembler took the file part from a stale register and lost the filter.
+- Some crashes on bad input become errors or are avoided: `Bank Swap` of
+  two banks that do not exist, `Dir/W` without a screen, `PLoad` when the
+  bank address happened to end in $0000 (reported "out of memory").
 
 ## Assembler compatibility notes
 

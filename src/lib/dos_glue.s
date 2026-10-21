@@ -173,3 +173,24 @@ _lib_fill_free_on_clear
 		dc.l	0
 		CCall	_lib_fill_free
 		rts
+
+; IFF (lib/iff.cpp)
+		LibCall	InMaskIff,_lib_in_mask_iff,1,None		IFF MASK m
+		LibCall	FnPicture,_lib_fn_picture,0,Int			=PICTURE
+		LibCall	InLoadIff1,_lib_in_load_iff1,1,None		LOAD IFF a$
+		LibCall	InLoadIff2,_lib_in_load_iff2,2,None		LOAD IFF a$,s
+		LibCall	FnFormLoad2,_lib_fn_form_load2,2,Int		=FORM LOAD(c,a)
+		LibCall	FnFormLoad3,_lib_fn_form_load3,3,Int		=FORM LOAD(c,a,n)
+		LibCall	FnFormLength1,_lib_fn_form_length1,1,Int	=FORM LENGTH(c)
+		LibCall	FnFormLength2,_lib_fn_form_length2,2,Int	=FORM LENGTH(c,n)
+		LibCall	FnFormPlay2,_lib_fn_form_play2,2,Int		=FORM PLAY(a,n)
+		LibCall	FnFormPlay3,_lib_fn_form_play3,3,Int		=FORM PLAY(a,n,s)
+		LibCall	FnFormSkip1,_lib_fn_form_skip1,1,Int		=FORM SKIP(a)
+		LibCall	FnFormSkip2,_lib_fn_form_skip2,2,Int		=FORM SKIP(a,n)
+		LibCall	InIffAnim2,_lib_in_iff_anim2,2,None		IFF ANIM a$,s
+		LibCall	InIffAnim3,_lib_in_iff_anim3,3,None		IFF ANIM a$,s,n
+		LibCall	FnFormParam,_lib_fn_form_param,0,Int		=FRAME PARAM
+		LibCall	InSaveIff1,_lib_in_save_iff1,1,None		SAVE IFF a$
+		LibCall	InSaveIff2,_lib_in_save_iff2,2,None		SAVE IFF a$,c
+		LibCall	InCommandLine,_lib_in_command_line,1,None	COMMAND LINE$=a$
+		LibCall	FnCommandLine,_lib_fn_command_line,0,String	=COMMAND LINE$

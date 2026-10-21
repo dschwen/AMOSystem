@@ -30,10 +30,13 @@ struct Ctx {
     uint8_t *a3, *a4, *a5, *a6;
 };
 
-// The scratch registers of a call into the assembler
+extern "C" Ctx amos_ctx;
+
+// The registers of a call into the assembler: d0-d7/a0-a2. d6/d7 start as
+// the interpreter's (Demande, for one, depends on d7); a3-a6 always are.
 struct Regs {
-    uint32_t d[6];      // d0-d5
-    uint32_t a[3];      // a0-a2
+    uint32_t d[8] = {0, 0, 0, 0, 0, 0, amos_ctx.d6, amos_ctx.d7};
+    uint32_t a[3] = {0, 0, 0};
 };
 
 // The registers of a RegRoutine (src/glue.i), changed in place

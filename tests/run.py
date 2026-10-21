@@ -352,6 +352,13 @@ def main():
                                    else os.path.join(ROOT, 'build', 'dist', 'AMOS'))
     if not os.path.isdir(amos_tree):
         sys.exit(f'{amos_tree} missing: run "make dist" first')
+    if not args.amos_tree and not args.reference:
+        # build/dist is a copy: refuse to test a stale one
+        for built, copy in (('AMOSPro', 'AMOSPro'), ('AMOSPro.Lib', 'APSystem/AMOSPro.Lib'),
+                            ('AMOS.library', 'APSystem/AMOS.library')):
+            a, b = os.path.join(ROOT, 'build', built), os.path.join(amos_tree, copy)
+            if os.path.exists(a) and (not os.path.exists(b) or open(a, 'rb').read() != open(b, 'rb').read()):
+                sys.exit(f'{b} is older than build/{built}: run "make dist" first')
     tables = amostok.Tables([os.path.join(amos_tree, 'APSystem')])
     amos, kickstart = prepare(amos_tree, args.kickstart, args.rom_key)
 

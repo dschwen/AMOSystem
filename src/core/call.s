@@ -6,11 +6,11 @@
 
 ; void amos_call(Regs *r, const void *fn)
 ;
-; Calls fn with d0-d5/a0-a2 from *r and the interpreter registers
-; d6-d7/a3-a6 from amos_ctx, then stores d0-d5/a0-a2 back into *r.
-; amos_ctx is restored afterwards: the callee may leave other values in
-; d6-d7/a3-a6 (an extension's bank routine loads its own base into a3),
-; and C++ it calls in turn saves its registers there.
+; Calls fn with d0-d7/a0-a2 from *r and the interpreter registers a3-a6
+; from amos_ctx, then stores d0-d7/a0-a2 back into *r. amos_ctx is
+; restored afterwards: the callee may leave other values in d6-d7/a3-a6
+; (an extension's bank routine loads its own base into a3), and C++ it
+; calls in turn saves its registers there.
 		xdef	_amos_call
 _amos_call
 		movem.l	d2-d7/a2-a6,-(sp)
@@ -21,14 +21,14 @@ _amos_call
 		move.l	a0,-(sp)
 		pea	.Back(pc)
 		move.l	a1,-(sp)
-		movem.l	_amos_ctx,d6-d7/a3-a6
-		movem.l	(a0),d0-d5/a0-a2
+		movem.l	_amos_ctx+8,a3-a6
+		movem.l	(a0),d0-d7/a0-a2
 		rts				to fn, which returns to .Back
 .Back		move.l	a0,-(sp)
 		move.l	4(sp),a0
-		movem.l	d0-d5,(a0)
-		move.l	(sp)+,6*4(a0)
-		movem.l	a1-a2,7*4(a0)
+		movem.l	d0-d7,(a0)
+		move.l	(sp)+,8*4(a0)
+		movem.l	a1-a2,9*4(a0)
 		addq.l	#4,sp
 		movem.l	(sp)+,d2-d7
 		movem.l	d2-d7,_amos_ctx
