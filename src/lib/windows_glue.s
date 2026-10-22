@@ -5,4 +5,51 @@
 
 		SECTION	.text,CODE
 
-		LibCall	InLocate,_lib_in_locate,2,None		LOCATE x,y
+		LibCall	InLocate,_lib_in_locate,2,None
+		LibCall	InWindopen5,_lib_in_windopen5,5,None
+		LibCall	InWindopen6,_lib_in_windopen6,6,None
+		LibCall	InWindopen7,_lib_in_windopen7,7,None
+		LibCall	InWindsave,_lib_in_windsave,0,None
+		LibCall	InWindmove,_lib_in_windmove,2,None
+		LibCall	InWindsize,_lib_in_windsize,2,None
+		LibCall	InWindclose,_lib_in_windclose,0,None
+		LibCall	InWindow,_lib_in_window,1,None
+		LibCall	FnWindon,_lib_fn_windon,0,Int
+		LibCall	InWriting1,_lib_in_writing1,1,None
+		LibCall	InWriting2,_lib_in_writing2,2,None
+		LibCall	InBorder,_lib_in_border,3,None
+		LibCall	InTitleTop,_lib_in_title_top,1,None
+		LibCall	InTitleBottom,_lib_in_title_bottom,1,None
+		LibCall	FnXCurs,_lib_fn_xcurs,0,Int
+		LibCall	FnYCurs,_lib_fn_ycurs,0,Int
+		LibCall	InSetCurs,_lib_in_set_curs,8,None
+		LibCall	InCentre,_lib_in_centre,1,None
+		LibCall	InCmove,_lib_in_cmove,2,None
+		LibCall	InCursPen,_lib_in_curs_pen,1,None
+		LibCall	InPaper,_lib_in_paper,1,None
+		LibCall	InPen,_lib_in_pen,1,None
+		LibCall	InClw,_lib_in_clw,0,None
+		LibCall	InHome,_lib_in_home,0,None
+		LibCall	InCleft,_lib_in_cleft,0,None
+		LibCall	InCright,_lib_in_cright,0,None
+		LibCall	InCup,_lib_in_cup,0,None
+		LibCall	InCdown,_lib_in_cdown,0,None
+		LibCall	InCursOff,_lib_in_curs_off,0,None
+		LibCall	InCursOn,_lib_in_curs_on,0,None
+		LibCall	InInverseOn,_lib_in_inverse_on,0,None
+		LibCall	InInverseOff,_lib_in_inverse_off,0,None
+		LibCall	InUnderOn,_lib_in_under_on,0,None
+		LibCall	InUnderOff,_lib_in_under_off,0,None
+		LibCall	InScrollOn,_lib_in_scroll_on,0,None
+		LibCall	InScrollOff,_lib_in_scroll_off,0,None
+		LibCall	InShadeOn,_lib_in_shade_on,0,None
+		LibCall	InShadeOff,_lib_in_shade_off,0,None
+		LibCall	InCline0,_lib_in_cline0,0,None
+		LibCall	InMemorizeX,_lib_in_memorize_x,0,None
+		LibCall	InMemorizeY,_lib_in_memorize_y,0,None
+		LibCall	InRememberX,_lib_in_remember_x,0,None
+		LibCall	InRememberY,_lib_in_remember_y,0,None
+		LibCall	InCline1,_lib_in_cline1,1,None
+		LibCall	InHScroll,_lib_in_hscroll,1,None
+		LibCall	InVScroll,_lib_in_vscroll,1,None
+		LibCall	InSetTab,_lib_in_set_tab,1,None

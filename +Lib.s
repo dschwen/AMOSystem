@@ -5415,218 +5415,78 @@ IAmRb:	SyCall	AMALReg
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					WINDOPEN
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InWindopen5
+	Lib_Int	InWindopen5		src/lib/windows.cpp
 ; - - - - - - - - - - - - -
-	move.l	d3,-(a3)
-	moveq	#0,d3
-	move.l	d3,-(a3)
-	Rbra	L_InWindopen7
+	Lib_Int	InWindopen6		src/lib/windows.cpp
 ; - - - - - - - - - - - - -
-	Lib_Par InWindopen6
-; - - - - - - - - - - - - -
-	move.l	d3,-(a3)
-	moveq	#0,d3
-	Rbra	L_InWindopen7
-; - - - - - - - - - - - - -
-	Lib_Par InWindopen7
-; - - - - - - - - - - - - -
-	tst.w	ScOn(a5)
-	Rbeq	L_ScNOp
-	Rbsr	L_SaveRegs
-	move.l	d3,a1
-	move.l	(a3)+,d7
-	moveq	#1,d6			Faire un CLW!
-	move.l	(a3)+,d5
-	move.l	(a3)+,d4
-	move.l	(a3)+,d3
-	move.l	(a3)+,d2
-	move.l	(a3)+,d1
-	cmp.l	#65536,d1
-	Rbcc	L_WFonCall
-	WiCall	WindOp
-	Rbne	L_EcWiErr
-	Rbsr	L_LoadRegs
-	rts
+	Lib_Int	InWindopen7		src/lib/windows.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					WINDSAVE
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InWindsave
-; - - - - - - - - - - - - -
-	move.l	ScOnAd(a5),d0
-	Rbeq	L_ScNOp
-	move.l	d0,a0
-	move.w	#-1,EcWiDec(a0)
-	rts
+	Lib_Int	InWindsave		src/lib/windows.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					WINDMODE
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InWindmove
-; - - - - - - - - - - - - -
-	tst.w	ScOn(a5)
-	Rbeq	L_ScNOp
-	move.l	d3,d2
-	Rbmi	L_FonCall
-	move.l	(a3)+,d1
-	Rbmi	L_FonCall
-	WiCall	MoveWi
-	Rbne	L_EcWiErr
-	rts
+	Lib_Int	InWindmove		src/lib/windows.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					WINDSIZE
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InWindsize
-; - - - - - - - - - - - - -
-	tst.w	ScOn(a5)
-	Rbeq	L_ScNOp
-	move.l	d3,d2
-	Rbmi	L_FonCall
-	move.l	(a3)+,d1
-	Rbmi	L_FonCall
-	WiCall	SizeWi
-	Rbne	L_EcWiErr
-	rts
+	Lib_Int	InWindsize		src/lib/windows.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					WINDCLOSE
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InWindclose
-; - - - - - - - - - - - - -
-	tst.w	ScOn(a5)
-	Rbeq	L_ScNOp
-	WiCall	WinDel
-	Rbne	L_EcWiErr
-	rts
+	Lib_Int	InWindclose		src/lib/windows.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					WINDOW n
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InWindow
-; - - - - - - - - - - - - -
-	tst.w	ScOn(a5)
-	Rbeq	L_ScNOp
-	move.l	d3,d1
-	WiCall	QWindow
-	Rbne	L_EcWiErr
-	rts
+	Lib_Int	InWindow		src/lib/windows.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					=WINDON
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par FnWindon
-; - - - - - - - - - - - - -
-	tst.w	ScOn(a5)
-	Rbeq	L_ScNOp
-	WiCall	GAdr
-	move.l	d1,d3
-	Ret_Int
+	Lib_Int	FnWindon		src/lib/windows.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					WRITING
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InWriting1
+	Lib_Int	InWriting1		src/lib/windows.cpp
 ; - - - - - - - - - - - - -
-	move.l	d3,-(a3)
-	moveq	#0,d3
-	Rbra	L_InWriting2
-; - - - - - - - - - - - - -
-	Lib_Par InWriting2
-; - - - - - - - - - - - - -
-	move.l	d3,d0
-	cmp.l	#3,d0
-	Rbcc	L_WFonCall
-	lsl.w	#3,d0
-	move.l	(a3)+,d1
-	cmp.l	#5,d1
-	Rbcc	L_WFonCall
-	or.w	d1,d0
-	add.b	#"0",d0
-	lea	ChWrt(pc),a1
-	move.b	d0,2(a1)
-	Rbra	L_GoWn
-ChWrt:	dc.b 	27,"W0",0
+	Lib_Int	InWriting2		src/lib/windows.cpp
 
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					BORDER n,paper,n
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InBorder
-; - - - - - - - - - - - - -
-	tst.w	ScOn(a5)
-	Rbeq	L_ScNOp
-	move.l	(a3)+,d2
-	move.l	(a3)+,d1
-	WiCall	SBord
-	Rbne	L_EcWiErr
-	rts
+	Lib_Int	InBorder		src/lib/windows.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					TITLE TOP a$
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InTitleTop
-; - - - - - - - - - - - - -
-	move.l	d3,a2
-	move.w	(a2)+,d2
-	Rbsr	L_ChVerBuf
-	move.l	Buffer(a5),d1
-	moveq	#0,d2
-	Rbra	L_WnTT
+	Lib_Int	InTitleTop		src/lib/windows.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					TITLE BOTTOM
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InTitleBottom
+	Lib_Int	InTitleBottom		src/lib/windows.cpp
 ; - - - - - - - - - - - - -
-	move.l	d3,a2
-	move.w	(a2)+,d2
-	Rbsr	L_ChVerBuf
-	move.l	Buffer(a5),d2
-	moveq	#0,d1
-	Rbra	L_WnTT
-; - - - - - - - - - - - - -
-	Lib_Def	WnTT
-; - - - - - - - - - - - - -
-	tst.w	ScOn(a5)
-	Rbeq	L_ScNOp
-	WiCall	STitle
-	Rbne	L_EcWiErr
-	rts
+	Lib_Empty			WnTT, now in src/lib/windows.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					=XYCURS
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par FnXCurs
+	Lib_Int	FnXCurs		src/lib/windows.cpp
 ; - - - - - - - - - - - - -
-	tst.w	ScOn(a5)
-	Rbeq	L_ScNOp
-	WiCall	XYCuWi
-	move.l	d1,d3
-	Ret_Int
-; - - - - - - - - - - - - -
-	Lib_Par FnYCurs
-; - - - - - - - - - - - - -
-	tst.w	ScOn(a5)
-	Rbeq	L_ScNOp
-	WiCall	XYCuWi
-	move.l	d2,d3
-	Ret_Int
+	Lib_Int	FnYCurs		src/lib/windows.cpp
 
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					SET CURS
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InSetCurs
-; - - - - - - - - - - - - -
-	move.l	d3,-(a3)
-	move.l	Buffer(a5),a1
-	lea	8(a1),a0
-	moveq	#7,d0
-WnSCu1:	move.l	(a3)+,d1
-	move.b	d1,-(a0)
-	dbra	d0,WnSCu1
-	WiCall	SCurWi
-	rts
+	Lib_Int	InSetCurs		src/lib/windows.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					LOCATE
@@ -5636,308 +5496,135 @@ WnSCu1:	move.l	(a3)+,d1
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					CENTRE
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InCentre
-; - - - - - - - - - - - - -
-	tst.w	ScOn(a5)
-	Rbeq	L_ScNOp
-	move.l	d3,a2
-	move.w	(a2)+,d2
-	Rbsr	L_ChVerBuf
-	move.l	Buffer(a5),a1
-	WiCall	Centre
-	Rbne	L_EcWiErr
-	rts
+	Lib_Int	InCentre		src/lib/windows.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					CMOVE
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InCmove
-; - - - - - - - - - - - - -
-	move.l	d3,d0
-	cmp.l	#EntNul,d0
-	bne.s	WnCm2
-WnCm1:	moveq	#0,d0
-WnCm2:	move.l	(a3)+,d1
-	cmp.l	#EntNul,d1
-	bne.s	WnCm4
-WnCm3:	moveq	#0,d1
-WnCm4:	add.l	#128,d0
-	add.l	#128,d1
-	cmp.l	#255,d0
-	Rbhi	L_WFonCall
-	cmp.l	#255,d1
-	Rbhi	L_WFonCall
-	lea	ChCMv(pc),a1
-	move.b	d1,2(a1)
-	move.b	d0,5(a1)
-	Rbra	L_GoWn
-ChCMv:	dc.b 27,"N0",27,"O0",0
-	even
+	Lib_Int	InCmove		src/lib/windows.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					CURSPEN
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InCursPen
-; - - - - - - - - - - - - -
-	lea	ChCPe(pc),a1
-	Rbra	L_WnPp
-ChCPe	dc.b 27,"D0",0
+	Lib_Int	InCursPen		src/lib/windows.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					PAPER
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InPaper
-; - - - - - - - - - - - - -
-	lea	ChPap(pc),a1
-	Rbra	L_WnPp
-ChPap	dc.b 27,"B0",0
+	Lib_Int	InPaper		src/lib/windows.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					PEN
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InPen
+	Lib_Int	InPen		src/lib/windows.cpp
 ; - - - - - - - - - - - - -
-	lea	ChPen(pc),a1
-	Rbra	L_WnPp
-ChPen:	dc.b 27,"P0",0
-; - - - - - - - - - - - - -
-	Lib_Def	WnPp
-; - - - - - - - - - - - - -
-	add.b	#"0",d3
-	move.b	d3,2(a1)
-	Rbra	L_GoWn
+	Lib_Empty			WnPp, now in src/lib/windows.cpp
 
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					CLW
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InClw
-; - - - - - - - - - - - - -
-	lea	ChClw(pc),a1
-	Rbra	L_GoWn
-ChClw:	dc.b 	25,0
+	Lib_Int	InClw		src/lib/windows.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					HOME
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InHome
-; - - - - - - - - - - - - -
-	lea	ChHom(pc),a1
-	Rbra	L_GoWn
-ChHom:	dc.b 	12,0
+	Lib_Int	InHome		src/lib/windows.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					CLEFT
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InCleft
-; - - - - - - - - - - - - -
-	lea	ChCLf(pc),a1
-	Rbra	L_GoWn
-ChCLf:	dc.b 	29,0
+	Lib_Int	InCleft		src/lib/windows.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					CRIGHT
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InCright
-; - - - - - - - - - - - - -
-	lea	ChCRt(pc),a1
-	Rbra	L_GoWn
-ChCRt:	dc.b 	28,0
+	Lib_Int	InCright		src/lib/windows.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					CUP
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InCup
-; - - - - - - - - - - - - -
-	lea	ChCUp(pc),a1
-	Rbra	L_GoWn
-ChCUp:	dc.b 	30,0
+	Lib_Int	InCup		src/lib/windows.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					CDOWN
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InCdown
-; - - - - - - - - - - - - -
-	lea	ChCDn(pc),a1
-	Rbra	L_GoWn
-ChCDn:	dc.b 	31,0
+	Lib_Int	InCdown		src/lib/windows.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					CURSOFF
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InCursOff
-; - - - - - - - - - - - - -
-	lea	ChCOf(pc),a1
-	Rbra	L_GoWn
-ChCOf:	dc.b 	27,"C0",0
+	Lib_Int	InCursOff		src/lib/windows.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					CURSON
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InCursOn
-; - - - - - - - - - - - - -
-	lea	ChCOn(pc),a1
-	Rbra	L_GoWn
-ChCOn:	dc.b 	27,"C1",0
+	Lib_Int	InCursOn		src/lib/windows.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					INVERSE ON
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InInverseOn
-; - - - - - - - - - - - - -
-	lea	ChIOn(pc),a1
-	Rbra	L_GoWn
-ChIOn:	dc.b 	27,"I1",0
+	Lib_Int	InInverseOn		src/lib/windows.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					INVERSE OFF
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InInverseOff
-; - - - - - - - - - - - - -
-	lea	ChIOf(pc),a1
-	Rbra	L_GoWn
-ChIOf:	dc.b 	27,"I0",0
+	Lib_Int	InInverseOff		src/lib/windows.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					UNDER ON
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InUnderOn
-; - - - - - - - - - - - - -
-	lea	ChUOn(pc),a1
-	Rbra	L_GoWn
-ChUOn:	dc.b 	27,"U1",0
+	Lib_Int	InUnderOn		src/lib/windows.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					UNDER OFF
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InUnderOff
-; - - - - - - - - - - - - -
-	lea	ChUOf(pc),a1
-	Rbra	L_GoWn
-ChUOf:	dc.b 	27,"U0",0
+	Lib_Int	InUnderOff		src/lib/windows.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					SCROLLING ON
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InScrollOn
-; - - - - - - - - - - - - -
-	lea	ChScOn(pc),a1
-	Rbra	L_GoWn
-ChScOn:	dc.b 	27,"V1",0
+	Lib_Int	InScrollOn		src/lib/windows.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					SCROLLING OFF
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InScrollOff
-; - - - - - - - - - - - - -
-	lea	ChScOf(pc),a1
-	Rbra	L_GoWn
-ChScOf:	dc.b 	27,"V0",0
+	Lib_Int	InScrollOff		src/lib/windows.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					SHADE ON
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InShadeOn
-; - - - - - - - - - - - - -
-	lea	ChSOn(pc),a1
-	Rbra	L_GoWn
-ChSOn:	dc.b 	27,"S1",0
+	Lib_Int	InShadeOn		src/lib/windows.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					SHADE OFF
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InShadeOff
-; - - - - - - - - - - - - -
-	lea	ChSOf(pc),a1
-	Rbra	L_GoWn
-ChSOf:	dc.b 	27,"S0",0
+	Lib_Int	InShadeOff		src/lib/windows.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					CLEAR LINE
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InCline0
-; - - - - - - - - - - - - -
-	lea	ChCll(pc),a1
-	Rbra	L_GoWn
-ChCll:	dc.b 26,0
+	Lib_Int	InCline0		src/lib/windows.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					MEMORIZE X
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InMemorizeX
-; - - - - - - - - - - - - -
-	lea	ChMx1(pc),a1
-	Rbra	L_GoWn
-ChMx1:	dc.b 	27,"M0",0
+	Lib_Int	InMemorizeX		src/lib/windows.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					MEMORIZE Y
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InMemorizeY
-; - - - - - - - - - - - - -
-	lea	ChMy1(pc),a1
-	Rbra	L_GoWn
-ChMy1:	dc.b 	27,"M2",0
+	Lib_Int	InMemorizeY		src/lib/windows.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					REMEMBER X
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InRememberX
-; - - - - - - - - - - - - -
-	lea	ChMx2(pc),a1
-	Rbra	L_GoWn
-ChMx2:	dc.b 	27,"M1",0
+	Lib_Int	InRememberX		src/lib/windows.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					REMEMBER Y
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InRememberY
-; - - - - - - - - - - - - -
-	lea	ChMy2(pc),a1
-	Rbra	L_GoWn
-ChMy2:	dc.b 	27,"M3",0
+	Lib_Int	InRememberY		src/lib/windows.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					CLEAR LINE
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InCline1
-; - - - - - - - - - - - - -
-	tst.l	d3
-	Rbeq	L_WFonCall
-	cmp.l	#255-48,d3
-	Rbcc	L_WFonCall
-	add.w	#48,d3
-	lea	ChCln(pc),a1
-	move.b	d3,2(a1)
-	Rbra	L_GoWn
-ChCln:	dc.b 	27,"Q0",0
+	Lib_Int	InCline1		src/lib/windows.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					HSCROLL
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InHScroll
-; - - - - - - - - - - - - -
-	lea	ChHSc(pc),a1
-	Rbra	L_HVSc
-ChHSc:	dc.b 	16,0,17,0,18,0,19,0
+	Lib_Int	InHScroll		src/lib/windows.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					VSCROLL
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InVScroll
+	Lib_Int	InVScroll		src/lib/windows.cpp
 ; - - - - - - - - - - - - -
-	lea	ChVSc(pc),a1
-	Rbra	L_HVSc
-ChVSc:	dc.b 20,0,21,0,22,0,23,0
-; - - - - - - - - - - - - -
-	Lib_Def	HVSc
-; - - - - - - - - - - - - -
-	cmp.l	#4,d3
-	Rbhi	L_WFonCall
-Hv1:	subq.l	#1,d3
-	Rbmi	L_WFonCall
-	beq.s	Hv3
-Hv2:	tst.b	(a1)+
-	bne.s	Hv2
-	bra.s	Hv1
-Hv3	Rbra	L_GoWn
+	Lib_Empty			HVSc, now in src/lib/windows.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					SET TAB
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InSetTab
-; - - - - - - - - - - - - -
-	cmp.l	#255-48,d3
-	Rbhi	L_WFonCall
-	add.w	#48,d3
-	lea	ChSTa(pc),a1
-	move.b	d3,2(a1)
-	Rbra	L_GoWn
-ChSTa:	dc.b 27,"T0",0
+	Lib_Int	InSetTab		src/lib/windows.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					Envoie a la trappe
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	GoWn
-; - - - - - - - - - - - - -
-	tst.w	ScOn(a5)
-	Rbeq	L_ScNOp
-	WiCall	Print
-	Rbne	L_EcWiErr
-	rts
+	Lib_Empty			GoWn, now in src/lib/windows.cpp
 
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
