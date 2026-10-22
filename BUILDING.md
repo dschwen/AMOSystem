@@ -231,6 +231,8 @@ Text windows (AMOS.library)
 Drawing (AMOS.library)
 - `Paint` kept the offset of the clip rectangle in a word and added in 16
   bits: wrong on screens of more than 64 KB a bitplane.
+- `Get Fonts`/`Get Disc Fonts`/`Get Rom Fonts` opened diskfont.library
+  again at each call, never closing those openings.
 
 ARexx
 - A message arriving at the ARexx port that is not an ARexx command was
