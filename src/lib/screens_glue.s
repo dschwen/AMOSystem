@@ -180,3 +180,8 @@
 		LibCall	FnAmosHere,_lib_fn_amos_here,0,Int
 		LibCall	InAmosLock,_lib_in_amos_lock,0,None
 		LibCall	InAmosUnlock,_lib_in_amos_unlock,0,None
+
+; Packed pictures and the editor's Screen Copy (lib/unpack.cpp)
+		RegRoutine UnPack_Bitmap,_lib_unpack_bitmap
+		RegRoutine UnPack_Screen,_lib_unpack_screen
+		RegRoutine ScCopy,_lib_sc_copy
