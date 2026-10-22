@@ -633,6 +633,53 @@ void slider_set(AllRegs *r)
     r->d[0] = 0;
 }
 
+// WScCpy: the fast Screen Copy, with the A and D channels only, when the
+// minterm is $CC and x1 (d0), x2 (d2) and the width (d4) are multiples of
+// 16. a0/a1: the bitmaps, d1/d3 the lines, d5 the height. d7: 0 done,
+// -1 not done. Overlapping copies go backwards when needed.
+uint32_t screen_copy(const AllRegs *r)
+{
+    uint16_t x1 = r->d[0], y1 = r->d[1], x2 = r->d[2], y2 = r->d[3], width = r->d[4], height = r->d[5];
+    if (uint8_t(r->d[6]) != 0xCC || (x1 & 15) || (x2 & 15) || (width & 15))
+        return 0xFFFFFFFF;
+    uint16_t con1 = 0;
+    if (!(int16_t(y2) < int16_t(y1) || (y2 == y1 && int16_t(x2) < int16_t(x1)))) {
+        con1 = 2;               // descending: from the last word
+        x1 += width - 16;
+        y1 += height - 1;
+        x2 += width - 16;
+        y2 += height - 1;
+    }
+    const struct BitMap *from = ptr<struct BitMap>(r->a[0]), *to = ptr<struct BitMap>(r->a[1]);
+    uint16_t bytes = uint16_t(width >> 4) << 1;
+    uint32_t start1 = uint32_t(uint16_t(x1 >> 4) << 1) + uint32_t(from->BytesPerRow) * y1;
+    uint32_t start2 = uint32_t(uint16_t(x2 >> 4) << 1) + uint32_t(to->BytesPerRow) * y2;
+    uint16_t size = uint16_t(height << 6) + (bytes >> 1);
+    auto &c = chips();
+    OwnBlitter();
+    WaitBlit();
+    c.bltcon0 = 0x09F0;
+    c.bltcon1 = con1;
+    c.bltbdat = 0xFFFF;
+    c.bltcdat = 0xFFFF;
+    c.bltalwm = 0xFFFF;
+    c.bltafwm = 0xFFFF;
+    c.bltamod = from->BytesPerRow - bytes;
+    c.bltdmod = to->BytesPerRow - bytes;
+    int planes = from->Depth < to->Depth ? from->Depth : to->Depth;
+    for (int p = 0; p < planes; p++) {
+        uint8_t *a = from->Planes[p] + start1, *d = to->Planes[p] + start2;
+        WaitBlit();
+        c.bltapt = a;
+        c.bltcpt = d;
+        c.bltdpt = d;
+        c.bltsize = size;
+    }
+    WaitBlit();
+    DisownBlitter();
+    return 0;
+}
+
 } // namespace
 
 extern "C" {
@@ -644,4 +691,5 @@ void w_ec_slider_h(AllRegs *r) { slider(r, false); }
 void w_ec_slider_v(AllRegs *r) { slider(r, true); }
 void w_ec_slider_set(AllRegs *r) { slider_set(r); }
 void w_ec_slider_knob(AllRegs *r) { slider_knob(r); }
+void w_ec_screen_copy(AllRegs *r) { r->d[7] = screen_copy(r); }
 }

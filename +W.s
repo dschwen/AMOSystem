@@ -72,6 +72,7 @@ Version	MACRO
 		XREF	_w_get_fonts,_w_free_fonts,_w_get_font,_w_set_font,_w_close_font
 		XREF	_w_rain_set,_w_rain_do,_w_rain_var,_w_rain_del,_w_rain_hide
 		XREF	_w_cop_swap,_w_cop_swap_lists,_w_cop_reset,_w_cop_wait,_w_cop_move,_w_cop_movel,_w_cop_base
+		XREF	_w_screen_copy
 		XREF	_w_sc_open,_w_sc_close,_w_sc_close_range,_w_sc_to_front,_w_sc_to_back,_w_sc_view,_w_sc_offset
 		XREF	_w_sc_hide,_w_sc_clone,_w_sc_double,_w_sc_swap,_w_sc_swap_all,_w_sc_dual,_w_sc_dual_priority
 		XREF	_w_sc_activate,_w_sc_current,_w_sc_address,_w_sc_free_number,_w_sc_max_raw,_w_sc_ntsc
@@ -2333,99 +2334,7 @@ Bmal7:	add.l	d4,a0
 *	therefore twice as fast as normal screen copy!
 *
 
-WScCpy:	cmp.b	#$CC,d6
-	bne.s	NoWScCpy
-	move.w	d0,d7
-	and.w	#$f,d7
-	bne.s	NoWScCpy
-	move.w	d2,d7
-	and.w	#$f,d7
-	bne.s	NoWScCpy
-	move.w	d4,d7
-	and.w	#$f,d7
-	bne.s	NoWScCpy
-	bra.s	DoWScCpy
-NoWScCpy:
-	moveq.l	#-1,d7
-	rts
-DoWScCpy:
-	moveq.l	#0,d7
-	cmp.w	d1,d3
-	blt.s	Ascending_Blit
-	bgt.s	Descending_Blit
-	cmp.w	d0,d2
-	blt.s	Ascending_Blit
-Descending_Blit:
-	addq.l	#2,d7
-
-	add.w	d4,d0
-	sub.w	#16,d0
-	add.w	d5,d1
-	subq.w	#1,d1
-
-	add.w	d4,d2
-	sub.w	#16,d2
-	add.w	d5,d3
-	subq.w	#1,d3
-Ascending_Blit:
-	lsl.w	#6,d5
-	lsr.w	#4,d0
-	lsl.w	#1,d0
-
-	lsr.w	#4,d2
-	lsl.w	#1,d2
-
-	lsr.w	#4,d4
-	lsl.w	#1,d4
-	move.w	(a0),d6
-	mulu	d6,d1
-	and.l	#$FFFF,d0
-	add.l	d1,d0
-	sub.w	d4,d6
-	move.w	(a1),d1
-	mulu	d1,d3
-	and.l	#$FFFF,d2
-	add.l	d3,d2
-	sub.w	d4,d1
-	lsr.w	#1,d4
-	add.w	d4,d5
-	moveq.l	#0,d4
-	move.b	5(a0),d4
-	moveq.l	#0,d3
-	move.b	5(a1),d3
-	lea	8(a0),a0
-	lea	8(a1),a1
-	lea	circuits,a6
-	bsr	OwnBlit
-	move.w	#%100111110000,BltCon0(a6)
-	move.w	d7,BltCon1(a6)
-	moveq.l	#-1,d7
-	move.w	d7,BltDatB(a6)
-	move.w	d7,BltDatC(a6)
-	move.w	d7,BltMaskD(a6)
-	move.w	d7,BltMaskG(a6)
-	move.w	d6,BltModA(a6)
-	move.w	d1,BltModD(a6)
-	bra.s	Start_Blit
-Blit_Loop:
-	move.l	(a0)+,a2
-	add.l	d0,a2
-	move.l	(a1)+,a3
-	add.l	d2,a3
-	bsr	BlitWait
-	move.l	a2,BltAdA(a6)
-	move.l	a3,BltAdC(a6)
-	move.l	a3,BltAdD(a6)
-	move.w	d5,BltSize(a6)
-Start_Blit:
-	subq.w	#1,d4
-	bmi.s	Blit_out
-	dbra	d3,Blit_Loop
-Blit_out:
-	bsr	BlitWait
-	bsr	DownBlit
-	moveq.l	#0,d7
-	rts
+WScCpy:	jmp	_w_screen_copy		src/w/drawing.cpp
 
 
 ;-----------------------------------------------------------------
