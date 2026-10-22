@@ -1,0 +1,11 @@
+wait 12
+glide -3000 -3000
+wait 0.3
+glide 628 194
+wait 0.3
+click 1
+wait 1
+glide -192 -180
+wait 0.3
+click 1
+wait 1

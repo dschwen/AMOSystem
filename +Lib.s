@@ -5839,388 +5839,121 @@ IAmRb:	SyCall	AMALReg
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ;	Initialisation � chaud des dialogues
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	Dia_WarmInit
-; - - - - - - - - - - - - -
-	clr.l	IDia_BankPuzzle(a5)
-	clr.l	IDia_Error(a5)
-	rts
+	Lib_Int	Dia_WarmInit		src/lib/interface.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ;		DIALOG OPEN channel,programmes[,variable,buffer]
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InDialogOpen2
+	Lib_Int	InDialogOpen2		src/lib/interface.cpp
 ; - - - - - - - - - - - - -
-	move.l	d3,-(a3)
-	move.l	#16,-(a3)
-	move.l	#1024,d3
-	Rbra	L_InDialogOpen4
+	Lib_Int	InDialogOpen3		src/lib/interface.cpp
 ; - - - - - - - - - - - - -
-	Lib_Par InDialogOpen3
-; - - - - - - - - - - - - -
-	move.l	d3,-(a3)
-	move.l	#1024,d3
-	Rbra	L_InDialogOpen4
-; - - - - - - - - - - - - -
-	Lib_Par InDialogOpen4
-; - - - - - - - - - - - - -
-; Adresse de la banque puzzle
-	Rbsr	L_Dia_GetPuzzle
-	move.l	d0,d5
-; Parametres
-	move.l	d3,d1			Taille du buffer
-	cmp.l	#256,d1
-	Rbls	L_FonCall
-	move.l	(a3)+,d2		Nombre de variables
-	Rbmi	L_FonCall
-; Chaine ou numero?
-	moveq	#1,d3			Recopier la chaine
-	move.l	(a3)+,d0
-	cmp.l	#1024,d0
-	bcc.s	.Ch
-; Numero de programme dans la banque de ressource
-	cmp.w	d5,d0			Programme defini?
-	Rbhi	L_FonCall
-	subq.w	#1,d0
-	Rbmi	L_FonCall
-	lsl.w	#2,d0
-	add.l	2(a0,d0.w),a0		Pointe le programme
-	moveq	#0,d3			Ne plus recopier la chaine
-	bra.s	.Suite
-; Numero du canal
-.Ch	move.l	d0,a0
-.Suite	move.l	(a3)+,d0
-	Rble	L_FonCall
-; Appelle l'initialisation
-	clr.l	IDia_Error(a5)
-	Rjsr	L_Dia_OpenChannel
-	tst.w	d0
-	bne.s	.Err
-	rts
-; Une erreur
-.Err	move.l	d1,IDia_Error(a5)
-	Rbra	L_Dia_GoError
+	Lib_Int	InDialogOpen4		src/lib/interface.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					Branchement aux erreurs IO
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	Dia_GoError
-; - - - - - - - - - - - - -
-	add.w	#IDia_Errors,d0
-	Rjmp	L_Error
+	Lib_Empty			Dia_GoError, now in src/lib/dialog.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ;	=Edialog: position de la derniere erreur
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par FnEDialog
-; - - - - - - - - - - - - -
-	move.l	IDia_Error(a5),d3
-	Ret_Int
+	Lib_Int	FnEDialog		src/lib/interface.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ;		DIALOG CLOSE [n]
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InDialogClose0
+	Lib_Int	InDialogClose0		src/lib/interface.cpp
 ; - - - - - - - - - - - - -
-	Rjsr	L_Dia_CloseChannels
-	rts
-; - - - - - - - - - - - - -
-	Lib_Par InDialogClose1
-; - - - - - - - - - - - - -
-	move.l	d3,d0
-	Rble	L_FonCall
-	Rjsr	L_Dia_CloseChannel
-	Rbne	L_Dia_GoError
-	rts
+	Lib_Int	InDialogClose1		src/lib/interface.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ;		DIALOG CLR c
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InDialogClr
-; - - - - - - - - - - - - -
-	move.l	d3,d0
-	Rble	L_FonCall
-	Rjsr	L_Dia_EffChannel
-	Rbne	L_Dia_GoError
-	rts
+	Lib_Int	InDialogClr		src/lib/interface.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ;		DIALOG FREEZE [c]
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InDialogFreeze0
+	Lib_Int	InDialogFreeze0		src/lib/interface.cpp
 ; - - - - - - - - - - - - -
-	moveq	#-1,d1
-	Rjsr	L_Dia_FreezeChannels
-	rts
-; - - - - - - - - - - - - -
-	Lib_Par InDialogFreeze1
-; - - - - - - - - - - - - -
-	move.l	d3,d0
-	Rble	L_FonCall
-	moveq	#-1,d1
-	Rjsr	L_Dia_FreezeChannel
-	Rbne	L_Dia_GoError
-	rts
+	Lib_Int	InDialogFreeze1		src/lib/interface.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ;		DIALOG UNFREEZE [c]
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InDialogUnFreeze0
+	Lib_Int	InDialogUnFreeze0		src/lib/interface.cpp
 ; - - - - - - - - - - - - -
-	moveq	#0,d1
-	Rjsr	L_Dia_FreezeChannels
-	rts
-; - - - - - - - - - - - - -
-	Lib_Par InDialogUnFreeze1
-; - - - - - - - - - - - - -
-	move.l	d3,d0
-	Rble	L_FonCall
-	moveq	#0,d1
-	Rjsr	L_Dia_FreezeChannel
-	Rbne	L_Dia_GoError
-	rts
+	Lib_Int	InDialogUnFreeze1		src/lib/interface.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ;		DIALOG UPDATE n,z,[value]
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InDialogUpdate2
+	Lib_Int	InDialogUpdate2		src/lib/interface.cpp
 ; - - - - - - - - - - - - -
-	move.l	d3,-(a3)
-	move.l	#EntNul,d3
-	move.l	d3,-(a3)
-	move.l	d3,-(a3)
-	Rbra	L_InDialogUpdate5
+	Lib_Int	InDialogUpdate3		src/lib/interface.cpp
 ; - - - - - - - - - - - - -
-	Lib_Par InDialogUpdate3
+	Lib_Int	InDialogUpdate4		src/lib/interface.cpp
 ; - - - - - - - - - - - - -
-	move.l	d3,-(a3)
-	move.l	#EntNul,d3
-	move.l	d3,-(a3)
-	Rbra	L_InDialogUpdate5
-; - - - - - - - - - - - - -
-	Lib_Par InDialogUpdate4
-; - - - - - - - - - - - - -
-	move.l	d3,-(a3)
-	move.l	#EntNul,d3
-	Rbra	L_InDialogUpdate5
-; - - - - - - - - - - - - -
-	Lib_Par InDialogUpdate5
-; - - - - - - - - - - - - -
-	move.l	d3,d4
-	move.l	(a3)+,d3
-	move.l	(a3)+,d2
-	move.l	(a3)+,d1
-	move.l	(a3)+,d0
-	Rble	L_FonCall
-	Rjsr	L_Dia_Update
-	Rbne	L_Dia_GoError
-	rts
+	Lib_Int	InDialogUpdate5		src/lib/interface.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ;		=DIALOG RUN( channel[,label][,x,y] )
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par FnDialogRun1
+	Lib_Int	FnDialogRun1		src/lib/interface.cpp
 ; - - - - - - - - - - - - -
-	move.l	d3,-(a3)
-	move.l	#-1,-(a3)
-	move.l	#EntNul,d3
-	move.l	d3,-(a3)
-	Rbra	L_FnDialogRun4
+	Lib_Int	FnDialogRun2		src/lib/interface.cpp
 ; - - - - - - - - - - - - -
-	Lib_Par FnDialogRun2
-; - - - - - - - - - - - - -
-	move.l	d3,-(a3)
-	move.l	#EntNul,d3
-	move.l	d3,-(a3)
-	Rbra	L_FnDialogRun4
-; - - - - - - - - - - - - -
-	Lib_Par FnDialogRun4
-; - - - - - - - - - - - - -
-;	move.l	(a3)+,d3
-	move.l	(a3)+,d2
-	move.l	(a3)+,d1
-	cmp.l	#65536,d1
-	Rbge	L_FonCall
-	move.l	(a3)+,d0
-	Rble	L_FonCall
-	tst.l	Patch_Errors(a5)		Monitor present?
-	Rbne	L_FonCall
-	clr.l	IDia_Error(a5)
-	Rjsr	L_Dia_RunProgram
-	tst.w	d0
-	bne.s	.Err
-	move.l	d1,d3
-	Ret_Int
-.Err	move.l	d1,IDia_Error(a5)
-	Rbra	L_Dia_GoError
+	Lib_Int	FnDialogRun4		src/lib/interface.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ;		=DIALOG(n)
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par FnDialog
-; - - - - - - - - - - - - -
-	move.l	d3,d0
-	Rble	L_FonCall
-	Rjsr	L_Dia_GetReturn
-	Rbne	L_Dia_GoError
-	move.l	d1,d3
-	Ret_Int
+	Lib_Int	FnDialog		src/lib/interface.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ;		=VDIALOG(n,n)=
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InVDialog
+	Lib_Int	InVDialog		src/lib/interface.cpp
 ; - - - - - - - - - - - - -
-;	move.l	(a3)+,d3
-	move.l	(a3)+,d1
-	move.l	(a3)+,d0
-	Rjsr	L_Dia_GetVariable
-	Rbne	L_Dia_GoError
-	move.l	d3,(a0)
-	rts
-; - - - - - - - - - - - - -
-	Lib_Par FnVDialog
-; - - - - - - - - - - - - -
-	move.l	d3,d1
-	move.l	(a3)+,d0
-	Rjsr	L_Dia_GetVariable
-	Rbne	L_Dia_GoError
-	move.l	(a0),d3
-	Ret_Int
+	Lib_Int	FnVDialog		src/lib/interface.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 		=VDIALOG$()=
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InVDialogD
+	Lib_Int	InVDialogD		src/lib/interface.cpp
 ; - - - - - - - - - - - - -
-	Rbra	L_InVDialog
-; - - - - - - - - - - - - -
-	Lib_Par FnVDialogD
-; - - - - - - - - - - - - -
-	move.l	d3,d1
-	move.l	(a3)+,d0
-	Rjsr	L_Dia_GetVariable
-	Rbne	L_Dia_GoError
-	move.l	(a0),d3
-	Ret_String
+	Lib_Int	FnVDialogD		src/lib/interface.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ;		=RDIALOG(n,n[,n])
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par FnRDialog2
+	Lib_Int	FnRDialog2		src/lib/interface.cpp
 ; - - - - - - - - - - - - -
-	move.l	d3,-(a3)
-	moveq	#1,d3
-	Rbra	L_FnRDialog3
-; - - - - - - - - - - - - -
-	Lib_Par FnRDialog3
-; - - - - - - - - - - - - -
-	move.l	d3,d2
-	move.l	(a3)+,d1
-	move.l	(a3)+,d0
-	Rjsr	L_Dia_GetValue
-	Rbne	L_Dia_GoError
-	tst.b	d2
-	beq.s	.Nul
-	moveq	#0,d1
-	moveq	#0,d2
-.Nul	move.l	d1,d3
-	Ret_Int
+	Lib_Int	FnRDialog3		src/lib/interface.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					=RDIALOG$()
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par FnRDialogD2
+	Lib_Int	FnRDialogD2		src/lib/interface.cpp
 ; - - - - - - - - - - - - -
-	move.l	d3,-(a3)
-	moveq	#1,d3
-	Rbra	L_FnRDialogD3
-; - - - - - - - - - - - - -
-	Lib_Par FnRDialogD3
-; - - - - - - - - - - - - -
-	move.l	d3,d2
-	move.l	(a3)+,d1
-	move.l	(a3)+,d0
-	Rjsr	L_Dia_GetValue
-	Rbne	L_Dia_GoError
-	tst.b	d2
-	Rbeq	L_Ret_ChVide
-	move.l	d1,a2
-	Rbra	L_Str2Chaine
+	Lib_Int	FnRDialogD3		src/lib/interface.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 		=ZDIALOG(channel,x,y)
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par	FnZDialog
-; - - - - - - - - - - - - -
-	move.l	d3,d2
-	move.l	(a3)+,d1
-	move.l	(a3)+,d0
-	Rjsr	L_Dia_GetZone
-	Rbne	L_Dia_GoError
-	move.l	d1,d3
-	Ret_Int
+	Lib_Int	FnZDialog		src/lib/interface.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ;		=DIALOG BOX(a$[,v][,v$][,x,y])
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par FnDialogBox1
+	Lib_Int	FnDialogBox1		src/lib/interface.cpp
 ; - - - - - - - - - - - - -
-	move.l	d3,-(a3)		a$
-	move.l	#EntNul,d3		y
-	move.l	d3,-(a3)		v
-	move.l	ChVide(a5),-(a3)	v$
-	move.l	d3,-(a3)		x
-	Rbra	L_FnDialogBox5
+	Lib_Int	FnDialogBox2		src/lib/interface.cpp
 ; - - - - - - - - - - - - -
-	Lib_Par FnDialogBox2
+	Lib_Int	FnDialogBox3		src/lib/interface.cpp
 ; - - - - - - - - - - - - -
-	move.l	d3,-(a3)		v
-	move.l	#EntNul,d3		y
-	move.l	ChVide(a5),-(a3)	v$
-	move.l	d3,-(a3)		x
-	Rbra	L_FnDialogBox5
-; - - - - - - - - - - - - -
-	Lib_Par FnDialogBox3
-; - - - - - - - - - - - - -
-	move.l	d3,-(a3)		v$
-	move.l	#EntNul,d3		y
-	move.l	d3,-(a3)		x
-	Rbra	L_FnDialogBox5
-; - - - - - - - - - - - - -
-	Lib_Par FnDialogBox5
-; - - - - - - - - - - - - -
-	tst.l	Patch_Errors(a5)		Monitor present?
-	Rbne	L_FonCall
-	Rbsr	L_SaveRegs
-	Rbsr	L_Dia_GetPuzzle
-	move.l	d0,d5			Nombre de programmes
-	move.l	d3,d1			Y
-	move.l	(a3)+,d0		X
-	move.l	(a3)+,d3		Variable $
-	move.l	(a3)+,d2		Variable
-	move.l	(a3)+,d4		Programme
-	cmp.l	#1024,d4		Une chaine?
-	bcc.s	.Chaine
-	cmp.w	d5,d4			Programme defini?
-	Rbhi	L_FonCall
-	subq.w	#1,d4
-	Rbmi	L_FonCall
-	lsl.w	#2,d4
-	add.l	2(a0,d4.w),a0
-	moveq	#0,d5			Ne pas copier le programme
-	bra.s	.Suite
-.Chaine	move.l	d4,a0
-	moveq	#1,d5			Copier le programme
-.Suite	moveq	#0,d4			Rien!
-	move.l	#1024,d6		Buffer
-	Rjsr	L_Dia_RunQuick
-	tst.w	d0
-	bne.s	.Err
-	move.l	d1,d3
-	Rbsr	L_LoadRegs
-	Ret_Int
-.Err	move.l	d1,IDia_Error(a5)
-	Rbra	L_Dia_GoError
+	Lib_Int	FnDialogBox5		src/lib/interface.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ;		READ TEXT a$
@@ -6304,7 +6037,7 @@ IAmRb:	SyCall	AMALReg
 .Skup	move.w	d0,TRd_OldEc(a5)
 ; Ouverture de l'ecran
 ; ~~~~~~~~~~~~~~~~~~~~
-	Rbsr	L_Dia_GetDefault
+	Rjsr	L_Dia_GetDefault
 	move.l	a1,a0
 	moveq	#EcFsel,d0
 	move.w	PI_RtSx(a5),d1
@@ -6328,7 +6061,7 @@ IAmRb:	SyCall	AMALReg
 .Ok	movem.l	(sp)+,d0/d1/a0/a1
 ; Appel du DBL
 ; ~~~~~~~~~~~~
-	Rbsr	L_Dia_GetDefault
+	Rjsr	L_Dia_GetDefault
 	add.l	2+0(a0),a0		Programme numero 1
 	move.l	d7,d0
 	move.l	(a3)+,d1		Longueur du buffer
@@ -6432,111 +6165,27 @@ IAmRb:	SyCall	AMALReg
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 		RESOURCE SCREEN OPEN n,sx,sy,flash
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InResourceScreenOpen
-; - - - - - - - - - - - - -
-	Rbsr	L_Dia_GetPuzzle
-	move.l	a1,a0
-	moveq	#-1,d4			Interlaced comme la banque
-;	move.l	(a3)+,d3
-	move.l	(a3)+,d2
-	move.l	(a3)+,d1
-	move.l	(a3)+,d0
-	cmp.l	#8,d0
-	Rbcc	L_IllScN
-	Rjsr	L_Dia_RScOpen
-	Rbne	L_EcWiErr
-	move.l	a0,ScOnAd(a5)
-	move.w	EcNumber(a0),ScOn(a5)
-	addq.w	#1,ScOn(a5)
-	rts
+	Lib_Int	InResourceScreenOpen		src/lib/interface.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 		RESOURCE BANK n
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InResourceBank
-; - - - - - - - - - - - - -
-	tst.l	d3
-	Rbmi	L_FonCall
-	move.l	d3,IDia_BankPuzzle(a5)
-	rts
+	Lib_Int	InResourceBank		src/lib/interface.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 	Retourne l'adresse de la banque PUZZLE
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	Dia_GetPuzzle
-; - - - - - - - - - - - - -
-	move.l	IDia_BankPuzzle(a5),d0
-	Rbeq	L_Dia_GetDefault
-; Une banque normale
-	move.l	a3,-(sp)
-	Rjsr	L_Bnk.GetAdr
-	Rbeq	L_BkNoRes
-	cmp.l	#"Reso",-8(a0)
-	Rbne	L_BkNoRes
-	move.l	a0,a3
-	Rbsr	L_Dia_GetDefault
-; Les graphiques
-	cmp.w	#1,(a3)
-	bcs.s	.PaG
-	move.l	2+0(a3),d0
-	beq.s	.PaG
-	lea	0(a3,d0.l),a1
-; Les messages
-.PaG	cmp.w	#2,(a3)
-	bcs.s	.PaB
-	move.l	2+4(a3),d0
-	beq.s	.PaB
-	lea	0(a3,d0.l),a2
-; Les Programmes
-.PaB	moveq	#0,d0			Pas de programmes par defaut
-	cmp.w	#3,(a3)
-	bcs.s	.PaP
-	move.l	2+8(a3),d0
-	beq.s	.PaP
-	lea	0(a3,d0.l),a0		Adresse des programmes
-	move.w	(a0),d0			Nombre de programmes par defaut
-; Ok!
-.PaP	move.l	(sp)+,a3
-	rts
+	Lib_Int	Dia_GetPuzzle		src/lib/interface.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 	Retourne la banque par defaut
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	Dia_GetDefault
-; - - - - - - - - - - - - -
-	move.l	Sys_Resource(a5),d0
-	Rbeq	L_BkNoRes
-	move.l	d0,a0
-	move.l	a0,a1
-	add.l	2+0(a0),a1		Base des graphiques
-	move.l	a0,a2
-	add.l	2+4(a0),a2		Base des messages
-	add.l	2+8(a0),a0		Base des programmes
-	moveq	#0,d0			Programmes par defaut
-	rts
+	Lib_Int	Dia_GetDefault		src/lib/interface.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 	RESOURCE UNPACK n,x,y
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InResourceUnpack
-; - - - - - - - - - - - - -
-	Rbsr	L_Dia_GetPuzzle
-	move.l	a1,a0
-	move.l	d3,d2
-	move.l	(a3)+,d1
-	move.l	(a3)+,d0
-	Rble	L_FonCall
-	cmp.w	(a0),d0
-	Rbhi	L_FonCall
-	lsl.w	#2,d0
-	move.l	-4+2(a0,d0.w),d0
-	add.l	d0,a0
-	move.l	ScOnAd(a5),d0
-	Rbeq	L_ScNOp
-	move.l	d0,a1
-	Rjsr	L_UnPack_Bitmap
-	Rbeq	L_FonCall
-	rts
+	Lib_Int	InResourceUnpack		src/lib/interface.cpp
 
 ; __________________________________________________________________________
 ;
@@ -7237,7 +6886,7 @@ IAmRb:	SyCall	AMALReg
 	move.l	#256*5,d1		Buffer
 	moveq	#FsV_Max,d2		Nombre de variables
 	moveq	#0,d3			Ne PAS recopier
-	Rbsr	L_Dia_OpenChannel
+	Rjsr	L_Dia_OpenChannel
 	tst.l	d0			Une erreur?
 	bne	Fs_BadAPI
 	move.l	a0,Fs_Channel(a4)
@@ -7268,7 +6917,7 @@ IAmRb:	SyCall	AMALReg
 	moveq	#-1,d1
 	moveq	#0,d2
 	moveq	#0,d3
-	Rbsr	L_Dia_RunProgram
+	Rjsr	L_Dia_RunProgram
 	tst.l	d0
 	bne	Fs_BadAPI
 	bsr	FsI_SliStore
@@ -7395,7 +7044,7 @@ Fs_GetFName
 	move.l	#Fs_ChannelN,d0
 	moveq	#Fs_FileN,d1
 	moveq	#0,d2
-	Rbsr	L_Dia_GetValue
+	Rjsr	L_Dia_GetValue
 	move.l	d1,a1
 	tst.b	(a1)
 	beq.s	.Ex1
@@ -7471,7 +7120,7 @@ Fs_Ok	bsr	Fs_Store
 	move.l	#Fs_ChannelN,d0
 	moveq	#Fs_FileN,d1
 	moveq	#0,d2
-	Rbsr	L_Dia_GetValue
+	Rjsr	L_Dia_GetValue
 	move.l	d1,a1			Si NUL>>> va en CANCEL!
 	tst.b	(a1)
 	beq	Fs_Cancel
@@ -7639,7 +7288,7 @@ Fs_Dev	move.w	d1,-(sp)
 Fs_Name	move.l	#Fs_ChannelN,d0		Demande la position dans la liste
 	moveq	#Fs_ListN,d1
 	moveq	#0,d2
-	Rbsr	L_Dia_GetValue
+	Rjsr	L_Dia_GetValue
 	move.l	d1,d0
 	move.l	d1,d2
 	Rjsr	L_FillGet
@@ -7705,7 +7354,7 @@ Fs_NewName
 	move.l	#Fs_ChannelN,d0		Update la zone FILE NAME
 	moveq	#Fs_FileN,d1
 	move.l	a0,d2
-	Rbsr	L_Dia_Update
+	Rjsr	L_Dia_Update
 	rts
 
 ; PARENT
@@ -7817,7 +7466,7 @@ Fs_Error
 	moveq	#0,d4			Rien!
 	moveq	#0,d5			Ne pas copier le programme
 	move.l	#256,d6			Buffer
-	Rbsr	L_Dia_RunQuick
+	Rjsr	L_Dia_RunQuick
 	bsr	FsI_ReStart
 	tst.w	d0
 	bne	Fs_BadAPI
@@ -7858,7 +7507,7 @@ Fs_Close
 	move.b	FsV_Store+3(a0),PI_FsStore(a5)
 ; Ferme le canal
 .LowM	move.l	#Fs_ChannelN,d0
-	Rbsr	L_Dia_CloseChannel
+	Rjsr	L_Dia_CloseChannel
 .NoChan
 ; Referme l'�cran
 ; ~~~~~~~~~~~~~~~
@@ -8170,7 +7819,7 @@ Fs_NomDir
 	move.l	#Fs_ChannelN,d0		Demande la chaine PATH
 	moveq	#Fs_PathN,d1
 	moveq	#0,d2
-	Rbsr	L_Dia_GetValue
+	Rjsr	L_Dia_GetValue
 	bne	Fs_BadAPI
 	move.l	d1,a2
 ; Separe filtre et path
@@ -8286,7 +7935,7 @@ Fs_NewDir
 	move.l	#Fs_ChannelN,d0		Update la zone PATHNAME
 	moveq	#Fs_PathN,d1
 	move.l	a0,d2
-	Rbsr	L_Dia_Update
+	Rjsr	L_Dia_Update
 ; Demande le nouveau directory
 	move.w	#-1,Fs_Click(a4)
 	bsr	Fs_First		Lis le directory
@@ -8302,7 +7951,7 @@ Fs_ScOpen
 	ext.l	d2
 	moveq	#1,d3
 	moveq	#-1,d4
-	Rbsr	L_Dia_RScOpen
+	Rjsr	L_Dia_RScOpen
 	rts
 
 ; Prend les entrees (a3)+
@@ -8390,9 +8039,9 @@ FsI_Loop
 ; Animation de l'interface
 	bsr	Fs_Multi		Multitache
 	moveq	#1,d0
-	Rbsr	L_Dia_AutoTest2
+	Rjsr	L_Dia_AutoTest2
 	move.l	#Fs_ChannelN,d0		Demande de resultat
-	Rbsr	L_Dia_GetReturn
+	Rjsr	L_Dia_GetReturn
 	tst.w	d0
 	bne.s	.Quit
 	move.w	d1,Fs_Input(a4)
@@ -8438,7 +8087,7 @@ _AffF	movem.l	a2/d2,-(sp)
 	move.l	#Fs_ChannelN,d0		Change la taille de la liste
 	moveq	#Fs_ListN,d1
 	moveq	#0,d2
-	Rbsr	L_Dia_GetZoneAd
+	Rjsr	L_Dia_GetZoneAd
 	beq	Fs_BadAPI
 	move.w	Fs_ASize(a4),Dia_LiMaxAct(a0)
 	move.l	#Fs_ChannelN,d0		Re-actualise le slider, donc la liste
@@ -8448,7 +8097,7 @@ _AffF	movem.l	a2/d2,-(sp)
 	move.l	Fs_Variables(a4),a2
 	move.l	FsV_PList(a2),d2	Nouvelle position
 	clr.l	FsV_AffFlag(a2)
-	Rbsr	L_Dia_Update
+	Rjsr	L_Dia_Update
 	bne	Fs_BadAPI
 	addq.l	#1,FsV_AffFlag(a2)
 	movem.l	(sp)+,a2/d2
@@ -8464,7 +8113,7 @@ _SliStore
 	moveq	#Fs_SliderS,d1
 	moveq	#1,d3			Window = 1
 	moveq	#0,d2
-	Rbsr	L_Dia_Update
+	Rjsr	L_Dia_Update
 	bne	Fs_BadAPI
 	movem.l	(sp)+,d2-d4
 	rts
@@ -8613,7 +8262,7 @@ Fs_LowMemory
 	move.l	#1024,d1		Buffer
 	moveq	#32,d2			Nombre de variables
 	moveq	#0,d3			Ne PAS recopier
-	Rbsr	L_Dia_OpenChannel
+	Rjsr	L_Dia_OpenChannel
 	tst.l	d0			Une erreur?
 	bne	Fs_OoMem
 	move.l	#-1,Fs_Channel(a4)	Canal non multitache!
@@ -8626,7 +8275,7 @@ Fs_LowMemory
 	moveq	#-1,d1
 	moveq	#0,d2
 	moveq	#0,d3
-	Rbsr	L_Dia_RunProgram
+	Rjsr	L_Dia_RunProgram
 	tst.l	d0
 	bne	Fs_OoMem
 
@@ -8817,47 +8466,7 @@ _CtData
 ;	D2=	Longueur maxi
 ;	D3=	Largeur maxi (-1= maximum)
 ; - - - - - - - - - - - - -
-	Lib_Def	LEd_Init
-; - - - - - - - - - - - - -
-	movem.l	a0-a3,-(sp)
-	move.l	a0,a3
-	move.l	a2,LEd_Buffer(a3)	Adresse buffer
-	move.b	d0,LEd_Flags(a3)	Flags
-	move.w	d2,LEd_Max(a3)		Longueur maxi ligne
-	clr.w	LEd_Cur(a3)
-	clr.w	LEd_Start(a3)
-	moveq	#-1,d0			RAZ masques
-	move.l	d0,LEd_Mask+0(a3)
-	move.l	d0,LEd_Mask+4(a3)
-	move.l	d0,LEd_Mask+8(a3)
-	WiCall	XYCuWi
-	move.w	d1,LEd_X(a3)
-	move.w	d2,LEd_Y(a3)
-	move.w	d3,LEd_Large(a3)	Largeur
-	bpl.s	.Skip
-	WiCall	SXSYCuWi		Trouve le maximum
-	sub.w	LEd_X(a3),d1
-	subq.w	#1,d1
-	bmi.s	.Err
-	btst	#8,d0			SCROLL ON? (Bit#0 de WiSys)
-	beq.s	.PSc
-	subq.w	#1,d1
-	bmi.s	.Err
-.PSc	move.w	d1,LEd_Large(a3)
-.Skip	bclr	#2,LEd_Flags+1(a3)	Pas de curseur
-	WiCalA	Print,.CuOff(pc)	Arret du vrai curseur!
-	move.l	T_EcCourant(a5),a0	Stocke le numero d'ecran
-	move.w	EcNumber(a0),LEd_Screen(a3)
-	movem.l	(sp),a0-a3
-	moveq	#-1,d0
-	Rbsr	L_LEd_New		Affiche la ligne
-	movem.l	(sp)+,a0-a3
-	moveq	#0,d0
-	rts
-.Err	movem.l	(sp)+,a0-a3
-	moveq	#-1,d0			Pas assez de place
-	rts
-.CuOff	dc.b	27,"C0",0
+	Lib_Int	LEd_Init		src/lib/lineedit.cpp
 
 
 ; 	Boucle de l'editeur ligne
@@ -8871,211 +8480,7 @@ _CtData
 ;		2= 	Souris en dehors zone
 ;		-1=	Control-C si flag
 ; - - - - - - - - - - - - -
-	Lib_Def	LEd_Loop
-; - - - - - - - - - - - - -
-	movem.l	a2-a3/d3,-(sp)
-	move.l	a0,a3
-	Rbsr	L_LEd_CuMarche
-
-; Gestion des flags
-; ~~~~~~~~~~~~~~~~~~~~~
-.Loop	btst	#LEd_FMulti,LEd_Flags(a3)	Multitache?
-	beq.s	.Sk1
-	Rbsr	L_Dia_WaitMul
-.Sk1	btst	#LEd_FTests,LEd_Flags(a3)	Tests AMOS
-	beq.s	.Sk2
-	Rjsr	L_Test_PaSaut
-	move.w	T_Actualise(a5),d0		Control-C
-	and.w	ActuMask(a5),d0
-	bclr	#BitControl,d0
-	beq.s	.Sk2
-	move.w	d0,T_Actualise(a5)
-	moveq	#0,d1
-	moveq	#-1,d2
-	bra	.Exit
-.Sk2	SyCall	MouseKey			Tests de la souris
-	and.w	#$03,d1
-	beq.s	.Sk3
-	btst	#LEd_FMouCur,LEd_Flags(a3)
-	beq	.MOut
-	SyCall	MouScrFront		Souris dans ecran de front
-	cmp.w	LEd_Screen(a3),d0	Le bon ecran?
-	bne.s	.MOut
-	SyCall	XyWin			Dans la fenetre courante
-	bmi.s	.MOut
-	cmp.w	LEd_Y(a3),d2		Meme ligne Y
-	bne.s	.MOut
-	sub.w	LEd_X(a3),d1		Dans la ligne X
-	bcs.s	.MOut
-	add.w	LEd_Start(a3),d1	Dans le texte?
-	cmp.w	LEd_Long(a3),d1
-	bhi.s	.MOut
-	cmp.w	LEd_Cur(a3),d1
-	beq.s	.Sk3
-	move.w	d1,LEd_Cur(a3)		On change!
-	bra	.Print
-.MOut	btst	#LEd_FMouse,LEd_Flags(a3)	Retourner la souris
-	beq.s	.Sk3
-	moveq	#0,d1
-	moveq	#2,d2			Sortie, avec code souris (=2)
-	bra	.Exit
-.Sk3
-
-; Prend la touche
-; ~~~~~~~~~~~~~~~
-	move.l	LEd_Buffer(a3),a2
-	SyCall	Inkey
-	move.l	d1,d0
-	beq.s	.Rien
-	swap	d0
-	cmp.b	#$4F,d0			Fleche gauche
-	beq	.G
-	cmp.b	#$4E,d0			Fleche droite
-	beq	.D
-	cmp.b	#$41,d0			BackSpace
-	beq	.Ba
-	cmp.b	#$46,d0			Delete
-	beq	.Dl
-	cmp.b	#13,d1			Return
-	beq.s	.Rt
-	cmp.b	#32,d1
-	bcc.s	.Lt
-; Retour � l'appelant, avec le scancode eventuel en D1
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.Out	btst	#LEd_FKeys,LEd_Flags(a3)
-	beq	.Loop
-	moveq	#0,d2
-	bra.s	.Exit
-; Rien en retour. Retourner � l'appelant?
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.Rien	btst	#LEd_FOnce,LEd_Flags(a3)
-	beq	.Loop
-	moveq	#0,d2
-.Exit	moveq	#0,d0
-	move.w	LEd_Long(a3),d0
-	move.l	LEd_Buffer(a3),a0
-	clr.b	0(a0,d0.w)
-	tst.w	d2
-	movem.l	(sp)+,a2-a3/d3
-	rts
-; Return
-; ~~~~~~
-.Rt	moveq	#1,d2
-	bra	.Exit
-; Une lettre
-; ~~~~~~~~~~
-.Lt	btst	#LEd_FFilter,LEd_Flags(a3)	; Limiter les entrees?
-	beq.s	.Ins
-	tst.b	d1
-	bmi.s	.Rien
-	cmp.b	#32,d1
-	bcs.s	.Rien
-	move.w	d1,d0				; Oui, pointe les tables
-	lsr.w	#3,d0
-	lea	LEd_Mask-4(a3,d0.w),a0
-	move.b	d1,d0
-	and.w	#$07,d0
-	neg.w	d0
-	addq.w	#7,d0
-	btst	d0,(a0)
-	beq	.Rien
-; Insere la lettre
-.Ins	move.w	LEd_Cur(a3),d2
-	move.w	LEd_Long(a3),d3
-	cmp.w	LEd_Max(a3),d3
-	bcs.s	.Cour
-	cmp.w	d2,d3			; Remplace la derniere lettre
-	bne	.Loop
-	move.b	d1,-1(a2,d2.w)
-	bra	.Print
-.Cour	lea	0(a2,d2.w),a0		; Recopie la ligne
-	lea	0(a2,d3.w),a1
-	bra.s	.In
-.Copy	move.b	-(a1),1(a1)		; Boucle de recopie
-.In	cmp.l	a0,a1
-	bhi.s	.Copy
-.Poke	move.b	d1,(a0)
-	addq.w	#1,LEd_Cur(a3)
-	addq.w	#1,LEd_Long(a3)
-	bra	.Print
-; Fleche gauche
-; ~~~~~~~~~~~~~
-.G	move.w	LEd_Cur(a3),d2
-	beq	.Loop
-	move.w	d0,d1
-	and.w	#$0300,d0		; Shifts
-	bne.s	.Mg
-	and.w	#$1800,d1		; Control
-	bne.s	.Gl
-	subq.w	#1,LEd_Cur(a3)		; Un caractere � gauche
-	bra	.Print
-.Gl	clr.w	LEd_Cur(a3)		; Debut ligne
-	bra	.Print
-.Mg	subq.w	#1,d2			; Mot gauche
-	move.w	d2,LEd_Cur(a3)
-	beq	.Print
-	move.b	-1(a2,d2.w),d0
-	Rbsr	L_LEd_Lettre
-	bne.s	.Mg
-	bra	.Print
-; Fleche droite
-; ~~~~~~~~~~~~~
-.D	move.w	LEd_Cur(a3),d2
-	move.w	LEd_Long(a3),d3
-	cmp.w	d3,d2
-	bcc	.Loop
-	move.w	d0,d1
-	and.w	#$0300,d0		; Shifts
-	bne.s	.Md
-	and.w	#$1800,d1		; Control
-	bne.s	.Dd
-	addq.w	#1,LEd_Cur(a3)		; A droite
-	bra	.Print
-.Dd	move.w	d3,LEd_Cur(a3)		; Droite de la ligne
-	bra	.Print
-.Md	addq.w	#1,d2
-	move.w	d2,LEd_Cur(a3)
-	cmp.w	d3,d2
-	bcc	.Print
-	move.b	-1(a2,d2.w),d0
-	Rbsr	L_LEd_Lettre
-	bne.s	.Md
-	bra	.Print
-; BackSpace
-; ~~~~~~~~~
-.Ba	and.w	#$0300,d1
-	bne.s	.Cl
-	tst.w	LEd_Cur(a3)
-	beq	.Loop
-	subq.w	#1,LEd_Cur(a3)
-; Delete
-; ~~~~~~
-.Dl	and.w	#$0300,d1
-	bne.s	.Cl
-	move.w	LEd_Cur(a3),d2
-	move.w	LEd_Long(a3),d3
-	cmp.w	d3,d2
-	bcc	.Loop
-	lea	0(a2,d2.w),a0			Recopie du texte
-	lea	0(a2,d3.w),a1
-.DCopy	move.b	1(a0),(a0)+
-	cmp.l	a1,a0
-	bcs.s	.DCopy
-	subq.w	#1,LEd_Long(a3)
-	bset	#0,LEd_Flags+1(a3)
-	bra	.Print
-; Nettoyage ligne
-; ~~~~~~~~~~~~~~~
-.Cl	clr.w	LEd_Long(a3)
-	clr.w	LEd_Cur(a3)
-	bset	#1,LEd_Flags+1(a3)
-; Impression de la ligne, retour � la boucle
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.Print	Rbsr	L_LEd_Print
-	btst	#LEd_FTests,LEd_Flags(a3)	Si flag TEST (INPUT)
-	beq	.Loop
-	Rjsr	L_Dia_Patch			Branchement au patch moniteur
-	bra	.Loop
+	Lib_Int	LEd_Loop		src/lib/lineedit.cpp
 
 ; Remplacement de la ligne editee par une autre
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -9083,168 +8488,32 @@ _CtData
 ;	A1=	Nouvelle ligne
 ;	D0=	Longueur (ou -1)
 ; - - - - - - - - - - - - -
-	Lib_Def	LEd_New
-; - - - - - - - - - - - - -
-	movem.l	a2-a3/d2-d4,-(sp)
-	move.l	a0,a3
-	move.l	LEd_Buffer(a3),a2
-	move.w	LEd_Max(a3),d2
-	tst.w	d0
-	beq.s	.Exit1
-.Copy	move.b	(a1)+,(a2)+
-	beq.s	.Exit
-	subq.w	#1,d0
-	beq.s	.Exit1
-	subq.w	#1,d2
-	bne.s	.Copy
-	addq.l	#1,a2
-.Exit	subq.l	#1,a2
-.Exit1	clr.b	(a2)
-	sub.l	LEd_Buffer(a3),a2
-	move.w	a2,LEd_Long(a3)
-	move.w	a2,LEd_Cur(a3)
-	clr.w	LEd_Start(a3)
-; Fin de l'impression...
-	bset	#1,LEd_Flags+1(a3)
-	Rbsr	L_LEd_Print
-	move.l	a3,a0
-	Rbsr	L_LEd_CuStoppe
-	move.l	a3,a0
-	movem.l	(sp)+,a2-a3/d2-d4
-	rts
+	Lib_Int	LEd_New		src/lib/lineedit.cpp
 
 ; 	Impression de la ligne courante
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ; - - - - - - - - - - - - -
-	Lib_Def	LEd_Print
-; - - - - - - - - - - - - -
-	move.l	LEd_Buffer(a3),a2
-; Curseur on / off
-	move.l	a3,a0
-	Rbsr	L_LEd_CuStoppe
-; Locate en debut de ligne
-	move.w	LEd_X(a3),d1
-	move.w	LEd_Y(a3),d2
-	WiCall	Locate
-; Effacement complet de la ligne?
-	bclr	#1,LEd_Flags+1(a3)
-	beq.s	.Pacl
-	move.w	LEd_Large(a3),d2
-.Eff	WiCalD	ChrOut,32
-	subq.w	#1,d2
-	bne.s	.Eff
-	move.w	LEd_X(a3),d1
-	move.w	LEd_Y(a3),d2
-	WiCall	Locate
-; Curseur � gauche
-.Pacl	move.w	LEd_Cur(a3),d2
-	cmp.w	LEd_Start(a3),d2
-	bcc.s	.Pag
-	move.w	d2,LEd_Start(a3)
-; Curseur � droite
-.Pag	move.w	LEd_Start(a3),d0
-	add.w	LEd_Large(a3),d0
-	cmp.w	d0,d2
-	ble.s	.Pad
-	move.w	d2,d0
-	sub.w	LEd_Large(a3),d0
-	move.w	d0,LEd_Start(a3)
-	bset	#0,LEd_Flags+1(a3)
-; Impression de la ligne
-.Pad	move.w	LEd_Start(a3),d0
-	lea	0(a2,d0.w),a1
-	move.w	LEd_Long(a3),d1
-	sub.w	d0,d1
-	cmp.w	LEd_Large(a3),d1
-	ble.s	.Pal
-	bclr	#0,LEd_Flags+1(a3)
-	move.w	LEd_Large(a3),d1
-	addq.w	#1,d1
-.Pal	WiCall	Print2
-; Effacement de la droite de la ligne?
-	bclr	#0,LEd_Flags+1(a3)
-	beq.s	.Noe
-	WiCalD	ChrOut,32
-; Locate au curseur
-.Noe	move.w	LEd_X(a3),d1
-	add.w	LEd_Cur(a3),d1
-	sub.w	LEd_Start(a3),d1
-	move.w	LEd_Y(a3),d2
-	WiCall	Locate
-; Remet le curseur (vrai ou faux)
-	move.l	a3,a0
-	Rbsr	L_LEd_CuMarche
-	rts
+	Lib_Empty			LEd_Print, now in src/lib/dialog.cpp
 
 ; Arret curseur ligne editee
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~
 ; - - - - - - - - - - - - -
-	Lib_Def	LEd_CuStoppe
-; - - - - - - - - - - - - -
-	bclr	#2,LEd_Flags+1(a0)
-	beq.s	.Pacu
-	lea	LEd_CuOff(pc),a1
-	btst	#LEd_FCursor,LEd_Flags(a0)
-	bne.s	.Nor
-	Rlea	L_LEd_FauCu,1
-.Nor	WiCall	Print
-.Pacu	rts
-LEd_CuOff	dc.b	27,"C0",0
-	even
+	Lib_Empty			LEd_CuStoppe, now in src/lib/dialog.cpp
 ; Remise en route curseur
 ; ~~~~~~~~~~~~~~~~~~~~~~~
 ; - - - - - - - - - - - - -
-	Lib_Def	LEd_CuMarche
+	Lib_Empty			LEd_CuMarche, now in src/lib/dialog.cpp
 ; - - - - - - - - - - - - -
-	bset	#2,LEd_Flags+1(a0)
-	bne.s	.Pacu
-	lea	LEd_CuOn(pc),a1
-	btst	#LEd_FCursor,LEd_Flags(a0)
-	bne.s	.Nor
-	Rlea	L_LEd_FauCu,1
-.Nor	WiCall	Print
-.Pacu	rts
-LEd_CuOn	dc.b	27,"C1",0
-	even
-; - - - - - - - - - - - - -
-	Lib_Def	LEd_FauCu
-; - - - - - - - - - - - - -
-LEd_FauCu	dc.b	27,"I1",27,"W2"," ",27,"W0",27,"I0",29,0
-	even
+	Lib_Empty			LEd_FauCu, now in src/lib/dialog.cpp
 
 ;
 ; Ramene VRAI si D2 est une lettre ou un chiffre
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ; - - - - - - - - - - - - -
-	Lib_Def	LEd_Lettre
-; - - - - - - - - - - - - -
-	cmp.b	#"0",d0
-	bcs.s	.LFaux
-	cmp.b	#"9",d0
-	bls.s	.LVrai
-	cmp.b	#"A",d0
-	bcs.s	.LFaux
-	cmp.b	#"Z",d0
-	bls.s	.LVrai
-	cmp.b	#"a",d0
-	bcs.s	.LFaux
-	cmp.b	#"z",d0
-	bls.s	.LVrai
-	cmp.b	#128,d0
-	bcc.s	.LVrai
-.LFaux:	moveq	#0,d0
-	rts
-.LVrai:	moveq	#-1,d0
-	rts
+	Lib_Empty			LEd_Lettre, now in src/lib/dialog.cpp
 
 ; - - - - - - - - - - - - -
-	Lib_Def	Dia_WaitMul
-; - - - - - - - - - - - - -
-	movem.l	a0-a1/a6/d0-d1,-(sp)
-	move.l	T_GfxBase(a5),a6
-	jsr	-270(a6)
-	movem.l	(sp)+,a0-a1/a6/d0-d1
-	rts
+	Lib_Int	Dia_WaitMul		src/lib/dialog.cpp
 
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -9273,368 +8542,18 @@ LEd_FauCu	dc.b	27,"I1",27,"W2"," ",27,"W0",27,"I0",29,0
 ;	A0=	Adresse du canal
 ;	A1=	Adresse des variables du canal
 ; - - - - - - - - - - - - -
-	Lib_Def	Dia_OpenChannel
-; - - - - - - - - - - - - -
-	movem.l	a2-a6/d2-d7,-(sp)
-	addq.l	#1,d2
-	movem.l	a0-a2/d0-d2,-(sp)
-	lsl.l	#2,d2
-	and.w	#$FFFE,d1
-	add.l	d1,d2
-	add.l	#Dia_Vars,d2
-; Boite d�ja en route?
-; ~~~~~~~~~~~~~~~~~~~~
-	Rbsr	L_Dia_GetChannel
-	bne	.Deja
-; Un ecran ouvert?
-; ~~~~~~~~~~~~~~~~
-	tst.l	T_EcCourant(a5)
-	beq	.Scnop
-; Reserve la zone de memoire
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~
-	move.l	Cur_Dialogs(a5),a0
-	move.l	d2,d0				Longueur buffer
-	Rjsr	L_Lst.New
-	beq	.Mem
-	lea	8(a1),a4
-	move.l	(sp)+,Dia_Channel(a4)		Numero de la boite
-	move.l	(sp)+,d2			Longueur du buffer
-	move.l	(sp)+,Dia_NVar(a4)		Nombre de variables
-	move.l	(sp)+,a2			Adresse du programme
-	move.l	(sp)+,Dia_Puzzle(a4)		Banque de puzzle
-	move.l	(sp)+,Dia_Messages(a4)
-	move.l	sp,Dia_Sp(a4)
-; Branche la routine ClearVar
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	Rjsr	L_Dia_ClearVar
-; Stocke le Numero / Adresse de l'�cran courant
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	move.l	T_EcCourant(a5),a0
-	move.l	a0,Dia_Screen(a4)
-	move.w	EcNumber(a0),Dia_ScreenNb(a4)
-; Init des couleurs sliders
-; ~~~~~~~~~~~~~~~~~~~~~~~~~
-	lea	SlDInit(pc),a0
-	lea	Dia_SlDefault(a4),a1
-	moveq	#16-1,d0
-.Se	move.b	(a0)+,(a1)+
-	dbra	d0,.Se
-; Copie le programme dans une espace memoire
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	moveq	#0,d0
-	move.w	(a2)+,d0
-	beq	.Synt
-	move.l	a2,Dia_Programs(a4)
-	clr.l	Dia_ProgLong(a4)
-	sub.l	a6,a6
-	btst	#0,d3
-	beq.s	.PaCop
-	move.l	d0,d1
-	addq.l	#4,d0
-	move.l	d0,Dia_ProgLong(a4)
-	SyCall	MemFast
-	beq	.Mem2
-	move.l	a0,Dia_Programs(a4)
-.Copy	move.b	(a2)+,(a0)+
-	subq.w	#1,d1
-	bne.s	.Copy
-	clr.b	(a0)
-.PaCop	move.l	Dia_Programs(a4),a6
-; Trouve le debut et la fin du buffer interne
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	move.l	Dia_NVar(a4),d0
-	lsl.l	#2,d0
-	lea	Dia_Vars(a4),a3
-	add.l	d0,a3
-	move.l	a3,Dia_Labels(a4)
-	move.l	a3,Dia_Buffer(a4)
-	lea	0(a3,d2.l),a0
-	move.l	a0,Dia_Pile(a4)
-; Trouve les labels, defini les instructions supplementaires
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	clr.l	(a3)
-	subq.l	#1,(a3)
-.INext	Rbsr	L_Dia_Chr		Premiere lettre
-	beq	.Quit
-	cmp.b	#"[",d0
-	beq.s	.INext
-	cmp.b	#"]",d0
-	beq.s	.INext
-	move.b	d0,d1			Deuxieme lettre
-	Rbsr	L_Dia_Chr
-	beq	.Synt
-	lsl.w	#8,d1
-	move.b	d0,d1
-	Rlea	L_Dia_Instr,0		Exploration des tokens
-	move.l	a0,a1
-	moveq	#Dia_NInstr-1,d0
-	moveq	#-1,d7
-.Find	addq.w	#1,d7
-	cmp.w	(a0)+,d1
-	dbeq	d0,.Find
-	tst.w	d0
-	bmi	.PaDef
-; Un label?
-	cmp.w	#28,d7			Label?
-	beq	.Lab
-	cmp.w	#35,d7			Instruction?
-	beq	.Inst
-; Saute les parametres
-	move.w	Dia_NParam-Dia_Instr-2(a0),d2
-	beq.s	.NoPar
-; Appelle l'evaluation
-.Param	bsr	.Evalue
-	subq.w	#1,d2
-	beq.s	.PFin
-	cmp.b	#",",d0
-	beq.s	.Param
-	bne	.NPar
-.PFin	cmp.b	#",",d2
-	beq	.NPar
-	bra	.INext
-; Pas de parametres: un separateur
-.NoPar	Rbsr	L_Dia_Chr
-	beq	.Synt
-	bcc	.INext
-	bra	.Synt
-; Fixe les bornes du buffer
-; ~~~~~~~~~~~~~~~~~~~~~~~~~
-.Quit	clr.l	(a3)
-	subq.l	#1,(a3)+
-	move.l	a3,Dia_Buffer(a4)
-	move.l	a3,Dia_PBuffer(a4)
-	clr.l	(a3)
-; Ok, pas d'erreur!
-; ~~~~~~~~~~~~~~~~~
-	move.l	a4,a0
-	lea	Dia_Vars(a4),a1
-	movem.l	(sp)+,a2-a6/d2-d7
-	moveq	#0,d0
-	rts
-
-; Erreur avant verification
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.Scnop	moveq	#EDia_Screen,d0
-	bra.s	.Err
-.Mem	moveq	#EDia_OMem,d0
-	bra.s	.Err
-.Deja	moveq	#EDia_ChanAD,d0
-.Err	moveq	#0,d1
-	lea	3*4+3*4(sp),sp
-	movem.l	(sp)+,a2-a6/d2-d7
-	tst.l	d0
-	rts
-; Messages d'erreur pendant verification
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.NPar	moveq	#EDia_NPar,d2
-	bra.s	.Err2
-.ALab	moveq	#EDia_LabAD,d2
-	bra.s	.Err2
-.Mem2	sub.l	a6,a6
-	moveq	#EDia_OMem,d2
-	bra.s	.Err3
-.Synt	moveq	#EDia_Syntax,d2
-; Efface le buffer
-.Err2	sub.l	Dia_Programs(a4),a6
-.Err3	move.l	Dia_Sp(a4),sp
-; Efface le buffer
-	move.l	a4,a0
-	Rbsr	L_Dia_CloseA0
-; Pointe l'erreur en D1
-	move.l	a6,d1
-	move.l	d2,d0
-	movem.l	(sp)+,a2-a6/d2-d7
-	rts
-
-; Definition d'une instruction
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.Inst	Rbsr	L_Dia_Chr
-	beq	.Synt
-	bcc	.Synt
-	bmi	.Synt
-	move.b	d0,d1
-	lsl.w	#8,d1
-	Rbsr	L_Dia_Chr
-	bcc	.Synt
-	move.b	d0,d1
-; Une instruction deja definie?
-	Rlea	L_Dia_Instr,0		Exploration des tokens
-	moveq	#Dia_NInstr-1,d0
-.UFind	cmp.w	(a0)+,d1
-	dbeq	d0,.UFind
-	tst.w	d0
-	bpl	.Synt
-; Recherche dans le labels
-	move.l	Dia_Labels(a4),a0
-.IChk	move.w	(a0),d0
-	addq.l	#6,a0
-	bmi.s	.IOk
-	cmp.w	d1,d0
-	bne.s	.IChk
-	bra	.ALab
-; Poke dans les labels
-.IOk	move.w	d1,(a3)+		Adresse dans la liste
-	Rbsr	L_Dia_Chr
-	cmp.b	#",",d0			Une virgule
-	bne	.Synt
-	Rbsr	L_Dia_Chr		Trouve le nombre de params
-	beq	.Synt
-	bcc	.Synt
-	bpl	.Synt
-	addq.l	#4,a3
-	Rbsr	L_Dia_FChif
-	move.l	(a3),d1			Jusqu'� 16 parametres
-	cmp.l	#9,d1
-	bhi	.Synt
-	move.w	d1,(a3)+
-	Rbsr	L_Dia_Chr		Saute le ;
-	bcs	.Synt
-	Rbsr	L_Dia_Chr		Adresse du debut de la routine
-	cmp.b	#"[",d0
-	bne	.Synt
-	move.l	a6,d0
-	sub.l	Dia_Programs(a4),d0
-	move.w	d0,(a3)+
-	clr.l	(a3)			Marque la fin des labels
-	subq.l	#1,(a3)
-	bra	.INext
-; Trouve le numero du label
-; ~~~~~~~~~~~~~~~~~~~~~~~~~
-.Lab	Rbsr	L_Dia_Chr
-	beq	.Synt
-	bcc	.Synt
-	bpl	.Synt
-	addq.l	#4,a3
-	Rbsr	L_Dia_FChif
-	move.l	(a3),d1
-	cmp.l	#65536,d1
-	bcc	.Synt
-	clr.l	(a3)
-	subq.l	#1,(a3)
-	move.l	Dia_Labels(a4),a0
-.Chk	move.l	(a0),d0
-	addq.l	#6,a0
-	bmi.s	.Ok
-	cmp.l	d1,d0
-	bne.s	.Chk
-	bra	.ALab
-.Ok	move.l	d1,(a3)+
-	Rbsr	L_Dia_Chr		Saute le separateur
-	beq	.Synt
-	bcs	.Synt
-	move.l	a6,d0
-	sub.l	Dia_Programs(a4),d0
-	move.w	d0,(a3)+
-	clr.l	(a3)
-	subq.l	#1,(a3)
-	bra	.INext
-; Appel d'un UI: saute les parametres
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.PaDef	Rbsr	L_Dia_Chr
-	beq	.Synt
-	bcc	.Dfin
-	subq.l	#1,a6
-.Dloop	bsr	.Evalue
-	cmp.b	#",",d0
-	beq.s	.Dloop
-.Dfin	bra	.INext
-; Evaluation d'une expression
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.Evalue
-.ELoop	Rbsr	L_Dia_Chr		Premiere lettre
-	bmi.s	.Chiffre
-	bvs.s	.Signe
-	beq	.Synt
-	bcc	.EFini
-	Rlea	L_Dia_FTokens,1
-	move.b	-64(a1,d0.w),d0		Offset des codes
-	beq	.Synt
-	lea	32(a1,d0.w),a1		Pointe la liste
-	Rbsr	L_Dia_Chr
-.FLoop	move.w	(a1)+,d1		Trouve le bon
-	beq	.Synt
-	cmp.b	d0,d1
-	bne.s	.FLoop
-	cmp.b	#'"',d1				"
-	beq.s	.Guil
-	cmp.b	#"'",d1				'
-	beq.s	.Guil
-	bra.s	.ELoop
-.Signe	Rlea	L_Dia_FTokens,1
-	lea	32(a1),a1
-	bra.s	.FLoop
-.Chiffre
-	cmp.b	#"%",d0
-	beq.s	.BLoop
-	cmp.b	#"$",d0
-	beq.s	.HLoop
-.DLoop	Rbsr	L_Dia_ChrC
-	bmi.s	.CFini
-	cmp.b	#10,d0
-	bcs.s	.DLoop
-	bra.s	.CFini
-.BLoop	Rbsr	L_Dia_ChrC
-	bmi.s	.CFini
-	cmp.b	#2,d0
-	bcs.s	.BLoop
-	bra.s	.CFini
-.HLoop	Rbsr	L_Dia_ChrC
-	bmi.s	.CFini
-	cmp.b	#10,d0
-	bcs.s	.HLoop
-	add.b	#"0"-"A",d0
-	bmi.s	.CFini
-	cmp.b	#6,d0
-	bcs.s	.HLoop
-.CFini	subq.l	#1,a6
-	bra	.ELoop
-; Des guillemets
-.Guil	move.b	(a6)+,d0
-	cmp.b	#" ",d0
-	bcs	.Synt
-	cmp.b	d0,d1
-	bne.s	.Guil
-	bra	.ELoop
-; On a fini l'expression
-.EFini	rts
-; Init des sliders par defaut
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~
-SlDInit	dc.b 0,0,0,1,4,4,4,1
-	dc.b 0,0,0,1,3,3,3,1
-	even
+	Lib_Int	Dia_OpenChannel		src/lib/dialog.cpp
 
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; Demande un espace buffer temporaire
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	Dia_GetBuffer
-; - - - - - - - - - - - - -
-	movem.l	a1/d1,-(sp)
-	move.l	Dia_ABuffer(a4),a0
-	addq.w	#1,d0
-	and.w	#$FFFE,d0
-	lea	0(a0,d0.w),a1
-	move.l	a1,d1
-	cmp.l	a3,d1
-	Rbcc	L_Dia_OBuffer
-	move.l	d1,Dia_ABuffer(a4)
-	move.w	d0,(a0)
-; Nettoyage
-	lea	4(a0),a1
-.C	clr.w	(a1)+
-	cmp.l	a1,d1
-	bhi.s	.C
-	clr.l	(a1)
-	movem.l	(sp)+,a1/d1
-	rts
+	Lib_Empty			Dia_GetBuffer, now in src/lib/dialog.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; Memorise la position du buffer
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	Dia_SetBuffer
-; - - - - - - - - - - - - -
-	move.l	Dia_ABuffer(a4),Dia_PBuffer(a4)
-	rts
+	Lib_Empty			Dia_SetBuffer, now in src/lib/dialog.cpp
 
 ; ___________________________________________________________________________
 ;
@@ -9647,43 +8566,7 @@ SlDInit	dc.b 0,0,0,1,4,4,4,1
 ;	D0=	Erreur
 ;
 ; - - - - - - - - - - - - -
-	Lib_Def	Dia_Active
-; - - - - - - - - - - - - -
-	movem.l	a0-a1/d1,-(sp)
-; Verifie la presence de l'�cran, du meme!
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	move.w	Dia_ScreenNb(a4),d0
-	lsl.w	#2,d0
-	add.w	#T_EcAdr,d0
-	move.l	0(a5,d0.w),d0
-	cmp.l	Dia_Screen(a4),d0
-	bne.s	.Err
-; Stocke l'ancien ecran
-; ~~~~~~~~~~~~~~~~~~~~~
-	move.w	#-1,Dia_ScreenOld(a4)
-	move.l	T_EcCourant(a5),a0
-	move.w	EcNumber(a0),d0
-	cmp.w	Dia_ScreenNb(a4),d0
-	beq.s	.Deja
-; Active le nouvel ecran
-; ~~~~~~~~~~~~~~~~~~~~~~
-	move.w	d0,Dia_ScreenOld(a4)
-	move.w	Dia_ScreenNb(a4),d1
-	EcCall	Active
-; Stocke la fenetre active
-; ~~~~~~~~~~~~~~~~~~~~~~~~
-.Deja	WiCall	GAdr
-	move.w	d1,Dia_WindOld(a4)
-	move.w	d1,Dia_WindOn(a4)
-; Ok!
-; ~~~
-	moveq	#0,d0
-	bra.s	.Out
-; Erreur, l'�cran est modifie
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.Err	moveq	#EDia_Screen,d0
-.Out	movem.l	(sp)+,a0-a1/d1
-	rts
+	Lib_Empty			Dia_Active, now in src/lib/dialog.cpp
 
 ; ___________________________________________________________________________
 ;
@@ -9694,50 +8577,13 @@ SlDInit	dc.b 0,0,0,1,4,4,4,1
 ;	A4=	Boite de dialogue
 ;
 ; - - - - - - - - - - - - -
-	Lib_Def	Dia_ReActive
-; - - - - - - - - - - - - -
-	movem.l	d0-d1/a0-a1,-(sp)
-; Une fenetre d'�dition en route?
-	move.l	Dia_Edited(a4),d0
-	ble.s	.Skip
-	move.l	d0,a0
-	Rbsr	L_Dia_EdActive
-	bra.s	.Meme
-; Remet la fenetre de fond
-.Skip	move.w	Dia_WindOld(a4),d1
-	cmp.w	Dia_WindOn(a4),d1
-	beq.s	.Meme
-	move.w	d1,Dia_WindOn(a4)
-	WiCall	QWindow
-; Remet l'ancien ecran
-.Meme	move.w	Dia_ScreenOld(a4),d1
-	bmi.s	.Deja
-	EcCall	Active
-	move.w	#-1,Dia_ScreenOld(a4)
-.Deja	movem.l	(sp)+,d0-d1/a0-a1
-	rts
+	Lib_Empty			Dia_ReActive, now in src/lib/dialog.cpp
 
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 	Branchement de la routine de fermeture CLEARVAR
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	Dia_ClearVar
-; - - - - - - - - - - - - -
-	move.l	a2,-(sp)
-	lea	.Struc(pc),a1
-	lea	Sys_ClearRoutines(a5),a2
-	SyCall	AddRoutine
-	lea	.Struc1(pc),a1
-	lea	Sys_DefaultRoutines(a5),a2
-	SyCall	AddRoutine
-	Rlea	L_Dia_AutoTest,0
-	move.l	a0,GoTest_Dialog(a5)
-	move.l	(sp)+,a2
-	rts
-.Struc	dc.l	0
-	bra.s	.Clr
-.Struc1	dc.l	0
-.Clr	Rbra	L_Dia_CloseChannels
+	Lib_Empty			Dia_ClearVar, now in src/lib/dialog.cpp
 
 ; ___________________________________________________________________________
 ;
@@ -9745,16 +8591,7 @@ SlDInit	dc.b 0,0,0,1,4,4,4,1
 ; ___________________________________________________________________________
 ;
 ; - - - - - - - - - - - - -
-	Lib_Def	Dia_CloseChannels
-; - - - - - - - - - - - - -
-.Loop	move.l	Cur_Dialogs(a5),a0
-	move.l	(a0),d0
-	beq.s	.Out
-	move.l	d0,a0
-	move.l	8(a0),d0
-	Rbsr	L_Dia_CloseChannel
-	bra.s	.Loop
-.Out	rts
+	Lib_Int	Dia_CloseChannels		src/lib/dialog.cpp
 
 ; ___________________________________________________________________________
 ;
@@ -9767,38 +8604,11 @@ SlDInit	dc.b 0,0,0,1,4,4,4,1
 ;	D0=	Erreurs
 ;
 ; - - - - - - - - - - - - -
-	Lib_Def	Dia_CloseChannel
-; - - - - - - - - - - - - -
-	movem.l	d2,-(sp)
-; Efface une boite existante
-	move.l	d0,d2
-	Rbsr	L_Dia_EffChannel
-; Efface la structure
-	move.l	d2,d0
-	Rbsr	L_Dia_GetChannel
-	beq.s	.Err
-	Rbsr	L_Dia_CloseA0
-	moveq	#0,d0
-.Out	movem.l	(sp)+,d2
-	rts
-.Err	moveq	#EDia_ChanND,d0
-	bra.s	.Out
+	Lib_Int	Dia_CloseChannel		src/lib/dialog.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					Ferme le canal A0
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	Dia_CloseA0
-; - - - - - - - - - - - - -
-	pea	-8(a0)
-	move.l	Dia_Programs(a0),d0
-	beq.s	.Skip
-	move.l	d0,a1
-	move.l	Dia_ProgLong(a0),d0
-	beq.s	.Skip
-	SyCall	MemFree
-.Skip	move.l	(sp)+,a1
-	move.l	Cur_Dialogs(a5),a0
-	Rjsr	L_Lst.Del
-	rts
+	Lib_Empty			Dia_CloseA0, now in src/lib/dialog.cpp
 
 ; _______________________________________________________________________
 ;
@@ -9820,46 +8630,7 @@ SlDInit	dc.b 0,0,0,1,4,4,4,1
 ;	D0=	Erreur
 ;	D1=	Reponse
 ; - - - - - - - - - - - - -
-	Lib_Def	Dia_RunQuick
-; - - - - - - - - - - - - -
-	movem.l	d2-d7,-(sp)
-; Trouve le bon numero de canal
-	movem.l	d0/d1/a0/a1,-(sp)
-	move.l	#65536,d7
-.Find	move.l	d7,d0
-	Rbsr	L_Dia_GetChannel
-	beq.s	.Ok
-	addq.l	#1,d7
-	bra.s	.Find
-.Ok	movem.l	(sp)+,d0/d1/a0/a1
-; Ouvre le canal
-	movem.l	d0-d1,-(sp)
-	movem.l	d2-d4,-(sp)
-	move.l	d7,d0
-	move.l	d6,d1
-	moveq	#16,d2
-	move.l	d5,d3
-	Rbsr	L_Dia_OpenChannel
-	bne	.Err
-; Met les variables d'entree
-	move.l	(sp)+,(a1)+
-	move.l	(sp)+,(a1)+
-	move.l	(sp)+,(a1)+
-; Demarre le programme
-	move.l	d7,d0
-	moveq	#-1,d1
-	movem.l	(sp)+,d2-d3
-	Rbsr	L_Dia_RunProgram
-; Efface le canal
-	movem.l	d0/d1,-(sp)
-	move.l	d7,d0
-	Rbsr	L_Dia_CloseChannel
-	movem.l	(sp)+,d0/d1
-.Out	movem.l	(sp)+,d2-d7
-	tst.w	d0
-	rts
-.Err	lea	5*4(sp),sp
-	bra.s	.Out
+	Lib_Int	Dia_RunQuick		src/lib/dialog.cpp
 
 ; _______________________________________________________________________
 ;
@@ -9876,33 +8647,7 @@ SlDInit	dc.b 0,0,0,1,4,4,4,1
 ;	D0=	Erreur
 ;
 ; - - - - - - - - - - - - -
-	Lib_Def	Dia_Update
-; - - - - - - - - - - - - -
-	movem.l	a2-a6/d2-d7,-(sp)
-	move.l	d4,d5
-	move.l	d3,d4
-	move.l	d2,d3
-	move.l	d1,d2
-	Rbsr	L_Dia_GetChannel
-	beq.s	.NF
-	move.l	a0,a4
-	moveq	#0,d0
-	btst	#0,Dia_RFlags(a4)
-	beq.s	.Out
-	move.l	Dia_Pile(a4),a3
-	Rbsr	L_Dia_Active
-	bne.s	.NF
-	Rbsr	L_Dia_ZUpdate
-	Rbsr	L_Dia_ReActive
-	move.w	Dia_Error(a4),d0	Pas d'erreur, revient directement
-	beq.s	.Out
-	move.w	Dia_ErrorPos(a4),d1	Position de l'erreur
-	ext.l	d1
-.Out	movem.l	(sp)+,d2-d7/a2-a6
-	ext.l	d0
-	rts
-.NF	moveq	#EDia_ChanND,d0
-	bra.s	.Out
+	Lib_Int	Dia_Update		src/lib/dialog.cpp
 
 ; _______________________________________________________________________
 ;
@@ -9919,138 +8664,18 @@ SlDInit	dc.b 0,0,0,1,4,4,4,1
 ;	D1=	Parametre eventuel
 ;
 ; - - - - - - - - - - - - -
-	Lib_Def	Dia_RunProgram
-; - - - - - - - - - - - - -
-	movem.l	a2-a6/d2-d7,-(sp)
-	move.l	d0,d5
-	move.l	d1,d4
-; Va effacer une boite d�ja en route
-	Rbsr	L_Dia_EffChannel
-; Trouve l'adresse du canal
-	move.l	d5,d0
-	Rbsr	L_Dia_GetChannel
-	beq	.ChanNF
-	move.l	a0,a4
-; Base X / Base Y
-	move.l	#EntNul,d0
-	cmp.l	d0,d2
-	beq.s	.Sk1
-	move.l	d2,Dia_BaseX(a4)
-.Sk1	cmp.l	d0,d3
-	beq.s	.Sk2
-	move.l	d3,Dia_BaseY(a4)
-.Sk2
-; Trouve l'adresse du programme
-	move.l	Dia_Programs(a4),a6
-	move.l	d4,d0
-	bmi.s	.Palab
-	Rbsr	L_Dia_GetLabel
-	beq	.LabNF
-	add.l	d0,a6
-.Palab
-; Prepare les piles
-	move.l	Dia_Pile(a4),a3
-	moveq	#0,d6
-	moveq	#0,d7
-	move.l	Dia_Buffer(a4),a0
-	move.l	a0,Dia_PBuffer(a4)
-	clr.l	(a0)
-	clr.l	Dia_LastKey(a4)
-	clr.l	Dia_Edited(a4)
-	clr.l	Dia_LastZone(a4)
-	clr.w	Dia_XA(a4)
-	clr.w	Dia_YA(a4)
-	clr.w	Dia_XB(a4)
-	clr.w	Dia_YB(a4)
-	clr.w	Dia_Return(a4)
-	clr.w	Dia_Error(a4)
-	clr.w	Dia_Users(a4)
-	clr.l	Dia_PUsers(a4)
-	clr.w	Dia_NPUsers(a4)
-	clr.l	Dia_Release(a4)
-; Active l'�cran
-	Rbsr	L_Dia_Active
-	bne.s	.Err
-; Writing 0
-	move.l	T_RastPort(a5),a1
-	moveq	#0,d0
-	move.w	d0,Dia_Writing(a4)
-	GfxCa5	SetDrMd
-; Appelle le programme
-	bset	#0,Dia_RFlags(a4)	Faire un effacement
-	bclr	#1,Dia_RFlags(a4)	Runne?
-	bclr	#2,Dia_RFlags(a4)	Pas FREEZE
-	Rbsr	L_Dia_ClearKey		Plus de touches
-	Rbsr	L_Dia_Loop
-	Rbsr	L_Dia_ClearKey		Plus de touches
-	btst	#1,Dia_RFlags(a4)
-	bne.s	.Runne
-; Initialise pour les tests
-	Rbsr	L_Dia_EdFirst		Premiere ligne EDIT
-	Rbsr	L_Dia_Patch
-	Rbsr	L_Dia_ReActive		Remet l'ancien ecran
-	move.w	Dia_Error(a4),d0	Pas d'erreur, revient directement
-	beq.s	.OOut
-.Err	move.l	a4,a0			Erreur, efface ce qui a ete dessin�
-	Rbsr	L_Dia_EffChanA0
-	move.w	Dia_Error(a4),d0	Type de l'erreur
-	ext.l	d0
-.OErr	move.w	Dia_ErrorPos(a4),d1	Position de l'erreur
-	ext.l	d1
-.OOut	movem.l	(sp)+,d2-d7/a2-a6
-	rts
-; Un RUn a eu lieu!
-; ~~~~~~~~~~~~~~~~~
-.Runne		move.l	a4,a0			Efface le canal
-	Rbsr	L_Dia_EffChanA0
-	move.w	Dia_Return(a4),d1
-	ext.l	d1
-	move.w	Dia_Error(a4),d0
-	beq.s	.OOut
-	bra.s	.OErr
-; Programme non trouve
-; ~~~~~~~~~~~~~~~~~~~~
-.LabNF	moveq	#EDia_LabND,d0
-	bra.s	.OOut
-; Channel not found
-; ~~~~~~~~~~~~~~~~~
-.ChanNF	moveq	#EDia_ChanND,d0
-	bra.s	.OOut
+	Lib_Int	Dia_RunProgram		src/lib/dialog.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					Trouve le label D0>>>D0
 ;	BEQ= 	pas trouve
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	Dia_GetLabel
-; - - - - - - - - - - - - -
-	move.l	Dia_Labels(a4),a0
-.Loop	move.l	(a0)+,d1
-	addq.l	#2,a0
-	bmi.s	.Err
-	cmp.l	d0,d1
-	bne.s	.Loop
-	moveq	#0,d0
-	move.w	-2(a0),d0
-	rts
-.Err 	moveq	#0,d0
-	rts
+	Lib_Empty			Dia_GetLabel, now in src/lib/dialog.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					Freeze tous les canaux
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	Dia_FreezeChannels
-; - - - - - - - - - - - - -
-	move.l	d2,-(sp)
-	move.l	d1,d2
-	move.l	Cur_Dialogs(a5),a1
-	bra.s	.In
-.Loop	move.l	d0,a1
-	lea	8(a1),a0
-	Rbsr	L_Dia_FrzA0
-.In	move.l	(a1),d0
-	bne.s	.Loop
-	movem.l	(sp)+,d2
-	rts
+	Lib_Int	Dia_FreezeChannels		src/lib/dialog.cpp
 ; _______________________________________________________________________
 ;
 ;	FREEZE / UNFREEZE  canal
@@ -10064,27 +8689,9 @@ SlDInit	dc.b 0,0,0,1,4,4,4,1
 ;
 ; Un seul canal
 ; - - - - - - - - - - - - -
-	Lib_Def	Dia_FreezeChannel
+	Lib_Int	Dia_FreezeChannel		src/lib/dialog.cpp
 ; - - - - - - - - - - - - -
-	move.l	d2,-(sp)
-	move.l	d1,d2
-	Rbsr	L_Dia_GetChannel
-	beq.s	.NF
-	Rbsr	L_Dia_FrzA0
-.Ok	moveq	#0,d0
-.Out	movem.l	(sp)+,d2
-	rts
-; Erreur
-.NF	moveq	#EDia_ChanND,d0
-	bra.s	.Out
-; - - - - - - - - - - - - -
-	Lib_Def	Dia_FrzA0
-; - - - - - - - - - - - - -
-	bclr	#2,Dia_RFlags(a0)
-	tst.w	d2
-	beq.s	.Skip
-	bset	#2,Dia_RFlags(a0)
-.Skip	rts
+	Lib_Empty			Dia_FrzA0, now in src/lib/dialog.cpp
 
 ; _______________________________________________________________________
 ;
@@ -10097,79 +8704,12 @@ SlDInit	dc.b 0,0,0,1,4,4,4,1
 ;	D0=	Erreur
 ;
 ; - - - - - - - - - - - - -
-	Lib_Def	Dia_EffChannel
-; - - - - - - - - - - - - -
-	Rbsr	L_Dia_GetChannel
-	beq.s	.Err
-	Rbsr	L_Dia_EffChanA0
-	moveq	#0,d0
-	rts
-.Err	moveq	#EDia_ChanND,d0
-	rts
+	Lib_Int	Dia_EffChannel		src/lib/dialog.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; Efface une boite de dialogue dans un canal A0
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	Dia_EffChanA0
-; - - - - - - - - - - - - -
-	movem.l	a2-a4/a6/d2-d7,-(sp)
-	move.l	a0,a4
-; Faut-il effacer?
-	bclr	#0,Dia_RFlags(a4)
-	beq	.PaEff
-; Active l'ancien ecran
-	Rbsr	L_Dia_Active
-	bne	.PaEff
-; Efface les fenetres / Zones r�serv�es par le programme
-	clr.l	-(sp)
-	move.l	Dia_Buffer(a4),a6
-	bra.s	.EIn
-; Une ligne d'edition
-.ELoop	cmp.w	#Dia_EdMark,2(a6)	Une ligne d'edition
-	bne.s	.PaEd
-	move.l	a6,a0			Efface la fenetre
-	Rbsr	L_Dia_EdEnd
-; Un bouton
-.PaEd	cmp.w	#Dia_BlMark,2(a6)
-	bne.s	.PaBl
-	move.l	a6,-(sp)
-; Une liste
-.PaBl	cmp.w	#Dia_LiMark,2(a6)
-	bne.s	.PaLi
-	move.l	a6,a2
-	Rbsr	L_Dia_LiEnd
-; Un Texte
-.PaLi	cmp.w	#Dia_TxMark,2(a6)
-	bne.s	.PaTx
-	move.l	a6,a2
-	Rbsr	L_Dia_TxEnd
-; Suivant dans le buffer
-.PaTx	add.w	(a6),a6
-.EIn	tst.w	(a6)
-	bne.s	.ELoop
-; Efface les blocs dans l'ordre inverse
-	bra.s	.BlIn
-.BlLp	move.l	d0,a6
-	moveq	#0,d1
-	move.w	Dia_BlNumber(a6),d1
-	move.l	#EntNul,d2
-	move.l	d2,d3
-	move.l	d3,d4
-	move.l	d4,d5
-	move.l	Buffer(a5),a1
-	EcCall	BlPut
-	moveq	#0,d1
-	move.w	Dia_BlNumber(a6),d1
-	EcCall	BlDel
-.BlIn	move.l	(sp)+,d0
-	bne.s	.BlLp
-	Rbsr	L_Dia_Patch
-; Remet l'ancien ecran
-	clr.l	Dia_Edited(a4)
-	Rbsr	L_Dia_ReActive
-; Remet le buffer en place
-.PaEff	movem.l	(sp)+,a2-a4/a6/d2-d7
-	rts
+	Lib_Empty			Dia_EffChanA0, now in src/lib/dialog.cpp
 
 ; ___________________________________________________
 ;
@@ -10177,49 +8717,12 @@ SlDInit	dc.b 0,0,0,1,4,4,4,1
 ; ___________________________________________________
 ;
 ; - - - - - - - - - - - - -
-	Lib_Def	Dia_GetVariable
-; - - - - - - - - - - - - -
-	move.l	d2,-(sp)
-	move.l	d1,d2
-	Rbsr	L_Dia_GetChannel
-	beq.s	.NFnd
-	cmp.l	Dia_NVar(a0),d2
-	bhi	.FCall
-	lsl.w	#2,d2
-	lea	Dia_Vars(a0),a0
-	add.w	d2,a0
-	moveq	#0,d0
-	bra.s	.Out
-.NFnd	moveq	#EDia_ChanND,d0
-	bra.s	.Out
-.FCall	moveq	#EDia_VarND,d0
-.Out	movem.l	(sp)+,d2
-	rts
+	Lib_Int	Dia_GetVariable		src/lib/dialog.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 	Retourne le numero de la zone sous D1/D2 dans le canal D0
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	Dia_GetZone
-; - - - - - - - - - - - - -
-	move.l	a4,-(sp)
-	movem.l	d1/d2,-(sp)
-	Rbsr	L_Dia_GetChannel
-	movem.l	(sp)+,d1/d2
-	beq	.NFnd
-	move.l	a0,a4
-	Rbsr	L_Dia_GetZ
-	moveq	#-1,d1
-	tst.l	d0
-	beq.s	.Out
-	move.l	d0,a0
-	move.w	Dia_ZoNumber(a0),d1
-	ext.l	d1
-	moveq	#0,d0
-.Out	move.l	(sp)+,a4
-	rts
-; Rien du tout!
-.NFnd	moveq	#EDia_ChanND,d0
-	bra.s	.Out
+	Lib_Int	Dia_GetZone		src/lib/dialog.cpp
 
 ; ___________________________________________________
 ;
@@ -10227,92 +8730,12 @@ SlDInit	dc.b 0,0,0,1,4,4,4,1
 ; ___________________________________________________
 ;
 ; - - - - - - - - - - - - -
-	Lib_Def	Dia_GetValue
-; - - - - - - - - - - - - -
-	Rbsr	L_Dia_GetZoneAd
-	beq	.NFnd
-	moveq	#0,d1
-	moveq	#0,d2
-; Un bouton normal / slider / liste
-	cmp.w	#Dia_BtMark,2(a0)
-	beq.s	.Po
-	cmp.w	#Dia_LiMark,2(a0)
-	beq.s	.Po
-	cmp.w	#Dia_SlMark,2(a0)
-	beq.s	.Po
-	cmp.w	#Dia_TxMark,2(a0)
-	beq.s	.Tx
-	cmp.w	#Dia_EdMark,2(a0)
-	beq.s	.Ed
-.Ok	moveq	#0,d0
-	rts
-; Rien du tout!
-.NFnd	moveq	#EDia_ChanND,d0
-	rts
-; Une valeur en chiffre, normale
-.Po	move.l	Dia_ZoPos(a0),d1
-	moveq	#0,d2
-	bra.s	.Ok
-; Un hyper texte
-.Tx	moveq	#0,d2
-	move.l	Dia_ZoPos(a0),d1	Vide!
-	bne.s	.Po
-	lea	Dia_TxBuffer(a0),a0
-	move.l	a0,d1
-	moveq	#2,d2
-	bra.s	.Ok
-; Une ligne d'�dition
-.Ed	cmp.w	#Dia_DiLong,(a0)
-	beq.s	.Di
-; Un texte
-	move.l	Dia_LEd+LEd_Buffer(a0),d1
-	moveq	#2,d2
-	bra.s	.Ok
-; Un chiffre
-.Di	move.l	Dia_LEd+LEd_Buffer(a0),a1
-	move.b	(a1)+,d0
-	cmp.b	#32,d0
-	bcs.s	.Di2
-	movem.l	a0/a3/a6/d7,-(sp)
-	move.l	a1,a6
-	lea	Dia_DiValue(a0),a3
-	clr.l	(a3)+
-	Rbsr	L_Dia_FChif
-	movem.l	(sp)+,a0/a3/a6/d7
-.Di2	move.l	Dia_DiValue(a0),d1
-	moveq	#0,d2
-	bra.s	.Ok
+	Lib_Int	Dia_GetValue		src/lib/dialog.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; Retourne l'adresse de la zone Channel D0 / Zone D1 - D2
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	Dia_GetZoneAd
-; - - - - - - - - - - - - -
-	movem.l	d2/d3,-(sp)
-	move.l	d1,d3
-	Rbsr	L_Dia_GetChannel
-	beq.s	.NFnd
-; Boucle d'exploration
-	subq.w	#1,d2
-	move.l	Dia_Buffer(a0),a1
-	bra.s	.In
-.Loop	cmp.w	#Dia_ZoMark,4(a1)
-	bne.s	.Next
-	cmp.w	Dia_ZoNumber(a1),d3
-	beq.s	.Fnd
-.Next	add.w	(a1),a1
-.In	tst.w	(a1)
-	bne.s	.Loop
-.NFnd	moveq	#0,d0
-	bra.s	.Out
-; Trouve?
-.Fnd	tst.w	d2
-	ble.s	.Skip
-	dbra	d2,.Next
-.Skip	move.l	a1,d0
-	move.l	d0,a0
-.Out	movem.l	(sp)+,d2/d3
-	rts
+	Lib_Int	Dia_GetZoneAd		src/lib/dialog.cpp
 
 
 ; __________________________________________
@@ -10321,17 +8744,7 @@ SlDInit	dc.b 0,0,0,1,4,4,4,1
 ; __________________________________________
 ;
 ; - - - - - - - - - - - - -
-	Lib_Def	Dia_SetVFlags
-; - - - - - - - - - - - - -
-	move.l	d2,-(sp)
-	bra.s	.In
-.Loop	lsr.w	#1,d0
-	moveq	#0,d2
-	addx.l	d2,d2
-	move.l	d2,(a0)+
-.In	dbra	d1,.Loop
-	movem.l	(sp)+,d2
-	rts
+	Lib_Int	Dia_SetVFlags		src/lib/dialog.cpp
 
 ; ___________________________________________
 ;
@@ -10339,19 +8752,7 @@ SlDInit	dc.b 0,0,0,1,4,4,4,1
 ; ___________________________________________
 ;
 ; - - - - - - - - - - - - -
-	Lib_Def	Dia_GetVFlags
-; - - - - - - - - - - - - -
-	move.w	d1,d0
-	lsl.w	#2,d0
-	add.w	d0,a0
-	moveq	#0,d0
-	bra.s	.Skip
-.Loop	lsl.w	#1,d0
-	tst.l	-(a0)
-	beq.s	.Skip
-	bset	#0,d0
-.Skip	dbra	d1,.Loop
-	rts
+	Lib_Int	Dia_GetVFlags		src/lib/dialog.cpp
 
 ;
 ; Retourne le parametre d'une boite de dialogue
@@ -10362,20 +8763,7 @@ SlDInit	dc.b 0,0,0,1,4,4,4,1
 ;	D0=	Erreur
 ;	D1=	Parametre
 ; - - - - - - - - - - - - -
-	Lib_Def	Dia_GetReturn
-; - - - - - - - - - - - - -
-	Rbsr	L_Dia_GetChannel
-	beq.s	.Err
-	moveq	#-1,d1
-	btst	#0,Dia_RFlags(a0)
-	beq.s	.Out
-	moveq	#0,d1
-	move.w	Dia_Return(a0),d1
-	clr.w	Dia_Return(a0)
-.Out	moveq	#0,d0
-	rts
-.Err	moveq	#EDia_ChanND,d0
-	rts
+	Lib_Int	Dia_GetReturn		src/lib/dialog.cpp
 
 ;_____________________________________________________________________________
 ;
@@ -10389,246 +8777,18 @@ SlDInit	dc.b 0,0,0,1,4,4,4,1
 ;	D3=	Flash
 ;	D4=	Interlaced? (-1:comme resource / 0-1: force)
 ; - - - - - - - - - - - - -
-	Lib_Def	Dia_RScOpen
-; - - - - - - - - - - - - -
-	movem.l	a2/d2-d7,-(sp)
-	subq.l	#8,sp
-	move.l	d3,(sp)
-	move.l	d2,d3			TY
-	move.l	d1,d2			TX
-	move.l	d0,d1			Numero
-	move.l	a0,a1
-	move.w	(a1),d0
-	lsl.w	#2,d0
-	lea	2(a1,d0.w),a1
-	move.w	(a1)+,d6		Nombre couleurs
-	ext.l	d6
-	move.w	(a1)+,d5		Mode
-	and.l	#$8004,d5
-	tst.w	d4			Force l'interlaced?
-	bmi.s	.Skm
-	bclr	#2,d5
-	tst.w	d4
-	beq.s	.Skm
-	bset	#2,d5
-.Skm	cmp.l	#4096,d6
-	bne.s	.ScOo0
-	moveq	#6,d4
-	or.w	#$0800,d5
-	moveq	#64,d6
-	bra.s	.ScOo2
-* Nombre de couleurs-> plans
-.ScOo0	moveq	#1,d4			* Nb de plans
-	moveq	#2,d0
-.ScOo1	cmp.l	d0,d6
-	beq.s	.ScOo2
-	lsl.w	#1,d0
-	addq.w	#1,d4
-	cmp.w	#7,d4
-	bcs.s	.ScOo1
-.ScOo2	EcCall	Cree
-	bne.s	.Err
-	move.l	a0,4(sp)
-* Fait flasher la couleur
-	move.l	(sp),d1			Efface le curseur
-	bne.s	.Fl
-	lea	.Cu0(pc),a1
-	bra.s	.Prn
-.Fl	moveq	#1,d0			Met le curseur
-	cmp.w	EcNbCol(a0),d1
-	bcc.s	.Err
-	moveq	#46,d0
-	Rjsr	L_Sys_GetMessage
-	move.l	a0,a1
-	EcCall	Flash
-	bne.s	.Err
-	move.l	(sp),d1
-	lea	.Cu1(pc),a1
-	add.b	#"0",d1
-	move.b	d1,2(a1)
-.Prn	WiCall	Print
-	moveq	#0,d0
-* Erreur
-.Err	tst.l	(sp)+
-	move.l	(sp)+,a0
-	movem.l	(sp)+,a2/d2-d7
-	tst.w	d0
-	rts
-.Cu0	dc.b	27,"C0",0
-.Cu1	dc.b	27,"D0",0
+	Lib_Int	Dia_RScOpen		src/lib/dialog.cpp
 
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 	LISTE DES INSTRUCTIONS DIALOGUE
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	Dia_Instr
-; - - - - - - - - - - - - -
-Dia_Instr	dc.w	"EX"		0 EXit
-		dc.w	"UN"		1 UNpack
-		dc.w	"LI"		2 LIne
-		dc.w	"BO"		3 BOx
-		dc.w	"SI"		4 SIze
-		dc.w	"BA"		5 BAse
-		dc.w	"PU"		6 PUzzle
-		dc.w	"SV"		7 Set Var
-		dc.w	"IL"		8 Illegal
-		dc.w	"PR"		9 PRint
-		dc.w	"PO"		10 Print Outline
-		dc.w	"IN"		11 INk
-		dc.w	"SF"		12 SetFont
-		dc.w	"SW"		13 SetWriting
-		dc.w	"SL"		14 SetLine
-		dc.w	"SP"		15 Set Pattern
-		dc.w	"BU"		16 BUtton
-		dc.w	"JP"		17 Jump
-		dc.w	"RU"		18 Run
-		dc.w	"BR"		19 Button Return
-		dc.w	"ED"		20 Edit Ascii
-		dc.w	"JS"		21 Jump to subroutine!
-		dc.w	"RT"		22 Rts!
-		dc.w	"BC"		23 Button Change
-		dc.w	"KY"		24 Affectation touche
-		dc.w	"SA"		25 Save
-		dc.w	"DI"		26 Digit
-		dc.w	"BL"		27 Block
-		dc.w	"LA"		28 Label
-		dc.w	"BQ"		29 Button Quit
-		dc.w	"HS"		30 Slider Horizontal
-		dc.w	"VS"		31 Slider Vertical
-		dc.w	"AL"		32 Active List
-		dc.w	"IL"		33 Inactive List
-		dc.w	"ZC"		34 Zone change
-		dc.w	"UI"		35 User Instruction
-		dc.w	"GB"		36 Graphic Box
-		dc.w	"GS"		37 Graphic Square
-		dc.w	"GL"		38 Graphic Line
-		dc.w	"IF"		39 If
-		dc.w	"SZ"		40 SetZonevar
-		dc.w	"XY"		41 XA YA XB YB
-		dc.w	"NW"		42 NoWait
-		dc.w	"VT"		43 VText
-		dc.w	"VL"		44 VLine
-		dc.w	"HT"		45 HyperText
-		dc.w	"CA"		46 Call
-		dc.w	"SM"		47 Screen Move
-		dc.w	"GE"		48 Graphic Ellipse
-		dc.w	"GP"		49 Graphic Plot
-		dc.w	"SS"		50 Set Slider
-Dia_NInstr	equ	 (*-Dia_Instr)/2
-Dia_NParam	dc.w	0		0 EXit
-		dc.w	3		1 UNpack X,Y,I
-		dc.w	4		2 LIne X,Y,I,SX
-		dc.w	5		3 BOx X,Y,I,SX,SY
-		dc.w	2		4 SIze X,Y
-		dc.w	2		5 BAse X,Y
-		dc.w	1		6 PUzzle I
-		dc.w	2		7 SetVar N,V
-		dc.w	0		8 Illegal
-		dc.w	4		9 Print X,Y,Text,Ink
-		dc.w	5		10 POutline X,Y,Text,P0,P1
-		dc.w	3		11 INk A,B,C
-		dc.w	2		12 SetFont Font,Style
-		dc.w	1		13 SetWrite Mode
-		dc.w	1		14 SetLine Line
-		dc.w	2		15 SetFill Pattern,Out
-		dc.w	8		16 Button z,x,y,sx,sy,pos,min,max
-		dc.w	1		17 Jump
-		dc.w	2		18 Teste
-		dc.w	1		19 Button Return
-		dc.w	8		20 Edit n,x,y,sx,sxm,$$,pap,pen
-		dc.w	1		21 Jump Sub
-		dc.w	0		22 Rts
-		dc.w	2		23 Button Change
-		dc.w	2		24 Affectation touche
-		dc.w	1		25 Save
-		dc.w	8		26 Digit n,x,y,sx,var#,flag,pap,pen
-		dc.w	1		27 Block 2
-		dc.w	1		28 LAbel N
-		dc.w	0		29 Button Quit
-		dc.w	9		30 Slider H
-		dc.w	9		31 Slider V
-		dc.w	10		32 Active List
-		dc.w	10		33 Inactive List
-		dc.w	2		34 Zone Change
-		dc.w	0		35 INstruction
-		dc.w	4		36 Graphic Box x,y,x,y
-		dc.w	4		37 Graphic Square x,y,x,y
-		dc.w	4		38 Graphic Line x,y,x,y
-		dc.w	1		39 IF
-		dc.w	1		40 SetZonevar
-		dc.w	4		41 XY
-		dc.w	0		42 NoWait
-		dc.w	4		43 HText x,y,t,pen
-		dc.w	4		44 VLine x,y,i,y2
-		dc.w 	10		45 HText z,x,y,sx,sy,txt,pos,flags,pap,pen;[]
-		dc.w	1		46 CAll ad
-		dc.w	0		47 Screen Move
-		dc.w	4		48 Graphic Ellipse x,y,r1,r2
-		dc.w	3		49 Graphic Plot x,y,i
-		dc.w	8		50 Set Slider a,b,c,p,a,b,c,p
+	Lib_Empty			Dia_Instr, now in src/lib/dialog.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 	DEFINITIONS DES TOKENS FONCTIONS
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	Dia_FTokens
-; - - - - - - - - - - - - -
-Dia_FTokens	IncBin	"bin/+Dialog_Funcs.bin"
-		Even
-
-* D�finition des fonctions
-* ~~~~~~~~~~~~~~~~~~~~~~~~
-*Dia_Foncs:
-* BX		0 - Base X
-* BY		1 - Base Y
-* SX		2 - Size X
-* SY		3 - Size Y
-* ++		4 - Plus
-* --		5 - Moins
-* **		6 - Mul
-* //		7 - Div
-* NE		8 - NEg
-* ME		9 - MEss
-* ME		10- MEss VIDE!
-* TW		11- Text Width
-* TH		12- Text Height
-* VA		13- Variable
-* ""		14- String 1
-* ''		15- String 2
-* CX		16- Centre Text
-* SW		17- Size of screen X
-* SH		18- Size of screen Y
-* MI		19- Minimum
-* MA		20- Maximum
-* BP		21- Button position
-* ##		22- Number
-* !!		23- Plus chaine
-* MZ		24- Message ZERO
-* XA		25- Position X2
-* YA		26- Position Y2
-* XB		27- Position X2
-* YB		28- Position Y2
-* AR		29- Array
-* ZP		30- Zone Position
-* P1		31- Param #
-* P2		32- Param #
-* P3		33- Param #
-* P4		34- Param #
-* P5		35- Param #
-* P6		36- Param #
-* P7		37- Param #
-* P8		38- Param #
-* P9		39- Param #
-* ==		40- Equal
-* \\		41- Different
-* <<		42- Inferieur
-* >>		43- Superieur
-* &&		44- And
-* ||		45- Or
-* ZV		46- ZoneVar
-* ZN		47- ZoneNumber
-* TL		48- Text Length
-* AS		49- Array Size
-Dia_NFonc:	equ	50
+	Lib_Empty			Dia_FTokens, now in src/lib/dialog.cpp
 
 ; ___________________________________________________________________________
 ;
@@ -10642,1488 +8802,7 @@ Dia_NFonc:	equ	50
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					INTERPRETATION DU PROGRAMME
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	Dia_Loop
-; - - - - - - - - - - - - -
-Dia_Loop
-	movem.l	d2-d7/a2/a3/a6,-(sp)
-; Sauvegarde de la pile
-; ~~~~~~~~~~~~~~~~~~~~~
-	move.l	sp,Dia_Sp(a4)
-; Boucle d'appel
-; ~~~~~~~~~~~~~~
-.INext	tst.w	Dia_Error(a4)		Sort si erreur
-	Rbne	L_Dia_Quit
-	Rbsr	L_Dia_Chr		Premiere lettre
-	Rbeq	L_Dia_Synt		DOIT finir par exit
-	cmp.b	#"]",d0			Routine finie?
-	Rbeq	L_Dia_Quit
-	move.b	d0,d1			Deuxieme lettre
-	Rbsr	L_Dia_Chr
-	lsl.w	#8,d1
-	move.b	d0,d1
-	Rlea	L_Dia_Instr,0		Exploration des tokens
-	move.l	a0,a1
-	moveq	#Dia_NInstr-1,d0
-.Find	cmp.w	(a0)+,d1
-	dbeq	d0,.Find
-	tst.w	d0
-	bmi	.Inst
-	move.l	a0,d0
-	sub.l	a1,d0
-	lsl.w	#1,d0
-	pea	.Jumps-4(pc,d0.w)
-	bra	.Params
-; Appel des instructions
-; ~~~~~~~~~~~~~~~~~~~~~~
-.Jumps	Rbra	L_Dia_Quit		0
-	bra	Dia_Unpack		1
-	bra	Dia_Line		2
-	bra	Dia_Box			3
-	bra	Dia_Size		4
-	bra	Dia_Base		5
-	bra	Dia_Pu			6
-	bra	Dia_SetVar		7
-	bra	Dia_Illegal		8
-	bra	Dia_Text		9
-	bra	Dia_Outline		10
-	bra	Dia_SInk		11
-	bra	Dia_SFont		12
-	bra	Dia_SWrite		13
-	bra	Dia_SLine		14
-	bra	Dia_SFill		15
-	bra	Dia_Button		16
-	bra	Dia_Jump		17
-	bra	Dia_Run			18
-	bra	Dia_BR			19
-	bra	Dia_Edit		20
-	bra	Dia_JSub		21
-	bra	Dia_Rts			22
-	bra	Dia_BChange		23
-	bra	Dia_Key			24
-	bra	Dia_Block		25
-	bra	Dia_Digit		26
-	bra	Dia_Block2		27
-	bra	Dia_Label		28
-	bra	Dia_BQuit		29
-	bra	Dia_SliderH		30
-	bra	Dia_SliderV		31
-	bra	Dia_List		32
-	bra	Dia_List		33
-	bra	Dia_ZChange		34
-	Rbra	L_Dia_Synt		35 Instruction!
-	bra	Dia_GBox		36
-	bra	Dia_GSquare		37
-	bra	Dia_GLine		38
-	bra	Dia_If			39
-	bra	Dia_ZVar		40
-	bra	Dia_XY			41
-	bra	Dia_NWait		42
-	bra	Dia_VText		43
-	bra	Dia_VLine		44
-	bra	Dia_HyperText		45
-	bra	Dia_Call		46
-	bra	Dia_SMove		47
-	bra	Dia_GEllipse		48
-	bra	Dia_GPlot		49
-	bra	Dia_SetSlider		50
-
-; Prend les parametres
-; ~~~~~~~~~~~~~~~~~~~~
-.Params	move.l	Dia_PBuffer(a4),Dia_ABuffer(a4)
-	move.w	Dia_NParam-Dia_Instr-2(a0),d0
-	beq.s	.NoPar
-	cmp.w	#7,d0
-	bcc.s	.Call
-	move.w	d0,-(sp)
-	clr.w	-(sp)
-; Appelle l'evaluation
-.Param	Rbsr	L_Dia_Evalue
-; Pousse dans le bon registre
-	move.w	(sp),d1
-	jmp	.Move(pc,d1.w)
-.Move	move.l	d0,d2
-	bra.s	.Next
-	move.l	d0,d3
-	bra.s	.Next
-	move.l	d0,d4
-	bra.s	.Next
-	move.l	d0,d5
-	bra.s	.Next
-	move.l	d0,d6
-	bra.s	.Next
-	move.l	d0,d7
-; Un autre param?
-.Next	addq.w	#4,(sp)
-	subq.w	#1,2(sp)
-	bne.s	.Param
-	addq.l	#4,sp
-	bra.s	.Call
-; Pas de parametres
-; ~~~~~~~~~~~~~~~~~
-.NoPar	Rbsr	L_Dia_Chr
-; Appelle l'instruction
-; ~~~~~~~~~~~~~~~~~~~~~
-.Call	move.l	(sp)+,a0
-	jsr	(a0)
-	move.l	Dia_PBuffer(a4),a0
-	clr.l	(a0)
-	bra	.INext
-
-; Une instruction user!
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.Inst	move.l	Dia_Labels(a4),a0
-.ULoop	move.w	(a0)+,d0
-	addq.l	#4,a0
-	Rbmi	L_Dia_Synt
-	cmp.w	d0,d1
-	bne.s	.ULoop
-	cmp.w	#10,Dia_Users(a4)		Pas plus de 10 appels
-	Rbcc	L_Dia_Fonc
-; Pousse les anciennes valeurs
-	move.l	a3,-(sp)
-	move.l	Dia_Sp(a4),-(sp)
-; Adresse dans le programme
-	moveq	#0,d0
-	move.w	-(a0),d0
-	add.l	Dia_Programs(a4),d0
-	move.l	d0,-(sp)
-; Recupere les parametres
-	move.w	-(a0),-(sp)			Nombre de parametres
-	beq.s	.UNoPar
-	move.w	(sp),-(sp)
-.UPar	Rbsr	L_Dia_Evalue			Recupere les parametres
-	move.l	d0,-(a3)
-	subq.w	#1,(sp)
-	bne.s	.UPar
-	addq.l	#2,sp
-	bra.s	.UCall
-.UNoPar	Rbsr	L_Dia_Chr
-; Branche au programme
-.UCall	move.w	(sp)+,d1
-	move.l	(sp),d0				A6
-	exg	d0,a6
-	move.l	d0,(sp)
-	move.l	Dia_PUsers(a4),-(sp)		Position pile user
-	move.l	a3,Dia_PUsers(a4)
-	move.w	Dia_NPUsers(a4),-(sp)		Nombre params user
-	move.w	d1,Dia_NPUsers(a4)
-	addq.w	#1,Dia_Users(a4)
-	bsr	Dia_Loop
-	subq.w	#1,Dia_Users(a4)
-	move.w	(sp)+,Dia_NPUsers(a4)
-	move.l	(sp)+,Dia_PUsers(a4)
-	move.l	(sp)+,a6
-	move.l	(sp)+,Dia_Sp(a4)
-	move.l	(sp)+,a3
-	bra	.INext
-; ________________________________________________________________________
-;
-; 	INSTRUCTIONS DBL
-;
-
-; GRAPHIC PLOT d2x,d3y,d4ink
-; ~~~~~~~~~~~~
-Dia_GPlot
-	move.l	T_RastPort(a5),a1
-	move.l	d4,d0				Set Ink A
-	bmi.s	.Skip
-	GfxCa5	SetAPen
-.Skip	move.l	d2,d0
-	move.l	d3,d1
-	move.w	d0,Dia_XA(a4)
-	move.w	d0,Dia_YA(a4)
-	move.w	d1,Dia_XB(a4)
-	move.w	d1,Dia_YB(a4)
-	addq.w	#1,Dia_XB(a4)
-	addq.w	#1,Dia_YB(a4)
-	GfxCa5	WritePixel
-	rts
-
-; GRAPHIC ELLIPSE d2x,d3y,d4r1,d5r2
-; ~~~~~~~~~~~~~~~
-Dia_GEllipse
-	move.l	T_RastPort(a5),a1
-	move.l	d2,d0
-	move.l	d3,d1
-	move.l	d4,d2
-	Rble	L_Dia_Fonc
-	move.l	d5,d3
-	Rble	L_Dia_Fonc
-	move.w	d0,Dia_XA(a4)
-	move.w	d0,Dia_YA(a4)
-	move.w	d1,Dia_XB(a4)
-	move.w	d1,Dia_YB(a4)
-	add.l	Dia_BaseX(a4),d0
-	add.l	Dia_BaseY(a4),d1
-	GfxCa5	DrawEllipse
-	rts
-
-; GRAPHIC BOX d2x,d3y,d4x,d5y
-; ~~~~~~~~~~~
-Dia_GBox
-	move.l	T_RastPort(a5),a1
-	move.l	d2,d0
-	move.l	d3,d1
-	move.l	d4,d2
-	move.l	d5,d3
-	move.w	d0,Dia_XA(a4)
-	move.w	d1,Dia_YA(a4)
-	move.w	d2,Dia_XB(a4)
-	move.w	d3,Dia_YB(a4)
-	add.l	Dia_BaseX(a4),d0
-	add.l	Dia_BaseY(a4),d1
-	add.l	Dia_BaseX(a4),d2
-	add.l	Dia_BaseY(a4),d3
-	cmp.l	d0,d2
-	Rble	L_Dia_Fonc
-	cmp.l	d1,d3
-	Rble	L_Dia_Fonc
-	GfxCa5	RectFill
-	rts
-; GRAPHIC SQUARE d2x,d3y,d4x,d5y
-; ~~~~~~~~~~~~~~
-Dia_GSquare
-	move.l	a2,-(sp)
-	move.w	d2,Dia_XA(a4)
-	move.w	d3,Dia_YA(a4)
-	move.w	d4,Dia_XB(a4)
-	move.w	d5,Dia_YB(a4)
-	add.l	Dia_BaseX(a4),d2
-	add.l	Dia_BaseY(a4),d3
-	add.l	Dia_BaseX(a4),d4
-	add.l	Dia_BaseY(a4),d5
-	moveq	#16,d0
-	Rbsr	L_Dia_GetBuffer
-	move.l	T_RastPort(a5),a1
-	move.w	d2,36(a1)
-	move.w	d3,38(a1)
-	addq.l	#4,a0
-	move.l	a0,a2
-	move.w	d2,(a2)+
-	move.w	d5,(a2)+
-	move.w	d4,(a2)+
-	move.w	d5,(a2)+
-	move.w	d4,(a2)+
-	move.w	d3,(a2)+
-	move.w	d2,(a2)+
-	move.w	d3,(a2)+
-	addq.w	#1,d3
-	cmp.w	d5,d3
-	bcc.s	.IBx1
-	subq.w	#2,d3
-.IBx1	moveq	#4,d0
-	GfxCa5	PolyDraw
-	move.l	(sp)+,a2
-	rts
-; GRAPHIC LINE d2x d3y d4x d5y
-; ~~~~~~~~~~~~
-Dia_GLine
-	move.w	d2,Dia_XA(a4)
-	move.w	d3,Dia_YA(a4)
-	move.w	d4,Dia_XB(a4)
-	move.w	d5,Dia_YB(a4)
-	add.l	Dia_BaseX(a4),d2
-	add.l	Dia_BaseY(a4),d3
-	add.l	Dia_BaseX(a4),d4
-	add.l	Dia_BaseY(a4),d5
-	move.l	T_RastPort(a5),a1
-	move.w	d2,36(a1)
-	move.w	d3,38(a1)
-	move.l	d4,d0
-	move.l	d5,d1
-	GfxCa5	RDraw
-	rts
-
-; SAVE d2BLOCK
-; ~~~~~~~~~~~~
-Dia_Block
-	cmp.l	#"NobL",Dia_Magic(a5)
-	beq.s	Dia_NoBloc
-	moveq	#Dia_BlLong,d0
-	Rbsr	L_Dia_GetBuffer
-	move.w	#Dia_BlMark,2(a0)
-	move.w	d2,4(a0)
-	Rbsr	L_Dia_SetBuffer
-Dia_Block2
-	cmp.l	#"NobL",Dia_Magic(a5)
-	beq.s	Dia_NoBloc
-	move.l	d2,d1
-	move.l	Dia_BaseX(a4),d2
-	move.l	d2,d0
-	and.w	#$FFF0,d2
-	sub.l	d2,d0
-	move.l	Dia_BaseY(a4),d3
-	move.l	Dia_Sx(a4),d4
-	add.l	d0,d4
-	add.w	#15,d4
-	and.w	#$FFF0,d4
-	move.l	Dia_Sy(a4),d5
-	moveq	#0,d6
-	EcCall	BlGet
-	Rbne	L_Dia_Synt
-Dia_NoBloc
-	rts
-
-; KY d2CODE d3SHIFT
-; ~~
-Dia_Key
-	moveq	#Dia_KyLong,d0
-	Rbsr	L_Dia_GetBuffer
-	move.w	#Dia_KyMark,2(a0)
-	move.b	d2,Dia_KyCode(a0)
-	move.b	d3,Dia_KyShift(a0)
-	move.l	Dia_LastZone(a4),Dia_KyZone(a0)
-	Rbsr	L_Dia_SetBuffer
-	rts
-
-; IF d2condition [instructions]
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Dia_If	Rbsr	L_Dia_Chr
-	cmp.b	#"[",d0
-	Rbne	L_Dia_Synt
-	tst.l	d2
-	beq.s	.Skip
-; Branche!
-; ~~~~~~~~
-	move.l	Dia_Sp(a4),-(sp)
-	bsr	Dia_Loop
-	move.l	(sp)+,Dia_Sp(a4)
-; Saute l'instruction
-; ~~~~~~~~~~~~~~~~~~~
-.Skip	moveq	#1,d1
-.Loop	move.b	(a6)+,d0
-	Rbeq	L_Dia_Synt
-	cmp.b	#"[",d0
-	beq.s	.Plus
-	cmp.b	#"]",d0
-	bne.s	.Loop
-	subq.w	#1,d1
-	bne.s	.Loop
-	rts
-.Plus	addq.w	#1,d1
-	bra.s	.Loop
-
-; JSub d2NUMERO
-; ~~~~
-Dia_JSub
-	move.l	a6,-(a3)
-	move.l	#"MoiM",-(a3)
-	bsr	Dia_Label
-	rts
-; RTs
-; ~~~
-Dia_Rts
-	cmp.l	#"MoiM",(a3)+
-	Rbne	L_Dia_Synt
-	move.l	(a3)+,a6
-	rts
-; Jump d2NUMERO
-; ~~~~
-Dia_Jump
-; Trouve un label D2
-; ~~~~~~~~~~~~~~~~~~
-Dia_Label
-	move.l	d2,d0
-	Rbsr	L_Dia_GetLabel
-	move.l	Dia_Programs(a4),a6
-	add.l	d0,a6
-	rts
-
-; Unpack Image d2X d3Y d4I
-; ~~~~~~~~~~~~
-Dia_Unpack
-	move.l	d2,-(sp)
-	move.l	Dia_Puzzle(a4),a0
-	move.l	d4,d0
-	add.l	Dia_PuzzleI(a4),d0
-	Rbeq	L_Dia_Synt
-	cmp.w	(a0),d0
-	Rbhi	L_Dia_Synt
-	lsl.w	#2,d0
-	add.l	-4+2(a0,d0.w),a0
-	move.l	Dia_Screen(a4),a1
-	move.w	d2,Dia_XA(a4)
-	move.w	d3,Dia_YA(a4)
-	move.w	d2,Dia_XB(a4)
-	move.w	d3,Dia_YB(a4)
-	move.l	d2,d1
-	move.l	d3,d2
-	add.l	Dia_BaseX(a4),d1
-	add.l	Dia_BaseY(a4),d2
-	Rjsr	L_UnPack_Bitmap
-	move.w	d0,Dia_PuzzleSx+2(a4)
-	add.w	d0,Dia_XB(a4)
-	swap	d0
-	move.w	d0,Dia_PuzzleSy+2(a4)
-	add.w	d0,Dia_YB(a4)
-	move.l	(sp)+,d2
-	rts
-; Dessin d'une ligne d2X d3Y d4I d5X2
-; ~~~~~~~~~~~~~~~~~~
-Dia_Line
-	movem.l	d2-d7,-(sp)
-	and.l	#$FFFFFFF8,d2			Multiple de 8
-	and.l	#$FFFFFFF8,d5
-	move.l	d2,d6
-	move.l	d5,d7
-	sub.l	d2,d7
-	Rble	L_Dia_Fonc
-; Le corps de la ligne
-	addq.l	#1,d4
-.Loop	bsr	Dia_Unpack
-	move.l	Dia_PuzzleSx(a4),d0
-	beq.s	.Skip
-	add.l	d0,d2
-	sub.l	d0,d7
-	cmp.l	d0,d7
-	bge.s	.Loop
-; La gauche
-.Skip	move.l	d6,d2
-	subq.l	#1,d4
-	bsr	Dia_Unpack
-; La droite
-	move.l	d5,d2
-	sub.l	Dia_PuzzleSx(a4),d2
-	addq.l	#2,d4
-	bsr	Dia_Unpack
-	bra	Dia_BFin
-; Dessin d'une ligne verticale d2X d3Y d4I d5Y2
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Dia_VLine
-	movem.l	d2-d7,-(sp)
-	and.l	#$FFFFFFF8,d2			Multiple de 8
-	move.l	d3,d6
-	move.l	d5,d7
-	sub.l	d3,d7
-	Rble	L_Dia_Fonc
-; Le corps de la ligne
-	addq.l	#1,d4
-.Loop	bsr	Dia_Unpack
-	move.l	Dia_PuzzleSy(a4),d0
-	beq.s	.Skip
-	add.l	d0,d3
-	sub.l	d0,d7
-	cmp.l	d0,d7
-	bge.s	.Loop
-; Le haut
-.Skip	move.l	d6,d3
-	subq.l	#1,d4
-	bsr	Dia_Unpack
-; Le bas
-	move.l	d5,d3
-	sub.l	Dia_PuzzleSy(a4),d3
-	addq.l	#2,d4
-	bsr	Dia_Unpack
-	bra	Dia_BFin
-; Dessin d'une boite d2X d3Y d4I d5X d6Y
-; ~~~~~~~~~~~~~~~~~~
-Dia_Box
-	movem.l	d2-d7,-(sp)
-	move.l	d3,-(sp)
-	move.l	d6,d7
-	sub.l	d3,d7
-	Rble	L_Dia_Fonc
-; Le haut
-	addq.l	#3,d4
-	bsr	Dia_Line
-	move.l	Dia_PuzzleSy(a4),d0
-	beq.s	.Ho
-	sub.l	d0,d7
-	ble.s	.Ho
-; Screen copy du milieu
-	movem.l	d2-d6,-(sp)
-	move.l	d5,d6
-.Copy	move.l	d2,d0
-	move.l	d3,d1
-	move.l	d6,d4
-	add.l	Dia_PuzzleSy(a4),d3
-	move.l	d3,d5
-	Rbsr	L_Dia_ScCopy
-	sub.l	Dia_PuzzleSy(a4),d7
-	cmp.l	Dia_PuzzleSy(a4),d7
-	bge.s	.Copy
-	movem.l	(sp)+,d2-d6
-; Le haut
-.Ho	subq.l	#3,d4
-	move.l	(sp)+,d3
-	bsr	Dia_Line
-; Le bas
-	addq.l	#6,d4
-	move.l	d6,d3
-	sub.l	Dia_PuzzleSy(a4),d3
-	bsr	Dia_Line
-; Met les variables XX/YY
-Dia_BFin
-	movem.l	(sp)+,d2-d7
-	move.w	d2,d0
-	and.w	#$FFFFFFF8,d0
-	move.w	d0,Dia_XA(a4)
-	move.w	d3,Dia_YA(a4)
-	rts
-
-; Set Size of the box d2SX d3SY
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Dia_Size
-	add.l	#15,d2			Multiple de 16
-	and.l	#$FFFFFFF0,d2
-	move.l	d2,Dia_Sx(a4)
-	move.l	d3,Dia_Sy(a4)
-	rts
-; Set XA XB YA YB
-; ~~~~~~~~~~~~~~~
-Dia_XY	move.w	d2,Dia_XA(a4)
-	move.w	d3,Dia_YA(a4)
-	move.w	d4,Dia_XB(a4)
-	move.w	d5,Dia_YB(a4)
-	rts
-; Set Base of the box d2X d3Y
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Dia_Base
-	and.l	#$FFFFFFF0,d2		Multiple de 16
-	move.l	d2,Dia_BaseX(a4)
-	move.l	d3,Dia_BaseY(a4)
-	rts
-; Set Puzzle Size d2IBase
-; ~~~~~~~~~~~~~~~
-Dia_Pu
-	move.l	d2,Dia_PuzzleI(a4)
-	rts
-; Set Zone variable VAL
-; ~~~~~~~~~~~~~~~~~~~~~
-Dia_ZVar
-	move.l	d2,Dia_NextZone(a4)
-	rts
-; Set Variable d2N,d3V
-; ~~~~~~~~~~~~~~~~~~~~
-Dia_SetVar
-	move.l	d2,d0
-	lsl.w	#2,d0
-	lea	Dia_Vars(a4),a0
-	move.l	d3,0(a0,d0.w)
-	Rbsr	L_Dia_SetBuffer
-	rts
-; Call
-; ~~~~~~~
-Dia_Call
-	movem.l	a2-a6/d2-d7,-(sp)
-	move.l	d2,a0
-	jsr	(a0)
-	movem.l	(sp)+,a2-a6/d2-d7
-	rts
-; Move screen
-; ~~~~~~~~~~~~~~~~~~~~~~
-Dia_SMove
-	movem.l	a2/d2,-(sp)
-	move.l	T_EcCourant(a5),a2
-	SyCall	XyMou
-	sub.w	EcAWY(a2),d2
-	move.w	d2,-(sp)
-.MLoop	SyCall	XyMou
-	sub.w	(sp),d2
-	cmp.w	EcAWY(a2),d2
-	beq.s	.MSkip
-	move.w	d2,EcAWY(a2)
-	bset	#2,EcAW(a2)
-	EcCall	CopForce
-	Rbsr	L_Dia_WaitMul
-.MSkip	SyCall	MouseKey
-	btst	#0,d1
-	bne.s	.MLoop
-	tst.w	(sp)+
-	movem.l	(sp)+,a2/d2
-	rts
-
-; Debug
-; ~~~~~~~
-Dia_Illegal
-	illegal
-Dia_Rien
-	rts
-; Inks d2A d3B d4C
-; ~~~~
-Dia_SInk
-	move.l	T_RastPort(a5),a1
-	move.l	d4,d0			Ink C
-	bmi.s	.Skip1
-	move.b	d0,27(a1)
-.Skip1	move.l	d3,d0			Ink B
-	bmi.s	.Skip2
-	GfxCa5	SetBPen
-.Skip2	move.l	d2,d0			Ink A
-	bmi.s	.Skip3
-	GfxCa5	SetAPen
-.Skip3	rts
-; SET SLIDER A,B,C,P,A,B,C,P
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~
-Dia_SetSlider
-	lea	Dia_SlDefault(a4),a2
-	moveq	#7,d2
-.Loop	Rbsr	L_Dia_Evalue
-	move.b	d0,(a2)+
-	dbra	d2,.Loop
-	move.l	-8(a2),(a2)+
-	move.l	-8(a2),(a2)+
-	rts
-
-; Print TEXT Outline d2X d3Y d4Text d5Ink1 d6Ink2
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Dia_Outline
-; Writing 0
-	move.l	T_RastPort(a5),a1
-	moveq	#0,d0
-	bsr	Dia_Write
-; Imprime le fond
-	subq.l	#1,d2
-	bsr.s	Dia_Text
-	moveq	#-1,d5
-	addq.l	#2,d2
-	bsr.s	Dia_Text
-	subq.l	#1,d2
-	subq.l	#1,d3
-	bsr.s	Dia_Text
-	addq.l	#2,d3
-	bsr.s	Dia_Text
-	subq.l	#1,d3
-; Imprime le devant
-	move.l	d6,d5
-; Print TEXT d2X d3Y d4Text d5Ink
-; ~~~~~~~~~~
-Dia_Text
-	move.l	T_RastPort(a5),a1
-	move.l	d5,d0
-	bmi.s	.SkipI
-	GfxCa5	SetAPen
-.SkipI	move.l	d2,d0
-	move.w	d3,d1
-	move.w	d2,Dia_XA(a4)
-	move.w	d3,Dia_YA(a4)
-	move.w	d2,Dia_XB(a4)
-	move.w	d3,Dia_YB(a4)
-	add.l	Dia_BaseX(a4),d0
-	add.l	Dia_BaseY(a4),d1
-	move.w	d0,36(a1)
-	add.w	62(a1),d1
-	move.w	d1,38(a1)
-	move.l	d4,a0
-	tst.b	(a0)+
-	moveq	#0,d0
-	move.b	(a0)+,d0
-	beq.s	.Skip
-	move.l	a6,-(sp)
-	movem.l	a0/a1/d0,-(sp)		Imprime
-	move.l	T_GfxBase(a5),a6
-	jsr	Text(a6)
-	movem.l	(sp)+,a0/a1/d0
-	move.w	58(a1),d1		Hauteur
-	add.w	d1,Dia_YB(a4)
-	jsr	TextLength(a6)		Largeur
-	add.w	d0,Dia_XB(a4)
-	move.l	(sp)+,a6
-.Skip	rts
-; Print VTEXT d2X d3Y d4Text d5Ink
-; ~~~~~~~~~~
-Dia_VText
-	movem.l	a6/d2-d4,-(sp)
-	move.l	T_RastPort(a5),a1
-	move.l	d5,d0
-	bmi.s	.SkipI
-	GfxCa5	SetAPen
-.SkipI	move.l	d2,d0
-	move.w	d3,d1
-	move.w	d2,Dia_XA(a4)
-	move.w	d3,Dia_YA(a4)
-	move.w	d2,Dia_XB(a4)
-	move.w	d3,Dia_YB(a4)
-	add.l	Dia_BaseX(a4),d2
-	add.l	Dia_BaseY(a4),d3
-	add.w	62(a1),d3
-	move.l	d4,a0
-	tst.b	(a0)+
-	moveq	#0,d4
-	move.b	(a0)+,d4
-	beq.s	.Skip
-	move.l	T_GfxBase(a5),a6
-.Loop	moveq	#1,d0			Imprime une lettre
-	move.w	d2,36(a1)
-	move.w	d3,38(a1)
-	movem.l	a0/a1,-(sp)
-	jsr	Text(a6)
-	movem.l	(sp)+,a0/a1
-	addq.l	#1,a0
-	move.w	58(a1),d1
-	add.w	d1,d3
-	add.w	d1,Dia_XB(a4)
-	subq.w	#1,d4
-	bne.s	.Loop
-	movem.l	(sp)+,a6/d2-d4
-.Skip	rts
-; SET FONT d2FONT d3STYLE
-; ~~~~~~~~
-Dia_SFont
-	move.l	d2,d1
-	bmi.s	.Skip1
-	EcCall	SFont
-.Skip1	tst.l	d3
-	bmi.s	.Skip2
-	move.l	T_RastPort(a5),a1
-	move.b	d3,56(a1)
-.Skip2	rts
-; WRITING d2MODE
-; ~~~~~~~
-Dia_SWrite
-	move.l	d2,d0
-	bmi.s	.Skip
-	bsr	Dia_Write
-.Skip	rts
-
-; Change le writing courant
-; ~~~~~~~~~~~~~~~~~~~~~~~~~
-Dia_Write
-;	cmp.w	Dia_Writing(a4),d0
-;	beq.s	.Skip
-	move.w	d0,Dia_Writing(a4)
-	move.l	T_RastPort(a5),a1
-	GfxCa5	SetDrMd
-.Skip	rts
-
-; SET LINE d2PATTERN
-; ~~~~~~~~
-Dia_SLine
-	tst.l	d2
-	bmi.s	.Skip
-	move.l	T_RastPort(a5),a1
-	move.w	d2,34(a1)
-.Skip	rts
-; PATTERN d2PATTERN d3OUTLINE
-; ~~~~~~~
-Dia_SFill
-	move.l	T_RastPort(a5),a1
-	tst.l	d3
-	bmi.s	.Skip
-	bclr	#4,33(a1)
-	tst.w	d3
-	beq.s	.Skip
-	bset	#4,33(a1)
-.Skip	move.l	d2,d1
-	EcCall	Pattern
-	rts
-
-; ________________________________________________________________________
-;
-;	Interface avec l'�diteur ligne
-;
-; DIgit	Numero,X,Y,Long,Valeur,Flag,Paper,Pen
-; ~~~~~
-Dia_Digit
-	movem.l	a2/d2-d7,-(sp)
-	moveq	#Dia_DiLong,d0
-	Rbsr	L_Dia_GetBuffer
-	move.l	a0,a2
-	move.w	#Dia_EdMark,2(a2)
-	move.l	a2,Dia_LastZone(a4)
-; Numero / Position / Largeur
-	bsr	Dia_EdDiRout
-; Place pour le chiffre
-	Rbsr	L_Dia_Evalue		Variable
-	move.l	d0,Dia_DiValue(a2)
-; Afficher le chiffre de depart?
-	Rbsr	L_Dia_Evalue
-	move.l	d0,d1
-	sub.l	a0,a0
-	btst	#0,d1
-	beq.s	.Paa
-	move.l	Dia_DiValue(a2),-(a3)
-	moveq	#1,d7
-	Rbsr	L_Dia_FDecimal
-	move.l	(a3)+,a0
-.Paa	move.w	#(1<<LEd_FMouCur)|(1<<LEd_FMouse)|(1<<LEd_FOnce)|(1<<LEd_FKeys)|(1<<LEd_FFilter),d0
-	move.w	d4,d1			Largeur= largeur fenetre-1
-	subq.w	#1,d1
-	lea	Dia_DiBuffer(a2),a1
-	pea	Dia_LEd+LEd_Mask(a2)
-	bsr	Dia_Edit2
-	move.l	(sp)+,a0
-	move.l	#%00000000000101011111111111000000,(a0)+
-	clr.l	(a0)+
-	clr.l	(a0)+
-	movem.l	(sp)+,a2/d2-d7
-	rts
-
-; EDit Numero X Y Long Max Chaine Paper Pen
-; ~~~~
-Dia_Edit
-	movem.l	a2/d2-d7,-(sp)
-	moveq	#Dia_EdLong,d0
-	Rbsr	L_Dia_GetBuffer
-	move.l	a0,a2
-	move.w	#Dia_EdMark,2(a2)
-	move.l	a2,Dia_LastZone(a4)
-; Numero / Position / Longueur
-	bsr	Dia_EdDiRout
-; Longmax
-	Rbsr	L_Dia_Evalue
-	tst.l	d0
-	Rbeq	L_Dia_Fonc
-	cmp.l	#1024,d0
-	Rbhi	L_Dia_Fonc
-	move.w	d0,-(sp)
-; Reserve le buffer
-	addq.w	#6,d0
-	Rbsr	L_Dia_GetBuffer
-	move.w	#Dia_StMark,2(a0)
-	pea	4(a0)
-; Copie la chaine de d�part, finie par zero
-	Rbsr	L_Dia_Evalue
-	move.l	d0,a0
-; Flags
-	move.l	(sp)+,a1
-	move.w	#(1<<LEd_FMouCur)|(1<<LEd_FMouse)|(1<<LEd_FOnce)|(1<<LEd_FKeys),d0
-	move.w	(sp)+,d1
-	bsr	Dia_Edit2
-	movem.l	(sp)+,a2/d2-d7
-	rts
-
-; Entree pour DIGIT, A0=chaine D1=longmax D0=Flags A1=Buffer
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Dia_Edit2
-	movem.l	a1/d0/d1,-(sp)
-; Recopie la chaine dans le buffer
-	move.l	a0,d0
-	beq.s	.Sk4
-	moveq	#0,d0
-	tst.b	(a0)+
-	move.b	(a0)+,d0
-	cmp.w	d1,d0
-	bcc.s	.Sk3
-	move.w	d0,d1
-	bra.s	.Sk3
-.Sk2	move.b	(a0)+,d0
-	cmp.b	#32,d0
-	bcs.s	.Sk3
-	move.b	d0,(a1)+
-.Sk3	dbra	d1,.Sk2
-.Sk4	clr.b	(a1)
-; Cree la fenetre
-	moveq	#1,d5
-	moveq	#0,d6
-	moveq	#0,d7
-	sub.l	a1,a1
-	move.w	Dia_ZoNumber(a2),d1
-	add.w	#1000,d1		Fenetres � partir de 1000
-	move.w	d1,Dia_WindOn(a4)
-	WiCall	WindOp
-; Paper / Pen
-	Rbsr	L_Dia_Evalue
-	move.w	d0,d2
-	Rbsr	L_Dia_Evalue
-	move.b	d0,d3
-; Reserve la zone / Initialise
-	lea	.Init(pc),a1
-	add.b	#"0",d2
-	move.b	d2,.Paper-.Init(a1)
-	add.b	#"0",d3
-	move.b	d3,.Pen-.Init(a1)
-	WiCall	Print
-; Imprime le texte, curseur � la fin
-	movem.l	(sp)+,a1/d0/d2
-	moveq	#0,d1
-	moveq	#-1,d3
-	lea	Dia_LEd(a2),a0
-	move.l	a1,a2
-	Rbsr	L_LEd_Init
-	Rbne	L_Dia_Fonc
-	Rbsr	L_Dia_SetBuffer
-	rts
-; Chaine d'init
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.Init	dc.b	27,"C0",27,"B"
-.Paper	dc.b	"0",27,"P"
-.Pen	dc.b	"0",27,"J",48+31,25,27,"V0",0
-	even
-
-
-; ________________________________________________________________________
-;
-;	ZONE D'HYPER-TEXTE
-;
-; HText Numero X Y Tx Ty Txt Pos Zones Paper Pen; []
-; ~~~~~
-Dia_HyperText
-	movem.l	a2/d2-d7,-(sp)
-	move.l	#Dia_TxLong,d0
-	Rbsr	L_Dia_GetBuffer
-	move.l	a0,a2
-	move.w	#Dia_TxMark,2(a2)
-; Numero / Position / Longueur
-	bsr	Dia_EdDiRout
-; Largeur / Hauteur
-	move.w	d4,Dia_TxTx(a2)
-	Rbsr	L_Dia_Evalue
-	move.w	d0,Dia_TxTy(a2)
-	move.w	d0,d5
-	lsl.w	#3,d0
-	move.w	d0,Dia_ZoSy(a2)
-; Adresse du texte
-	Rbsr	L_Dia_Evalue
-	cmp.l	#1*1024,d0		*** Illegal
-	Rble	L_Dia_Fonc
-	move.l	d0,Dia_TxText(a2)
-; Position dans le texte
-	Rbsr	L_Dia_Evalue
-	move.w	d0,Dia_TxPos(a2)
-; Cree la fenetre
-	moveq	#0,d6
-	moveq	#0,d7
-	sub.l	a1,a1
-	move.w	Dia_ZoNumber(a2),d1
-	add.w	#3000,d1		Fenetres � partir de 3000
-	move.w	d1,Dia_WindOn(a4)
-	WiCall	WindOp
-	tst.w	d0
-	Rbne	L_Dia_Fonc
-; Nombre de zones/ligne
-	Rbsr	L_Dia_Evalue
-	move.w	d0,Dia_TxDispMax(a2)
-	mulu	#Dia_TxDispZone,d0
-	addq.l	#4+4,d0
-	move.w	d0,Dia_TxDispSize(a2)
-; Paper / Pen
-	Rbsr	L_Dia_Evalue
-	move.b	d0,d2
-	Rbsr	L_Dia_Evalue
-	move.b	d0,d3
-; Initialise
-	add.b	#"0",d2
-	add.b	#"0",d3
-	move.b	d2,Dia_TxPaper(a2)
-	move.b	d3,Dia_TxPen(a2)
-	lea	.Pp(pc),a0
-	lea	Dia_TxPp(a2),a1
-	move.l	(a0)+,(a1)
-	move.l	(a0)+,4(a1)
-	move.b	d2,2(a1)
-	move.b	d3,5(a1)
-	WiCall	Print
-	lea	.Clw(pc),a1
-	move.w	CurTab(a5),d0
-	add.b	#"0",d0
-	move.b	d0,6(a1)
-	WiCall	Print
-; Recupere la routine
-	Rbsr	L_Dia_GetRout
-	move.w	d1,Dia_ZoRChange(a2)
-; Trouve tous les pointeurs sur les lignes / Compte les lignes
-	lea	-16(a3),a0
-	move.l	a0,d4
-	move.l	Dia_TxText(a2),a0
-	move.l	Dia_ABuffer(a4),a1
-	lea	4(a1),a1
-	move.l	a1,Dia_TxAdress(a2)
-	moveq	#0,d1
-	bra.s	.In
-.NLine  sub.l	d2,d3
-	move.b	d3,-1(a1)		Longueur de la ligne precedente
-.In	move.l	a0,d2
-	move.l	d2,d3
-	cmp.l	d4,a1
-	Rbcc	L_Dia_OBuffer
-	addq.l	#1,d1
-	move.l	a0,d0
-	sub.l	Dia_TxText(a2),d0
-	lsl.l	#8,d0
-	move.l	d0,(a1)+
-.CLoop	move.b	(a0)+,d0
-	cmp.b	#32,d0
-	bcc.s	.CLoop
-	tst.b	d0
-	beq.s	.CFini
-	cmp.b	#27,d0
-	beq.s	.CEsc
-	cmp.b	#10,d0
-	beq.s	.C10
-	cmp.b	#13,d0
-	bne.s	.CLoop
-.C10	move.l	a0,d3
-	subq.l	#1,d3
-	cmp.b	#13,(a0)
-	bne.s	.NLine
-	addq.l	#1,a0
-	bra.s	.NLine
-.C13	move.l	a0,d3
-	subq.l	#1,d3
-	cmp.b	#10,(a0)
-	bne.s	.NLine
-	addq.l	#1,a0
-	bra.s	.NLine
-.CEsc	addq.l	#2,a0
-	bra.s	.CLoop
-.CFini	sub.l	d2,d3
-	move.b	d3,-1(a1)
-	move.w	d1,Dia_TxNLine(a2)
-	move.l	d1,Dia_NextZone(a4)		Met dans la variable temporaire
-	move.l	Dia_ABuffer(a4),a0
-	move.l	a1,Dia_ABuffer(a4)
-	clr.l	(a1)
-	sub.l	a0,a1
-	move.w	a1,(a0)
-	move.w	#Dia_TaMark,2(a0)
-; Reserve le buffer de travail
-	move.w	Dia_TxTy(a2),d0
-	mulu	Dia_TxDispSize(a2),d0
-	addq.l	#4,d0
-	Rbsr	L_Dia_GetBuffer
-	move.w	#Dia_TdMark,2(a0)
-	lea	4(a0),a0
-	move.l	a0,Dia_TxDisplay(a2)
-; Fixe le buffer!!!
-	Rbsr	L_Dia_SetBuffer
-; Affiche le contenu!
-	Rbsr	L_Dia_TxDraw
-; Fini
-	movem.l	(sp)+,a2/d2-d7
-	rts
-	even
-.Pp	dc.b	27,"B0",27,"P0",0
-.Clw	dc.b	27,"C0",25,27,"T0",27,"V0",0
-	even
-
-; ________________________________________________________________________
-;
-;	ZONE DE LISTE
-;
-; AList Numero X Y Tx Ty Tab$ Pos Flags Paper Pen; []
-; ~~~~~
-Dia_List
-	movem.l	a2/d2-d7,-(sp)
-	moveq	#Dia_LiLong,d0
-	Rbsr	L_Dia_GetBuffer
-	move.l	a0,a2
-	move.w	#Dia_LiMark,2(a2)
-; Numero / Position / Longueur
-	bsr	Dia_EdDiRout
-; Largeur / Hauteur
-	move.w	d4,Dia_LiTx(a2)
-	Rbsr	L_Dia_Evalue
-	move.w	d0,Dia_LiTy(a2)
-	move.w	d0,d5
-	lsl.w	#3,d0
-	move.w	d0,Dia_ZoSy(a2)
-; Tableau
-	Rbsr	L_Dia_Evalue
-	tst.l	d0
-	beq.s	.ANul
-	cmp.l	#1*1024,d0		*** Illegal
-	Rble	L_Dia_Fonc
-	move.l	d0,Dia_LiArray(a2)
-	move.l	d0,a0
-	cmp.b	#1,(a0)			Nombre de dimensions
-	Rbne	L_Dia_Fonc
-	cmp.b	#2,1(a0)		Taille variable=4!
-	Rbne	L_Dia_Fonc
-	moveq	#0,d0
-	move.w	2(a0),d0
-	cmp.w	#32768,d0
-	Rbcc	L_Dia_Fonc
-.ANul	move.w	d0,Dia_LiMaxAct(a2)
-	move.w	d0,-(sp)
-; Position dans tableau
-	Rbsr	L_Dia_Evalue
-	cmp.w	Dia_LiMaxAct(a2),d0
-	bcs.s	.PNul
-	move.w	Dia_LiMaxAct(a2),d0
-.PNul	move.w	d0,Dia_LiPos(a2)
-	move.w	#-1,Dia_LiActNumber(a2)
-	move.l	#-1,Dia_ZoPos(a2)
-; Cree la fenetre
-	moveq	#0,d6
-	moveq	#0,d7
-	sub.l	a1,a1
-	move.w	Dia_ZoNumber(a2),d1
-	add.w	#2000,d1		Fenetres � partir de 1000
-	move.w	d1,Dia_WindOn(a4)
-	WiCall	WindOp
-	tst.w	d0
-	Rbne	L_Dia_Fonc
-; Flags
-	Rbsr	L_Dia_Evalue
-	move.b	d0,Dia_ZoFlags+1(a2)
-; Paper / Pen
-	Rbsr	L_Dia_Evalue
-	move.w	d0,d2
-	Rbsr	L_Dia_Evalue
-	move.b	d0,d3
-; Initialise
-	lea	Dia_WInit(pc),a1
-	add.b	#"0",d2
-	move.b	d2,Dia_WPaper-Dia_WInit(a1)
-	add.b	#"0",d3
-	move.b	d3,Dia_WPen-Dia_WInit(a1)
-	WiCall	Print
-; Fixe le buffer
-	Rbsr	L_Dia_SetBuffer
-; Recupere la routine
-	Rbsr	L_Dia_GetRout
-	move.w	d1,Dia_ZoRChange(a2)
-; Trouve la longueur de l'affichage du tableau
-	moveq	#0,d0
-	move.w	(sp)+,d0
-	move.l	Dia_ABuffer(a4),a0
-	addq.l	#4,a0
-	move.l	a0,a1
-	Rbsr	L_Dia_DecToAsc
-	sub.l	a1,a0
-	move.w	a0,Dia_LiLArray(a2)
-; Affiche le contenu!
-	Rbsr	L_Dia_LiDraw
-; Fini
-	movem.l	(sp)+,a2/d2-d7
-	rts
-; Chaine d'init fenetre
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Dia_WInit	dc.b	27,"C0",27,"B"
-Dia_WPaper	dc.b	"0",27,"P"
-Dia_WPen	dc.b	"0",27,"J",48+31,25,27,"V0",0
-		even
-
-; Routine pour Ed et Digit
-; ~~~~~~~~~~~~~~~~~~~~~~~~
-Dia_EdDiRout
-; Numero
-	Rbsr	L_Dia_Evalue
-	move.w	d0,Dia_ZoNumber(a2)
-; Positions
-	move.w	#Dia_ZoMark,Dia_ZoId(a2)
-	Rbsr	L_Dia_Evalue
-	move.w	d0,Dia_XA(a4)
-	move.w	d0,Dia_XB(a4)
-	add.l	Dia_BaseX(a4),d0
-	and.l	#$FFF0,d0
-	move.l	d0,d2
-	move.w	d0,Dia_ZoX(a2)
-	Rbsr	L_Dia_Evalue
-	move.w	d0,Dia_YA(a4)
-	move.w	d0,Dia_YB(a4)
-	add.l	Dia_BaseY(a4),d0
-	move.l	d0,d3
-	move.w	d0,Dia_ZoY(a2)
-; Largeur
-	Rbsr	L_Dia_Evalue
-	addq.w	#1,d0
-	and.w	#$FFFE,d0
-	Rbeq	L_Dia_Synt
-	add.w	d0,Dia_XB(a4)
-	addq.w	#8,Dia_YB(a4)
-	move.w	d0,d4			Taille de la fenetre paire
-	lsl.w	#3,d0
-	move.w	d0,Dia_ZoSx(a2)
-	move.w	#8,Dia_ZoSy(a2)
-; Variable de zone
-	move.l	Dia_NextZone(a4),Dia_ZoVar(a2)
-	rts
-
-; ________________________________________________________________________
-;
-; 	Interface avec les sliders
-;
-; SH Numero, X, Y, SX, SY, Pos, Fenetre, Total, Step;[]
-; ~~
-Dia_SliderH
-	moveq	#0,d6
-	bra.s	Dia_Slider
-Dia_SliderV
-	moveq	#-1,d6
-Dia_Slider
-	move.l	a2,-(sp)
-	moveq	#Dia_SlLong,d0
-	bsr	Dia_GetEntete
-	move.w	#Dia_SlMark,2(a2)
-	move.w	Dia_ZoX(a2),Dia_Sl+Sl_X(a2)
-	move.w	Dia_ZoY(a2),Dia_Sl+Sl_Y(a2)
-	move.w	Dia_ZoSx(a2),Dia_Sl+Sl_Sx(a2)
-	subq.w	#1,Dia_Sl+Sl_Sx(a2)
-	move.w	Dia_ZoSy(a2),Dia_Sl+Sl_Sy(a2)
-	subq.w	#1,Dia_Sl+Sl_Sy(a2)
-; Horizontal ou vertical?
-	move.w	Dia_Sl+Sl_X(a2),Dia_Sl+Sl_Start(a2)
-	move.w	Dia_Sl+Sl_Sx(a2),Dia_Sl+Sl_Size(a2)
-	tst.w	d6
-	beq.s	.PaV
-	bset	#Sl_FlagVertical,Dia_Sl+Sl_Flags(a2)
-	move.w	Dia_Sl+Sl_Y(a2),Dia_Sl+Sl_Start(a2)
-	move.w	Dia_Sl+Sl_Sy(a2),Dia_Sl+Sl_Size(a2)
-.PaV
-; Position de depart
-	Rbsr	L_Dia_Evalue
-	move.w	d0,Dia_Sl+Sl_Position(a2)
-	move.l	d0,Dia_ZoPos(a2)
-; Taille de depart
-	Rbsr	L_Dia_Evalue
-	move.w	d0,Dia_Sl+Sl_Window(a2)
-; Maximum de reference
-	Rbsr	L_Dia_Evalue
-	move.w	d0,Dia_Sl+Sl_Global(a2)
-; +/- scrolling
-	Rbsr	L_Dia_Evalue
-	move.w	d0,Dia_Sl+Sl_Scroll(a2)
-; Routines
-	lea	Dia_RSlider(pc),a0
-	move.l	a0,Dia_Sl+Sl_Routines(a2)
-; Couleurs
-	lea	Dia_SlDefault(a4),a1
-	lea	Dia_Sl+Sl_Inactive(a2),a0
-	moveq	#16-1,d0
-.Co	moveq	#0,d1
-	move.b	(a1)+,d1
-	move.w	d1,(a0)+
-	dbra	d0,.Co
-; Fixe la position du buffer
-	Rbsr	L_Dia_SetBuffer
-; Routine de dessin
-	Rbsr	L_Dia_GetRout
-	move.w	d1,Dia_ZoRChange(a2)
-; Dessine le slider
-; ~~~~~~~~~~~~~~~~~
-	moveq	#0,d0
-	lea	Dia_Sl(a2),a0
-	Rbsr	L_Sl_Draw
-	move.w	Dia_Writing(a4),d0
-	move.l	T_RastPort(a5),a1
-	GfxCa5	SetDrMd
-; Ok!
-; ~~~
-	move.l	(sp)+,a2
-	rts
-
-; Interface de dessin
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Dia_RSlider
-	bra	Dia_SlUpdate
-	bra	Dia_SlChange
-	bra	Dia_SlChange
-	bra	Dia_SlChange
-; Appelle la routine change
-; ~~~~~~~~~~~~~~~~~~~~~~~~~
-Dia_SlChange
-	move.l	a2,-(sp)
-	lea	-Dia_Sl(a2),a2
-	moveq	#0,d0
-	move.w	Dia_Sl+Sl_Position(a2),d0
-	move.l	d0,Dia_ZoPos(a2)
-	Rbsr	L_Dia_ZoChange
-	move.l	(sp)+,a2
-	rts
-; Update nul
-; ~~~~~~~~~~
-Dia_SlUpdate
-	rts
-
-; ________________________________________________________________________
-;
-; 	Interface avec les boutons
-;
-; Bouton Numero, X, Y, SX, SY, Pos, Min, Max;[] []
-; ~~~~~~
-Dia_Button
-	move.l	a2,-(sp)
-	moveq	#Dia_BtLong,d0
-	bsr	Dia_GetEntete
-	move.w	#Dia_BtMark,2(a2)
-	move.l	a2,Dia_LastZone(a4)
-; Position de depart
-	Rbsr	L_Dia_Evalue
-	move.l	d0,Dia_ZoPos(a2)
-; Minimum et maximum
-	Rbsr	L_Dia_Evalue
-	move.w	d0,Dia_BtMin(a2)
-	Rbsr	L_Dia_Evalue
-	move.w	d0,Dia_BtMax(a2)
-	clr.b	Dia_ZoFlags(a2)
-; Fixe la position du buffer
-	Rbsr	L_Dia_SetBuffer
-; Routine de dessin du bouton
-	Rbsr	L_Dia_GetRout
-	move.w	d1,Dia_BtRDraw(a2)
-; Routine de changement de position
-	Rbsr	L_Dia_GetRout
-	move.w	d1,Dia_ZoRChange(a2)
-; Initialisation du bouton
-	Rbsr	L_Dia_BtDraw
-; Termine!
-	move.l	(sp)+,a2
-	rts
-
-; Fabrique un entete de zone active - D0=longueur
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-;	D0=	longueur
-Dia_GetEntete
-	movem.w	d2/d3,-(sp)
-	Rbsr	L_Dia_GetBuffer
-	move.l	a0,a2
-; Numero
-	Rbsr	L_Dia_Evalue
-	move.w	d0,Dia_ZoNumber(a2)
-; X/Y/SX/SY
-	move.w	#Dia_ZoMark,Dia_ZoId(a2)
-	Rbsr	L_Dia_Evalue
-	move.w	d0,d2
-	add.l	Dia_BaseX(a4),d0
-	move.w	d0,Dia_ZoX(a2)
-	Rbsr	L_Dia_Evalue
-	move.w	d0,d3
-	add.l	Dia_BaseY(a4),d0
-	move.w	d0,Dia_ZoY(a2)
-	Rbsr	L_Dia_Evalue
-	move.w	d0,Dia_ZoSx(a2)
-	Rbsr	L_Dia_Evalue
-	move.w	d0,Dia_ZoSy(a2)
-; Variables internes
-	move.w	d2,Dia_XA(a4)
-	move.w	d3,Dia_YA(a4)
-	add.w	Dia_ZoSx(a2),d2
-	move.w	d2,Dia_XB(a4)
-	add.w	Dia_ZoSy(a2),d3
-	move.w	d3,Dia_YB(a4)
-; Variable interne
-	move.l	Dia_NextZone(a4),Dia_ZoVar(a2)
-	movem.w	(sp)+,d2/d3
-	rts
-
-; Button Return d2V/F -> mis dans VAR-2
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Dia_BR	move.l	d2,Dia_Vars-2*4(a4)
-	rts
-
-; Button Quit
-; ~~~~~~~~~~~
-Dia_BQuit
-	move.l	Dia_Vars-3*4(a4),d0		Dans un bouton?
-	Rbeq	L_Dia_Synt
-	move.l	d0,a0
-	bset	#7,Dia_ZoFlags(a0)
-	rts
-
-; Button Nowait
-; ~~~~~~~~~~~~~
-Dia_NWait
-	move.l	Dia_Vars-3*4(a4),d0		Dans un bouton?
-	Rbeq	L_Dia_Synt
-	move.l	d0,a0
-	bset	#5,Dia_ZoFlags(a0)
-	rts
-; Button Change, d2NUMBER d3POSITION
-; ~~~~~~~~~~~~~~
-Dia_BChange
-; Peut-on effectuer l'instruction?
-	move.l	Dia_Vars-3*4(a4),d0		Si appel� en dehors de la parenth
-	Rbeq	L_Dia_Synt
-	move.l	d0,a0
-	btst	#6,Dia_ZoFlags(a0)
-	beq.s	.Ok
-	rts
-; Explore la liste
-.Ok	movem.l	a2/d2/d3,-(sp)
-	move.l	Dia_Buffer(a4),a2
-.Loop	cmp.w	#Dia_BtMark,2(a2)		Un bouton?
-	bne.s	.Next
-	cmp.w	Dia_ZoNumber(a2),d2		Le bon?
-	bne.s	.Next
-	cmp.l	Dia_Vars-3*4(a4),a2		Pas celui-ci?
-	beq.s	.Next
-	bset	#6,Dia_ZoFlags(a2)		Marque le flag!
-	cmp.l	Dia_ZoPos(a2),d3		Faut-il changer le bouton?
-	beq.s	.Deja
-	move.l	d3,Dia_ZoPos(a2)		Change le bouton
-	Rbsr	L_Dia_BtDraw			Va le dessiner
-	Rbsr	L_Dia_ZoChange			Va le changer
-.Deja	bclr	#6,Dia_ZoFlags(a2)		Enleve le flag!
-	bclr	#7,Dia_ZoFlags(a2)		Pas de sortie!
-.Next	add.w	(a2),a2
-	tst.w	(a2)
-	bne.s	.Loop
-	movem.l	(sp)+,a2/d2/d3
-	rts
-
-; ________________________________________________________________________
-;
-;	INTERFACE AVEC LES ZONES ACTIVES
-;
-; Zone Change, d2NUMBER d3POSITION
-; ~~~~~~~~~~~
-Dia_ZChange
-	movem.l	d4-d5,-(sp)
-; Peut-on effectuer l'instruction?
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	tst.l	Dia_Vars-3*4(a4)		Si appel� en dehors d'une parenth
-	Rbeq	L_Dia_Synt
-	move.l	#EntNul,d4
-	move.l	d4,d5
-	Rbsr	L_Dia_ZUpdate
-	movem.l	(sp)+,d4-d5
-	rts
-
-
-
-; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-; 	INSTRUCTION RUn d3Flag d2Timer
-; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Dia_Run
-; - - - - - - - - - - - - -
-	move.b	d3,Dia_Flags(a4)
-	move.l	d2,Dia_Timer(a4)
-	move.l	T_VblCount(a5),Dia_TimerPos(a4)
-	bset	#1,Dia_RFlags(a4)
-; Nettoyage des entrees
-; ~~~~~~~~~~~~~~~~~~~~~
-	bclr	#0,d3			Nettoyer les touches
-	beq.s	.Skip1
-	SyCall	ClearKey
-.Skip1	bclr	#1,d3			Nettoyer les clicks
-	beq.s	.Skip2
-	Rbsr	L_Dia_NoMKey
-.Skip2
-; Active la premiere fenetre
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~
-	Rbsr	L_Dia_EdFirst
-; Boucle d'attente
-; ~~~~~~~~~~~~~~~~
-.Loop	Rjsr	L_Sys_WaitMul
-; Le timer
-	move.l	Dia_Timer(a4),d0
-	beq.s	.Skip
-	move.l	T_VblCount(a5),d1
-	sub.l	Dia_TimerPos(a4),d1
-	cmp.l	d0,d1
-	bcc.s	.Exit0
-.Skip
-; Control-C?
-	move.w	T_Actualise(a5),d0
-	bclr	#BitControl,d0
-	beq.s	.PaC
-	move.w	d0,T_Actualise(a5)
-	bra.s	.Exit0
-.PaC
-; Un coup de test.
-	Rbsr	L_Dia_Tests
-	bne.s	.Exit
-; Branchement au monitor?
-	move.l	Patch_ScFront(a5),d0
-	beq.s	.Loop
-	move.l	d0,a0
-	jsr	(a0)
-	bra.s	.Loop
-; Sortie...
-; ~~~~~~~~~
-.Exit0	clr.w	Dia_Return(a4)
-; Remet l'ecran du moniteur
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~
-.Exit	tst.l	Patch_ScFront(a5)
-	beq.s	.Exit1
-	movem.l	a0/d0,-(sp)
-	move.l	Patch_ScFront(a5),a0
-	jsr	(a0)
-	movem.l	(sp)+,a0/d0
-.Exit1	tst.w	d0
-	rts
+	Lib_Empty			Dia_Loop, now in src/lib/dialog.cpp
 
 
 
@@ -12132,528 +8811,7 @@ Dia_Run
 ; 	EVALUATION D'EXPRESSION
 ;
 ; - - - - - - - - - - - - -
-	Lib_Def	Dia_Evalue
-; - - - - - - - - - - - - -
-	move.l	d7,-(sp)
-	moveq	#0,d7
-.Loop	Rbsr	L_Dia_Chr		Premiere lettre
-	bmi.s	.Chiffre
-	bvs.s	.Signe
-	beq.s	.Fini
-	bcc.s	.Fini
-	Rlea	L_Dia_FTokens,1
-	move.b	-64(a1,d0.w),d0		Offset des codes
-	lea	32(a1,d0.w),a1		Pointe la liste
-	Rbsr	L_Dia_Chr
-.FLoop	move.w	(a1)+,d1		Trouve le bon
-	cmp.b	d0,d1
-	bne.s	.FLoop
-	lsr.w	#8,d1			Pointe la fonction
-	jsr	.Jumps(pc,d1.w)		Appel!
-	bra.s	.Loop
-.Signe	Rlea	L_Dia_FTokens,1
-	lea	32(a1),a1
-	bra.s	.FLoop
-.Chiffre
-	Rbsr	L_Dia_FChif
-	bra.s	.Loop
-; On a fini l'expression
-.Fini	cmp.w	#1,d7
-	Rbne	L_Dia_Synt
-	move.l	(a3)+,d0
-	move.l	(sp)+,d7
-	rts
-.Jumps	bra	Dia_FBx			0
-	bra	Dia_FBy			1
-	bra	Dia_FSx			2
-	bra	Dia_FSy			3
-	bra	Dia_FPlus		4
-	bra	Dia_FMoins		5
-	bra	Dia_FMul		6
-	bra	Dia_FDiv		7
-	bra	Dia_FNeg		8
-	bra	Dia_FMess		9
-	bra	Dia_FMess		10
-	bra	Dia_FTw			11
-	bra	Dia_FTh			12
-	bra	Dia_FVar		13
-	bra	Dia_FString1		14
-	bra	Dia_FString2		15
-	bra	Dia_FCx			16
-	bra	Dia_FSw			17
-	bra	Dia_FSh			18
-	bra	Dia_FMin		19
-	bra	Dia_FMax		20
-	bra	Dia_FBP			21
-	Rbra	L_Dia_FDecimal		22
-	bra	Dia_FPlusCh		23
-	bra	Dia_FStZero		24
-	bra	Dia_FXA			25
-	bra	Dia_FYA			26
-	bra	Dia_FXB			27
-	bra	Dia_FYB			28
-	bra	Dia_FArray		29
-	bra	Dia_FZP			30
-	bra	Dia_P1			31
-	bra	Dia_P2			32
-	bra	Dia_P3			33
-	bra	Dia_P4			34
-	bra	Dia_P5			35
-	bra	Dia_P6			36
-	bra	Dia_P7			37
-	bra	Dia_P8			38
-	bra	Dia_P9			39
-	bra	Dia_FEq			40
-	bra	Dia_FNEq		41
-	bra	Dia_FInf		42
-	bra	Dia_FSup		43
-	bra	Dia_FAnd		44
-	bra	Dia_FOr			45
-	bra	Dia_FZVar		46
-	bra	Dia_FZNum		47
-	bra	Dia_FLTxt		48
-	bra	Dia_FASize		49
-
-; Prend une variable
-; ~~~~~~~~~~~~~~~~~~
-Dia_FVar
-	tst.w	d7
-	Rble	L_Dia_Synt
-	move.l	(a3),d0
-	lsl.w	#2,d0
-	lea	Dia_Vars(a4),a0
-	move.l	0(a0,d0.l),(a3)
-	rts
-; = ZV Une variable interne � une zone
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Dia_FZVar
-	addq.w	#1,d7
-	move.l	Dia_Vars-3*4(a4),d0
-	beq.s	.Ext
-; Variable � l'interieur de la zone
-	move.l	d0,a0
-	move.l	Dia_ZoVar(a0),-(a3)
-	rts
-; Variable � l'exterieur de la zone
-.Ext	move.l	Dia_NextZone(a4),-(a3)
-	rts
-; = ZN Numero de la zone
-; ~~~~~~~~~~~~~~~~~~~~~~
-Dia_FZNum
-	move.l	Dia_Vars-3*4(a4),d0
-	Rbeq	L_Dia_Synt
-	move.l	d0,a0
-	moveq	#0,d0
-	move.w	Dia_ZoNumber(a0),d0
-	move.l	d0,-(a3)
-	addq.w	#1,d7
-	rts
-
-; =tableau pos ARray Retourne le contenu d'une variable dans une tableau
-; ~~~~~~~~~~~~~~~~~~~
-Dia_FArray
-	cmp.w	#2,d7
-	Rblt	L_Dia_NPar
-	subq.w	#1,d7
-	move.l	(a3)+,d1
-	move.l	(a3),a0
-	cmp.l	#1*1024,a0		*** Illegal
-	Rble	L_Dia_Fonc
-	cmp.b	#1,(a0)+		Nombre de dimensions
-	Rbne	L_Dia_Fonc
-	cmp.b	#2,(a0)+		Taille variable=4!
-	Rbne	L_Dia_Fonc
-	moveq	#0,d0
-	move.w	(a0),d0
-	cmp.l	d0,d1
-	Rbcc	L_Dia_Fonc
-	lsl.l	#2,d1
-	lea	4(a0,d1.l),a0
-	move.l	(a0),(a3)
-	rts
-; =tableau ArraySize Retourne la taille d'un tableau
-; ~~~~~~~~~~~~~~~~~~
-Dia_FASize
-	cmp.w	#1,d7
-	Rblt	L_Dia_NPar
-	move.l	(a3),d0
-	beq.s	.Nul
-	move.l	d0,a0
-	cmp.l	#1*1024,a0		*** Illegal
-	Rble	L_Dia_Fonc
-	cmp.b	#1,(a0)+		Nombre de dimensions
-	Rbne	L_Dia_Fonc
-	cmp.b	#2,(a0)+		Taille variable=4!
-	Rbne	L_Dia_Fonc
-	moveq	#0,d0
-	move.w	(a0),d0
-.Nul	move.l	d0,(a3)
-	rts
-
-; =Px
-; ~~~
-Dia_P1	moveq	#1,d0
-	bra.s	Dia_P
-Dia_P2	moveq	#2,d0
-	bra.s	Dia_P
-Dia_P3	moveq	#3,d0
-	bra.s	Dia_P
-Dia_P4	moveq	#4,d0
-	bra.s	Dia_P
-Dia_P5	moveq	#5,d0
-	bra.s	Dia_P
-Dia_P6	moveq	#6,d0
-	bra.s	Dia_P
-Dia_P7	moveq	#7,d0
-	bra.s	Dia_P
-Dia_P8	moveq	#8,d0
-	bra.s	Dia_P
-Dia_P9	moveq	#9,d0
-Dia_P	move.l	Dia_PUsers(a4),d1
-	Rbeq	L_Dia_Synt
-	move.l	d1,a0
-	move.w	Dia_NPUsers(a4),d1
-	sub.w	d0,d1
-	Rbcs	L_Dia_Synt
-	lsl.w	#2,d1
-	move.l	0(a0,d1.w),-(a3)
-	addq.w	#1,d7
-	rts
-
-; X Size of display
-; ~~~~~~~~~~~~~~~~~
-Dia_FSw
-	move.l	T_EcCourant(a5),a0
-	moveq	#0,d0
-	move.w	EcTx(a0),d0
-	move.l	d0,-(a3)
-	addq.w	#1,d7
-	rts
-; Y Size of display
-; ~~~~~~~~~~~~~~~~~
-Dia_FSh
-	move.l	T_EcCourant(a5),a0
-	moveq	#0,d0
-	move.w	EcTy(a0),d0
-	move.l	d0,-(a3)
-	addq.w	#1,d7
-	rts
-; Operateur PLUS
-; ~~~~~~~~~~~~~~
-Dia_FPlus
-	cmp.w	#2,d7
-	Rblt	L_Dia_Synt
-	move.l	(a3)+,d0
-	add.l	d0,(a3)
-	subq.w	#1,d7
-	rts
-; Operateur MOINS
-; ~~~~~~~~~~~~~~~
-Dia_FMoins
-	cmp.w	#2,d7
-	Rblt	L_Dia_Synt
-	move.l	(a3)+,d0
-	sub.l	d0,(a3)
-	subq.w	#1,d7
-	rts
-; Operateur MULTIPLIE
-; ~~~~~~~~~~~~~~~~~~~
-Dia_FMul
-	cmp.w	#2,d7
-	Rblt	L_Dia_Synt
-	move.l	(a3)+,d0
-	move.l	(a3),d1
-	muls	d0,d1
-	move.l	d1,(a3)
-	subq.w	#1,d7
-	rts
-; Operateur DIVISE
-; ~~~~~~~~~~~~~~~~
-Dia_FDiv
-	cmp.w	#2,d7
-	Rblt	L_Dia_Synt
-	move.l	(a3)+,d0
-	Rbeq	L_Dia_Synt
-	move.l	(a3),d1
-	ext.l	d1
-	divs	d0,d1
-	ext.l	d1
-	move.l	d1,(a3)
-	subq.w	#1,d7
-	rts
-; Operateur =
-; ~~~~~~~~~~~
-Dia_FEq
-	cmp.w	#2,d7
-	Rblt	L_Dia_Synt
-	move.l	(a3)+,d0
-	cmp.l	(a3),d0
-	beq.s	Dia_Tr
-	bne.s	Dia_Fa
-; Operateur \
-; ~~~~~~~~~~~
-Dia_FNEq
-	cmp.w	#2,d7
-	Rblt	L_Dia_Synt
-	move.l	(a3)+,d0
-	cmp.l	(a3),d0
-	bne.s	Dia_Tr
-	beq.s	Dia_Fa
-; Operateur <
-; ~~~~~~~~~~~
-Dia_FInf
-	cmp.w	#2,d7
-	Rblt	L_Dia_Synt
-	move.l	(a3)+,d0
-	move.l	(a3),d1
-	cmp.l	d0,d1
-	blt.s	Dia_Tr
-	bra.s	Dia_Fa
-; Operateur >
-; ~~~~~~~~~~~
-Dia_FSup
-	cmp.w	#2,d7
-	Rblt	L_Dia_Synt
-	move.l	(a3)+,d0
-	move.l	(a3),d1
-	cmp.l	d0,d1
-	bgt.s	Dia_Tr
-; Faux / Vrai
-; ~~~~~~~~~~~
-Dia_Fa	clr.l	(a3)
-	subq.w	#1,d7
-	rts
-Dia_Tr	move.l	#-1,(a3)
-	subq.w	#1,d7
-	rts
-; Operateur &<
-; ~~~~~~~~~~~
-Dia_FAnd
-	cmp.w	#2,d7
-	Rblt	L_Dia_Synt
-	move.l	(a3)+,d0
-	and.l	d0,(a3)
-	subq.w	#1,d7
-	rts
-; Operateur |
-; ~~~~~~~~~~~
-Dia_FOr
-	cmp.w	#2,d7
-	Rblt	L_Dia_Synt
-	move.l	(a3)+,d0
-	or.l	d0,(a3)
-	subq.w	#1,d7
-	rts
-; Negatif
-; ~~~~~~~
-Dia_FNeg
-	tst.w	d7
-	Rbeq	L_Dia_Synt
-	neg.l	(a3)
-	rts
-; Taille en X
-; ~~~~~~~~~~~
-Dia_FSx	move.l	Dia_Sx(a4),-(a3)
-	addq.w	#1,d7
-	rts
-; Taille en Y
-; ~~~~~~~~~~~
-Dia_FSy	move.l	Dia_Sy(a4),-(a3)
-	addq.w	#1,d7
-	rts
-; Positions apres fonctions X et Y
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Dia_FXA	move.w	Dia_XA(a4),d0
-	bra.s	Dia_FX
-Dia_FYA	move.w	Dia_YA(a4),d0
-	bra.s	Dia_FX
-Dia_FXB	move.w	Dia_XB(a4),d0
-	bra.s	Dia_FX
-Dia_FYB	move.w	Dia_YB(a4),d0
-Dia_FX	ext.l	d0
-	move.l	d0,-(a3)
-	addq.w	#1,d7
-	rts
-; Base en X
-; ~~~~~~~~~
-Dia_FBx	move.l	Dia_BaseX(a4),-(a3)
-	addq.w	#1,d7
-	rts
-; Base en Y
-; ~~~~~~~~~
-Dia_FBy	move.l	Dia_BaseY(a4),-(a3)
-	addq.w	#1,d7
-	rts
-; Message normal
-; ~~~~~~~~~~~~~~
-Dia_FMess
-	tst.w	d7
-	Rbeq	L_Dia_Synt
-	move.l	Dia_Messages(a4),a0
-	move.l	(a3),d0
-	Rble	L_Dia_Fonc
-	moveq	#0,d1
-	bra.s	.MSkip
-.MLoop	move.b	1(a0),d1
-	Rbmi	L_Dia_Fonc
-	lea	2(a0,d1.w),a0
-.MSkip	subq.l	#1,d0
-	bne.s	.MLoop
-	move.l	a0,(a3)
-	rts
-
-; Largeur d'un texte
-; ~~~~~~~~~~~~~~~~~~
-Dia_FTw
-	tst.w	d7
-	Rbeq	L_Dia_Synt
-	move.l	(a3),a0
-	tst.b	(a0)+
-	moveq	#0,d0
-	move.b	(a0)+,d0
-	beq.s	.Skip
-	move.l	T_RastPort(a5),a1
-	move.l	a6,-(sp)
-	move.l	T_GfxBase(a5),a6
-	jsr	TextLength(a6)
-	move.l	(sp)+,a6
-	ext.l	d0
-.Skip	move.l	d0,(a3)
-	rts
-; Centrage d'un texte
-; ~~~~~~~~~~~~~~~~~~~
-Dia_FCx
-	bsr	Dia_FTw
-	move.l	(a3),d0
-	move.l	Dia_Sx(a4),d1
-	sub.l	d0,d1
-	bpl.s	.Skip
-	moveq	#0,d1
-.Skip	lsr.l	#1,d1
-	move.l	d1,(a3)
-	rts
-; Nombre de caracteres
-; ~~~~~~~~~~~~~~~~~~~~
-Dia_FLTxt
-	cmp.w	#1,d7
-	Rblt	L_Dia_Synt
-	move.l	(a3),a0
-	moveq	#0,d0
-	tst.b	(a0)+
-	move.b	(a0)+,d0
-	move.l	d0,(a3)
-	rts
-; Hauteur d'un texte
-; ~~~~~~~~~~~~~~~~~~
-Dia_FTh
-	move.l	T_RastPort(a5),a1
-	move.w	58(a1),d0
-	ext.l	d0
-	move.l	d0,-(a3)
-	addq.w	#1,d7
-	rts
-
-; Copie d'une chaine terminee par zero ADR LONG MZ
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Dia_FStZero
-	cmp.w	#2,d7
-	Rblt	L_Dia_Synt
-	move.l	a2,-(sp)
-	Rbsr	L_Dia_StDebut
-	subq.w	#1,d7
-	move.l	(a3)+,d1	Longueur max
-	move.l	(a3),a2
-.Loop	move.b	(a2)+,d0
-	cmp.b	#32,d0
-	bcs.s	.Exit
-	move.b	d0,(a0)+
-	subq.w	#1,d1
-	bgt.s	.Loop
-.Exit	move.l	a1,(a3)
-	move.l	(sp)+,a2
-	Rbra	L_Dia_StFini
-; Addition de chaines CH1 CH2 $
-; ~~~~~~~~~~~~~~~~~~~
-Dia_FPlusCh
-	cmp.w	#2,d7
-	Rblt	L_Dia_Synt
-	Rbsr	L_Dia_StDebut
-	subq.w	#1,d7
-; Premiere chaine
-	move.l	a2,-(sp)
-	move.l	4(a3),a2
-	moveq	#0,d0
-	tst.b	(a2)+
-	move.b	(a2)+,d0
-	subq.w	#1,d0
-	bmi.s	.Sk1
-.Lp1	move.b	(a2)+,(a0)+
-	dbra	d0,.Lp1
-.Sk1
-; Deuxieme chaine
-	move.l	(a3)+,a2
-	moveq	#0,d0
-	tst.b	(a2)+
-	move.b	(a2)+,d0
-	subq.w	#1,d0
-	bmi.s	.Sk2
-.Lp2	move.b	(a2)+,(a0)+
-	dbra	d0,.Lp2
-.Sk2
-; Stocke le r�sultat
-	move.l	a1,(a3)
-	move.l	(sp)+,a2
-	Rbra	L_Dia_StFini
-; Variable en STRING
-; ~~~~~~~~~~~~~~~~~~
-Dia_FString1
-	moveq	#'"',d1
-	bra.s	Dia_FStr
-Dia_FString2
-	moveq	#"'",d1
-Dia_FStr
-	Rbsr	L_Dia_StDebut
-.Loop	move.b	(a6)+,d0
-	cmp.b	#" ",d0
-	bcs.s	.Fin
-	cmp.b	d0,d1
-	beq.s	.Fini
-	move.b	d0,(a0)+
-	bra.s	.Loop
-.Fin	subq.l	#1,a6
-.Fini	move.l	a1,-(a3)
-	addq.w	#1,d7
-	Rbra	L_Dia_StFini
-; Fonction MIN
-; ~~~~~~~~~~~~
-Dia_FMin
-	cmp.w	#2,d7
-	Rblt	L_Dia_Synt
-	subq.w	#1,d7
-	move.l	(a3)+,d0
-	cmp.l	(a3),d0
-	bge.s	.Skip
-	move.l	d0,(a3)
-.Skip	rts
-; Fonction MAX
-; ~~~~~~~~~~~~
-Dia_FMax
-	cmp.w	#2,d7
-	Rblt	L_Dia_Synt
-	subq.w	#1,d7
-	move.l	(a3)+,d0
-	cmp.l	(a3),d0
-	ble.s	.Skip
-	move.l	d0,(a3)
-.Skip	rts
-
-; Button Position, prise dans VAR-1
-; Zone Position, prise dans VAR-1
-; ~~~~~~~~~~~~~
-Dia_FZP
-Dia_FBP	move.l	Dia_Vars-1*4(a4),-(a3)
-	addq.w	#1,d7
-	rts
+	Lib_Empty			Dia_Evalue, now in src/lib/dialog.cpp
 
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -12663,47 +8821,17 @@ Dia_FBP	move.l	Dia_Vars-1*4(a4),-(a3)
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 	FONCTION: Conversion en d�cimal CHIF #
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	Dia_FDecimal
-; - - - - - - - - - - - - -
-	cmp.w	#1,d7
-	Rblt	L_Dia_Synt
-	Rbsr	L_Dia_StDebut
-	move.l	(a3),d0
-	move.l	a1,(a3)
-	Rbsr	L_Dia_DecToAsc
-	Rbra	L_Dia_StFini
+	Lib_Empty			Dia_FDecimal, now in src/lib/dialog.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 	Fixe le debut d'une chaine
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	Dia_StDebut
-; - - - - - - - - - - - - -
-	move.l	Dia_ABuffer(a4),a0
-	clr.w	(a0)+			Longueur
-	move.w	#Dia_StMark,(a0)+	Id
-	move.l	a0,a1
-	clr.w	(a0)+
-	rts
+	Lib_Empty			Dia_StDebut, now in src/lib/dialog.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 	Calcule le buffer pour une chaine
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	Dia_StFini
-; - - - - - - - - - - - - -
-	move.l	a0,d0
-	move.l	a0,d1
-	sub.l	a1,d1
-	subq.b	#2,d1
-	move.b	d1,1(a1)		Longueur de la chaine
-	addq.l	#1,d0
-	and.w	#$FFFE,d0
-	move.l	d0,Dia_ABuffer(a4)	Position du buffer
-	subq.l	#4,a1			Pointe le header
-	move.l	d0,a0
-	clr.l	(a0)			Plus rien!
-	sub.l	a1,a0
-	move.w	a0,(a1)			Longueur de la chaine
-	rts
+	Lib_Empty			Dia_StFini, now in src/lib/dialog.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 	ROUTINES GESTIONS ZONE D'EDITION
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -12711,65 +8839,27 @@ Dia_FBP	move.l	Dia_Vars-1*4(a4),-(a3)
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 	Efface la fenetre de dialogue A0
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	Dia_EdEnd
-; - - - - - - - - - - - - -
-	Rbsr	L_Dia_EdOn
-	Rbsr	L_Dia_WiZero
-	WiCall	WinDel
-	move.w	#-1,Dia_WindOn(a4)
-	rts
+	Lib_Empty			Dia_EdEnd, now in src/lib/dialog.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 	Active la ligne de dialogue A0
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	Dia_EdActive
-; - - - - - - - - - - - - -
-	move.l	a0,-(sp)
-	moveq	#0,d1
-	move.w	Dia_ZoNumber(a0),d1
-	add.w	#1000,d1
-	Rbsr	L_Dia_WActive
-	move.l	(sp)+,a0
-	lea	Dia_LEd(a0),a0
-	Rbra	L_LEd_CuMarche
+	Lib_Empty			Dia_EdActive, now in src/lib/dialog.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 	Fenetre dialogue A0 en route
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	Dia_EdOn
-; - - - - - - - - - - - - -
-	movem.l	a0/a1/d0/d1,-(sp)
-	moveq	#0,d1
-	move.w	Dia_ZoNumber(a0),d1
-	add.w	#1000,d1
-	Rbsr	L_Dia_WActive
-	movem.l	(sp)+,a0/a1/d0/d1
-	rts
+	Lib_Empty			Dia_EdOn, now in src/lib/dialog.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 	Inactive la fenetre A0
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	Dia_EdInactive
-; - - - - - - - - - - - - -
-	lea	Dia_LEd(a0),a0
-	Rbra	L_LEd_CuStoppe
+	Lib_Empty			Dia_EdInactive, now in src/lib/dialog.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 	Active s'il faut, la fenetre D1
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	Dia_WActive
-; - - - - - - - - - - - - -
-	cmp.w	Dia_WindOn(a4),d1
-	beq.s	.Skip
-	move.w	d1,Dia_WindOn(a4)
-	WiCall	QWindow
-.Skip	rts
+	Lib_Empty			Dia_WActive, now in src/lib/dialog.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 	Passe paper/pen � zero pour effacement
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	Dia_WiZero
-; - - - - - - - - - - - - -
-	lea	.Zero(pc),a1
-	WiCall	Print
-	rts
-.Zero	dc.b	27,"J0",0
-	even
+	Lib_Empty			Dia_WiZero, now in src/lib/dialog.cpp
 
 
 
@@ -12780,267 +8870,24 @@ Dia_FBP	move.l	Dia_Vars-1*4(a4),-(a3)
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 	Activation de la fenetre texte, A2=structure
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	Dia_TxActive
-; - - - - - - - - - - - - -
-	movem.l	a0-a1/d0-d1,-(sp)
-	moveq	#0,d1
-	move.w	Dia_ZoNumber(a2),d1
-	add.w	#3000,d1
-	Rbsr	L_Dia_WActive
-	movem.l	(sp)+,a0-a1/d0-d1
-	rts
+	Lib_Empty			Dia_TxActive, now in src/lib/dialog.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 	Efface la fenetre de texte A2
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	Dia_TxEnd
-; - - - - - - - - - - - - -
-	Rbsr	L_Dia_TxActive
-	Rbsr	L_Dia_WiZero
-	WiCall	WinDel
-	move.w	#-1,Dia_WindOn(a4)
-	rts
+	Lib_Empty			Dia_TxEnd, now in src/lib/dialog.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 	Affiche la page de texte
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	Dia_TxDraw
-; - - - - - - - - - - - - -
-	movem.l	d2/d3,-(sp)
-; Boucle d'affichage
-	move.w	Dia_TxPos(a2),d2
-	move.w	Dia_TxTy(a2),d3
-.ALoop	move.w	d2,d0
-	Rbsr	L_Dia_TxAff
-	addq.w	#1,d2
-	subq.w	#1,d3
-	bne.s	.ALoop
-; Plus d'actif!
-	clr.l	Dia_TxAct(a2)
-	movem.l	(sp)+,d2/d3
-	rts
+	Lib_Empty			Dia_TxDraw, now in src/lib/dialog.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 	Affiche la ligne #D0
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	Dia_TxAff
-; - - - - - - - - - - - - -
-	movem.l	d0-d7/a0-a6,-(sp)
-	clr.w	-(sp)
-; Locate
-	moveq	#0,d3
-	move.w	d0,d3
-	moveq	#0,d1
-	move.w	d0,d2
-	sub.w	Dia_TxPos(a2),d2
-	bmi	.Vide
-	cmp.w	Dia_TxTy(a2),d2
-	bcc	.Vide
-	move.w	d2,d0
-	mulu	Dia_TxDispSize(a2),d0
-	move.l	Dia_TxDisplay(a2),a3
-	add.w	d0,a3				Adresse des pointeurs
-	clr.l	(a3)				Par defaut, rien!
-	clr.w	4(a3)
-	WiCall	Locate
-; Paper / Ink + Effacement ligne
-	lea	Dia_TxPp(a2),a1
-	WiCall	Print
-	WiCalD	ChrOut,26
-; Trouve l'adresse de la ligne
-	cmp.w	Dia_TxNLine(a2),d3
-	bcc	.Vide
-	move.w	d3,d0
-	lsl.w	#2,d0
-	move.l	Dia_TxAdress(a2),a0
-	move.l	0(a0,d0.w),d6
-	lsr.l	#8,d6
-	add.l	Dia_TxText(a2),d6
-	move.l	d6,a6				Adresse de la ligne!
-	move.l	a6,(a3)+
-	moveq	#0,d1
-	move.b	3(a0,d0.w),d1			Longueur de la ligne
-	lea	0(a6,d1.w),a0
-	move.l	a0,d7				Fin de la ligne
-	move.b	(a0),d5				Marque la fin
-	clr.b	(a0)
-; Affiche les segments de la ligne
-.RLoop	move.l	a6,a1
-.CLoop	move.b	(a1)+,d0
-	beq.s	.CPrn
-	cmp.b	#"{",d0
-	bne.s	.CLoop
-.CPrn	subq.l	#1,a1
-; Imprime le segment, normal
-	exg	a6,a1
-	move.b	(a6),d4
-	clr.b	(a6)
-	moveq	#0,d1			Impression limitee
-	moveq	#0,d2			Depuis le debut
-	move.w	Dia_TxTx(a2),d3		Taille fenetre -1
-	WiCall	Print3
-	cmp.w	d3,d1
-	bcc	.Ouf			Si droite atteinte
-; Un segment actif?
-	move.b	d4,(a6)
-	cmp.b	#"{",d4
-	bne	.Ouf
-; Affichage d'un segment actif
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	move.l	a6,a1
-	move.w	(sp),d0
-	cmp.w	Dia_TxDispMax(a2),d0
-	bcc	.AErr
-	cmp.b	#"[",1(a1)
-	bne	.AErr
-	addq.l	#2,a1
-; Saute la partie reponse
-	move.b	Dia_TxPen(a2),4(a3)		Pen=paper
-	move.b	Dia_TxPaper(a2),5(a3)		Paper=pen
-	WiCall	XYCuWi
-	move.b	d1,2(a3)			Position dans ecran
-	move.l	a1,d0
-	sub.l	d6,d0
-	move.b	d0,6(a3)			Debut mot cl� dans texte
-	bset	#31,d4
-	cmp.b	#",",(a1)			Si pas de mot cl�
-	bne.s	.ALoop
-	bclr	#31,d4
-.ALoop	move.b	(a1)+,d0
-	beq	.AErr
-	cmp.b	#",",d0
-	beq.s	.Pp
-	cmp.b	#"]",d0
-	bne.s	.ALoop
-	beq.s	.AFin
-; Retrouve paper et pen
-.Pp	bsr	.PaPe
-	move.b	d1,4(a3)
-	cmp.b	#",",d0
-	bne	.AErr
-	bsr	.PaPe
-	move.b	d1,5(a3)
-	cmp.b	#"]",d0
-	bne	.AErr
-; Cherche la fin de la parenthese }
-.AFin	move.l	a1,a6
-.FLoop	move.b	(a1)+,d0
-	beq.s	.FFin
-	cmp.b	#"}",d0
-	bne.s	.FLoop
-	subq.l	#1,a1
-.FFin	move.l	a6,d0
-	sub.l	d6,d0
-	move.b	d0,(a3)				Debut dans le texte
-	move.l	a1,d0
-	sub.l	d6,d0
-	move.b	d0,1(a3)			Fin dans le texte
-; Change les couleurs
-	move.l	a1,-(sp)
-	lea	Dia_HtActive1(pc),a1
-	move.b	4(a3),2(a1)
-	move.b	5(a3),5(a1)
-	WiCall	Print
-	move.l	(sp)+,a1
-; Imprime le texte actif
-	exg.l	a1,a6
-	move.b	(a6),d4
-	clr.b	(a6)
-	moveq	#0,d1				Impression limitee
-	moveq	#0,d2
-	move.w	Dia_TxTx(a2),d3
-	WiCall	Print3
-	move.b	d4,(a6)
-	addq.w	#1,(sp)
-	move.b	d1,3(a3)			Position dans ecran
-	clr.b	7(a3)
-	btst	#31,d4				Inactif?
-	bne.s	.PaIna
-	move.b	#1,2(a3)
-	clr.b	3(a3)
-.PaIna	lea	Dia_TxDispZone(a3),a3
-	clr.w	(a3)
-; Rebranche � la normale
-	cmp.w	Dia_TxTx(a2),d1
-	bcc	.Ouf
-	cmp.b	#"}",d4
-	bne.s	.Ouf
-	addq.l	#1,a6
-	lea	Dia_TxPp(a2),a1
-	WiCall	Print
-	bra	.RLoop
-; Erreur dans la definition
-.AErr	clr.l	(a3)
-	clr.w	4(a3)
-	lea	1(a6),a1
-	bra	.CLoop
-; Ouf, c'est fini!
-; ~~~~~~~~~~~~~~~~
-.Ouf	move.l	d7,a0
-	move.b	d5,(a0)
-.Vide	addq.l	#2,sp
-	movem.l	(sp)+,d0-d7/a0-a6
-	rts
-; Petite saisie de chiffre decimal
-.PaPe	moveq	#0,d2
-	moveq	#0,d1
-.PLoop	move.b	(a1)+,d0
-	move.b	d0,d2
-	sub.b	#"0",d2
-	bcs.s	.POut
-	cmp.b	#9,d2
-	bhi.s	.POut
-	mulu	#10,d1
-	add.l	d2,d1
-	bra.s	.PLoop
-.POut	add.b	#"0",d1
-	rts
-Dia_HtActive1
-	dc.b	27,"B0",27,"P0",0
-	even
+	Lib_Empty			Dia_TxAff, now in src/lib/dialog.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 	Affiche le mot actif A0(pointeurs) D0=Y
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	Dia_TxAffActive
-; - - - - - - - - - - - - -
-	movem.l	a2-a4/d2-d4,-(sp)
-	move.l	a0,a3
-	moveq	#0,d2
-	move.w	d0,d2
-	mulu	Dia_TxDispSize(a2),d0
-	move.l	Dia_TxDisplay(a2),a4
-	move.l	0(a4,d0.w),a4
-; Locate
-	moveq	#0,d1
-	move.b	2(a3),d1
-	WiCall	Locate
-	bne.s	.Out
-; Change les couleurs
-	lea	Dia_HtActive(pc),a1
-	move.b	4(a3),2(a1)
-	move.b	5(a3),5(a1)
-	cmp.l	Dia_TxAct(a2),a3
-	bne.s	.Pa
-	move.b	5(a3),2(a1)
-	move.b	4(a3),5(a1)
-.Pa	WiCall	Print
-; Imprime le texte actif
-	moveq	#0,d0
-	move.b	(a3)+,d0
-	lea	0(a4,d0.w),a1
-	move.b	(a3)+,d0
-	lea	0(a4,d0.w),a4
-	move.b	(a4),d4
-	clr.b	(a4)
-	moveq	#0,d1				Impression limitee
-	moveq	#0,d2
-	move.w	Dia_TxTx(a2),d3
-	WiCall	Print3
-	move.b	d4,(a4)
-; Ca y est!
-.Out	movem.l	(sp)+,a2-a4/d2-d4
-	rts
-Dia_HtActive
-	dc.b	27,"B0",27,"P0",0
-	even
+	Lib_Empty			Dia_TxAffActive, now in src/lib/dialog.cpp
 
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -13050,133 +8897,20 @@ Dia_HtActive
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 	Activation de la fenetre liste A2=liste
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	Dia_LiActive
-; - - - - - - - - - - - - -
-	movem.l	a0-a1/d0-d1,-(sp)
-	moveq	#0,d1
-	move.w	Dia_ZoNumber(a2),d1
-	add.w	#2000,d1
-	Rbsr	L_Dia_WActive
-	movem.l	(sp)+,a0-a1/d0-d1
-	rts
+	Lib_Empty			Dia_LiActive, now in src/lib/dialog.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 	Efface la fenetre de liste A2
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	Dia_LiEnd
-; - - - - - - - - - - - - -
-	Rbsr	L_Dia_LiActive
-	Rbsr	L_Dia_WiZero
-	WiCall	WinDel
-	move.w	#-1,Dia_WindOn(a4)
-	rts
+	Lib_Empty			Dia_LiEnd, now in src/lib/dialog.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 	Affichage du contenu d'une liste - A2=liste
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	Dia_LiDraw
-; - - - - - - - - - - - - -
-	movem.l	d2/d3,-(sp)
-; Boucle d'affichage
-	move.w	Dia_LiPos(a2),d2
-	move.w	Dia_LiTy(a2),d3
-.ALoop	move.w	d2,d0
-	Rbsr	L_Dia_LiAff
-	addq.w	#1,d2
-	subq.w	#1,d3
-	bne.s	.ALoop
-; Ok!
-	movem.l	(sp)+,d2/d3
-	rts
+	Lib_Empty			Dia_LiDraw, now in src/lib/dialog.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 	Affichage d'un des �l�ments de la liste - A2 structure - D0=#
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	Dia_LiAff
-; - - - - - - - - - - - - -
-	movem.l	d0-d6/a0-a1,-(sp)
-; Locate
-	moveq	#0,d4
-	move.w	d0,d4
-	moveq	#0,d1
-	move.w	d0,d2
-	sub.w	Dia_LiPos(a2),d2
-	bmi	.Vide
-	cmp.w	Dia_LiTy(a2),d2
-	bcc	.Vide
-	WiCall	Locate
-; Paper / Ink + Effacement ligne
-	lea	.Inv0(pc),a1
-	cmp.w	Dia_LiActNumber(a2),d4
-	bne.s	.Ina
-	lea	.Inv1(pc),a1
-.Ina	WiCall	Print
-; Trop loin?
-	move.l	Dia_LiArray(a2),d0
-	beq	.Vide
-	move.l	d0,a0
-	cmp.w	2(a0),d4
-	bcc	.Vide
-; Imprime le numero, eventuellement
-	moveq	#0,d6
-	btst	#0,Dia_ZoFlags+1(a2)
-	beq.s	.NoNum
-	move.l	d4,d0
-	btst	#1,Dia_ZoFlags+1(a2)
-	beq.s	.Nm1
-	addq.l	#1,d0
-.Nm1	move.l	Dia_ABuffer(a4),a0
-	addq.l	#4,a0
-	move.l	a0,d2
-	Rbsr	L_Dia_DecToAsc
-	sub.l	a0,d2
-	move.b	#" ",(a0)+
-	move.b	#"-",(a0)+
-	move.b	#" ",(a0)+
-	clr.b	(a0)
-	move.l	a0,d6
-	sub.l	Dia_ABuffer(a4),d6
-	subq.l	#2,d6
-; Met des espaces au debut
-	add.w	Dia_LiLArray(a2),d2
-	ble.s	.Nm2
-.NmL	WiCalD	ChrOut,32
-	subq.w	#1,d2
-	bne.s	.NmL
-; Imprime le chiffre
-.Nm2	move.l	Dia_ABuffer(a4),a1
-	addq.l	#4,a1
-	WiCall	Print
-.NoNum
-; Imprime la chaine
-	move.l	Dia_LiArray(a2),a0
-	moveq	#0,d0
-	cmp.w	2(a0),d4
-	bcc.s	.Vide
-; Un tableau magique?
-	cmp.l	#"MgIk",4(a0)
-	bne.s	.Norm
-	move.l	8(a0),a0
-	jsr	(a0)
-	bra.s	.Sui
-; Un tableau normal
-.Norm	lsl.l	#2,d4
-	lea	6(a0,d4.l),a0
-	move.l	(a0),d0
-	cmp.l	#8*1024,d0
-	ble	.Vide
-	move.l	d0,a1
-	move.b	(a1)+,d1
-	lsl.w	#8,d1
-	move.b	(a1)+,d1
-.Sui	move.w	Dia_LiTx(a2),d2
-	sub.w	d6,d2
-	cmp.w	d2,d1
-	ble.s	.Pa
-	move.w	d2,d1
-.Pa	WiCall	Print2
-.Vide	movem.l	(sp)+,d0-d6/a0-a1
-	rts
-.Inv0	dc.b	27,"I0",26,0
-.Inv1	dc.b	27,"I1",26,0
+	Lib_Empty			Dia_LiAff, now in src/lib/dialog.cpp
 
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -13186,73 +8920,12 @@ Dia_HtActive
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 	Dessine le slider A2
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	Dia_SlDraw
-; - - - - - - - - - - - - -
-	move.l	a2,-(sp)
-	moveq	#0,d0
-	lea	Dia_Sl(a2),a0
-	Rbsr	L_Sl_Draw
-	move.w	Dia_Writing(a4),d0
-	move.l	T_RastPort(a5),a1
-	GfxCa5	SetDrMd
-	move.l	(sp)+,a2
-	rts
+	Lib_Empty			Dia_SlDraw, now in src/lib/dialog.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					ROUTINE DESSIN BOUTON
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	Dia_BtDraw
-; - - - - - - - - - - - - -
-	movem.l	a2/a6,-(sp)
-	moveq	#0,d0
-	move.w	Dia_BtRDraw(a2),d0
-	beq	.Skip
-; Adresse de la routine
-	move.l	Dia_Programs(a4),a6
-	add.l	d0,a6
-; Sauve les donn�es
-	move.l	Dia_BaseX(a4),-(sp)
-	move.l	Dia_BaseY(a4),-(sp)
-	move.l	Dia_Sx(a4),-(sp)
-	move.l	Dia_Sy(a4),-(sp)
-	move.w	Dia_XA(a4),-(sp)
-	move.w	Dia_YA(a4),-(sp)
-	move.w	Dia_XB(a4),-(sp)
-	move.w	Dia_YB(a4),-(sp)
-	move.l	Dia_Vars-1*4(a4),-(sp)
-	move.l	Dia_Vars-2*4(a4),-(sp)
-	move.l	Dia_Vars-3*4(a4),-(sp)
-	move.l	Dia_Sp(a4),-(sp)
-; Change XYSXSY
-	moveq	#0,d0
-	move.w	Dia_ZoSx(a2),d0
-	move.l	d0,Dia_Sx(a4)
-	move.w	Dia_ZoSy(a2),d0
-	move.l	d0,Dia_Sy(a4)
-	move.w	Dia_ZoX(a2),d0
-	move.l	d0,Dia_BaseX(a4)
-	move.w	Dia_ZoY(a2),d0
-	move.l	d0,Dia_BaseY(a4)
-; Appelle la routine
-	move.l	Dia_ZoPos(a2),Dia_Vars-1*4(a4)
-	move.l	a2,Dia_Vars-3*4(a4)
-	Rbsr	L_Dia_Loop
-; Restore les donn�es
-	move.l	(sp)+,Dia_Sp(a4)
-	move.l	(sp)+,Dia_Vars-3*4(a4)
-	move.l	(sp)+,Dia_Vars-2*4(a4)
-	move.l	(sp)+,Dia_Vars-1*4(a4)
-	move.w	(sp)+,Dia_YB(a4)
-	move.w	(sp)+,Dia_XB(a4)
-	move.w	(sp)+,Dia_YA(a4)
-	move.w	(sp)+,Dia_XA(a4)
-	move.l	(sp)+,Dia_Sy(a4)
-	move.l	(sp)+,Dia_Sx(a4)
-	move.l	(sp)+,Dia_BaseY(a4)
-	move.l	(sp)+,Dia_BaseX(a4)
-; Retour
-.Skip	movem.l	(sp)+,a2/a6
-	rts
+	Lib_Empty			Dia_BtDraw, now in src/lib/dialog.cpp
 
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -13262,229 +8935,29 @@ Dia_HtActive
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 	Delimite une routine []
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	Dia_GetRout
-; - - - - - - - - - - - - -
-	Rbsr	L_Dia_Chr
-	cmp.b	#"[",d0
-	Rbne	L_Dia_Synt
-	move.l	a6,d1
-	Rbsr	L_Dia_Chr
-	Rbeq	L_Dia_Synt
-	cmp.b	#"]",d0
-	beq.s	.Zero
-	sub.l	Dia_Programs(a4),d1
-	Rbsr	L_Dia_EndP
-	rts
-.Zero	moveq	#0,d1
-	rts
+	Lib_Empty			Dia_GetRout, now in src/lib/dialog.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 	Trouve la fin d'une parenthese
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	Dia_EndP
-; - - - - - - - - - - - - -
-	move.l	d1,-(sp)
-	moveq	#1,d1
-.Loop	move.b	(a6)+,d0
-	Rbeq	L_Dia_Synt
-	cmp.b	#"[",d0
-	beq.s	.Plus
-	cmp.b	#"]",d0
-	bne.s	.Loop
-	subq.w	#1,d1
-	bne.s	.Loop
-	move.l	(sp)+,d1
-	rts
-.Plus	addq.w	#1,d1
-	bra.s	.Loop
+	Lib_Empty			Dia_EndP, now in src/lib/dialog.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					UPDATE LA ZONE D2
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	Dia_ZUpdate
-; - - - - - - - - - - - - -
-	movem.l	a2/d6,-(sp)
-	move.l	Dia_Buffer(a4),a2
-	move.l	#EntNul,d6
-.Loop	cmp.w	#Dia_ZoMark,4(a2)		Une zone?
-	bne.s	.Next
-	cmp.w	Dia_ZoNumber(a2),d2		La bonne?
-	bne.s	.Next
-	cmp.l	Dia_Vars-3*4(a4),a2		Pas celui-ci?
-	beq.s	.Next
-	cmp.w	#Dia_EdMark,2(a2)
-	beq	.Ed
-	cmp.w	#Dia_BtMark,2(a2)
-	beq	.Bt
-	cmp.w	#Dia_SlMark,2(a2)
-	beq	.Sl
-	cmp.w	#Dia_LiMark,2(a2)
-	beq	.Li
-	cmp.w	#Dia_TxMark,2(a2)
-	beq	.Tx
-.Next	add.w	(a2),a2
-	tst.w	(a2)
-	bne.s	.Loop
-	Rbsr	L_Dia_Patch
-	movem.l	(sp)+,a2/d6
-	rts
-; Un bouton
-; ~~~~~~~~~
-.Bt	cmp.l	d3,d6
-	beq.s	.BNul
-	cmp.l	Dia_ZoPos(a2),d3		Faut-il change le bouton?
-	beq.s	.BDeja
-	move.l	d3,Dia_ZoPos(a2)		Change le bouton
-.BNul	Rbsr	L_Dia_BtDraw			Va le dessiner
-	Rbsr	L_Dia_ZoChange			Va le changer
-.BDeja	bclr	#7,Dia_ZoFlags(a2)		Pas de sortie!
-	bra.s	.Next
-; Un slider
-; ~~~~~~~~~
-.Sl	cmp.l	d5,d6				Update global
-	beq.s	.SNul1
-	move.w	d5,Dia_Sl+Sl_Global(a2)
-.SNul1	cmp.l	d4,d6				Update window
-	beq.s	.SNul2
-	move.w	d4,Dia_Sl+Sl_Window(a2)
-.SNul2	cmp.l	d3,d6				Update position
-	beq.s	.SNul3
-	move.l	d3,Dia_ZoPos(a2)
-	move.w	d3,Dia_Sl+Sl_Position(a2)
-.SNul3	Rbsr	L_Dia_SlDraw
-	Rbsr	L_Dia_ZoChange
-	bclr	#7,Dia_ZoFlags(a2)		Pas de sortie!
-	bra	.Next
-; Une liste
-; ~~~~~~~~~
-.Li	cmp.l	d5,d6				Maximum Activable
-	beq.s	.LNul1
-	move.w	d5,Dia_LiMaxAct(a2)
-.LNul1	cmp.l	d4,d6				Active courant
-	beq.s	.LNul2
-	move.w	Dia_LiActNumber(a2),d0
-	bmi.s	.LAct
-	move.w	#-1,Dia_LiActNumber(a2)
-	Rbsr	L_Dia_LiActive
-	Rbsr	L_Dia_LiAff
-.LAct	move.w	d4,Dia_LiActNumber(a2)
-	move.l	d4,Dia_ZoPos(a2)
-.LNul2	cmp.l	d3,d6				Position de la liste
-	beq.s	.LNul3
-	move.w	d3,Dia_LiPos(a2)
-.LNul3	Rbsr	L_Dia_LiActive
-	Rbsr	L_Dia_LiDraw
-	bclr	#7,Dia_ZoFlags(a2)		Pas de sortie!
-	bra	.Next
-; Un texte
-; ~~~~~~~~
-.Tx	cmp.l	d3,d6
-	beq	.Next
-	move.w	d3,Dia_TxPos(a2)
-	Rbsr	L_Dia_TxActive
-	Rbsr	L_Dia_TxDraw
-	bclr	#7,Dia_ZoFlags(a2)
-	bra	.Next
-; Une zone de texte
-; ~~~~~~~~~~~~~~~~~
-.Ed	cmp.l	d3,d6
-	beq	.Next
-	cmp.w	#Dia_EdLong,(a2)
-	bne.s	.Di
-	cmp.l	#1*1024,d3			Illegal: type mismatch
-	Rble	L_Dia_Fonc
-	move.l	d3,a1
-	bra.s	.EdCop
-; Un chiffre?
-; ~~~~~~~~~~~
-.Di	move.l	d3,-(a3)
-	moveq	#1,d7
-	Rbsr	L_Dia_FDecimal
-	move.l	(a3)+,a1
-; Recopie le texte dans le buffer
-.EdCop	move.l	a2,a0
-	Rbsr	L_Dia_EdOn
-	lea	Dia_LEd(a2),a0
-	moveq	#0,d0
-	tst.b	(a1)+
-	move.b	(a1)+,d0
-	Rbsr	L_LEd_New
-	bra	.Next
+	Lib_Empty			Dia_ZUpdate, now in src/lib/dialog.cpp
 
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 	Routine CHANGE zone active (bouton / liste active / slider)
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	Dia_ZoChange
-; - - - - - - - - - - - - -
-	move.l	a6,-(sp)
-	move.l	Dia_ZoPos(a2),d0
-	moveq	#0,d1
-	move.w	Dia_ZoRChange(a2),d1
-	beq	.Skip
-; Sauve les donn�es
-	move.l	Dia_BaseX(a4),-(sp)
-	move.l	Dia_BaseY(a4),-(sp)
-	move.l	Dia_Sx(a4),-(sp)
-	move.l	Dia_Sy(a4),-(sp)
-	move.w	Dia_XA(a4),-(sp)
-	move.w	Dia_YA(a4),-(sp)
-	move.w	Dia_XB(a4),-(sp)
-	move.w	Dia_YB(a4),-(sp)
-	move.l	Dia_Vars-1*4(a4),-(sp)
-	move.l	Dia_Vars-2*4(a4),-(sp)
-	move.l	Dia_Vars-3*4(a4),-(sp)
-	move.l	Dia_Sp(a4),-(sp)
-; Prepare les donn�es
-	move.l	d0,Dia_Vars-1*4(a4)		Position du bouton
-	move.l	d0,Dia_Vars-2*4(a4)
-	move.l	a2,Dia_Vars-3*4(a4)		Adresse de la structure
-	bclr	#7,Dia_ZoFlags(a2)		Pas de QUIT
-	bclr	#5,Dia_ZoFlags(a2)		Pas de IMMEDIAT
-; Appelle la routine
-	move.l	Dia_Programs(a4),a6
-	add.l	d1,a6
-	Rbsr	L_Dia_Loop
-; Retour de parametres
-	move.l	Dia_Vars-2*4(a4),d0
-; Restaure les donn�es
-	move.l	(sp)+,Dia_Sp(a4)
-	move.l	(sp)+,Dia_Vars-3*4(a4)
-	move.l	(sp)+,Dia_Vars-2*4(a4)
-	move.l	(sp)+,Dia_Vars-1*4(a4)
-	move.w	(sp)+,Dia_YB(a4)
-	move.w	(sp)+,Dia_XB(a4)
-	move.w	(sp)+,Dia_YA(a4)
-	move.w	(sp)+,Dia_XA(a4)
-	move.l	(sp)+,Dia_Sy(a4)
-	move.l	(sp)+,Dia_Sx(a4)
-	move.l	(sp)+,Dia_BaseY(a4)
-	move.l	(sp)+,Dia_BaseX(a4)
-; Retour, D0= position de retour
-.Skip	move.l	(sp)+,a6
-	rts
+	Lib_Empty			Dia_ZoChange, now in src/lib/dialog.cpp
 
 ;
 ; 	Trouve l'adresse du dialogue numero D0
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ;	OUT	BEQ Pas trouve, BNE Trouve, D0=Flags / A1=Adresse
 ; - - - - - - - - - - - - -
-	Lib_Def	Dia_GetChannel
-; - - - - - - - - - - - - -
-	move.l	Cur_Dialogs(a5),a0
-	move.l	(a0),d1
-	beq.s	.Nof
-.Loop	move.l	d1,a1
-	cmp.l	8(a1),d0
-	beq.s	.Fnd
-	move.l	(a1),d1
-	bne.s	.Loop
-.Nof	sub.l	a1,a1
-	move.l	a1,a0
-	rts
-.Fnd	lea	8(a1),a0
-	move.l	a0,a1
-	move.w	#%00000,CCR
-	rts
+	Lib_Int	Dia_GetChannel		src/lib/dialog.cpp
 
 
 ; ________________________________________________________________________
@@ -13494,820 +8967,69 @@ Dia_HtActive
 ; Exploration de l'arbre par le test
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ; - - - - - - - - - - - - -
-	Lib_Def	Dia_AutoTest
+	Lib_Int	Dia_AutoTest		src/lib/dialog.cpp
 ; - - - - - - - - - - - - -
-	moveq	#127,d0				Teste jusqu'� 127 boites
-	Rbra	L_Dia_AutoTest2
-; - - - - - - - - - - - - -
-	Lib_Def	Dia_AutoTest2
-; - - - - - - - - - - - - -
-	movem.l	a2-a6/d2-d7,-(sp)
-	move.l	d0,d7
-	subq.w	#1,d7
-; Explore les differentes boites
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.Tests	move.l	Cur_Dialogs(a5),a4
-	move.l	(a4),d0
-	beq.s	.Out
-.Loop	move.l	d0,a4
-	lea	8(a4),a4
-	btst	#0,Dia_RFlags(a4)		Canal effac�?
-	beq.s	.Next
-	btst	#2,Dia_RFlags(a4)		Canal FREEZE?
-	bne.s	.Next
-	Rbsr	L_Dia_Active			Active l'�cran
-	bne.s	.Err
-	move.l	Dia_Edited(a4),d0		Active la fenetre courante
-	ble.s	.PaWi
-	move.l	d0,a0
-	Rbsr	L_Dia_EdActive
-.PaWi	move.l	Dia_Pile(a4),a3
-	Rbsr	L_Dia_Tests			Fait les tests
-	beq.s	.Act
-	move.l	a4,a0
-	Rbsr	L_Dia_EffChanA0			Effacement du canal!
-.Act	Rbsr	L_Dia_ReActive			Remet l'ancien ecran
-	move.w	Dia_Error(a4),d0		Une erreur?
-	bne.s	.Err
-.Next	move.l	-8(a4),d0
-	beq.s	.Out
-	dbra	d7,.Loop
-; Termin�!
-; ~~~~~~~~
-.Out	moveq	#0,d0				Pas d'erreur
-.Out2	movem.l	(sp)+,a2-a6/d2-d7
-	rts
-; Une erreur: met le canal en FREEZE, pour eviter la boucle
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.Err	bset	#2,Dia_RFlags(a4)
-	bra.s	.Out2
+	Lib_Int	Dia_AutoTest2		src/lib/dialog.cpp
 
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					UN TOUR DE L'ARBRE D'OBJETS
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	Dia_Tests
-; - - - - - - - - - - - - -
-	movem.l	a2-a3/d2-d7,-(sp)
-; Flags a zero!
-; ~~~~~~~~~~~~~
-	clr.w	Dia_Exit(a4)
-; Un bouton instantann�
-; ~~~~~~~~~~~~~~~~~~~~~
-	move.l	Dia_Release(a4),d0
-	beq.s	.Pare
-	move.l	d0,a2
-	move.w	Dia_ZoNumber(a2),Dia_Return(a4)
-	SyCall	MouseKey
-	and.w	#$01,d1
-	beq.s	.Re
-	Rbsr	L_Dia_ZoChange
-	bclr	#7,Dia_Flags(a2)
-	beq	.TFini
-	addq.w	#1,Dia_Exit(a4)
-	bra	.TFini
-.Re	clr.w	Dia_Return(a4)
-	clr.l	Dia_Release(a4)
-	Rbsr	L_Dia_BtDraw
-	Rbsr	L_Dia_Patch
-.Pare
-; Une �dition?
-; ~~~~~~~~~~~~~
-	move.l	Dia_Edited(a4),d0
-	beq.s	.NoEd
-	cmp.l	#-1,d0
-	beq.s	.NoEd
-	bsr	.Timer
-	move.l	d0,a2
-	move.l	a2,a0
-	Rbsr	L_Dia_EdActive
-	lea	Dia_LEd(a2),a0
-	Rbsr	L_LEd_Loop
-	cmp.w	#1,d2			Return
-	bne.s	.PaRet
-	move.l	Dia_Edited(a4),a0	Renvoie la zone
-	move.w	Dia_ZoNumber(a0),Dia_Return(a4)
-	btst	#4,Dia_Flags(a4)	Passer avec RETURN?
-	beq.s	.EdNxt
-	bra	.Mouse
-.PaRet	tst.l	d1			Une touche?
-	beq	.Mouse
-	Rbsr	L_Dia_Patch
-	move.l	d1,d0
-	swap	d0
-	cmp.b	#$42,d0			Tab?
-	bne.s	.EdK
-; Trouve la prochaine fenetre � �diter
-.EdNxt	move.l	a2,a0
-	Rbsr	L_Dia_EdInactive
-	move.l	Dia_Edited(a4),a0
-	move.l	#-1,Dia_Edited(a4)
-	Rbsr	L_Dia_EdNext
-	Rbsr	L_Dia_ClearKey
-	Rbsr	L_Dia_Patch
-	bra	.Mouse
-; Une touche?
-; ~~~~~~~~~~~
-.NoEd	move.l	T_ClLast(a5),d1
-.EdK	move.l	d1,Dia_LastKey(a4)
-	beq	.Mouse
-	bsr 	.Timer
-	btst	#2,Dia_Flags(a4)	Sortie forcee?
-	beq.s	.PaEx
-	addq.w	#1,Dia_Exit(a4)
-.PaEx	move.b	d1,d2
-	swap	d1
-	cmp.b	#"a",d2			Garde la majuscule
-	blt.s	.Mj
-	cmp.b	#"z",d2
-	bgt.s	.Mj
-	sub.b	#$20,d2
-.Mj	move.l	Dia_Buffer(a4),a2
-; Boucle d'exploration
-.KLoop	tst.w	(a2)
-	beq	.ReEd
-	cmp.w	#Dia_KyMark,2(a2)	Une definition de touche?
-	bne	.KNext
-	move.b	Dia_KyCode(a2),d0	Prend le code
-	bmi.s	.KScan
-	beq	.KNext
-	cmp.b	d0,d2			ASCII egal?
-	bne	.KNext
-	bra.s	.KShf
-.KScan	cmp.b	#-1,d0			-1>>> sortie directe
-	beq	.KShf
-	and.b	#$7f,d0
-	cmp.b	d1,d0
-	bne	.KNext
-.KShf	ror.w	#8,d1			Les shifts
-	move.b	Dia_KyShift(a2),d0
-	move.b	d0,d2			Shift?
-	and.b	#Shf,d2
-	sne	d2
-	move.b	d1,d3
-	and.b	#Shf,d3
-	sne	d3
-	cmp.b	d2,d3
-	bne.s	.KNextS
-	move.b	d0,d2			Amiga?
-	and.b	#Ami,d2
-	sne	d2
-	move.b	d1,d3
-	and.b	#Ami,d3
-	sne	d3
-	cmp.b	d2,d3
-	bne.s	.KNextS
-	move.b	d0,d2			Control
-	and.b	#Ctr,d2
-	sne	d2
-	move.b	d1,d3
-	and.b	#Ctr,d3
-	sne	d3
-	cmp.b	d2,d3
-	bne.s	.KNextS
-	move.b	d0,d2			Alternate
-	and.b	#Alt,d2
-	sne	d2
-	move.b	d1,d3
-	and.b	#Alt,d3
-	sne	d3
-	cmp.b	d2,d3
-	bne.s	.KNextS
-.Pa4	move.l	Dia_KyZone(a2),d0
-	beq.s	.Mouse
-	Rbsr	L_Dia_ClearKey		Nettoyage du buffer
-	moveq	#1,d4			Simule l'appui
-	move.l	d0,d5			Pointe l'objet � activer
-	moveq	#0,d6
-	moveq	#0,d7
-	bra	.MousIn
-; Passe au suivant
-.KNextS	ror.w	#8,d1
-.KNext	add.w	(a2),a2
-	bra	.KLoop
-; Aucune touche active, TAB reactive une fenetre EDITt
-.ReEd	cmp.l	#-1,Dia_Edited(a4)
-	bne	.Mouse
-	move.w	Dia_LastKey(a4),d0
-	cmp.b	#$42,Dia_LastKey+1(a4)
-	bne.s	.Mouse
-.ReA	Rbsr	L_Dia_EdFirst
-	Rbsr	L_Dia_ClearKey
-	Rbsr	L_Dia_Patch
-	bra	.TFini
-
-; La souris?
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.Mouse
-; Gestion des listes actives.
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	SyCall	MouseKey
-	move.w	d1,d4
-	and.w	#$01,d4
-	Rbsr	L_Dia_GetMouseZone		Une zone?
-	move.l	d0,d5
-	move.w	d1,d6
-	move.w	d2,d7
-; Explore toute la liste
-.MousIn	move.l	Dia_Buffer(a4),a2
-.MLoop	cmp.w	#Dia_ZoMark,4(a2)
-	bne.s	.MNext
-	move.w	2(a2),d0
-	cmp.w	#Dia_BtMark,d0
-	beq	.MBt
-	cmp.w	#Dia_EdMark,d0
-	beq	.MEd
-	cmp.w	#Dia_SlMark,d0
-	beq	.MSl
-	cmp.w	#Dia_LiMark,d0
-	beq	.MLi
-	cmp.w	#Dia_TxMark,d0
-	beq	.MHy
-.MNext	add.w	(a2),a2
-	tst.w	(a2)
-	bne.s	.MLoop
-; Appui souris?
-; ~~~~~~~~~~~~~
-	tst.w	d4
-	beq.s	.PaSou
-	bsr	.Timer
-	btst	#3,Dia_Flags(a4)
-	beq.s	.PaSou
-	addq.w	#1,Dia_Exit(a4)
-.PaSou
-; Fin de la boucle! Sortie= BNE!
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.TFini	move.w	Dia_Exit(a4),d0
-	movem.l	(sp)+,a2-a3/d2-d7
-	rts
-
-
-; Reset le timer si action
-; ~~~~~~~~~~~~~~~~~~~~~~~~~
-.Timer	tst.l	Dia_Timer(sp)
-	beq.s	.Skt
-	move.l	T_VblCount(a5),Dia_TimerPos(a4)
-.Skt	rts
-
-; Mousekey->	Bouton
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.MBt	tst.w	d4
-	beq	.MNext
-	cmp.l	a2,d5
-	bne	.MNext
-; Met le numero du bouton
-	move.w	Dia_ZoNumber(a2),Dia_Return(a4)
-; Passe au dessin suivant
-	move.l	Dia_ZoPos(a2),d1
-	addq.w	#1,d1
-	cmp.w	Dia_BtMax(a2),d1
-	ble.s	.PaSup
-	move.w	Dia_BtMin(a2),d1
-.PaSup	move.l	d1,Dia_ZoPos(a2)
-; Appelle les routines
-	Rbsr	L_Dia_BtDraw
-	Rbsr	L_Dia_ZoChange
-	Rbsr	L_Dia_Patch
-	bclr	#5,Dia_ZoFlags(a2)
-	bne.s	.PaW
-	Rbsr	L_Dia_NoMKey
-	cmp.l	Dia_ZoPos(a2),d0
-	beq.s	.Ju
-	move.l	d0,Dia_ZoPos(a2)
-	Rbsr	L_Dia_BtDraw
-	Rbsr	L_Dia_Patch
-.Ju	bra.s	.BQuit
-.PaW	move.l	d0,Dia_ZoPos(a2)
-	move.l	a2,Dia_Release(a4)
-; Positionne le flag EXIT
-.BQuit	bclr	#7,Dia_ZoFlags(a2)
-	beq	.MNext
-	addq.w	#1,Dia_Exit(a4)
-	bra	.MNext
-; Mousekey->	Une edition
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.MEd	tst.w	d4
-	beq	.MNext
-	cmp.l	a2,d5
-	bne	.MNext
-; Change l'�dition courante
-	move.l	Dia_Edited(a4),d0
-	move.l	a2,Dia_Edited(a4)
-	cmp.l	d0,a2			Active la nouvelle fenetre
-	beq.s	.Bla
-	cmp.l	#-1,d0
-	beq.s	.Bla
-	move.l	d0,a0
-	Rbsr	L_Dia_EdInactive
-	Rbsr	L_Dia_Patch
-.Bla	bra	.MNext
-; Mousekey->	Un slider
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.MSl	tst.w	d4
-	beq	.MNext
-	cmp.l	a2,d5
-	bne	.MNext
-	move.w	Dia_ZoNumber(a2),Dia_Return(a4)
-	lea	Dia_Sl(a2),a0
-	Rbsr	L_Sl_Clic
-	move.l	T_RastPort(a5),a1
-	move.w	Dia_Writing(a4),d0
-	GfxCa5	SetDrMd
-	bclr	#7,Dia_ZoFlags(a2)
-	bra	.MNext
-; Mousekey->	Une liste active
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.MLi	cmp.l	a2,d5
-	bne.s	.LNon
-; Coordonnees dans la fenetre
-	move.w	d7,d2
-	lsr.w	#3,d2
-	add.w	Dia_LiPos(a2),d2
-	cmp.w	Dia_LiMaxAct(a2),d2		Autorise?
-	blt.s	.LDans
-.LNon	moveq	#-1,d2
-; Effacer une ancienne selection?
-.LDans	move.w	Dia_LiActNumber(a2),d0
-	bmi.s	.LAct
-	cmp.w	d0,d2
-	beq	.LKey
-	btst	#2,Dia_ZoFlags+1(a2)		Flag appui sur mouse?
-	beq.s	.LPak1
-	tst.w	d4
-	beq.s	.LKey
-	tst.w	d2
-	bmi.s	.LKey
-.LPak1	move.w	#-1,Dia_LiActNumber(a2)
-	move.l	#-1,Dia_ZoPos(a2)
-	Rbsr	L_Dia_LiActive
-	Rbsr	L_Dia_LiAff
-	Rbsr	L_Dia_Patch
-; Active la nouvelle
-.LAct	btst	#2,Dia_ZoFlags+1(a2)		Flag appui sur mouse?
-	beq.s	.LPak2
-	tst.w	d4
-	beq.s	.LKey
-.LPak2	move.w	d2,d0
-	bmi.s	.LKey
-	move.w	d0,Dia_LiActNumber(a2)
-	Rbsr	L_Dia_LiActive
-	Rbsr	L_Dia_LiAff
-	Rbsr	L_Dia_Patch
-; Appui sur la souris?
-.LKey	tst.w	d4
-	beq	.MNext
-	moveq	#0,d0
-	move.w	d2,d0
-	bmi	.MNext
-	move.w	Dia_ZoNumber(a2),Dia_Return(a4)
-	move.l	d0,Dia_ZoPos(a2)
-	Rbsr	L_Dia_ZoChange
-	Rbsr	L_Dia_Patch
-	bclr	#5,Dia_ZoFlags(a2)
-	bne.s	.LNow
-	Rbsr	L_Dia_NoMKey
-	Rbsr	L_Dia_Patch
-.LNow	bra	.BQuit
-
-; Mousekey->	Hypertexte
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.MHy	cmp.l	a2,d5
-	bne.s	.HRien
-; Trouve le mot actif dans cette fenetre
-	move.w	d7,d2
-	lsr.w	#3,d2
-	move.w	d6,d1
-	lsr.w	#3,d1
-	move.l	Dia_TxDisplay(a2),a0
-	move.w	d2,d0
-	mulu	Dia_TxDispSize(a2),d0
-	add.w	d0,a0
-	move.l	(a0)+,d0
-	bne.s	.HIn
-	bra.s	.HRien
-.HLoop	cmp.b	2(a0),d1
-	bcs.s	.HNext
-	cmp.b	3(a0),d1
-	bcs.s	.HFound
-.HNext	lea	Dia_TxDispZone(a0),a0
-.HIn	tst.w	(a0)
-	bne.s	.HLoop
-.HRien	moveq	#0,d2
-	bra.s	.HSuit
-; Trouve!
-.HFound	move.w	d2,d3
-	move.l	a0,d2
-; Effacer une ancienne selection?
-.HSuit	move.l	Dia_TxAct(a2),d0
-	beq.s	.HAct
-	cmp.l	d0,d2
-	beq.s	.HKey
-	move.l	#-1,Dia_ZoPos(a2)
-	Rbsr	L_Dia_TxActive
-	move.l	Dia_TxAct(a2),a0
-	move.w	Dia_TxYAct(a2),d0
-	clr.l	Dia_TxAct(a2)
-	Rbsr	L_Dia_TxAffActive
-	Rbsr	L_Dia_Patch
-; Active la nouvelle
-.HAct	move.l	d2,Dia_TxAct(a2)
-	beq.s	.HKey
-	move.w	d3,Dia_TxYAct(a2)
-	Rbsr	L_Dia_TxActive
-	move.l	d2,a0
-	move.w	d3,d0
-	Rbsr	L_Dia_TxAffActive
-	Rbsr	L_Dia_Patch
-; Appui sur la souris?
-.HKey	tst.w	d4
-	beq	.MNext
-	tst.l	d2
-	beq	.MNext
-	move.w	Dia_ZoNumber(a2),Dia_Return(a4)
-	movem.l	a3/a6/d7,-(sp)
-	mulu	Dia_TxDispSize(a2),d3
-	move.l	Dia_TxDisplay(a2),a6
-	move.l	0(a6,d3.w),a6
-	move.l	d2,a0
-	moveq	#0,d0
-	move.b	6(a0),d0
-	add.l	d0,a6
-	Rbsr	L_Dia_Chr
-	bpl.s	.Let
-; Un chiffre
-	Rbsr	L_Dia_FChif
-	move.l	(a3)+,Dia_ZoPos(a2)
-	clr.b	Dia_TxBuffer(a2)
-	bra	.HX
-; Un texte!
-.Let	sub.l	#1,a6
-	lea	Dia_TxBuffer(a2),a0
-	lea	Dia_TxBufferEnd-2(a2),a1
-.HCopy	move.b	(a6)+,d0
-	cmp.l	a1,a0
-	bcc.s	.HOut
-	cmp.b	#",",d0
-	beq.s	.HOut
-	cmp.b	#"]",d0
-	beq.s	.HOut
-	move.b	d0,(a0)+
-	bra.s	.HCopy
-.HOut	clr.b	(a0)
-	clr.l	Dia_ZoPos(a2)
-.HX	movem.l	(sp)+,a3/a6/d7
-	Rbsr	L_Dia_ZoChange
-	Rbsr	L_Dia_Patch
-	bclr	#5,Dia_ZoFlags(a2)
-	bne	.MNext
-	Rbsr	L_Dia_NoMKey
-	Rbsr	L_Dia_Patch
-	bra	.MNext
+	Lib_Empty			Dia_Tests, now in src/lib/dialog.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 	Recherche une zone dans l'arbre
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	Dia_GetMouseZone
-; - - - - - - - - - - - - -
-	SyCall	XyMou			Coordonn�es du curseur
-	moveq	#0,d3
-	SyCall	XyScr			Dans l'�cran
-	Rbra	L_Dia_GetZ
+	Lib_Empty			Dia_GetMouseZone, now in src/lib/dialog.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 	Trouve la zone D1/D2 (coords ecran)
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	Dia_GetZ
-; - - - - - - - - - - - - -
-	move.l	Dia_Buffer(a4),a0
-	tst.w	(a0)
-	beq.s	.Out
-.Loop	cmp.w	#Dia_ZoMark,4(a0)
-	bne.s	.Next
-	lea	6(a0),a1
-	move.w	6+0(a0),d0
-	cmp.w	d0,d1			X
-	bcs.s	.Next
-	add.w	6+4(a0),d0		X+SX
-	cmp.w	d0,d1
-	bcc.s	.Next
-	move.w	6+2(a0),d0		Y
-	cmp.w	d0,d2
-	bcs.s	.Next
-	add.w	6+6(a0),d0		Y+SY
-	cmp.w	d0,d2
-	bcs.s	.Ok
-.Next	move.w	(a0),d0
-	add.w	d0,a0
-	bne.s	.Loop
-.Out	moveq	#0,d0
-	rts
-.Ok	sub.w	Dia_ZoX(a0),d1
-	sub.w	Dia_ZoY(a0),d2
-	move.l	a0,d0
-	rts
+	Lib_Empty			Dia_GetZ, now in src/lib/dialog.cpp
 
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 	Activation de la premiere fenetre d'�dition
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	Dia_EdFirst
+	Lib_Empty			Dia_EdFirst, now in src/lib/dialog.cpp
 ; - - - - - - - - - - - - -
-	move.l	Dia_Buffer(a4),a0
-	clr.l	Dia_Edited(a4)
-	Rbra	L_EdaLoop
+	Lib_Empty			Dia_EdNext, now in src/lib/dialog.cpp
 ; - - - - - - - - - - - - -
-	Lib_Def	Dia_EdNext
-; - - - - - - - - - - - - -
-	add.w	(a0),a0
-	Rbra	L_EdaLoop
-; - - - - - - - - - - - - -
-	Lib_Def	EdaLoop
-; - - - - - - - - - - - - -
-.Loop	tst.w	(a0)
-	beq.s	Edano
-	cmp.w	#Dia_EdMark,2(a0)
-	beq.s	Edaed
-	add.w	(a0),a0
-	bra.s	.Loop
-Edaed	move.l	a0,Dia_Edited(a4)
-	Rbsr	L_Dia_EdActive
-Edano	rts
+	Lib_Empty			EdaLoop, now in src/lib/dialog.cpp
 
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					ERREURS DE L'INTERPRETEUR
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	Dia_OBuffer
+	Lib_Empty			Dia_OBuffer, now in src/lib/dialog.cpp
 ; - - - - - - - - - - - - -
-	move.w	#EDia_OBuffer,Dia_Error(a4)
-	Rbra	L_Dia_Er
+	Lib_Empty			Dia_NPar, now in src/lib/dialog.cpp
 ; - - - - - - - - - - - - -
-	Lib_Def	Dia_NPar
+	Lib_Empty			Dia_Fonc, now in src/lib/dialog.cpp
 ; - - - - - - - - - - - - -
-	move.w	#EDia_NPar,Dia_Error(a4)
-	Rbra	L_Dia_Er
+	Lib_Empty			Dia_Synt, now in src/lib/dialog.cpp
 ; - - - - - - - - - - - - -
-	Lib_Def	Dia_Fonc
+	Lib_Empty			Dia_Er, now in src/lib/dialog.cpp
 ; - - - - - - - - - - - - -
-	move.w	#EDia_FCall,Dia_Error(a4)
-	Rbra	L_Dia_Er
-; - - - - - - - - - - - - -
-	Lib_Def	Dia_Synt
-; - - - - - - - - - - - - -
-	move.w	#EDia_Syntax,Dia_Error(a4)
-	Rbra	L_Dia_Er
-; - - - - - - - - - - - - -
-	Lib_Def	Dia_Er
-; - - - - - - - - - - - - -
-	move.l	a6,d0
-	sub.l	Dia_Programs(a4),d0
-	move.w	d0,Dia_ErrorPos(a4)
-	Rbra	L_Dia_Quit
-; - - - - - - - - - - - - -
-	Lib_Def	Dia_Quit
-; - - - - - - - - - - - - -
-	move.l	Dia_Sp(a4),sp
-	move.w	Dia_Error(a4),d0
-	movem.l	(sp)+,d2-d7/a2/a3/a6
-	rts
+	Lib_Empty			Dia_Quit, now in src/lib/dialog.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					CHRGET rapide...
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	Dia_Chr
-; - - - - - - - - - - - - -
-Dia_Chr	moveq	#0,d0
-.Loop	move.b	(a6)+,d0
-	bmi.s	.Loop
-	move.w	d0,a0
-	move.b	.Codes(pc,d0.w),d0
-	bmi.s	.Loop
-	move.w	d0,CCR
-	exg	d0,a0
-	rts
-.Codes	dc.b	%00100		*  0 " " Fin
-	dc.b	$80+%00000	*  1 " "
-	dc.b	$80+%00000	*  2 " "
-	dc.b	$80+%00000	*  3 " "
-	dc.b	$80+%00000	*  4 " "
-	dc.b	$80+%00000	*  5 " "
-	dc.b	$80+%00000	*  6 " "
-	dc.b	$80+%00000	*  7 " "
-	dc.b	$80+%00000	*  8 " "
-	dc.b	$80+%00000	*  9 " "
-	dc.b	$80+%00000	* 10 " "
-	dc.b	$80+%00000	* 11 " "
-	dc.b	$80+%00000	* 12 " "
-	dc.b	$80+%00000	* 13 " "
-	dc.b	$80+%00000	* 14 " "
-	dc.b	$80+%00000	* 15 " "
-	dc.b	$80+%00000	* 16 " "
-	dc.b	$80+%00000	* 17 " "
-	dc.b	$80+%00000	* 18 " "
-	dc.b	$80+%00000	* 19 " "
-	dc.b	$80+%00000	* 20 " "
-	dc.b	$80+%00000	* 21 " "
-	dc.b	$80+%00000	* 22 " "
-	dc.b	$80+%00000	* 23 " "
-	dc.b	$80+%00000	* 24 " "
-	dc.b	$80+%00000	* 25 " "
-	dc.b	$80+%00000	* 26 " "
-	dc.b	$80+%00000	* 27 " " Escape
-	dc.b	$80+%00000	* 28 " "
-	dc.b	$80+%00000	* 29 " "
-	dc.b	$80+%00000	* 30 " "
-	dc.b	$80+%00000	* 31 " "
-
-	dc.b	$80+%00000	* 32 " " 0
-	dc.b	%00011		* 33 "!" 1
-	dc.b	%00011		* 34 """ 2
-	dc.b	%00011		* 35 "#" 3
-	dc.b	%01001		* 36 "$" 4
-	dc.b	%01001		* 37 "%" 5
-	dc.b	%00011		* 38 "&" 6
-	dc.b	%00011		* 39 "'" 7
-	dc.b	$80+%00000	* 40 "(" 8
-	dc.b	$80+%00000	* 41 ")" 9
-	dc.b	%00011		* 42 "*" 10
-	dc.b	%00011		* 43 "+" 11
-	dc.b	%00000		* 44 "," 12
-	dc.b	%00011		* 45 "-" 13
-	dc.b	$80+%00000	* 46 "." 14
-	dc.b	%00011		* 47 "/" 15
-	dc.b	%01001		* 48 "0"
-	dc.b	%01001		* 49 "1"
-	dc.b	%01001		* 50 "2"
-	dc.b	%01001		* 51 "3"
-	dc.b	%01001		* 52 "4"
-	dc.b	%01001		* 53 "5"
-	dc.b	%01001		* 54 "6"
-	dc.b	%01001		* 55 "7"
-	dc.b	%01001		* 56 "8"
-	dc.b	%01001		* 57 "9"
-	dc.b	%00000		* 58 ":"
-	dc.b	%00000		* 59 ";"
-	dc.b	%00011		* 60 "<"
-	dc.b	%00011		* 61 "="
-	dc.b	%00011		* 62 ">"
-	dc.b	%00011		* 63 "?"
-	dc.b	%00011		* 64 "@"
-	dc.b	%00001		* 65 "A"
-	dc.b	%00001		* 66 "B"
-	dc.b	%00001		* 67 "C"
-	dc.b	%00001		* 68 "D"
-	dc.b	%00001		* 69 "E"
-	dc.b	%00001		* 70 "F"
-	dc.b	%00001		* 71 "G"
-	dc.b	%00001		* 72 "H"
-	dc.b	%00001		* 73 "I"
-	dc.b	%00001		* 74 "J"
-	dc.b	%00001		* 75 "K"
-	dc.b	%00001		* 76 "L"
-	dc.b	%00001		* 77 "M"
-	dc.b	%00001		* 78 "O"
-	dc.b	%00001		* 79 "P"
-	dc.b	%00001		* 80 "Q"
-	dc.b	%00001		* 81 "R"
-	dc.b	%00001		* 82 "S"
-	dc.b	%00001		* 83 "T"
-	dc.b	%00001		* 84 "U"
-	dc.b	%00001		* 85 "V"
-	dc.b	%00001		* 86 "K"
-	dc.b	%00001		* 87 "W"
-	dc.b	%00001		* 88 "X"
-	dc.b	%00001		* 89 "Y"
-	dc.b	%00001		* 90 "Z"
-	dc.b	%00011		* 91 "["
-	dc.b	%00011		* 92 "\"
-	dc.b	%00011		* 93 "]"
-	dc.b	%00011		* 94 "^"
-	dc.b	%00011		* 95 " "
-	dc.b	%00000		* 96 "`"
-	dc.b	$80+%00000	* 97 "a"
-	dc.b	$80+%00000	* 98 "b"
-	dc.b	$80+%00000	* 99 "c"
-	dc.b	$80+%00000	* 100 "d"
-	dc.b	$80+%00000	* 101 "e"
-	dc.b 	$80+%00000	* 102 "f"
-	dc.b	$80+%00000	* 103 "g"
-	dc.b	$80+%00000	* 104 "h"
-	dc.b	$80+%00000	* 105 "i"
-	dc.b	$80+%00000	* 106 "j"
-	dc.b	$80+%00000	* 107 "k"
-	dc.b	$80+%00000	* 108 "l"
-	dc.b	$80+%00000	* 109 "m"
-	dc.b	$80+%00000	* 110 "n"
-	dc.b	$80+%00000	* 111 "o"
-	dc.b	$80+%00000	* 112 "p"
-	dc.b	$80+%00000	* 113 "q"
-	dc.b	$80+%00000	* 114 "r"
-	dc.b	$80+%00000	* 115 "s"
-	dc.b	$80+%00000	* 116 "t"
-	dc.b	$80+%00000	* 117 "u"
-	dc.b	$80+%00000	* 118 "v"
-	dc.b	$80+%00000	* 119 "w"
-	dc.b	$80+%00000	* 120 "x"
-	dc.b	$80+%00000	* 121 "y"
-	dc.b	$80+%00000	* 122 "z"
-	dc.b	$80+%00000	* 123 "{"
-	dc.b	$80+%00011	* 124 "|"
-	dc.b	$80+%00000	* 125 "}"
-	dc.b	$80+%00000	* 126 "~"
-	dc.b	$80+%00000	* 127 ""
-	even
+	Lib_Empty			Dia_Chr, now in src/lib/dialog.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					Prend un chiffre
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	Dia_FChif
-; - - - - - - - - - - - - -
-	moveq	#0,d1
-	cmp.b	#"%",d0
-	beq.s	.Bin
-	cmp.b	#"$",d0
-	beq.s	.Hex
-	sub.b	#"0",d0
-	move.b	d0,d1
-	moveq	#0,d0
-.Loop	Rbsr	L_Dia_ChrC
-	bmi.s	.Fini
-	cmp.b	#10,d0
-	bcc.s	.Fini
-	add.l	d1,d1
-	move.l	d1,a0
-	lsl.l	#2,d1
-	add.l	a0,d1
-	add.l	d0,d1
-	bra.s	.Loop
-.Fini	move.l	d1,-(a3)
-	addq.l	#1,d7
-	subq.l	#1,a6
-	rts
-; En binaire
-; ~~~~~~~~~~
-.Bin	Rbsr	L_Dia_ChrC
-	bmi.s	.Fini
-	cmp.b	#2,d0
-	bcc.s	.Fini
-	lsl.l	#1,d1
-	or.b	d0,d1
-	bra.s	.Bin
-; En hexa
-; ~~~~~~~
-.Hex	Rbsr	L_Dia_ChrC
-	bmi.s	.Fini
-	cmp.b	#10,d0
-	bcs.s	.Hx1
-	add.b	#"0"-"A",d0
-	bmi.s	.Fini
-	cmp.b	#6,d0
-	bcc.s	.Fini
-	add.b	#10,d0
-.Hx1	lsl.l	#4,d1
-	or.b	d0,d1
-	bra.s	.Hex
+	Lib_Empty			Dia_FChif, now in src/lib/dialog.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					CHRGET SPECIAL CHIFFRES
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	Dia_ChrC
-; - - - - - - - - - - - - -
-	move.b	(a6)+,d0
-	sub.b	#"0",d0
-	rts
+	Lib_Empty			Dia_ChrC, now in src/lib/dialog.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					Conversion Decimal>>>ascii
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	Dia_DecToAsc
-; - - - - - - - - - - - - -
-	movem.l	a1/d0-d3,-(sp)
-	tst.l	d0
-	bpl.s	.Pos
-	move.b	#"-",(a0)+
-	neg.l	d0
-.Pos	lea	.MDix(pc),a1
-	move.l	(a1)+,d1
-	moveq	#0,d3
-.Loop   moveq	#-1,d2
-.Lp	addq.b 	#1,d2
-        sub.l 	d1,d0
-        bcc.s 	.Lp
-        add.l 	d1,d0
-	move.l	(a1)+,d1
-	beq.s	.Put
-	tst.b	d2
-	bne.s	.Put
-	tst.w	d3
-	beq.s	.Loop
-.Put	add.b	#"0",d2
-	move.b	d2,(a0)+
-	addq.w	#1,d3
-	tst.l	d1
-	bne.s	.Loop
-	movem.l	(sp)+,a1/d0-d3
-	rts
-; Multiples de 10
-.MDix	dc.l 1000000000,100000000,10000000,1000000
-        dc.l 100000,10000,1000,100,10,1,0
+	Lib_Empty			Dia_DecToAsc, now in src/lib/dialog.cpp
 
 
 ;_____________________________________________________________________________
@@ -14325,19 +9047,7 @@ Dia_Chr	moveq	#0,d0
 ; _____________________________
 ;
 ; - - - - - - - - - - - - -
-	Lib_Def	Bt_InitList
-; - - - - - - - - - - - - -
-	movem.l	a2/d2,-(sp)
-	move.l	a0,a2
-	move.w	d0,d2
-.Loop	Rbsr	L_Bt_Init
-	lea	Bt_Long(a2),a2
-	move.l	a2,a0
-	move.w	d2,d0
-	tst.w	(a0)
-	bne.s	.Loop
-	movem.l	(sp)+,a2/d2
-	rts
+	Lib_Int	Bt_InitList		src/lib/dialog.cpp
 
 ; __________________________________________________
 ;
@@ -14349,32 +9059,7 @@ Dia_Chr	moveq	#0,d0
 ; _______________________________
 ;
 ; - - - - - - - - - - - - -
-	Lib_Def	Bt_Init
-; - - - - - - - - - - - - -
-	movem.l	a2/d2-d5,-(sp)
-	move.w	d0,d2
-	move.l	a0,a2
-	Rbsr	L_Bt_CPos
-	tst.w	d2
-	beq.s	.Skip
-	Rbsr	L_Bt_CDraw
-.Skip	move.w	Bt_Zone(a2),d1
-	move.w	Bt_X(a2),d2
-	move.w	Bt_Y(a2),d3
-	moveq	#0,d0
-	move.b	Bt_Dx(a2),d0
-	add.w	d0,d2
-	move.b	Bt_Dy(a2),d0
-	add.w	d0,d3
-	move.w	d2,d4
-	move.w	d3,d5
-	move.b	Bt_Sx(a2),d0
-	add.w	d0,d4
-	move.b	Bt_Sy(a2),d0
-	add.w	d0,d5
-	SyCall	SetZone
-	movem.l	(sp)+,a2/d2-d5
-	rts
+	Lib_Int	Bt_Init		src/lib/dialog.cpp
 
 ; __________________________________________________
 ;
@@ -14385,11 +9070,7 @@ Dia_Chr	moveq	#0,d0
 ; _______________________________
 ;
 ; - - - - - - - - - - - - -
-	Lib_Def	Bt_End
-; - - - - - - - - - - - - -
-	move.w	Bt_Zone(a0),d1
-	SyCall	RazZone
-	rts
+	Lib_Int	Bt_End		src/lib/dialog.cpp
 
 ; __________________________________________________
 ;
@@ -14400,86 +9081,24 @@ Dia_Chr	moveq	#0,d0
 ; _______________________________
 ;
 ; - - - - - - - - - - - - -
-	Lib_Def	Bt_Gere
-; - - - - - - - - - - - - -
-	movem.l	d2/a2,-(sp)
-	move.l	a0,a2
-	SyCall	MouseKey
-	move.w	d1,-(sp)
-	and.w	#$03,d1
-	beq.s	.BNone
-	SyCall	GetZone
-	swap	d1
-.ELoop	cmp.w	Bt_Zone(a2),d1
-	beq.s	.Down
-	lea	Bt_Long(a2),a2
-	tst.w	Bt_Number(a2)
-	bne.s	.ELoop
-.BNone	moveq	#0,d0
-.BOut	move.w	(sp)+,d1
-	movem.l	(sp)+,d2/a2
-	tst.l	d0
-	rts
-.Down	bsr	RBt_Down
-	bra.s	.BOut
-; On appuie sur un bouton A2
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~
-RBt_Down
-	btst	#Bt_FlagOnOf,Bt_Flags(a2)
-	bne.s	.OOf
-; One shot
-	eor.w	#1,Bt_Pos(a2)
-	Rbsr	L_Bt_CDraw
-	Rbsr	L_Dia_NoMKey
-	eor.w	#1,Bt_Pos(a2)
-	Rbsr	L_Bt_CDraw
-	Rbsr	L_Bt_CChange
-	move.l	a2,d0
-	rts
-; On / Off
-.OOf	eor.w	#1,Bt_Pos(a2)
-	Rbsr	L_Bt_CDraw
-	btst	#Bt_FlagNoWait,Bt_Flags(a2)
-	bne.s	.WSkip2
-	Rbsr	L_Dia_NoMKey
-.WSkip2	bset	#Bt_FlagNew,Bt_Flags(a2)
-	Rbsr	L_Bt_CChange
-	move.l	a2,d0
-	rts
+	Lib_Int	Bt_Gere		src/lib/dialog.cpp
 
 ; Appelle la routine de modification bouton
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ; - - - - - - - - - - - - -
-	Lib_Def	Bt_CChange
-; - - - - - - - - - - - - -
-	move.b	Bt_RChange(a2),d0
-	Rbne	L_Bt_Call
-	rts
+	Lib_Empty			Bt_CChange, now in src/lib/dialog.cpp
 ; Ramene la position du bouton
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ; - - - - - - - - - - - - -
-	Lib_Def	Bt_CPos
-; - - - - - - - - - - - - -
-	move.b	Bt_RPos(a2),d0
-	Rbne	L_Bt_Call
-	rts
+	Lib_Empty			Bt_CPos, now in src/lib/dialog.cpp
 ; Va dessiner un bouton
 ; ~~~~~~~~~~~~~~~~~~~~~
 ; - - - - - - - - - - - - -
-	Lib_Def	Bt_CDraw
-; - - - - - - - - - - - - -
-	move.b	Bt_RDraw(a2),d0
-	Rbne	L_Bt_Call
-	rts
+	Lib_Empty			Bt_CDraw, now in src/lib/dialog.cpp
 ; Appelle la routine
 ; ~~~~~~~~~~~~~~~~~~
 ; - - - - - - - - - - - - -
-	Lib_Def	Bt_Call
-; - - - - - - - - - - - - -
-	move.l	Bt_Routines(a2),a0
-	ext.w	d0
-	lsl.w	#2,d0
-	jmp	-4(a0,d0.w)
+	Lib_Empty			Bt_Call, now in src/lib/dialog.cpp
 
 ;_____________________________________________________________________________
 ;
@@ -14495,55 +9114,12 @@ RBt_Down
 ; _______________________________
 ;
 ; - - - - - - - - - - - - -
-	Lib_Def	Sl_Init
-; - - - - - - - - - - - - -
-	movem.l	d2-d5/a2,-(sp)
-	move.l	a0,a2
-; Initialise les zones
-	move.w	Sl_Zone(a2),d1
-	beq.s	.SkipZ
-	move.w	Sl_X(a2),d2
-	move.w	Sl_Y(a2),d3
-	move.w	d2,d4
-	move.w	d3,d5
-	add.w	Sl_Sx(a2),d4
-	add.w	Sl_Sy(a2),d5
-	sub.w	Sl_ZDx(a2),d2
-	sub.w	Sl_ZDy(a2),d3
-	add.w	Sl_ZDx(a2),d4
-	add.w	Sl_ZDy(a2),d5
-	SyCall	SetZone
-.SkipZ
-; Update les valeurs
-	moveq	#0,d0
-	Rbsr	L_Sl_Call
-; X/Y
-	move.w	Sl_X(a2),Sl_Start(a2)
-	move.w	Sl_Sx(a2),Sl_Size(a2)
-	btst	#Sl_FlagVertical,Sl_Flags(a2)
-	beq.s	.Skip
-	move.w	Sl_Y(a2),Sl_Start(a2)
-	move.w	Sl_Sy(a2),Sl_Size(a2)
-.Skip
-; Va dessiner
-	moveq	#0,d0
-	move.l	a2,a0
-	Rbsr	L_Sl_Draw
-; Ok!
-	moveq	#0,d0
-	movem.l	(sp)+,d2-d5/a2
-	rts
+	Lib_Int	Sl_Init		src/lib/dialog.cpp
 
 ; Appel d'une routine slider
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~
 ; - - - - - - - - - - - - -
-	Lib_Def	Sl_Call
-; - - - - - - - - - - - - -
-	move.l	Sl_Routines(a2),d1
-	bne.s	.Call
-	rts
-.Call	move.l	d1,a0
-	jmp	0(a0,d0.w)
+	Lib_Empty			Sl_Call, now in src/lib/dialog.cpp
 
 ; __________________________________________________
 ;
@@ -14554,159 +9130,7 @@ RBt_Down
 ; _______________________________
 ;
 ; - - - - - - - - - - - - -
-	Lib_Def	Sl_Clic
-; - - - - - - - - - - - - -
-	movem.l	a2-a2/d2-d7,-(sp)
-	move.l	a0,a2
-; Active le slider
-	moveq	#0,d0
-	Rbsr	L_Sl_Call
-; Souris
-	bsr	Sl_XYMouEc
-	move.w	d2,d0
-	sub.w	Sl_Start(a2),d0
-	cmp.w	Sl_Mouse1(a2),d0
-	bcs	.Sl_Down
-	cmp.w	Sl_Mouse2(a2),d0
-	bcc	.Sl_Up
-;
-; POSITIONNE DIRECTEMENT
-; ~~~~~~~~~~~~~~~~~~~~~~
-.Direct	move.w	d0,d7
-	sub.w	Sl_Mouse1(a2),d7
-	move.l	a2,a0
-	moveq	#-1,d0
-	Rbsr	L_Sl_Draw
-.loop	sub.w	d7,d2
-	bpl.s	.skipu
-	moveq	#0,d2
-.skipu	sub.w	Sl_Start(a2),d2
-	bpl.s	.skip0
-	moveq	#0,d2
-.skip0	move.w	Sl_Global(a2),d0
-	addq.w	#1,d0
-	mulu	d0,d2
-	move.w	Sl_Size(a2),d1
-	addq.w	#1,d1
-	divu	d1,d2
-	move.w	Sl_Global(a2),d0
-	sub.w	Sl_Window(a2),d0
-	bpl.s	.Skk
-	moveq	#0,d0
-.Skk	cmp.w	d0,d2
-	ble.s	.skip1
-	move.w	d0,d2
-.skip1	cmp.w	Sl_Position(a2),d2
-	beq.s	.skip
-	move.w	d2,Sl_Position(a2)
-	move.l	a2,a0
-	moveq	#-1,d0
-	Rbsr	L_Sl_Draw
-	SyCall	MouseKey
-	btst	#1,d1
-	beq.s	.skip
-	moveq	#3*4,d0
-	Rbsr	L_Sl_Call
-.skip	SyCall	MouseKey
-	btst	#0,d1
-	beq.s	.out
-	Rbsr	L_Dia_WaitMul
-	Rbsr	L_Dia_Patch
-	bsr	Sl_XYMouEc
-	bra.s	.loop
-.out	moveq	#3*4,d0
-	Rbsr	L_Sl_Call
-	Rbsr	L_Dia_Patch
-	bra	.End
-
-;	sub.w	d7,d2
-;	bpl.s	.skip0
-;	moveq	#0,d2
-;.skip0	move.w	Sl_Global(a2),d0
-;	mulu	d0,d2
-;	move.w	Sl_Window(a2),d1
-;	divu	d1,d2
-;	lsr.w	#3,d2
-;	move.w	Sl_Global(a2),d0
-;	sub.w	Sl_Window(a2),d0
-;	addq.w	#1,d0
-;	bmi.s	.skip
-;	cmp.w	d0,d2
-;	bcs.s	.skip1
-;	move.w	d0,d2
-;.skip1
-;
-; Slider-> Gauche/Haut
-; ~~~~~~~~~~~~~~~~~~~~
-.Sl_Down
-	move.l	a2,a0
-	moveq	#-1,d0
-	Rbsr	L_Sl_Draw
-	move.w	Sl_Position(a2),d0
-	sub.w	Sl_Scroll(a2),d0
-	bpl.s	.Sld0
-	moveq	#0,d0
-.Sld0	cmp.w	Sl_Position(a2),d0
-	beq.s	.Sld1
-	move.w	d0,Sl_Position(a2)
-	moveq	#1*4,d0
-	Rbsr	L_Sl_Call
-	Rbsr	L_Dia_Patch
-.Sld1	SyCall	MouseKey
-	btst	#0,d1
-	beq.s	.End
-	btst	#1,d1
-	bne.s	.Sl_Down
-	Rbsr	L_Dia_WaitMul
-	bra.s	.Sld1
-;
-; Slider-> Droite/Bas
-; ~~~~~~~~~~~~~~~~~~~
-.Sl_Up
-	move.l	a2,a0
-	moveq	#-1,d0
-	Rbsr	L_Sl_Draw
-	move.w	Sl_Position(a2),d0
-	add.w	Sl_Scroll(a2),d0
-	move.w	d0,d1
-	add.w	Sl_Window(a2),d1
-	cmp.w	Sl_Global(a2),d1
-	bls.s	.Slu0
-	move.w	Sl_Global(a2),d0
-	sub.w	Sl_Window(a2),d0
-	bpl.s	.Slu0
-	moveq	#0,d0
-.Slu0	cmp.w	Sl_Position(a2),d0
-	beq.s	.Slu1
-	move.w	d0,Sl_Position(a2)
-	moveq	#2*4,d0
-	Rbsr	L_Sl_Call
-	Rbsr	L_Dia_Patch
-.Slu1	SyCall	MouseKey
-	btst	#0,d1
-	beq.s	.End
-	btst	#1,d1
-	bne.s	.Sl_Up
-	Rbsr	L_Dia_WaitMul
-	bra.s	.Slu1
-;
-; Fin de la gestion
-; ~~~~~~~~~~~~~~~~~
-.End	move.l	a2,a0
-	moveq	#0,d0
-	Rbsr	L_Sl_Draw
-	movem.l	(sp)+,a2-a2/d2-d7
-	rts
-; Routinette: XY Mouse dans l'ecran courant, dans le bon sens
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Sl_XYMouEc
-	SyCall	XyMou
-	moveq	#0,d3
-	SyCall	XyScr
-	btst	#Sl_FlagVertical,Sl_Flags(a2)
-	bne.s	.Skip
-	move.w	d1,d2
-.Skip	rts
+	Lib_Int	Sl_Clic		src/lib/dialog.cpp
 
 ; __________________________________________________
 ;
@@ -14718,46 +9142,7 @@ Sl_XYMouEc
 ; _______________________________
 ;
 ; - - - - - - - - - - - - -
-	Lib_Def	Sl_Draw
-; - - - - - - - - - - - - -
-	movem.l	a2/d2-d7,-(sp)
-	move.l	a0,a2
-; Change les encres
-	lea	Sl_Inactive(a2),a0
-	tst.w	d0
-	beq.s	.Skip
-	lea	Sl_Active(a2),a0
-.Skip	movem.w	(a0),d0-d7
-	EcCall	SetSli
-; Writing JAM2
-	move.l	T_RastPort(a5),a1
-	moveq	#1,d0
-	GfxCa5	SetDrMd
-; Dessine le slider
-	lea	Sl_Sx(a2),a0
-	movem.w	(a0),d1-d7
-	btst	#Sl_FlagVertical,Sl_Flags(a2)
-	bne.s	.Vert
-; Slider horizontal
-	EcCall	HorSli
-	lea	Sl_Sx(a2),a2
-	movem.w	(a2),d1-d7
-	move.w	d1,d0
-	bra.s	.Pour
-; Slider vertical
-.Vert	EcCall	VerSli
-	lea	Sl_Sx(a2),a2
-	movem.w	(a2),d1-d7
-	move.w	d2,d0
-; Calcule les pourcentages
-.Pour	EcCall	PourSli
-	add.w	d6,d7			Plus taille du centre
-	move.w	d6,Sl_Mouse1(a2)
-	move.w	d7,Sl_Mouse2(a2)
-; Ok
-	moveq	#0,d0
-	movem.l	(sp)+,a2/d2-d7
-	rts
+	Lib_Int	Sl_Draw		src/lib/dialog.cpp
 
 ; _________________________________________________
 ;
@@ -14765,15 +9150,7 @@ Sl_XYMouEc
 ; _________________________________________________
 ;
 ; - - - - - - - - - - - - -
-	Lib_Def	Dia_NoMKey
-; - - - - - - - - - - - - -
-	movem.l	d0-d1/a0-a1,-(sp)
-.Lp	Rbsr	L_Dia_WaitMul
-	SyCall	MouseKey
-	and.w	#$01,d1
-	bne.s	.Lp
-	movem.l	(sp)+,d0-d1/a0-a1
-	rts
+	Lib_Int	Dia_NoMKey		src/lib/dialog.cpp
 
 ; _________________________________________________
 ;
@@ -14781,28 +9158,14 @@ Sl_XYMouEc
 ; _________________________________________________
 ;
 ; - - - - - - - - - - - - -
-	Lib_Def	Dia_ClearKey
-; - - - - - - - - - - - - -
-	movem.l	d0-d1/a0-a1,-(sp)
-	SyCall	ClearKey
-	clr.l	T_ClLast(a5)
-	movem.l	(sp)+,d0-d1/a0-a1
-	rts
+	Lib_Int	Dia_ClearKey		src/lib/dialog.cpp
 ; _________________________________________________
 ;
 ;	Appel du patch
 ; _________________________________________________
 ;
 ; - - - - - - - - - - - - -
-	Lib_Def	Dia_Patch
-; - - - - - - - - - - - - -
-	movem.l	d0/a0,-(sp)
-	move.l	Patch_ScCopy(a5),d0
-	beq.s	.Skip
-	move.l	d0,a0
-	jsr	(a0)
-.Skip	movem.l	(sp)+,d0/a0
-	rts
+	Lib_Empty			Dia_Patch, now in src/lib/dialog.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 	FIN DES DIALOGUES

@@ -31,15 +31,24 @@ class Display:
         _x11.XCloseDisplay(self.d)
 
     def key(self, keysym, hold=0.05):
-        """Press and release a key given by its X keysym name ("a", "Return")."""
-        code = _x11.XKeysymToKeycode(self.d, _x11.XStringToKeysym(keysym.encode()))
-        if not code:
-            raise ValueError(f'unknown key {keysym}')
-        _xtst.XTestFakeKeyEvent(self.d, code, 1, 0)
-        _x11.XFlush(self.d)
-        time.sleep(hold)
-        _xtst.XTestFakeKeyEvent(self.d, code, 0, 0)
-        _x11.XFlush(self.d)
+        """Press and release a key given by its X keysym name ("a", "Return"),
+        with "shift+", "ctrl+" or "alt+" in front for modifiers."""
+        *mods, name = keysym.split('+') if len(keysym) > 1 else [keysym]
+        modifiers = {'shift': 'Shift_L', 'ctrl': 'Control_L', 'alt': 'Alt_L'}
+        codes = []
+        for k in [modifiers[m] for m in mods] + [name]:
+            code = _x11.XKeysymToKeycode(self.d, _x11.XStringToKeysym(k.encode()))
+            if not code:
+                raise ValueError(f'unknown key {k}')
+            codes.append(code)
+        for code in codes:
+            _xtst.XTestFakeKeyEvent(self.d, code, 1, 0)
+            _x11.XFlush(self.d)
+            time.sleep(hold)
+        for code in reversed(codes):
+            _xtst.XTestFakeKeyEvent(self.d, code, 0, 0)
+            _x11.XFlush(self.d)
+            time.sleep(hold)
 
     def keys(self, keysyms, gap=0.05):
         for k in keysyms:

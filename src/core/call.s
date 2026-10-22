@@ -79,6 +79,35 @@ _amos_eval
 		movem.l	(sp)+,d2-d7/a2-a6
 		rts
 
+; void amos_call_all(AllRegs *r, const void *fn)
+;
+; Calls fn with all of d0-d7/a0-a6 from *r (dialog callbacks get the
+; dialog's a3, a4 and a6), stores them back. The context is restored.
+		xdef	_amos_call_all
+_amos_call_all
+		movem.l	d2-d7/a2-a6,-(sp)
+		GetCtx	a0
+		movem.l	(a0),d2-d7
+		movem.l	d2-d7,-(sp)
+		move.l	4+44+24(sp),a0		r
+		move.l	8+44+24(sp),a1		fn
+		move.l	a0,-(sp)
+		pea	.Back(pc)
+		move.l	a1,-(sp)
+		movem.l	(a0),d0-d7/a0-a6
+		rts				to fn, which returns to .Back
+.Back		move.l	a0,-(sp)
+		move.l	4(sp),a0
+		movem.l	d0-d7,(a0)
+		move.l	(sp)+,8*4(a0)
+		movem.l	a1-a6,9*4(a0)
+		addq.l	#4,sp
+		movem.l	(sp)+,d2-d7
+		GetCtx	a0
+		movem.l	d2-d7,(a0)
+		movem.l	(sp)+,d2-d7/a2-a6
+		rts
+
 ; void amos_goto(const void *fn, uint32_t d0)
 ;
 ; Jumps to fn with d0 and the interpreter registers. Never returns: used to

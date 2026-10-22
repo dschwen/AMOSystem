@@ -121,26 +121,78 @@ the number to text conversions.
 
 ### Deliberate differences from the original
 
+Bugs of the assembler that the C++ fixes. Everything else keeps the
+original behaviour, quirks included (the tests record the original
+binaries' results). Where a fix changes a recorded result, the golden file
+has the corrected one.
+
+Strings and numbers
 - `Flip$` took its length from a register whose high word was not cleared.
   Depending on what ran before, it failed with "out of string space"
   (error 11). It now always works; `tests/golden/strings.txt` has the
   corrected line.
-- `Dir`/`Dir First$` on a file name relative to the current directory: the
-  assembler took the file part from a stale register and lost the filter.
-- Some crashes on bad input become errors or are avoided: `Bank Swap` of
-  two banks that do not exist, `Dir/W` without a screen, `PLoad` when the
-  bank address happened to end in $0000 (reported "out of memory").
-- Menus: an error inside the menu (no memory for a background) restored the
-  registers in the wrong order and crashed; a `(PR)` object crashed `Menu
-  Calc` (and the menu in direct mode); `Bank To Menu` kept stale background
-  and `(RE)` memory pointers from the menu the bank was made from;
-  `Menu Called`/`Menu Once` with a level instead of coordinates wrote to a
-  random address; the inactive object of an item was never freed; a
-  background save on a screen of more than 64K per plane was put back at
-  the wrong place; `Menu$` reported an object as compiled when there was
-  no memory for it.
+
+Banks, files and directories
+- `Bank Swap` of two banks that do not exist crashed; it is now an error.
+- `Dir`/`Dir First$` on a file name relative to the current directory took
+  the file part from a stale register and lost the filter.
+- `Dir/W` without a screen crashed.
+- `PLoad` reported "out of memory" when the bank address happened to end in
+  $0000.
+
+IFF
+- `Iff Anim` stopped on an `illegal` instruction left in the code (a
+  debugger break).
+- An IFF picture with an empty `CMAP` chunk made the palette loop wrap
+  around (a `dbra` with a zero count) and overwrite memory.
+
+Menus
+- An error inside the menu (no memory for a background) restored the
+  registers in the wrong order and crashed.
+- A `(PR)` object crashed `Menu Calc`, which ran the procedure with the
+  registers of the last menu shown; `Menu Calc` now saves them too.
+- In direct mode a `(PR)` object was not skipped: its name ran as object
+  commands.
+- `Bank To Menu` kept the background and `(RE)` memory pointers of the menu
+  the bank was made from, and freed them later.
+- `Menu Called`/`Menu Once` with a level instead of coordinates wrote to a
+  random address; they now do nothing.
+- The inactive object of an item was never freed.
+- A background save on a screen of more than 64K per plane was put back at
+  the wrong place (the offset was kept in a word).
+- `Menu$` reported an object as compiled when there was no memory for it
+  (it returned the length); it is now "out of memory".
+
+Interface (dialogs)
+- `VText` with an empty string left the stack unbalanced and crashed.
+- A division whose divisor has a zero low word (`65536`) caused a
+  division-by-zero trap; it is now a syntax error, like a zero divisor.
+- `IL` (an "illegal" debugger trap, which also hides the Inactive List
+  instruction of the same name) is a syntax error instead of a crash.
+- `Dialog Run` of a program without `RUn` returned whatever a register
+  held (often 1000 plus the number of the first edit zone); it now
+  returns 0.
+- While `RUn` waits, an action restarted its timer depending on a long word
+  on the stack instead of the channel's timer.
+- A button with `NW` held down decided on stopping the dialog from a flag
+  read past the end of the button (`Dia_Flags` of the channel structure
+  applied to the zone); it now uses the zone's `BQ` flag.
+- An error of the program outside the interpreter loop (in `Dialog Update`
+  or in the zone handling between instructions) jumped back to a stale
+  stack pointer; it now ends that call with the error.
+- A click in an edit zone while none was being edited (after `Dialog Clr`)
+  wrote through a null pointer.
+- With the mouse over no screen, the line editor compared a leftover
+  register with its screen number; this now counts as outside the line.
+- The zone lists were also searched at their end marker, reading past it.
+- `Dialog Open` of an empty program reported its syntax error at a
+  meaningless position; it is now 0.
 
 ## Assembler compatibility notes
+
+- Fixed in the sources for the build only, without changing the code:
+  `bne.` and `cmp.s` typos that GenAm tolerated, and two Latin-1 characters
+  in `+Editor_Config.s` strings that had been replaced by U+FFFD.
 
 - `+W.s` (AMOS.library) was built with GenIm2, which matches symbols without
   regard to case, so it is assembled with `-nocase`. All other sources need

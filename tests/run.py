@@ -35,9 +35,11 @@ Input: tests/amos/<name>.input scripts keyboard and mouse events (the
 emulator then grabs the input), one command per line:
   sync NAME        wait until the program creates AMOSTEST:out/NAME
   wait SECONDS
-  key KEYSYM       press and release an X key ("a", "Return", "Escape")
+  key KEYSYM       press and release an X key ("a", "Return", "Escape"),
+                   "shift+", "ctrl+" or "alt+" in front for modifiers
   keys TEXT        type the characters of TEXT (letters, digits, space)
-  move DX DY       move the mouse by DX,DY
+  move DX DY       move the mouse by DX,DY in one event
+  glide DX DY      the same in small steps (large moves)
   button N up|down / click N
   shot NAME        screenshot of the display as AMOSTEST:out/<test>_NAME.png,
                    compared like the other results
@@ -113,6 +115,7 @@ uae_cpu_cycle_exact = false
 uae_sound_output = none
 kickstart_file = {kickstart}
 floppy_drive_count = 1
+joystick_port_1 = none
 hard_drive_0 = {hd}
 hard_drive_0_label = AMOSTEST
 hard_drive_0_priority = 10
@@ -279,6 +282,17 @@ def play_input(script, display, out, deadline, name=None, env=None):
                 d.keys([KEYSYMS.get(c, c) for c in ' '.join(args)])
             elif op == 'move':
                 d.move_by(int(args[0]), int(args[1]))
+            elif op == 'glide':
+                # small steps: a large relative move is clipped at the edge
+                # of the X screen, the emulator only sees the clipped part
+                dx, dy = int(args[0]), int(args[1])
+                steps = max(1, (max(abs(dx), abs(dy)) + 19) // 20)
+                done_x = done_y = 0
+                for i in range(1, steps + 1):
+                    x, y = dx * i // steps, dy * i // steps
+                    d.move_by(x - done_x, y - done_y)
+                    done_x, done_y = x, y
+                    time.sleep(0.02)
             elif op == 'button':
                 d.button(int(args[0]), args[1] == 'down')
             elif op == 'shot':
