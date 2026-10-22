@@ -8,7 +8,7 @@
 // callee does to those registers does not come back.
 //
 // The context is per task because the file selector runs Interface code in
-// a task of its own: amos_ctx is the main task's, amos_ctx2 the other's.
+// a task of its own (see core/call.s).
 //
 // Rules for C++ that calls back into the assembler:
 // - A library routine may not return: errors reset the stack to the
@@ -33,15 +33,18 @@ struct Ctx {
     uint8_t *a3, *a4, *a5, *a6;
 };
 
-extern "C" Ctx amos_ctx, amos_ctx2;
-extern "C" const void *amos_task;      // the main task
+// The block of the contexts (core/call.s): the main task, its context, the
+// context of any other task. AMOSPro's, shared with the programs it loads.
+extern "C" uint8_t *amos_bridge;
 
 // The context of the running task (ExecBase->ThisTask)
 inline Ctx &ctx()
 {
     constexpr int ThisTask = 276;
     auto exec = *reinterpret_cast<const uint8_t *const *>(4);
-    return *reinterpret_cast<const void *const *>(exec + ThisTask) == amos_task ? amos_ctx : amos_ctx2;
+    uint8_t *block = amos_bridge;
+    bool main = *reinterpret_cast<const void *const *>(exec + ThisTask) == *reinterpret_cast<void **>(block);
+    return *reinterpret_cast<Ctx *>(block + (main ? 4 : 4 + sizeof(Ctx)));
 }
 
 // The registers of a call into the assembler: d0-d7/a0-a2. d6/d7 start as

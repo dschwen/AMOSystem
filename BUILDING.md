@@ -82,11 +82,15 @@ through into a `Lib_Int`.
   AMOS.library function numbers (`amos::sy::WaitVbl`, `amos::wi::Locate`...).
   `build/gen/lib_routines.h` has the routine numbers (`amos::L_Demande`).
 - The glue saves the interpreter registers (d6-d7/a3-a6) in the task's
-  context, `ctx()`, on every entry into C++: `amos_ctx` for the main task,
-  `amos_ctx2` for any other, which is the file selector's (it runs Interface
-  code in a task of its own while the main task reads the directory). The
-  main task is recorded at startup (`+B.s`). `tc_UserData` is not free for
-  this: AMOS.library keeps its data zone there. Calls back into the assembler run with them:
+  context, `ctx()`, on every entry into C++: one for the main task, one for
+  any other, which is the file selector's (it runs Interface code in a task
+  of its own while the main task reads the directory). The contexts are a
+  block that `amos_bridge` points to (`src/core/call.s`); AMOSPro records
+  its main task in it at startup and passes its address in `T_CBridge` to
+  AMOS.library, whose own copy of the bridge then uses it. (`tc_UserData`
+  is not free for this: AMOS.library keeps its data zone there.)
+  AMOS.library is no longer assembled with `OPT P+`: its code calls C++ in
+  other hunks, which LoadSeg relocates. Calls back into the assembler run with them:
   `lib_call(L_x, regs)` (`JJsr`), `sy_call`/`ec_call`/`wi_call`
   (`SyCall`/`EcCall`/`WiCall`) with d0-d5/a0-a2 in an `amos::Regs`.
 - `error(n)`, `fon_call()` and `lib_jump(L_x, d0)` raise errors. They do not

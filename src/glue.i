@@ -38,17 +38,16 @@ LibRoutine	MACRO
 		ENDM
 
 ; GetCtx An: An = the context of the running task, where CCall keeps
-; d6-d7/a3-a6: amos_ctx for the main task (amos_task), amos_ctx2 for any
-; other (the file selector's)
+; d6-d7/a3-a6. amos_bridge points to the block of the contexts (see
+; core/call.s): the main task, its context, the context of another task.
 GetCtx		MACRO
 		move.l	$4.w,\1
-		move.l	276(\1),\1		ThisTask
-		cmp.l	_amos_task,\1
-		bne.s	.Other\@
-		lea	_amos_ctx,\1
-		bra.s	.Done\@
-.Other\@	lea	_amos_ctx2,\1
-.Done\@
+		move.l	276(\1),-(sp)		ThisTask
+		move.l	_amos_bridge,\1
+		cmpm.l	(\1)+,(sp)+
+		beq.s	.Main\@
+		lea	24(\1),\1
+.Main\@
 		ENDM
 
 ; Call the C function \1 (a0 is lost). Not for interrupt code: an

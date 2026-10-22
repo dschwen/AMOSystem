@@ -308,7 +308,7 @@ HsLong:		equ 	20
 		Rl	OldName,1
 		Rl	WVersion,1
 		Rl	RastPort,1
-		Rl	Libre3,1		Libre!
+		Rl	CBridge,1		The contexts of the C++ code (src/core/call.s)
 		Rl	FontInfos,1
 		Rw	FontILong,1
 		Rw	PaPeek,1

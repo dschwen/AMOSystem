@@ -35,7 +35,7 @@
 ;
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-		OPT	P+
+		OPT	P-		(C++ code is in other hunks; LoadSeg relocates)
 
 ***************************************************************************
 		IFND	EZFlag
@@ -63,6 +63,7 @@ Version	MACRO
 	ENDM
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+		XREF	_amos_bridge
 WDebut	bra	Startall	Cold start
 	bra	Endall		End
 	dc.l	L_Trappe	Length of data zone
@@ -9209,6 +9210,8 @@ IceStart
 
 	lea	W_Base(pc),a0
 	move.l	a5,(a0)
+; The contexts of the C++ code are AMOSPro's (src/core/call.s)
+	move.l	T_CBridge(a5),_amos_bridge
 	lea	SyIn(pc),a0
 	move.l	a0,T_SyVect(a5)
 	bsr	WMemInit

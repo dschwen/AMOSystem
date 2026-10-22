@@ -4,8 +4,11 @@
 ;
 ; The interpreter registers d6-d7/a3-a6 at the last entry into C++ are
 ; kept per task: the file selector runs Interface code in a second task,
-; at the same time as the main one. The main task (amos_task, set by +B.s)
-; uses amos_ctx, any other amos_ctx2.
+; at the same time as the main one. The contexts are a block: the main
+; task (set by +B.s), its context, the context of any other task.
+; amos_bridge points to the block: AMOSPro's own, which it passes in
+; T_CBridge to the programs it loads (AMOS.library...), so that all share
+; it.
 
 		Include	"glue.i"
 
@@ -122,10 +125,13 @@ _amos_goto
 
 		SECTION	.bss,BSS
 
-; The contexts, d6, d7, a3-a6: the main task's and the other one's
-		xdef	_amos_ctx
-		xdef	_amos_ctx2
+; The block: the main task, then the contexts (d6, d7, a3-a6) of the main
+; task and of the other one
 		xdef	_amos_task
-_amos_ctx	ds.l	6
-_amos_ctx2	ds.l	6
 _amos_task	ds.l	1
+		ds.l	6
+		ds.l	6
+
+		SECTION	.data,DATA
+		xdef	_amos_bridge
+_amos_bridge	dc.l	_amos_task

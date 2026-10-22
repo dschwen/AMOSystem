@@ -376,6 +376,7 @@ UserName	dc.w	14
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 SaveSp		dc.l 	0
 		XREF	_amos_task
+		XREF	_amos_bridge
 Panic		dc.l	0
 
 ;		Marqueur de version
@@ -1585,6 +1586,7 @@ CommandX
 ; Start system function of the amos.library
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	move.l	a4,Sys_WAd(a5)
+	move.l	_amos_bridge,T_CBridge(a5)	The C++ contexts, for the library
 	move.l	#"V2.0",d0		Magic!
 	move.w	#$0200,d1		Version d'AMOSPro
 	jsr	12(a4)
