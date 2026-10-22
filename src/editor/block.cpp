@@ -376,6 +376,24 @@ void hide()
 
 } // namespace
 
+namespace amos::ed {
+
+// Ed_BlocOn: marking starts, or the block is forgotten
+void block_on()
+{
+    EditWindow &w = window();
+    if (int16_t(w.Edt_YBloc) >= 0) {
+        hide();
+        return;
+    }
+    w.Edt_YBloc = program_line();
+    w.Edt_XBloc = w.Edt_XCu;
+    w.Edt_YOldBloc = 0;
+    block_cursor();
+}
+
+} // namespace amos::ed
+
 extern "C" {
 // Ed_BlocAff: while marking, the lines between the cursor's old and new
 // line shown again
@@ -400,19 +418,7 @@ void ed_block_show(AllRegs *)
     }
 }
 
-// Ed_BlocOn: marking starts, or the block is forgotten
-void ed_block_on(AllRegs *)
-{
-    EditWindow &w = window();
-    if (int16_t(w.Edt_YBloc) >= 0) {
-        hide();
-        return;
-    }
-    w.Edt_YBloc = program_line();
-    w.Edt_XBloc = w.Edt_XCu;
-    w.Edt_YOldBloc = 0;
-    block_cursor();
-}
+void ed_block_on(AllRegs *) { block_on(); }
 
 void ed_block_cursor(AllRegs *) { block_cursor(); }
 void ed_block_hide(AllRegs *) { hide(); }

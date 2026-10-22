@@ -1,0 +1,26 @@
+wait 12
+key ctrl+y
+key ctrl+shift+Up
+key Down
+key ctrl+y
+key ctrl+y
+wait 0.5
+glide -3000 -3000
+wait 0.3
+glide 200 150
+wait 0.3
+click 1
+wait 0.5
+type Q
+glide 60 40
+wait 0.3
+click 1
+wait 0.5
+click 1
+wait 0.5
+glide 40 60
+wait 0.3
+click 1
+wait 0.5
+type W
+wait 2

@@ -63,6 +63,7 @@
 		XREF	_ed_store_entry,_ed_store_block_entry,_ed_delete_line_entry,_ed_delete_chunk_at_entry
 		XREF	_ed_delete_chunk_entry,_ed_find_line_entry,_ed_next_line_entry
 		XREF	_ed_indent_entry
+		XREF	_ed_mouse_entry
 		XREF	_ed_key_entry,_ed_key_function_entry,_ed_function_keys_entry
 		XREF	_ed_marks_clear_entry,_ed_auto_marks_entry,_ed_set_mark_entry,_ed_goto_mark_entry
 		XREF	_ed_marks_to_addresses_entry,_ed_marks_to_numbers_entry,_ed_marks_change_entry
@@ -1266,220 +1267,14 @@ Ed_Loop
 ; 	Teste la souris
 ; __________________________
 ;
-Ed_Mouse
-
-
-; Une touche?
-; ~~~~~~~~~~~
-	SyCall	MouseKey
-	move.b	d1,Ed_MkIns(a5)
-	cmp.b	Ed_OMKey(a5),d1
-	bne.s	.MkC
-	addq.w	#1,Ed_MkCpt(a5)
-	bra.s	.MkS
-.MkC	clr.w	Ed_MkCpt(a5)
-	move.b	d1,Ed_OMKey(a5)
-.MkS	moveq	#1,d2
-.EdMk0	btst	d2,Ed_MkFl(a5)
-	bne.s	.EdMk1
-; Appuie sur la touche
-	btst	d2,d1
-	beq.s	.EdMk2
-	bset	d2,Ed_MkFl(a5)
-	bset	d2,Ed_MKey(a5)
-	bra.s	.EdMk2
-; Doit relacher la touche
-.EdMk1	bclr	d2,Ed_MKey(a5)
-	btst	d2,d1
-	bne.s	.EdMk2
-	bclr	d2,Ed_MkFl(a5)
-.EdMk2	dbra	d2,.EdMk0
-	move.b	Ed_MkIns(a5),d7
-	and.w	#3,d7
-	beq	Ed_MQuit
-
-; Une macro en route?
-; ~~~~~~~~~~~~~~~~~~~
-	tst.w	EdMa_Tape(a5)
-	bne	EdMa_Stop
-	tst.l	EdMa_Play(a5)
-	beq.s	.PaMacro
-	clr.l	EdMa_Play(a5)
-.PaMacro
-
-; Le menu?
-; ~~~~~~~~
-	btst	#1,d7
-	beq.s	.NoMenu
-	bsr	Ed_MnGere
-	beq	Ed_MEnd
-	bmi.s	.Err
-	moveq	#0,d1
-	bsr	Ed_FCall
-	bra	Ed_MEnd
-.Err	bsr	EdM_Error
-	bra	Ed_MEnd
-.NoMenu
-
-; Une Zone?
-; ~~~~~~~~~
-	SyCall	GetZone
-	cmp.w	#EcEdit,d1
-	bne	Ed_MQuit
-	swap	d1
-	move.w	d1,d6
-; Un bouton du haut?
-	cmp.w	#Ed_BoutonsZones,d1
-	bcc	Ed_MBouton
-; ___________________________
-;
-; Bouge une separation?
-; ___________________________
-;
-	move.w	d6,d0
-	and.w	#$FFF8,d0
-	move.w	d6,d1
-	and.w	#$07,d1
-	cmp.b	#1,d1
-	bne.s	.NoZoHo
-	bsr	Ed_TokCur
-	bsr	Edt_GetAd
-	bsr	Ed_MSepHaut
-	bra	Ed_MEnd
-.NoZoHo
-	cmp.w	#2,d1
-	bne.s	.NoZoBa
-	bsr	Ed_TokCur
-	bsr	Edt_GetAd
-	bsr	Ed_MSepBas
-	bra	Ed_MEnd
-.NoZoBa
-; _____________________
-;
-; Un bouton de fenetre
-; _____________________
-;
-	tst.w	d1
-	beq.s	.NoBt
-	bsr	Edt_GetAd
-	beq.s	.NoBt
-	lea	Edt_Bt1(a0),a0
-	JJsrR	L_Bt_Gere,a1
-	bne	Ed_MEnd
-.NoBt
-; _____________________
-;
-; Changement de fenetre
-; _____________________
-;
-	move.w	d6,d0
-	and.w	#$FFF8,d0
-	cmp.w	Edt_Window(a4),d0
-	beq.s	.Same
-; Doit changer l'�cran actuel
-	bsr	Ed_TokCur
-	bsr	Edt_GetAd
-	beq.s	.Same
-	bsr	Edt_Active
-	bra	Ed_MEnd
-.Same
-
-; ___________________
-;
-; Click dans le texte
-; ___________________
-;
-	SyCall	XyMou
-	moveq	#0,d3
-	SyCall	XyScr
-	SyCall	XyWin
-	move.l	d1,d3
-	or.l	d2,d1
-	bmi	.NoText
-
-; Positionne le curseur
-; ~~~~~~~~~~~~~~~~~~~~~
-	btst	#0,d7
-	beq.s	.NoText
-	move.w	Ed_MkCpt(a5),d0
-	beq.s	.Pos
-	cmp.w	#20,d0
-	bcs	Ed_MQuit
-.Pos
-	add.w	Edt_XPos(a4),d3
-	cmp.w	#250,d3
-	bcc	Ed_MQuit
-	add.w	Edt_YPos(a4),d2
-	cmp.w	Prg_NLigne(a6),d2
-	bhi	Ed_MQuit
-	sub.w	Edt_YPos(a4),d2
-	bsr	Ed_CuOff
-
-	cmp.w	Edt_YCu(a4),d2
-	beq.s	.Notok
-	bsr	Ed_TokCur
-.Notok	move.w	Edt_YCu(a4),d0
-	add.w	Edt_YPos(a4),d0
-	move.w	d0,Edt_YOldBloc(a4)
-
-; Mode bloc / normal
-	cmp.w	Edt_YCu(a4),d2
-	bne.s	.Noe
-	cmp.w	Edt_XCu(a4),d3
-	bne.s	.Noe
-	tst.w	Ed_MkCpt(a5)
-	bne	Ed_MEnd
-	bsr	Ed_BlocOn
-	bra	Ed_MEnd
-; Positionne le curseur
-.Noe	move.w	d2,Edt_YCu(a4)
-	move.w	d3,Edt_XCu(a4)
-	or.b	#EtA_BXY,Edt_EtatAff(a4)
-	bsr	Ed_Loca
-	bra	Ed_MEnd
-.NoText
-; ______________________
-;
-; Click dans les sliders
-; ______________________
-;
-	lea	Edt_SlV(a4),a0
-	cmp.w	Sl_Zone(a0),d6
-	bne.s	.NoSlV
-	bsr	Ed_CuOff
-	bsr	Ed_TokCur
-	JJsrR	L_Sl_Clic,a1
-	bra	Ed_MQuit
-.NoSlV	bra	Ed_MQuit
-
-; ____________________________
-;
-; Click dans un bouton general
-; ____________________________
-;
-Ed_MBouton
-	lea	Ed_Boutons(a5),a0
-	JJsrR	L_Bt_Gere,a1
-	beq.s	Ed_MEnd
-; Appelle la fonction
-	move.l	d0,a0
-	move.w	Bt_Number(a0),d2
-	moveq	#13,d0
-	bsr	Ed_GetSysteme
-	move.b	-1(a0,d2.w),d2
-	subq.w	#1,d2
-	bsr	Ed_FCall
-Ed_MEnd
-	clr.b	Ed_CuFlag(a5)
-	moveq	#-1,d0
-	rts
-Ed_MQuit
-	moveq	#0,d0
-	rts
+; The mouse: src/editor/mouse.cpp
+Ed_Mouse	jmp	_ed_mouse_entry
 ; ____________________________
 ;
 ; CHANGEMENT DE LA SEPARATION du haut, fenetre A0
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		xdef	_ed_separation_top
+_ed_separation_top
 Ed_MSepHaut
 	movem.l	a2-a6/d2-d7,-(sp)
 	move.l	a0,a4
@@ -1520,6 +1315,8 @@ Ed_RShLimits
 ;
 ; CHANGEMENT DE LA SEPARATION du bas, fenetre A0
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		xdef	_ed_separation_bottom
+_ed_separation_bottom
 Ed_MSepBas
 	movem.l	a2-a6/d2-d7,-(sp)
 	move.l	a0,a4
@@ -1625,6 +1422,8 @@ Ed_KEnd		rts
 
 ; Appelle le menu editeur et retourne le choix, si choix
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		xdef	_ed_menu
+_ed_menu
 Ed_MnGere
 	bsr	EdM_Editor
 	tst.l	MnBase(a5)		Menus definis?
@@ -5091,6 +4890,8 @@ EdMa_New
 
 ; Termine l'enregistrement de la macro
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		xdef	_ed_macro_stop
+_ed_macro_stop
 EdMa_Stop
 ; Plus de souris
 	JJsr	L_Dia_NoMKey
@@ -9018,6 +8819,8 @@ XYMouEced
 ;
 ; Active la fenetre A0, si on peut
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		xdef	_ed_window_active
+_ed_window_active
 Edt_Active
 	bsr	Ed_TokCur
 	tst.w	Edt_WindTy(a0)
@@ -9508,6 +9311,8 @@ EdM_End
 ;
 ; Erreur, on ne peut pas ouvrir les menus
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		xdef	_ed_menu_error
+_ed_menu_error
 EdM_Error
 	move.w	#185,d0			Out of memory: cannot open menu
 	bsr	Ed_GetMessage

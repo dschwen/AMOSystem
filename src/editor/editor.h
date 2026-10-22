@@ -83,6 +83,10 @@ void set_y(uint16_t y);
 void goto_x(uint16_t x);
 void goto_y(uint16_t y);
 void show_column(uint16_t x);
+void cursor_off();
+
+// editor/block.cpp: Ed_BlocOn
+void block_on();
 struct Labels {
     uint32_t before, after;
     uint16_t here;
