@@ -234,6 +234,14 @@ Drawing (AMOS.library)
 - `Get Fonts`/`Get Disc Fonts`/`Get Rom Fonts` opened diskfont.library
   again at each call, never closing those openings.
 
+Screens (AMOS.library)
+- `Double Buffer` copied the bitmaps with a 16-bit count: on planes of
+  more than 64 KB it wrote past the new planes, and it left the end of
+  planes whose size is not a multiple of 16 bytes uncopied.
+- A `Screen Open` that ran out of memory cleared the pattern through a
+  null RastPort while freeing the screen, writing to address 8 (an
+  exception vector).
+
 ARexx
 - A message arriving at the ARexx port that is not an ARexx command was
   taken off the port and never replied to, so its sender waited for ever;
