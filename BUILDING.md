@@ -266,6 +266,13 @@ Mouse (AMOS.library)
   the screen table taken for a screen; it now returns "screen not
   opened" without changing them.
 
+Collisions (AMOS.library)
+- The offsets into the masks of the two images were 16-bit: an image whose
+  mask row times the lines above the crossing reached 32K (a 320-pixel
+  wide image, below line 819) was tested at the wrong place, and
+  collisions were missed. Test collide2.
+- `Spritebob Col` with no bob at all walked a list starting at address 0.
+
 Input handler (AMOS.library)
 - The console.device request `ConIo` was 40 bytes, but its opening clears
   80 bytes and the device uses 48: it overran into the key conversion

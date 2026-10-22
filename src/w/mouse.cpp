@@ -2,8 +2,8 @@
 // registers of AMOS.library (SyCall). The input handler and the VBL
 // interrupt (+W.s) move the mouse; T_MouShow (negative: hidden) keeps the
 // VBL from writing the mouse sprite while it changes. The collisions, which
-// AMAL may test in the VBL, keep their own copy of the screen to hardware
-// conversion (+W.s CXyS).
+// AMAL may test, keep their own copy of the screen to hardware
+// conversion (w/collision.cpp).
 
 #include "w/w.h"
 
