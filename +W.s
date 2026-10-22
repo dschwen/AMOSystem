@@ -71,6 +71,7 @@ Version	MACRO
 		XREF	_w_flash_off,_w_flash,_w_shift,_w_shift_off,_w_fade,_w_fade_off,_w_fade_stop
 		XREF	_w_get_fonts,_w_free_fonts,_w_get_font,_w_set_font,_w_close_font
 		XREF	_w_rain_set,_w_rain_do,_w_rain_var,_w_rain_del,_w_rain_hide
+		XREF	_w_cop_swap,_w_cop_swap_lists,_w_cop_reset,_w_cop_wait,_w_cop_move,_w_cop_movel,_w_cop_base
 		XREF	_w_menu_start,_w_menu_stop
 WDebut	bra	Startall	Cold start
 	bra	Endall		End
@@ -5226,89 +5227,14 @@ ICpo1	tst.w	T_CopON(a5)
 ICpoX	moveq	#0,d0
 	rts
 
-******* COPSWAP
-TCopSw	tst.w	T_CopON(a5)
-	bne	CopEr1
-	move.l	T_CopPos(a5),a0
-	move.l	#$FFFFFFFE,(a0)
-TCpSw	move.l	T_CopLogic(a5),a0
-	move.l	T_CopPhysic(a5),a1
-	move.l	a1,T_CopLogic(a5)
-	move.l	a0,T_CopPhysic(a5)
-	move.l	a0,Circuits+Cop1Lc
-******* COPRESET
-TCopRes	tst.w	T_CopON(a5)
-	bne	CopEr1
-	move.l	T_CopLogic(a5),T_CopPos(a5)
-	clr.w	T_Cop255(a5)
-	moveq	#0,d0
-	rts
-
-******* COP WAIT x,y
-*	D1=	X
-*	D2=	Y
-*	D3=	Masque X
-*	D4=	Masque Y
-TCopWt	tst.w	T_CopON(a5)
-	bne	CopEr1
-	cmp.w	#313,d1
-	bcc	CopEr3
-	cmp.w	#313,d2
-	bcc	CopEr3
-	move.l	T_CopPos(a5),a1
-	cmp.w	#256,d2
-	bcs.s	CopW1
-	tst.w	T_Cop255(a5)
-	bne.s	CopW1
-	move.w	#$FFE1,(a1)+
-	move.w	#$FFFE,(a1)+
-	addq.w	#1,T_Cop255(a5)
-CopW1	lsl.w	#8,d2			* Position en X/Y
-	lsr.w	#1,d1
-	and.w	#$00FE,d1
-	or.w	#$01,d1
-	or.w	d2,d1
-	move.w	d1,(a1)+
-	lsl.w	#8,d4			* Masque en X/Y
-	lsr.w	#1,d3
-	and.w	#$00FE,d3
-	or.w	d4,d3
-	move.w	d3,(a1)+
-CopFin	move.l	a1,T_CopPos(a5)
-	sub.l	T_CopLogic(a5),a1
-	cmp.l	T_CopLong(a5),a1
-	bcc	CopEr2
-	moveq	#0,d0
-	rts
-CopEr1	moveq	#1,d0			* Copper not desactivated
-	rts
-CopEr2	moveq	#2,d0			* Copper list too long
-	rts
-CopEr3	moveq	#3,d0			* Copper param out of range
-	rts
-
-******* CMOVE ad,value
-*	D1=	AD
-*	D2=	Value
-TCopMv	tst.w	T_CopON(a5)
-	bne.s	CopEr1
-	move.l	T_CopPos(a5),a1
-	cmp.w	#512,d1
-	bcc.s	CopEr3
-	and.w	#$01FE,d1
-	move.w	d1,(a1)+
-	move.w	d2,(a1)+
-	bra	CopFin
-******* CMOVEL ad,value
-TCopMl	swap	d2
-	bsr	TCopMv
-	swap	d2
-	addq.w	#2,d1
-	bra	TCopMv
-******* CBASE
-TCopBs	move.l	T_CopLogic(a5),d1
-	moveq	#0,d0
-	rts
+******* The user copper list: src/w/copper.cpp
+TCopSw	jmp	_w_cop_swap
+TCpSw	jmp	_w_cop_swap_lists
+TCopRes	jmp	_w_cop_reset
+TCopWt	jmp	_w_cop_wait
+TCopMv	jmp	_w_cop_move
+TCopMl	jmp	_w_cop_movel
+TCopBs	jmp	_w_cop_base
 	ENDC
 
 ;-----------------------------------------------------------------
