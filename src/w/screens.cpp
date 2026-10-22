@@ -25,7 +25,7 @@ using namespace amos;
 using namespace amos::w;
 
 // +W.s
-extern "C" uint8_t w_ec_active[], w_wvbl[], w_ec_force_cop[], w_dad_amal[], w_bb_ec_off[], w_wopen[], w_widela[],
+extern "C" uint8_t w_wvbl[], w_ec_force_cop[], w_dad_amal[], w_bb_ec_off[], w_wopen[], w_widela[],
     w_flash_off[], w_shift_off[], w_fade_stop[], w_close_font[];
 
 namespace {
@@ -58,7 +58,14 @@ void call_a0(uint8_t *routine, uint32_t a0)
     amos_call(&r, routine);
 }
 
-void activate(Screen *s) { call_a0(w_ec_active, address(s)); }
+// Ec_Active: s the current screen, its RastPort the one drawn in
+void activate(Screen *s)
+{
+    WData &d = wdata();
+    d.EcCourant = address(s);
+    if (s)
+        d.RastPort = s->Ec_RastPort;
+}
 void wait_vbl() { call(w_wvbl); }
 
 // EcTout / EcOtoV: the screens are to be recomputed, or only rebuilt
@@ -226,7 +233,7 @@ void free_screen(Screen *s)
     // (The assembler cleared the pattern through a null RastPort when the
     // screen failed to open, writing to address 8)
     if (d.RastPort)
-        call(w_eff_pat);
+        clear_pattern();
     call(w_close_font);
 
     // The current screen: the first not cloned one of number < 8, else

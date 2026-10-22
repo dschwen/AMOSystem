@@ -1,6 +1,6 @@
 // The mouse, coordinate conversions, zones and the hardware collision
-// registers of AMOS.library (SyCall). The input handler and the VBL
-// interrupt (+W.s) move the mouse; T_MouShow (negative: hidden) keeps the
+// registers of AMOS.library (SyCall). The input handler (w/input.cpp) and
+// the VBL (w/vbl.cpp) move the mouse; T_MouShow (negative: hidden) keeps the
 // VBL from writing the mouse sprite while it changes. The collisions, which
 // AMAL may test, keep their own copy of the screen to hardware
 // conversion (w/collision.cpp).

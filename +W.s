@@ -425,82 +425,7 @@ EcCree:	jmp	_w_sc_open
 
 ;	Sauve les contenu du rasport de l'ecran courant
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-		xdef	_w_ec_push
-_w_ec_push
-Ec_Push	movem.l	a0-a1/d0,-(sp)
-	tst.w	T_PaPeek(a5)
-	bne.s	.Pasave
-	move.l	T_RastPort(a5),d0
-	beq.s	.Pasave
-	move.l	d0,a0
-	lea	T_EcSave(a5),a1
-	move.b	25(a0),(a1)+		0 EcInkA(a1)
-	move.b	26(a0),(a1)+		1 EcInkB(a1)
-	move.b	27(a0),(a1)+		2 EcOutL(a1)
-	move.b	28(a0),(a1)+		3 EcMode(a1)
-	move.w	32(a0),(a1)+		4 EcCont(a1)
-	move.w	34(a0),(a1)+		6 EcLine(a1)
-	move.w	36(a0),(a1)+		8 EcX(a1)
-	move.w	38(a0),(a1)+		10 EcY(a1)
-	move.l	8(a0),(a1)+		12 EcPat
-	move.b	29(a0),(a1)+		16 EcPatY
-	addq.l	#1,a1
-	lea	52(a0),a0
-	moveq	#14-1,d0		18 Fonte
-.Loop	move.b	(a0)+,(a1)+
-	dbra	d0,.Loop
-; Sauve le clip rectangle
-	move.l	T_EcCourant(a5),a0
-	move.w	EcClipX0(a0),(a1)+	32
-	move.w	EcClipY0(a0),(a1)+	34
-	move.w	EcClipX1(a0),(a1)+	36
-	move.w	EcClipY1(a0),(a1)+	38
-.Pasave	movem.l	(sp)+,a0-a1/d0
-	rts
-
-;	Restore les modes graphiques de l'ecran courant
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-		xdef	_w_ec_pull
-_w_ec_pull
-Ec_Pull	movem.l	a0-a2/d0-d3,-(sp)
-	tst.w	T_PaPeek(a5)
-	bne.s	.Papull
-	lea	T_EcSave(a5),a2
-	move.l	T_RastPort(a5),d0
-	beq.s	.Papull
-	move.l	d0,a1
-; Change le RASTPORT
-; ~~~~~~~~~~~~~~~~~~
-	moveq	#0,d0			Ink A
-	move.b	(a2)+,d0
-	GfxA5	SetAPen
- 	moveq	#0,d0			Ink B
-	move.b	(a2)+,d0
-	GfxA5	SetBPen
-	move.b	(a2)+,27(a1)		OutL
-	moveq	#0,d0
-	move.b	(a2)+,d0
-	GfxA5	SetDrMd			Draw Mode
-	move.w	(a2)+,32(a1)		Cont
-	move.w	(a2)+,34(a1)		Line
-	move.w	(a2)+,36(a1)		X
-	move.w	(a2)+,38(a1)		Y
-	move.l	(a2)+,8(a1)		EcPat
-	move.b	(a2)+,29(a1)		EcPatY
-	addq.l	#1,a2
-	lea	52(a1),a1		Fonte
-	moveq	#14-1,d0
-.Loop	move.b 	(a2)+,(a1)+
-	dbra	d0,.Loop
-; Restore le clip rectangle
-; ~~~~~~~~~~~~~~~~~~~~~~~~~
-	move.w	(a2)+,d0
-	move.w	(a2)+,d1
-	move.w	(a2)+,d2
-	move.w	(a2)+,d3
-	bsr	Ec_SetClip
-.Papull	movem.l	(sp)+,a0-a2/d0-d3
-	rts
+; Ec_Push / Ec_Pull: src/w/drawing.cpp
 
 EcView:	jmp	_w_sc_view
 EcFirst:	jmp	_w_sc_to_front
@@ -548,18 +473,7 @@ EcMarch	jmp	_w_sc_activate
 
 ;	Routine d'activation de l'ecran A0
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-		xdef	_w_ec_active
-_w_ec_active
-Ec_Active
-	move.l	a0,T_EcCourant(a5)
-	move.l	a0,d0
-	beq.s	.Skip
-	move.l	Ec_RastPort(a0),T_RastPort(a5)
-	move.l	a1,-(sp)
-	lea	WRastPort(pc),a1
-	move.l	Ec_RastPort(a0),(a1)
-	move.l	(sp)+,a1
-.Skip	rts
+; Ec_Active: src/w/screens.cpp
 
 ******* RETURNS CURRENT USERS SCREEN ADDRESS
 EcCrnt	jmp	_w_sc_current
@@ -602,63 +516,7 @@ TSClip:	jmp	_w_set_clip		src/w/drawing.cpp
 
 ;	Change le clip rectangle dans l'ecran
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-		xdef	_w_ec_set_clip
-_w_ec_set_clip
-Ec_SetClip
-	movem.l	d2-d4/a4/a6,-(sp)
-	move.l	T_EcCourant(a5),a4
-	tst.l	Ec_Region(a4)
-	bne.s	.Deja
-
-; Faut-il creer un cliprect?
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~
-	lea	EcClipX0(a4),a0
-	cmp.w	(a0)+,d0
-	bne.s	.Nou
-	cmp.w	(a0)+,d1
-	bne.s	.Nou
-	cmp.w	(a0)+,d2
-	bne.s	.Nou
-	cmp.w	(a0)+,d3
-	beq.s	.Exit
-
-; Installe la clipping region
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.Nou	movem.w	d0-d3,-(sp)			Sauve
-	movem.w	d0-d3,-(sp)			Pour structure
-	subq.w	#1,4(sp)
-	subq.w	#1,6(sp)
-	move.l	T_GfxBase(a5),a6
-	jsr	_LVONewRegion(a6)		Prend une nouvelle region
-	move.l	d0,Ec_Region(a4)
-	beq.s	.Out				Out of memory
-	move.l	sp,a1
-	move.l	d0,a0
-	jsr	_LVOOrRectRegion(a6)
-	tst.l	d0
-	beq.s	.Out
-	move.l	T_LayBase(a5),a6		Installe le CLIP
-	move.l	Ec_Layer(a4),a0
-	move.l	Ec_Region(a4),a1
-	jsr	_LVOInstallClipRegion(a6)
-	addq.l	#8,sp
-	movem.w	(sp)+,d0-d3
-
-; Poke dans les structures
-; ~~~~~~~~~~~~~~~~~~~~~~~~
-.Deja	lea	EcClipX0(a4),a0
-	movem.w	d0-d3,(a0)
-	subq.w	#1,d2
-	subq.w	#1,d3
-	move.l	Ec_Layer(a4),a0			Layer
-	move.l	8(a0),a0			ClipRect
-	movem.w	d0-d3,16(a0)			Poke les nouveaux!
-	bra.s	.Exit
-
-.Out	addq.l	#8,sp
-	movem.w	(sp)+,d0-d3
-.Exit	movem.l	(sp)+,d2-d4/a4/a6
-	rts
+; Ec_SetClip: src/w/drawing.cpp
 
 ******* PAINT: src/w/drawing.cpp
 TPaint	jmp	_w_paint
@@ -667,24 +525,7 @@ TPaint	jmp	_w_paint
 SPat:	jmp	_w_pattern		src/w/drawing.cpp
 
 ******* Efface le pattern de l'ecran courant
-		xdef	_w_eff_pat
-_w_eff_pat
-EffPat:	movem.l	a0-a1/d0-d2,-(sp)
-	move.l	T_EcCourant(a5),a0
-	move.l	EcPat(a0),d0
-	beq.s	EffPx
-	move.l	d0,a1
-	move.w	EcPatL(a0),d0
-	ext.l	d0
-	clr.l	EcPat(a0)
-	clr.w	EcPatL(a0)
-	clr.b	EcPatY(a0)
-	bsr	FreeMm
-EffPx:	move.l	T_RastPort(a5),a0
-	clr.l	8(a0)
-	clr.b	29(a0)
-	movem.l	(sp)+,a0-a1/d0-d2
-	rts
+; EffPat: src/w/drawing.cpp
 
 ******* Fonts: src/w/fonts.cpp
 TGFonts	jmp	_w_get_fonts
@@ -3636,7 +3477,6 @@ ConIo		ds.b 	Lio+Lmsg
 ConEssai	ds.b	32
 W_Base		ds.l	1
 GfxBase		ds.l	1
-WRastPort	ds.l	1
 		even
 ; Table de retournement bobs
 

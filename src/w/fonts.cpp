@@ -136,19 +136,14 @@ uint32_t set_font(uint16_t n)
 void menu_start()
 {
     WData &d = wdata();
-    call(w_ec_push);
+    push_state();
     d.PaPeek = 1;
     Screen *s = current_screen();
     d.SaveZo = s->EcAZones;
     d.SaveNZo = s->EcNZones;
     s->EcAZones = 0;
     s->EcNZones = 0;
-    Regs c;
-    c.d[0] = 0;
-    c.d[1] = 0;
-    c.d[2] = s->EcTx;
-    c.d[3] = s->EcTy;
-    amos_call(&c, w_ec_set_clip);
+    set_clip_rect(0, 0, s->EcTx, s->EcTy);
     struct RastPort *rp = rastport();
     SetDrMd(rp, JAM2);
     rp->Flags |= AREAOUTLINE;
@@ -163,7 +158,7 @@ void menu_stop()
     s->EcAZones = d.SaveZo;
     s->EcNZones = d.SaveNZo;
     d.PaPeek = 0;
-    call(w_ec_pull);
+    pull_state();
 }
 
 } // namespace

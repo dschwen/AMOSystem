@@ -1,5 +1,7 @@
 // Drawing functions of AMOS.library's screen table (EcCall): Cls of a
-// rectangle, the clip rectangle, Set Pattern, Paint and the sliders.
+// rectangle, the clip rectangle, Set Pattern, Paint and the sliders. Also
+// the drawing state of the current screen saved and restored around
+// menus and sliders.
 
 #include "core/amiga.h"
 #include "w/w.h"
@@ -8,6 +10,8 @@
 
 #define GRAPHICS_BASE_NAME (reinterpret_cast<struct GfxBase *>(amos::wdata().GfxBase))
 #include <proto/graphics.h>
+#define LAYERS_BASE_NAME (amos::ptr<struct Library>(amos::wdata().LayBase))
+#include <proto/layers.h>
 
 using namespace amos;
 using namespace amos::w;
@@ -109,7 +113,7 @@ void set_clip(AllRegs *r)
         c.d[2] = uint16_t(x2);
         c.d[3] = uint16_t(y2);
     }
-    amos_call(&c, w_ec_set_clip);
+    set_clip_rect(c.d[0], c.d[1], c.d[2], c.d[3]);
     r->d[0] = 0;
 }
 
@@ -134,7 +138,7 @@ bool skip_images(const uint8_t *&image, uint16_t n)
 // multi-coloured patterns.
 uint32_t set_pattern(int16_t n)
 {
-    call(w_eff_pat);
+    clear_pattern();
     if (!n)
         return 0;
     const uint8_t *image;
@@ -579,10 +583,10 @@ void slider_bar(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2)
 void slider(AllRegs *r, bool vertical)
 {
     Screen *s = current_screen();
-    call(w_ec_push);
+    push_state();
     uint16_t width = r->d[1], height = r->d[2];
     if (uint16_t(r->d[4]) > uint16_t(r->d[3])) {
-        call(w_ec_pull);
+        pull_state();
         r->d[0] = 1;
         return;
     }
@@ -611,7 +615,7 @@ void slider(AllRegs *r, bool vertical)
         frame();
         slider_bar(b, y1, x2, y2);
     }
-    call(w_ec_pull);
+    pull_state();
     r->d[0] = 0;
 }
 
@@ -681,6 +685,117 @@ uint32_t screen_copy(const AllRegs *r)
 }
 
 } // namespace
+
+namespace amos::w {
+
+// Ec_SetClip: the clip rectangle of the current screen, through a clip
+// region of its layer, which the first call installs
+void set_clip_rect(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1)
+{
+    Screen *s = current_screen();
+    if (!s->Ec_Region) {
+        if (x0 == s->EcClipX0 && y0 == s->EcClipY0 && x1 == s->EcClipX1 && y1 == s->EcClipY1)
+            return;
+        struct Region *region = NewRegion();
+        s->Ec_Region = address(region);
+        if (!region)
+            return;
+        struct Rectangle rect = {int16_t(x0), int16_t(y0), int16_t(x1 - 1), int16_t(y1 - 1)};
+        if (!OrRectRegion(region, &rect))
+            return;
+        InstallClipRegion(ptr<struct Layer>(s->Ec_Layer), region);
+    }
+    s->EcClipX0 = x0;
+    s->EcClipY0 = y0;
+    s->EcClipX1 = x1;
+    s->EcClipY1 = y1;
+    // the bounds of the layer's ClipRect
+    uint16_t *bounds = ptr<uint16_t>(peek_l(ptr<uint8_t>(s->Ec_Layer) + 8) + 16);
+    bounds[0] = x0;
+    bounds[1] = y0;
+    bounds[2] = x1 - 1;
+    bounds[3] = y1 - 1;
+}
+
+// T_EcSave: pens, draw mode, flags, line pattern, position, area pattern,
+// the font fields of the RastPort, then the clip rectangle
+struct Saved {
+    uint8_t fg, bg, outline, mode;
+    uint16_t flags, line, x, y;
+    uint32_t pattern;
+    uint8_t pattern_size, pad;
+    uint8_t font[14];
+    uint16_t clip[4];
+};
+static_assert(sizeof(Saved) == 40);
+
+// Ec_Push: the drawing state of the current screen into T_EcSave (not
+// while a menu has it saved)
+void push_state()
+{
+    WData &d = wdata();
+    struct RastPort *rp = rastport();
+    if (d.PaPeek || !rp)
+        return;
+    auto &v = *reinterpret_cast<Saved *>(d.EcSave);
+    v.fg = rp->FgPen;
+    v.bg = rp->BgPen;
+    v.outline = rp->AOlPen;
+    v.mode = rp->DrawMode;
+    v.flags = rp->Flags;
+    v.line = rp->LinePtrn;
+    v.x = rp->cp_x;
+    v.y = rp->cp_y;
+    v.pattern = address(rp->AreaPtrn);
+    v.pattern_size = rp->AreaPtSz;
+    copy(v.font, &rp->Font, sizeof v.font);
+    Screen *s = current_screen();
+    v.clip[0] = s->EcClipX0;
+    v.clip[1] = s->EcClipY0;
+    v.clip[2] = s->EcClipX1;
+    v.clip[3] = s->EcClipY1;
+}
+
+// Ec_Pull: back from T_EcSave
+void pull_state()
+{
+    WData &d = wdata();
+    struct RastPort *rp = rastport();
+    if (d.PaPeek || !rp)
+        return;
+    const auto &v = *reinterpret_cast<const Saved *>(d.EcSave);
+    SetAPen(rp, v.fg);
+    SetBPen(rp, v.bg);
+    rp->AOlPen = v.outline;
+    SetDrMd(rp, v.mode);
+    rp->Flags = v.flags;
+    rp->LinePtrn = v.line;
+    rp->cp_x = v.x;
+    rp->cp_y = v.y;
+    rp->AreaPtrn = ptr<UWORD>(v.pattern);
+    rp->AreaPtSz = v.pattern_size;
+    copy(&rp->Font, v.font, sizeof v.font);
+    set_clip_rect(v.clip[0], v.clip[1], v.clip[2], v.clip[3]);
+}
+
+// EffPat: no more pattern on the current screen
+void clear_pattern()
+{
+    WData &d = wdata();
+    Screen *s = current_screen();
+    if (uint32_t pattern = s->EcPat) {
+        uint32_t size = int16_t(s->EcPatL);
+        s->EcPat = 0;
+        s->EcPatL = 0;
+        s->EcPatY = 0;
+        free_mm(pattern, size);
+    }
+    struct RastPort *rp = ptr<struct RastPort>(d.RastPort);
+    rp->AreaPtrn = nullptr;
+    rp->AreaPtSz = 0;
+}
+
+} // namespace amos::w
 
 extern "C" {
 void w_ec_cls(AllRegs *r) { cls(r); }
