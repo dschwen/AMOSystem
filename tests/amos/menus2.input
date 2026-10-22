@@ -1,0 +1,37 @@
+sync keys
+key s
+wait 1
+key F1
+sync open
+button 3 down
+wait 0.5
+shot open
+move 0 14
+wait 0.4
+move 0 40
+wait 0.5
+shot items
+move 110 -50
+wait 0.4
+move 0 30
+wait 0.4
+move 60 0
+wait 0.5
+shot sub
+button 3 up
+sync drag
+button 3 down
+wait 0.5
+button 1 down
+wait 0.3
+move 30 20
+wait 0.5
+button 1 up
+wait 0.5
+shot dropped
+button 3 up
+sync mouse
+button 3 down
+wait 0.5
+shot mouse
+button 3 up

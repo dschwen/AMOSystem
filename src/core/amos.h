@@ -48,6 +48,7 @@ struct RegFrame {
 extern "C" {
 extern Ctx amos_ctx;
 void amos_call(Regs *r, const void *fn);
+void amos_eval(Regs *r, const void *fn);
 [[noreturn]] void amos_goto(const void *fn, uint32_t d0);
 }
 
@@ -67,6 +68,10 @@ inline const void *lib_address(int routine)
 
 // JJsr: call a routine of AMOSPro.Lib
 inline void lib_call(int routine, Regs &r) { amos_call(&r, lib_address(routine)); }
+
+// JJsr to a routine that evaluates parameters from the program: the
+// interpreter continues at the a6 (and with the a3) it leaves
+inline void lib_eval(int routine, Regs &r) { amos_eval(&r, lib_address(routine)); }
 
 // Rjmp to a routine of AMOSPro.Lib that does not come back (errors)
 [[noreturn]] inline void lib_jump(int routine, uint32_t d0) { amos_goto(lib_address(routine), d0); }

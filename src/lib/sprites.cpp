@@ -2,6 +2,7 @@
 // AMAL instructions of the section are still assembler.
 
 #include "lib/banks.h"
+#include "lib/sprites.h"
 
 using namespace amos;
 
@@ -64,28 +65,6 @@ void sy_set_bob(Regs &r)
 }
 
 void sprites_changed() { wdata().Actualise |= BitSprites; }
-
-// AdBob / AdIcon: the entry of image n of the sprite / icon bank (bits
-// 14-15, the flips, left out). Returns it; *count gets the number of
-// images.
-uint8_t *image_entry(uint32_t n, bool icon, uint16_t *count = nullptr)
-{
-    n &= 0x3FFF;
-    if (!n)
-        fon_call();
-    RegFrame r = {};
-    r.d[0] = n;
-    uint32_t entry = icon ? lib_bnk_ad_icon(r) : lib_bnk_ad_bob(r);
-    if (!entry) {
-        // AdBErr: no bank at all, or no such image
-        if (!static_cast<uint16_t>(r.d[1]))
-            lib_jump(L_BkNoRes, 0);
-        error(45 + 30 - 1);
-    }
-    if (count)
-        *count = static_cast<uint16_t>(r.d[1]);
-    return ptr<uint8_t>(entry);
-}
 
 // MkMa1 / NoMa1: masks of count images from entry on
 void make_masks(uint8_t *entry, uint16_t count)
@@ -208,20 +187,6 @@ Screen *current_screen()
     return ptr<Screen>(idata().ScOnAd);
 }
 
-// Paste: image n (its bank entry) at x,y of the current screen
-void paste(uint32_t x, uint32_t y, uint32_t n, uint8_t *entry)
-{
-    Regs r = {};
-    r.a[2] = address(entry);
-    r.d[1] = n;
-    r.d[2] = x;
-    r.d[3] = y;
-    r.d[4] = 0;
-    r.d[5] = -1u;
-    r.a[1] = idata().BufBob;
-    sy_call(sy::Patch, r);
-}
-
 // XYBob / XYSp: d1 = x, d2 = y, d3 = image
 Regs &where(int function, int32_t n)
 {
@@ -244,6 +209,42 @@ uint32_t collision(int function, uint32_t n, uint32_t from, uint32_t to)
 }
 
 } // namespace
+
+// AdBob / AdIcon: the entry of image n of the sprite / icon bank (bits
+// 14-15, the flips, left out). Returns it; *count gets the number of
+// images.
+uint8_t *amos::image_entry(uint32_t n, bool icon, uint16_t *count)
+{
+    n &= 0x3FFF;
+    if (!n)
+        fon_call();
+    RegFrame r = {};
+    r.d[0] = n;
+    uint32_t entry = icon ? lib_bnk_ad_icon(r) : lib_bnk_ad_bob(r);
+    if (!entry) {
+        // AdBErr: no bank at all, or no such image
+        if (!static_cast<uint16_t>(r.d[1]))
+            lib_jump(L_BkNoRes, 0);
+        error(45 + 30 - 1);
+    }
+    if (count)
+        *count = static_cast<uint16_t>(r.d[1]);
+    return ptr<uint8_t>(entry);
+}
+
+// Paste: image n (its bank entry) at x,y of the current screen
+void amos::paste(uint32_t x, uint32_t y, uint32_t n, uint8_t *entry)
+{
+    Regs r = {};
+    r.a[2] = address(entry);
+    r.d[1] = n;
+    r.d[2] = x;
+    r.d[3] = y;
+    r.d[4] = 0;
+    r.d[5] = -1u;
+    r.a[1] = idata().BufBob;
+    sy_call(sy::Patch, r);
+}
 
 // ---- updates ------------------------------------------------------------
 

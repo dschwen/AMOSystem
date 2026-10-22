@@ -35,6 +35,37 @@ _amos_call
 		movem.l	(sp)+,d2-d7/a2-a6
 		rts
 
+; void amos_eval(Regs *r, const void *fn)
+;
+; amos_call for a routine that reads parameters from the program: a3 and
+; a6 keep the values it leaves (the parameter stack and the program
+; pointer past the parameters), the rest of amos_ctx is restored.
+		xdef	_amos_eval
+_amos_eval
+		movem.l	d2-d7/a2-a6,-(sp)
+		movem.l	_amos_ctx,d2-d7
+		movem.l	d2-d7,-(sp)
+		move.l	4+44+24(sp),a0		r
+		move.l	8+44+24(sp),a1		fn
+		move.l	a0,-(sp)
+		pea	.Back(pc)
+		move.l	a1,-(sp)
+		movem.l	_amos_ctx+8,a3-a6
+		movem.l	(a0),d0-d7/a0-a2
+		rts				to fn, which returns to .Back
+.Back		move.l	a0,-(sp)
+		move.l	4(sp),a0
+		movem.l	d0-d7,(a0)
+		move.l	(sp)+,8*4(a0)
+		movem.l	a1-a2,9*4(a0)
+		addq.l	#4,sp
+		movem.l	(sp)+,d2-d7
+		movem.l	d2-d7,_amos_ctx
+		move.l	a3,_amos_ctx+8
+		move.l	a6,_amos_ctx+20
+		movem.l	(sp)+,d2-d7/a2-a6
+		rts
+
 ; void amos_goto(const void *fn, uint32_t d0)
 ;
 ; Jumps to fn with d0 and the interpreter registers. Never returns: used to

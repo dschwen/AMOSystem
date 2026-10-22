@@ -9,6 +9,10 @@ constexpr uint32_t ModeOldFile = 1005;  // MODE_OLDFILE
 constexpr uint32_t ModeNewFile = 1006;  // MODE_NEWFILE
 constexpr int DEBase = 79;              // first disk error number
 
+// AddRoutine: link a routine record (a link, then code) into list, one
+// of the Sys_ClearRoutines... lists, unless it is in already
+void add_routine(uint8_t *record, uint32_t list);
+
 // Dsk.PathIt: complete the name in Name1 with the current directory
 void path_it();
 // NomDisc: the AMOS string s as a file name in Name1 (completed with the

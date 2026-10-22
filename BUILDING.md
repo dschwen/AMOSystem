@@ -98,6 +98,9 @@ through into a `Lib_Int`.
   such a call, and side effects belong after the string allocation, as in
   the assembler.
 - Interrupt code must not use `CCall`/`amos_ctx`.
+- `lib_eval(L_x, regs)` calls a routine that reads parameters from the
+  program itself (`MnDim`, the evaluator): the interpreter then continues at
+  the a6 (and with the a3) it leaves.
 
 Routines that other assembler code calls with registers (`L_InstrFind`,
 `Bnk.GetAdr`...) keep a register entry. `RegRoutine Name,_c_function` hands
@@ -123,6 +126,15 @@ the number to text conversions.
 - Some crashes on bad input become errors or are avoided: `Bank Swap` of
   two banks that do not exist, `Dir/W` without a screen, `PLoad` when the
   bank address happened to end in $0000 (reported "out of memory").
+- Menus: an error inside the menu (no memory for a background) restored the
+  registers in the wrong order and crashed; a `(PR)` object crashed `Menu
+  Calc` (and the menu in direct mode); `Bank To Menu` kept stale background
+  and `(RE)` memory pointers from the menu the bank was made from;
+  `Menu Called`/`Menu Once` with a level instead of coordinates wrote to a
+  random address; the inactive object of an item was never freed; a
+  background save on a screen of more than 64K per plane was put back at
+  the wrong place; `Menu$` reported an object as compiled when there was
+  no memory for it.
 
 ## Assembler compatibility notes
 

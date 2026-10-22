@@ -34,6 +34,8 @@ char *copy(char *to, const char *from)
     return to - 1;
 }
 
+} // namespace
+
 void add_routine(uint8_t *record, uint32_t list)
 {
     Regs r = {};
@@ -41,8 +43,6 @@ void add_routine(uint8_t *record, uint32_t list)
     r.a[2] = list;
     sy_call(sy::AddRoutine, r);
 }
-
-} // namespace
 
 void path_it()
 {
