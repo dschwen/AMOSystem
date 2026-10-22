@@ -256,6 +256,11 @@ Bobs and blocks (AMOS.library)
 `tests/amos/blocks2.asc` covers these; its golden results come from the
 C++ build.
 
+Hardware sprites (AMOS.library)
+- A 16-colour sprite above number 7 hung AMOS when no two neighbouring
+  free sprite channels were left: the search skipped half-free pairs
+  without counting the try.
+
 ARexx
 - A message arriving at the ARexx port that is not an ARexx command was
   taken off the port and never replied to, so its sender waited for ever;
