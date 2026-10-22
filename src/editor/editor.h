@@ -77,6 +77,23 @@ void set_x(uint16_t x);
 void set_y(uint16_t y);
 void goto_x(uint16_t x);
 void goto_y(uint16_t y);
+void show_column(uint16_t x);
+struct Labels {
+    uint32_t before, after;
+    uint16_t here;
+};
+Labels labels_around(uint16_t start);
+
+// editor/lines.cpp: R_MotGoch, R_MotDroi, the length of the cursor's line
+uint16_t word_left_of_cursor();
+uint16_t word_right_of_cursor();
+uint16_t current_line_length();
+
+// editor/cursor.cpp: Ed_Untok, Ed_BufUntok, Ed_CGauche, Ed_CDroite
+void untokenise_line(uint16_t n, uint16_t y);
+void untokenise_window();
+void cursor_left();
+void cursor_right();
 
 // editor/indent.cpp
 void indent(uint8_t *program, uint16_t tab);

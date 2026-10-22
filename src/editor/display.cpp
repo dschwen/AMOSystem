@@ -14,7 +14,7 @@ using namespace amos;
 using namespace amos::ed;
 
 // +Edit.s
-extern "C" uint8_t ed_cursor_on_text[], ed_cursor_off_text[], ed_get_systeme[], ed_all_aver_fin[], ed_buf_untok[],
+extern "C" uint8_t ed_cursor_on_text[], ed_cursor_off_text[], ed_get_systeme[], ed_all_aver_fin[],
     ed_tok_cur[], ed_aver_fin[], ed_sl_update_y[];
 
 namespace {
@@ -223,7 +223,7 @@ void new_buffer()
     Regs r;
     r.d[1] = window().Edt_Window;
     wi_call(wi::QWindow, r);
-    run(ed_buf_untok);
+    untokenise_window();
     show_all();
 }
 
@@ -366,6 +366,40 @@ void show_character(uint16_t x, uint16_t y)
 
 } // namespace
 
+namespace amos::ed {
+
+// Ed_AffBufCar: column x of all the lines of the window
+void show_column(uint16_t x)
+{
+    for (uint16_t y = 0; y < window().Edt_WindTy; y++)
+        show_character(x, y);
+    place_cursor();
+}
+
+// Ed_NLab: the labels and procedures around the cursor's line, counting
+// from line start: the last one before (0 if none), the first after (or
+// the end)
+Labels labels_around(uint16_t start)
+{
+    EditWindow &w = window();
+    uint16_t here = w.Edt_YPos + w.Edt_YCu;
+    uint32_t before = 0, after = 0xFFFFFFFF;
+    for (uint8_t *line = find_line(start); peek_w(line); line = next_line()) {
+        after++;
+        uint16_t t = peek_w(line + 2);
+        if (t != tk::Proc && t != tk::Lab)
+            continue;
+        if (uint16_t(after) == here)
+            continue;
+        if (uint16_t(after) > here)
+            break;
+        before = (before & 0xFFFF0000) | uint16_t(after);
+    }
+    return {before, after, here};
+}
+
+} // namespace amos::ed
+
 extern "C" {
 // Ed_Loca (d1 the cursor's column in the window)
 void ed_place_cursor(AllRegs *r)
@@ -380,12 +414,7 @@ void ed_show_line(AllRegs *r) { show_line(uint16_t(r->d[1]), true); }
 void ed_show_line_only(AllRegs *r) { show_line(uint16_t(r->d[1]), false); }
 
 // Ed_AffBufCar: column d1 of all the lines of the window
-void ed_show_column(AllRegs *r)
-{
-    for (uint16_t y = 0; y < window().Edt_WindTy; y++)
-        show_character(uint16_t(r->d[1]), y);
-    place_cursor();
-}
+void ed_show_column(AllRegs *r) { show_column(uint16_t(r->d[1])); }
 
 void ed_show_all(AllRegs *) { show_all(); }
 void ed_new_buffer(AllRegs *) { new_buffer(); }
@@ -419,28 +448,13 @@ void ed_set_xy(AllRegs *r)
     new_buffer();
 }
 
-// Ed_NLab: the labels and procedures around the cursor's line, counting
-// from line d0: d1 the last one before (0 if none), d2 the first after
-// (or the end)
+// Ed_NLab: d0 the line to count from; d1 the label before, d2 after
 void ed_labels_around(AllRegs *r)
 {
-    EditWindow &w = window();
-    uint16_t here = w.Edt_YPos + w.Edt_YCu;
-    uint32_t before = 0, after = 0xFFFFFFFF;
-    for (uint8_t *line = find_line(uint16_t(r->d[0])); peek_w(line); line = next_line()) {
-        after++;
-        uint16_t t = peek_w(line + 2);
-        if (t != tk::Proc && t != tk::Lab)
-            continue;
-        if (uint16_t(after) == here)
-            continue;
-        if (uint16_t(after) > here)
-            break;
-        before = (before & 0xFFFF0000) | uint16_t(after);
-    }
-    r->d[1] = before;
-    r->d[2] = after;
-    r->d[3] = (r->d[3] & 0xFFFF0000) | here;
+    Labels l = labels_around(uint16_t(r->d[0]));
+    r->d[1] = l.before;
+    r->d[2] = l.after;
+    r->d[3] = (r->d[3] & 0xFFFF0000) | l.here;
 }
 
 // Ed_AffSlV: the vertical slider

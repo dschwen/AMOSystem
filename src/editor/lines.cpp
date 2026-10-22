@@ -13,7 +13,7 @@ using namespace amos;
 using namespace amos::ed;
 
 // +Edit.s
-extern "C" uint8_t ed_sam_play[], ed_c_droite[], ed_c_gauche[], ed_join[], ed_not_edit[], ed_l_to_long[],
+extern "C" uint8_t ed_sam_play[], ed_join[], ed_not_edit[], ed_l_to_long[],
     ed_ins_line[], ed_del_li_cu[], ed_tok_cur[], ed_return_quiet[];
 
 namespace {
@@ -132,6 +132,10 @@ void keep_text(const uint8_t *text, uint16_t n) { undo_text(text, n); }
 
 namespace amos::ed {
 
+uint16_t word_left_of_cursor() { return word_left(); }
+uint16_t word_right_of_cursor() { return word_right(); }
+uint16_t current_line_length() { return current().length; }
+
 // Ed_PKey: the character c typed, inserted or over the one under the
 // cursor; entry the undo entry being redone, if any
 void type_key(uint8_t c, bool insert, uint8_t *redone)
@@ -181,7 +185,7 @@ void type_key(uint8_t c, bool insert, uint8_t *redone)
         *l.at = c;
         l.set_length(length);
         edited();
-        run(ed_c_droite);
+        cursor_right();
         show_line(window().Edt_YCu, false);
     }
     place_cursor();
@@ -215,7 +219,7 @@ void backspace()
         run(ed_join);
         return;
     }
-    run(ed_c_gauche);
+    cursor_left();
     delete_key();
 }
 

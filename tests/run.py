@@ -246,9 +246,15 @@ def record_editor(name, shots):
     mask.save(os.path.join(GOLDEN, name + '_mask.png'))
 
 
+# The editor's chip and fast memory gauges (top right): the converted
+# programs are larger than the originals, the fast one shows it
+MEMORY_GAUGES = (536, 0, 610, 32)
+
+
 def compare_editor(name, shots):
     golden = Image.open(os.path.join(GOLDEN, name + '.png')).convert('RGB')
     mask = Image.open(os.path.join(GOLDEN, name + '_mask.png')).convert('L')
+    mask.paste(255, MEMORY_GAUGES)
     keep = mask.point(lambda v: 0 if v else 255)
     best = None
     for path in shots:

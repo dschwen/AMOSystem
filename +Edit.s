@@ -63,6 +63,13 @@
 		XREF	_ed_store_entry,_ed_store_block_entry,_ed_delete_line_entry,_ed_delete_chunk_at_entry
 		XREF	_ed_delete_chunk_entry,_ed_find_line_entry,_ed_next_line_entry
 		XREF	_ed_indent_entry
+		XREF	_ed_cursor_up_entry,_ed_cursor_up_t_entry,_ed_cursor_down_entry,_ed_cursor_down_t_entry
+		XREF	_ed_cursor_left_entry,_ed_cursor_right_entry,_ed_page_top_entry,_ed_page_bottom_entry
+		XREF	_ed_word_left_key_entry,_ed_word_right_key_entry,_ed_line_start_entry,_ed_line_end_entry
+		XREF	_ed_page_up_entry,_ed_page_down_entry,_ed_scroll_up_key_entry,_ed_scroll_down_key_entry
+		XREF	_ed_scroll_left_key_entry,_ed_scroll_right_key_entry,_ed_text_top_entry,_ed_text_top_t_entry
+		XREF	_ed_text_bottom_entry,_ed_text_bottom_t_entry,_ed_label_previous_entry,_ed_label_next_entry
+		XREF	_ed_buf_untok_entry,_ed_untok_entry,_ed_cgo_entry,_ed_cdr_entry,_ed_shaut2_entry,_ed_sbas2_entry
 		XREF	_ed_show_slider_entry,_ed_cursor_on_entry,_ed_cursor_off_entry,_ed_show_current_line_entry
 		XREF	_ed_centre_entry,_ed_goto_x_entry,_ed_goto_y_entry,_ed_set_x_entry,_ed_set_y_entry
 		XREF	_ed_set_xy_entry,_ed_labels_around_entry,_ed_place_cursor_entry,_ed_show_column_entry
@@ -3114,378 +3121,40 @@ Ed_STab	bsr	Ed_TokCur
 	bra	Ed_Loca
 
 ;
-; Curseur vers le haut
-; ~~~~~~~~~~~~~~~~~~~~
-Ed_CHaut
-	bsr	Ed_TokCur
-	moveq	#"F",d0			Va faire du bruit!
-	bsr	Ed_SamPlay
-Ed_ChtT
-	bset	#EtA_Y,Edt_EtatAff(a4)
-	tst.w	Edt_YCu(a4)
-	beq.s	CHt1
-	subq.w	#1,Edt_YCu(a4)
-	bra	Ed_Loca
-CHt1	tst.w	Edt_YPos(a4)
-	beq	Ed_CHtE
-	subq.w	#1,Edt_YPos(a4)
-; Scrolle l'ecran graphique
-; ~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_CHt
-	move.b	#SlDelai,Edt_ASlY(a4)
-	cmp.w	#1,Edt_WindTy(a4)
-	beq.s	.Skip
-	WiCalD	ChrOut,20
-; Scrolle l'ecran texte
-; ~~~~~~~~~~~~~~~~~~~~~
-	move.l	Edt_BufE(a4),a1
-	move.w	Edt_WindTy(a4),d0
-	lsl.w	#8,d0
-	add.w	d0,a1
-	lea	-256(a1),a0
-	move.w	Edt_WindTy(a4),d0
-	subq.w	#1,d0
-	lsl.w	#4,d0
-	subq.w	#1,d0
-.CBs2	move.l	-(a0),-(a1)
-	move.l	-(a0),-(a1)
-	move.l	-(a0),-(a1)
-	move.l	-(a0),-(a1)
-	dbra	d0,.CBs2
-; Affiche la derniere ligne
-; ~~~~~~~~~~~~~~~~~~~~~~~~~
-.Skip	move.w	Edt_YPos(a4),d0
-	moveq	#0,d1
-	bsr	Ed_Untok
-	bsr	Ed_EALigne
-	bra	Ed_Loca
-;
-; Pitit retour.
-; ~~~~~~~~~~~~~
-CFin:	rts
-
-;
-; Curseur vers le bas
-; ~~~~~~~~~~~~~~~~~~~
-Ed_CBas
-	bsr	Ed_TokCur
-	moveq	#"F",d0			Va faire du bruit!
-	bsr	Ed_SamPlay
-
-; Entree pour la tokenisation
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_CBasT
-	bset	#EtA_Y,Edt_EtatAff(a4)
-	move.w	Edt_YPos(a4),d0		* Deja la derniere ligne
-	add.w	Edt_YCu(a4),d0
-	cmp.w	Prg_NLigne(a6),d0
-	bcc	Ed_CBasE
-
-	move.w	Edt_YCu(a4),d0
-	move.w	Edt_WindTy(a4),d1
-	subq.w	#1,d1
-	cmp.w	d1,d0
-	bcc.s	.CBs1
-	addq.w	#1,Edt_YCu(a4)
-	bra	Ed_Loca
-
-.CBs1:	addq.w	#1,Edt_YPos(a4)
-; Scrolle l'ecran graphique
-; ~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_CBs
-	move.b	#SlDelai,Edt_ASlY(a4)
-	cmp.w	#1,Edt_WindTy(a4)
-	beq.s	.Skip
-	WiCalD	ChrOut,22
-; Scrolle l'ecran texte
-; ~~~~~~~~~~~~~~~~~~~~~
-	move.l	Edt_BufE(a4),a1
-	lea	256(a1),a0
-	move.w	Edt_WindTy(a4),d0
-	subq.w	#1,d0
-	lsl.w	#4,d0
-	subq.w	#1,d0
-.CHt2	move.l	(a0)+,(a1)+
-	move.l	(a0)+,(a1)+
-	move.l	(a0)+,(a1)+
-	move.l	(a0)+,(a1)+
-	dbra	d0,.CHt2
-; Affiche la derniere ligne
-; ~~~~~~~~~~~~~~~~~~~~~~~~~
-.Skip	move.w	Edt_YPos(a4),d0
-	move.w	Edt_WindTy(a4),d1
-	subq.w	#1,d1
-	add.w	d1,d0
-	bsr	Ed_Untok
-	bsr	Ed_EALigne
-	bra	Ed_Loca
-
-;
-; Curseur vers la gauche
-; ~~~~~~~~~~~~~~~~~~~~~~
-		xdef	_ed_c_gauche
-_ed_c_gauche
-Ed_CGauche
-	moveq	#"F",d0			Va faire du bruit!
-	bsr	Ed_SamPlay
-
-	bset	#EtA_X,Edt_EtatAff(a4)
-	move.w	Edt_XCu(a4),d0
-	beq	CFin
-	subq.w	#1,d0
-	move.w	d0,Edt_XCu(a4)
-	sub.w	Edt_XPos(a4),d0
-	cmp.w	#15,d0
-	bcc.s	CGo1
-	tst.w	Edt_XPos(a4)
-	beq.s	CGo1
-Ed_CGo
-	subq.w	#1,Edt_XPos(a4)
-	WiCalD	ChrOut,19
-	moveq	#0,d1
-	bsr	Ed_AffBufCar
-CGo1	bra	Ed_Loca
-
-;
-; Curseur vers la droite
-; ~~~~~~~~~~~~~~~~~~~~~~
-		xdef	_ed_c_droite
-_ed_c_droite
-Ed_CDroite
-	moveq	#"F",d0			Va faire du bruit!
-	bsr	Ed_SamPlay
-
-	bset	#EtA_X,Edt_EtatAff(a4)
-	move.w	Edt_XCu(a4),d0
-	cmp.w	#250,d0
-	bcc	CFin
-	addq.w	#1,d0
-	move.w	d0,Edt_XCu(a4)
-	sub.w	Edt_XPos(a4),d0
-	cmp.w	#WiTx-10,d0
-	bcs.s	CDr0
-Ed_CDr
-	addq.w	#1,Edt_XPos(a4)
-	WiCalD	ChrOut,17
-	move.w	Edt_WindTx(a4),d1
-	subq.w	#1,d1
-	bsr	Ed_AffBufCar
-CDr0	bra	Ed_Loca
-
-;
-; Haut page
-; ~~~~~~~~~
-Ed_HPage
-	bsr	Ed_TokCur
-	clr.w	Edt_YCu(a4)
-Ed_LXY
-	or.b	#EtA_BXY,Edt_EtatAff(a4)
-	bra	Ed_Loca
-
-;
-; Bas page
-; ~~~~~~~~
-Ed_BPage
-	bsr	Ed_TokCur
-	move.w	Edt_WindTy(a4),d0
-	subq.w	#1,d0
-	move.w	Edt_YPos(a4),d1
-	add.w	d0,d1
-	cmp.w	Prg_NLigne(a6),d1
-	bcs.s	.BPag
-	sub.w	Prg_NLigne(a6),d1
-	sub.w	d1,d0
-.BPag	move.w	d0,Edt_YCu(a4)
-	bra	Ed_LXY
-
-;
-; Mot gauche
-; ~~~~~~~~~~
-Ed_MGauche
-	bsr	R_MotGoch
-	move.w	d1,Edt_XCu(a4)
-	bra	Ed_Cent
-;
-; Mot droit
-; ~~~~~~~~~
-Ed_MDroite
-	bsr	R_MotDroi
-	move.w	d1,Edt_XCu(a4)
-	bra	Ed_Cent
+; Cursor movement: src/editor/cursor.cpp
+Ed_CHaut	jmp	_ed_cursor_up_entry
+Ed_ChtT		jmp	_ed_cursor_up_t_entry
+CFin:		rts
+Ed_CBas		jmp	_ed_cursor_down_entry
+Ed_CBasT	jmp	_ed_cursor_down_t_entry
+Ed_CGauche	jmp	_ed_cursor_left_entry
+Ed_CGo		jmp	_ed_cgo_entry
+Ed_CDroite	jmp	_ed_cursor_right_entry
+Ed_CDr		jmp	_ed_cdr_entry
+Ed_HPage	jmp	_ed_page_top_entry
+Ed_BPage	jmp	_ed_page_bottom_entry
+Ed_MGauche	jmp	_ed_word_left_key_entry
+Ed_MDroite	jmp	_ed_word_right_key_entry
 ; R_MotGoch, R_MotDroi (d1 the start of the word): src/editor/lines.cpp
 R_MotGoch	jmp	_ed_word_left_entry
 R_MotDroi	jmp	_ed_word_right_entry
-
-
-;
-; Debut ligne
-; ~~~~~~~~~~~
 Ed_DLigne
-Ed_DLigneT
-	clr.w	Edt_XCu(a4)
-	bra	Ed_Cent
-
-;
-; Fin ligne
-; ~~~~~~~~~
-Ed_FLigne
-	bsr	Ed_LCourant
-	move.w	d0,Edt_XCu(a4)
-	bra	Ed_Cent
-
-;
-; Page up
-; ~~~~~~~
-Ed_PHaut
-	bsr	Ed_TokCur
-	bset	#EtA_Y,Edt_EtatAff(a4)
-	move.b	#SlDelai,Edt_ASlY(a4)
-	tst.w	Edt_YPos(a4)
-	beq	Ed_HTex
-	move.w	Edt_WindTy(a4),d0
-	subq.w	#2,d0
-	bpl.s	.Skip
-	moveq	#1,d0
-.Skip	sub.w	d0,Edt_YPos(a4)
-	bcc	Ed_NewBuf
-	clr.w	Edt_YPos(a4)
-	bra	Ed_NewBuf
-;
-; Page down
-; ~~~~~~~~~
-Ed_PBas
-	bsr	Ed_TokCur
-	move.w	Edt_YPos(a4),d0
-	add.w	Edt_YCu(a4),d0
-	move.w	Edt_WindTy(a4),d1
-	subq.w	#2,d1
-	bpl.s	.Skip
-	moveq	#1,d1
-.Skip	add.w	d1,d0
-	cmp.w	Prg_NLigne(a6),d0
-	bcc	Ed_BTex
-	add.w	d1,Edt_YPos(a4)
-	bset	#EtA_Y,Edt_EtatAff(a4)
-	move.b	#SlDelai,Edt_ASlY(a4)
-	bra	Ed_NewBuf
-
-;
-; Scrolling sous le curseur HAUT
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_SHaut
-	bsr	Ed_TokCur
-	tst.w	Edt_YPos(a4)
-	beq	CFin
-Ed_SHaut2
-	subq.w	#1,Edt_YPos(a4)
-	moveq	#0,d1
-	moveq	#0,d2
-	WiCall	Locate
-	bra	Ed_CHt
-
-;
-; Scrolling sous le curseur BAS
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_SBas
-	bsr	Ed_TokCur
-	move.w	Edt_YPos(a4),d0
-	add.w	Edt_YCu(a4),d0
-	cmp.w	Prg_NLigne(a6),d0
-	bcc	CFin
-Ed_SBas2
-	addq.w	#1,Edt_YPos(a4)
-	moveq	#0,d1
-	move.w	Edt_WindTy(a4),d2
-	subq.w	#1,d2
-	WiCall	Locate
-	bra	Ed_CBs
-
-;
-; Scrolling sous le curseur GAUCHE
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_SGauche
-	bsr	Ed_TokCur
-	tst.w	Edt_XPos(a4)
-	beq	CFin
-	subq.w	#1,Edt_XCu(a4)
-	bra	Ed_CGo
-
-;
-; Scrolling sous le curseur DROITE
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_SDroite
-	bsr	Ed_TokCur
-	move.w	Edt_XCu(a4),d0
-	cmp.w	#250,d0
-	bcc	CFin
-	addq.w	#1,Edt_XCu(a4)
-	bra	Ed_CDr
-
-;
-; Haut du texte
-; ~~~~~~~~~~~~~
-Ed_HTexte
-	bsr	Ed_TokCur
-	bsr	Ed_AutoMarks
-Ed_HTex
-	clr.w	Edt_YPos(a4)
-	clr.w	Edt_XPos(a4)
-	clr.w	Edt_YCu(a4)
-	clr.w	Edt_XCu(a4)
-	move.b	#SlDelai,Edt_ASlY(a4)
-	bsr	Ed_NewBuf
-	bra	Ed_CHtE
-
-;
-; Bas du texte
-; ~~~~~~~~~~~~
-Ed_BTexte
-	bsr	Ed_TokCur
-	bsr	Ed_AutoMarks
-Ed_BTex
-	move.w	Prg_NLigne(a6),d0
-	move.w	Edt_WindTy(a4),d1
-	lsr.w	#1,d1				*XXX EdTy-EdTY/3
-	sub.w	d1,d0
-	bcc.s	.BTx1
-	moveq	#0,d0
-.BTx1	move.w	d0,Edt_YPos(a4)
-	neg.w	d0
-	add.w	Prg_NLigne(a6),d0
-	move.w	d0,Edt_YCu(a4)
-	clr.w	Edt_XPos(a4)
-	clr.w	Edt_XCu(a4)
-	move.b	#SlDelai,Edt_ASlY(a4)
-	bsr	Ed_NewBuf
-	bra	Ed_CBasE
-
-;
-; NEXT / PREVIOUS label
-; ~~~~~~~~~~~~~~~~~~~~~
-Ed_PLabel
-	bsr	Ed_TokCur
-	bsr	Ed_NLab
-	move.w	d1,d0
-	beq	Ed_HTexte
-	bra.s	NLb1
-Ed_NLabel
-	bsr	Ed_TokCur
-	bsr	Ed_NLab
-	move.w	d2,d0
-	beq	Ed_HTexte
-NLb1	cmp.w	Prg_NLigne(a6),d0
-	bcc	Ed_BTexte
-	bsr	Ed_AutoMarks
-	or.b	#EtA_BXY,Edt_EtatAff(a4)
-	move.b	#SlDelai,Edt_ASlY(a4)
-	move.w	d0,d1
-	sub.w	Edt_YCu(a4),d0
-	bpl.s	NLb2
-	clr.w	d0
-	move.w	d1,Edt_YCu(a4)
-NLb2:	move.w	d0,Edt_YPos(a4)
-	clr.w	Edt_XCu(a4)
-	bra	Ed_NewBuf
+Ed_DLigneT	jmp	_ed_line_start_entry
+Ed_FLigne	jmp	_ed_line_end_entry
+Ed_PHaut	jmp	_ed_page_up_entry
+Ed_PBas		jmp	_ed_page_down_entry
+Ed_SHaut	jmp	_ed_scroll_up_key_entry
+Ed_SHaut2	jmp	_ed_shaut2_entry
+Ed_SBas		jmp	_ed_scroll_down_key_entry
+Ed_SBas2	jmp	_ed_sbas2_entry
+Ed_SGauche	jmp	_ed_scroll_left_key_entry
+Ed_SDroite	jmp	_ed_scroll_right_key_entry
+Ed_HTexte	jmp	_ed_text_top_entry
+Ed_HTex		jmp	_ed_text_top_t_entry
+Ed_BTexte	jmp	_ed_text_bottom_entry
+Ed_BTex		jmp	_ed_text_bottom_t_entry
+Ed_PLabel	jmp	_ed_label_previous_entry
+Ed_NLabel	jmp	_ed_label_next_entry
 
 ;
 ; Copie chaine
@@ -3525,6 +3194,8 @@ Prg_MarkRaz
 
 ; Positionne la premiere system-mark
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		xdef	_ed_auto_marks
+_ed_auto_marks
 Ed_AutoMarks
 	movem.l	a0-a1/d0-d1,-(sp)
 	move.w	Edt_YPos(a4),d0
@@ -8844,6 +8515,8 @@ Ed_LToLong
 ;
 ; Top of text
 ; ~~~~~~~~~~~
+		xdef	_ed_top_of_text
+_ed_top_of_text
 Ed_CHtE
 	move.w	#200,d0			***- Top of text
 	bsr	Ed_GetMessage
@@ -8852,6 +8525,8 @@ Ed_CHtE
 ;
 ; Bottom of text
 ; ~~~~~~~~~~~~~~
+		xdef	_ed_bottom_of_text
+_ed_bottom_of_text
 Ed_CBasE
 	move.w	#201,d0			***- Bottom of text
 	bsr	Ed_GetMessage
@@ -9481,57 +9156,9 @@ Ed_TokStok2
 TokX	rts
 
 
-; DETOKENISE TOUT LE BUFFER
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-		xdef	_ed_buf_untok
-_ed_buf_untok
-Ed_BufUntok
-	clr.w	-(sp)
-	move.w	Edt_YPos(a4),d0
-	bsr	Ed_FindL
-	bra.s	.BUnt1
-.BUnt0	bsr	Ed_NextL
-.BUnt1	move.w	(sp),d1
-	move.l	Edt_BufE(a4),a1
-	lsl.w	#8,d1
-	lea	0(a1,d1.w),a1
-	clr.w	(a1)
-	clr.b	255(a1)			Ligne editable
-	tst.w	d0
-	beq.s	.BUnt2
-	JJsrP	L_Tk_EditL,a2
-	bne.s	.Edit
-	move.b	#-1,255(a1)		Ligne NON editable!
-.Edit	moveq	#0,d0
-	bsr	Detok
-.BUnt2	addq.w	#1,(sp)
-	move.w	(sp),d0
-	cmp.w	Edt_WindTy(a4),d0
-	bcs.s	.BUnt0
-	addq.l	#2,sp
-	rts
-
-;
-; DETOKENISE la LIGNE D0 dans le BUFFER ligne D1
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_Untok
-	movem.l	d0-d1/a0-a2,-(sp)
-	move.l	Edt_BufE(a4),a1
-	lsl.w	#8,d1
-	lea	0(a1,d1.w),a1
-	clr.w	(a1)
-	clr.b	255(a1)
-	move.l	a1,-(sp)
-	bsr	Ed_FindL
-	move.l	(sp)+,a1
-	beq.s	.Fin
-	JJsrR	L_Tk_EditL,a2
-	bne.s	.Edit
-	move.b	#-1,255(a1)
-.Edit	moveq	#0,d0
-	bsr	Detok
-.Fin	movem.l	(sp)+,d0-d1/a0-a2
-	rts
+; Ed_BufUntok, Ed_Untok (d0 the program's line, d1 the window's): src/editor/cursor.cpp
+Ed_BufUntok	jmp	_ed_buf_untok_entry
+Ed_Untok	jmp	_ed_untok_entry
 
 ;
 ; NEW
