@@ -33,4 +33,7 @@ Stored store_block(const uint8_t *block, uint32_t length, uint16_t position);
 int32_t delete_line(uint16_t n);
 void delete_chunk(uint8_t *from, uint8_t *to);
 
+// editor/indent.cpp
+void indent(uint8_t *program, uint16_t tab);
+
 } // namespace amos::ed

@@ -62,6 +62,7 @@
 		XREF	_amos_bridge
 		XREF	_ed_store_entry,_ed_store_block_entry,_ed_delete_line_entry,_ed_delete_chunk_at_entry
 		XREF	_ed_delete_chunk_entry,_ed_find_line_entry,_ed_next_line_entry
+		XREF	_ed_indent_entry
 		XREF	_ed_tokenise_entry,_ed_detok_entry,_ed_mon_detok_entry,_ed_tinst_entry
 EDebut		dc.l	Ed_Cold-EDebut
 		dc.l	Ed_Title-EDebut
@@ -8498,100 +8499,8 @@ Ed_Indent
 	bsr	Ed_NewBuf
 	rts
 
-;	Indentation du programme
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-;	A0:	Debut programme
-;	D0:	Valeur du Tab
-Indent	movem.l	d2-d7,-(sp)
-	move.w	d0,d3
-	moveq	#0,d6
-IndLine	move.l	a0,a1		* Adresse de debut de ligne
-	moveq	#0,d4
-	moveq	#0,d7
-	move.w	d6,d5
-	tst.w	(a0)+
-	beq	IndX
-IndLoop	move.w	(a0)+,d0
-	beq	IndFL
-	bsr	TInst
-	cmp.w	#_TkProc,d0
-	beq.s	IndPro
-	cmp.w	#_TkEndP,d0
-	beq.s	IndProF
-	cmp.w	#_TkFor,d0
-	beq.s	IndPls
-	cmp.w	#_TkRpt,d0
-	beq.s	IndPls
-	cmp.w	#_TkWhl,d0
-	beq.s	IndPls
-	cmp.w	#_TkDo,d0
-	beq.s	IndPls
-	cmp.w	#_TkIf,d0
-	beq.s	IndPls
-	cmp.w	#_TkThen,d0
-	beq.s	IndThen
-	cmp.w	#_TkElse,d0
-	beq.s	IndElse
-	cmp.w	#_TkElsI,d0
-	beq.s	IndElse
-	cmp.w	#_TkEndI,d0
-	beq.s	IndMns
-	cmp.w	#_TkNxt,d0
-	beq.s	IndMns
-	cmp.w	#_TkUnt,d0
-	beq.s	IndMns
-	cmp.w	#_TkWnd,d0
-	beq.s	IndMns
-	cmp.w	#_TkLoo,d0
-	beq.s	IndMns
-	bra.s	IndLoop
-* Debut d'une procedure: RAZ
-IndPro:	moveq	#0,d5
-	move.w	d3,d6
-	tst.b	10(a1)
-	bpl.s	IndLoop
-	moveq	#0,d6
-	move.l	4(a1),d0
-	lea	12+2(a1,d0.l),a0
-	bra	IndFL
-* Fin d'une procedure
-IndProF	moveq	#0,d5
-	moveq	#0,d6
-	bra	IndLoop
-* Debut d'une boucle: + pour la ligne suivante
-IndPls:	addq.w	#1,d7
-	add.w	d3,d6
-	bra	IndLoop
-* Fin d'une boucle: - pour cette ligne et la suivante
-IndMns:	subq.w	#1,d7
-	bpl.s	IndM
-	clr.w	d7
-	sub.w	d3,d5
-	sub.w	d3,d6
-	bra	IndLoop
-IndM:	sub.w	d3,d6
-	bra	IndLoop
-* THEN: met le flag pour ELSE
-IndThen:moveq	#1,d4
-	bra.s	IndMns
-* ELSE: si FLAG, ne fait RIEN
-IndElse tst.w	d4
-	bne	IndLoop
-	sub.w	d3,d5
-	bra	IndLoop
-* Fin d'une ligne: poke D5!
-IndFL:	tst.w	d5
-	bpl.s	IndFl1
-	clr.w	d5
-IndFl1:	cmp.w	#127,d5
-	bcs.s	IndFl2
-	moveq	#127,d5
-IndFl2:	addq.w	#1,d5
-	move.b	d5,1(a1)
-	bra	IndLine
-* Fin de l'indentation automatique
-IndX:	movem.l	(sp)+,d2-d7
-	rts
+; Indentation du programme (a0 the program, d0 the tab): src/editor/indent.cpp
+Indent	jmp	_ed_indent_entry
 
 ;
 ; Teste le programme s'il faut
