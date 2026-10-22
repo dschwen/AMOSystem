@@ -3281,34 +3281,7 @@ Ip3:	movem.l	(sp)+,a0-a2/d2-d7
 ;	d6= WTy
 ;	d5= WY
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	AppCentre
-; - - - - - - - - - - - - -
-FsApp1	move.w	d6,d4
-	move.w	d6,EcAWTY(a2)
-	add.w	d6,EcAWTY(a2)
-	bset	#2,EcAWT(a2)
-	move.w	EcTy(a2),d0
-	lsr.w	#1,d0
-	sub.w	d6,d0
-	move.w	d0,EcAVY(a2)
-	bset	#2,EcAV(a2)
-	move.w	d5,EcAWY(a2)
-	sub.w	d6,EcAWY(a2)
-	bset	#2,EcAW(a2)
-	movem.l	a2/d4-d7,-(sp)
-	Rjsr	L_ReCop
-	movem.l	(sp)+,a2/d4-d7
-	add.w	d7,d6
-	bpl.s	FsApp2
-	moveq	#1,d6
-FsApp2:	move.w	EcTy(a2),d0
-	lsr.w	#1,d0
-	cmp.w	d0,d6
-	bcs.s	FsApp3
-	move.w	d0,d6
-FsApp3:	cmp.w	d4,d6
-	bne.s	FsApp1
-	rts
+	Lib_Int	AppCentre		src/lib/screens.cpp
 
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -3801,23 +3774,7 @@ FsApp3:	cmp.w	d4,d6
 ; - - - - - - - - - - - - -
 	Lib_Empty			GSPal, now in src/lib/screens.cpp
 ; - - - - - - - - - - - - -
-	Lib_Def	PalRout
-; - - - - - - - - - - - - -
-	tst.w	ScOn(a5)
-	Rbeq	L_ScNOp
-	move.l	Buffer(a5),a1
-	moveq	#0,d0
-PalR1:	move.w	#$FFFF,(a1)
-	btst	d0,d3
-	beq.s	PalR2
-	move.w	(a0),(a1)
-PalR2:	addq.l	#2,a0
-	addq.l	#2,a1
-	addq.w	#1,d0
-	cmp.w	#32,d0
-	bcs.s	PalR1
-	move.l	Buffer(a5),a1
-	rts
+	Lib_Int	PalRout		src/lib/screens.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					FLASH OFF
@@ -4045,59 +4002,11 @@ PalR2:	addq.l	#2,a0
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					Reserve le tempras
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	GetRas
-; - - - - - - - - - - - - -
-	movem.l	a0/a1/d0/d1,-(sp)
-	Rbsr	L_FreeRas
-	bmi.s	GRas2
-	bne.s	GRas1
-	move.l	ScOnAd(a5),d0
-	Rbeq	L_ScNOp
-	move.l	d0,a0
-	move.l	EcTPlan(a0),d0
-GRas1:	move.l	d0,d1
-	move.l	Buffer(a5),a1
-	cmp.l	#TBuffer,d0
-	bls.s	GRas2
-	SyCall	MemChip
-	Rbeq	L_OOfMem
-	move.l	a0,RasAd(a5)
-	move.l	d1,RasLong(a5)
-	move.l	a0,a1
-GRas2:	move.l	d1,d0
-	lea	ATmpRas(a5),a0
-	move.l	T_RastPort(a5),a2
-	move.l	a0,12(a2)
-	GfxCa5	InitTmpRas
-	movem.l	(sp)+,a0/a1/d0/d1
-	rts
+	Lib_Int	GetRas		src/lib/screens.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					Libere le tempras
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	FreeRas
-; - - - - - - - - - - - - -
-	move.l	RasAd(a5),d0
-	beq.s	FriRX
-	move.l	d0,a1
-	move.l	RasLong(a5),d0
-	SyCall	MemFree
-	clr.l	RasAd(a5)
-	clr.l	RasLong(a5)
-	move.l	T_RastPort(a5),a1
-	clr.l	12(a1)
-FriRX:	tst.l	RasLock(a5)
-	bne.s	FriRY
-	moveq	#0,d0
-	move.w	RasSize(a5),d0
-	clr.w	RasSize(a5)
-	tst.l	d0
-	rts
-* Raster locke!
-FriRY:	move.l	RasLock(a5),a1
-	moveq	#0,d1
-	move.w	RasSize(a5),d1
-	moveq	#-1,d0
-	rts
+	Lib_Int	FreeRas		src/lib/screens.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					INK a,b,c
@@ -4351,50 +4260,11 @@ FriRY:	move.l	RasLock(a5),a1
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 ; - - - - - - - - - - - - -
-	Lib_Def	GfxPnt
+	Lib_Empty			GfxPnt, now in src/lib/screens.cpp
 ; - - - - - - - - - - - - -
-; Entree speciale pour PAINT!
-	movem.l	a3-a6/d6-d7,-(sp)
-	move.l	T_EcVect(a5),a3
-	lea	SuPaint*4(a3),a3
-	Rbra	L_GfxF0
+	Lib_Int	GfxFunc		src/lib/screens.cpp
 ; - - - - - - - - - - - - -
-	Lib_Def	GfxFunc
-; - - - - - - - - - - - - -
-; Appel d'une fonction GFX avec autoback!
-	movem.l	a3-a6/d6-d7,-(sp)
-	move.l	T_GfxBase(a5),a6
-	lea	0(a6,d5.w),a3
-	Rbra	L_GfxF0
-; - - - - - - - - - - - - -
-	Lib_Def	GfxF0
-; - - - - - - - - - - - - -
-	move.l	ScOnAd(a5),a2
-	tst.w	EcAuto(a2)
-	bne.s	GfxF1
-	jsr	(a3)
-	bra.s	GfxX1
-* Autoback!!
-GfxF1	move.l 	36(a1),a4
-	moveq	#0,d7
-	movem.l	d0-d7/a0-a3,-(sp)
-	EcCall	AutoBack1
-	movem.l	(sp),d0-d7/a0-a3
-	btst	#BitDble,EcFlags(a2)
-	beq.s	GfxF2
-	jsr	(a3)
-	EcCall	AutoBack2
-	movem.l	(sp),d0-d7/a0-a3
-	move.l	a4,36(a1)
-	jsr	(a3)
-	EcCall	AutoBack3
-GfxX	movem.l	(sp)+,d0-d7/a0-a3
-GfxX1	movem.l	(sp)+,a3-a6/d6-d7
-	rts
-* Single buffer
-GfxF2	jsr	(a3)
-	EcCall	AutoBack4
-	bra.s	GfxX
+	Lib_Empty			GfxF0, now in src/lib/screens.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					Routine: #ecran D1 >>> adresse D0
@@ -7074,41 +6944,7 @@ IAmRb:	SyCall	AMALReg
 ; - - - - - - - - - - - - -
 	Lib_Int	ScCopy		src/lib/unpack.cpp
 ; - - - - - - - - - - - - -
-	Lib_Def	Dia_ScCopy
-; - - - - - - - - - - - - -
-	movem.l	d0-d7/a0-a4,-(sp)
-	move.l	T_EcCourant(a5),a0
-	move.l	a0,a1
-	lea	EcCurrent(a0),a2
-	move.l	a2,SccEcO(a5)			Bitmaps
-	move.l	a2,SccEcD(a5)
-	move.l	Dia_BaseX(a4),d6
-	add.l	d6,d0
-	add.l	d6,d2
-	add.l	d6,d4
-	move.l	Dia_BaseY(a4),d6
-	add.l	d6,d1
-	add.l	d6,d3
-	add.l	d6,d5
-	move.w	#$CC,d6
-	Rjsr	L_Sco0
-	movem.l	(sp)+,d0-d7/a0-a4
-	rts
-
-; _____________________________________________________________________________
-;
-;								Unpacker
-;______________________________________________________________________________
-;
-UAEc:	equ 0
-UDEc:	equ 4
-UITy:	equ 8
-UTy:	equ 10
-UTLine:	equ 12
-UNPlan:	equ 14
-USx	equ 16
-USy	equ 18
-UPile:	equ 20
+	Lib_Empty			Dia_ScCopy, now in src/lib/screens.cpp
 
 ; _________________________________________________
 ;

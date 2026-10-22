@@ -57,8 +57,15 @@ struct RegFrame {
     uint32_t a[3];      // a0-a2
 };
 
+// All the registers, for calls into code that wants its own a3-a6
+struct AllRegs {
+    uint32_t d[8];
+    uint32_t a[7];
+};
+
 extern "C" {
 void amos_call(Regs *r, const void *fn);
+void amos_call_all(AllRegs *r, const void *fn);
 void amos_eval(Regs *r, const void *fn);
 [[noreturn]] void amos_goto(const void *fn, uint32_t d0);
 }

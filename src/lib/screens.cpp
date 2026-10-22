@@ -26,6 +26,9 @@ using EcScreen = amos::Screen;
 namespace {
 
 constexpr uint32_t EntNul = 0x80000000;
+// EcFlags: BitDble (5) is set with bset on the word in memory, so in its
+// high byte
+constexpr uint16_t DoubleBuffer = 1 << (8 + 5);
 
 // graphics.library offsets for GfxFunc
 constexpr int16_t LVOWritePixel = -324, LVODraw = -246, LVODrawEllipse = -180, LVOPolyDraw = -336,
@@ -95,13 +98,117 @@ struct RastPort *move_cursor(uint32_t x, uint32_t y)
     return rp;
 }
 
+// FreeRas: free the TmpRas of Paint/Polygon. Returns -1 if one is locked
+// (Ras Lock), else its old size (RasSize, then 0).
+int32_t tmp_ras_free()
+{
+    IData &d = idata();
+    if (d.RasAd) {
+        Regs r = {};
+        r.a[1] = d.RasAd;
+        r.d[0] = d.RasLong;
+        sy_call(sy::MemFree, r);
+        d.RasAd = 0;
+        d.RasLong = 0;
+        rastport()->TmpRas = nullptr;
+    }
+    if (d.RasLock)
+        return -1;
+    uint16_t size = d.RasSize;
+    d.RasSize = 0;
+    return size;
+}
+
+// GetRas: a TmpRas as large as a plane of the screen (or Set Paint's
+// size, or Ras Lock's buffer)
+void tmp_ras_get()
+{
+    IData &d = idata();
+    int32_t size = tmp_ras_free();
+    uint32_t length;
+    uint32_t buffer;
+    if (size < 0) {
+        length = d.RasSize;
+        buffer = d.RasLock;
+    } else {
+        length = static_cast<uint32_t>(size);
+        if (!length)
+            length = screen0()->EcTPlan;
+        buffer = d.Buffer;
+        if (length > 1024) {
+            Regs r = {};
+            r.d[0] = length;
+            sy_call(sy::MemChip, r);
+            if (!r.a[0])
+                lib_jump(L_OOfMem, 0);
+            d.RasAd = buffer = r.a[0];
+            d.RasLong = length;
+        }
+    }
+    struct TmpRas *t = reinterpret_cast<struct TmpRas *>(d.ATmpRas);
+    rastport()->TmpRas = t;
+    InitTmpRas(t, ptr<BYTE>(buffer), static_cast<LONG>(length));
+}
+
+// GfxF0: call fn with registers r (a6 = graphics.library), in both buffers
+// of a screen with Autoback
+void gfx_autoback(const void *fn, AllRegs &r)
+{
+    EcScreen *s = ptr<EcScreen>(idata().ScOnAd);
+    if (!s->EcAuto) {
+        amos_call_all(&r, fn);
+        return;
+    }
+    // The graphic cursor (cp_x/cp_y) for the second buffer
+    uint32_t cursor = peek_l(ptr<uint8_t>(r.a[1]) + 36);
+    r.d[7] = 0;
+    const AllRegs saved = r;
+    auto back = [&](int function) {
+        Regs b = {};
+        for (int i = 0; i < 8; i++)
+            b.d[i] = saved.d[i];
+        for (int i = 0; i < 3; i++)
+            b.a[i] = saved.a[i];
+        ec_call(function, b);
+    };
+    back(ec::AutoBack1);
+    AllRegs c = saved;
+    if (s->EcFlags & DoubleBuffer) {
+        amos_call_all(&c, fn);
+        back(ec::AutoBack2);
+        c = saved;
+        poke_l(ptr<uint8_t>(c.a[1]) + 36, cursor);
+        amos_call_all(&c, fn);
+        back(ec::AutoBack3);
+    } else {
+        amos_call_all(&c, fn);
+        back(ec::AutoBack4);
+    }
+    r = saved;
+}
+
+AllRegs all_regs(const Regs &r)
+{
+    AllRegs a = {};
+    for (int i = 0; i < 8; i++)
+        a.d[i] = r.d[i];
+    for (int i = 0; i < 3; i++)
+        a.a[i] = r.a[i];
+    a.a[3] = address(ctx().a3);
+    a.a[4] = address(ctx().a4);
+    a.a[5] = address(ctx().a5);
+    a.a[6] = wdata().GfxBase;
+    return a;
+}
+
 // GfxFunc: a graphics.library function on the current RastPort, drawn in
 // both buffers with Autoback. The registers are those of the function.
 void gfx(int16_t lvo, Regs &r)
 {
     r.d[5] = static_cast<uint16_t>(lvo);
     r.a[1] = wdata().RastPort;
-    lib_call(L_GfxFunc, r);
+    AllRegs a = all_regs(r);
+    gfx_autoback(ptr<uint8_t>(wdata().GfxBase) + lvo, a);
 }
 
 // AdrEc: a screen by number, or null
@@ -1034,9 +1141,7 @@ extern "C" void lib_in_set_paint(uint32_t n)
 extern "C" void lib_in_paint3(uint32_t x, uint32_t y, uint32_t mode)
 {
     need_screen();
-    Regs ras = {};
-    ras.d[1] = 0;
-    lib_call(L_GetRas, ras);
+    tmp_ras_get();
     uint32_t colour = point(x, y);
     struct RastPort *rp = rastport();
     Regs r = {};
@@ -1046,9 +1151,11 @@ extern "C" void lib_in_paint3(uint32_t x, uint32_t y, uint32_t mode)
     r.d[4] = (mode & 0xFFFF0000u) | (mode & 1);
     r.d[5] = idata().Buffer;
     r.a[1] = address(rp);
-    lib_call(L_GfxPnt, r);
-    Regs f = {};
-    lib_call(L_FreeRas, f);
+    // GfxPnt: AMOS.library's paint, with Autoback (a6 left as it is)
+    AllRegs a = all_regs(r);
+    a.a[6] = address(ctx().a6);
+    gfx_autoback(ptr<uint8_t>(wdata().EcVect) + 4 * ec::SuPaint, a);
+    tmp_ras_free();
 }
 
 extern "C" void lib_in_paint2(uint32_t x, uint32_t y) { lib_in_paint3(x, y, -1u); }
@@ -1213,7 +1320,7 @@ extern "C" void lib_in_scroll(uint32_t n)
     }
     Regs r = {};
     ec_call(ec::AutoBack1, r);
-    if (s->EcFlags & 1 << 5) {
+    if (s->EcFlags & DoubleBuffer) {
         do_scroll(entry, s);
         ec_call(ec::AutoBack2, r);
         do_scroll(entry, s);
@@ -1786,3 +1893,87 @@ extern "C" void lib_in_amos_lock()
 }
 
 extern "C" void lib_in_amos_unlock() { wdata().NoFlip = 0; }
+
+// ---- helpers the assembler calls ---------------------------------------------
+
+// AppCentre: a2 = screen, d7 = speed (negative: closing), d6 = start
+// height, d5 = the middle line: the screen opens / closes from its middle
+extern "C" uint32_t lib_app_centre(RegFrame &r)
+{
+    EcScreen *s = ptr<EcScreen>(r.a[2]);
+    int16_t speed = static_cast<int16_t>(r.d[7]), h = static_cast<int16_t>(r.d[6]);
+    int16_t middle = static_cast<int16_t>(r.d[5]);
+    // (The view changes take bit 2 of the high byte of their words)
+    auto changed = [](uint16_t &w) { reinterpret_cast<uint8_t *>(&w)[0] |= 1 << 2; };
+    int16_t last;
+    do {
+        last = h;
+        s->EcAWTY = static_cast<uint16_t>(2 * h);
+        changed(s->EcAWT);
+        s->EcAVY = static_cast<uint16_t>((s->EcTy >> 1) - h);
+        changed(s->EcAV);
+        s->EcAWY = static_cast<uint16_t>(middle - h);
+        changed(s->EcAW);
+        Regs c = {};
+        lib_call(L_ReCop, c);
+        h = static_cast<int16_t>(h + speed);
+        if (h < 0)
+            h = 1;
+        uint16_t half = s->EcTy >> 1;
+        if (static_cast<uint16_t>(h) >= half)
+            h = static_cast<int16_t>(half);
+    } while (h != last);
+    r.d[4] = static_cast<uint16_t>(last);
+    r.d[6] = static_cast<uint16_t>(h);
+    return r.d[0];
+}
+
+// PalRout: d3 = the colours to change (bits), a0 = the palette. Out: a1 =
+// a palette in Buffer with $FFFF for the others.
+extern "C" uint32_t lib_pal_rout(RegFrame &r)
+{
+    if (!idata().ScOn)
+        screen_not_open();
+    uint16_t *to = ptr<uint16_t>(idata().Buffer);
+    const uint16_t *from = ptr<uint16_t>(r.a[0]);
+    for (int i = 0; i < 32; i++)
+        to[i] = r.d[3] >> i & 1 ? from[i] : 0xFFFF;
+    r.a[0] += 64;
+    r.a[1] = idata().Buffer;
+    return r.d[0];
+}
+
+// GetRas / FreeRas (FreeRas: d0 = the old size, BEQ; or -1, BMI, with a1 =
+// the locked buffer and d1 its size)
+extern "C" uint32_t lib_get_ras(RegFrame &r)
+{
+    tmp_ras_get();
+    return r.d[0];
+}
+extern "C" uint32_t lib_free_ras(RegFrame &r)
+{
+    int32_t size = tmp_ras_free();
+    if (size < 0) {
+        r.a[1] = idata().RasLock;
+        r.d[1] = idata().RasSize;
+    }
+    return r.d[0] = static_cast<uint32_t>(size);
+}
+
+// GfxFunc: d5 = graphics.library offset, a1 = RastPort, the function's
+// registers
+extern "C" uint32_t lib_gfx_func(RegFrame &r)
+{
+    Regs g = {};
+    for (int i = 0; i < 8; i++)
+        g.d[i] = r.d[i];
+    for (int i = 0; i < 3; i++)
+        g.a[i] = r.a[i];
+    AllRegs a = all_regs(g);
+    gfx_autoback(ptr<uint8_t>(wdata().GfxBase) + static_cast<int16_t>(r.d[5]), a);
+    for (int i = 0; i < 6; i++)
+        r.d[i] = a.d[i];
+    for (int i = 0; i < 3; i++)
+        r.a[i] = a.a[i];
+    return r.d[0];
+}

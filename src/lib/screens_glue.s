@@ -185,3 +185,10 @@
 		RegRoutine UnPack_Bitmap,_lib_unpack_bitmap
 		RegRoutine UnPack_Screen,_lib_unpack_screen
 		RegRoutine ScCopy,_lib_sc_copy
+
+; Helpers of Ecran.s and AppCentre (lib/screens.cpp)
+		RegRoutine AppCentre,_lib_app_centre
+		RegRoutine PalRout,_lib_pal_rout
+		RegRoutine GetRas,_lib_get_ras
+		RegRoutine FreeRas,_lib_free_ras
+		RegRoutine GfxFunc,_lib_gfx_func

@@ -38,14 +38,8 @@ namespace amos {
 uint8_t *lst_new(uint32_t *list, uint32_t length);
 void lst_del(uint32_t *list, uint8_t *element);
 }
-// dialog_glue.s: the routine records of Dia_ClearVar, and calls into the
-// assembler with all the registers
+// dialog_glue.s: the routine records of Dia_ClearVar
 extern "C" uint8_t lib_dia_on_clear[], lib_dia_on_default[];
-struct AllRegs {
-    uint32_t d[8];
-    uint32_t a[7];
-};
-extern "C" void amos_call_all(AllRegs *r, const void *fn);
 
 namespace amos {
 void add_routine(uint8_t *record, uint32_t list);
