@@ -260,22 +260,27 @@ def compare_editor(name, shots):
 KEYSYMS = {' ': 'space', '.': 'period', ',': 'comma', '$': 'dollar', '"': 'quotedbl', '-': 'minus'}
 
 
-def play_input(script, display, out, deadline, name=None, env=None):
-    """Send the events of an input script to the emulator window."""
+def play_input(script, display, out, deadline, name=None, env=None, stopped=None):
+    """Send the events of an input script to the emulator window. Stops when
+    stopped is set: the display goes away then, and Xlib would exit the
+    whole process on the next call."""
+    stopped = stopped or threading.Event()
     d = xinput.Display(display)
     try:
         d.move(640, 512)            # into the window: it gets the keyboard
         for cmd in script:
+            if stopped.is_set():
+                return
             op, args = cmd[0], cmd[1:]
             if op == 'sync':
                 path = os.path.join(out, args[0])
                 while not os.path.exists(path):
-                    if time.time() > deadline:
+                    if time.time() > deadline or stopped.wait(0.2):
                         return
-                    time.sleep(0.2)
                 time.sleep(0.3)
             elif op == 'wait':
-                time.sleep(float(args[0]))
+                if stopped.wait(float(args[0])):
+                    return
             elif op == 'key':
                 d.key(args[0])
             elif op == 'keys':
@@ -352,6 +357,8 @@ def run_test(name, tables, amos, kickstart, workbench, timeout, visible):
         xvfb, env['DISPLAY'] = start_xvfb()
     start = time.time()
     shots = None
+    stopped = threading.Event()
+    player = None
     try:
         with open(os.path.join(base, 'fs-uae.log'), 'w') as log:
             proc = subprocess.Popen(['fs-uae', config], stdout=log, stderr=subprocess.STDOUT,
@@ -360,7 +367,7 @@ def run_test(name, tables, amos, kickstart, workbench, timeout, visible):
             player = None
             if script:
                 player = threading.Thread(target=play_input, args=(script, env['DISPLAY'], out,
-                                                                   start + timeout, name, env),
+                                                                   start + timeout, name, env, stopped),
                                           daemon=True)
                 player.start()
             try:
@@ -383,6 +390,10 @@ def run_test(name, tables, amos, kickstart, workbench, timeout, visible):
             finally:
                 stop(proc, group=True)
     finally:
+        # the input player lets go of the display first
+        stopped.set()
+        if player:
+            player.join(10)
         if xvfb:
             stop(xvfb)
     return os.path.exists(os.path.join(out, 'DONE')), time.time() - start, out, shots

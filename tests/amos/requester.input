@@ -5,5 +5,3 @@ key Return
 wait 3
 shot retry
 key Escape
-sync again
-wait 2
