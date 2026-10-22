@@ -63,6 +63,11 @@
 		XREF	_ed_store_entry,_ed_store_block_entry,_ed_delete_line_entry,_ed_delete_chunk_at_entry
 		XREF	_ed_delete_chunk_entry,_ed_find_line_entry,_ed_next_line_entry
 		XREF	_ed_indent_entry
+		XREF	_ed_show_slider_entry,_ed_cursor_on_entry,_ed_cursor_off_entry,_ed_show_current_line_entry
+		XREF	_ed_centre_entry,_ed_goto_x_entry,_ed_goto_y_entry,_ed_set_x_entry,_ed_set_y_entry
+		XREF	_ed_set_xy_entry,_ed_labels_around_entry,_ed_place_cursor_entry,_ed_show_column_entry
+		XREF	_ed_new_buffer_all_entry,_ed_new_buffer_entry,_ed_show_all_entry,_ed_show_line_entry
+		XREF	_ed_show_line_only_entry
 		XREF	_ed_current_line_entry,_ed_letter_entry,_ed_insert_text_entry,_ed_delete_text_entry
 		XREF	_ed_word_left_entry,_ed_word_right_entry,_ed_type_key_entry,_ed_delete_key_entry
 		XREF	_ed_backspace_entry,_ed_clear_line_entry,_ed_delete_to_end_entry,_ed_delete_to_start_entry
@@ -4652,6 +4657,8 @@ Ed_GetNbMessage
 ;
 ; Get new editor message
 ; ~~~~~~~~~~~~~~~~~~~~~~
+		xdef	_ed_get_systeme
+_ed_get_systeme
 Ed_GetSysteme
 	move.l	Ed_Systeme(a5),a0
 	bra.s	Ed_GetMessageA0
@@ -6569,6 +6576,8 @@ Edt_SliderY
 	bra	Edt_SlMinusY
 	bra	Edt_SlPlusY
 	bra	Edt_SlDrawY
+		xdef	_ed_sl_update_y
+_ed_sl_update_y
 Edt_SlUpdateY
 	move.w	Edt_WindTy(a4),Edt_SlV+Sl_Window(a4)
 	move.w	Edt_YPos(a4),Edt_SlV+Sl_Position(a4)
@@ -6848,6 +6857,8 @@ Ed_Avertir
 ;
 ; Efface le dernier avertissement
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		xdef	_ed_aver_fin
+_ed_aver_fin
 Ed_AverFin
 	movem.l	d0-d7/a0-a4,-(sp)
 	move.w	Ed_Avert(a5),d1
@@ -6870,6 +6881,8 @@ Ed_AverFin
 ;
 ; Effacement de tous les avertissements
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		xdef	_ed_all_aver_fin
+_ed_all_aver_fin
 Ed_AllAverFin
 	tst.w	Ed_Avert(a5)
 	bne.s	.Skip
@@ -9084,489 +9097,26 @@ Ed_SB
 ;	ROUTINES AFFICHAGE / POSITIONNEMENT FENETRES
 ; ___________________________________________________________________
 ;
-; Affiche les sliders
-; ~~~~~~~~~~~~~~~~~~~
-Ed_AffSlV
-	tst.w	Edt_WindTy(a4)
-	beq.s	.Skip
-	bsr	Edt_SlUpdateY
-	lea	Edt_SlV(a4),a0
-	moveq	#0,d0
-	JJsrR	L_Sl_Draw,a1
-.Skip	rts
-
-;
-; Curseur ON/OFF
-; ~~~~~~~~~~~~~~
-Ed_CuOn
-	movem.l	d0/a0/a1,-(sp)
-	lea	ChCuOn(pc),a1
-	WiCall	Print
-	movem.l	(sp)+,d0/a0/a1
-	rts
-Ed_CuOff
-	movem.l	d0/a0/a1,-(sp)
-	lea	ChCuOff(pc),a1
-	WiCall	Print
-	clr.b	Ed_CuFlag(a5)
-	movem.l	(sp)+,d0/a0/a1
-	rts
-
-;
-; Reaffichage de la ligne courante
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-		xdef	_ed_ea_li_cu
-_ed_ea_li_cu
-Ed_EALiCu
-	move.w	Edt_YCu(a4),d1
-	bsr	Ed_EALigne
-	bra	Ed_Loca
-
-;
-; Routine: centre la fenetre editeur sur la position du curseur
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-		xdef	_ed_cent
-_ed_cent
-Ed_Cent
-	bset	#EtA_X,Edt_EtatAff(a4)
-	moveq	#15,d1
-	move.w	Edt_XCu(a4),d0
-	sub.w	Edt_XPos(a4),d0
-	bcs.s	.AGoch
-	cmp.w	Edt_WindTx(a4),d0
-	bcc.s	.ADroi
-	bra	Ed_Loca
-; Curseur trop � droite
-.ADroi	sub.w	Edt_WindTx(a4),d0
-	addq.w	#1,d0
-	add.w	d0,Edt_XPos(a4)
-	bra	Ed_AffBuf
-; Curseur trop � gauche
-.AGoch	add.w	d0,Edt_XPos(a4)
-	bra	Ed_AffBuf
-
-;
-; Positionne l'�cran en X
-; ~~~~~~~~~~~~~~~~~~~~~~~
-		xdef	_ed_goto_x
-_ed_goto_x
-Ed_GotoX
-	cmp.w	Edt_XCu(a4),d0
-	beq.s	.Skip
-	move.w	Edt_XPos(a4),d1
-	bsr	Ed_SetX
-	cmp.w	Edt_XPos(a4),d1
-	beq	Ed_EALiCu
-	bne	Ed_AffBuf
-.Skip	rts
-;
-; Positionne l'ecran en Y
-; ~~~~~~~~~~~~~~~~~~~~~~~
-		xdef	_ed_goto_y
-_ed_goto_y
-Ed_GotoY
-	move.w	Edt_YPos(a4),d1
-	add.w	Edt_YCu(a4),d1
-	cmp.w	d0,d1
-	beq.s	.Skip
-	bsr	Ed_TokCur
-	move.w	Edt_YPos(a4),d1
-	bsr	Ed_SetY
-	cmp.w	Edt_YPos(a4),d1
-	beq	Ed_Loca
-	bne	Ed_NewBuf
-.Skip	rts
-;
-; Centre l'ecran en X, sans affichage
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_SetX
-	movem.w	d0-d1,-(sp)
-	bset	#EtA_X,Edt_EtatAff(a4)
-	move.w	d0,Edt_XCu(a4)
-	clr.w	d1
-	cmp.w	#70,d0
-	bcs.s	EdSx2
-EdSx1	add.w	#20,d1
-	sub.w	#20,d0
-	cmp.w	#60,d0
-	bcc.s	EdSx1
-EdSx2	move.w	d1,Edt_XPos(a4)
-	movem.w	(sp)+,d0-d1
-	rts
-;
-; Centre l'ecran en Y, sans affichage
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_SetY
-	movem.w	d0/d1,-(sp)
-	bset	#EtA_Y,Edt_EtatAff(a4)
-	move.b	#SlDelai,Edt_ASlY(a4)
-; Limite en bas
-	cmp.w	Prg_NLigne(a6),d0
-	bls.s	.Sk1
-	move.w	Prg_NLigne(a6),d0
-.Sk1	move.w	d0,d1
-	sub.w	Edt_YPos(a4),d1
-	bcs.s	.Remonte
-	cmp.w	Edt_WindTy(a4),d1
-	bcc.s	.Descend
-	bra.s	.Out
-; Remonte la fenetre
-.Remonte
-	add.w	d1,Edt_YPos(a4)
-	bra.s	.Out
-; Descend la fenetre
-.Descend
-	sub.w	Edt_WindTy(a4),d1
-	addq.w	#1,d1
-	add.w	d1,Edt_YPos(a4)
-; Position du curseur
-.Out	sub.w	Edt_YPos(a4),d0
-	move.w	d0,Edt_YCu(a4)
-	movem.w	(sp)+,d0/d1
-	rts
-
-;
-; Centre l'ecran en X et Y, gere les procedures....
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-;	A0= adresse dans programme
-;	D0= X curseur
-;
-Ed_SetXY
-	clr.l	Prg_AdEProc(a6)
-	move.w	d0,Prg_XEProc(a6)
-	move.w	d0,-(sp)
-	bsr	Ed_FindA
-	tst.l	d1
-	beq.s	EdSxy1
-	move.l	a0,Prg_AdEProc(a6)
-	clr.w	(sp)
-EdSxy1	bsr	Ed_SetY
-	move.w	(sp)+,d0
-	bsr	Ed_SetX
-	bsr	Ed_AverFin
-	bra	Ed_NewBuf
-
-;
-; Routine situe le label AVANT et APRES LCour: D1= avant / D2= apres
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_NLab
-	move.w	Edt_YPos(a4),d3
-	add.w	Edt_YCu(a4),d3
-	moveq	#0,d1
-	moveq	#-1,d2
-	bsr	Ed_FindL
-	bra.s	.NLab1
-.NLab0	bsr	Ed_NextL
-.NLab1	beq.s	.NLab3
-	addq.l	#1,d2
-	move.w	2(a0),d0
-	cmp.w	#_TkProc,d0
-	beq.s	.NLab2
-	cmp.w	#_TkLab,d0
-	bne.s	.NLab0
-.NLab2	cmp.w	d3,d2
-	beq.s	.NLab0
-	bhi.s	.NLab3
-	move.w	d2,d1
-	bra.s	.NLab0
-.NLab3	rts
-
-;
-; Locate le curseur dans l'ecran
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-		xdef	_ed_loca
-_ed_loca
-Ed_Loca
-	move.l	d2,-(sp)
-	move.w	Edt_YCu(a4),d2
-	move.w	Edt_XCu(a4),d1
-	sub.w	Edt_XPos(a4),d1
-	ext.l	d1
-	ext.l	d2
-	WiCall	Locate
-	move.l	(sp)+,d2
-	rts
-
-;
-; Affiche le caractere ECRAN D1 de tout le buffer d'edition
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_AffBufCar
-	moveq	#0,d2
-.ABufC	bsr	Ed_ACar
-	addq.w	#1,d2
-	cmp.w	Edt_WindTy(a4),d2
-	bcs.s	.ABufC
-	bra	Ed_Loca
-
-;
-; Imprime le caractere ECRAN D1 de la ligne D2
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_ACar
-	movem.l	d0-d7/a0-a1,-(sp)
-; Locate en debut de ligne
-	move.w	d1,d4
-	move.w	d2,d5
-	WiCall	Locate
-; Pointe la ligne dans le buffer
-	move.w	d5,d0
-	lsl.w	#8,d0
-	move.l	Edt_BufE(a4),a0
-	lea	0(a0,d0.w),a0
-	add.w	Edt_XPos(a4),d4
-	moveq	#" ",d6
-	cmp.w	(a0)+,d4
-	bcc.s	.NoBloc
-	move.b	0(a0,d4.w),d6
-; Machine le bloc
-	move.w	Edt_YBloc(a4),d0
-	bmi	.NoBloc
-	move.w	Edt_YPos(a4),d1
-	add.w	Edt_YCu(a4),d1
-	move.w	Edt_XBloc(a4),d2
-	move.w	Edt_XCu(a4),d3
-	cmp.w	d0,d1
-	bcs.s	.Sw
-	bhi.s	.Sk2
-	cmp.w	d2,d3
-	beq.s	.NoBloc
-	bcc.s	.Sk2
-.Sw	exg	d0,d1
-	exg	d2,d3
-.Sk2	cmp.w	d0,d5
-	bcs.s	.NoBloc
-	beq.s	.DBloc
-	cmp.w	d1,d5
-	bcs.s	.InBloc
-	bhi.s	.NoBloc
-	cmp.w	d3,d4
-	bcc.s	.NoBloc
-	bra.s	.InBloc
-.DBloc	cmp.w	d1,d5
-	beq.s	.LBloc
-	cmp.w	d2,d4
-	bcs.s	.InBloc
-	bra.s	.NoBloc
-.LBloc	cmp.w	d2,d4
-	bcs.s	.NoBloc
-	cmp.w	d3,d4
-	bcc.s	.NoBloc
-; Dessin en inverse
-.InBloc	moveq	#17,d0
-	bsr	Ed_GetSysteme
-	move.l	a0,a1
-	WiCall	Print
-	move.w	d6,d1
-	WiCall	ChrOut
-	moveq	#18,d0
-	bsr	Ed_GetSysteme
-	move.l	a0,a1
-	WiCall	Print
-	bra.s	.Out
-; Dessin normal
-.NoBloc	move.w	d6,d1
-	WiCall	ChrOut
-; Ouf!
-.Out	movem.l	(sp)+,d0-d7/a0-a1
-	rts
-
-; Detokenise le buffer et raffiche les infos.
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_NewBufAff
-	move.b	#EtA_BAll,Edt_EtatAff(a4)
-	move.b	#SlDelai,Edt_ASlY(a4)
-; Detokenise et affiche le buffer
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_NewBuf
-	move.w	Edt_Window(a4),d1
-	WiCall	QWindow
-	bsr	Ed_BufUntok
-; Affiche tout le buffer d'edition
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_AffBuf
-; Enleve tous les avertissements
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	bsr	Ed_AllAverFin
-; Reaffiche les lignes
-; ~~~~~~~~~~~~~~~~~~~~
-	moveq	#0,d1
-.Loop	bsr	Ed_EALigne
-	addq.w	#1,d1
-	cmp.w	Edt_WindTy(a4),d1
-	bcs.s	.Loop
-;	move.b	#2,Edt_ASlY(a4)			Affichage du slider
-;	move.b	#EtA_BAll,Edt_EtatAff(a4)	Affichage de l'etat
-	bra	Ed_Loca
-;
-; Imprime la ligne du buffer D1
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-		xdef	_ed_ea_ligne
-_ed_ea_ligne
-Ed_EALigne
-	movem.l	d0-d6/a0-a2,-(sp)	* Efface
-	moveq	#-1,d6
-	bra.s	EALi
-		xdef	_ed_a_ligne
-_ed_a_ligne
-Ed_ALigne
-	movem.l	d0-d6/a0-a2,-(sp)	* Affiche seulement
-	moveq	#0,d6
-EALi
-; Locate en debut de ligne
-; ~~~~~~~~~~~~~~~~~~~~~~~~
-	move.w	d1,d6
-	move.w	d1,d2
-	moveq	#0,d1
-	ext.l	d2
-	WiCall	Locate
-; Pointe la ligne dans le buffer
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	move.w	d6,d0
-	lsl.w	#8,d0
-	move.l	Edt_BufE(a4),a2
-	lea	0(a2,d0.w),a2
-	move.w	Edt_XPos(a4),d4
-	move.w	(a2)+,d0		* Longueur de la ligne
-	cmp.w	d0,d4
-	bcc	.End
-	lea	0(a2,d4.w),a2		* Pointe le debut
-	move.w	d4,d5
-	add.w	Edt_WindTx(a4),d5	* Pointe la fin
-	cmp.w	d0,d5
-	bls.s	.Sk1
-	move.w	d0,d5
-.Sk1	move.w	d5,d0
-	sub.w	d4,d0
-	cmp.w	Edt_WindTx(a4),d0
-	bcs.s	.Sz
-	bclr	#31,d6
-.Sz
-; Un bloc en route?
-; ~~~~~~~~~~~~~~~~~
-	add.w	Edt_YPos(a4),d6
-	move.w	Edt_YBloc(a4),d0
-	bmi	.NoBloc
-	move.w	Edt_YPos(a4),d1
-	add.w	Edt_YCu(a4),d1
-	move.w	Edt_XBloc(a4),d2
-	move.w	Edt_XCu(a4),d3
-	cmp.w	d0,d1
-	bcs.s	.Sw
-	bhi.s	.Sk2
-	cmp.w	d2,d3
-	beq	.NoBloc
-	bcc.s	.Sk2
-.Sw	exg	d0,d1
-	exg	d2,d3
-.Sk2	cmp.w	d5,d3
-	bls.s	.SkQ
-	move.w	d5,d3
-.SkQ	cmp.w	d0,d6
-	bcs	.NoBloc
-	beq.s	.DBloc
-	cmp.w	d1,d6
-	bhi	.NoBloc
-	beq.s	.EBloc
-; Au milieu du bloc, TOUT en inverse
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	bsr	.Inverse
-	move.l	a2,a1
-	move.w	d5,d1
-	sub.w	d4,d1
-	bsr	.Print
-	bsr	.Normal
-	bra	.End
-; Bloc sur une seule ligne
-; ~~~~~~~~~~~~~~~~~~~~~~~~
-.DEBloc	cmp.w	d5,d2
-	bcc	.NoBloc
-	move.w	d2,d1
-	sub.w	d4,d1
-	bls.s	.S1
-	move.l	a2,a1
-	add.w	d1,a2
-	add.w	d1,d4
-	bsr	.Print
-.S1	bsr	.Inverse
-	move.w	d3,d1
-	sub.w	d4,d1
-	bls.s	.S2
-	move.l	a2,a1
-	add.w	d1,d4
-	add.w	d1,a2
-	bsr	.Print
-.S2	bsr	.Normal
-	bra.s	.NoBloc
-; Au debut du bloc, passe en inverse
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.DBloc	cmp.w	d1,d6
-	beq.s	.DEBloc
-	cmp.w	d5,d2
-	bcc.s	.NoBloc
-	move.w	d2,d1
-	sub.w	d4,d1
-	bls.s	.Sk3
-	move.l	a2,a1
-	add.w	d1,a2
-	add.w	d1,d4
-	bsr	.Print
-.Sk3	bsr	.Inverse
-	move.w	d5,d1
-	sub.w	d4,d1
-	bls.s	.Sk4
-	move.l	a2,a1
-	bsr	.Print
-.Sk4	bsr	.Normal
-	bra	.End
-; A la fin du bloc, passe en normal
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.EBloc	cmp.w	d0,d6
-	beq.s	.DEBloc
-	bsr	.Inverse
-	move.w	d3,d1
-	sub.w	d4,d1
-	bls.s	.Sk5
-	move.l	a2,a1
-	add.w	d1,a2
-	add.w	d1,d4
-	bsr	.Print
-.Sk5	bsr	.Normal
-; Pas de bloc, NORMAL!
-; ~~~~~~~~~~~~~~~~~~~~
-.NoBloc	move.w	d5,d1
-	sub.w	d4,d1
-	bls.s	.End
-	move.l	a2,a1
-	bsr	.Print
-; Efface jusqu'� la fin de la ligne?
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.End	tst.l	d6
-	bpl.s	.Sk7
-	WiCalD	ChrOut,7
-.Sk7
-; Fini!
-; ~~~~~
-	movem.l	(sp)+,d0-d6/a0-a2
-	rts
-.Inverse
-	moveq	#17,d0
-	bsr	Ed_GetSysteme
-	move.l	a0,a1
-	WiCall	Print
-	rts
-.Normal
-	moveq	#18,d0
-	bsr	Ed_GetSysteme
-	move.l	a0,a1
-	WiCall	Print
-	rts
-.Print
-	move.b	0(a1,d1.w),d0
-	clr.b	0(a1,d1.w)
-	move.w	d0,-(sp)
-	WiCall	Print
-	move.w	(sp)+,d0
-	move.b	d0,0(a1,d1.w)
-	rts
+; The display of the window, the cursor and the window's position:
+; src/editor/display.cpp
+Ed_AffSlV	jmp	_ed_show_slider_entry
+Ed_CuOn		jmp	_ed_cursor_on_entry
+Ed_CuOff	jmp	_ed_cursor_off_entry
+Ed_EALiCu	jmp	_ed_show_current_line_entry
+Ed_Cent		jmp	_ed_centre_entry
+Ed_GotoX	jmp	_ed_goto_x_entry
+Ed_GotoY	jmp	_ed_goto_y_entry
+Ed_SetX		jmp	_ed_set_x_entry
+Ed_SetY		jmp	_ed_set_y_entry
+Ed_SetXY	jmp	_ed_set_xy_entry
+Ed_NLab		jmp	_ed_labels_around_entry
+Ed_Loca		jmp	_ed_place_cursor_entry
+Ed_AffBufCar	jmp	_ed_show_column_entry
+Ed_NewBufAff	jmp	_ed_new_buffer_all_entry
+Ed_NewBuf	jmp	_ed_new_buffer_entry
+Ed_AffBuf	jmp	_ed_show_all_entry
+Ed_EALigne	jmp	_ed_show_line_entry
+Ed_ALigne	jmp	_ed_show_line_only_entry
 
 
 
@@ -9933,6 +9483,8 @@ TokX	rts
 
 ; DETOKENISE TOUT LE BUFFER
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		xdef	_ed_buf_untok
+_ed_buf_untok
 Ed_BufUntok
 	clr.w	-(sp)
 	move.w	Edt_YPos(a4),d0
@@ -13189,7 +12741,11 @@ CurBloc		dc.b	%10101010
 ; Controle curseur
 ; ~~~~~~~~~~~~~~~~
 CRet		dc.b	13,10,0,0
+		xdef	_ed_cursor_on_text
+_ed_cursor_on_text
 ChCuOn		dc.b	27,"C1",0
+		xdef	_ed_cursor_off_text
+_ed_cursor_off_text
 ChCuOff		dc.b	27,"C0",0
 
 ; Marque des menus actives

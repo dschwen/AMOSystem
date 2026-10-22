@@ -273,6 +273,10 @@ Editor
 - Listing variable names with capitals (the editor's "first capital"
   setting for variables) took the capital from the token instead of the
   name and lost its place in the line, garbling the rest of it.
+- Redrawing one column of the window (scrolling sideways by one) with a
+  marked block compared the window's line numbers with the program's,
+  and drew the first line of a block of several lines in inverse left of
+  the block's start instead of from it.
 - With no undo buffer (an undo size of 0), typing over a character wrote
   the old one through a register left from other code.
 - Out of memory, keeping a cleared part of a line for undo still said it

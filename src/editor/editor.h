@@ -63,6 +63,21 @@ void delete_key();
 void undo_change(uint8_t *entry);
 void redo_change(uint8_t *entry);
 
+// editor/display.cpp: Ed_Loca, Ed_EALigne (erase) / Ed_ALigne, Ed_AffBuf,
+// Ed_NewBuf, Ed_NewBufAff, Ed_EALiCu, Ed_Cent, Ed_SetX, Ed_SetY, Ed_GotoX,
+// Ed_GotoY
+void place_cursor();
+void show_line(uint16_t y, bool erase);
+void show_all();
+void new_buffer();
+void new_buffer_all();
+void show_current_line();
+void centre();
+void set_x(uint16_t x);
+void set_y(uint16_t y);
+void goto_x(uint16_t x);
+void goto_y(uint16_t y);
+
 // editor/indent.cpp
 void indent(uint8_t *program, uint16_t tab);
 

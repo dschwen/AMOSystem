@@ -13,9 +13,8 @@ using namespace amos;
 using namespace amos::ed;
 
 // +Edit.s
-extern "C" uint8_t ed_sam_play[], ed_cent[], ed_loca[], ed_ea_li_cu[], ed_ea_ligne[], ed_a_ligne[], ed_c_droite[],
-    ed_c_gauche[], ed_join[], ed_not_edit[], ed_l_to_long[], ed_goto_x[], ed_goto_y[], ed_ins_line[], ed_del_li_cu[],
-    ed_tok_cur[], ed_return_quiet[];
+extern "C" uint8_t ed_sam_play[], ed_c_droite[], ed_c_gauche[], ed_join[], ed_not_edit[], ed_l_to_long[],
+    ed_ins_line[], ed_del_li_cu[], ed_tok_cur[], ed_return_quiet[];
 
 namespace {
 
@@ -29,13 +28,6 @@ void run_d0(uint8_t *routine, uint32_t d0)
 {
     Regs r;
     r.d[0] = d0;
-    call(routine, r);
-}
-
-void run_d1(uint8_t *routine, uint32_t d1)
-{
-    Regs r;
-    r.d[1] = d1;
     call(routine, r);
 }
 
@@ -155,7 +147,7 @@ void type_key(uint8_t c, bool insert, uint8_t *redone)
             l.x = l.length;
             l.at = l.text + l.x;
             window().Edt_XCu = l.x;
-            run(ed_cent);
+            centre();
         }
         uint8_t *entry = undo_start();
         if (entry) {
@@ -190,9 +182,9 @@ void type_key(uint8_t c, bool insert, uint8_t *redone)
         l.set_length(length);
         edited();
         run(ed_c_droite);
-        run_d1(ed_a_ligne, window().Edt_YCu);
+        show_line(window().Edt_YCu, false);
     }
-    run(ed_loca);
+    place_cursor();
     idata().Ed_SCallFlags = 0x01;
 }
 
@@ -208,7 +200,7 @@ void delete_key()
         entry[5] = *l.at;
     }
     delete_text(1);
-    run(ed_ea_li_cu);
+    show_current_line();
 }
 
 } // namespace amos::ed
@@ -235,8 +227,8 @@ void clear_line()
     Line l = current();
     l.set_length(0);
     keep_text(l.text, l.length);
-    run(ed_ea_li_cu);
-    run(ed_cent);
+    show_current_line();
+    centre();
 }
 
 // Ed_DelFin: up to the end of the line
@@ -248,7 +240,7 @@ void delete_to_end()
         return;
     l.set_length(l.x);
     keep_text(l.at, l.length - l.x);
-    run(ed_ea_li_cu);
+    show_current_line();
 }
 
 // Ed_DelDebut: up to the cursor
@@ -261,7 +253,7 @@ void delete_to_start()
     window().Edt_XCu = 0;
     keep_text(l.text, n);
     delete_text(n);
-    run(ed_ea_li_cu);
+    show_current_line();
 }
 
 // Ed_DelMot: up to the next word
@@ -277,7 +269,7 @@ void delete_word()
         return;
     keep_text(l.at, n);
     delete_text(n);
-    run(ed_ea_li_cu);
+    show_current_line();
 }
 
 // Ed_BackMot: back to the start of the word
@@ -287,15 +279,15 @@ void delete_word_left()
     if (to >= window().Edt_XCu)
         return;
     window().Edt_XCu = to;
-    run(ed_cent);
+    centre();
     delete_word();
 }
 
 void tab_done()
 {
     edited();
-    run_d1(ed_ea_ligne, window().Edt_YCu);
-    run(ed_cent);
+    show_line(window().Edt_YCu, true);
+    centre();
 }
 
 // Ed_Tab: the line moved right by a tab
@@ -348,11 +340,11 @@ void untab()
 // ---- undo and redo ----------------------------------------------------------
 
 // Un_XY / Un_X: the cursor where the entry was made
-void to_column(const uint8_t *entry) { run_d0(ed_goto_x, entry[1]); }
+void to_column(const uint8_t *entry) { goto_x(entry[1]); }
 
 void to_place(const uint8_t *entry)
 {
-    run_d0(ed_goto_y, peek_w(entry + 2));
+    goto_y(peek_w(entry + 2));
     to_column(entry);
 }
 
@@ -361,7 +353,7 @@ const uint8_t *to_block(const uint8_t *entry)
 {
     to_column(entry);
     const uint8_t *block = ptr<uint8_t>(peek_l(entry + 2));
-    run_d0(ed_goto_y, peek_w(block + 2));
+    goto_y(peek_w(block + 2));
     return block;
 }
 
@@ -373,7 +365,7 @@ void restore_line(const uint8_t *block)
     l.set_length(n);
     for (uint16_t i = 0; i < n; i++)
         l.text[i] = block[4 + i];
-    run(ed_ea_li_cu);
+    show_current_line();
     edited();
 }
 
@@ -383,7 +375,7 @@ void reinsert_text(const uint8_t *block)
     if (n <= 4)
         return;
     insert_text(block + 4, n - 4);
-    run(ed_ea_li_cu);
+    show_current_line();
 }
 
 } // namespace
@@ -403,7 +395,7 @@ void undo_change(uint8_t *entry)
         } else {
             *current().at = entry[4];
             edited();
-            run(ed_ea_li_cu);
+            show_current_line();
         }
         break;
     case 2:
@@ -428,7 +420,7 @@ void undo_change(uint8_t *entry)
             l.text[i] = block[7 + i];
         program().Prg_NLigne -= peek_w(block + 4);
         edited();
-        run(ed_ea_li_cu);
+        show_current_line();
         break;
     }
     case 6:
@@ -463,7 +455,7 @@ void redo_change(uint8_t *entry)
         uint16_t n = peek_w(block);
         if (n > 4)
             delete_text(n - 4);
-        run(ed_ea_li_cu);
+        show_current_line();
         break;
     }
     case 4:
