@@ -1,0 +1,12 @@
+wait 12
+button 3 down
+wait 1
+move -400 -470
+wait 0.7
+move 0 24
+wait 0.3
+move 60 0
+wait 0.7
+button 3 up
+wait 1
+wait 3

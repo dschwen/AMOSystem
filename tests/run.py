@@ -29,6 +29,7 @@ waits for the screen to settle and takes a few screenshots. The golden
 result is <name>.png plus <name>_mask.png, the pixels that changed between
 the screenshots (the cursor blinks), which the comparison ignores. Only
 the top of the display is compared (EDITOR_AREA): keep the listing short.
+With an input script, the screenshots are taken after the script ran.
 
 Input: tests/amos/<name>.input scripts keyboard and mouse events (the
 emulator then grabs the input), one command per line:
@@ -342,13 +343,19 @@ def run_test(name, tables, amos, kickstart, workbench, timeout, visible):
             proc = subprocess.Popen(['fs-uae', config], stdout=log, stderr=subprocess.STDOUT,
                                     env=env, start_new_session=True)
             done = os.path.join(out, 'DONE')
+            player = None
             if script:
-                threading.Thread(target=play_input, args=(script, env['DISPLAY'], out, start + timeout,
-                                                          name, env), daemon=True).start()
+                player = threading.Thread(target=play_input, args=(script, env['DISPLAY'], out,
+                                                                   start + timeout, name, env),
+                                          daemon=True)
+                player.start()
             try:
                 if editor:
                     if not xvfb:
                         raise RuntimeError('editor tests need the virtual display')
+                    if player:
+                        # the screenshots show the editor after the input
+                        player.join(max(0, start + timeout - time.time()))
                     shots = editor_shots(env, base, start + timeout)
                     return shots is not None, time.time() - start, out, shots
                 while time.time() - start < timeout:
