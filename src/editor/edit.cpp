@@ -1,6 +1,9 @@
 // The lines of the editor's window and the program (+Edit.s): the edited
 // line tokenised and stored (Ed_TokCur, Ed_TokStok), Return splitting the
 // line, joining two lines, inserting and deleting a line.
+//
+// The alerts (Ed_NotEdit, Ed_LToLong, Ed_OofBuf...) do not come back: they
+// go to the editor's loop, which resets the stack and turns undo back on.
 
 #include "editor/editor.h"
 
@@ -38,8 +41,6 @@ void store_line(uint16_t extra)
     text[length] = 0;
     uint8_t *buffer = ptr<uint8_t>(d.Ed_BufT);
     int32_t result = tokenise_line(text, buffer);
-    // (the original left this and the next error with registers on the
-    // stack, and returned through them)
     if (result < 0) {
         run(ed_l_to_long);
         return;
@@ -131,7 +132,6 @@ int32_t delete_current_line()
     EditWindow &w = window();
     uint16_t n = program_line();
     uint8_t *text = cursor_line();
-    // (the original returned through a word it had pushed here)
     if (buffer_line(w.Edt_YCu)[255]) {
         run(ed_not_edit);
         return -1;
@@ -235,16 +235,13 @@ void join()
     uint8_t *text = cursor_line();
     uint16_t length = cursor_length();
     uint8_t *above = text - 256;
-    // (the original left undo off after these two alerts)
     if (length && above[253]) {
-        d.Ed_FUndo--;
         run(ed_not_edit);
         return;
     }
     uint16_t above_length = peek_w(above - 2);
     uint16_t total = length + above_length;
     if (total >= 250) {
-        d.Ed_FUndo--;
         run(ed_l_to_long);
         return;
     }

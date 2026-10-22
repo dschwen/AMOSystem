@@ -1,0 +1,21 @@
+timeout 200
+wait 12
+key ctrl+y
+key ctrl+shift+Up
+key Down
+key ctrl+y
+key ctrl+y
+key ctrl+y
+key ctrl+y
+key ctrl+y
+key ctrl+y
+key Down
+type Data 1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
+key Down
+wait 1
+key Up
+type B=2
+key Down
+wait 1
+key ramiga+s
+wait 4
