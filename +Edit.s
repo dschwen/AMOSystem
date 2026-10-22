@@ -63,6 +63,7 @@
 		XREF	_ed_store_entry,_ed_store_block_entry,_ed_delete_line_entry,_ed_delete_chunk_at_entry
 		XREF	_ed_delete_chunk_entry,_ed_find_line_entry,_ed_next_line_entry
 		XREF	_ed_indent_entry
+		XREF	_ed_key_entry,_ed_key_function_entry,_ed_function_keys_entry
 		XREF	_ed_marks_clear_entry,_ed_auto_marks_entry,_ed_set_mark_entry,_ed_goto_mark_entry
 		XREF	_ed_marks_to_addresses_entry,_ed_marks_to_numbers_entry,_ed_marks_change_entry
 		XREF	_ed_block_show_entry,_ed_block_on_entry,_ed_block_cursor_entry,_ed_block_hide_entry
@@ -1617,83 +1618,9 @@ Ed_BasMove
 ; 	Teste le clavier
 ; __________________________
 ;
-Ed_Key
-
-; Une macro en lecture?
-; ~~~~~~~~~~~~~~~~~~~~~
-	move.l	EdMa_Play(a5),d0
-	beq.s	.PaMacro
-	addq.l	#3,d0
-	move.l	d0,a0
-	move.l	d0,EdMa_Play(a5)
-	move.b	-(a0),d1
-	lsl.w	#8,d1
-	move.b	-(a0),d1
-	swap	d1
-	clr.w	d1
-	move.b	-(a0),d1			La fin est marquee par -1
-	cmp.b	#-1,d1
-	bne.s	.EndMac
-	clr.l	EdMa_Play(a5)
-.PaMacro
-; Simule le CONTROL-C
-; ~~~~~~~~~~~~~~~~~~~~
-	bclr	#BitControl-8,T_Actualise(a5)	* Simule CONTROL-C
-	beq.s	.EdPaCc
-	move.l	#$08330043,d1
-	bra.s	.MacIn
-.EdPaCc
-
-; Prend les touches
-; ~~~~~~~~~~~~~~~~~
-	SyCall	Inkey
-.MacIn	tst.l	d1
-	beq	Ed_KEnd
-
-; Une macro en enregistrement?
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	move.w	EdMa_Tape(a5),d0
-	beq.s	.UneMac
-	move.l	EdMa_List(a5),a0
-	lea	8+4-1(a0,d0.w),a0
-	cmp.b	#-1,(a0)
-	beq.s	.2Big
-	move.l	d1,d0
-	move.b	d0,(a0)+
-	swap	d0
-	move.b	d0,(a0)+
-	lsr.w	#8,d0
-	move.b	d0,(a0)+
-	addq.w	#3,EdMa_Tape(a5)
-.2Big	bra.s	.EndMac
-; La touche en question est-elle une macro?
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.UneMac	bsr	EdMa_Adr
-	beq.s	.EndMac
-	lea	12(a1),a1
-	move.l	a1,EdMa_Play(a5)
-	bra	Ed_Key
-.EndMac
-
-; Une fonction?
-; ~~~~~~~~~~~~~
-	bsr	Ed_Ky2Fonc
-	beq.s	.Char
-	bsr	Ed_FCall
-	moveq	#-1,d0
-	bra	Ed_KEnd
-; Stocke la lettre dans le buffer
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.Char	move.l	d1,d7
-	move.b	Ed_Insert(a5),d6
-	bsr	Ed_PKey
-	moveq	#"C",d0
-	bsr	Ed_SamPlay
-	moveq	#-1,d0
-;
-; Fini pour les touches
-; ~~~~~~~~~~~~~~~~~~~~~
-Ed_KEnd	rts
+; The keys: src/editor/keys.cpp
+Ed_Key		jmp	_ed_key_entry
+Ed_KEnd		rts
 
 
 ; Appelle le menu editeur et retourne le choix, si choix
@@ -1745,107 +1672,9 @@ Ed_MnGere
 .Err	moveq	#-1,d0
 	rts
 
-; Explore la table des touches de fonctions
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-;	D1=	Touche
-Ed_Ky2Fonc
-	movem.l	d1/d3-d7,-(sp)
-	move.b	d1,d7
-	cmp.b	#"a",d7		* D7= lettre majuscule
-	bcs.s	.EdL5
-	cmp.b	#"z",d7
-	bhi.s	.EdL5
-	sub.b	#"a"-"A",d7
-.EdL5	swap 	d1
-	move.b	d1,d6		* D6= scancode
-	lsr.w	#8,d1
-	and.b	#%11111011,d1
-	move.b	d1,d5		* D5= shifts
-	swap	d1
-* Recherche dans la table
-.EdL5a	clr.w	d2
-	lea	Ed_KFonc(a5),a0
-.EdL6	move.b	d5,d4
-	move.b	(a0),d0		* Boucle de comparaison
-	bpl.s	.EdL7
-	cmp.b	#$FF,d0
-	beq	.EdL10
-	and.b	#$7f,d0		* Compare au scancode
-	cmp.b	d0,d6
-	bne.s	.EdL9
-	bra.s	.EdL8
-.EdL7	beq.s	.EdLN		* Rien, passe au suivant
-	cmp.b	d0,d7		* Compare au code ASCII
-	bne.s	.EdL9
-.EdL8	move.b	1(a0),d3	* Compare le SHIFTS...
-	bne.s	.EdL8a
-	tst.b	d4
-	bne.s	.EdL9
-	bra.s	.EdLG
-.EdL8a	move.b	d4,d0
-	and.b	#Shf,d0		* Teste les shifts
-	beq.s	.EdL8b
-	and.b	d3,d0
-	beq.s	.EdL9
-	and.b	#255^Shf,d3
-	and.b	#255^Shf,d4
-	beq.s	.EdLG
-.EdL8b	move.b	d4,d0
-	and.b	#Ctr,d0		* Teste CONTROL
-	beq.s	.EdL8c
-	and.b	d3,d0
-	beq.s	.EdL9
-	and.b	#255^Ctr,d3
-	and.b	#255^Ctr,d4
-	beq.s	.EdLG
-.EdL8c	move.b	d4,d0
-	and.b	#Alt,d0		* Teste ALTERNATE
-	beq.s	.EdL8d
-	and.b	d3,d0
-	beq.s	.EdL9
-	and.b	#255^Alt,d3
-	and.b	#255^Alt,d4
-	beq.s	.EdLG
-.EdL8d	move.b	d4,d0
-	and.b	#Ami,d0		* Teste AMIGA
-	beq.s	.EdL9
-	and.b	d3,d0
-	beq.s	.EdL9
-	and.b	#255^Ami,d3
-	and.b	#255^Ami,d4
-	beq.s	.EdLG
-.EdL9	lea	2(a0),a0
-	bra	.EdL6
-.EdLN	addq.w	#1,d2
-	addq.l	#1,a0
-	bra	.EdL6
-.EdLG:	or.b	d4,d3
-	bne.s	.EdL9
-	moveq	#-1,d0
-	bra.s	.Out
-.EdL10	moveq	#0,d0
-.Out	movem.l	(sp)+,d1/d3-d7
-	rts
+Ed_Ky2Fonc	jmp	_ed_key_function_entry
 
-; Pointe la touche affectee � une fonction
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-;	D0=	Fonction
-;
-Ed_Fonc2Ky
-	lea	Ed_KFonc(a5),a0
-	bra.s	.Skip4
-.Loop4	addq.l	#2,a0
-	tst.b	(a0)
-	bne.s	.Loop4
-	addq.l	#1,a0
-	cmp.b	#$FF,(a0)
-	beq.s	.NoKey
-.Skip4	subq.b	#1,d0
-	bne.s	.Loop4
-	move.l	a0,d0
-	rts
-.NoKey	moveq	#0,d0
-	rts
+Ed_Fonc2Ky	jmp	_ed_function_keys_entry
 
 ; Ed_PKey (d7 the character, d6 insert), R_InsChar, R_DelChar:
 ; src/editor/lines.cpp
@@ -2124,6 +1953,8 @@ Ed_Splitted
 ;	D2	Numero de la fonction
 ; ___________________________________________________________________
 ;
+		xdef	_ed_function_call
+_ed_function_call
 Ed_FCall
 ; Nettoyage
 ; ~~~~~~~~~
