@@ -1,0 +1,5 @@
+AMOSTEST:aaa.txt
+AMOSTEST:sub/inner.txt
+
+
+end

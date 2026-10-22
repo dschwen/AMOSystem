@@ -118,3 +118,38 @@ _lib_arexx_on_clear
 		dc.l	0
 		CCall	_lib_arx_close
 		rts
+
+; The file selector (lib/fsel.cpp)
+		RegRoutine Dsk.FileSelector,_lib_dsk_file_selector
+		LibCall	FnFileSelector1,_lib_fn_file_selector1,1,String	=FSEL$(p$...)
+		LibCall	FnFileSelector2,_lib_fn_file_selector2,2,String
+		LibCall	FnFileSelector3,_lib_fn_file_selector3,3,String
+		LibCall	FnFileSelector4,_lib_fn_file_selector4,4,String
+; The routine of the list of names (called with registers by the list)
+		RegRoutine _lib_fs_get_name,_lib_fs_get_name_c
+; Records: the flush routine of AMOS.library, Sys_EndRoutines
+		xdef	_lib_fs_flush_record
+		xdef	_lib_fs_end_record
+_lib_fs_flush_record
+		dc.l	0
+		CCall	_lib_fs_flush
+		rts
+_lib_fs_end_record
+		dc.l	0
+		CCall	_lib_fs_end
+		rts
+; Disk errors while the selector runs (Fs_ErrPatch): back into it
+		xdef	_lib_fs_error_patch
+_lib_fs_error_patch
+		jmp	_lib_fs_error
+; The selector's task: a5, then C++ through CCall, which gives the task
+; its context
+		xdef	_lib_fs_task_entry
+_lib_fs_task_entry
+		move.l	_lib_fs_task_a5,a5
+		CCall	_lib_fs_task
+		rts
+
+		SECTION	.bss,BSS
+		xdef	_lib_fs_task_a5
+_lib_fs_task_a5	ds.l	1

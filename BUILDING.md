@@ -190,6 +190,17 @@ Interface (dialogs)
 - `Read Text` of a file with no memory for it read the file into whatever
   address a register held; it is now "out of memory".
 
+File selector
+- With no memory for its data, the selector "cancelled" through a null
+  structure and an undefined stack pointer; it now returns no file.
+- When the dialog failed in the selector's own task, that task jumped to
+  the cancel code with the main task's stack pointer; it now stops, and the
+  selector cancels.
+- The two tasks could lose each other's commands (show the files, quit...):
+  the task read and cleared the command word in two steps.
+- A zone number outside the selector's 20 ran code past the end of the jump
+  table; it is ignored.
+
 ARexx
 - A message arriving at the ARexx port that is not an ARexx command was
   taken off the port and never replied to, so its sender waited for ever;
