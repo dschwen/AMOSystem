@@ -14,28 +14,20 @@
 // not written to (bit NPlan-p for plane p).
 
 #include "core/amiga.h"
-#include "core/amos.h"
-
-#include <hardware/custom.h>
+#include "w/w.h"
 
 #define GRAPHICS_BASE_NAME (reinterpret_cast<struct GfxBase *>(amos::wdata().GfxBase))
 #include <proto/graphics.h>
 
 using namespace amos;
-
-// +W.s
-extern "C" uint8_t w_tabk1[], w_tabk2[], w_tabk3[], w_tabk4[], w_fast_mm[], w_free_mm[], w_sy_set_z[];
+using namespace amos::w;
 
 namespace {
-
-constexpr uint32_t EntNul = 0x80000000;
 
 // WiSys (high byte)
 constexpr uint16_t SysScroll = 1 << 8, SysCursor = 1 << 9, SysInverse = 1 << 10;
 // WiFlags: shade, underline, a writing mode other than the normal one
 constexpr uint16_t FlagShade = 1 << 1, FlagUnder = 1 << 2, FlagWriting = 1 << 15;
-// EcFlags BitDble
-constexpr uint16_t DoubleBuffer = 1 << (8 + 5);
 
 // Errors of the window functions
 enum : uint32_t {
@@ -54,8 +46,6 @@ uint8_t draw_mode = DrawBoth;
 // The fast way of drawing a plane, WiColor (the assembler kept the address
 // of the code there)
 enum : uint32_t { PlaneZero, PlaneNormal, PlaneInverse, PlaneOne, PlaneSkip };
-
-volatile struct Custom &chips() { return *reinterpret_cast<volatile struct Custom *>(0xDFF000); }
 
 // Borders 1-16 (Brd): eight strings, the top left corner, top right
 // corner, top, right side, bottom left, bottom right, bottom, left side
@@ -87,38 +77,8 @@ const uint8_t frames[8][8] = {
 // The text cursor of a new window (DefCurs)
 const uint8_t default_cursor[8] = {0, 0, 0, 0, 0, 0, 0xFF, 0xFF};
 
-void copy(void *to, const void *from, uint32_t n)
-{
-    auto t = static_cast<uint8_t *>(to);
-    auto f = static_cast<const uint8_t *>(from);
-    while (n--)
-        *t++ = *f++;
-}
-
-// FastMm / FreeMm
-uint32_t fast_mm(uint32_t size)
-{
-    Regs r;
-    r.d[0] = size;
-    amos_call(&r, w_fast_mm);
-    return r.d[0];
-}
-
-void free_mm(uint32_t address, uint32_t size)
-{
-    Regs r;
-    r.d[0] = size;
-    r.a[1] = address;
-    amos_call(&r, w_free_mm);
-}
-
 // TAbk1-4: the autoback steps around a print. Returns their d0.
-uint32_t autoback(uint8_t *step)
-{
-    Regs r;
-    amos_call(&r, step);
-    return r.d[0];
-}
+uint32_t autoback(uint8_t *step) { return call(step); }
 
 // Compte: the number of characters a string prints (an escape sequence
 // is three bytes, none printed), and the end, after its zero

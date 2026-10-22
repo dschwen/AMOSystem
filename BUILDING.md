@@ -124,8 +124,12 @@ windows are the first: `T_WiVect` points to the table in
 The glue makes the caller's d6-d7/a3-a6 the task's context for the C++
 code (it needs a5) and puts the old context back afterwards, as callers
 are assembler, C++ (through `amos_call`) or other tasks (requesters).
-Assembler routines the C++ still calls (`TAbk1`-`4`, `FastMm`, `SySetZ`)
-are exported from `+W.s` under `_w_` names. The writing modes, which the
+Other functions of the vector tables (the drawing ones of the screen
+table: `Cls`, clip, `Set Pattern`, `Paint`, sliders) keep their entry in
+`+W.s`, which jumps to a `WEntry` (`src/w/wglue.i`) that does the same for
+one C function. Assembler routines the C++ still calls (`TAbk1`-`4`,
+`FastMm`, `SySetZ`, `Ec_SetClip`...) are exported from `+W.s` under `_w_`
+names; `src/w/w.h` declares them. The writing modes, which the
 assembler patched into its own code, are two variables, shared by all
 windows as before.
 
@@ -223,6 +227,10 @@ Text windows (AMOS.library)
   the window) instead of the screen; it now keeps the screen's.
 - Window addresses, background buffer sizes and offsets were partly
   computed in 16 bits, wrong on screens of more than 64 KB a bitplane.
+
+Drawing (AMOS.library)
+- `Paint` kept the offset of the clip rectangle in a word and added in 16
+  bits: wrong on screens of more than 64 KB a bitplane.
 
 ARexx
 - A message arriving at the ARexx port that is not an ARexx command was

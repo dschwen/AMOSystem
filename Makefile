@@ -134,7 +134,7 @@ PREREQ := $(LIB_GEN) $(CI)/.stamp $(COMMON_SRC)
 # Programs: the assembler source becomes one object, linked with the C++ of
 # its src/ directory. The linker scripts keep the hunk order the assembler
 # code depends on.
-$(OBJ)/src/%.o: src/%.s $(wildcard src/*.i)
+$(OBJ)/src/%.o: src/%.s $(wildcard src/*.i src/*/*.i)
 	@mkdir -p $(dir $@)
 	$(VASM) $(OBJFLAGS) -Isrc -o $@ $<
 
