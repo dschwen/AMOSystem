@@ -506,6 +506,10 @@ Program_Load
 	move.l	d1,-(a1)
 .In	move.l	(a0)+,d1
 	bne.s	.Loop
+; The C++ code of the module uses AMOSPro's contexts (src/core/call.s):
+; the table ends with the address of its amos_bridge
+	move.l	(a0),a1
+	move.l	T_CBridge(a5),(a1)
 ; OK, pas d'erreur
 ; ~~~~~~~~~~~~~~~~
 	moveq	#0,d0

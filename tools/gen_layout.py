@@ -13,7 +13,8 @@ every field gets a static_assert on its offset. Structures:
 - WData, the AMOS.library data below a5 (the T_ fields, without "T_")
 - Window, which +Equ.s describes with a chain of equ's
 It also lists the function numbers of the AMOS.library vectors (SyCall,
-EcCall, WiCall) as amos::sy::X, amos::ec::X and amos::wi::X.
+EcCall, WiCall) as amos::sy::X, amos::ec::X and amos::wi::X, the special
+tokens (_TkXxx) as amos::tk::Xxx.
 
   gen_layout.py --out FILE [--vasm VASM] [vasm include options...]
 """
@@ -300,6 +301,18 @@ def vector_functions(src_dir):
     return result
 
 
+def tokens(src_dir):
+    """[(name, value)] of the special tokens _TkXxx of +Equ.s (16-bit; the
+    operators' are negative)"""
+    result = []
+    with open(os.path.join(src_dir, '+Equ.s'), encoding='latin-1') as f:
+        for line in f:
+            label, op, operand = split_line(line)
+            if label and label.startswith('_Tk') and op == 'equ' and operand.startswith('$'):
+                result.append((label[3:], int(operand[1:], 16) & 0xFFFF))
+    return result
+
+
 def main():
     p = argparse.ArgumentParser()
     p.add_argument('--out', required=True)
@@ -326,6 +339,11 @@ def main():
         out.extend(f'constexpr int {name} = {num};' for name, num in names)
         out.append(f'}} // namespace {ns}')
         out.append('')
+    out.append('// The special tokens (+Equ.s _TkXxx): offsets in the token table')
+    out.append('namespace tk {')
+    out.extend(f'constexpr uint16_t {name} = 0x{value:04X};' for name, value in tokens(args.src))
+    out.append('} // namespace tk')
+    out.append('')
     out.append('} // namespace amos')
     with open(args.out, 'w') as f:
         f.write('\n'.join(out) + '\n')

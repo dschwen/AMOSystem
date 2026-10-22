@@ -7,7 +7,7 @@
 //
 // The handler runs in input.device's task: its glue (+W.s IoHandler) gives
 // it AMOS.library's data zone as a5, which the C++ context gets (see
-// w/call_w.s).
+// core/call_go.s).
 
 #include "core/amiga.h"
 #include "w/w.h"

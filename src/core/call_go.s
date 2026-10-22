@@ -1,5 +1,6 @@
 ; ---------------------------------------------------------------------
-;	Entry of AMOS.library functions into C++ (see w/wglue.i)
+;	Entry of assembler-called functions into C++ (see w/wglue.i): used by
+;	AMOS.library and the editor
 ; ---------------------------------------------------------------------
 ;
 ; The registers d6-d7/a3-a6 of the caller become the context of the task

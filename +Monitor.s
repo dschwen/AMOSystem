@@ -60,10 +60,12 @@
 
 ; Branchements internes au moniteur
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		XREF	_amos_bridge
 MDebut		dc.l	In_Editor-MDebut	0- Depuis l'editeur
 		dc.l	In_Program-MDebut	1- Depuis le programme
 		dc.l	MonitorChr-MDebut	2- Entree du moniteur
 		dc.l	0
+		dc.l	_amos_bridge		the C++ contexts (+B.s Program_Load)
 
 ; Equates internes au moniteur
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

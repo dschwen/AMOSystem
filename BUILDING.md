@@ -269,6 +269,14 @@ Mouse (AMOS.library)
   the screen table taken for a screen; it now returns "screen not
   opened" without changing them.
 
+Editor
+- Listing variable names with capitals (the editor's "first capital"
+  setting for variables) took the capital from the token instead of the
+  name and lost its place in the line, garbling the rest of it.
+- Hexadecimal and binary constants were listed with as many digits as a
+  register left over from other code said; they are now always listed
+  without leading zeros, as that register usually made them.
+
 Collisions (AMOS.library)
 - The offsets into the masks of the two images were 16-bit: an image whose
   mask row times the lines above the crossing reached 32K (a 320-pixel
