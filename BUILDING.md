@@ -117,6 +117,18 @@ sets the condition codes from its return value for callers that branch on
 them. `move_to_cpp.py` also turns the library's PC-relative `Rbsr`/`Rbra`/
 `Rbcc` to converted routines into `Rjsr`/`Rjmp`.
 
+AMOS.library functions move to C++ a vector table at a time. The text
+windows are the first: `T_WiVect` points to the table in
+`src/w/windows_glue.s`, whose entries hand all registers to
+`w_window(n, AllRegs *)` and set the condition codes from d0 as before.
+The glue makes the caller's d6-d7/a3-a6 the task's context for the C++
+code (it needs a5) and puts the old context back afterwards, as callers
+are assembler, C++ (through `amos_call`) or other tasks (requesters).
+Assembler routines the C++ still calls (`TAbk1`-`4`, `FastMm`, `SySetZ`)
+are exported from `+W.s` under `_w_` names. The writing modes, which the
+assembler patched into its own code, are two variables, shared by all
+windows as before.
+
 Converted so far: the integer paths of `Abs` and `Sgn`, the string
 functions of `String.s` (except `Left$`/`Mid$`/`Right$`, `Str$` and `Val`,
 which are in `+ILib.s`), the keyboard and joystick functions, `Locate`,
@@ -204,6 +216,13 @@ File selector
   the task read and cleared the command word in two steps.
 - A zone number outside the selector's 20 ran code past the end of the jump
   table; it is ignored.
+
+Text windows (AMOS.library)
+- Printing with autoback on a double-buffered screen saved and restored
+  the cursor background from the window structure (`EcCurS(a5)`, a5 being
+  the window) instead of the screen; it now keeps the screen's.
+- Window addresses, background buffer sizes and offsets were partly
+  computed in 16 bits, wrong on screens of more than 64 KB a bitplane.
 
 ARexx
 - A message arriving at the ARexx port that is not an ARexx command was
