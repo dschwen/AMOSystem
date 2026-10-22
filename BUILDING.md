@@ -242,6 +242,20 @@ Screens (AMOS.library)
   null RastPort while freeing the screen, writing to address 8 (an
   exception vector).
 
+Bobs and blocks (AMOS.library)
+- `Get Cblock` stopped a run of equal bytes after 65 bytes but recorded
+  64: the rest of that line of the block came out shifted by a byte, with
+  a byte from past its end (blocks wider than 512 pixels).
+- `Put Cblock` on a screen with fewer bitplanes than the block lost its
+  place in the data after the first line; the extra planes are now
+  skipped.
+- `Vrev` of a one-line image swapped 65536 lines, overwriting memory.
+- `Get Cblock`/`Put Cblock` added line offsets in 16 bits (screens of
+  more than 64 KB a bitplane).
+
+`tests/amos/blocks2.asc` covers these; its golden results come from the
+C++ build.
+
 ARexx
 - A message arriving at the ARexx port that is not an ARexx command was
   taken off the port and never replied to, so its sender waited for ever;

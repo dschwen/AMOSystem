@@ -15,6 +15,7 @@ static uint32_t memory(uint8_t *routine, uint32_t size)
 uint32_t fast_mm(uint32_t size) { return memory(w_fast_mm, size); }
 uint32_t fast_mm2(uint32_t size) { return memory(w_fast_mm2, size); }
 uint32_t chip_mm(uint32_t size) { return memory(w_chip_mm, size); }
+uint32_t chip_mm2(uint32_t size) { return memory(w_chip_mm2, size); }
 
 void free_mm(uint32_t address, uint32_t size)
 {
