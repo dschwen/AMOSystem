@@ -73,6 +73,7 @@ Version	MACRO
 		XREF	_w_rain_set,_w_rain_do,_w_rain_var,_w_rain_del,_w_rain_hide
 		XREF	_w_cop_swap,_w_cop_swap_lists,_w_cop_reset,_w_cop_wait,_w_cop_move,_w_cop_movel,_w_cop_base
 		XREF	_w_screen_copy
+		XREF	_w_tabk1,_w_tabk2,_w_tabk3,_w_tabk4
 		XREF	_w_auto_req,_w_easy_req
 		XREF	_w_mem_fast_clear,_w_mem_fast,_w_mem_chip_clear,_w_mem_chip,_w_mem_reserve,_w_mem_free
 		XREF	_w_add_flush_routine,_w_add_routine,_w_mem_flush,_w_call_routines
@@ -944,90 +945,11 @@ EcHide:	jmp	_w_sc_hide
 
 ***********************************************************
 *	GESTION DE L'AUTOBACK!
-******* AUTOBACK 1
-		xdef	_w_tabk1
-_w_tabk1
-TAbk1:	movem.l	a3-a6,-(sp)
-	move.l	W_Base(pc),a5
-	move.l	T_EcCourant(a5),a0
-	move.w	EcAuto(a0),d0
-	subq.w	#1,d0
-	ble.s	TAbk1X
-	bsr	WVbl
-	bsr	BobEff
-TAbk1X:	movem.l	(sp)+,a3-a6
-	rts
-******* AUTOBACK 2
-		xdef	_w_tabk2
-_w_tabk2
-TAbk2	move.l	W_Base(pc),a1
-	move.l	T_EcCourant(a1),a0
-	move.w	EcAuto(a0),d0
-	subq.w	#1,d0
-	bmi.s	TAbk2X
-	bne.s	TAbk2B
-* Autoback simple---> change le rastport / current
-	moveq	#EcMaxPlans-1,d0
-	move.l	Ec_BitMap(a0),a1
-	addq.l	#8,a1
-	lea	EcCurrent(a0),a2
-	lea	EcPhysic(a0),a0
-TAbk2A	move.l	(a0),(a1)+
-	move.l	(a0)+,(a2)+
-	dbra	d0,TAbk2A
-TAbk2X	rts
-* Autoback total---> screen swap
-TAbk2B	movem.l	a3-a6,-(sp)
-	move.l	a1,a5
-	bsr	BobAct
-	bsr	BobAff
-	bsr	ScSwapS
-	bsr	WVbl
-	bsr	BobEff
-	movem.l	(sp)+,a3-a6
-	rts
-******* AUTOBACK 3
-		xdef	_w_tabk3
-_w_tabk3
-TAbk3	move.l	W_Base(pc),a1
-	move.l	T_EcCourant(a1),a0
-	move.w	EcAuto(a0),d0
-	subq.w	#1,d0
-	bmi.s	TAbk3X
-	bne.s	TAbk3B
-* Simple ---> remet le rasport / current
-	moveq	#EcMaxPlans-1,d0
-	move.l	Ec_BitMap(a0),a1
-	addq.l	#8,a1
-	lea	EcCurrent(a0),a2
-	lea	EcLogic(a0),a0
-TAbk3A	move.l	(a0),(a1)+
-	move.l	(a0)+,(a2)+
-	dbra	d0,TAbk3A
-TAbk3X	rts
-* Total ---> Re screen swap!
-TAbk3B	movem.l	a3-a6,-(sp)
-	move.l	a1,a5
-	bsr	BobAct
-	bsr	BobAff
-	bsr	ScSwapS
-	bsr	WVbl
-	bclr	#BitBobs,T_Actualise(a5)
-	movem.l	(sp)+,a3-a6
-	rts
-******* AUTOBACK 4 -> ecrans single buffer!
-		xdef	_w_tabk4
-_w_tabk4
-TAbk4:	movem.l	a3-a6,-(sp)
-	move.l	W_Base(pc),a5
-	move.l	T_EcCourant(a5),a0
-	move.w	EcAuto(a0),d0
-	subq.w	#1,d0
-	ble.s	TAbk4X
-	bsr	BobAct
-	bsr	BobAff
-TAbk4X:	movem.l	(sp)+,a3-a6
-	rts
+******* Autoback: src/w/autoback.cpp
+TAbk1:	jmp	_w_tabk1
+TAbk2	jmp	_w_tabk2
+TAbk3	jmp	_w_tabk3
+TAbk4:	jmp	_w_tabk4
 
 ***********************************************************
 *	CLS
