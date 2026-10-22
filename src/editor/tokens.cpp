@@ -841,6 +841,8 @@ namespace amos::ed {
 
 uint32_t detok(const uint8_t *line, uint8_t *buffer) { return detokenise(line, buffer, nullptr, false).length; }
 
+int32_t tokenise_line(uint8_t *text, uint8_t *buffer) { return tokenise(text, buffer).result; }
+
 } // namespace amos::ed
 
 extern "C" {

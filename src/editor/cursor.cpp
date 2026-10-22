@@ -10,7 +10,7 @@ using namespace amos;
 using namespace amos::ed;
 
 // +Edit.s
-extern "C" uint8_t ed_tok_cur[], ed_sam_play[], ed_top_of_text[], ed_bottom_of_text[], ed_auto_marks[];
+extern "C" uint8_t ed_sam_play[], ed_top_of_text[], ed_bottom_of_text[], ed_auto_marks[];
 
 namespace {
 
@@ -27,7 +27,7 @@ void run(uint8_t *routine)
     call(routine, r);
 }
 
-void tokenise_current() { run(ed_tok_cur); }
+void tokenise_current() { tokenise_current_line(); }
 
 void sound()
 {
@@ -337,6 +337,8 @@ namespace amos::ed {
 
 void cursor_left() { left(); }
 void cursor_right() { right(); }
+void line_up_t() { line_up(); }
+void line_down_t() { line_down(); }
 
 } // namespace amos::ed
 

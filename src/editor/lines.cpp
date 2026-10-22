@@ -13,8 +13,7 @@ using namespace amos;
 using namespace amos::ed;
 
 // +Edit.s
-extern "C" uint8_t ed_sam_play[], ed_join[], ed_not_edit[], ed_l_to_long[],
-    ed_ins_line[], ed_del_li_cu[], ed_tok_cur[], ed_return_quiet[];
+extern "C" uint8_t ed_sam_play[], ed_not_edit[], ed_l_to_long[];
 
 namespace {
 
@@ -216,7 +215,7 @@ namespace {
 void backspace()
 {
     if (!window().Edt_XCu) {
-        run(ed_join);
+        join_lines();
         return;
     }
     cursor_left();
@@ -411,7 +410,7 @@ void undo_change(uint8_t *entry)
         break;
     case 4: {
         const uint8_t *block = to_block(entry);
-        run(ed_ins_line);
+        insert_line();
         reinsert_text(block);
         break;
     }
@@ -429,16 +428,16 @@ void undo_change(uint8_t *entry)
     }
     case 6:
         to_place(entry);
-        run(ed_del_li_cu);
+        delete_current_line();
         break;
     case 7:
         to_block(entry);
-        run(ed_del_li_cu);
+        delete_current_line();
         restore_line(to_block(entry));
         break;
     case 8:
         restore_line(to_block(entry));
-        run(ed_return_quiet);
+        return_quiet();
         break;
     }
 }
@@ -464,24 +463,24 @@ void redo_change(uint8_t *entry)
     }
     case 4:
         to_block(entry);
-        run(ed_del_li_cu);
+        delete_current_line();
         break;
     case 5:
         to_block(entry);
         edited();
-        run(ed_tok_cur);
+        tokenise_current_line();
         break;
     case 6:
         to_place(entry);
-        run(ed_ins_line);
+        insert_line();
         break;
     case 7:
         restore_line(to_block(entry));
-        run(ed_return_quiet);
+        return_quiet();
         break;
     case 8:
         to_block(entry);
-        run(ed_del_li_cu);
+        delete_current_line();
         restore_line(to_block(entry));
         break;
     }

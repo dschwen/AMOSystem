@@ -38,6 +38,8 @@ inline void free_memory(uint32_t address, uint32_t size)
 // the text), its length
 const uint8_t *skip_token(uint16_t t, const uint8_t *a);
 uint32_t detok(const uint8_t *line, uint8_t *buffer);
+// Tokenise: 1, 0 for an empty line, -1 if too long
+int32_t tokenise_line(uint8_t *text, uint8_t *buffer);
 
 // editor/storage.cpp
 struct Stored {
@@ -94,6 +96,16 @@ void untokenise_line(uint16_t n, uint16_t y);
 void untokenise_window();
 void cursor_left();
 void cursor_right();
+void line_up_t();
+void line_down_t();
+
+// editor/edit.cpp: Ed_TokCur, Ed_InsLine, Ed_DelLiCu, Ed_ReturnQuiet,
+// Ed_Join
+void tokenise_current_line();
+void insert_line();
+int32_t delete_current_line();
+void return_quiet();
+void join_lines();
 
 // editor/indent.cpp
 void indent(uint8_t *program, uint16_t tab);

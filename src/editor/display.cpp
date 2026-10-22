@@ -15,7 +15,7 @@ using namespace amos::ed;
 
 // +Edit.s
 extern "C" uint8_t ed_cursor_on_text[], ed_cursor_off_text[], ed_get_systeme[], ed_all_aver_fin[],
-    ed_tok_cur[], ed_aver_fin[], ed_sl_update_y[];
+    ed_aver_fin[], ed_sl_update_y[];
 
 namespace {
 
@@ -315,7 +315,7 @@ void goto_y(uint16_t y)
     EditWindow &w = window();
     if (uint16_t(w.Edt_YPos + w.Edt_YCu) == y)
         return;
-    run(ed_tok_cur);
+    tokenise_current_line();
     uint16_t top = w.Edt_YPos;
     set_y(y);
     if (w.Edt_YPos == top)

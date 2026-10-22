@@ -63,6 +63,8 @@
 		XREF	_ed_store_entry,_ed_store_block_entry,_ed_delete_line_entry,_ed_delete_chunk_at_entry
 		XREF	_ed_delete_chunk_entry,_ed_find_line_entry,_ed_next_line_entry
 		XREF	_ed_indent_entry
+		XREF	_ed_del_li_cu_entry,_ed_join_entry,_ed_return_entry,_ed_return_quiet_entry
+		XREF	_ed_ins_line_entry,_ed_tok_cur_entry,_ed_tok_stok_entry,_ed_tok_stok2_entry
 		XREF	_ed_cursor_up_entry,_ed_cursor_up_t_entry,_ed_cursor_down_entry,_ed_cursor_down_t_entry
 		XREF	_ed_cursor_left_entry,_ed_cursor_right_entry,_ed_page_top_entry,_ed_page_bottom_entry
 		XREF	_ed_word_left_key_entry,_ed_word_right_key_entry,_ed_line_start_entry,_ed_line_end_entry
@@ -2030,6 +2032,8 @@ Ed_SplitWindow
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ; 	D0=	Flags
 ;	A0= 	Fenetre origine
+		xdef	_ed_splitted
+_ed_splitted
 Ed_Splitted
 	move.l	Edt_LinkPrev(a0),d1
 	or.l	Edt_LinkNext(a0),d1
@@ -8541,6 +8545,8 @@ Ed_NoMark
 ;
 ; Out of mem tokenisation
 ; ~~~~~~~~~~~~~~~~~~~~~~~
+		xdef	_ed_oof_buf
+_ed_oof_buf
 Ed_OofBuf
 	bsr	Ed_NewBuf		Reaffiche la ligne!
 	move.w	#202,d0			***- Out of buffer space
@@ -8803,357 +8809,17 @@ Ed_ALigne	jmp	_ed_show_line_only_entry
 ;
 
 ;
-; DELETION LIGNE DANS PROGRAMME
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-;	Retourne 	0: si ligne deletee
-;			1: si ligne non deletee
-		xdef	_ed_del_li_cu
-_ed_del_li_cu
-Ed_DelLiCu
-	move.w	Edt_YPos(a4),d1
-	add.w	Edt_YCu(a4),d1
-	move.w	d1,-(sp)
-; Stocke dans UNDO
-	bsr	Ed_LCourant
-	bne	Ed_NotEdit
-	move.w	Edt_XCu(a4),-(sp)
-	clr.w	Edt_XCu(a4)
-	move.l	Prg_PUndo(a6),a2
-	ext.l	d0
-	bsr	Un_CLine
-	bne.s	.SkipU
-	move.b	#$84,(a2)
-.SkipU	move.w	(sp)+,Edt_XCu(a4)
-	move.w	(sp)+,d1
-; Enleve dans le programme
-	bsr	Ed_DeLigne
-	move.w	d0,-(sp)
-	bne.s	.RetV3
-; Enleve dans l'affichage
-	WiCalD	ChrOut,23
-	bsr	Ed_LCourant
-	lea	-2(a0),a0
-	lea	256(a0),a1
-	move.w	Edt_WindTy(a4),d0
-	mulu	#256,d0
-	add.l	Edt_BufE(a4),d0
-	move.l	d0,a2
-	sub.l	a1,d0
-	bls.s	.RetV2
-	lsr.w	#2,d0
-	subq.w	#1,d0
-.RetV1:	move.l	(a1)+,(a0)+
-	dbra	d0,.RetV1
-.RetV2:	clr.w	-256(a2)
-.RetV3	move.w	Edt_YPos(a4),d0
-	move.w	Edt_WindTy(a4),d1
-	subq.w	#1,d1
-	add.w	d1,d0
-	bsr	Ed_Untok
-	bsr	Ed_EALigne
-	move.b	#SlDelai,Edt_ASlY(a4)
-	bsr	Ed_Loca
-	move.w	(sp)+,d0
-	rts
-
-;
-; Joint la ligne et celle du dessus!
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-;
-		xdef	_ed_join
-_ed_join
-Ed_Join	tst.w	Edt_YCu(a4)
-	beq	.Out
-	tst.w	Edt_XCu(a4)
-	bne	.Out
-	addq.b	#1,Ed_FUndo(a5)
-
-	bsr	Ed_LCourant
-	lea	-256(a0),a1
-; Peut-on joindre les lignes?
-	tst.w	-2(a0)
-	beq.s	.Vide
-	tst.b	255-2(a1)		Previous ligne editable?
-	bne	Ed_NotEdit
-; Ok!
-.Vide	move.w	-2(a1),d1
-	move.w	d0,d2
-	add.w	d1,d2
-	cmp.w	#250,d2			Line too long!
-	bcc	Ed_LToLong
-	clr.w	-2(a0)
-	move.w	d2,-2(a1)
-	lea	0(a1,d1.w),a1
-	subq.w	#1,d0
-	bmi.s	.Bac1
-.Bac0:	move.b	(a0)+,(a1)+
-	dbra	d0,.Bac0
-.Bac1:	move.w	d1,-(sp)
-; Efface la ligne actuelle
-	bsr	Ed_DelLiCu
-; Ligne non effacee: c'est la derniere
-	tst.w	d0
-	beq.s	.Skk
-	move.w	Prg_NLigne(a6),d1
-	beq.s	.Skk
-	subq.w	#1,d1
-	move.w	d1,d0
-	bsr	Ed_FindL		Est-ce une derniere ligne
-	beq.s	.Skk
-	cmp.l	#$02000000,(a0)		Instruction vide?
-	bne.s	.Skk
-	bsr	Ed_DeLigne		On l'enleve!
-; Affiche la pr�c�dente
-.Skk	bsr	Ed_ChtT
-	addq.w	#1,Edt_LEdited(a4)
-	move.b	#SlDelai,Edt_ASlY(a4)
-	move.w	(sp)+,Edt_XCu(a4)
-	bsr	Ed_EALiCu
-	bsr	Ed_Cent
-; UNDO
-	or.b	#%11,Ed_SCallFlags(a5)
-	subq.b	#1,Ed_FUndo(a5)
-	bsr	Ed_LCourant
-	move.l	Prg_PUndo(a6),a2
-	ext.l	d0
-	bsr	Un_CLine
-	bne.s	.Out
-	move.b	#$88,(a2)
-.Out	rts
-
-;
-; RETURN >>> recupere la droite de la ligne
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_Return
-; Fait du bruit
-	moveq	#"D",d0
-	bsr	Ed_SamPlay
-		xdef	_ed_return_quiet
-_ed_return_quiet
-Ed_ReturnQuiet
-; A gauche de la ligne
-	tst.w	Edt_XCu(a4)
-	beq	.Goch
-; Bas du buffer= stockage temporaire
-	move.l	Prg_StMini(a6),a2	* Adresse dans STMINI
-	clr.w	(a2)+			* CHAINE VIDE!
-	clr.w	(a2)
-	move.l	Prg_StBas(a6),a0
-	lea	-256(a0),a0
-	cmp.l	a0,a2
-	bcc	Ed_OofBuf
-; Gestion UNDO
-	bsr	Ed_LCourant
-	bne	.PaEd
-	move.l	Prg_PUndo(a6),a1
-	ext.l	d0
-	bsr	Un_CLine
-	bne.s	.Skip
-	move.b	#$87,(a1)
-.Skip	addq.b	#1,Ed_FUndo(a5)
-; Copie la droite de la ligne
-	bsr	Ed_LCourant
-	move.w	d1,d2
-	cmp.w	d0,d2
-	bcs.s	.RtI1
-	move.w	d0,d2
-.RtI1:	move.w	d2,-2(a0)		* Change la taille ligne origine
-.RtI2:	cmp.w	d0,d1
-	bcc.s	.RtI3
-	move.b	(a1)+,(a2)+
-	addq.w	#1,d1
-	bra.s	.RtI2
-.RtI3:	clr.b	(a2)
-; Tokenise
-	move.w	Prg_NLigne(a6),-(sp)
-	moveq	#1,d0			Une ligne de plus si a la fin!
-	bsr	Ed_TokStok2
-; D�but de la ligne suivante
-	bsr	Ed_CBasT
-	bsr	Ed_DLigneT
-; Insere la ligne, si pas � la fin du texte
-	move.w	(sp)+,d2
-	cmp.w	Prg_NLigne(a6),d2
-	bne.s	.Sk
-	bsr	Ed_InsLine
-; Recopie la nouvelle
-.Sk	bsr	Ed_LCourant
-	move.l	a0,a2
-	clr.b	255-2(a2)		La ligne est editable!
-	clr.w	d0
-	move.l	Prg_StMini(a6),a1
-	lea	2(a1),a1
-.RtI4:	move.b	(a1)+,d1
-	beq.s	.RtI5
-	move.b	d1,(a2)+
-	addq.w	#1,d0
-	bra.s	.RtI4
-.RtI5:	move.w	d0,-2(a0)
-; Affiche la nouvelle ligne/revient a l'editeur
-	addq.w	#1,Edt_LEdited(a4)
-	bsr	Ed_EALiCu
-	subq.b	#1,Ed_FUndo(a5)
-	rts
-; A gauche de la ligne: INS puis bas
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.Goch	bsr	Ed_InsLine
-	bsr	Ed_CBasT
-	bra	Ed_DLigneT
-; Ligne non editable
-; ~~~~~~~~~~~~~~~~~~
-.PaEd	bsr	Ed_CBasT
-	bsr	Ed_DLigneT
-	bra	Ed_InsLine
-
-;
-; Insere une ligne � la position du curseur
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-;
-		xdef	_ed_ins_line
-_ed_ins_line
-Ed_InsLine
-; Ligne courante
-	bsr	Ed_TokCur
-; Tokenise une ligne vide
-	move.l	Ed_BufT(a5),a1
-	lea	128(a1),a0
-	clr.b	(a0)
-	bsr	Tokenise
-; Va l'inserer dans le texte
-	move.l	Ed_BufT(a5),a1
-	move.w	Edt_YPos(a4),d1
-	add.w	Edt_YCu(a4),d1
-	moveq	#-1,d0
-	bsr	Ed_Stocke
-	bne	Ed_OofBuf
-; Gestion UNDO
-	bsr	Un_Debut
-	bne.s	.Skip
-	move.b	#$06,(a2)
-; Une ligne de plus
-.Skip	addq.w	#1,Prg_NLigne(a6)
-	move.b	#SlDelai,Edt_ASlY(a4)
-	bsr	Ed_NewBuf
-	rts
-
-;
-; TOKENISE / STOCKE la ligne courante
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-;
-		xdef	_ed_tok_cur
-_ed_tok_cur
-Ed_TokCur
-	tst.w	Edt_LEdited(a4)
-	beq.s	.Skip
-	movem.l	a0-a1/d0-d1,-(sp)
-	moveq	#0,d0
-	bsr.s	Ed_TokStok2
-	bsr	Ed_Loca
-	move.l	a4,a0
-	moveq	#%01,d0
-	bsr	Ed_Splitted
-	movem.l	(sp)+,a0-a1/d0-d1
-.Skip	rts
-
-Ed_TokStok
-	tst.w	Edt_LEdited(a4)
-	beq	TokX
-Ed_TokStok2
-	movem.l	d2-d7/a2,-(sp)
-	move.w	d0,d2
-; Va tokeniser la ligne
-; ~~~~~~~~~~~~~~~~~~~~~
-	clr.w	Edt_LEdited(a4)
-	bsr	Ed_LCourant	* Adresse de la ligne courante
-	clr.b	0(a0,d0.w)	* Marque la fin
-	moveq	#0,d0
-	move.l	Ed_BufT(a5),a1	* Buffer de tokenisation
-	bsr	Tokenise
-	bmi	Ed_LToLong
-	add.w	d0,d2
-; Stocke la ligne
-; ~~~~~~~~~~~~~~~
-	move.l	Ed_BufT(a5),a1
-	move.w	Edt_YPos(a4),d1
-	add.w	Edt_YCu(a4),d1
-	moveq	#0,d0
-	bsr	Ed_Stocke
-	bne	Ed_OofBuf
-	move.l	a0,a2		Adresse ligne dans le programme
-	add.w	d1,d2		Une ligne de plus???
-; Copie l'ancienne ligne dans le buffer de tokenisation
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	bsr	Ed_LCourant
-	move.l	Ed_BufT(a5),a1
-	move.w	d0,d5
-	subq.w	#1,d0
-	bmi.s	.NC
-.C1	move.b	(a0)+,(a1)+
-	dbra	d0,.C1
-.NC
-; Une ligne de plus, si � la fin, et non vide
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	moveq	#0,d6
-	move.w	Edt_YPos(a4),d1
-	add.w	Edt_YCu(a4),d1
-	cmp.w	Prg_NLigne(a6),d1
-	bne.s	.Rien
-	tst.w	d2
-	beq.s	.Rien
-	moveq	#1,d6
-	addq.w	#1,Prg_NLigne(a6)
-.Rien
-; Reaffiche la ligne tokenisee
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	bsr	Ed_LCourant
-	lea	-2(a0),a1
-	move.l	a2,a0
-	moveq	#0,d0
-	bsr	Detok
-	move.w	Edt_YCu(a4),d1
-	bsr	Ed_EALigne
-; Gestion du UNDO
-; ~~~~~~~~~~~~~~~
-	bsr	Un_Debut
-	bne.s	.NoUndo
-	move.b	#$85,(a2)
-	bsr	Ed_LCourant
-	move.l	a0,a1
-	move.w	d0,d7
-	add.w	d5,d0
-	moveq	#8,d1
-	add.w	d0,d1
-	move.l	d1,d0
-	SyCall	MemFastClear
-	move.w	d1,(a0)
-	add.l	d1,Prg_TUndo(a6)
-	move.w	2(a2),2(a0)
-	move.l	a0,2(a2)
-	move.w	d6,4(a0)
-; Copie l'ancienne ligne
-	move.l	Ed_BufT(a5),a2
-	lea	6(a0),a0
-	move.b	d5,(a0)+
-	subq.w	#1,d5
-	bmi.s	.Sk1
-.Co1	move.b	(a2)+,(a0)+
-	dbra	d5,.Co1
-.Sk1
-; Copie la nouvelle
-	move.b	d7,(a0)+
-	subq.w	#1,d7
-	bmi.s	.Sk2
-.Co2	move.b	(a1)+,(a0)+
-	dbra	d7,.Co2
-.Sk2
-.NoUndo
-; Copie du flag double precision
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	move.b	MathFlags(a5),Prg_MathFlags(a6)
-; Ok!
-; ~~~
-	movem.l	(sp)+,d2-d7/a2
-TokX	rts
+; Deleting, joining, splitting (Return), inserting lines, the edited line
+; tokenised and stored: src/editor/edit.cpp
+Ed_DelLiCu	jmp	_ed_del_li_cu_entry
+Ed_Join		jmp	_ed_join_entry
+Ed_Return	jmp	_ed_return_entry
+Ed_ReturnQuiet	jmp	_ed_return_quiet_entry
+Ed_InsLine	jmp	_ed_ins_line_entry
+Ed_TokCur	jmp	_ed_tok_cur_entry
+Ed_TokStok	jmp	_ed_tok_stok_entry
+Ed_TokStok2	jmp	_ed_tok_stok2_entry
+TokX		rts
 
 
 ; Ed_BufUntok, Ed_Untok (d0 the program's line, d1 the window's): src/editor/cursor.cpp

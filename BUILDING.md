@@ -273,6 +273,15 @@ Editor
 - Listing variable names with capitals (the editor's "first capital"
   setting for variables) took the capital from the token instead of the
   name and lost its place in the line, garbling the rest of it.
+- Storing the edited line when it tokenised too long (many short numbers
+  fit 250 characters but not 510 bytes of tokens) or did not fit the
+  buffer, and deleting a line that cannot be edited through undo, branched
+  to the alert with registers or a word still on the stack and returned
+  through them.
+- Joining a line to a closed procedure or into a line too long left undo
+  switched off.
+- Without memory for its undo block, storing a line wrote the block's
+  header at address 0.
 - Redrawing one column of the window (scrolling sideways by one) with a
   marked block compared the window's line numbers with the program's,
   and drew the first line of a block of several lines in inverse left of
