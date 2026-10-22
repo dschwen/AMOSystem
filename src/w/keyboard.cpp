@@ -1,6 +1,6 @@
 // Keyboard functions of AMOS.library (SyCall): Inkey$, Put Key, the
 // function keys, Key State, Key Shift, Key Speed. The input handler
-// (+W.s) fills the key buffer: three bytes a key (shifts, scan code,
+// (w/input.cpp) fills the key buffer: three bytes a key (shifts, scan code,
 // ASCII), T_ClTete the last one written, T_ClQueue the last one read.
 // (ClKWait and TGetDisc answer in the condition codes and stay in +W.s,
 // with ClInit/ClVide, which the start-up uses.)
@@ -43,6 +43,44 @@ void set_time(uint8_t *io, uint16_t vbls)
 
 } // namespace
 
+namespace amos::w {
+
+// The characters of text into the key buffer; chr$(1) then shifts, scan
+// code and ASCII for a key; '...' a comment. Until full. Returns where it
+// stopped.
+const uint8_t *put_key(const uint8_t *text)
+{
+    WData &d = wdata();
+    for (;;) {
+        uint8_t shifts = 0, scan = 0, c = *text++;
+        if (!c)
+            break;
+        if (c == '\'') {
+            do
+                c = *text++;
+            while (c && c != '\'');
+            if (!c)
+                break;
+            continue;
+        }
+        if (c == 1) {
+            shifts = *text++;
+            scan = *text++;
+            c = *text++;
+        }
+        uint16_t at = next(head());
+        if (at == d.ClQueue)
+            break;
+        d.ClBuffer[at] = shifts;
+        d.ClBuffer[at + 1] = scan;
+        d.ClBuffer[at + 2] = c;
+        head() = at;
+    }
+    return text;
+}
+
+} // namespace amos::w
+
 extern "C" {
 // ClInky: d1 = shifts and scan code in the high word, ASCII in the low
 // one, 0 if no key
@@ -79,38 +117,10 @@ void w_sy_key_state(AllRegs *r)
     r->d[0] = 0;
 }
 
-// ClPutK: Put Key a1: the characters into the key buffer; chr$(1) then
-// shifts, scan code and ASCII for a key; '...' a comment. Until full.
+// ClPutK: Put Key a1 (see put_key)
 void w_sy_put_key(AllRegs *r)
 {
-    WData &d = wdata();
-    const uint8_t *text = ptr<uint8_t>(r->a[1]);
-    for (;;) {
-        uint8_t shifts = 0, scan = 0, c = *text++;
-        if (!c)
-            break;
-        if (c == '\'') {
-            do
-                c = *text++;
-            while (c && c != '\'');
-            if (!c)
-                break;
-            continue;
-        }
-        if (c == 1) {
-            shifts = *text++;
-            scan = *text++;
-            c = *text++;
-        }
-        uint16_t at = next(head());
-        if (at == d.ClQueue)
-            break;
-        d.ClBuffer[at] = shifts;
-        d.ClBuffer[at + 1] = scan;
-        d.ClBuffer[at + 2] = c;
-        head() = at;
-    }
-    r->a[1] = address(text);
+    r->a[1] = address(put_key(ptr<uint8_t>(r->a[1])));
     // (movem.w gives d0-d3 back sign-extended)
     for (int i = 0; i < 4; i++)
         r->d[i] = uint32_t(int32_t(int16_t(r->d[i])));

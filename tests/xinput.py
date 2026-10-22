@@ -32,9 +32,11 @@ class Display:
 
     def key(self, keysym, hold=0.05):
         """Press and release a key given by its X keysym name ("a", "Return"),
-        with "shift+", "ctrl+" or "alt+" in front for modifiers."""
+        with "shift+", "ctrl+", "alt+", "lamiga+" or "ramiga+" in front for
+        modifiers."""
         *mods, name = keysym.split('+') if len(keysym) > 1 else [keysym]
-        modifiers = {'shift': 'Shift_L', 'ctrl': 'Control_L', 'alt': 'Alt_L'}
+        modifiers = {'shift': 'Shift_L', 'ctrl': 'Control_L', 'alt': 'Alt_L',
+                     'lamiga': 'Super_L', 'ramiga': 'Super_R'}
         codes = []
         for k in [modifiers[m] for m in mods] + [name]:
             code = _x11.XKeysymToKeycode(self.d, _x11.XStringToKeysym(k.encode()))

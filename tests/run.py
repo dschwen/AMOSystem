@@ -36,7 +36,8 @@ emulator then grabs the input), one command per line:
   sync NAME        wait until the program creates AMOSTEST:out/NAME
   wait SECONDS
   key KEYSYM       press and release an X key ("a", "Return", "Escape"),
-                   "shift+", "ctrl+" or "alt+" in front for modifiers
+                   "shift+", "ctrl+", "alt+", "lamiga+" or "ramiga+" in
+                   front for modifiers
   keys TEXT        type the characters of TEXT (letters, digits, space)
   move DX DY       move the mouse by DX,DY in one event
   glide DX DY      the same in small steps (large moves)

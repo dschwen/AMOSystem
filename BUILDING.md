@@ -266,6 +266,12 @@ Mouse (AMOS.library)
   the screen table taken for a screen; it now returns "screen not
   opened" without changing them.
 
+Input handler (AMOS.library)
+- The console.device request `ConIo` was 40 bytes, but its opening clears
+  80 bytes and the device uses 48: it overran into the key conversion
+  buffer that followed. The handler converts into a buffer of its own
+  now, so `ConIo` has its full size.
+
 ARexx
 - A message arriving at the ARexx port that is not an ARexx command was
   taken off the port and never replied to, so its sender waited for ever;

@@ -37,4 +37,8 @@ uint32_t call(uint8_t *routine);
 
 void copy(void *to, const void *from, uint32_t n);
 
+// w/keyboard.cpp, w/input.cpp
+const uint8_t *put_key(const uint8_t *text);
+void send_fake_event();
+
 } // namespace amos::w
