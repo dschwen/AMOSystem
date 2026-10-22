@@ -53,11 +53,14 @@ Stored store(const uint8_t *line, uint16_t position, bool insert);
 Stored store_block(const uint8_t *block, uint32_t length, uint16_t position);
 int32_t delete_line(uint16_t n);
 void delete_chunk(uint8_t *from, uint8_t *to);
+// Ed_DelChunk: bytes from line n out of the program
+void delete_lines(uint16_t n, uint32_t bytes);
 
 // editor/undo.cpp: a new undo entry (0 if undo is off), one keeping n
 // characters of a line
 uint8_t *undo_start();
 uint8_t *undo_text(const uint8_t *text, uint16_t n);
+void undo_reset();
 
 // editor/lines.cpp: Ed_PKey, Ed_Delete; what undo and redo do
 void type_key(uint8_t c, bool insert, uint8_t *redone);
@@ -87,6 +90,8 @@ struct Labels {
 Labels labels_around(uint16_t start);
 
 // editor/lines.cpp: R_MotGoch, R_MotDroi, the length of the cursor's line
+void insert_text_at_cursor(const uint8_t *text, uint16_t n);
+void delete_text_at_cursor(uint16_t n);
 uint16_t word_left_of_cursor();
 uint16_t word_right_of_cursor();
 uint16_t current_line_length();

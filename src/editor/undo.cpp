@@ -121,6 +121,9 @@ uint8_t *undo_start()
     return entry;
 }
 
+// Prg_UndoRaz of the current program
+void undo_reset() { reset(program()); }
+
 // Un_CLine: the n characters at text kept in a new entry (kind $83: a
 // cleared part of a line); the entry, or 0
 uint8_t *undo_text(const uint8_t *text, uint16_t n)

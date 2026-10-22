@@ -131,6 +131,8 @@ void keep_text(const uint8_t *text, uint16_t n) { undo_text(text, n); }
 
 namespace amos::ed {
 
+void insert_text_at_cursor(const uint8_t *text, uint16_t n) { insert_text(text, n); }
+void delete_text_at_cursor(uint16_t n) { delete_text(n); }
 uint16_t word_left_of_cursor() { return word_left(); }
 uint16_t word_right_of_cursor() { return word_right(); }
 uint16_t current_line_length() { return current().length; }

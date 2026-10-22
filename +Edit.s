@@ -63,6 +63,10 @@
 		XREF	_ed_store_entry,_ed_store_block_entry,_ed_delete_line_entry,_ed_delete_chunk_at_entry
 		XREF	_ed_delete_chunk_entry,_ed_find_line_entry,_ed_next_line_entry
 		XREF	_ed_indent_entry
+		XREF	_ed_block_show_entry,_ed_block_on_entry,_ed_block_cursor_entry,_ed_block_hide_entry
+		XREF	_ed_cursor_normal_entry,_ed_block_all_entry,_ed_block_store_entry,_ed_block_forget_entry
+		XREF	_ed_block_cut_entry,_ed_block_paste_entry,_ed_block_free_entry,_ed_block_free_a0_entry
+		XREF	_ed_block_limits_entry,_ed_block_insert_entry,_ed_block_delete_entry,_ed_block_copy_entry
 		XREF	_ed_del_li_cu_entry,_ed_join_entry,_ed_return_entry,_ed_return_quiet_entry
 		XREF	_ed_ins_line_entry,_ed_tok_cur_entry,_ed_tok_stok_entry,_ed_tok_stok2_entry
 		XREF	_ed_cursor_up_entry,_ed_cursor_up_t_entry,_ed_cursor_down_entry,_ed_cursor_down_t_entry
@@ -4814,518 +4818,23 @@ Ed_SamOn
 ;
 
 ;
-; Bloc en route, reaffiche les lignes concernees par le mouvement du curseur
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_BlocAff
-	tst.w	Edt_YBloc(a4)
-	bmi.s	.Out
-	move.w	Edt_YOldBloc(a4),d2
-	bmi.s	.Out
-	move.w	#-1,Edt_YOldBloc(a4)
-	move.w	Edt_YPos(a4),d3
-	add.w	Edt_YCu(a4),d3
-	cmp.w	d2,d3
-	bcc.s	.Skip
-	exg	d2,d3
-.Skip	move.w	d2,d1
-	sub.w	Edt_YPos(a4),d1
-	bmi.s	.Hors
-	cmp.w	Edt_WindTy(a4),d1
-	bcc.s	.Hors
-	movem.w	d2/d3,-(sp)
-	bsr	Ed_ALigne
-	bsr	Ed_Loca
-	movem.w	(sp)+,d2/d3
-.Hors	addq.w	#1,d2
-	cmp.w	d3,d2
-	bls.s	.Skip
-.Out	rts
-
-;
-; Start / Stop block
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_BlocOn
-	tst.w	Edt_YBloc(a4)
-	bpl.s	Ed_BlocHide
-	move.w	Edt_YPos(a4),d0
-	add.w	Edt_YCu(a4),d0
-	move.w	d0,Edt_YBloc(a4)
-	move.w	Edt_XCu(a4),Edt_XBloc(a4)
-	clr.w	Edt_YOldBloc(a4)
-Ed_BlocCu
-	lea	CurBloc(pc),a1
-	WiCall	SCurWi
-	rts
-Ed_BlocHide
-	move.w	#-1,Edt_YBloc(a4)
-	bsr	Ed_AffBuf
-; Remet le curseur normal
-; ~~~~~~~~~~~~~~~~~~~~~~~
-Ed_CuNor
-	lea	CurNor(pc),a1
-	WiCall	SCurWi
-	rts
-;
-; All text as block
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_BlocAll
-	bsr	Ed_BlocCu
-	clr.w	Edt_XCu(a4)
-	clr.w	Edt_YCu(a4)
-	clr.w	Edt_XPos(a4)
-	clr.w	Edt_YPos(a4)
-	clr.w	Edt_XBloc(a4)
-	move.w	Prg_NLigne(a6),Edt_YBloc(a4)
-	bsr	Ed_NewBufAff
-	rts
-;
-; Block STORE
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_BlocStore
-	bsr	Ed_BlockLimits
-	lea	Ed_Block(a5),a0
-	bsr	Ed_BlockCopyA0
-	bmi	Ed_OMm
-	bne	Ed_BlocWhat
-	bsr	Ed_BlocHide
-	moveq	#7,d0
-	bra	Ed_ProAlert
-;
-; Block Forget
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_BlocForget
-	tst.l	Ed_Block(a5)
-	beq	Ed_BlocWhat
-	bsr	Ed_BlocFree
-	moveq	#8,d0
-	bra	Ed_ProAlert
-;
-; Block CUT
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_BlocCut
-	bsr	Ed_BlockLimits
-	lea	Ed_Block(a5),a0
-	bsr	Ed_BlockCopyA0
-	bmi	Ed_OMm
-	bne	Ed_BlocWhat
-	bsr	Ed_BlocHide
-	lea	Ed_Block(a5),a0
-	bsr	Ed_BlockDeleteA0
-	bsr	Prg_UndoRaz		Illegal: remettre plus tard!
-	moveq	#7,d0
-	bra	Ed_ProAlert
-;
-; Block PASTE
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_BlocPaste
-	tst.l	Ed_Block(a5)
-	beq	Ed_BlocWhat
-	lea	Ed_Block(a5),a0
-	bsr	Ed_BlockInsertA0
-	bsr	Prg_UndoRaz		Illegal: remettre plus tard!
-	rts
-;
-; Libere le bloc
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_BlocFree
-	lea	Ed_Block(a5),a0
-Ed_BlockFreeA0
-	bra	Ed_MemFree
-;
-; Trouve les limites du bloc dans d4-d7
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_BlockLimits
-	tst.w	Edt_YBloc(a4)
-	bmi	Ed_BlocWhat
-	moveq	#0,d4
-	move.w	Edt_YBloc(a4),d4
-	move.w	Edt_YPos(a4),d5
-	add.w	Edt_YCu(a4),d5
-	move.w	Edt_XBloc(a4),d6
-	move.w	Edt_XCu(a4),d7
-	cmp.w	d4,d5
-	bhi.s	.L0
-	bne.s	.Sw
-	cmp.w	d6,d7
-	bcc.s	.L0
-.Sw	exg	d4,d5
-	exg	d6,d7
-.L0	cmp.w	Prg_NLigne(a6),d5
-	bcs.s	.Blu
-	move.w	Prg_NLigne(a6),d5
-	moveq	#0,d7
-.Blu	rts
-
-;
-; Insert le bloc du texte en position courante
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_BlockInsertA0
-	movem.l	d2-d7/a2,-(sp)
-	addq.b	#1,Ed_FUndo(a5)
-	move.l	(a0),d0
-	beq	.Vide
-	move.l	d0,a2
-; Met le curseur � la bonne position
-	movem.w	(a2)+,d4-d6
-	move.l	(a2)+,d7
-	bsr	Ed_LCourant
-	beq.s	.Edit
-	tst.w	(a2)			Si ligne non editable,
-	bne	Ed_NotEdit		il faut un bloc sans 1ere ligne!
-.Edit	cmp.w	d0,d1
-	bls.s	.Pl
-	move.w	d0,Edt_XCu(a4)
-.Pl	move.w	Edt_YPos(a4),d3		Position courante
-	add.w	Edt_YCu(a4),d3
-; Premiere ligne
-	move.w	(a2),d0
-	beq.s	.Pa1
-	lea	2(a2),a0		Insere la ligne
-	bsr	R_InsChar
-	bsr	Ed_EALiCu
-	move.w	(a2),d0
-	add.w	Edt_XCu(a4),d0		Positionne le curseur
-	bsr	Ed_GotoX
-.Pa1	btst	#30,d7			Une seule ligne?
-	bne.s	.Ok
-	btst	#31,d7			Un procedure sur la ligne?
-	bne.s	.Proc
-; Si pas une seule ligne, on fait un RETURN
-	movem.l	a2/d2-d7,-(sp)
-	bsr	Ed_ReturnQuiet		Return
-	bsr	Ed_TokCur		Ligne suivante
-	movem.l	(sp)+,a2/d2-d7
-	addq.w	#1,d3
-.Proc	add.w	(a2)+,a2		Saute la 1ere ligne
-	move.l	a2,d0			Rend pair
-	Pair	d0
-	move.l	d0,a2
-; Corps du bloc
-	tst.w	(a2)
-	beq.s	.NoCor
-	lea	6(a2),a0		Insere le bloc en 1 coup
-	move.l	2(a2),d0
-	move.w	d3,d1
-	bsr	Ed_StoBlock
-	bne	Ed_OofBuf
-	move.w	d3,d0			Change les marques
-	move.w	(a2),d1
-	bsr	Ed_MarksChange
-	add.w	(a2),d3			Plus nombre de lignes
-.NoCor	move.l	2(a2),d0
-	lea	6(a2,d0.l),a2
-; Derniere ligne
-	JJsr	L_Prg_CptLines
-	move.w	d3,d0
-	bsr	Ed_GotoY
-	bsr	Ed_NewBufAff
-	move.w	(a2),d0
-	beq.s	.PaD
-	lea	2(a2),a0
-	bsr	R_InsChar
-	bsr	Ed_EALiCu
-	bsr	Ed_TokCur
-.PaD	move.w	d7,d0
-	bsr	Ed_GotoX
-; Termine!
-.Ok	moveq	#-1,d0
-.Vide	subq.b	#1,Ed_FUndo(a5)
-	movem.l	(sp)+,d2-d7/a2
-	tst.l	d0
-	rts
-
-;
-; Delete le bloc du texte
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_BlockDeleteA0
-	movem.l	d2-d7/a2-a3,-(sp)
-	addq.b	#1,Ed_FUndo(a5)
-	move.l	(a0),d0
-	beq	.Vide
-	move.l	d0,a2
-	movem.w	(a2)+,d4-d6		Positions
-	move.l	(a2)+,d7		Flags
-	move.w	d6,d0			Locate en ligne 1
-	bsr	Ed_GotoX
-	move.w	d4,d0
-	bsr	Ed_GotoY
-	move.l	a2,a3			Milieu>>> A3
-	add.w	(a3)+,a3
-	move.l	a3,d0
-	Pair	d0
-	move.l	d0,a3
-	btst	#31,d7			Une procedure en premier?
-	bne	.Proc1
-	btst	#30,d7			Juste le milieu?
-	bne.s	.NoMi
-; Enleve le milieu s'il faut
-	tst.w	(a3)
-	beq.s	.NoMi
-	move.l	2(a3),d0		Enleve le programme
-	move.w	d4,d1
-	addq.w	#1,d1
-	bsr	Ed_DelChunk
-	move.w	d4,d1			Change les marques
-	addq.w	#1,d1
-	move.w	(a3),d1
-	neg.w	d1
-	bsr	Ed_MarksChange
-	JJsr	L_Prg_CptLines		Compte
-	bsr	Ed_NewBufAff		Afiche
-; Enleve la premiere ligne
-.NoMi	move.w	(a2),d0
-	beq.s	.Pa1
-	bsr	R_DelChar
-	bsr	Ed_EALiCu
-.Pa1	btst	#30,d7			Pas de tokenisation si juste milieu
-	bne.s	.Ok
-	bsr	Ed_TokCur
-; Derniere ligne
-.Der	move.l	2(a3),d0		Pointe la derniere ligne
-	lea	6(a3,d0.l),a3
-	moveq	#0,d0			Locate debut ligne suivante
-	bsr	Ed_GotoX
-	move.w	d4,d0
-	addq.w	#1,d0
-	bsr	Ed_GotoY
-	move.w	(a3),d0
-	beq.s	.Join
-	bsr	R_DelChar		Enleve les caracteres
-	bsr	Ed_TokCur
-.Join	bsr	Ed_Join			Join la ligne du dessus
-	bsr	Ed_TokCur
-	bra.s	.Ok
-; Une procedure sur la premiere ligne
-.Proc1	move.l	2(a3),d0		Enleve le programme
-	move.w	d4,d1
-	bsr	Ed_DelChunk
-	move.w	d4,d0			Change les marques
-	move.w	(a3),d1
-	neg.w	d1
-	bsr	Ed_MarksChange
-	JJsr	L_Prg_CptLines
-	bsr	Ed_NewBufAff
-	move.l	2(a3),d0
-	lea	6(a3,d0.l),a3
-	moveq	#0,d0			Locate debut ligne
-	bsr	Ed_GotoX
-	move.w	(a3),d0
-	beq.s	.Ok
-	bsr	R_DelChar		Enleve les caracteres
-	bsr	Ed_TokCur
-; Termine!
-.Ok	moveq	#-1,d0
-.Vide	subq.b	#1,Ed_FUndo(a5)
-	movem.l	(sp)+,d2-d7/a2-a3
-	tst.l	d0
-	rts
-
-
-;
-; Fabrique le bloc. (a0) adresse ou poker la structure
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-;	A0	adresse du pointeur
-;	D4-D7	limites du bloc
-Ed_BlockCopyA0
-	movem.l	a2-a3/d2-d7,-(sp)
-	move.l	a0,-(sp)
-; Calcule la taille
-; ~~~~~~~~~~~~~~~~~
-	move.l	Ed_BufT(a5),a3
-	lea	256(a3),a3
-	move.l	a3,d3
-	neg.l	d3
-	and.l	#$0000FFFF,d7		Libere les flags
-; Copie la premiere ligne
-	move.w	Edt_YPos(a4),d0		La ligne courante?
-	add.w	Edt_YCu(a4),d0
-	cmp.w	d0,d4
-	bne.s	.NoCur
-	bsr	Ed_LCourant		Ligne sous le curseur
-	bne	.NoCur
-	tst.w	d0
-	beq	.NoBloc
-	lea	-2(a0),a1
-	bra.s	.Copy1
-.NoCur	move.w	d4,d0			Trouve la ligne
-	bsr	Ed_FindL
-	beq	.NoBloc
-	JJsrR	L_Tk_EditL,a1		Peut on couper la ligne?
-	beq.s	.Proc1
-	move.l	Ed_BufT(a5),a1		Detokenise la ligne...
-	moveq	#0,d0
-	bsr	Detok
-	move.l	Ed_BufT(a5),a1
-.Copy1	move.w	(a1)+,d0
-	cmp.w	d0,d6
-	bcs.s	.Sk1
-	move.w	d0,d6
-.Sk1	cmp.w	d4,d5
-	beq	.Seul
-	sub.w	d6,d0
-	move.b	d0,(a3)+
-	beq.s	.Der
-	subq.w	#1,d0
-	add.w	d6,a1
-.Cp1	move.b	(a1)+,(a3)+
-	dbra	d0,.Cp1
-	bra.s	.Der
-; Une procedure sur la premiere ligne
-.Proc1	tst.w	d6			X=0?
-	bne	Ed_NotEdit
-	cmp.w	d4,d5			Au moins une ligne?
-	ble	Ed_NotEdit
-	bset	#31,d7			X1= Flag
-	clr.b	(a3)+			1ere ligne vide
-; Copie la derniere ligne
-.Der	clr.b	(a3)+
-	move.w	Edt_YPos(a4),d0		La ligne courante?
-	add.w	Edt_YCu(a4),d0
-	cmp.w	d0,d5
-	bne.s	.NoCur2
-	bsr	Ed_LCourant		Ligne sous le curseur
-	bne.s	.NoCur2
-	tst.w	d0
-	beq.s	.Nc2
-	lea	-2(a0),a1
-	bra.s	.Copy2
-.NoCur2	move.w	d5,d0
-	bsr	Ed_FindL
-	beq	.Nc2
-	bsr	Ed_EditL
-	beq.s	.Proc2
-	move.l	Ed_BufT(a5),a1
-	moveq	#0,d0
-	bsr	Detok
-	move.l	Ed_BufT(a5),a1
-.Copy2	move.w	(a1)+,d0
-	cmp.w	d0,d7
-	bcs.s	.Sk2
-	move.w	d0,d7
-.Sk2	move.w	d7,d0
-	move.b	d0,-1(a3)
-	beq.s	.Nc2
-	subq.w	#1,d0
-.Cp2	move.b	(a1)+,(a3)+
-	dbra	d0,.Cp2
-.Nc2	bra.s	.Mil
-; Une procedure sur la derniere ligne: le curseur doit etre � gauche
-.Proc2	tst.w	d7			Curseur � gauche donc
-	bne	Ed_NotEdit		rien � copier!
-; Evalue la taille du milieu
-.Mil	move.w	d4,d2
-	btst	#31,d7			Si closed procedure
-	bne.s	.Ccp
-	addq.w	#1,d2
-.Ccp	cmp.w	d2,d5
-	beq.s	.NoM
-	move.w	d2,d0
-	bsr	Ed_FindL
-	beq.s	.NoM
-.Ct3	bsr	Ed_SizeL
-	add.l	d0,d3
-	bsr	Ed_NextL
-	beq.s	.NoM
-	addq.w	#1,d2
-	cmp.w	d5,d2
-	bcs.s	.Ct3
-.NoM	addq.l	#4+2,d3
-	bra.s	.Reserve
-; Une seule ligne: copie le bout
-.Seul	cmp.w	d0,d7
-	bcs.s	.SkS
-	move.w	d0,d7
-.SkS	move.w	d7,d0
-	sub.w	d6,d0
-	beq	.NoBloc
-	move.b	d0,(a3)+
-	beq.s	.Sl2
-	subq.w	#1,d0
-	add.w	d6,a1
-.Sl1	move.b	(a1)+,(a3)+
-	dbra	d0,.Sl1
-.Sl2	bset	#30,d7
-; Reserve la m�moire
-; ~~~~~~~~~~~~~~~~~~
-.Reserve
-	add.l	a3,d3
-	tst.l	d3
-	beq	.NoBloc
-	move.l	(sp),a0
-	bsr	Ed_BlockFreeA0
-	add.l	#24,d3
-	move.l	d3,d0
-	move.l	(sp),a0
-	bsr	Ed_MemReserve
-	beq	.OOm
-	move.l	a0,a1
-	movem.w	d4-d6,(a1)	Stocke les positions
-	lea	6(a1),a1
-	move.l	d7,(a1)+	Flags
-; Copie la premiere ligne
-; ~~~~~~~~~~~~~~~~~~~~~~~
-	move.l	Ed_BufT(a5),a2
-	lea	256(a2),a2
-	moveq	#0,d0
-	move.b	(a2)+,d0
-	move.w	d0,(a1)+
-	beq.s	.Pc1
-	subq.w	#1,d0
-.Co1	move.b	(a2)+,(a1)+
-	dbra	d0,.Co1
-	move.l	a1,d0
-	Pair	d0
-	move.l	d0,a1
-.Pc1	btst	#30,d7			Seul?
-	bne.s	.Ok
-; Copie le milieu
-; ~~~~~~~~~~~~~~~
-.CMil	move.l	a1,a3
-	clr.w	(a1)+			Nombre de lignes
-	clr.l	(a1)+			Taille
-	clr.w	(a1)
-	move.w	d4,d3
-	btst	#31,d7			Si closed
-	bne.s	.Cpr
-	addq.w	#1,d3
-.Cpr	cmp.w	d5,d3
-	bcc.s	.Sc2
-	move.w	d3,d0
-	bsr	Ed_FindL
-	beq.s	.Sc2
-.Lo2	addq.w	#1,(a3)			Une ligne de plus
-	bsr	Ed_SizeL
-	add.l	d0,2(a3)		Taille en plus
-	lsr.l	#1,d0
-.Mc2	move.w	(a0)+,(a1)+
-	subq.l	#1,d0
-	bne.s	.Mc2
-	bsr	Ed_NextL
-	beq.s	.Sc2
-	addq.w	#1,d3
-	cmp.w	d5,d3
-	bcs.s	.Lo2
-.Sc2
-; Copie la derniere ligne
-; ~~~~~~~~~~~~~~~~~~~~~~~
-	moveq	#0,d0
-	move.b	(a2)+,d0
-	move.w	d0,(a1)+
-	beq.s	.Ok
-	subq.w	#1,d0
-.Co2	move.b	(a2)+,(a1)+
-	dbra	d0,.Co2
-	bra.s	.Ok
-; Finito!
-; ~~~~~~~
-.OOm	moveq	#-1,d0
-	bra.s	.End
-.NoBloc	moveq	#1,d0
-	bra.s	.End
-.Ok	moveq	#0,d0
-.End	move.l	(sp)+,a0
-	movem.l	(sp)+,d2-d7/a2-a3
-	rts
+; The marked block: src/editor/block.cpp
+Ed_BlocAff	jmp	_ed_block_show_entry
+Ed_BlocOn	jmp	_ed_block_on_entry
+Ed_BlocCu	jmp	_ed_block_cursor_entry
+Ed_BlocHide	jmp	_ed_block_hide_entry
+Ed_CuNor	jmp	_ed_cursor_normal_entry
+Ed_BlocAll	jmp	_ed_block_all_entry
+Ed_BlocStore	jmp	_ed_block_store_entry
+Ed_BlocForget	jmp	_ed_block_forget_entry
+Ed_BlocCut	jmp	_ed_block_cut_entry
+Ed_BlocPaste	jmp	_ed_block_paste_entry
+Ed_BlocFree	jmp	_ed_block_free_entry
+Ed_BlockFreeA0	jmp	_ed_block_free_a0_entry
+Ed_BlockLimits	jmp	_ed_block_limits_entry
+Ed_BlockInsertA0 jmp	_ed_block_insert_entry
+Ed_BlockDeleteA0 jmp	_ed_block_delete_entry
+Ed_BlockCopyA0	jmp	_ed_block_copy_entry
 
 ; ________________________________________
 ;
@@ -8564,6 +8073,8 @@ Ed_Al100
 
 ; Out of memory / alert
 ; ~~~~~~~~~~~~~~~~~~~~~
+		xdef	_ed_out_of_memory
+_ed_out_of_memory
 Ed_OMm	move.w	#204,d0			***- Out of memory
 	bsr	Ed_GetMessage
 	moveq	#120,d0
@@ -8609,6 +8120,8 @@ Ed_PaPlace
 
 ; What bloc?
 ; ~~~~~~~~~~
+		xdef	_ed_block_what
+_ed_block_what
 Ed_BlocWhat
 	moveq	#6,d0
 	bra.s	Ed_ProAlert
@@ -8647,6 +8160,8 @@ Ed_NoRedo
 ;
 ; Appel alerte message indexe
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		xdef	_ed_pro_alert
+_ed_pro_alert
 Ed_ProAlert
 	bsr	Ed_GetMessage
 	moveq	#127,d0
@@ -12014,6 +11529,8 @@ ExtNot	dc.b	"Extension ",$80
 ; _____________________________________________________________________________
 
 Ed_Vide		dc.w 0
+		xdef	_ed_cursor_normal
+_ed_cursor_normal
 CurNor		dc.b	%00000000
 		dc.b	%00000000
 		dc.b	%00000000
@@ -12022,6 +11539,8 @@ CurNor		dc.b	%00000000
 		dc.b	%11111111
 		dc.b	%11111111
 		dc.b	%00000000
+		xdef	_ed_cursor_block
+_ed_cursor_block
 CurBloc		dc.b	%10101010
 		dc.b	%01010101
 		dc.b	%10101010

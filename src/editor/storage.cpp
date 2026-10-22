@@ -154,6 +154,13 @@ Stored store_block(const uint8_t *block, uint32_t length, uint16_t position)
     return put(block, length, position, false, true);
 }
 
+void delete_lines(uint16_t n, uint32_t bytes)
+{
+    uint8_t *line = find_line(n);
+    if (peek_w(line))
+        delete_chunk(line, line + bytes);
+}
+
 // Ed_DeLigne: line n out of the program: 0 done, 1 none there, -1 a closed
 // procedure
 int32_t delete_line(uint16_t n)
@@ -199,12 +206,7 @@ void ed_store_block(AllRegs *r)
 void ed_delete_line(AllRegs *r) { r->d[0] = uint32_t(delete_line(uint16_t(r->d[1]))); }
 
 // Ed_DelChunk: d0 bytes from line d1
-void ed_delete_chunk_at(AllRegs *r)
-{
-    uint8_t *a0 = find_line(uint16_t(r->d[1]));
-    if (peek_w(a0))
-        delete_chunk(a0, a0 + r->d[0]);
-}
+void ed_delete_chunk_at(AllRegs *r) { delete_lines(uint16_t(r->d[1]), r->d[0]); }
 
 // Ed_StDelChunk: a0..a1 out of the program (d1 = a0)
 void ed_delete_chunk(AllRegs *r)

@@ -273,6 +273,9 @@ Editor
 - Listing variable names with capitals (the editor's "first capital"
   setting for variables) took the capital from the token instead of the
   name and lost its place in the line, garbling the rest of it.
+- Cutting a block of several lines moved the marks (Set Mark) from a line
+  number never set (the routine loaded the count twice into the same
+  register).
 - Without memory for its undo block, storing a line wrote the block's
   header at address 0.
 - Redrawing one column of the window (scrolling sideways by one) with a
