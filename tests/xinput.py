@@ -52,9 +52,9 @@ class Display:
             _x11.XFlush(self.d)
             time.sleep(hold)
 
-    def keys(self, keysyms, gap=0.05):
+    def keys(self, keysyms, gap=0.05, hold=0.05):
         for k in keysyms:
-            self.key(k)
+            self.key(k, hold)
             time.sleep(gap)
 
     def move(self, x, y):

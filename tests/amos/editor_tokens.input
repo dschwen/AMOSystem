@@ -1,0 +1,55 @@
+timeout 400
+wait 12
+key ctrl+shift+Up
+key Down
+key ctrl+y
+key ctrl+y
+key ctrl+y
+key ctrl+y
+key ctrl+y
+key ctrl+y
+key ctrl+shift+Down
+wait 0.5
+type A=1 : B#=2.5 : C$="Hello" : Print A;B#;C$
+key Return
+type For I=1 To 10 Step 2 : Inc A : Next I
+key Return
+type If A>0 and B#<3.5e2 Then Print "yes" Else Print "no"
+key Return
+type X=$FF+%1010-12345678 : Y#=-0.001 : Z=Not(X) mod 3
+key Return
+type HERE: Rem a comment with Print inside
+key Return
+type ' quote comment
+key Return
+type Procedure TEST[P,Q$] : Shared X : End Proc[P*2]
+key Return
+type TEST[3,"z"] : Print Param
+key Return
+type Dim T(10,5),S$(3) : T(1,2)=4 : Read N : Data 1,2,"x"
+key Return
+type Screen Open 0,320,200,16,Lowres : Bob 1,10,20,1 : Wait Vbl
+key Return
+type On Error Goto HERE : Gosub HERE : Goto HERE
+key Return
+type Boom : Sam Play 1 : Pack 0 To 10
+key Return
+type print len("abc")+asc(mid$("xyz",2,1))
+key Return
+type If A=1 : Print 1 : Else If A=2 : Print 2 : Else : Print 3 : End If
+key Return
+type Repeat : A=A-1 : Until A<=0 : While A<5 : Wend
+key Return
+type Print At(1,2);"x";Chr$(65);Str$(1.5);Val("2")
+key Return
+type Def Fn F(A)=A*2 : Print Fn F(3)
+key Return
+type 100 Print 1 : Goto 100
+key Return
+type X=Varptr(A) : Poke Start(1),0 : Call 1
+key Return
+type Print 1.0E+10;3.14159;Pi#;-$10;%0
+key Return
+wait 1
+key ramiga+s
+wait 4

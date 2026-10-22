@@ -39,6 +39,9 @@ emulator then grabs the input), one command per line:
                    "shift+", "ctrl+", "alt+", "lamiga+" or "ramiga+" in
                    front for modifiers
   keys TEXT        type the characters of TEXT (letters, digits, space)
+  type TEXT        type the rest of the line as it is (any printable ASCII,
+                   no comment)
+  timeout SECONDS  a longer time limit for this test
   move DX DY       move the mouse by DX,DY in one event
   glide DX DY      the same in small steps (large moves)
   button N up|down / click N
@@ -260,6 +263,35 @@ def compare_editor(name, shots):
 
 KEYSYMS = {' ': 'space', '.': 'period', ',': 'comma', '$': 'dollar', '"': 'quotedbl', '-': 'minus'}
 
+# "type": any printable ASCII as the keys of a US keyboard (the Amiga's usa
+# keymap): the unshifted key's X keysym, with shift where needed
+UNSHIFTED = {' ': 'space', '`': 'grave', '-': 'minus', '=': 'equal', '[': 'bracketleft',
+             ']': 'bracketright', '\\': 'backslash', ';': 'semicolon', "'": 'apostrophe',
+             ',': 'comma', '.': 'period', '/': 'slash'}
+SHIFTED = {'~': '`', '!': '1', '@': '2', '#': '3', '$': '4', '%': '5', '^': '6', '&': '7',
+           '*': '8', '(': '9', ')': '0', '_': '-', '+': '=', '{': '[', '}': ']', '|': '\\',
+           ':': ';', '"': "'", '<': ',', '>': '.', '?': '/'}
+
+
+def type_keys(text):
+    """The key names (for Display.key) that type text."""
+    keys = []
+    for c in text:
+        shift = c.isupper() or c in SHIFTED
+        base = SHIFTED.get(c, c).lower()
+        name = UNSHIFTED.get(base, base)
+        keys.append('shift+' + name if shift else name)
+    return keys
+
+
+def parse_input_line(line):
+    """The words of a script line; "type" keeps the rest of the line as it
+    is (one argument, comments included)."""
+    line = line.rstrip('\n')
+    if line.split()[:1] == ['type']:
+        return ['type', line.split('type', 1)[1][1:]]
+    return line.split('#')[0].split()
+
 
 def play_input(script, display, out, deadline, name=None, env=None, stopped=None):
     """Send the events of an input script to the emulator window. Stops when
@@ -286,6 +318,10 @@ def play_input(script, display, out, deadline, name=None, env=None, stopped=None
                 d.key(args[0])
             elif op == 'keys':
                 d.keys([KEYSYMS.get(c, c) for c in ' '.join(args)])
+            elif op == 'type':
+                d.keys(type_keys(args[0]), hold=0.03, gap=0.03)
+            elif op == 'timeout':
+                pass
             elif op == 'move':
                 d.move_by(int(args[0]), int(args[1]))
             elif op == 'glide':
@@ -335,13 +371,18 @@ def run_test(name, tables, amos, kickstart, workbench, timeout, visible):
     script = None
     if os.path.exists(os.path.join(TESTS, name + '.input')):
         with open(os.path.join(TESTS, name + '.input')) as f:
-            script = [line.split('#')[0].split() for line in f]
+            script = [parse_input_line(line) for line in f]
             script = [cmd for cmd in script if cmd]
+        for cmd in script:
+            if cmd[0] == 'timeout':
+                timeout = max(timeout, int(cmd[1]))
     if editor:
         listing = body
     else:
         listing = head + PROLOGUE.format(name=name) + body.rstrip('\n') + '\n' + EPILOGUE
     amostok.tokenize_program(listing, tables).save(os.path.join(hd, name + '.AMOS'))
+    with open(os.path.join(hd, name + '.AMOS'), 'rb') as f:
+        listing_bytes = f.read()
     with open(os.path.join(hd, 'S', 'startup-sequence'), 'w', encoding='latin-1') as f:
         f.write(STARTUP.format(name=name))
     uaem.add_sidecars(hd)
@@ -379,6 +420,10 @@ def run_test(name, tables, amos, kickstart, workbench, timeout, visible):
                         # the screenshots show the editor after the input
                         player.join(max(0, start + timeout - time.time()))
                     shots = editor_shots(env, base, start + timeout)
+                    # a program the editor saved over the test's own
+                    program = os.path.join(hd, name + '.AMOS')
+                    if open(program, 'rb').read() != listing_bytes:
+                        shutil.copy(program, os.path.join(out, name + '_saved.AMOS'))
                     return shots is not None, time.time() - start, out, shots
                 while time.time() - start < timeout:
                     if os.path.exists(done) or proc.poll() is not None:
@@ -425,6 +470,23 @@ def compare(name, out):
             problems.append(f'{f} differs')
     if not got:
         problems.append('no output')
+    return problems
+
+
+def compare_files(name, out):
+    """The files an editor test leaves (a saved program), against the golden
+    ones but its screen."""
+    screen = (name + '.png', name + '_mask.png')
+    got = {f: p for f, p in outputs(out, name).items()}
+    want = {f: p for f, p in outputs(GOLDEN, name).items() if f not in screen}
+    problems = []
+    for f in sorted(set(got) | set(want)):
+        if f not in got:
+            problems.append(f'{f} missing')
+        elif f not in want:
+            problems.append(f'{f} not in golden')
+        elif open(got[f], 'rb').read() != open(want[f], 'rb').read():
+            problems.append(f'{f} differs')
     return problems
 
 
@@ -484,6 +546,8 @@ def main():
                 os.makedirs(GOLDEN, exist_ok=True)
                 if shots:
                     record_editor(name, shots)
+                    for f, path in outputs(out, name).items():
+                        shutil.copy(path, os.path.join(GOLDEN, f))
                     print(f'{name}: recorded the editor screen ({seconds:.0f}s)')
                     continue
                 got = outputs(out, name)
@@ -491,7 +555,10 @@ def main():
                     shutil.copy(path, os.path.join(GOLDEN, f))
                 print(f'{name}: recorded {len(got)} files ({seconds:.0f}s)')
                 continue
-            problems = compare_editor(name, shots) if shots else compare(name, out)
+            if shots:
+                problems = compare_editor(name, shots) + compare_files(name, out)
+            else:
+                problems = compare(name, out)
             failed += bool(problems)
             status = 'ok' if not problems else 'FAIL: ' + ', '.join(problems)
             print(f'{name}: {status} ({seconds:.0f}s)')
