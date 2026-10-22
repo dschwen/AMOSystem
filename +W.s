@@ -75,6 +75,7 @@ Version	MACRO
 		XREF	_w_screen_copy
 		XREF	_w_vbl
 		XREF	_w_input,_w_send_fake_event,_w_test_cyclic
+		XREF	_w_tamoswb,_w_joy,_w_request_on_off
 		XREF	_w_copper_make,_w_copper_force
 		XREF	_w_tabk1,_w_tabk2,_w_tabk3,_w_tabk4
 		XREF	_w_auto_req,_w_easy_req
@@ -4060,98 +4061,8 @@ Old_LoadView	dc.l	0		Ici et pas ailleurs...
 ;	D1>0	>	AMOS
 ;	D1<0	>	Rien (trouver valeur)
 ;	Retour D1= AMOS ici(-1), WB ici (0)
-		xdef	_w_amos_wb
-_w_amos_wb
-TAMOSWb
-	tst.w	d1
-	beq	.ToWB
-	bmi	.Return
-
-; 	Back to AMOS
-; ~~~~~~~~~~~~~~~~~~
-.ToAMOS	tst.b	T_AMOSHere(a5)
-	bne	.Return
-	move.b	#-1,T_AMOSHere+1(a5)		Code interdisant les requester
-
-; Load View(0) + WaitTOF si AA
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	btst	#WFlag_LoadView,T_WFlags(a5)
-	beq.s	.PaAA0
-	movem.l	d0-d3/a0-a2/a6,-(sp)
-
-	move.l	T_IntBase(a5),a6		Ouvre un ecran LOWRES
-
-	btst	#WFlag_WBClosed,T_WFlags(a5)	Si WB ferme, le referme!
-	beq.s	.NoWB
-	jsr	-78(a6)
-.NoWB
-	lea	NewScreen(pc),a0
-	jsr	OpenScreen(a6)
-	move.l	d0,T_IntScreen(a5)
-
-	move.l	T_GfxBase(a5),a6		WaitTOF
-	jsr	-$10e(a6)
-	jsr	-$10e(a6)
-
-	sub.l	a1,a1
-	move.l	T_GfxBase(a5),a6
-	jsr	-$de(a6)			LoadView(a0)
-	jsr	-$10e(a6)			WaitTOF
-	jsr	-$10e(a6)			WaitTOF
-	move.w	$dff07c,d0
-	cmp.b	#$f8,d0				AA Chipset?
-	bne.s	.NoBug
-	move.w	#0,$dff1fc			Sprite resolution
-	move.w	#%0000110000000000,$dff106	Sprite width / DualPF palette
-.NoBug
-
-	movem.l	(sp)+,d0-d3/a0-a2/a6
-.PaAA0
-	lea	Circuits,a0			Remet les circuits
-	move.w	#$8080,JoyTest(a0)
-	move.l 	T_CopPhysic(a5),$80(a0)
-	clr.w 	$88(a0)
-	move.b	#-1,T_AMOSHere(a5)		AMOS en front!
-	clr.b	T_AMOSHere+1(a5)		Flip termine!
-	bra.s	.Return
-
-; 	Goto workbench
-; ~~~~~~~~~~~~~~~~~~~~
-.ToWB	tst.b	T_AMOSHere(a5)
-	beq.s	.Return
-	clr.b	T_AMOSHere(a5)			AMOS en fond!
-	move.b	#-1,T_AMOSHere+1(a5)		Code interdisant les requesters
-
-	move.w	T_OldDma(a5),$Dff096		Remet les chips
-	move.l	T_GfxBase(a5),a0
-	move.l 	38(a0),$dff080
-	clr.w	$dff088
-
-; Efface l'ecran si AA
-; ~~~~~~~~~~~~~~~~~~~~
-	btst	#WFlag_LoadView,T_WFlags(a5)
-	beq.s	.PaAA1
-	movem.l	d0-d3/a0-a2/a6,-(sp)
-	move.l	T_IntBase(a5),a6		Close Screen
-	btst	#WFlag_WBClosed,T_WFlags(a5)	Si WB ferme, le rouvre!
-	beq.s	.NoBW
-	jsr	-210(a6)			Reopen workbench
-.NoBW	move.l	T_IntScreen(a5),a0		Close screen
-	jsr	CloseScreen(a6)
-	move.l	T_GfxBase(a5),a6
-	jsr	-$10e(a6)			WaitTOF
-	jsr	-$10e(a6)			WaitTOF
-	movem.l	(sp)+,d0-d3/a0-a2/a6
-.PaAA1
-	clr.b	T_AMOSHere+1(a5)		Flip termine!
-
-; Retourne l'etat actuel
-; ~~~~~~~~~~~~~~~~~~~~~~
-.Return	move.b	T_AMOSHere(a5),d1
-	ext.w	d1
-	ext.l	d1
-	moveq	#0,d0
-	rts
+; AMOS / Workbench: src/w/system.cpp
+TAMOSWb	jmp	_w_tamoswb
 
 ;	Clear CPU Caches
 ; ~~~~~~~~~~~~~~~~~~~~~~
@@ -4185,15 +4096,6 @@ WRastPort	ds.l	1
 		even
 ; Table de retournement bobs
 
-NTx:		equ 480
-NTy:		equ 12
-NNp:		equ 1
-NewScreen:	dc.w 0,0,NTx,NTy,NNp
-		dc.b 1,0
-		dc.w %0010000000000000,%00000110
-		dc.l 0,0,0,0
-		ds.b	16
-		even
 
 ;		Caracteres speciaux des fontes AMOS
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -4541,30 +4443,7 @@ CXyS3	add.w	EcWY(a0),d2
 **********************************************************
 *	JOYSTICK / d1= # de port
 **********************************************************
-ClJoy:	tst.b	T_AMOSHere(a5)
-	beq.s	JoyNo
-	moveq	#6,d0			;# du bit de FEU
-	add.w	d1,d0
-	lea	Circuits,a0
-	lsl.w	#1,d1
-	move.w	10(a0,d1.w),d2
-; Prend le bouton
-	clr.w	d1
-	btst	d0,CiaAPrA
-	bne.s	Joy1
-	bset	#4,d1
-; Teste les directions
-Joy1:	lea	JoyTab(pc),a0
-	lsl.b	#6,d2
-	lsr.w 	#6,d2
-	and.w	#$000F,d2
-	or.b	0(a0,d2.w),d1
-Joy2	moveq	#0,d0
-	rts
-JoyNo	moveq	#0,d1
-	bra.s	Joy2
-JoyTab:	dc.b 	%0000,%0010,%1010,%1000,%0001,%0000,%0000,%1001
-	dc.b 	%0101,%0000,%0000,%0000,%0100,%0110,%0000,%0000
+ClJoy:	jmp	_w_joy
 
 ******* Zones: src/w/mouse.cpp
 SyResZ:	jmp	_w_zones_reserve
@@ -4852,9 +4731,7 @@ T_Size		equ	T_Gad+128
 
 ;	Set request ON / OFF
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~
-WRequest_OnOff
-	move.w	d0,T_ReqFlag(a5)
-	rts
+WRequest_OnOff	jmp	_w_request_on_off
 
 ; System requesters: src/w/requester.cpp (a5 the data zone for it)
 AutoReq	move.l	a5,-(sp)

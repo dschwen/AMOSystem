@@ -17,7 +17,7 @@
 #include <exec/io.h>
 
 // +W.s
-extern "C" uint8_t w_con_io[], w_amos_wb[], w_add_vbl[], w_rem_vbl[];
+extern "C" uint8_t w_con_io[], w_add_vbl[], w_rem_vbl[];
 
 #define CONSOLE_BASE_NAME (amos::ptr<struct Device>(amos::peek_l(w_con_io + 20)))
 #include <proto/console.h>
@@ -46,16 +46,6 @@ const uint8_t special[32] = {
 
 // The fake mouse event (WSend_FakeEvent)
 struct InputEvent fake_event;
-
-// TAMOSWb: 0 to the Workbench, >0 to AMOS, <0 nothing. -1 if AMOS is in
-// front, 0 if not.
-int32_t amos_wb(int32_t to)
-{
-    Regs r;
-    r.d[1] = uint32_t(to);
-    amos_call(&r, w_amos_wb);
-    return int32_t(r.d[1]);
-}
 
 
 // Cla_Stocke: a key into the key buffer (unless full) and ClLast

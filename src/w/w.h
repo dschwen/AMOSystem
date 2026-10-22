@@ -37,6 +37,10 @@ uint32_t call(uint8_t *routine);
 
 void copy(void *to, const void *from, uint32_t n);
 
+// w/system.cpp: TAMOSWb, 0 the Workbench in front, >0 AMOS, <0 nothing;
+// -1 if AMOS is in front, 0 if not
+int32_t amos_wb(int32_t to);
+
 // w/keyboard.cpp, w/input.cpp
 const uint8_t *put_key(const uint8_t *text);
 void send_fake_event();

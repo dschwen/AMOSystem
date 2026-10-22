@@ -1,0 +1,6 @@
+sync a
+wait 0.5
+button 1 down
+sync b
+wait 0.5
+button 1 up
