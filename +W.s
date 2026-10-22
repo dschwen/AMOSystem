@@ -73,6 +73,7 @@ Version	MACRO
 		XREF	_w_rain_set,_w_rain_do,_w_rain_var,_w_rain_del,_w_rain_hide
 		XREF	_w_cop_swap,_w_cop_swap_lists,_w_cop_reset,_w_cop_wait,_w_cop_move,_w_cop_movel,_w_cop_base
 		XREF	_w_screen_copy
+		XREF	_w_vbl
 		XREF	_w_copper_make,_w_copper_force
 		XREF	_w_tabk1,_w_tabk2,_w_tabk3,_w_tabk4
 		XREF	_w_auto_req,_w_easy_req
@@ -1193,64 +1194,7 @@ ShI:	clr.w	(a0)+
 
 ShStop:	jmp	_w_shift_off
 
-***********************************************************
-*	INTERRUPTIONS SHIFTER
-***********************************************************
-Shifter:lea	T_TShift(a5),a0
-	tst.w	(a0)
-	beq.s	ShfX
-	subq.w	#1,(a0)
-	bne.s	ShfX
-* Shifte!
-	move.w	2(a0),(a0)
-	addq.l	#4,a0
-	move.l	(a0)+,a1
-	move.w	EcNumber(a1),d0
-	lsl.w	#7,d0
-	lea	0(a3,d0.w),a4
-	lea	EcPal(a1),a1
-	move.w	(a0)+,d0
-	move.w	(a0)+,d1
-	move.w	d0,d2
-	move.w	d1,d3
-	tst.b	(a0)+
-	bne.s	Shf6
-* En montant!
-	move.w	0(a1,d3.w),d5
-Shf5:	move.w	-2(a1,d3.w),0(a1,d3.w)
-	subq.w	#2,d3
-	cmp.w	d2,d3
-	bne.s	Shf5
-	bra.s	Shf8
-* En descendant
-Shf6:	move.w	0(a1,d2.w),d5
-Shf7:	move.w	2(a1,d2.w),0(a1,d2.w)
-	addq.w	#2,d2
-	cmp.w	d2,d3
-	bne.s	Shf7
-* Poke dans les listes copper les couleurs D0-D1
-Shf8:	tst.b	(a0)+			* Rotation???
-	beq.s	Shf8a
-	move.w	d5,0(a1,d2.w)
-Shf8a:	move.w	d0,d2
-	lsl.w	#1,d2
-Shf9:	move.w	0(a1,d0.w),d3
-	move.l	a4,a2
-	cmp.w	#PalMax*2,d0
-	bcs.s	ShfC
-	lea	64(a2),a2
-ShfC:	move.l	(a2)+,d4
-	beq.s	ShfB
-ShfA:	move.l	d4,a0
-	move.w	d3,2(a0,d2.w)
-	move.l	(a2)+,d4
-	bne.s	ShfA
-ShfB:	addq.w	#2,d0
-	addq.w	#4,d2
-	cmp.w	d1,d0
-	bls.s	Shf9
-* Fini!
-ShfX	rts
+; The interrupt parts of shift, fade and flash: src/w/vbl.cpp
 	ENDC
 
 ******* Fade: src/w/colours.cpp
@@ -1258,137 +1202,8 @@ FadeTOf	jmp	_w_fade_off
 FaStop	jmp	_w_fade_stop
 FadeTOn	jmp	_w_fade
 
-***********************************************************
-*	INTERRUPTIONS FADEUR
-*	Attention! Change A3!!!
-***********************************************************
-FadeI	tst.w	T_FadeFlag(a5)
-	beq.s	FadX
-	subq.w	#1,T_FadeCpt(a5)
-	beq.s	Fad0
-FadX	rts
-* Fade!
-Fad0	move.w	T_FadeVit(a5),T_FadeCpt(a5)
-	move.l	T_FadePal(a5),a1
-	move.l	T_FadeCop(a5),d3
-	move.w	T_FadeNb(a5),d7
-	lea	T_FadeCol(a5),a2
-	moveq	#0,d6
-* Boucle
-Fad1	move.w	(a2)+,d5
-	bmi.s	FadN0
-	moveq	#0,d4
-	moveq	#0,d0
-	move.b	(a2)+,d0
-	cmp.b	(a2)+,d0		* R
-	beq.s	Fad4
-	bhi.s	Fad2
-	addq.w	#1,d0
-	bra.s	Fad3
-Fad2	subq.w	#1,d0
-Fad3	addq.w	#1,d4
-	move.b	d0,-2(a2)
-Fad4	moveq	#0,d1
-	move.b	(a2)+,d1
-	cmp.b	(a2)+,d1		* G
-	beq.s	Fad7
-	bhi.s	Fad5
-	addq.w	#1,d1
-	bra.s	Fad6
-Fad5	subq.w	#1,d1
-Fad6	addq.w	#1,d4
-	move.b	d1,-2(a2)
-Fad7	moveq	#0,d2
-	move.b	(a2)+,d2
-	cmp.b	(a2)+,d2		* B
-	beq.s	FadA
-	bhi.s	Fad8
-	addq.w	#1,d2
-	bra.s	Fad9
-Fad8	subq.w	#1,d2
-Fad9	addq.w	#1,d4
-	move.b	d2,-2(a2)
-* Calcule la couleur
-FadA	tst.w	d4
-	beq.s	FadN1
-	addq.w	#1,d6
-	lsl.w	#4,d0
-	or.w	d1,d0
-	lsl.w	#4,d0
-	or.w	d2,d0
-* Poke dans l'ecran
-	move.w	d0,0(a1,d5.w)
-* Poke dans les listes copper
-	lsl.w	#1,d5
-	move.l	d3,a3
-	cmp.w	#PalMax*4,d5
-	bcs.s	FadC
-	lea	64(a3),a3
-FadC	move.l	(a3)+,d1
-	beq.s	FadN
-FadB	move.l	d1,a4
-	move.w	d0,2(a4,d5.w)
-	move.l	(a3)+,d1
-	bne.s	FadB
-* Couleur suivante
-FadN	dbra	d7,Fad1
-	move.w	d6,T_FadeFlag(a5)
-	rts
-* Rien dans cette couleur
-FadN0	addq.l	#6,a2
-	dbra	d7,Fad1
-	move.w	d6,T_FadeFlag(a5)
-	rts
-* Plus rien maintenant
-FadN1	move.w	#-1,-8(a2)
-	bra.s	FadN
 
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;       INTERRUPTIONS FLASHEUR
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-FlInt:  tst.b	T_NbFlash+1(a5)		Autorisee?
-	bne.s	FlShXX
-	move.b 	T_NbFlash(a5),d7	Nombre en route
-	beq.s	FlShXX
-	addq.b	#1,T_NbFlash+1(a5)	Inhibe!
-        lea	T_tflash-lflash+2(a5),a0
-FlShLL	lea	lflash-2(a0),a0
-FlShL	move.w 	(a0)+,d0
-        beq.s 	FlShLL
-; Flashe!
-	sub.w 	#1,(a0)			* Compteur
-        bne.s 	FlShN
-	lea	2(a0),a1
-	move.l	(a1)+,a2		* Adresse de l'ecran
-	add.w	(a1)+,a1		* Pointe
-	move.w	(a1)+,(a0)
-	bne.s	Flsh4
-	lea	6(a0),a1
-	clr.w	(a1)+
-	move.w	(a1)+,(a0)
-FlSh4:	addq.w	#4,6(a0)		* Pointe le suivant
-	move.w	(a1),d2
-	move.w	d2,EcPal-2(a2,d0.w)	* Change dans la definition
-	lsl.w	#1,d0
-	move.w	EcNumber(a2),d1
-	lsl.w	#7,d1
-	lea	0(a3,d1.w),a2
-	cmp.w	#PalMax*4+4,d0
-	bcs.s	FlSh5
-	lea	64(a2),a2
-FlSh5:	move.l	(a2)+,d1		* Change toutes les definitions
-	beq.s	FlShN
-FlSh6:	move.l	d1,a1
-	move.w	d2,2-4(a1,d0.w)
-	move.l	(a2)+,d1
-	bne.s	FlSh6
-; Encore un actif?
-FlShN	subq.b	#1,d7
-	bne.s	FlShLL
-; Fini!
-FlShX	subq.b	#1,T_NbFlash+1(a5)	Retabli les interruptions
-FlShXX	rts
 
 ***********************************************************
 *	FABRIQUE LA COPPER LISTE A PARTIR DES ECRANS
@@ -2966,6 +2781,8 @@ AmJumps	dc.w 	AmStop-AmJumps			* 00
 
 ***********************************************************
 *	ANIMEUR / DEPLACEUR
+		xdef	_w_animator
+_w_animator
 Animeur:
 ********
 	lea	AMJumps(pc),a4
@@ -4638,115 +4455,11 @@ VBLEnd
 	rts
 
 ******* Entree des interruptions
+; The VBL server (is_Data in a1): src/w/vbl.cpp
 VblIn:	movem.l	d2-d7/a2-a4,-(sp)
-	lea	Circuits,a6
-	move.l	a1,a5
-* Fait les switch entrelaces
-	tst.w	T_InterBit(a5)
-	beq.s	SIntX2
-	lea	T_InterList(a5),a5
-	move.l	(a5)+,d0
-	beq.s	SIntX
-	move.w	$4(a6),d6
-SInt0	move.l	d0,a4			* Adresse ecran
-	move.l	(a5)+,a3		* Adresse marqueur
-	move.w	EcNPlan(a4),d5		* D5 Nb de plans
-	subq.w	#1,d5
-	move.l	(a3)+,d2
-	beq.s	SInt4
-SInt1	move.l	(a3)+,a0
-	tst.w	d6
-	bmi.s	SInt2
-	move.w	EcTx(a4),d0
-	lsr.w	#3,d0
-	add.w	d0,a0
-SInt2	move.w	d5,d1
-	move.l	d2,a2
-	lea	EcPhysic(a4),a1
-SInt3	move.l	(a1)+,d0
-	add.l	a0,d0
-	move.w	d0,6(a2)
-	swap	d0
-	move.w	d0,2(a2)
-	addq.l	#8,a2
-	dbra	d1,SInt3
-	move.l	(a3)+,d2
-	bne.s	SInt1
-SInt4	move.l	(a5)+,d0
-	bne.s	SInt0
-SIntX	move.l	W_Base(pc),a5
-SIntX2
-
-* Fait les screen swaps
-	lea	T_SwapList(a5),a0
-	move.l	(a0),d0
-	beq.s	SSwpX
-	clr.l	(a0)+
-SSwp1:	move.l	a0,a1
-	move.l	d0,a4
-	move.w	(a1)+,d1		* Nb de plans
-	move.l	(a4)+,d0
-	beq.s	SSwp4
-SSwp2:	move.l	(a4)+,d3		* Decalage
-	move.l	d0,a3
-	move.l	a1,a2
-	move.w	d1,d2
-SSwp3:	move.l	(a2)+,d0
-	add.l	d3,d0
-	move.w	d0,6(a3)
-	swap	d0
-	move.w	d0,2(a3)
-	addq.l	#8,a3
-	dbra	d2,SSwp3
-	move.l	(a4)+,d0
-	bne.s	SSwp2
-SSwp4:	lea	SwapL-4(a0),a0
-	move.l	(a0)+,d0
-	bne.s	SSwp1
-SSwpX:
-
-* Change l'adresses des sprites hard
-	move.l	T_HsChange(a5),d0
-	beq.s	VblPaHs
-	clr.l	T_HsChange(a5)
-	bsr	HsPCop
-VblPaHs:
-
-* Marque le VBL
-	addq.l	#1,T_VBLCount(a5)
-	addq.l	#1,T_VBLTimer(a5)
-	subq.w	#1,T_EveCpt(a5)
-	bset	#BitVBL,T_Actualise(a5)
-
-* Appelle les autres routines
-	lea	VblRout(a5),a4
-	move.l	(a4)+,d0
-	beq.s	VblPaCa
-VblCall	move.l	d0,a0
-	jsr	(a0)
-	move.l	(a4)+,d0
-	bne.s	VblCall
-VblPaCa
-* Affiche la souris
-	bsr	MousInt
-* Couleurs
-	lea	T_CopMark(a5),a3
-
-	IFEQ	EZFlag
-	bsr	Shifter
-	ENDC
-
-	bsr	FlInt
-	bsr	FadeI
-
-	IFEQ	EZFlag
-* Animations
-	move.w	T_SyncOff(a5),d0
-	bne.s	PaSync
-	bsr	Animeur
-PaSync:
-	ENDC
-
+	move.l	a1,-(sp)
+	jsr	_w_vbl
+	addq.l	#4,sp
 	movem.l	(sp)+,d2-d7/a2-a4
 	lea	$DFF000,a0
 	moveq	#0,d0
@@ -4773,64 +4486,6 @@ WVbl1:	cmp.l	T_VblCount(a5),d0
 	rts
 
 ******* Traitement de la souris
-MousInt:tst.b	T_AMOSHere(a5)
-	beq	MouF
-
-	move.w	T_MouseX(a5),d0
-	move.w	T_MouseY(a5),d1
-
-; Limite la souris
-MouV7	cmp.w	T_MouXMin(a5),d0
-	bge.s	Mou5
-	move.w	T_MouXMin(a5),d0
-Mou5:	cmp.w	T_MouXMax(a5),d0
-	ble.s	Mou6
-	move.w	T_MouXMax(a5),d0
-Mou6:	cmp.w	T_MouYMin(a5),d1
-	bge.s	Mou7
-	move.w	T_MouYMin(a5),d1
-Mou7:	cmp.w	T_MouYMax(a5),d1
-	ble.s	Mou8
-	move.w	T_MouYMax(a5),d1
-Mou8:	move.w	d0,T_MouseX(a5)
-	move.w	d1,T_MouseY(a5)
-	lsr.w	#1,d0
-	lsr.w	#1,d1
-	move.w	d0,T_XMouse(a5)
-	move.w	d1,T_YMouse(a5)
-
-; Poke les mots de control, si SHOW
-	move.w	T_MouShow(a5),d2
-	bmi.s	MouF
-	sub.w	T_MouHotX(a5),d0
-	sub.w	T_MouHotY(a5),d1
-	move.l	T_HsPhysic(a5),a0		;Adresse du dessin
-	move.l	T_HsLogic(a5),a1
-	move.l	T_HsInter(a5),a2
-	ror.w	#1,d0
-	move.b	d1,d2
-	lsl.w	#8,d2
-	move.b	d0,d2
-	move.w	d2,(a0)
-	move.w	d2,(a1)
-	move.w	d2,(a2)
-	clr.w	d2
-	btst	#8,d1
-	beq.s	Mou10
-	bset	#8+2,d2
-Mou10:	add.w	T_MouTy(a5),d1
-	move.b	d1,d2
-	ror.w	#8,d2
-	btst	#8,d1
-	beq.s	Mou11
-	bset	#1,d2
-Mou11:	btst	#15,d0
-	beq.s	Mou12
-	bset	#0,d2
-Mou12:	move.w	d2,2(a0)
-	move.w	d2,2(a1)
-	move.w	d2,2(a2)
-MouF:	rts
 
 ***********************************************************
 *	BOUTONS DE LA SOURIS
@@ -4986,25 +4641,6 @@ HsEBuf:	tst.l	T_HsBuffer(a5)
 	bsr	FreeMm
 HsEb1:	rts
 
-******* Poke l'adresse D0 dans les listes copper
-HsPCop:	move.w	T_HsTCol(a5),d1
-	ext.l	d1
-	move.l	T_CopLogic(a5),a0
-	move.l	T_CopPhysic(a5),a1
-	addq.l	#4,a0
-	addq.l	#4,a1
-	moveq	#7,d2
-HsPc1:	swap	d0
-	move.w	d0,2(a0)
-	move.w	d0,2(a1)
-	swap	d0
-	move.w	d0,6(a0)
-	move.w	d0,6(a1)
-	add.l	d1,d0
-	lea	8(a0),a0
-	lea	8(a1),a1
-	dbra	d2,HsPc1
-	rts
 
 HsPri:	jmp	_w_sprite_priority
 
