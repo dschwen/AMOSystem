@@ -26,3 +26,15 @@ WEntryA0	MACRO
 		cmp.w	#0,a0
 		rts
 		ENDM
+
+; WEntryF cfunction: the same, the condition codes from the function's
+; return value (tst.l) and not from d0, which keeps its value unless the
+; function changes it in the registers
+WEntryF		MACRO
+		movem.l	d0-d7/a0-a6,-(sp)
+		lea	\1,a2
+		jsr	_w_go
+		tst.l	d0
+		movem.l	(sp)+,d0-d7/a0-a6
+		rts
+		ENDM

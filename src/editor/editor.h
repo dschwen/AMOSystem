@@ -17,6 +17,23 @@ inline uint32_t call(uint8_t *routine, Regs &r)
     return r.d[0];
 }
 
+// AMOS.library's memory (SyCall MemFast, MemFastClear, MemFree): 0 if none
+inline uint32_t memory(uint32_t size, bool clear)
+{
+    Regs r;
+    r.d[0] = size;
+    sy_call(clear ? sy::MemFastClear : sy::MemFast, r);
+    return r.a[0];
+}
+
+inline void free_memory(uint32_t address, uint32_t size)
+{
+    Regs r;
+    r.a[1] = address;
+    r.d[0] = size;
+    sy_call(sy::MemFree, r);
+}
+
 // editor/tokens.cpp: TInst; Detok of a line into buffer (the length word,
 // the text), its length
 const uint8_t *skip_token(uint16_t t, const uint8_t *a);

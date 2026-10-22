@@ -63,6 +63,10 @@
 		XREF	_ed_store_entry,_ed_store_block_entry,_ed_delete_line_entry,_ed_delete_chunk_at_entry
 		XREF	_ed_delete_chunk_entry,_ed_find_line_entry,_ed_next_line_entry
 		XREF	_ed_indent_entry
+		XREF	_ed_undo_start_entry,_ed_undo_line_entry,_ed_undo_advance_entry,_ed_undo_clear_entry
+		XREF	_ed_undo_previous_entry,_ed_undo_next_entry,_ed_undo_create_entry,_ed_undo_reset_entry
+		XREF	_ed_undo_free_entry,_ed_undo_create_all_entry,_ed_undo_reset_all_entry,_ed_undo_free_all_entry
+		XREF	_ed_undo_entry,_ed_redo_entry
 		XREF	_ed_search_entry,_ed_search_front_entry,_ed_search_back_entry,_ed_replace_text_entry
 		XREF	_ed_tokenise_entry,_ed_detok_entry,_ed_mon_detok_entry,_ed_tinst_entry
 EDebut		dc.l	Ed_Cold-EDebut
@@ -1934,133 +1938,19 @@ R_DelChar
 ;
 
 
-; 	UNDO
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_Undo	move.l	Prg_PUndo(a6),a2
-	bsr	Un_Prev
-	move.b	(a2),d0
-	beq	Ed_NoUndo
-	move.l	a2,Prg_PUndo(a6)
-; Appele la fonction
-	and.w	#$7f,d0
-	lsl.w	#2,d0
-	lea	JUndo(pc),a0
-	addq.b	#1,Ed_FUndo(a5)
-	jsr	-4(a0,d0.w)
-	subq.b	#1,Ed_FUndo(a5)
-	rts
-
-;	REDO
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_Redo	move.l	Prg_PUndo(a6),a2
-	move.b	(a2),d0
-	beq	Ed_NoRedo
-; Appelle la fonction
-	and.w	#$7f,d0
-	lsl.w	#2,d0
-	lea	JRedo(pc),a0
-	addq.b	#1,Ed_FUndo(a5)
-	jsr	-4(a0,d0.w)
-	subq.b	#1,Ed_FUndo(a5)
-; Passe au suivant
-	move.l	Prg_PUndo(a6),a2
-	bsr	Un_Next
-	move.l	a2,Prg_PUndo(a6)
-.Out	rts
+; Undo, Redo and the undo buffers: src/editor/undo.cpp
+Ed_Undo		jmp	_ed_undo_entry
+Ed_Redo		jmp	_ed_redo_entry
+Prg_CreateUndos	jmp	_ed_undo_create_all_entry
+Prg_FreeUndos	jmp	_ed_undo_free_all_entry
+Prg_RazUndos	jmp	_ed_undo_reset_all_entry
+Prg_UndoCreate	jmp	_ed_undo_create_entry
+Prg_UndoRaz	jmp	_ed_undo_reset_entry
+Prg_UndoFree	jmp	_ed_undo_free_entry
 
 
-; 	Cree les buffer UNDO de toutes les fenetres
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Prg_CreateUndos
-	movem.l	d0/a6,-(sp)
-	move.l	Prg_List(a5),d0
-	beq.s	.Out
-.Loop	move.l	d0,a6
-	bsr	Prg_UndoCreate
-	move.l	Prg_Next(a6),d0
-	bne.s	.Loop
-.Out	movem.l	(sp)+,d0/a6
-	rts
-; 	Efface les buffer UNDO de toutes les fenetres
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Prg_FreeUndos
-	movem.l	d0/a6,-(sp)
-	move.l	Prg_List(a5),d0
-	beq.s	.Out
-.Loop	move.l	d0,a6
-	bsr	Prg_UndoFree
-	move.l	Prg_Next(a6),d0
-	bne.s	.Loop
-.Out	movem.l	(sp)+,d0/a6
-	rts
-; 	Mise � zero de tous les buffers UNDO
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Prg_RazUndos
-	movem.l	d0/a6,-(sp)
-	move.l	Prg_List(a5),d0
-	beq.s	.Out
-.Loop	move.l	d0,a6
-	bsr	Prg_UndoRaz
-	move.l	Prg_Next(a6),d0
-	bne.s	.Loop
-.Out	movem.l	(sp)+,d0/a6
-	rts
-;
-; Cree le buffer UNDO
-; ~~~~~~~~~~~~~~~~~~~
-Prg_UndoCreate
-	bsr	Prg_UndoFree
-	movem.l	d0/d1/a0/a1,-(sp)
-	move.l	Ed_NUndo(a5),d0
-	beq.s	.Skip
-	addq.l	#3,d0
-	mulu	#6,d0
-	move.l	d0,d1
-	SyCall	MemFastClear
-	beq.s	.Skip
-	move.l	d1,Prg_LUndo(a6)
-	move.l	a0,Prg_Undo(a6)
-	move.l	a0,a1
-	move.b	#$FF,(a1)
-	addq.l	#6,a1
-	move.l	a1,Prg_PUndo(a6)
-	lea	-12(a1,d1.l),a1
-	move.b	#$FF,(a1)
-	clr.l	Prg_TUndo(a6)
-.Skip	movem.l	(sp)+,d0/d1/a0/a1
-	rts
-;
-; Efface tous les mouvements UNDO
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Prg_UndoRaz
-	movem.l	d0-d2/a0-a2,-(sp)
-	move.l	Prg_Undo(a6),d0
-	beq.s	.Skip
-	move.l	d0,a2
-	lea	6(a2),a2
-	move.l	a2,Prg_PUndo(a6)
-.Loop	bsr	Un_Del
-	addq.l	#6,a2
-	cmp.b	#$FF,(a2)
-	bne.s	.Loop
-.Skip	movem.l	(sp)+,d0-d2/a0-a2
-	rts
-;
-; Efface le buffer UNDO
-; ~~~~~~~~~~~~~~~~~~~~~
-Prg_UndoFree
-	bsr	Prg_UndoRaz
-	movem.l	a0/a1/d0,-(sp)
-	move.l	Prg_Undo(a6),d0
-	beq.s	.Skip
-	clr.l	Prg_Undo(a6)
-	move.l	d0,a1
-	move.l	Prg_LUndo(a6),d0
-	SyCall	MemFree
-.Skip	movem.l	(sp)+,a0/a1/d0
-	rts
-
-
+		xdef	_ed_undo_routines,_ed_redo_routines
+_ed_undo_routines
 JUndo	bra	Un_Char		1- Simple caractere
 	bra	Un_Delete	2- Delete
 	bra	Un_Clear	3- Effacement ligne / Fin de ligne
@@ -2069,6 +1959,7 @@ JUndo	bra	Un_Char		1- Simple caractere
 	bra	Un_ILine	6- Insertion ligne
 	bra	Un_Split	7- Split Line
 	bra	Un_Join		8- Join Line
+_ed_redo_routines
 JRedo	bra	Re_Char		1- Simple caractere
 	bra	Re_Delete	2- Delete
 	bra	Re_Clear	3- Effacement ligne / Fin de ligne
@@ -2258,107 +2149,13 @@ Un_X	moveq	#0,d0
 	bsr	Ed_GotoX
 	rts
 
-;
-; STOCKE en UNDO (A0) D0 caracteres
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Un_CLine
-	move.l	a2,-(sp)
-	bsr	Un_Debut
-	bne.s	.Skip
-	movem.l	a0-a1/d0-d2,-(sp)
-	move.l	a0,a1
-	ext.l	d0
-	move.w	d0,d1
-	addq.w	#4,d0
-	SyCall	MemFast
-	beq.s	.No
-	move.w	d0,(a0)
-	add.l	d0,Prg_TUndo(a6)
-	move.w	2(a2),2(a0)
-	move.b	#$83,(a2)
-	move.l	a0,2(a2)
-	subq.l	#1,d1
-	bmi.s	.No
-	addq.l	#4,a0
-.Loop	move.b	(a1)+,(a0)+
-	dbra	d1,.Loop
-.No	moveq	#0,d0
-	movem.l	(sp)+,a0-a1/d0-d2
-.Skip	move.l	(sp)+,a2
-	rts
-
-;
-; Stocke les coordonnees du curseur
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Un_Debut
-	tst.b	Ed_FUndo(a5)		Autorise?
-	bne.s	.OutNo
-	tst.l	Prg_Undo(a6)		Buffer defini?
-	beq.s	.OutNo
-	move.l	d2,-(sp)
-	move.l	Prg_PUndo(a6),a2
-	bsr	Un_Del
-	move.b	Edt_XCu+1(a4),1(a2)
-	move.w	Edt_YPos(a4),d2
-	add.w	Edt_YCu(a4),d2
-	move.w	d2,2(a2)
-	bsr	Un_Avance
-	movem.l	(sp)+,d2
-	move.w	#%00100,CCR		BEQ: undo en route
-	rts
-.OutNo	move.w	#%00000,CCR		BNE: pas d'undo!
-	rts
-
-;
-; Avance UNDO d'un cran
-; ~~~~~~~~~~~~~~~~~~~~~
-Un_Avance
-	move.l	a2,-(sp)
-	move.l	Prg_PUndo(a6),a2
-	bsr	Un_Next
-	bsr	Un_Del
-	move.l	a2,Prg_PUndo(a6)
-	move.l	(sp)+,a2
-	rts
-;
-; Efface le cran UNDO (a2)
-; ~~~~~~~~~~~~~~~~~~~~~~~~
-Un_Del
-	movem.l	a0/a1/d0,-(sp)
-	move.b	(a2),d0
-	bpl.s	.Out
-	move.l	2(a2),d0
-	beq.s	.Out
-	move.l	d0,a1
-	moveq	#0,d0
-	move.w	(a1),d0
-	sub.l	d0,Prg_TUndo(a6)
-	SyCall	MemFree
-.Out	clr.b	(a2)
-	movem.l	(sp)+,a0/a1/d0
-	rts
-
-
-; Va un cran en arriere
-; ~~~~~~~~~~~~~~~~~~~~~~
-Un_Prev
-	subq.l	#6,a2
-	cmp.b	#$FF,(a2)
-	bne.s	.Skip
-	move.l	Prg_Undo(a6),a2
-	add.l	Prg_LUndo(a6),a2
-	lea	-12(a2),a2
-.Skip	rts
-;
-; Va un cran en avant
-; ~~~~~~~~~~~~~~~~~~~
-Un_Next
-	addq.l	#6,a2
-	cmp.b	#$FF,(a2)
-	bne.s	.Skip
-	move.l	Prg_Undo(a6),a2
-	addq.l	#6,a2
-.Skip	rts
+; Un_CLine, Un_Debut, Un_Avance, Un_Del, Un_Prev: src/editor/undo.cpp
+Un_CLine	jmp	_ed_undo_line_entry
+Un_Debut	jmp	_ed_undo_start_entry
+Un_Avance	jmp	_ed_undo_advance_entry
+Un_Del		jmp	_ed_undo_clear_entry
+Un_Prev		jmp	_ed_undo_previous_entry
+Un_Next		jmp	_ed_undo_next_entry
 ; __________________________________________________________________________
 ;
 
@@ -9636,11 +9433,14 @@ Ed_AlRunned
 
 ; No more UNDO
 ; ~~~~~~~~~~~~
+		xdef	_ed_no_undo,_ed_no_redo
+_ed_no_undo
 Ed_NoUndo
 	moveq	#4,d0
 	bra	Ed_Al100
 ; No more REDO
 ; ~~~~~~~~~~~~
+_ed_no_redo
 Ed_NoRedo
 	moveq	#5,d0
 	bra	Ed_Al100

@@ -273,6 +273,10 @@ Editor
 - Listing variable names with capitals (the editor's "first capital"
   setting for variables) took the capital from the token instead of the
   name and lost its place in the line, garbling the rest of it.
+- Out of memory, keeping a cleared part of a line for undo still said it
+  was kept: the entry was marked as having a block of data, and undoing
+  it (or the entry being reused) freed whatever its line number pointed
+  to.
 - Hexadecimal and binary constants were listed with as many digits as a
   register left over from other code said; they are now always listed
   without leading zeros, as that register usually made them.
