@@ -14,7 +14,7 @@ using namespace amos;
 using namespace amos::ed;
 
 // +Edit.s
-extern "C" uint8_t ed_cursor_block[], ed_cursor_normal[], ed_marks_change[], ed_not_edit[], ed_oof_buf[],
+extern "C" uint8_t ed_cursor_block[], ed_cursor_normal[], ed_not_edit[], ed_oof_buf[],
     ed_block_what[], ed_out_of_memory[], ed_pro_alert[];
 
 namespace {
@@ -39,14 +39,6 @@ void set_cursor_shape(uint8_t *shape)
     Regs r;
     r.a[1] = address(shape);
     wi_call(wi::SCurWi, r);
-}
-
-void marks_change(uint16_t n, int16_t delta)
-{
-    Regs r;
-    r.d[0] = n;
-    r.d[1] = uint32_t(int32_t(delta));
-    call(ed_marks_change, r);
 }
 
 void count_lines()

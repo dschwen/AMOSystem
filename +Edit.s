@@ -63,6 +63,8 @@
 		XREF	_ed_store_entry,_ed_store_block_entry,_ed_delete_line_entry,_ed_delete_chunk_at_entry
 		XREF	_ed_delete_chunk_entry,_ed_find_line_entry,_ed_next_line_entry
 		XREF	_ed_indent_entry
+		XREF	_ed_marks_clear_entry,_ed_auto_marks_entry,_ed_set_mark_entry,_ed_goto_mark_entry
+		XREF	_ed_marks_to_addresses_entry,_ed_marks_to_numbers_entry,_ed_marks_change_entry
 		XREF	_ed_block_show_entry,_ed_block_on_entry,_ed_block_cursor_entry,_ed_block_hide_entry
 		XREF	_ed_cursor_normal_entry,_ed_block_all_entry,_ed_block_store_entry,_ed_block_forget_entry
 		XREF	_ed_block_cut_entry,_ed_block_paste_entry,_ed_block_free_entry,_ed_block_free_a0_entry
@@ -3191,39 +3193,9 @@ Une_Lettre	jmp	_ed_letter_entry
 ;								MARKS
 ; ___________________________________________________________________
 
-; Effacement des marques programme
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Prg_MarkRaz
-	lea	Prg_Marks(a6),a0
-	moveq	#10-1,d0
-.Cl	clr.l	(a0)+
-	dbra	d0,.Cl
-	rts
-
-; Positionne la premiere system-mark
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-		xdef	_ed_auto_marks
-_ed_auto_marks
-Ed_AutoMarks
-	movem.l	a0-a1/d0-d1,-(sp)
-	move.w	Edt_YPos(a4),d0
-	add.w	Edt_YCu(a4),d0
-	swap	d0
-	move.b	#$FF,d0
-	lsl.w	#8,d0
-	move.b	Edt_XCu+1(a4),d0
-	lea	Prg_Marks(a6),a0
-	cmp.l	(a0),d0
-	beq.s	.Rien
-; Remonte toutes les marques
-	lea	Ed_AutoMarksNb*4-4(a0),a1
-	moveq	#Ed_AutoMarksNb-2,d1
-.Loop	move.l	-(a1),4(a1)
-	dbra	d1,.Loop
-; Met la nouvelle
-	move.l	d0,(a0)
-.Rien	movem.l	(sp)+,a0-a1/d0-d1
-	rts
+; The marks: src/editor/marks.cpp
+Prg_MarkRaz	jmp	_ed_marks_clear_entry
+Ed_AutoMarks	jmp	_ed_auto_marks_entry
 
 ; Set MARK
 ; ~~~~~~~~
@@ -3245,18 +3217,7 @@ Ed_SMark2
 	addq.w	#1,d0
 Ed_SMark1
 	addq.w	#1,d0
-Ed_SMark0
-	bsr	Ed_TokCur
-	lea	Prg_Marks(a6),a2
-	lsl.w	#2,d0
-	add.w	d0,a2
-	move.w	Edt_YPos(a4),d0
-	add.w	Edt_YCu(a4),d0
-	move.w	d0,(a2)+
-	move.b	#$FF,(a2)+
-	move.b	Edt_XCu+1(a4),(a2)
-	moveq	#64,d0
-	bra	Ed_Al100
+Ed_SMark0	jmp	_ed_set_mark_entry
 ;
 ; Va a une marque
 ; ~~~~~~~~~~~~~~~
@@ -3278,103 +3239,11 @@ Ed_GMark2
 	addq.w	#1,d0
 Ed_GMark1
 	addq.w	#1,d0
-Ed_GMark0
-	bsr	Ed_TokCur
-	lea	Prg_Marks(a6),a2
-	lsl.w	#2,d0
-	add.w	d0,a2
-	tst.l	(a2)
-	beq	Ed_NoMark
-	bsr	Ed_AutoMarks
-	move.w	(a2),d0
-	move.l	a2,-(sp)
-	bsr	Ed_GotoY
-	move.l	(sp)+,a2
-	moveq	#0,d0
-	move.b	3(a2),d0
-	bra	Ed_GotoX
+Ed_GMark0	jmp	_ed_goto_mark_entry
 
-; Passe les marks en adresses dans le programme
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_Marks2Adress
-	movem.l	a0-a2/d0-d2,-(sp)
-	moveq	#9,d2
-	lea	Prg_Marks(a6),a2
-.Loop	tst.l	(a2)
-	beq.s	.Nx
-	move.w	(a2),d0
-	bsr	Ed_FindL
-	beq.s	.Clr
-	sub.l	Prg_StBas(a6),a0
-	move.l	a0,d0
-	lsl.l	#8,d0
-	move.b	3(a2),d0
-	move.l	d0,(a2)
-	bra.s	.Nx
-.Clr	clr.l	(a2)
-.Nx	addq.l	#4,a2
-	dbra	d2,.Loop
-	movem.l	(sp)+,a0-a2/d0-d2
-	rts
-; Repasse en numero de lignes
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_Marks2Number
-	movem.l a0-a2/d0-d2,-(sp)
-	moveq	#9,d2
-	lea	Prg_Marks(a6),a2
-.Loop	move.l	(a2),d0
-	beq.s	.Nx
-	lsr.l	#8,d0
-	add.l	Prg_StBas(a6),d0
-	move.l	d0,a0
-	bsr	Ed_FindA
-	move.w	d0,(a2)
-	move.b	#$FF,2(a2)
-	bra.s	.Nx
-.Clr	clr.l	(a2)
-.Nx	addq.l	#4,a2
-	dbra	d2,.Loop
-	movem.l	(sp)+,a0-a2/d0-d2
-	rts
-;
-;  Change les marks
-;  ~~~~~~~~~~~~~~~~
-;	D0= Numero ligne
-;	D1= Nombre de lignes
-		xdef	_ed_marks_change
-_ed_marks_change
-Ed_MarksChange
-	movem.l	d1/d2/d3/d4/a0,-(sp)
-	moveq	#9,d2
-	move.w	d0,d3
-	lea	Prg_Marks(a6),a0
-	tst.w	d1
-	bmi.s	.DLi
-; Insertion d'une ligne
-.ILi1	tst.l	(a0)
-	beq.s	.ILi2
-	cmp.w	(a0),d0
-	bgt.s	.ILi2
-	add.w	d1,(a0)
-.ILi2	addq.l	#4,a0
-	dbra	d2,.ILi1
-	bra.s	.Out
-; Suppression d'une ligne
-.DLi	sub.w	d1,d3
-.DLi1	tst.l	(a0)
-	beq.s	.DLi2
-	cmp.w	(a0),d3
-	ble.s	.DLiA
-	cmp.w	(a0),d0
-	bgt.s	.DLi2
-	clr.l	(a0)
-	bra.s	.DLi2
-.DLiA	add.w	d1,(a0)
-.DLi2	addq.l	#4,a0
-	dbra	d2,.DLi1
-; Sortie!
-.Out	movem.l	(sp)+,d1/d2/d3/d4/a0
-	rts
+Ed_Marks2Adress	jmp	_ed_marks_to_addresses_entry
+Ed_Marks2Number	jmp	_ed_marks_to_numbers_entry
+Ed_MarksChange	jmp	_ed_marks_change_entry
 
 ; ____________________________________________________________________________
 ;
@@ -8048,6 +7917,8 @@ Ed_CBasE
 ;
 ; Mark not set
 ; ~~~~~~~~~~~~
+		xdef	_ed_no_mark
+_ed_no_mark
 Ed_NoMark
 	moveq	#65,d0
 	bra	Ed_Al100
@@ -8066,6 +7937,8 @@ Ed_OofBuf
 ; Can't fold procedure
 ; ~~~~~~~~~~~~~~~~~~~~
 Ed_FoE	move.w	#203,d0			***- Not a procedure
+		xdef	_ed_alert_100
+_ed_alert_100
 Ed_Al100
 	bsr	Ed_GetMessage
 	moveq	#100,d0

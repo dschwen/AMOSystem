@@ -10,7 +10,7 @@ using namespace amos;
 using namespace amos::ed;
 
 // +Edit.s
-extern "C" uint8_t ed_sam_play[], ed_top_of_text[], ed_bottom_of_text[], ed_auto_marks[];
+extern "C" uint8_t ed_sam_play[], ed_top_of_text[], ed_bottom_of_text[];
 
 namespace {
 
@@ -244,7 +244,7 @@ void page_bottom()
     place_cursor();
 }
 
-void auto_marks() { run(ed_auto_marks); }
+void auto_marks() { auto_mark(); }
 
 // Ed_HTex / Ed_BTex
 void to_top()

@@ -112,6 +112,11 @@ int32_t delete_current_line();
 void return_quiet();
 void join_lines();
 
+// editor/marks.cpp: Ed_MarksChange (lines inserted or deleted at line
+// n), Ed_AutoMarks
+void marks_change(uint16_t n, int16_t delta);
+void auto_mark();
+
 // editor/indent.cpp
 void indent(uint8_t *program, uint16_t tab);
 

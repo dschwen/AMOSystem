@@ -8,21 +8,9 @@
 using namespace amos;
 using namespace amos::ed;
 
-// +Edit.s
-extern "C" uint8_t ed_marks_change[];
-
 namespace {
 
 constexpr uint8_t EtAFree = 1 << 5;     // Edt_EtatAff: the variables to clear
-
-// Ed_MarksChange: the marks from line n moved by delta lines
-void marks_change(uint16_t n, int32_t delta)
-{
-    Regs r;
-    r.d[0] = n;
-    r.d[1] = uint32_t(delta);
-    call(ed_marks_change, r);
-}
 
 void changed()
 {
