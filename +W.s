@@ -67,6 +67,8 @@ Version	MACRO
 		XREF	_w_wi_in,_w_wopen,_w_widela
 		XREF	_w_cls,_w_set_clip,_w_paint,_w_pattern
 		XREF	_w_slider_h,_w_slider_v,_w_slider_knob,_w_slider_set
+		XREF	_w_set_colour,_w_get_colour,_w_set_palette,_w_colour_back
+		XREF	_w_flash_off,_w_flash,_w_shift,_w_shift_off,_w_fade,_w_fade_off,_w_fade_stop
 WDebut	bra	Startall	Cold start
 	bra	Endall		End
 	dc.l	L_Trappe	Length of data zone
@@ -3715,77 +3717,11 @@ EcAdres	cmp.w	#8,d1
 	moveq	#0,d0
 	rts
 
-******* SET COLOUR D1,D2
-EcSCol:	move.l	T_EcCourant(a5),a0
-	and.w	#31,d1
-	lsl.w	#1,d1
-	and.w	#$FFF,d2
-	move.w	d2,EcPal(a0,d1.w)
-* Poke dans le copper
-	lsl.w	#1,d1
-	move.w	EcNumber(a0),d0
-	lsl.w	#7,d0
-	lea	T_CopMark(a5),a0
-	add.w	d0,a0
-	cmp.w	#PalMax*4,d1
-	bcs.s	ECol0
-	lea	64(a0),a0
-ECol0:	move.l	(a0)+,d0
-	beq.s	ECol1
-	move.l	d0,a1
-	move.w	d2,2(a1,d1.w)
-	bra.s	ECol0
-ECol1:	moveq	#0,d0
-	rts
-
-******* GET COLOUR D1
-EcGCol:	move.l	T_EcCourant(a5),a0
-	and.l	#31,d1
-	lsl.w	#1,d1
-	move.w	EcPal(a0,d1.w),d1
-	moveq	#0,d0
-	rts
-
-******* SET PALETTE A1
-EcSPal	movem.l	a2-a3/d2-d4,-(sp)
-	move.l	T_EcCourant(a5),a0
-	move.w	EcNumber(a0),d2
-	lsl.l	#7,d2
-	lea	T_CopMark(a5),a2
-	add.w	d2,a2
-	move.l	a2,d2
-	lea	EcPal(a0),a0
-	moveq	#0,d0
-	moveq	#0,d1
-	moveq	#31,d4
-* Boucle de pokage
-EcSP1	move.w	(a1)+,d1
-	bmi.s	EcSP3
-	and.w	#$FFF,d1
-* Poke dans la table
-	move.w	d1,(a0)
-* Poke dans le copper
-	move.l	d2,a2
-	cmp.w	#PalMax*4,d0
-	bcs.s	EcSP2
-	lea	64(a2),a2
-EcSP2:	move.l	(a2)+,d3
-	beq.s	EcSP3
-	move.l	d3,a3
-	move.w	d1,2(a3,d0.w)
-	bra.s	EcSP2
-EcSP3:	addq.l	#2,a0
-	addq.w	#4,d0
-	dbra	d4,EcSP1
-	movem.l	(sp)+,a2-a3/d2-d4
-	moveq	#0,d0
-	rts
-
-******* COLOUR BACK D1
-EcSColB	and.w	#$FFF,d1
-	move.w	d1,T_EcFond(a5)
-	moveq	#0,d0
-	rts
+******* Colours: src/w/colours.cpp
+EcSCol:	jmp	_w_set_colour
+EcGCol:	jmp	_w_get_colour
+EcSPal	jmp	_w_set_palette
+EcSColB	jmp	_w_colour_back
 
 
 ******* RAINBOW HIDE
@@ -4396,159 +4332,14 @@ razfl1: clr.b 	(a0)+
         dbra 	d0,razfl1
         rts
 
-; FLASH OFF: arrete les flash de l'ecran active
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-FlStop:	move.l	T_EcCourant(a5),d0
-	addq.b	#1,T_NbFlash+1(a5)	Inhibe les interruptions
-	moveq	#FlMax-1,d1
-	lea	T_TFlash(a5),a0
-FlS1	tst.w	(a0)
-	beq.s	FlS3
-	cmp.l	4(a0),d0
-	bne.s	FlS3
-	clr.w	(a0)
-FlS3	lea	LFlash(a0),a0
-	dbra	d1,FlS1
-FlSx	bsr	FlCalc			Nombre de flash reels
-	subq.b	#1,T_NbFlash+1(a5)	Redemarre
-	rts
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;       FLASH X,A$     d1=numero de la couleur, a1=adresse de la chaine
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-FlStart	movem.l	a2-a6/d2-d7,-(sp)
-	cmp.b	#FlMax,T_NbFlash(a5)
-	bcc	FlToo
-	addq.b	#1,T_NbFlash+1(a5)	;Arrete les flashes
-        clr 	d5
-; Trouve une position dans la table
-        lea	T_tflash(a5),a0       	;trouve la position dans la table
-	moveq	#FlMax-1,d0
-        addq 	#1,d1
-        lsl 	#1,d1
-	move.l	T_EcCourant(a5),d2	;ecran ouvert!
-flshi1: tst.w 	(a0)            	;premiere place libre
-        beq.s 	flspoke
-        cmp.w 	(a0),d1         	;Meme couleur Meme ecran
-        bne.s	flshi0
-	cmp.l	4(a0),d2
-	beq.s	flspoke
-flshi0: lea 	lflash(a0),a0
-	dbra	d0,flshi1
-        bra.s 	flsont          	;par securite
-flsynt	clr.w 	(a0)          		;arrete la couleur
-flsont	moveq 	#8,d0
-flout	bsr	FlCalc			;Nombre de flash REEL
-	subq.b	#1,T_NbFlash+1(a5)	;Deshinibe
-	tst.w	d0
-FlExit	movem.l	(sp)+,d2-d7/a2-a6
-	rts
-; Place trouvee: poke dans la table
-flspoke	moveq 	#lflash-1,d0  		;nettoie la table
-        move.l 	a0,a2
-flshi3: clr.b 	(a2)+
-        dbra 	d0,flshi3
-        moveq	#0,d0
-        tst.b 	(a1)          		;flash 1,"": arret de la couleur
-        beq.s 	flout
-	move.l	a0,a2
-	move.w	d1,(a2)+		;Numero de la couleur
-	move.w	#1,(a2)+		;Compteur
-        move.l 	d2,(a2)+    		;Adresse de l'ecran
-	clr.w	(a2)+			;Position
-        moveq 	#-1,d4
-flshi4: move.b	(a1)+,d0
-        cmp.b 	#"(",d0
-        bne 	flshi5
-        addq.l 	#1,d4
-        cmp 	#16,d4             	;16 couleurs autorisees!
-        bcc 	flsynt
-	moveq	#12,d2
-	clr.l	d1
-	bsr	GetHexa
-	beq	FlSynt
-	lsl.w	d2,d1
-	lsl.l	#4,d1
-	bsr	GetHexa
-	beq	FlSynt
-	lsl.w	d2,d1
-	lsl.l	#4,d1
-	bsr	GetHexa
-	beq	FlSynt
-	lsl.w	d2,d1
-	lsl.l	#4,d1
-	swap	d1
-        move.w 	d1,2(a2)	  	;poke la couleur!
-        cmp.b 	#",",(a1)+
-        bne 	flsynt
-        bsr 	dechexa
-        bne 	flsynt
-        tst 	d1
-        beq 	flsynt
-        move.w 	d1,(a2)		   	;poke la vitesse
-	addq.l	#4,a2
-        cmp.b 	#")",d0
-        bne 	flsynt
-        bra 	flshi4
-flshi5: tst.b 	d0            		;la chaine doit etre finie!
-        bne 	flsynt
-        clr.l 	d0            		;pas d'erreur
-        bra 	flout
-; Erreurs flash
-FlToo	moveq	#7,d0			* Too many flash
-	bra	FlExit
-
-; 	Calcule le nombre exact de flash
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-FlCalc	movem.l	a0-a1/d0-d1,-(sp)
-	addq.b	#1,T_NbFlash+1(a5)
-	moveq	#0,d0
-	moveq	#FlMax-1,d1
-        lea	T_tflash(a5),a0       	;trouve la position dans la table
-.Loop	tst.w	(a0)
-	beq.s	.Next
-	addq.w	#1,d0
-.Next	lea	lflash(a0),a0
-	dbra	d1,.Loop
-	move.b	d0,T_NbFlash(a5)
-	subq.b	#1,T_NbFlash+1(a5)
-	movem.l	(sp)+,a0-a1/d0-d1
-	rts
+; Flash Off, Flash: src/w/colours.cpp
+FlStop:	jmp	_w_flash_off
+FlStart	jmp	_w_flash
 
 
 	IFEQ	EZFlag
-***********************************************************
-*	START SHIFT
-*	D1= 	Numero du shift
-*	D2=	Vitesse
-*	D3=	Col debut
-*	D4=	Col fin
-*	D5= 	Direction
-*	D6= 	Rotation?
-***********************************************************
-ShStart	movem.l	a2/d3/d4,-(sp)
-	move.l	T_EcCourant(a5),a0
-	lea	T_TShift(a5),a1
-	move.l	a1,a2
-	clr.w	(a1)+
-	move.w	d2,(a1)+
-	move.l	a0,(a1)+
-	and.w	#31,d3				*** 256 couleurs!
-	and.w	#31,d4
-	cmp.w	d3,d4
-	bls.s	.Err
-	lsl.w	#1,d3
-	lsl.w	#1,d4
-	move.w	d3,(a1)+
-	move.w	d4,(a1)+
-	move.b	d5,(a1)+
-	move.b	d6,(a1)+
-	move.w	#1,(a2)
-	moveq	#0,d0
-.Out	movem.l	(sp)+,a2/d3/d4
-	rts
-.Err:	moveq	#9,d0
-	bra.s	.Out
+******* Shift: src/w/colours.cpp
+ShStart	jmp	_w_shift
 
 ***********************************************************
 *	Initialisation de la table des shifts
@@ -4559,18 +4350,7 @@ ShI:	clr.w	(a0)+
 	dbra	d0,ShI
 	rts
 
-***********************************************************
-*	Arret des shifts d'un ecran
-***********************************************************
-ShStop:	move.l	T_EcCourant(a5),d0
-	lea	T_TShift(a5),a0
-	tst.w	(a0)
-	beq.s	ShStX
-	cmp.l	4(a0),d0
-	bne.s	ShStX
-	clr.w	(a0)
-ShStX:	moveq	#0,d0
-	rts
+ShStop:	jmp	_w_shift_off
 
 ***********************************************************
 *	INTERRUPTIONS SHIFTER
@@ -4632,74 +4412,11 @@ ShfB:	addq.w	#2,d0
 ShfX	rts
 	ENDC
 
-***********************************************************
-*	FADE OFF
-FadeTOf	clr.w	T_FadeFlag(a5)
-	moveq	#0,d0
-	rts
-***********************************************************
-*	ARRETE LE FADE DE L'ECRAN COURANT!
-FaStop	move.l	T_EcCourant(a5),a0
-	lea	EcPal(a0),a0
-	cmp.l	T_FadePal(a5),a0
-	bne.s	FaStp
-	clr.w	T_FadeFlag(a5)
-FaStp	rts
+******* Fade: src/w/colours.cpp
+FadeTOf	jmp	_w_fade_off
+FaStop	jmp	_w_fade_stop
+FadeTOn	jmp	_w_fade
 
-***********************************************************
-*	INSTRUCTION FADE
-*	A1=	Nouvelle palette
-*	D1=	Vitesse
-FadeTOn	movem.l	d1-d7/a1-a3,-(sp)
-	move.l	T_EcCourant(a5),a2
-* Params
-DoF1	clr.w	T_FadeFlag(a5)
-	move.w	#1,T_FadeCpt(a5)
-	move.w	d1,T_FadeVit(a5)
-	move.w	EcNumber(a2),d0
-	lsl.w	#7,d0
-	lea	T_CopMark(a5),a3
-	add.w	d0,a3
-	move.l	a3,T_FadeCop(a5)
-	lea	EcPal(a2),a2
-	move.l	a2,T_FadePal(a5)
-* Explore toutes la palette (marquee)
-	moveq	#0,d7
-	moveq	#0,d6
-	lea	T_FadeCol(a5),a3
-DoF2	move.w	(a1)+,d2
-	bmi.s	DoF5
-	move.w	d7,(a3)+
-	moveq	#8,d4
-	moveq	#0,d5
-	move.w	0(a2,d7.w),d0
-DoF3	move.w	d0,d1
-	lsr.w	d4,d1
-	and.w	#$000F,d1
-	move.w	d2,d3
-	lsr.w	d4,d3
-	and.w	#$000F,d3
-	move.b	d1,(a3)+
-	move.b	d3,(a3)+
-	cmp.b	d1,d3
-	beq.s	DoF4
-	or.w	#$1,d5
-DoF4	subq.w	#4,d4
-	bpl.s	DoF3
-	add.w	d5,d6
-	tst.w	d5
-	bne.s	DoF5
-	subq.l	#8,a3
-DoF5	addq.w	#2,d7
-	cmp.w	#32*2,d7
-	bcs.s	DoF2
-* Demarre -ou non!-
-	move.w	d6,T_FadeFlag(a5)
-	subq.w	#1,d6
-	move.w	d6,T_FadeNb(a5)
-DoFx	movem.l	(sp)+,d1-d7/a1-a3
-	moveq	#0,d0
-	rts
 ***********************************************************
 *	INTERRUPTIONS FADEUR
 *	Attention! Change A3!!!
@@ -6122,63 +5839,6 @@ ChipMm2	movem.l	a0/d1,-(sp)
 _w_free_mm
 FreeMm	bra	WMemFree
 
-; Mini CHRGET: (a1)--->d0
-miniget:move.b	(a1)+,d0     ;beq: fini
-        beq.s 	mini5           ;bmi: lettre
-        cmp.b 	#32,d0        ;bne: chiffre
-        beq.s 	miniget
-        cmp.b 	#"0",d0
-        blt.s 	mini2
-        cmp.b 	#"9",d0
-        bhi.s 	mini2
-        moveq 	#1,d7
-        rts
-mini2:  cmp.b 	#"a",d0       ;transforme en majuscules
-        bcs.s 	mini3
-        sub.b 	#32,d0
-mini3:  moveq 	#-1,d7
-mini5:  rts
-
-; Prend un chiffre hexa--> D1
-Gethexa:clr.w	d1
-	bsr	MiniGet
-	beq.s	GhX
-	move.b	d0,d1
-	sub.b	#"0",d1
-	cmp.b	#9,d1
-	bls.s	Gh1
-	sub.b	#7,d1
-Gh1:	cmp.b	#15,d1
-	bhi.s	GhX
-	moveq	#1,d0
-	rts
-GhX:	moveq	#0,d0
-	rts
-
-;Conversion dec/hexa a1 -> chiffre en d1
-dechexa:clr 	d1         	; derniere lettre en D0
-        clr 	d2
-        bsr 	miniget
-        beq.s 	Mdh5
-        bpl.s 	Mdh2
-        cmp.b 	#"-",d0
-        bne.s 	Mdh5
-        moveq 	#1,d2
-Mdh0:   bsr 	miniget
-        beq.s 	Mdh3
-        bmi.s 	Mdh3
-Mdh2:   mulu 	#10,d1
-        sub.b 	#48,d0
-        and 	#$00ff,d0
-        add 	d0,d1
-        bra.s 	Mdh0
-Mdh3:   tst 	d2
-        beq.s 	Mdh4
-        neg 	d1
-Mdh4:   clr 	d2              ;beq: un chiffre
-        rts
-Mdh5:   moveq 	#1,d2         	;bne: pas de chiffre
-        rts
 
 ;-----------------------------------------------------------------
 ; **** *** **** ****
