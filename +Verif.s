@@ -5066,128 +5066,17 @@ Prg_Save
 ; 	Trouve la ligne 	D0
 ;	Debut source		A0
 ;	Debut Proc >>>		A1
+; Tk_FindN / Tk_FindL, Tk_SizeL, Tk_EditL, Tk_FindA: src/core/source.cpp
 Tk_FindN
 	moveq	#1,d0
 Tk_FindL
-	move.l	d1,-(sp)
-	moveq	#0,d1
-	sub.l	a1,a1
-	subq.w	#1,d0
-	bmi.s	FndT
-; Boucle principale
-Fnd1	move.b	(a0),d1
-	beq.s	FndT
-	cmp.w	#_TkProc,2(a0)
-	beq.s	Fnd4
-Fnd2	add.w	d1,a0
-	add.w	d1,a0
-Fnd3	dbra	d0,Fnd1
-	bra.s	FndT
-; Debut de procedure
-Fnd4	tst.w	10(a0)			* Fermee
-	bpl.s	Fnd5
-	move.l	4(a0),d1
-	lea	12+2(a0,d1.l),a0
-	moveq	#0,d1
-	bra.s	Fnd3
-Fnd5	move.l	a0,a1			* Ouverte
-	bra.s	Fnd7
-Fnd6	move.b	(a0),d1
-	beq.s	FndT
-	cmp.w	#_TkEndP,2(a0)
-	beq.s	Fnd8
-Fnd7	add.w	d1,a0
-	add.w	d1,a0
-	dbra	d0,Fnd6
-	bra.s	FndT
-Fnd8	sub.l	a1,a1
-	bra.s	Fnd2
-; Trouve!
-FndT	move.l	(sp)+,d1
-	move.w	(a0),d0
-	beq.s	FndT1
-	cmp.w	#_TkProc,2(a0)
-	bne.s	FndT1
-	move.l	a0,a1
-FndT1	tst.w	d0
-	rts
-; Taille de la ligne A0
-; ~~~~~~~~~~~~~~~~~~~~~
+	jmp	_tk_find_line
 Tk_SizeL
-	moveq	#0,d0
-	move.b	(a0),d0
-	beq.s	.Out
-	cmp.w	#_TkProc,2(a0)
-	beq.s	.Proc
-.Ouv	lsl.w	#1,d0
-.Out	rts
-.Proc	tst.w	10(a0)
-	bpl.s	.Ouv
-	moveq	#12+2,d0
-	add.l	4(a0),d0
-	rts
-; La ligne courante est-elle editable?
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	jmp	_tk_size_line
 Tk_EditL
-	tst.b	(a0)
-	beq.s	.Oui
-	cmp.w	#_TkProc,2(a0)
-	bne.s	.Oui
-	btst	#7,10(a0)
-	beq.s	.Oui
-	move.w	#%00100,CCR		BEQ>>> faux
-	rts
-.Oui	move.w	#%00000,CCR		BNE>>> vrai
-	rts
-
-; TROUVE LE NUMERO ET LE DEBUT DE LA LIGNE A0
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-; A1-> Debut du buffer
-; D0-> Numero
-; D1-> Adresse debut proc
+	jmp	_tk_editable
 Tk_FindA
-	movem.l	d2/a2,-(sp)
-	move.l	a1,a2
-	moveq	#-1,d0
-	moveq	#0,d1
-	moveq	#0,d2
-FdA1:	addq.l	#1,d0
-	move.l	a2,a1
-	move.b	(a2),d2
-	beq.s	FdAT
-	cmp.w	#_TkProc,2(a2)
-	beq.s	FdA4
-FdA2	add.w	d2,a2
-	add.w	d2,a2
-FdA3	cmp.l	a0,a2
-	bls.s	FdA1
-	bra.s	FdAT
-; Une procedure
-FdA4	tst.w	10(a2)
-	bpl.s	FdA2
-	move.l	a2,d1
-	btst	#4,10(a2)
-	beq.s	FdA6
-	add.l	4(a2),a2
-	lea	12+2(a2),a2
-	moveq	#0,d2
-	bra.s	FdA6
-FdA5	move.l	a2,a1
-	move.b	(a2),d2
-	beq.s	FdAT
-	cmp.w	#_TkEndP,2(a2)
-	beq.s	FdA7
-FdA6	add.w	d2,a2
-	add.w	d2,a2
-	cmp.l	a0,a2
-	bls.s	FdA5
-	bra.s	FdAT
-FdA7	moveq	#0,d1
-	bra.s	FdA2
-; Trouve!
-FdAT	move.l	a1,a0
-	movem.l	(sp)+,d2/a2
-	rts
+	jmp	_tk_find_address
 
 ;				Codage / Decodage procedure LOCKEE
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

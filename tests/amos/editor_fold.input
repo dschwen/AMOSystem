@@ -1,0 +1,27 @@
+wait 12
+key ctrl+y
+key ctrl+shift+Up
+key Down
+key ctrl+y
+key ctrl+y
+key ctrl+y
+key Down
+key Down
+key F9
+wait 2
+key Down
+key F9
+wait 2
+key Down
+key Down
+type B=2 : QQA
+key Return
+wait 0.5
+key Up
+key Up
+key Up
+key Up
+key ctrl+y
+wait 1
+key ramiga+s
+wait 4

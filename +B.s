@@ -377,6 +377,7 @@ UserName	dc.w	14
 SaveSp		dc.l 	0
 		XREF	_amos_task
 		XREF	_amos_bridge
+		XREF	_tk_find_line,_tk_size_line,_tk_editable,_tk_find_address
 Panic		dc.l	0
 
 ;		Marqueur de version
