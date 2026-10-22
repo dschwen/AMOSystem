@@ -441,7 +441,11 @@ def main():
     if not os.path.isdir(amos_tree):
         sys.exit(f'{amos_tree} missing: run "make dist" first')
     if not args.amos_tree and not args.reference:
-        # build/dist is a copy: refuse to test a stale one
+        # build/dist is a copy: refuse to test a stale one, or one whose
+        # sources changed since (a failed build leaves the old one)
+        if subprocess.run(['make', '-q', 'all'], cwd=ROOT, stdout=subprocess.DEVNULL,
+                          stderr=subprocess.DEVNULL).returncode != 0:
+            sys.exit('build/dist is not up to date: run "make dist" first')
         for built, copy in (('AMOSPro', 'AMOSPro'), ('AMOSPro.Lib', 'APSystem/AMOSPro.Lib'),
                             ('AMOS.library', 'APSystem/AMOS.library')):
             a, b = os.path.join(ROOT, 'build', built), os.path.join(amos_tree, copy)
