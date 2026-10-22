@@ -52,6 +52,17 @@ Stored store_block(const uint8_t *block, uint32_t length, uint16_t position);
 int32_t delete_line(uint16_t n);
 void delete_chunk(uint8_t *from, uint8_t *to);
 
+// editor/undo.cpp: a new undo entry (0 if undo is off), one keeping n
+// characters of a line
+uint8_t *undo_start();
+uint8_t *undo_text(const uint8_t *text, uint16_t n);
+
+// editor/lines.cpp: Ed_PKey, Ed_Delete; what undo and redo do
+void type_key(uint8_t c, bool insert, uint8_t *redone);
+void delete_key();
+void undo_change(uint8_t *entry);
+void redo_change(uint8_t *entry);
+
 // editor/indent.cpp
 void indent(uint8_t *program, uint16_t tab);
 

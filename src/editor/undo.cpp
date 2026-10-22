@@ -12,7 +12,7 @@ using namespace amos;
 using namespace amos::ed;
 
 // +Edit.s
-extern "C" uint8_t ed_undo_routines[], ed_redo_routines[], ed_no_undo[], ed_no_redo[];
+extern "C" uint8_t ed_no_undo[], ed_no_redo[];
 
 namespace {
 
@@ -100,9 +100,13 @@ void for_all(void (*f)(Program &))
         f(*ptr<Program>(p));
 }
 
+} // namespace
+
+namespace amos::ed {
+
 // Un_Debut: a new entry for the cursor's place, unless undo is off (while
 // undoing) or there is no buffer
-uint8_t *start()
+uint8_t *undo_start()
 {
     IData &d = idata();
     Program &p = program();
@@ -117,14 +121,40 @@ uint8_t *start()
     return entry;
 }
 
-// Undo, Redo: the routine of the entry's kind
-void act(const uint8_t *routines, uint8_t *entry)
+// Un_CLine: the n characters at text kept in a new entry (kind $83: a
+// cleared part of a line); the entry, or 0
+uint8_t *undo_text(const uint8_t *text, uint16_t n)
+{
+    uint8_t *entry = undo_start();
+    if (!entry)
+        return nullptr;
+    uint16_t size = n + 4;
+    uint8_t *block = ptr<uint8_t>(memory(size, false));
+    // (the original said it kept them without memory, and its caller
+    // marked the entry as having a block it did not have)
+    if (!block)
+        return nullptr;
+    Program &p = program();
+    poke_w(block, size);
+    p.Prg_TUndo += size;
+    poke_w(block + 2, peek_w(entry + 2));
+    entry[0] = 0x83;
+    poke_l(entry + 2, address(block));
+    for (uint16_t i = 0; i < n; i++)
+        block[4 + i] = text[i];
+    return entry;
+}
+
+} // namespace amos::ed
+
+namespace {
+
+// Undo, Redo of an entry (editor/lines.cpp), undo off meanwhile
+void act(void (*change)(uint8_t *), uint8_t *entry)
 {
     IData &d = idata();
-    Regs r;
-    r.a[2] = address(entry);
     d.Ed_FUndo++;
-    amos_call(&r, routines + ((entry[0] & 0x7F) - 1) * 4);
+    change(entry);
     d.Ed_FUndo--;
 }
 
@@ -134,38 +164,15 @@ extern "C" {
 // Un_Debut: the condition codes EQ and a2 the entry if there is one
 uint32_t ed_undo_start(AllRegs *r)
 {
-    uint8_t *entry = start();
+    uint8_t *entry = undo_start();
     if (!entry)
         return 1;
     r->a[2] = address(entry);
     return 0;
 }
 
-// Un_CLine: the d0 characters at a0 kept in a new entry (kind $83: a
-// cleared part of a line); EQ if kept, a2 kept
-uint32_t ed_undo_line(AllRegs *r)
-{
-    uint8_t *entry = start();
-    if (!entry)
-        return 1;
-    uint16_t n = uint16_t(r->d[0]);
-    uint16_t size = n + 4;
-    uint8_t *block = ptr<uint8_t>(memory(size, false));
-    // (the original said EQ without memory, and its caller marked the
-    // entry as having a block it did not have)
-    if (!block)
-        return 1;
-    Program &p = program();
-    poke_w(block, size);
-    p.Prg_TUndo += size;
-    poke_w(block + 2, peek_w(entry + 2));
-    entry[0] = 0x83;
-    poke_l(entry + 2, address(block));
-    const uint8_t *from = ptr<uint8_t>(r->a[0]);
-    for (uint16_t i = 0; i < n; i++)
-        block[4 + i] = from[i];
-    return 0;
-}
+// Un_CLine: the d0 characters at a0 kept for undo; EQ if kept, a2 kept
+uint32_t ed_undo_line(AllRegs *r) { return !undo_text(ptr<uint8_t>(r->a[0]), uint16_t(r->d[0])); }
 
 void ed_undo_advance(AllRegs *) { advance(program()); }
 void ed_undo_clear(AllRegs *r) { clear(program(), ptr<uint8_t>(r->a[2])); }
@@ -192,7 +199,7 @@ void ed_undo(AllRegs *)
         return;
     }
     p.Prg_PUndo = address(entry);
-    act(ed_undo_routines, entry);
+    act(undo_change, entry);
 }
 
 void ed_redo(AllRegs *)
@@ -204,7 +211,7 @@ void ed_redo(AllRegs *)
         call(ed_no_redo, r);
         return;
     }
-    act(ed_redo_routines, entry);
+    act(redo_change, entry);
     Program &q = program();
     q.Prg_PUndo = address(next(q, ptr<uint8_t>(q.Prg_PUndo)));
 }

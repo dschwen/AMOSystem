@@ -63,6 +63,10 @@
 		XREF	_ed_store_entry,_ed_store_block_entry,_ed_delete_line_entry,_ed_delete_chunk_at_entry
 		XREF	_ed_delete_chunk_entry,_ed_find_line_entry,_ed_next_line_entry
 		XREF	_ed_indent_entry
+		XREF	_ed_current_line_entry,_ed_letter_entry,_ed_insert_text_entry,_ed_delete_text_entry
+		XREF	_ed_word_left_entry,_ed_word_right_entry,_ed_type_key_entry,_ed_delete_key_entry
+		XREF	_ed_backspace_entry,_ed_clear_line_entry,_ed_delete_to_end_entry,_ed_delete_to_start_entry
+		XREF	_ed_delete_word_entry,_ed_delete_word_left_entry,_ed_tab_entry,_ed_untab_entry
 		XREF	_ed_undo_start_entry,_ed_undo_line_entry,_ed_undo_advance_entry,_ed_undo_clear_entry
 		XREF	_ed_undo_previous_entry,_ed_undo_next_entry,_ed_undo_create_entry,_ed_undo_reset_entry
 		XREF	_ed_undo_free_entry,_ed_undo_create_all_entry,_ed_undo_reset_all_entry,_ed_undo_free_all_entry
@@ -1823,113 +1827,12 @@ Ed_Fonc2Ky
 .NoKey	moveq	#0,d0
 	rts
 
-;
-; Stocke la lettre dans le buffer
-; 	D6= Insert mode?
-;	D7= caractere
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_PKey
-	cmp.b	#32,d7
-	bcs	.EdL15
-* Positionne a la fin de la ligne
-	bsr	Ed_LCourant
-	bne	Ed_NotEdit		Line not editable
-	cmp.w	d0,d1
-	bls.s	.EdL10a
-	move.w	d0,d1
-	lea	0(a0,d1.w),a1
-	move.w	d1,Edt_XCu(a4)
-	movem.l	a0/a1/d0/d1,-(sp)
-	bsr	Ed_Cent
-	movem.l	(sp)+,a0/a1/d0/d1
-* Recupere le code Ascii
-.EdL10a
-* Gestion UNDO
-	bsr	Un_Debut
-	bne.s	.Skip
-	move.b	#$01,(a2)		Flag Lettre
-	move.b	#-1,4(a2)		Move insert
-	move.b	d7,5(a2)		Caractere
-.Skip
-* Recupere le code ASCII
-	tst.b	d6
-	bne.s	.EdL11
-* Mode OVERWRITE
-	cmp.w	d0,d1
-	beq.s	.EdL13
-	move.b	(a1),4(a2)		Ancien caractere
-	bra.s	.EdL14
-* Mode INSERT
-.EdL11	cmp.w	#250,d0
-	bcc	Ed_LToLong
-	cmp.w	d0,d1
-	beq.s	.EdL13
-	lea	1(a0,d0.w),a2
-.EdL12	move.b	-(a2),1(a2)
-	cmp.l	a1,a2
-	bhi.s	.EdL12
-.EdL13	addq.w	#1,d0
-.EdL14	move.b	d7,(a1)
-	move.w	d0,-2(a0)
-	addq.w	#1,Edt_LEdited(a4)		* Flag ligne editee
-; Bouge le curseur
-	bsr	Ed_CDroite
-	move.w	Edt_YCu(a4),d1
-	bsr	Ed_ALigne
-; Reaffiche la ligne
-.EdL15	bsr	Ed_Loca
-; Si la fenetre est splitee
-	move.b	#%01,Ed_SCallFlags(a5)
-	rts
+; Ed_PKey (d7 the character, d6 insert), R_InsChar, R_DelChar:
+; src/editor/lines.cpp
+Ed_PKey		jmp	_ed_type_key_entry
 
-;
-; Insere le mot A0/long D0 dans la ligne courante
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-R_InsChar
-	movem.l	a0-a3/d0-d2,-(sp)
-	move.l	a0,a2
-	move.w	d0,d2
-	bsr	Ed_LCourant
-	add.w	d2,d0
-	cmp.w	#250,d0
-	bls.s	.Ok
-	sub.w	#250,d0
-	sub.w	d0,d2
-	move.w	#250,d0
-.Ok	tst.w	d2
-	beq.s	.Out
-	add.w	d2,-2(a0)
-	lea	0(a0,d0.w),a0
-	move.l	a0,a3
-	sub.w	d2,a3
-	bra.s	.Test
-.Copy	move.b	-(a3),-(a0)
-.Test	cmp.l	a1,a3
-	bhi.s	.Copy
-	subq.w	#1,d2
-.Loop	move.b	(a2)+,(a1)+
-	dbra	d2,.Loop
-	addq.w	#1,Edt_LEdited(a4)
-.Out	movem.l	(sp)+,a0-a3/d0-d2
-	rts
-;
-; Enleve D0 caracteres en position courante
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-R_DelChar
-	move.w	d0,d2
-	bsr	Ed_LCourant
-	cmp.w	d0,d2
-	bhi.s	.Skip
-	sub.w	d2,-2(a0)
-	lea	0(a1,d2.w),a0
-	sub.w	d1,d0
-	sub.w	d2,d0
-	subq.w	#1,d0
-	bmi.s	.Del2
-.Del1	move.b	(a0)+,(a1)+
-	dbra	d0,.Del1
-.Del2	addq.w	#1,Edt_LEdited(a4)
-.Skip	rts
+R_InsChar	jmp	_ed_insert_text_entry
+R_DelChar	jmp	_ed_delete_text_entry
 
 ; _________________________________________________________________________
 ;
@@ -1949,205 +1852,7 @@ Prg_UndoRaz	jmp	_ed_undo_reset_entry
 Prg_UndoFree	jmp	_ed_undo_free_entry
 
 
-		xdef	_ed_undo_routines,_ed_redo_routines
-_ed_undo_routines
-JUndo	bra	Un_Char		1- Simple caractere
-	bra	Un_Delete	2- Delete
-	bra	Un_Clear	3- Effacement ligne / Fin de ligne
-	bra	Un_DLine	4- Delete ligne du programme
-	bra	Un_Token	5- Tokenisation
-	bra	Un_ILine	6- Insertion ligne
-	bra	Un_Split	7- Split Line
-	bra	Un_Join		8- Join Line
-_ed_redo_routines
-JRedo	bra	Re_Char		1- Simple caractere
-	bra	Re_Delete	2- Delete
-	bra	Re_Clear	3- Effacement ligne / Fin de ligne
-	bra	Re_DLine	4- Delete ligne du programme
-	bra	Re_Token	5- Tokenisation
-	bra	Re_ILine	6- Insertion ligne
-	bra	Re_Split	7- Split Line
-	bra	Re_Join		8- Join Line
-;
-; UNDO: un caractere
-; ~~~~~~~~~~~~~~~~~~
-Un_Char
-	bsr	Un_XY
-	move.b	4(a2),d0
-	bpl.s	.Over
-; En INSERT
-	bsr	Ed_Delete
-	rts
-; En OVERWRITE
-.Over	bsr	Ed_LCourant
-	move.b	4(a2),(a1)
-	addq.w	#1,Edt_LEdited(a4)
-	bsr	Ed_EALiCu
-	rts
-;
-; REDO: un caractere
-; ~~~~~~~~~~~~~~~~~~
-Re_Char	bsr	Un_XY
-	moveq	#0,d6
-	tst.b	4(a2)
-	bpl.s	.Skip
-	moveq	#1,d6
-.Skip	move.b	5(a2),d7
-	bsr	Ed_PKey
-	rts
-;
-; UNDO: Delete
-; ~~~~~~~~~~~~
-Un_Delete
-	bsr	Un_XY
-	move.b	5(a2),d7
-	moveq	#1,d6
-	bsr	Ed_PKey
-	rts
-;
-; REDO: Delete
-; ~~~~~~~~~~~~
-Re_Delete
-	bsr	Un_XY
-	bsr	Ed_Delete
-	rts
-;
-; UNDO: Effacement dans la ligne
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Un_Clear
-	bsr	Un_XYSto
-Un_C2
-	move.w	(a2),d0
-	subq.w	#4,d0
-	bls.s	.Skip
-	lea	4(a2),a0
-	bsr	R_InsChar
-	bsr	Ed_EALiCu
-.Skip	rts
-;
-; REDO: Effacement dans la ligne
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Re_Clear
-	bsr	Un_XYSto
-	move.w	(a2),d0
-	subq.w	#4,d0
-	bls.s	.Skip
-	bsr	R_DelChar
-.Skip	bsr	Ed_EALiCu
-	rts
-;
-; UNDO: Ligne effacee du programme
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Un_DLine
-	bsr	Un_XYSto
-	move.l	a2,-(sp)
-	bsr	Ed_InsLine
-	move.l	(sp)+,a2
-	bra.s	Un_C2
-;
-; REDO: Ligne effacee du programme
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Re_DLine
-	bsr	Un_XYSto
-	bsr	Ed_DelLiCu
-	rts
-;
-; UNDO: Tokenisation
-; ~~~~~~~~~~~~~~~~~~
-Un_Token
-	bsr	Un_XYSto
-	bsr	Ed_LCourant
-; Recopie l'ancienne ligne
-	lea	6(a2),a1
-	moveq	#0,d0
-	move.b	(a1)+,d0
-	move.w	d0,-2(a0)
-	subq.w	#1,d0
-	bmi.s	.Skip
-.Loop	move.b	(a1)+,(a0)+
-	dbra	d0,.Loop
-; Une ligne de moins?
-.Skip	move.w	4(a2),d0
-	sub.w	d0,Prg_NLigne(a6)
-	addq.w	#1,Edt_LEdited(a4)
-	bsr	Ed_EALiCu
-	rts
-;
-; REDO: Tokenisation
-; ~~~~~~~~~~~~~~~~~~
-Re_Token
-	bsr	Un_XYSto
-	addq.w	#1,Edt_LEdited(a4)
-	bsr	Ed_TokCur
-	rts
-;
-; UNDO: Un-Split line
-; ~~~~~~~~~~~~~~~~~~~
-Re_Join
-Un_Split
-	move.l	a2,-(sp)
-	bsr	Un_XYSto
-	bsr	Ed_DelLiCu
-	move.l	(sp)+,a2
-	bsr	Un_XYSto
-	bsr	Un_RepLine
-	rts
-;
-; UNDO: Un-Join line
-; ~~~~~~~~~~~~~~~~~~
-Re_Split
-Un_Join
-	bsr	Un_XYSto
-	bsr	Un_RepLine
-	bsr	Ed_ReturnQuiet
-	rts
-;
-; Recopie integrale de la ligne
-Un_RepLine
-	bsr	Ed_LCourant
-	move.w	(a2),d0
-	subq.w	#4,d0
-	lea	4(a2),a1
-	move.w	d0,-2(a0)
-	subq.w	#1,d0
-	bmi.s	.Skip
-.Loop	move.b	(a1)+,(a0)+
-	dbra	d0,.Loop
-.Skip	bsr	Ed_EALiCu
-	addq.w	#1,Edt_LEdited(a4)
-	rts
-;
-; UNDO: Ligne inseree dans le programme
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Un_ILine
-	bsr	Un_XY
-	bsr	Ed_DelLiCu
-	rts
-;
-; REDO: Ligne inseree dans le programme
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Re_ILine
-	bsr	Un_XY
-	bsr	Ed_InsLine
-	rts
-;
-; Pointe la ligne stockee
-; ~~~~~~~~~~~~~~~~~~~~~~~
-Un_XYSto
-	bsr	Un_X
-	move.l	2(a2),a2
-	move.w	2(a2),d0
-	bsr	Ed_GotoY
-	rts
-;
-; Positionne le curseur sur la ligne UNDO
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Un_XY	move.w	2(a2),d0
-	bsr	Ed_GotoY
-Un_X	moveq	#0,d0
-	move.b	1(a2),d0
-	bsr	Ed_GotoX
-	rts
+; What undo and redo do for each kind of change: src/editor/lines.cpp
 
 ; Un_CLine, Un_Debut, Un_Avance, Un_Del, Un_Prev: src/editor/undo.cpp
 Un_CLine	jmp	_ed_undo_line_entry
@@ -3372,174 +3077,17 @@ FlagFonc
 	dc.b	%00000000		* 184
 	even
 
-;
-; BACKSPACE
-; ~~~~~~~~~
-Ed_Back
-	tst.w	Edt_XCu(a4)
-	beq	Ed_Join
-	bsr	Ed_CGauche
-	bsr	Ed_Delete
-.Skip	rts
-
-;
-; DELETE
-; ~~~~~~
-Ed_Delete
-	moveq	#"F",d0			Va faire du bruit!
-	bsr	Ed_SamPlay
-	bsr	Ed_LCourant
-	sub.w	Edt_XCu(a4),d0
-	subq.w	#1,d0
-	bmi	CFin
-; Gestion de l'UNDO
-	bsr	Un_Debut
-	bne.s	.Skip
-	move.b	#$02,(a2)
-	move.b	(a1),5(a2)
-.Skip
-; Enleve la lettre
-	moveq	#1,d0
-	bsr	R_DelChar
-	bra	Ed_EALiCu
-
-;
-; EFFACEMENT LIGNE
-; ~~~~~~~~~~~~~~~~
-Ed_EffLigne
-	addq.w	#1,Edt_LEdited(a4)
-	clr.w	Edt_XCu(a4)
-	bsr	Ed_LCourant
-	moveq	#0,d0
-	move.w	-2(a0),d0
-	clr.w	-2(a0)
-	bsr	Un_CLine
-	bsr	Ed_EALiCu
-	bra	Ed_Cent
-
-;
-; DELETE JUSQUA LA FIN DE LA LIGNE
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_DelFin
-	addq.w	#1,Edt_LEdited(a4)
-	bsr	Ed_LCourant
-	cmp.w	d0,d1
-	bcc.s	.EdFin
-	move.w	-2(a0),d0
-	move.w	d1,-2(a0)
-	sub.w	d1,d0
-	ext.l	d0
-	move.l	a1,a0
-	bsr	Un_CLine
-	bra	Ed_EALiCu
-.EdFin	rts
-;
-; DELETE JUSQU'AU DEBUT DE LA LIGNE
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_DelDebut
-	bsr	Ed_LCourant
-	tst.w	d1
-	beq.s	.Out
-	cmp.w	d0,d1
-	bcc.s	.Skip
-	move.w	d1,d0
-.Skip	clr.w	Edt_XCu(a4)
-	ext.l	d0
-	bsr	Un_CLine
-	bsr	R_DelChar
-	bsr	Ed_EALiCu
-.Out	rts
-;
-; SHIFT-DELETE MOT A DROITE
-; ~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_DelMot
-	bsr	R_MotDroi
-	move.w	Edt_XCu(a4),d0
-	cmp.w	d0,d1
-	bls.s	.Skip
-	sub.w	d0,d1
-	move.w	d1,d2
-	bsr	Ed_LCourant
-	cmp.w	d0,d1
-	bcc.s	.Skip
-	move.w	d2,d0
-	move.l	a1,a0
-	ext.l	d0
-	bsr	Un_CLine
-	move.w	d2,d0
-	bsr	R_DelChar
-	bsr	Ed_EALiCu
-.Skip	rts
-
-;
-; SHIFT-BACKSPACE MOT A GAUCHE
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_BackMot
-	bsr	R_MotGoch
-	move.w	Edt_XCu(a4),d0
-	cmp.w	d0,d1
-	bcc.s	.Skip
-	move.w	d1,Edt_XCu(a4)
-	bsr	Ed_Cent
-	bra.s	Ed_DelMot
-.Skip	rts
-
-;
-; TAB
-; ~~~
-Ed_Tab
-	bsr	Ed_LCourant
-	lea	0(a0,d0.w),a1		* Fin actuelle
-	move.w	Ed_Tabs(a5),d2
-	add.w	d2,d0
-	cmp.w	#250,d0
-	bcc	Ed_LToLong
-	add.w	d2,-2(a0)
-	lea	0(a0,d0.w),a2		* Nouvelle fin
-	bra.s	.ETab2
-.ETab1	move.b	-(a1),-(a2)
-.ETab2	cmp.l	a0,a1
-	bhi.s	.ETab1
-	add.w	d2,Edt_XCu(a4)
-	subq.w	#1,d2
-	bmi.s	ETab4
-.ETab3	move.b	#" ",(a1)+
-	dbra	d2,.ETab3
-ETab4	addq.w	#1,Edt_LEdited(a4)
-	move.w	Edt_YCu(a4),d1
-	bsr	Ed_EALigne
-	bsr	Ed_Cent
-ETabX	rts
-
-;
-; SHIFT TAB (enleve les tabs)
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_ShTab
-	bsr	Ed_LCourant
-	lea	0(a0,d0.w),a2
-	move.l	a0,a1
-	moveq	#0,d0
-	move.w	Ed_Tabs(a5),d1
-	subq.w	#1,d1
-	bmi.s	ETabX
-.ShT1	cmp.b	#" ",(a0)
-	bne.s	.ShT2
-	addq.l	#1,a0
-	cmp.l	a2,a0
-	bcc.s	.ShT2
-	addq.w	#1,d0
-	dbra	d1,.ShT1
-.ShT2	tst.w	d0
-	beq.s	ETabX
-	sub.w	d0,-2(a1)
-	sub.w	d0,Edt_XCu(a4)
-	bpl.s	.ShT4
-	clr.w	Edt_XCu(a4)
-	bra.s	.ShT4
-.ShT3	move.b	(a0)+,(a1)+
-.ShT4	cmp.l	a2,a0
-	bls.s	.ShT3
-	bra.s	ETab4
+; Backspace, Delete, deleting parts of the line, words, Tab, Shift-Tab:
+; src/editor/lines.cpp
+Ed_Back		jmp	_ed_backspace_entry
+Ed_Delete	jmp	_ed_delete_key_entry
+Ed_EffLigne	jmp	_ed_clear_line_entry
+Ed_DelFin	jmp	_ed_delete_to_end_entry
+Ed_DelDebut	jmp	_ed_delete_to_start_entry
+Ed_DelMot	jmp	_ed_delete_word_entry
+Ed_BackMot	jmp	_ed_delete_word_left_entry
+Ed_Tab		jmp	_ed_tab_entry
+Ed_ShTab	jmp	_ed_untab_entry
 
 ;
 ; SET TAB VALUE
@@ -3670,6 +3218,8 @@ Ed_CBs
 ;
 ; Curseur vers la gauche
 ; ~~~~~~~~~~~~~~~~~~~~~~
+		xdef	_ed_c_gauche
+_ed_c_gauche
 Ed_CGauche
 	moveq	#"F",d0			Va faire du bruit!
 	bsr	Ed_SamPlay
@@ -3694,6 +3244,8 @@ CGo1	bra	Ed_Loca
 ;
 ; Curseur vers la droite
 ; ~~~~~~~~~~~~~~~~~~~~~~
+		xdef	_ed_c_droite
+_ed_c_droite
 Ed_CDroite
 	moveq	#"F",d0			Va faire du bruit!
 	bsr	Ed_SamPlay
@@ -3755,44 +3307,9 @@ Ed_MDroite
 	bsr	R_MotDroi
 	move.w	d1,Edt_XCu(a4)
 	bra	Ed_Cent
-;
-; Pointe le mot PRECEDENT
-; ~~~~~~~~~~~~~~~~~~~~~~~
-R_MotGoch
-	bsr	Ed_LCourant
-	cmp.w	d0,d1
-	bls.s	.MGo0
-	move.w	d0,d1
-	bra.s	.MGo4
-.MGo0	subq.w	#1,d1
-	bmi.s	.MGo3
-	cmp.b	#32,-(a1)
-	bne.s	.MGo2
-.MGo1	subq.w	#1,d1
-	bmi.s	.MGo3
-	cmp.b	#32,-(a1)
-	beq.s	.MGo1
-.MGo2	subq.w	#1,d1
-	bmi.s	.MGo3
-	move.b	-(a1),d2
-	bsr	Une_Lettre
-	bne.s	.MGo2
-.MGo3	addq.w	#1,d1
-.MGo4	rts
-
-; Pointe le mot DROIT
-; ~~~~~~~~~~~~~~~~~~~
-R_MotDroi
-	bsr	Ed_LCourant
-.MDr1	addq.w	#1,d1
-	cmp.w	d0,d1
-	bcc.s	.MDr2
-	move.b	(a1)+,d2
-	bsr	Une_Lettre
-	bne.s	.MDr1
-	cmp.b	#32,(a1)
-	beq.s	.MDr1
-.MDr2	rts
+; R_MotGoch, R_MotDroi (d1 the start of the word): src/editor/lines.cpp
+R_MotGoch	jmp	_ed_word_left_entry
+R_MotDroi	jmp	_ed_word_right_entry
 
 
 ;
@@ -3983,25 +3500,8 @@ MajD0ed	cmp.b	#"a",d0
 ;
 ; Ramene VRAI si D2 est une lettre ou un chiffre
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Une_Lettre
-	cmp.b	#"0",d2
-	bcs.s	LFaux
-	cmp.b	#"9",d2
-	bls.s	LVrai
-	cmp.b	#"A",d2
-	bcs.s	LFaux
-	cmp.b	#"Z",d2
-	bls.s	LVrai
-	cmp.b	#"a",d2
-	bcs.s	LFaux
-	cmp.b	#"z",d2
-	bls.s	LVrai
-	cmp.b	#128,d2
-	bcc.s	LVrai
-LFaux:	moveq	#0,d2
-	rts
-LVrai:	moveq	#-1,d2
-	rts
+; Une_Lettre (d2): src/editor/lines.cpp
+Une_Lettre	jmp	_ed_letter_entry
 
 
 ; ___________________________________________________________________
@@ -4629,6 +4129,8 @@ Ed_SamEnd
 ;
 ; Joue le sample D0 (lettre de A � Z)
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		xdef	_ed_sam_play
+_ed_sam_play
 Ed_SamPlay
 	movem.l	d0-d3/a0-a2,-(sp)
 	tst.b	Ed_Sounds(a5)
@@ -9309,6 +8811,8 @@ Ed_LimM	moveq	#EcEdit+1,d3
 ;
 ; Line not editable
 ; ~~~~~~~~~~~~~~~~~
+		xdef	_ed_not_edit
+_ed_not_edit
 Ed_NotEdit
 	move.w	#183,d0
 	bsr	Ed_GetMessage
@@ -9317,6 +8821,8 @@ Ed_NotEdit
 ;
 ; Line too long
 ; ~~~~~~~~~~~~~
+		xdef	_ed_l_to_long
+_ed_l_to_long
 Ed_LToLong
 	move.w	#199,d0			***- Line too long
 	bsr	Ed_GetMessage
@@ -9609,6 +9115,8 @@ Ed_CuOff
 ;
 ; Reaffichage de la ligne courante
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		xdef	_ed_ea_li_cu
+_ed_ea_li_cu
 Ed_EALiCu
 	move.w	Edt_YCu(a4),d1
 	bsr	Ed_EALigne
@@ -9617,6 +9125,8 @@ Ed_EALiCu
 ;
 ; Routine: centre la fenetre editeur sur la position du curseur
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		xdef	_ed_cent
+_ed_cent
 Ed_Cent
 	bset	#EtA_X,Edt_EtatAff(a4)
 	moveq	#15,d1
@@ -9638,6 +9148,8 @@ Ed_Cent
 ;
 ; Positionne l'�cran en X
 ; ~~~~~~~~~~~~~~~~~~~~~~~
+		xdef	_ed_goto_x
+_ed_goto_x
 Ed_GotoX
 	cmp.w	Edt_XCu(a4),d0
 	beq.s	.Skip
@@ -9650,6 +9162,8 @@ Ed_GotoX
 ;
 ; Positionne l'ecran en Y
 ; ~~~~~~~~~~~~~~~~~~~~~~~
+		xdef	_ed_goto_y
+_ed_goto_y
 Ed_GotoY
 	move.w	Edt_YPos(a4),d1
 	add.w	Edt_YCu(a4),d1
@@ -9760,6 +9274,8 @@ Ed_NLab
 ;
 ; Locate le curseur dans l'ecran
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		xdef	_ed_loca
+_ed_loca
 Ed_Loca
 	move.l	d2,-(sp)
 	move.w	Edt_YCu(a4),d2
@@ -9883,10 +9399,14 @@ Ed_AffBuf
 ;
 ; Imprime la ligne du buffer D1
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		xdef	_ed_ea_ligne
+_ed_ea_ligne
 Ed_EALigne
 	movem.l	d0-d6/a0-a2,-(sp)	* Efface
 	moveq	#-1,d6
 	bra.s	EALi
+		xdef	_ed_a_ligne
+_ed_a_ligne
 Ed_ALigne
 	movem.l	d0-d6/a0-a2,-(sp)	* Affiche seulement
 	moveq	#0,d6
@@ -10062,6 +9582,8 @@ EALi
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ;	Retourne 	0: si ligne deletee
 ;			1: si ligne non deletee
+		xdef	_ed_del_li_cu
+_ed_del_li_cu
 Ed_DelLiCu
 	move.w	Edt_YPos(a4),d1
 	add.w	Edt_YCu(a4),d1
@@ -10113,6 +9635,8 @@ Ed_DelLiCu
 ; Joint la ligne et celle du dessus!
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ;
+		xdef	_ed_join
+_ed_join
 Ed_Join	tst.w	Edt_YCu(a4)
 	beq	.Out
 	tst.w	Edt_XCu(a4)
@@ -10179,6 +9703,8 @@ Ed_Return
 ; Fait du bruit
 	moveq	#"D",d0
 	bsr	Ed_SamPlay
+		xdef	_ed_return_quiet
+_ed_return_quiet
 Ed_ReturnQuiet
 ; A gauche de la ligne
 	tst.w	Edt_XCu(a4)
@@ -10258,6 +9784,8 @@ Ed_ReturnQuiet
 ; Insere une ligne � la position du curseur
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ;
+		xdef	_ed_ins_line
+_ed_ins_line
 Ed_InsLine
 ; Ligne courante
 	bsr	Ed_TokCur
@@ -10287,6 +9815,8 @@ Ed_InsLine
 ; TOKENISE / STOCKE la ligne courante
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ;
+		xdef	_ed_tok_cur
+_ed_tok_cur
 Ed_TokCur
 	tst.w	Edt_LEdited(a4)
 	beq.s	.Skip
@@ -10534,16 +10064,8 @@ Ed_FindA
 ; D0= longueur
 ; D1= position curseur
 ;
-Ed_LCourant:
-	move.w	Edt_YCu(a4),d0
-	lsl.w	#8,d0
-	move.l	Edt_BufE(a4),a0
-	lea	0(a0,d0.w),a0
-	move.w	(a0)+,d0
-	move.w	Edt_XCu(a4),d1
-	lea	0(a0,d1.w),a1
-	tst.b	255-2(a0)
-	rts
+; Ed_LCourant: src/editor/lines.cpp
+Ed_LCourant:	jmp	_ed_current_line_entry
 
 
 ;____________________________________________________________________
