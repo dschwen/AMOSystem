@@ -60,6 +60,8 @@
 ; Branchements internes � l'editeur
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 		XREF	_amos_bridge
+		XREF	_ed_store_entry,_ed_store_block_entry,_ed_delete_line_entry,_ed_delete_chunk_at_entry
+		XREF	_ed_delete_chunk_entry,_ed_find_line_entry,_ed_next_line_entry
 		XREF	_ed_tokenise_entry,_ed_detok_entry,_ed_mon_detok_entry,_ed_tinst_entry
 EDebut		dc.l	Ed_Cold-EDebut
 		dc.l	Ed_Title-EDebut
@@ -4356,6 +4358,8 @@ Ed_Marks2Number
 ;  ~~~~~~~~~~~~~~~~
 ;	D0= Numero ligne
 ;	D1= Nombre de lignes
+		xdef	_ed_marks_change
+_ed_marks_change
 Ed_MarksChange
 	movem.l	d1/d2/d3/d4/a0,-(sp)
 	moveq	#9,d2
@@ -10959,220 +10963,15 @@ Edt_New
 	clr.b	MathFlags(a5)		Simple precision par defaut
 	rts
 
-;
-; INSERE LE BLOC A0 LONGUEUR D0 EN POSITION D1
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-;
-Ed_StoBlock
-	movem.l	a2-a3/d2-d7,-(sp)
-	move.l	a0,a1
-	move.l	d0,d2
-	move.w	d1,d0
-	moveq	#0,d7			Ne pas changer les marques
-	bsr	Ed_FindL
-	bra	StoI
-;
-; STOCKE LA LIGNE (A1) EN POSITION D1, INSERT D0
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-;	Retour:	A0=	Ligne tokenisee
-;		A1=
-;		D0=	Erreur?
-;		D1=	Flag un ligne de plus!
-Ed_Stocke
-	movem.l	a2-a3/d2-d7,-(sp)
-
-	move.w	d0,d7
-	move.w	d1,d6
-	moveq	#0,d5
-
-; Longueur de la nouvelle ligne
-	moveq	#0,d2
-	move.b	(a1),d2
-	lsl.w	#1,d2
-; Pointe la ligne courante
-	move.w	d1,d0
-	bsr	Ed_FindL		Cherche l'adresse ---> A0
-	moveq	#0,d1
-	move.b	(a0),d1
-	lsl.l	#1,d1			Derniere ligne?
-	beq.s	StoD
-	tst.w	d7			Insertion
-	bne.s	StoI
-
-; Remplacement d'une ligne
-; ~~~~~~~~~~~~~~~~~~~~~~~~
-	cmp.w	#_TkProc,2(a0)		On est sur une procedure fermee???
-	bne.s	.Stck1
-	tst.w	10(a0)
-	bmi	StoClo
-.Stck1	cmp.l	d1,d2
-	beq	StoCop
-	bhi.s	StoR5
-* Nouvelle plus petite
-	move.l	a0,a2
-	sub.l	d2,d1
-	add.l	d1,a0
-	move.l	a0,a3
-	move.l	Prg_StBas(a6),d0
-	bra.s	StoR2
-StoR1	move.w	-(a2),-(a3)
-StoR2	cmp.l	d0,a2
-	bhi.s	StoR1
-	move.l	a3,Prg_StBas(a6)
-	move.l	d1,d0
-	bra.s	StoCop
-* Nouvelle plus grande
-StoR5	move.l	d2,d0
-	sub.l	d1,d0
-	bra.s	StoI0
-
-; Derniere ligne: pas une ligne vide, si non insert!
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-StoD	cmp.w	#4,d2			Ligne vide= 4 octets
-	bne.s	StoI
-	move.l	a0,d4
-	tst.w	d7
-	beq.s	StoV
-; Insersion ligne / Block
-; ~~~~~~~~~~~~~~~~~~~~~~~
-StoI	move.l	d2,d0
-	moveq	#1,d5
-StoI0	move.l	Prg_StBas(a6),a2
-	move.l	a2,a3
-	sub.l	d0,a3
-	cmp.l	Prg_StMini(a6),a3
-	bls.s	StoMem
-	move.l	a3,Prg_StBas(a6)
-	bra.s	StoI2
-StoI1	move.w	(a2)+,(a3)+		* Fait de la place
-StoI2	cmp.l	a0,a2
-	bcs.s	StoI1
-	sub.l	d0,a0
-; Copie de la ligne
-; ~~~~~~~~~~~~~~~~~
-StoCop	move.l	a0,a2
-	move.l	a0,d4
-	lsr.l	#1,d2
-StoC	move.w	(a1)+,(a2)+		* Copie la ligne
-	subq.l	#1,d2
-	bne.s	StoC
-; Change les marks
-; ~~~~~~~~~~~~~~~~
-	tst.w	d7
-	beq.s	.Skip
-	move.w	d6,d0
-	moveq	#1,d1
-	bsr	Ed_MarksChange
-.Skip
-; Nettoie les variables (si pas MERGE!)
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	bset	#EtA_Free,Edt_EtatAff(a4)
-	move.b	#1,Prg_Change(a6)
-	move.b	#1,Prg_StModif(a6)
-StoV	move.l	d5,d1
-	move.l	d4,a0
-	moveq	#0,d0
-	bra.s	StX
-; Procedure fermee
-StoClo	moveq	#-1,d0
-	bra.s	StX
-; Out of mem
-StoMem:	moveq	#1,d0
-StX	movem.l	(sp)+,a2-a3/d2-d7
-	rts
-;
-; ENLEVE UN CHUNK DE PROGRAMME
-;	D1=	Ligne debut
-;	D0=	Longueur chunk
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_DelChunk
-	move.l	d0,-(sp)
-	move.w	d1,d0
-	bsr	Ed_FindL
-	beq.s	.Out
-	move.l	a0,a1
-	add.l	(sp),a1
-	bsr	Ed_StDelChunk
-.Out	addq.l	#4,sp
-	rts
-
-; ENLEVE LA LIGNE D1
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-;	Retourne	0: si ligne deletee (NLIGNE=NLIGNE-1)
-;			1: si ligne non deletee
-;			-1 si ligne non editable
-Ed_DeLigne
-	move.w	d1,-(sp)
-	move.w	d1,d0
-	bsr	Ed_FindL
-	beq.s	.DelLL
-; Dans procedure. Ferm�e?
-	cmp.w	#_TkProc,2(a0)		* Pas si procedure fermee!
-	bne.s	.DelL0
-	tst.w	10(a0)
-	bmi.s	.DelLN
-; Enleve la ligne
-.DelL0	moveq	#0,d0
-	move.b	(a0),d0
-	lsl.w	#1,d0
-	lea	0(a0,d0.w),a1
-	bsr	Ed_StDelChunk
-; Marks
-	move.w	(sp),d0
-	moveq	#-1,d1
-	bsr	Ed_MarksChange
-; Nombre de lignes
-	subq.w	#1,Prg_NLigne(a6)
-.DelLX	moveq	#0,d0
-	bra.s	.Out
-.DelLN	moveq	#-1,d0
-	bra.s	.Out
-.DelLL	moveq	#1,d0
-.Out	addq.l	#2,sp
-	rts
-; Enleve le chunk de programme A0-A1
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_StDelChunk
-	move.l	a2,-(sp)
-	move.l	Prg_StBas(a6),a2
-	move.l	a0,d1
-	bra.s	DelL2
-DelL1:	move.w	-(a0),-(a1)
-DelL2:	cmp.l	a2,a0
-	bhi.s	DelL1
-	move.l	a1,Prg_StBas(a6)
-; Flags
-	move.b	#1,Prg_Change(a6)
-	move.b	#1,Prg_StModif(a6)
-	bset	#EtA_Free,Edt_EtatAff(a4)
-	move.l	(sp)+,a2
-	rts
-
-;
-; TROUVE L'ADRESSE DE LA LIGNE D0 (coord editeur)
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-; Si au milieu d'une procedure, AD ---> ADPROC
-;
-Ed_FindL
-	move.l	a1,-(sp)
-	move.l	Prg_StBas(a6),a0
-	JJsrR	L_Tk_FindL,a1
-	move.l	a0,Edt_CurLigne(a4)
-	move.l	a1,Edt_DebProc(a4)
-	move.l	(sp)+,a1
-	tst.w	d0
-	rts
-; Trouve la ligne suivante
-; ~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_NextL
-	move.l	a1,-(sp)
-	move.l	Edt_CurLigne(a4),a0
-	JJsrR	L_Tk_FindN,a1
-	move.l	a0,Edt_CurLigne(a4)
-	move.l	a1,Edt_DebProc(a4)
-	move.l	(sp)+,a1
-	tst.w	d0
-	rts
+; Ed_StoBlock, Ed_Stocke, Ed_DelChunk, Ed_DeLigne, Ed_StDelChunk,
+; Ed_FindL, Ed_NextL: src/editor/storage.cpp
+Ed_StoBlock	jmp	_ed_store_block_entry
+Ed_Stocke	jmp	_ed_store_entry
+Ed_DelChunk	jmp	_ed_delete_chunk_at_entry
+Ed_DeLigne	jmp	_ed_delete_line_entry
+Ed_StDelChunk	jmp	_ed_delete_chunk_entry
+Ed_FindL	jmp	_ed_find_line_entry
+Ed_NextL	jmp	_ed_next_line_entry
 
 ; Trouve la taille de la CURLIGNE
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
