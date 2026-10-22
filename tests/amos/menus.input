@@ -1,0 +1,19 @@
+sync ready
+button 3 down
+wait 0.5
+shot open
+move 0 30
+wait 0.5
+shot item
+button 3 up
+sync again
+button 3 down
+wait 0.3
+move 120 0
+wait 0.3
+move 0 40
+wait 0.3
+move 80 0
+wait 0.5
+shot sub
+button 3 up

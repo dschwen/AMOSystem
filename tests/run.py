@@ -30,6 +30,18 @@ result is <name>.png plus <name>_mask.png, the pixels that changed between
 the screenshots (the cursor blinks), which the comparison ignores. Only
 the top of the display is compared (EDITOR_AREA): keep the listing short.
 
+Input: tests/amos/<name>.input scripts keyboard and mouse events (the
+emulator then grabs the input), one command per line:
+  sync NAME        wait until the program creates AMOSTEST:out/NAME
+  wait SECONDS
+  key KEYSYM       press and release an X key ("a", "Return", "Escape")
+  keys TEXT        type the characters of TEXT (letters, digits, space)
+  move DX DY       move the mouse by DX,DY
+  button N up|down / click N
+  shot NAME        screenshot of the display as AMOSTEST:out/<test>_NAME.png,
+                   compared like the other results
+Programs can signal with: Open Out 9,"AMOSTEST:out/NAME" : Close 9
+
 Needs fs-uae, Xvfb, scrot, the Kickstart ROM with its rom.key and the
 Workbench directory drive (see --kickstart, --rom-key and --workbench).
 """
@@ -49,6 +61,7 @@ sys.path.insert(0, os.path.join(ROOT, 'tools'))
 from PIL import Image, ImageChops, ImageFilter  # noqa: E402
 
 import amostok  # noqa: E402
+import xinput   # noqa: E402
 import uaem     # noqa: E402
 
 CAMOS = os.path.dirname(ROOT)
@@ -113,7 +126,7 @@ hard_drive_2_priority = -128
 base_dir = {base}
 fullscreen = 0
 automatic_input_grab = 0
-initial_input_grab = 0
+initial_input_grab = {grab}
 governor_warning = 0
 notification_duration = 1
 '''
@@ -240,6 +253,47 @@ def compare_editor(name, shots):
     return [f'screen differs ({best} pixels, see build/test-run/{name}/shot0.png)']
 
 
+KEYSYMS = {' ': 'space', '.': 'period', ',': 'comma', '$': 'dollar', '"': 'quotedbl', '-': 'minus'}
+
+
+def play_input(script, display, out, deadline, name=None, env=None):
+    """Send the events of an input script to the emulator window."""
+    d = xinput.Display(display)
+    try:
+        d.move(640, 512)            # into the window: it gets the keyboard
+        for cmd in script:
+            op, args = cmd[0], cmd[1:]
+            if op == 'sync':
+                path = os.path.join(out, args[0])
+                while not os.path.exists(path):
+                    if time.time() > deadline:
+                        return
+                    time.sleep(0.2)
+                time.sleep(0.3)
+            elif op == 'wait':
+                time.sleep(float(args[0]))
+            elif op == 'key':
+                d.key(args[0])
+            elif op == 'keys':
+                d.keys([KEYSYMS.get(c, c) for c in ' '.join(args)])
+            elif op == 'move':
+                d.move_by(int(args[0]), int(args[1]))
+            elif op == 'button':
+                d.button(int(args[0]), args[1] == 'down')
+            elif op == 'shot':
+                time.sleep(0.5)
+                screenshot(env, os.path.join(out, f'{name}_{args[0]}.png'))
+            elif op == 'click':
+                d.button(int(args[0]), True)
+                time.sleep(0.1)
+                d.button(int(args[0]), False)
+            else:
+                raise ValueError(f'unknown input command {op}')
+            time.sleep(0.05)
+    finally:
+        d.close()
+
+
 def run_test(name, tables, amos, kickstart, workbench, timeout, visible):
     """Boot an emulator for one test. Returns (finished, seconds, out dir,
     screenshots of an editor test)."""
@@ -257,6 +311,11 @@ def run_test(name, tables, amos, kickstart, workbench, timeout, visible):
         head, _, body = body.partition('\n')
         head += '\n'
     editor = is_editor_test(name)
+    script = None
+    if os.path.exists(os.path.join(TESTS, name + '.input')):
+        with open(os.path.join(TESTS, name + '.input')) as f:
+            script = [line.split('#')[0].split() for line in f]
+            script = [cmd for cmd in script if cmd]
     if editor:
         listing = body
     else:
@@ -269,7 +328,8 @@ def run_test(name, tables, amos, kickstart, workbench, timeout, visible):
     config = os.path.join(base, 'test.fs-uae')
     with open(config, 'w') as f:
         f.write(FS_UAE_CONFIG.format(kickstart=kickstart, hd=hd, amos=amos,
-                                     workbench=workbench, base=os.path.join(base, 'fsuae')))
+                                     workbench=workbench, base=os.path.join(base, 'fsuae'),
+                                     grab=1 if script else 0))
     env = dict(os.environ)
     env['ALSOFT_DRIVERS'] = 'null'      # no sound device: keep OpenAL quiet
     xvfb = None
@@ -282,6 +342,9 @@ def run_test(name, tables, amos, kickstart, workbench, timeout, visible):
             proc = subprocess.Popen(['fs-uae', config], stdout=log, stderr=subprocess.STDOUT,
                                     env=env, start_new_session=True)
             done = os.path.join(out, 'DONE')
+            if script:
+                threading.Thread(target=play_input, args=(script, env['DISPLAY'], out, start + timeout,
+                                                          name, env), daemon=True).start()
             try:
                 if editor:
                     if not xvfb:
@@ -321,6 +384,10 @@ def compare(name, out):
             problems.append(f'{f} missing')
         elif f not in want:
             problems.append(f'{f} not in golden')
+        elif f.endswith('.png'):
+            a, b = Image.open(got[f]).convert('RGB'), Image.open(want[f]).convert('RGB')
+            if a.size != b.size or a.tobytes() != b.tobytes():
+                problems.append(f'{f} differs')
         elif open(got[f], 'rb').read() != open(want[f], 'rb').read():
             problems.append(f'{f} differs')
     if not got:

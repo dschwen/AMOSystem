@@ -174,6 +174,15 @@ harness compares screenshots with `tests/golden/<name>.png`, ignoring the
 pixels that change while it watches (the cursor). `editor_listing` covers
 the detokenizer.
 
+Interactive tests: `tests/amos/<name>.input` scripts keyboard and mouse
+events (`tests/xinput.py` sends them through the X server's XTest
+extension; the emulator grabs the input for such tests). `sync NAME` waits
+until the program writes `AMOSTEST:out/NAME`, and `shot NAME` saves a
+screenshot that is compared pixel for pixel. `menus` drives the menu bar
+with the right mouse button. Mouse positions are hardware coordinates: a
+lowres screen at its default position starts at 128,50 (`X Mouse=`/`Y
+Mouse=` put the pointer there first).
+
 Things to know when writing tests:
 - A syntax error drops AMOS into the editor. The test then times out, and
   `build/test-run/<name>/timeout.png` shows the editor with the cursor on the
