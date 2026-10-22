@@ -3,6 +3,7 @@
 // their interpreter are in lib/dialog.cpp.
 
 #include "lib/banks.h"
+#include "lib/dos.h"
 #include "lib/dialog.h"
 #include "lib/strings.h"
 
@@ -304,4 +305,141 @@ extern "C" void lib_in_resource_unpack(int32_t n, uint32_t x, uint32_t y)
     f.d[2] = y;
     if (!static_cast<uint16_t>(lib_unpack_bitmap(f)))
         fon_call();
+}
+
+// ---- Read Text ---------------------------------------------------------------------
+
+// IRText: show text (length bytes) in the text reader, a dialog of the
+// default resource on a screen of its own. A word clicked in hypertext
+// comes back in Param$.
+static void read_text(uint32_t title, uint32_t text_address, uint32_t length)
+{
+    IData &d = idata();
+    Regs sr = {};
+    lib_call(L_SaveRegs, sr);
+    uint8_t *text = ptr<uint8_t>(text_address);
+    uint32_t buffer = (length >> 4 << 2) + 2048;
+    // "#HYPn": hypertext of level n
+    uint32_t hyper = 0;
+    if (peek_l(text) == 0x23485950) {
+        uint8_t c = text[4];
+        hyper = static_cast<uint8_t>(c - '0');
+        if (c >= '1' && c <= '9') {
+            buffer += 2048;
+            text += 8;
+        }
+    }
+    Screen *current = ptr<Screen>(wdata().EcCourant);
+    d.TRd_OldEc = current ? current->EcNumber : 0xFFFF;
+    constexpr uint32_t EcFsel = 10;
+    Resource r = default_resource();
+    uint32_t error;
+    dia_resource_screen(r.graphics, EcFsel, static_cast<uint32_t>(static_cast<int16_t>(d.PI_RtSx)),
+                        static_cast<uint32_t>(static_cast<int16_t>(d.PI_RtSy)), 0, -1, &error);
+    if (static_cast<uint16_t>(error))
+        lib_jump(L_EcWiErr, error);
+    uint32_t channel = 65536;
+    while (dia_channel(channel))
+        channel++;
+    const uint8_t *program = r.programs + peek_l(r.programs + 2);
+    bool failed = true;
+    DiaOpen o = dia_open(channel, program, r.graphics, r.messages, buffer, 8, false);
+    if (!o.error) {
+        int32_t *v = dia_vars(o.d);
+        v[2] = static_cast<int32_t>(hyper);
+        v[0] = static_cast<int32_t>(address(text));
+        v[1] = static_cast<int32_t>(title);
+        if (!dia_run(channel, -1, 0, 0).error) {
+            failed = false;
+            // The screen appears from its centre
+            Regs a = {};
+            a.a[2] = wdata().EcAdr[EcFsel];
+            a.d[7] = d.PI_RtSpeed;
+            a.d[6] = 1;
+            a.d[5] = static_cast<uint16_t>(d.PI_RtWy + (d.PI_RtSy >> 1));
+            lib_call(L_AppCentre, a);
+            d.ParamC = d.ChVide;
+            for (;;) {
+                Regs w = {};
+                lib_call(L_Sys_WaitMul, w);
+                Regs t = {};
+                lib_call(L_Test_PaSaut, t);
+                DiaValue v = dia_value(channel, 5, 0);
+                if (v.type == 2 && *ptr<uint8_t>(v.value)) {
+                    // A word of the hypertext: Param$
+                    const uint8_t *word = ptr<uint8_t>(v.value);
+                    uint8_t *s = str_alloc(128);
+                    uint8_t *to = s + 2;
+                    while ((*to++ = *word++)) {
+                    }
+                    d.ParamC = str_finish(s, to - 1);
+                    break;
+                }
+                DiaResult ret = dia_return(channel);
+                if (ret.error) {
+                    // (Reported as "out of memory", as in the assembler)
+                    failed = true;
+                    break;
+                }
+                if (ret.value < 0)
+                    break;
+            }
+        }
+    }
+    dia_close(channel);
+    // And disappears into it
+    Screen *s = ptr<Screen>(wdata().EcAdr[EcFsel]);
+    Regs a = {};
+    a.a[2] = address(s);
+    a.d[7] = static_cast<uint32_t>(-static_cast<int16_t>(d.PI_RtSpeed));
+    a.d[6] = s->EcTy >> 1;
+    a.d[5] = static_cast<uint16_t>(s->EcAWY + a.d[6]);
+    lib_call(L_AppCentre, a);
+    Regs del = {};
+    del.d[1] = EcFsel;
+    ec_call(ec::Del, del);
+    if (static_cast<int16_t>(d.TRd_OldEc) >= 0) {
+        Regs act = {};
+        act.d[1] = d.TRd_OldEc;
+        ec_call(ec::Active, act);
+    }
+    Regs tb = {};
+    lib_call(L_ResTempBuffer, tb);
+    if (failed)
+        lib_jump(L_OOfMem, 0);
+    Regs lr = {};
+    lib_call(L_LoadRegs, lr);
+}
+
+// READ TEXT file$
+extern "C" void lib_in_read_text1(const uint8_t *name)
+{
+    // Room for Param$ (a hypertext word) before anything happens
+    str_alloc(256);
+    name_disc(name);
+    Regs m = {};
+    m.d[0] = 20;
+    lib_call(L_Def_GetMessage, m);      // "AMOS Professional Text Reader"
+    uint32_t title = m.a[0] - 2;
+    if (!file_open(ModeOldFile))
+        disk_error();
+    file_seek(0, 1);
+    uint32_t size = static_cast<uint32_t>(file_seek(0, -1));
+    Regs t = {};
+    t.d[0] = size + 4;
+    lib_call(L_ResTempBuffer, t);
+    // (The assembler read into whatever a0 held when there was no memory)
+    if (!idata().TempBuffer)
+        lib_jump(L_OOfMem, 0);
+    if (!file_read(ptr<void>(idata().TempBuffer), size))
+        disk_error();
+    file_close();
+    read_text(title, idata().TempBuffer, size);
+}
+
+// READ TEXT title$,address,length
+extern "C" void lib_in_read_text3(uint32_t title, uint32_t text, uint32_t length)
+{
+    str_alloc(256);
+    read_text(title, text, length);
 }

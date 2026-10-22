@@ -187,6 +187,13 @@ Interface (dialogs)
 - The zone lists were also searched at their end marker, reading past it.
 - `Dialog Open` of an empty program reported its syntax error at a
   meaningless position; it is now 0.
+- `Read Text` of a file with no memory for it read the file into whatever
+  address a register held; it is now "out of memory".
+
+ARexx
+- A message arriving at the ARexx port that is not an ARexx command was
+  taken off the port and never replied to, so its sender waited for ever;
+  it is now replied to.
 
 ## Assembler compatibility notes
 

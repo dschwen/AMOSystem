@@ -1,0 +1,10 @@
+sync ready
+wait 4
+key Escape
+sync again
+wait 4
+glide -3000 -3000
+wait 0.3
+glide 40 26
+wait 0.5
+click 1

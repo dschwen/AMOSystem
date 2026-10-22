@@ -98,3 +98,23 @@ _lib_dia_on_default
 		dc.l	0
 		CCall	_lib_dia_close_all
 		rts
+
+; Read Text (lib/interface.cpp)
+		LibCall	InReadText1,_lib_in_read_text1,1,None		READ TEXT a$
+		LibCall	InReadText3,_lib_in_read_text3,3,None		READ TEXT t$,a,l
+
+; ARexx (lib/arexx.cpp)
+		LibCall	FnArexxExist,_lib_fn_arexx_exist,1,Int		=AREXX EXIST(p$)
+		LibCall	InArexxOpen,_lib_in_arexx_open,1,None		AREXX OPEN p$
+		LibCall	FnArexx,_lib_fn_arexx,0,Int			=AREXX
+		LibCall	InArexxWait,_lib_in_arexx_wait,0,None		AREXX WAIT
+		LibCall	InArexxClose,_lib_in_arexx_close,0,None		AREXX CLOSE
+		LibCall	FnArexxD,_lib_fn_arexxd,1,String		=AREXX$(n)
+		LibCall	InArexxAnswer1,_lib_in_arexx_answer1,1,None	AREXX ANSWER c
+		LibCall	InArexxAnswer2,_lib_in_arexx_answer2,2,None	AREXX ANSWER c,a$
+; Closes the port when the program is cleared
+		xdef	_lib_arexx_on_clear
+_lib_arexx_on_clear
+		dc.l	0
+		CCall	_lib_arx_close
+		rts

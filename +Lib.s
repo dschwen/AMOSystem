@@ -5958,208 +5958,13 @@ IAmRb:	SyCall	AMALReg
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ;		READ TEXT a$
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InReadText1
-; - - - - - - - - - - - - -
-; Nom de fichier
-	move.l	d3,a2
-	move.l	#256,d3			256 pour Param$
-	Rjsr	L_Demande
-	Rjsr	L_NomDisc
-; Titre: AMOS Ascii Reader
-	moveq	#20,d0
-	Rjsr	L_Def_GetMessage
-	subq.l	#2,a0
-	move.l	a0,-(a3)
-; Ouvre le fichier
-	move.l	#1005,d2
-	Rjsr	L_D_Open
-	bne.s	*+8
-	Rjmp	L_DiskError
-; Trouve la taille
-	moveq	#0,d2
-	moveq	#1,d3
-	Rjsr	L_D_Seek
-	moveq	#0,d2
-	moveq	#-1,d3
-	Rjsr	L_D_Seek
-	move.l	d0,d3
-	addq.l	#4,d0
-	Rjsr	L_ResTempBuffer
-	move.l	a0,d2
-; Charge le fichier
-	Rjsr	L_D_Read
-	beq.s	*+8
-	Rjmp	L_DiskError
-	Rjsr	L_D_Close
-; Pousse l'adresse
-	move.l	TempBuffer(a5),-(a3)
-	Rbra	L_IRText
+	Lib_Int	InReadText1		src/lib/interface.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 	Trois parametres: titre,adresse,longueur
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InReadText3
+	Lib_Int	InReadText3		src/lib/interface.cpp
 ; - - - - - - - - - - - - -
-	move.l	d3,-(a3)
-	move.l	#256,d3			256 pour Param$
-	Rjsr	L_Demande
-	move.l	(a3)+,d3
-	Rbra	L_IRText
-; - - - - - - - - - - - - -
-	Lib_Def	IRText
-; - - - - - - - - - - - - -
-	Rbsr	L_SaveRegs
-; De l'hypertexte?
-; ~~~~~~~~~~~~~~~~
-	moveq	#0,d0
-	lsr.l	#4,d3			moyenne 16 par ligne
-	lsl.l	#2,d3			* 4
-	add.l	#2048,d3		Securite
-	move.l	(a3),a0
-	cmp.l	#"#HYP",(a0)
-	bne.s	.Skip
-	move.b	4(a0),d0
-	sub.b	#"0",d0
-	bcs.s	.Skip
-	beq.s	.Skip
-	cmp.b	#9,d0
-	bhi.s	.Skip
-	add.l	#2048,d3
-	addq.l	#8,(a3)
-.Skip	move.l	d0,-(a3)
-	move.l	d3,-(a3)
-; Stocke le numero de l'ecran courant
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	moveq	#-1,d0
-	move.l	T_EcCourant(a5),d1
-	beq.s	.Skup
-	move.l	d1,a0
-	move.w	EcNumber(a0),d0
-.Skup	move.w	d0,TRd_OldEc(a5)
-; Ouverture de l'ecran
-; ~~~~~~~~~~~~~~~~~~~~
-	Rjsr	L_Dia_GetDefault
-	move.l	a1,a0
-	moveq	#EcFsel,d0
-	move.w	PI_RtSx(a5),d1
-	move.w	PI_RtSy(a5),d2
-	ext.l	d1
-	ext.l	d2
-	moveq	#0,d3
-	moveq	#-1,d4
-	Rjsr	L_Dia_RScOpen
-	Rbne	L_EcWiErr
-;	move.l	a0,TRd_AdEc(a5)
-; Trouve le bon numero de canal dialogue
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	movem.l	d0/d1/a0/a1,-(sp)
-	move.l	#65536,d7
-.Find	move.l	d7,d0
-	Rjsr	L_Dia_GetChannel
-	beq.s	.Ok
-	addq.l	#1,d7
-	bra.s	.Find
-.Ok	movem.l	(sp)+,d0/d1/a0/a1
-; Appel du DBL
-; ~~~~~~~~~~~~
-	Rjsr	L_Dia_GetDefault
-	add.l	2+0(a0),a0		Programme numero 1
-	move.l	d7,d0
-	move.l	(a3)+,d1		Longueur du buffer
-	moveq	#8,d2			Variables internes
-	moveq	#0,d3			Pas de recopie
-	Rjsr	L_Dia_OpenChannel
-	bne	.OutM
-	move.l	(a3)+,8(a1)		Variable 2 = Hypertexte
-	move.l	(a3)+,0(a1)		Variable 0 = Base texte
-	move.l	(a3)+,4(a1)		Variable 1 = Titre
-; Demarre le programme
-; ~~~~~~~~~~~~~~~~~~~~
-	move.l	d7,d0
-	moveq	#-1,d1
-	moveq	#0,d2
-	moveq	#0,d3
-	Rjsr	L_Dia_RunProgram
-	tst.l	d0
-	bne	.OutM
-; Ouverture de l'ecran
-; ~~~~~~~~~~~~~~~~~~~~
-	move.l	d7,-(sp)
-	move.l	T_EcAdr+EcFsel*4(a5),a2
-	move.w	PI_RtSpeed(a5),d7
-	moveq	#1,d6
-	move.w	PI_RtWy(a5),d5
-	move.w	PI_RtSy(a5),d0
-	lsr.w	#1,d0
-	add.w	d0,d5
-	Rjsr	L_AppCentre
-	move.l	(sp)+,d7
-; Animation de l'ecran, uniquement READ TEXT
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	move.l	ChVide(a5),ParamC(a5)
-.Loop	move.l	d7,-(sp)
-	Rjsr	L_Sys_WaitMul
-	Rjsr	L_Test_PaSaut
-	move.l	(sp)+,d7
-	move.l	d7,d0
-	moveq	#5,d1
-	moveq	#0,d2
-	Rjsr	L_Dia_GetValue
-	cmp.b	#2,d2
-	beq.s	.Copy
-.Back	move.l	d7,d0
-	Rjsr	L_Dia_GetReturn
-	bne.s	.Quit
-	tst.l	d1
-	bpl.s	.Loop
-	bra.s	.Quit
-; Copie la chaine >>> Param$
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~
-.Copy	move.l	d1,a2
-	tst.b	(a2)
-	beq.s	.Back
-	move.l 	#128,d3
-	Rjsr	L_Demande
-	clr.w	(a0)+
-.Cop	move.b	(a2)+,(a0)+
-	bne.s	.Cop
-	move.l	a0,d0
-	and.l	#$FFFFFFFE,d0
-	move.l	d0,HiChaine(a5)
-	sub.l	a1,a0
-	subq.l	#3,a0
-	move.w	a0,(a1)
-	move.l	a1,ParamC(a5)
-	moveq	#0,d0
-	bra.s	.Quit
-; Fermeture du canal
-; ~~~~~~~~~~~~~~~~~~
-.OutM	moveq	#1,d0
-.Quit	move.l	d0,-(sp)
-	move.l	d7,d0
-	Rjsr	L_Dia_CloseChannel
-; Fermeture de l'ecran
-; ~~~~~~~~~~~~~~~~~~~~
-	move.l	T_EcAdr+EcFsel*4(a5),a2
-	move.w	PI_RtSpeed(a5),d7
-	neg.w	d7
-	move.w	EcTy(a2),d6
-	lsr.w	#1,d6
-	move.w	EcAWY(a2),d5
-	add.w	d6,d5
-	Rjsr	L_AppCentre
-	EcCalD	Del,EcFsel
-	move.w	TRd_OldEc(a5),d1
-	bmi.s	.NoEc
-	EcCall	Active
-.NoEc
-; Ok!
-; ~~~
-	moveq	#0,d0
-	Rjsr	L_ResTempBuffer
-	move.l	(sp)+,d0
-	Rbne	L_OOfMem
-	Rbsr	L_LoadRegs
-	rts
+	Lib_Empty			IRText, now in src/lib/interface.cpp
 
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -6194,159 +5999,41 @@ IAmRb:	SyCall	AMALReg
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 		=AREXX EXISTS("port")
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par FnArexxExist
-; - - - - - - - - - - - - -
-	move.l	d3,a2
-	move.w	(a2)+,d2
-	Rbsr	L_ChVerBuf
-	move.l	Buffer(a5),a0
-	moveq	#0,d0
-	Rbsr	L_Arx_RegisterPort
-	move.l	d0,d3
-	Ret_Int
+	Lib_Int	FnArexxExist		src/lib/arexx.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ;		AREXX OPEN "PORT_NAME"
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InArexxOpen
-; - - - - - - - - - - - - -
-; Chaine port-name
-; ~~~~~~~~~~~~~~~~
-	move.l	d3,a2
-	move.w	(a2)+,d2
-	lea	Arx_PortName(a5),a0
-	cmp.w	#32,d2
-	Rbcc	L_StooLong
-	subq.w	#1,d2
-	bmi.s	.Skip1
-.Loop1	move.b	(a2)+,(a0)+
-	cmp.b	#" ",-1(a0)
-	Rble	L_FonCall
-	dbra	d2,.Loop1
-.Skip1	clr.b	(a0)
-; Va ouvrir
-; ~~~~~~~~~
-	Rbsr	L_Arx_Open
-	Rbne	L_GoError
-	rts
+	Lib_Int	InArexxOpen		src/lib/arexx.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 		=AREXX
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par FnArexx
-; - - - - - - - - - - - - -
-	Rbsr	L_Arx_Message
-	move.l	d0,d3
-	beq.s	.Skip
-	moveq	#1,d3
-	move.l	Arx_Answer(a5),a0
-	move.l	rm_Action(a0),d0
-	and.l	#RXFF_RESULT,d0
-	beq.s	.Skip
-	moveq	#2,d3
-.Skip	Ret_Int
+	Lib_Int	FnArexx		src/lib/arexx.cpp
 
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 		AREXX WAIT
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InArexxWait
-; - - - - - - - - - - - - -
-.Loop	Rjsr	L_Sys_WaitMul
-	Rjsr	L_Test_Normal
-	Rbsr	L_Arx_Message
-	beq.s	.Loop
-	rts
+	Lib_Int	InArexxWait		src/lib/arexx.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 		AREXX CLOSE
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InArexxClose
-; - - - - - - - - - - - - -
-	tst.l	Arx_Answer(a5)
-	bne.s	.Err
-	Rbsr	L_Arx_Close
-	rts
-.Err	move.w	#198,d0
-	Rbra	L_GoError
+	Lib_Int	InArexxClose		src/lib/arexx.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ;		=AREXX$(n)
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par FnArexxD
-; - - - - - - - - - - - - -
-	cmp.l	#16,d3
-	Rbcc	L_FonCall
-	move.l	Arx_Answer(a5),d0
-	Rbeq	L_Ret_ChVide
-	move.l	d0,a0
-	lsl	#2,d3
-	move.l	rm_Args(a0,d3.w),d0
-	Rbeq	L_Ret_ChVide
-	move.l	d0,a2
-	move.w	ra_Length-ra_Buff(a2),d2
-	move.w	d2,d3
-	Rbeq	L_Ret_ChVide
-	Rjsr	L_Demande
-	move.w	d3,(a0)+
-.Copy	move.b	(a2)+,(a0)+
-	subq.w	#1,d2
-	bne.s	.Copy
-	moveq	#1,d0
-	add.l	a0,d0
-	and.w	#$FFFE,d0
-	move.l	d0,HiChaine(a5)
-	move.l	a1,d3
-	Ret_String
+	Lib_Int	FnArexxD		src/lib/arexx.cpp
 
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 		AREXX ANSWER error [,"answer"]
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InArexxAnswer1
+	Lib_Int	InArexxAnswer1		src/lib/arexx.cpp
 ; - - - - - - - - - - - - -
-	move.l	d3,-(a3)
-	move.l	ChVide(a5),d3
-	Rbra	L_InArexxAnswer2
-; - - - - - - - - - - - - -
-	Lib_Par InArexxAnswer2
-; - - - - - - - - - - - - -
-	move.l	d3,-(a3)
-	move.l	Arx_Answer(a5),d0
-	beq.s	.Err1
-	move.l	d0,a2
-; Une r�ponse?
-	move.l	rm_Action(a2),d0
-	and.l	#RXFF_RESULT,d0
-	beq.s	.NoResult
-	move.l	(a3),a0
-	moveq	#0,d0
-	move.w	(a0)+,d0
-	move.l	a6,-(sp)
-	move.l	Arx_Base(a5),a6
-	jsr	_LVOCreateArgstring(a6)
-	move.l	(sp)+,a6
-	tst.l	d0
-	beq.s	.Err2
-	move.l	d0,rm_Result2(a2)
-.NoResult
-; Le code de retour
-	move.l	4(a3),rm_Result1(a2)
-; Renvoie le message
-	addq.l	#8,a3
-	move.l	a2,a1
-	move.l	a6,-(sp)
-	move.l	4.w,a6
-	jsr	_LVOReplyMsg(a6)
-	move.l	(sp)+,a6
-	clr.l	Arx_Answer(a5)
-	rts
-; Not defined
-.Err1	move.w	#197,d0
-	Rbra	L_GoError
-; Out of mem
-.Err2	moveq	#24,d0
-	Rbra	L_GoError
+	Lib_Int	InArexxAnswer2		src/lib/arexx.cpp
 
 
 ; _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
@@ -6356,166 +6043,24 @@ IAmRb:	SyCall	AMALReg
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 	Close the Arexx port
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	Arx_Close
-; - - - - - - - - - - - - -
-	movem.l	a0-a2/d0-d2/a6,-(sp)
-	move.l	$4.w,a6
-	tst.l	Arx_Base(a5)
-	beq.s	.NoArx
-	tst.l	Arx_Port(a5)
-	beq.s	.NoPort
-; Un message re�u � renvoyer?
-	move.l	Arx_Answer(a5),d0
-	beq.s	.Skip0
-	clr.l	Arx_Answer(a5)
-	move.l	d0,a1
-	move.l	#RC_FATAL,rm_Result1(a1)
-	clr.l	rm_Result2(a1)
-	jsr	_LVOReplyMsg(a6)
-; Receptionne les messages en attente
-.Skip0	jsr	_LVOForbid(a6)
-	bra.s	.In1
-.Loop1	move.l	d0,a1
-	move.l	#RC_FATAL,rm_Result1(a1)
-	clr.l	rm_Result2(a1)
-	jsr	_LVOReplyMsg(a6)
-.In1	move.l	Arx_Port(a5),a0
-	jsr	_LVOGetMsg(a6)
-	tst.l	d0
-	bne.s	.Loop1
-; D�truit le port de communication
-	move.l	Arx_Port(a5),-(sp)
-	clr.l	Arx_Port(a5)
-	Rjsr	L_DeletePort
-	addq.l	#4,sp
-	jsr	_LVOPermit(a6)
-.NoPort
-; Ferme la librairie
-	move.l	Arx_Base(a5),a1
-	clr.l	Arx_Base(a5)
-	jsr	_LVOCloseLibrary(a6)
-; Finished!
-.NoArx	movem.l	(sp)+,d0-d2/a0-a2/a6
-	rts
+	Lib_Empty			Arx_Close, now in src/lib/arexx.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 		Ouverture du port AREXX
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	Arx_Open
-; - - - - - - - - - - - - -
-	tst.l	Arx_Base(a5)
-	bne.s	.Err1
-; Ouvre la librairie
-; ~~~~~~~~~~~~~~~~~~
-	lea	.Rexx(pc),a1
-	moveq	#0,d0
-	move.l	a6,-(sp)
-	move.l	$4.w,a6
-	jsr	_LVOOpenLibrary(a6)
-	move.l	(sp)+,a6
-	move.l	d0,Arx_Base(a5)
-	beq	.Err2
-; Cree le message-port
-; ~~~~~~~~~~~~~~~~~~~~
-	lea	Arx_PortName(a5),a0
-	moveq	#-1,d0
-	Rbsr	L_Arx_RegisterPort
-	move.l	a0,Arx_Port(a5)
-	beq.s	.Err3
-; Branche la routine de fermeture
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	movem.l	a0-a2/d0-d1,-(sp)
-	lea	.Struc(pc),a1
-	lea	Sys_ClearRoutines(a5),a2
-	SyCall	AddRoutine
-	movem.l	(sp)+,a0-a2/d0-d1
-	moveq	#0,d0
-	rts
-; Already opened
-.Err1	move.w	#193,d0
-	rts
-; No library
-.Err2	move.w	#194,d0
-	rts
-; Cannot open
-.Err3	Rbsr	L_Arx_Close
-	move.w	#195,d0
-	rts
-; Structure pour CLEARVAR
-.Struc	dc.l	0
-	Rbra	L_Arx_Close
-; Nom de la librairie
-.Rexx	dc.b	"rexxsyslib.library",0
-	even
+	Lib_Empty			Arx_Open, now in src/lib/arexx.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ;	Returns -1 if message port exist
 ;	A0=	Port name
 ;	D0=-1	Create port!
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	Arx_RegisterPort
-; - - - - - - - - - - - - -
-	move.l	a6,-(sp)
-	move.w	d0,-(sp)
-	clr.l	-(sp)
-	move.l	a0,-(sp)
-	moveq	#0,d3
-	move.l	$4.w,a6
-	jsr	_LVOForbid(a6)
-	move.l	(sp),a1
-	jsr	_LVOFindPort(a6)
-	tst.l	d0
-	bne.s	.Exist
-	tst.w	8(sp)
-	beq.s	.Skip
-	Rjsr	L_CreatePort
-	move.l	d0,a0
-.Skip	moveq	#0,d0
-	bra.s	.Out
-.Exist	sub.l	a0,a0
-	moveq	#-1,d0
-.Out	lea	10(sp),sp
-	movem.l	d0/a0,-(sp)
-	jsr	_LVOPermit(a6)
-	movem.l	(sp)+,d0/a0
-	move.l	(sp)+,a6
-	tst.w	d0
-	rts
+	Lib_Empty			Arx_RegisterPort, now in src/lib/arexx.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 		Get message, and returns -1 if message waiting
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	Arx_Message
-; - - - - - - - - - - - - -
-	move.l	a6,-(sp)
-	tst.l	Arx_Base(a5)
-	beq.s	.NoMess
-	tst.l	Arx_Answer(a5)
-	bne.s	.Mess
-; Asks for the message
-; ~~~~~~~~~~~~~~~~~~~~
-	move.l	$4.w,a6
-	move.l	Arx_Port(a5),a0
-	jsr	_LVOGetMsg(a6)
-	tst.l	d0
-	beq.s	.NoMess
-	move.l	d0,Arx_Answer(a5)
-	move.l	d0,a0
-	move.l	Arx_Base(a5),a6
-	jsr	_LVOIsRexxMsg(a6)
-	tst.l	d0
-	beq.s	.No
-	move.l	Arx_Answer(a5),a0
-	move.l	rm_Action(a0),d0
-	and.l	#RXCODEMASK,d0
-	cmp.l	#RXCOMM,d0
-	bne.s	.No
-.Mess	moveq	#-1,d0
-	bra.s	.Out
-.No	clr.l	Arx_Answer(a5)
-.NoMess	moveq	#0,d0
-.Out	move.l	(sp)+,a6
-	rts
+	Lib_Empty			Arx_Message, now in src/lib/arexx.cpp
 
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
