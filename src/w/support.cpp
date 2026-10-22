@@ -1,29 +1,16 @@
 // Services of +W.s for the C++ parts of AMOS.library
 
+#include "core/amiga.h"
 #include "w/w.h"
 
 namespace amos::w {
 
-static uint32_t memory(uint8_t *routine, uint32_t size)
-{
-    Regs r;
-    r.d[0] = size;
-    amos_call(&r, routine);
-    return r.d[0];
-}
-
-uint32_t fast_mm(uint32_t size) { return memory(w_fast_mm, size); }
-uint32_t fast_mm2(uint32_t size) { return memory(w_fast_mm2, size); }
-uint32_t chip_mm(uint32_t size) { return memory(w_chip_mm, size); }
-uint32_t chip_mm2(uint32_t size) { return memory(w_chip_mm2, size); }
-
-void free_mm(uint32_t address, uint32_t size)
-{
-    Regs r;
-    r.d[0] = size;
-    r.a[1] = address;
-    amos_call(&r, w_free_mm);
-}
+// FastMm... (w/memory.cpp)
+uint32_t fast_mm(uint32_t size) { return reserve(size, MemClear | MemPublic); }
+uint32_t fast_mm2(uint32_t size) { return reserve(size, MemPublic); }
+uint32_t chip_mm(uint32_t size) { return reserve(size, MemClear | MemPublic | MemChip); }
+uint32_t chip_mm2(uint32_t size) { return reserve(size, MemPublic | MemChip); }
+void free_mm(uint32_t address, uint32_t size) { release(address, size); }
 
 uint32_t call(uint8_t *routine)
 {
