@@ -63,6 +63,7 @@
 		XREF	_ed_store_entry,_ed_store_block_entry,_ed_delete_line_entry,_ed_delete_chunk_at_entry
 		XREF	_ed_delete_chunk_entry,_ed_find_line_entry,_ed_next_line_entry
 		XREF	_ed_indent_entry
+		XREF	_ed_search_entry,_ed_search_front_entry,_ed_search_back_entry,_ed_replace_text_entry
 		XREF	_ed_tokenise_entry,_ed_detok_entry,_ed_mon_detok_entry,_ed_tinst_entry
 EDebut		dc.l	Ed_Cold-EDebut
 		dc.l	Ed_Title-EDebut
@@ -7118,148 +7119,10 @@ Ed_SRCompte
 	move.b	d0,Ed_RepLong(a5)
 	rts
 
-; Routines de recherche en AVANT / ARRIERE
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_SchBoth
-	btst	#1,d5
-	bne	Ed_SchBack
-;
-; Recherche en avant
-; ~~~~~~~~~~~~~~~~~~
-;	D7=	Y
-;	D6=	X
-;	D5=	Flags
-;	D4=	YMax
-;	D3=	XMax
-Ed_SchFront
-	addq.w	#1,d6
-.Fst	move.w	d7,d0
-	bsr	Ed_FindL
-	beq	.SrchN
-; Sort des limites?
-.SrchL	cmp.w	d4,d7
-	bgt.s	.SrchN
-	bne.s	.Srch1
-	cmp.w	d3,d6
-	bgt.s	.SrchN
-; Detokenise, et recherche
-.Srch1	moveq	#0,d0
-	move.l	Ed_BufT(a5),a1
-	bsr	Detok
-	move.l	Ed_BufT(a5),a0
-	move.w	(a0),d0
-	clr.b	2(a0,d0.w)
-	cmp.w	d0,d6
-	bcc.s	.Srch2
-	lea	2(a0,d6.w),a0
-	lea	Ed_SchBuf(a5),a1
-	bsr	SchBuffer
-	bpl.s	.Srch3
-; Ligne suivante
-.Srch2	moveq	#0,d6
-	bclr	#BitControl-8,T_Actualise(a5)
-	bne.s	.SrchN
-	bsr	Ed_NextL
-	beq.s	.SrchN
-	addq.w	#1,d7
-	bra.s	.SrchL
-; Vraiment trouve?
-.Srch3	add.w	d0,d6
-	cmp.w	d4,d7
-	bne.s	.SrchT
-	cmp.w	d3,d6
-	bls.s	.SrchT
-; Pas trouve, FAUX
-.SrchN	moveq	#0,d0
-	rts
-; Trouve, VRAI
-.SrchT	moveq	#-1,d0
-	rts
-; Recherche en arriere
-; ~~~~~~~~~~~~~~~~~~~~
-;	D7=	Y
-;	D6=	X
-;	D5=	Flags
-;	D4=	YMax
-;	D3=	XMax
-Ed_SchBack
-	movem.w	d6-d7,-(sp)
-	move.w	d7,d4		Jusqu'� la position actuelle -1
-	move.w	d6,d3
-	subq.w	#1,d3
-	bpl.s	.Mm
-	move.w	#255,d3
-	subq.w	#1,d4
-	bmi.s	.NFound
-.Mm	clr.w	d6		A partir du d�but
-	clr.w	d7
-	move.l	#-1,-(sp)
-.Loop	bsr	Ed_SchFront	Tant que l'on trouve
-	beq.s	.PaT
-	move.w	d6,2(sp)
-	move.w	d7,(sp)
-	addq.w	#1,d6
-	bra.s	.Loop
-.PaT	move.w	(sp)+,d7
-	move.w	(sp)+,d6
-	bmi.s	.NFound
-; Trouve! Retourne VRAI
-	addq.l	#4,sp
-	moveq	#-1,d0
-	rts
-; Pas trouve: FAUX
-.NFound	movem.w	(sp)+,d6-d7
-	moveq	#0,d0
-	rts
-;
-; Routine SEARCH
-; ~~~~~~~~~~~~~~
-;	A1=	Chaine � chercher
-;	A0=	Chaine dans laquelle cherche
-;	D5-> 	Flags
-;	D6->	X Debut
-SchBuffer
-	movem.l	a1/d1-d4,-(sp)
-	move.l	a0,d4
-	move.b	(a1)+,d0
-	bsr.s	.MajS
-	move.b	d0,d1
-	move.l	a1,d3
-.RSe1	move.b	(a0)+,d0		* Cherche la 1ere lettre
-	beq.s	.RSeN
-	bsr.s	.MajS
-	cmp.b	d0,d1
-	bne.s	.RSe1
-	move.l	a0,d2
-	swap	d1
-.RSe2	move.b	(a1)+,d0
-	beq.s	.RSeT
-	bsr.s	.MajS
-	move.b	d0,d1
-	move.b	(a0)+,d0
-	bsr.s	.MajS
-	cmp.b	d0,d1
-	beq.s	.RSe2
-	move.l	d2,a0
-	move.l	d3,a1
-	swap	d1
-	bra.s	.RSe1
-.RSeN	movem.l	(sp)+,a1/d1-d4
-	moveq	#-1,d0
-	rts
-.RSeT	move.l	d2,d0
-	sub.l	d4,d0
-	subq.l	#1,d0
-	movem.l	(sp)+,a1/d1-d4
-	rts
-.MajS	btst	#0,d5
-	beq.s	.Skip
-	cmp.b	#"a",d0
-	bcs.s	.Skip
-	cmp.b	#"z",d0
-	bhi.s	.Skip
-	sub.b	#$20,d0
-.Skip	rts
+; Ed_SchBoth, Ed_SchFront, Ed_SchBack: src/editor/search.cpp
+Ed_SchBoth	jmp	_ed_search_entry
+Ed_SchFront	jmp	_ed_search_front_entry
+Ed_SchBack	jmp	_ed_search_back_entry
 
 
 ; REPLACE
@@ -7394,53 +7257,8 @@ Ed_ReplacePrev
 	or.w	#$8002,d5		Flag remplacer
 	bra.s	Ed_RSR
 
-;
-; Routine REPLACE
-; ~~~~~~~~~~~~~~~
-;	A0= 	Ligne � changer
-; 	D0=	Position du changement
-RepBuffer
-	movem.l	a0-a2/d2-d3,-(sp)
-	lea	0(a0,d0.w),a1		Position du changement
-	move.w	-2(a0),d0		Marque la fin de la ligne
-	move.l	a0,d1
-	clr.b	0(a0,d0.w)
-	moveq	#0,d2			Longueur des buffers
-	moveq	#0,d3
-	move.b	Ed_SchLong(a5),d2
-	move.b	Ed_RepLong(a5),d3
-	move.l	a1,a2
-	move.l	a1,a0
-	add.w	d2,a0
-.RChg1	move.b	(a0)+,(a1)+
-	bne.s	.RChg1
-; Place pour le nouveau
-	move.l	a1,a0
-	add.w	d3,a1
-	sub.l	a1,d1
-	neg.l	d1
-	cmp.w	#252,d1
-	bcc	.Tool
-.RChg2	move.b	-(a0),-(a1)
-	cmp.l	a2,a0
-	bcc.s	.RChg2
-; Poke le nouveau
-	lea	Ed_RepBuf(a5),a0
-	move.w	d3,d0
-	subq.w	#1,d0
-.RChg3	move.b	(a0)+,(a2)+
-	dbra	d0,.RChg3
-* Change la longueur de la ligne / pointe la fin du mot
-	add.w	d3,d6
-	subq.w	#1,d1
-	movem.l	(sp)+,a0-a2/d2-d3
-	move.w	d1,-2(a0)
-	moveq	#0,d0
-	rts
-* Line too long
-.Tool	movem.l	(sp)+,a0-a2/d2-d3
-	moveq	#-1,d0
-	rts
+; Routine REPLACE (a0 the line, d0 the column): src/editor/search.cpp
+RepBuffer	jmp	_ed_replace_text_entry
 
 ;_____________________________________________________________________________
 ;

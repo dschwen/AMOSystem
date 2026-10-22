@@ -17,8 +17,10 @@ inline uint32_t call(uint8_t *routine, Regs &r)
     return r.d[0];
 }
 
-// editor/tokens.cpp
+// editor/tokens.cpp: TInst; Detok of a line into buffer (the length word,
+// the text), its length
 const uint8_t *skip_token(uint16_t t, const uint8_t *a);
+uint32_t detok(const uint8_t *line, uint8_t *buffer);
 
 // editor/storage.cpp
 struct Stored {

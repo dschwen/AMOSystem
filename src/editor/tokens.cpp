@@ -837,6 +837,12 @@ DtkFin:
 
 } // namespace
 
+namespace amos::ed {
+
+uint32_t detok(const uint8_t *line, uint8_t *buffer) { return detokenise(line, buffer, nullptr, false).length; }
+
+} // namespace amos::ed
+
 extern "C" {
 // Tokenise: a0 the text, a1 the buffer; d0 1, 0 (empty) or -1 (too long),
 // d1 the length
