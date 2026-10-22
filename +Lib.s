@@ -4494,167 +4494,57 @@ GfxF2	jsr	(a3)
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					Update et assimiles
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InUpdateOff
+	Lib_Int	InUpdateOff		src/lib/sprites.cpp
 ; - - - - - - - - - - - - -
-	bclr	#5,ActuMask(a5)
-	bclr	#6,ActuMask(a5)
-	rts
+	Lib_Int	InUpdateOn		src/lib/sprites.cpp
 ; - - - - - - - - - - - - -
-	Lib_Par InUpdateOn
+	Lib_Int	InUpdate		src/lib/sprites.cpp
 ; - - - - - - - - - - - - -
-	bset	#5,ActuMask(a5)
-	bset	#6,ActuMask(a5)
-	rts
+	Lib_Int	InBobUpdateOff		src/lib/sprites.cpp
 ; - - - - - - - - - - - - -
-	Lib_Par InUpdate
+	Lib_Int	InBobUpdateOn		src/lib/sprites.cpp
 ; - - - - - - - - - - - - -
-	movem.l	a3-a6,-(sp)		* Bobs
-	move.l	a5,-(sp)		*** CHANGER!!!
-	SyCall	EffBob
-	SyCall	ActBob
-	SyCall	AffBob
-	EcCall	SwapScS
-	move.l	(sp)+,a5
-	SyCall	ActHs			* Hard sprites
-	SyCall	AffHs
-	movem.l	(sp)+,a3-a6
-	rts
+	Lib_Int	InBobUpdate		src/lib/sprites.cpp
 ; - - - - - - - - - - - - -
-	Lib_Par InBobUpdateOff
+	Lib_Int	InSpriteUpdateOff		src/lib/sprites.cpp
 ; - - - - - - - - - - - - -
-	bclr	#5,ActuMask(a5)
-	rts
+	Lib_Int	InSpriteUpdateOn		src/lib/sprites.cpp
 ; - - - - - - - - - - - - -
-	Lib_Par InBobUpdateOn
-; - - - - - - - - - - - - -
-	bset	#5,ActuMask(a5)
-	rts
-; - - - - - - - - - - - - -
-	Lib_Par InBobUpdate
-; - - - - - - - - - - - - -
-	movem.l	a3-a6,-(sp)		* Bobs
-	SyCall	EffBob
-	SyCall	ActBob
-	SyCall	AffBob
-	EcCall	SwapScS
-	movem.l	(sp)+,a3-a6
-	rts
-; - - - - - - - - - - - - -
-	Lib_Par InSpriteUpdateOff
-; - - - - - - - - - - - - -
-	bclr	#6,ActuMask(a5)
-	rts
-; - - - - - - - - - - - - -
-	Lib_Par InSpriteUpdateOn
-; - - - - - - - - - - - - -
-	bset	#6,ActuMask(a5)
-	rts
-; - - - - - - - - - - - - -
-	Lib_Par InSpriteUpdate
-; - - - - - - - - - - - - -
-	movem.l	a3-a6,-(sp)
-	SyCall	ActHs
-	SyCall	AffHs
-	movem.l	(sp)+,a3-a6
-	rts
+	Lib_Int	InSpriteUpdate		src/lib/sprites.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					UPDATE EVERY
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InUpdateEvery
-; - - - - - - - - - - - - -
-	cmp.l	#65536,d3
-	Rbcc	L_FonCall
-	move.w	d3,VBLDelai(a5)
-	rts
+	Lib_Int	InUpdateEvery		src/lib/sprites.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					BOB CLEAR / DRAW
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InBobClear
+	Lib_Int	InBobClear		src/lib/sprites.cpp
 ; - - - - - - - - - - - - -
-	movem.l	a3-a6,-(sp)
-	SyCall	EffBob
-	movem.l	(sp)+,a3-a6
-	rts
-; - - - - - - - - - - - - -
-	Lib_Par InBobDraw
-; - - - - - - - - - - - - -
-	movem.l	a3-a6,-(sp)
-	SyCall	ActBob
-	SyCall	AffBob
-	movem.l	(sp)+,a3-a6
-	rts
+	Lib_Int	InBobDraw		src/lib/sprites.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					LIMIT BOB
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InLimitBob0
+	Lib_Int	InLimitBob0		src/lib/sprites.cpp
 ; - - - - - - - - - - - - -
-	moveq	#-1,d1
-	move.l	#EntNul,d2
-	move.l	d2,d3
-	move.l	d3,d4
-	move.l	d4,d5
-	SyCall	LimBob
-	Rbne	L_FonCall
-	rts
+	Lib_Int	InLimitBob4		src/lib/sprites.cpp
 ; - - - - - - - - - - - - -
-	Lib_Par InLimitBob4
-; - - - - - - - - - - - - -
-	moveq	#-1,d1
-	move.l	d3,d5
-	move.l	(a3)+,d4
-	move.l	(a3)+,d3
-	move.l	(a3)+,d2
-	SyCall	LimBob
-	Rbne	L_FonCall
-	rts
-; - - - - - - - - - - - - -
-	Lib_Par InLimitBob5
-; - - - - - - - - - - - - -
-	move.l	d3,d5
-	move.l	(a3)+,d4
-	move.l	(a3)+,d3
-	move.l	(a3)+,d2
-	move.l	(a3)+,d1
-	SyCall	LimBob
-	Rbne	L_FonCall
-	rts
+	Lib_Int	InLimitBob5		src/lib/sprites.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					PRIORITY
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InPriorityOn
+	Lib_Int	InPriorityOn		src/lib/sprites.cpp
 ; - - - - - - - - - - - - -
-	moveq	#1,d1
-	moveq	#-1,d2
-	Rbra	L_Prooo
+	Lib_Int	InPriorityOff		src/lib/sprites.cpp
 ; - - - - - - - - - - - - -
-	Lib_Par InPriorityOff
+	Lib_Int	InPriorityReverseOn		src/lib/sprites.cpp
 ; - - - - - - - - - - - - -
-	moveq	#0,d1
-	moveq	#-1,d2
-	Rbra	L_Prooo
+	Lib_Int	InPriorityReverseOff		src/lib/sprites.cpp
 ; - - - - - - - - - - - - -
-	Lib_Par InPriorityReverseOn
-; - - - - - - - - - - - - -
-	moveq	#-1,d1
-	moveq	#1,d2
-	Rbra	L_Prooo
-; - - - - - - - - - - - - -
-	Lib_Par InPriorityReverseOff
-; - - - - - - - - - - - - -
-	moveq	#-1,d1
-	moveq	#0,d2
-	Rbra	L_Prooo
-; - - - - - - - - - - - - -
-	Lib_Def	Prooo
-; - - - - - - - - - - - - -
-	tst.w	ScOn(a5)
-	Rbeq	L_ScNOp
-	SyCall	SPrio
-	rts
+	Lib_Empty			Prooo, now in src/lib/sprites.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					=AMAL ERR
@@ -5083,778 +4973,234 @@ IAmRb:	SyCall	AMALReg
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					=X BOB
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par FnXBob
+	Lib_Int	FnXBob		src/lib/sprites.cpp
 ; - - - - - - - - - - - - -
-	move.l	d3,d1
-	Rbmi	L_FonCall
-	SyCall	XYBob
-	Rbne	L_FonCall
-	move.w	d1,d3
-	ext.l	d3
-	Ret_Int
-; - - - - - - - - - - - - -
-	Lib_Par FnYBob
-; - - - - - - - - - - - - -
-	move.l	d3,d1
-	Rbmi	L_FonCall
-	SyCall	XYBob
-	Rbne	L_FonCall
-	move.w	d2,d3
-	ext.l	d3
-	Ret_Int
+	Lib_Int	FnYBob		src/lib/sprites.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					=XY SPRITE
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par FnXSprite
+	Lib_Int	FnXSprite		src/lib/sprites.cpp
 ; - - - - - - - - - - - - -
-	move.l	d3,d1
-	Rbmi	L_FonCall
-	SyCall	XYSp
-	Rbne	L_FonCall
-	move.w	d1,d3
-	ext.l	d3
-	Ret_Int
-; - - - - - - - - - - - - -
-	Lib_Par FnYSprite
-; - - - - - - - - - - - - -
-	move.l	d3,d1
-	Rbmi	L_FonCall
-	SyCall	XYSp
-	Rbne	L_FonCall
-	move.w	d2,d3
-	ext.l	d3
-	Ret_Int
+	Lib_Int	FnYSprite		src/lib/sprites.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					=IBOB = ISPRITE
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par FnIBob
+	Lib_Int	FnIBob		src/lib/sprites.cpp
 ; - - - - - - - - - - - - -
-	move.l	d3,d1
-	Rbmi	L_FonCall
-	SyCall	XYBob
-	Rbne	L_FonCall
-	ext.l	d3
-	Ret_Int
-; - - - - - - - - - - - - -
-	Lib_Par FnISprite
-; - - - - - - - - - - - - -
-	move.l	d3,d1
-	Rbmi	L_FonCall
-	SyCall	XYSp
-	Rbne	L_FonCall
-	ext.l	d3
-	Ret_Int
+	Lib_Int	FnISprite		src/lib/sprites.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					= XY MOUSE
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InXMouse
+	Lib_Int	InXMouse		src/lib/sprites.cpp
 ; - - - - - - - - - - - - -
-	move.l	d3,d1
-	move.l	#EntNul,d2
-	SyCall	SetM
-	rts
+	Lib_Int	FnXMouse		src/lib/sprites.cpp
 ; - - - - - - - - - - - - -
-	Lib_Par FnXMouse
+	Lib_Int	InYMouse		src/lib/sprites.cpp
 ; - - - - - - - - - - - - -
-	SyCall	XyMou
-	move.w	d1,d3
-	ext.l	d3
-	Ret_Int
-; - - - - - - - - - - - - -
-	Lib_Par InYMouse
-; - - - - - - - - - - - - -
-	move.l	d3,d2
-	move.l	#EntNul,d1
-	SyCall	SetM
-	rts
-; - - - - - - - - - - - - -
-	Lib_Par FnYMouse
-; - - - - - - - - - - - - -
-	SyCall	XyMou
-	move.w	d2,d3
-	ext.l	d3
-	Ret_Int
+	Lib_Int	FnYMouse		src/lib/sprites.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					=MOUSEKEY / CLICK
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par FnMouseKey
+	Lib_Int	FnMouseKey		src/lib/sprites.cpp
 ; - - - - - - - - - - - - -
-	SyCall	MouseKey
-	moveq	#0,d3
-	move.w	d1,d3
-	Ret_Int
-; - - - - - - - - - - - - -
-	Lib_Par FnMouseClick
-; - - - - - - - - - - - - -
-	SyCall	MouRel
-	moveq	#0,d3
-	move.w	d1,d3
-	Ret_Int
+	Lib_Int	FnMouseClick		src/lib/sprites.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					HIDE ON HIDE
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InHide
+	Lib_Int	InHide		src/lib/sprites.cpp
 ; - - - - - - - - - - - - -
-	SyCalD	Hide,0
-	rts
-; - - - - - - - - - - - - -
-	Lib_Par InHideOn
-; - - - - - - - - - - - - -
-	SyCalD	Hide,-1
-	rts
+	Lib_Int	InHideOn		src/lib/sprites.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					SHOW SHOW ON
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InShow
+	Lib_Int	InShow		src/lib/sprites.cpp
 ; - - - - - - - - - - - - -
-	SyCalD	Show,0
-	rts
-; - - - - - - - - - - - - -
-	Lib_Par InShowOn
-; - - - - - - - - - - - - -
-	SyCalD	Show,-1
-	rts
+	Lib_Int	InShowOn		src/lib/sprites.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					LIMIT MOUSE
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InLimitMouse0
+	Lib_Int	InLimitMouse0		src/lib/sprites.cpp
 ; - - - - - - - - - - - - -
-	moveq	#0,d1
-	Rbra	L_LimMX
+	Lib_Int	InLimitMouse1		src/lib/sprites.cpp
 ; - - - - - - - - - - - - -
-	Lib_Par InLimitMouse1
+	Lib_Empty			LimMX, now in src/lib/sprites.cpp
 ; - - - - - - - - - - - - -
-	move.l	d3,d1
-	Rbmi	L_FonCall
-	addq.l	#1,d1
-	Rbra	L_LimMX
-; - - - - - - - - - - - - -
-	Lib_Def	LimMX
-; - - - - - - - - - - - - -
-	tst.w	ScOn(a5)
-	Rbeq	L_ScNOp
-	SyCall	LimitMEc		??? Nb d'ecrans
-	Rbne	L_EcWiErr
-	rts
-; - - - - - - - - - - - - -
-	Lib_Par InLimitMouse4
-; - - - - - - - - - - - - -
-	tst.w	ScOn(a5)
-	Rbeq	L_ScNOp
-	move.l	d3,d4
-	move.l	(a3)+,d3
-	move.l	(a3)+,d2
-	move.l	(a3)+,d1
-	SyCall	LimitM
-	rts
+	Lib_Int	InLimitMouse4		src/lib/sprites.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					CHANGE MOUSE n
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InChangeMouse
-; - - - - - - - - - - - - -
-	subq.l	#1,d3
-	Rbmi	L_FonCall
-	move.l	d3,d1
-	SyCall	ChangeM
-	rts
+	Lib_Int	InChangeMouse		src/lib/sprites.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					SET BOB n,back,plane,minterm
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InSetBob
-; - - - - - - - - - - - - -
-	Rbsr	L_SaveRegs
-	move.l	d3,d7
-	move.l	(a3)+,d6
-	move.l	(a3)+,d5
-	move.l	#EntNul,d4
-	move.l	d4,d3
-	move.l	d3,d2
-	move.l	(a3)+,d1
-	cmp.l	d4,d7
-	bne.s	IStb1
-	moveq	#0,d7
-IStb1	cmp.l	d4,d6
-	bne.s	IStb2
-	moveq	#-1,d6
-IStb2	cmp.l	d4,d5
-	bne.s	IStb3
-	moveq	#0,d5
-IStb3	tst.w	ScOn(a5)
-	Rbeq	L_ScNOp
-	SyCall	SetBob
-	Rbmi	L_OOfMem
-	Rbne	L_FonCall
-	Rbsr	L_LoadRegs
-	rts
+	Lib_Int	InSetBob		src/lib/sprites.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					BOB n,x,y,a
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InBob
-; - - - - - - - - - - - - -
-	tst.w	ScOn(a5)
-	Rbeq	L_ScNOp
-	move.l	d3,d4
-	move.l	(a3)+,d3
-	move.l	(a3)+,d2
-	move.l	(a3)+,d1
-	movem.l	d6-d7,-(sp)
-	moveq	#0,d7
-	moveq	#-1,d6
-	moveq	#0,d5
-	SyCall	SetBob
-	movem.l	(sp)+,d6-d7
-	Rbmi	L_OOfMem
-	Rbne	L_FonCall
-	rts
+	Lib_Int	InBob		src/lib/sprites.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					BOB OFF x
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InBobOff0
+	Lib_Int	InBobOff0		src/lib/sprites.cpp
 ; - - - - - - - - - - - - -
-	SyCall	OffBobS
-	rts
-; - - - - - - - - - - - - -
-	Lib_Par InBobOff1
-; - - - - - - - - - - - - -
-	move.l	d3,d1
-	SyCall	OffBob
-	rts
+	Lib_Int	InBobOff1		src/lib/sprites.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					SET SPRITE BUFFER
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InSetSpriteBuffer
-; - - - - - - - - - - - - -
-	move.l	d3,d1
-	cmp.l	#16,d1
-	Rbcs	L_FonCall
-	SyCall	SBufHs
-	Rbne	L_SpErr
-	rts
+	Lib_Int	InSetSpriteBuffer		src/lib/sprites.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					SPRITE PRIORITY
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InSpritePriority
-; - - - - - - - - - - - - -
-	tst.w	ScOn(a5)
-	Rbeq	L_ScNOp
-	move.l	d3,d1
-	cmp.l	#4,d1
-	Rbhi	L_FonCall
-	SyCall	PriHs
-	rts
+	Lib_Int	InSpritePriority		src/lib/sprites.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					SPRITE n,x,y,a
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InSprite
-; - - - - - - - - - - - - -
-	move.l	d3,d4
-	move.l	(a3)+,d3
-	move.l	(a3)+,d2
-	move.l	(a3)+,d1
-	SyCall	NXYAHs
-	Rbne	L_FonCall
-	bset	#6,T_Actualise(a5)
-	rts
+	Lib_Int	InSprite		src/lib/sprites.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					SPRITE OFF
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InSpriteOff0
+	Lib_Int	InSpriteOff0		src/lib/sprites.cpp
 ; - - - - - - - - - - - - -
-	SyCall	OffHs
-	bset	#6,T_Actualise(a5)
-	rts
-; - - - - - - - - - - - - -
-	Lib_Par InSpriteOff1
-; - - - - - - - - - - - - -
-	move.l	d3,d1
-	SyCall	XOffHs
-	Rbne	L_FonCall
-	bset	#6,T_Actualise(a5)
-	rts
+	Lib_Int	InSpriteOff1		src/lib/sprites.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					Collision hard
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InSetHardcol
+	Lib_Int	InSetHardcol		src/lib/sprites.cpp
 ; - - - - - - - - - - - - -
-	move.l	(a3)+,d2
-	moveq	#$0F,d1
-	SyCall	SetHCol
-	rts
-; - - - - - - - - - - - - -
-	Lib_Par FnHardcol
-; - - - - - - - - - - - - -
-	tst.l	d3
-	bmi.s	FHc1
-	cmp.l	#8,d3
-	Rbcc	L_FonCall
-FHc1	move.w	d3,d1
-	SyCall	GetHCol
-	move.l	d1,d3
-	Ret_Int
+	Lib_Int	FnHardcol		src/lib/sprites.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					=BOB SPRITE COL
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par FnBobSpriteCol1
+	Lib_Int	FnBobSpriteCol1		src/lib/sprites.cpp
 ; - - - - - - - - - - - - -
-	move.l	d3,d1
-	Rbmi	L_FonCall
-	moveq	#0,d2
-	bset	#31,d2
-	moveq	#63,d3
-	SyCall	ColBob
-	move.l	d0,d3
-	Ret_Int
-; - - - - - - - - - - - - -
-	Lib_Par FnBobSpriteCol3
-; - - - - - - - - - - - - -
-	cmp.l	#63,d3
-	Rbhi	L_FonCall
-	move.l	(a3)+,d2
-	Rbmi	L_FonCall
-	bset	#31,d2
-	move.l	(a3)+,d1
-	Rbmi	L_FonCall
-	SyCall	ColBob
-	move.l	d0,d3
-	Ret_Int
+	Lib_Int	FnBobSpriteCol3		src/lib/sprites.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					=BOB COL
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par FnBobCol1
+	Lib_Int	FnBobCol1		src/lib/sprites.cpp
 ; - - - - - - - - - - - - -
-	move.l	d3,d1
-	Rbmi	L_FonCall
-	moveq	#0,d2
-	move.l	#10000,d3
-	SyCall	ColBob
-	move.l	d0,d3
-	Ret_Int
-; - - - - - - - - - - - - -
-	Lib_Par FnBobCol3
-; - - - - - - - - - - - - -
-	tst.l	d3
-	Rbmi	L_FonCall
-	move.l	(a3)+,d2
-	Rbmi	L_FonCall
-	move.l	(a3)+,d1
-	Rbmi	L_FonCall
-	SyCall	ColBob
-	move.l	d0,d3
-	Ret_Int
+	Lib_Int	FnBobCol3		src/lib/sprites.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					=SPRITEBOBCOL
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par FnSpriteBobCol1
+	Lib_Int	FnSpriteBobCol1		src/lib/sprites.cpp
 ; - - - - - - - - - - - - -
-	move.l	d3,d1
-	Rbmi	L_FonCall
-	moveq	#0,d2
-	bset	#31,d2
-	move.l	#10000,d3
-	SyCall	ColSpr
-	move.l	d0,d3
-	Ret_Int
-; - - - - - - - - - - - - -
-	Lib_Par FnSpriteBobCol3
-; - - - - - - - - - - - - -
-	tst.l	d3
-	Rbmi	L_FonCall
-	move.l	(a3)+,d2
-	Rbmi	L_FonCall
-	bset	#31,d2
-	move.l	(a3)+,d1
-	Rbmi	L_FonCall
-	SyCall	ColSpr
-	move.l	d0,d3
-	Ret_Int
+	Lib_Int	FnSpriteBobCol3		src/lib/sprites.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					=SPRITE COL
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par FnSpriteCol1
+	Lib_Int	FnSpriteCol1		src/lib/sprites.cpp
 ; - - - - - - - - - - - - -
-	move.l	d3,d1
-	Rbmi	L_FonCall
-	moveq	#0,d2
-	moveq	#63,d3
-	SyCall	ColSpr
-	move.l	d0,d3
-	Ret_Int
-; - - - - - - - - - - - - -
-	Lib_Par FnSpriteCol3
-; - - - - - - - - - - - - -
-	cmp.l	#63,d3
-	Rbhi	L_FonCall
-	move.l	(a3)+,d2
-	Rbmi	L_FonCall
-	move.l	(a3)+,d1
-	Rbmi	L_FonCall
-	SyCall	ColSpr
-	move.l	d0,d3
-	Ret_Int
+	Lib_Int	FnSpriteCol3		src/lib/sprites.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					=COL(n)
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par FnCol
-; - - - - - - - - - - - - -
-	move.l	d3,d1
-	SyCall	ColGet
-	move.l	d0,d3
-	Ret_Int
+	Lib_Int	FnCol		src/lib/sprites.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					MASK
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InMakeIconMask0
+	Lib_Int	InMakeIconMask0		src/lib/sprites.cpp
 ; - - - - - - - - - - - - -
-	moveq	#1,d1
-	Rbsr	L_AdIcon
-	Rbne	L_GoError
-	subq.w	#1,d5
-	Rbra	L_MkMa1
+	Lib_Int	InMakeIconMask1		src/lib/sprites.cpp
 ; - - - - - - - - - - - - -
-	Lib_Par InMakeIconMask1
+	Lib_Int	InNoIconMask0		src/lib/sprites.cpp
 ; - - - - - - - - - - - - -
-	move.l	d3,d1
-	Rbsr	L_AdIcon
-	Rbne	L_GoError
-	moveq	#0,d5
-	Rbra	L_MkMa1
+	Lib_Int	InNoIconMask1		src/lib/sprites.cpp
 ; - - - - - - - - - - - - -
-	Lib_Par InNoIconMask0
+	Lib_Int	InMakeMask0		src/lib/sprites.cpp
 ; - - - - - - - - - - - - -
-	moveq	#1,d1
-	Rbsr	L_AdIcon
-	Rbne	L_GoError
-	subq.w	#1,d5
-	Rbra	L_NoMa1
+	Lib_Int	InMakeMask1		src/lib/sprites.cpp
 ; - - - - - - - - - - - - -
-	Lib_Par InNoIconMask1
-; - - - - - - - - - - - - -
-	move.l	d3,d1
-	Rbsr	L_AdIcon
-	Rbne	L_GoError
-	moveq	#0,d5
-	Rbra	L_NoMa1
-; - - - - - - - - - - - - -
-	Lib_Par InMakeMask0
-; - - - - - - - - - - - - -
-	moveq	#1,d1
-	Rbsr	L_AdBob
-	Rbne	L_GoError
-	subq.w	#1,d5
-	Rbra	L_MkMa1
-; - - - - - - - - - - - - -
-	Lib_Par InMakeMask1
-; - - - - - - - - - - - - -
-	move.l	d3,d1
-	Rbsr	L_AdBob
-	Rbne	L_GoError
-	moveq	#0,d5
-	Rbra	L_MkMa1
-; - - - - - - - - - - - - -
-	Lib_Def	MkMa1
-; - - - - - - - - - - - - -
-.Loop	tst.l	(a2)
-	beq.s	.Skip
-	SyCall	MaskMk
-	Rbne	L_OOfMem
-.Skip	addq.l	#8,a2
-	dbra	d5,.Loop
-	rts
+	Lib_Empty			MkMa1, now in src/lib/sprites.cpp
 
 ; - - - - - - - - - - - - -
-	Lib_Par InNoMask0
+	Lib_Int	InNoMask0		src/lib/sprites.cpp
 ; - - - - - - - - - - - - -
-	moveq	#1,d1
-	Rbsr	L_AdBob
-	Rbne	L_GoError
-	subq.w	#1,d5
-	Rbra	L_NoMa1
+	Lib_Int	InNoMask1		src/lib/sprites.cpp
 ; - - - - - - - - - - - - -
-	Lib_Par InNoMask1
-; - - - - - - - - - - - - -
-	move.l	d3,d1
-	Rbsr	L_AdBob
-	Rbne	L_GoError
-	moveq	#0,d5
-	Rbra	L_NoMa1
-; - - - - - - - - - - - - -
-	Lib_Def	NoMa1
-; - - - - - - - - - - - - -
-.Loop	tst.l	(a2)
-	beq.s	.Skip2
-	tst.l	4(a2)
-	ble.s	.Skip1
-	move.l	4(a2),a1
-	move.l	(a1),d0
-	SyCall	MemFree
-.Skip1	move.l	#$C0000000,4(a2)
-.Skip2	addq.l	#8,a2
-	dbra	d5,.Loop
-	rts
+	Lib_Empty			NoMa1, now in src/lib/sprites.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					HOT SPOT
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InHotSpot3
+	Lib_Int	InHotSpot3		src/lib/sprites.cpp
 ; - - - - - - - - - - - - -
-	move.l	(a3)+,d2
-	moveq	#0,d1
-	Rbra	L_HotSp
+	Lib_Int	InHotSpot2		src/lib/sprites.cpp
 ; - - - - - - - - - - - - -
-	Lib_Par InHotSpot2
-; - - - - - - - - - - - - -
-	move.l	d3,d1
-	and.w	#%01110111,d1
-	addq.w	#1,d1
-	Rbra	L_HotSp
-; - - - - - - - - - - - - -
-	Lib_Def	HotSp
-; - - - - - - - - - - - - -
-	movem.w	d1-d3,-(sp)
-	move.l	(a3)+,d1
-	Rbsr	L_AdBob
-	movem.w	(sp)+,d1-d3
-	SyCall	SpotHot
-	Rbne	L_FonCall
-	rts
+	Lib_Empty			HotSp, now in src/lib/sprites.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					GET SPRITE / BOB [sc],n,x,y to x,y
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InGetSprite6
+	Lib_Int	InGetSprite6		src/lib/sprites.cpp
 ; - - - - - - - - - - - - -
-	move.l	4*4(a3),d1
-	EcCall	AdrEc
-	Rbeq	L_ScNOp
-	move.l	d0,-(sp)
-	move.l	d0,a0
-	Rbsr	L_Ritoune
-	move.l	(a3),4(a3)
-	addq.l	#4,a3
-	Rbra	L_GS
+	Lib_Int	InGetSprite5		src/lib/sprites.cpp
 ; - - - - - - - - - - - - -
-	Lib_Par InGetSprite5
-; - - - - - - - - - - - - -
-	move.l	ScOnAd(a5),a0
-	move.l	a0,-(sp)
-	Rbeq	L_ScNOp
-	Rbsr	L_Ritoune
-	Rbra	L_GS
-; - - - - - - - - - - - - -
-	Lib_Def	GS
-; - - - - - - - - - - - - -
-	move.l	(a3),d0
-	Rble	L_FonCall
-	Rjsr	L_Bnk.AdBob
-	beq.s	.New
-	move.l	a0,a2
-	Rjsr	L_Bnk.EffBobA0
-	bra.s	.Suite
-; Appelle l'agrandissement (soit pas banque, soit trop grand)
-.New	moveq	#1,d0			Recopier l'ancienne!
-	move.l	(a3),d1			Taille nouvelle banque
-	Rjsr	L_Bnk.ResBob
-	Rbne	L_OOfMem
-	Rjsr	L_Bnk.Change		Changement de banque
-	move.l	(a3),d0			Adresse du nouveau bob
-	Rjsr	L_Bnk.AdBob
-	Rbeq	L_FonCall
-	move.l	a0,a2
-.Suite	addq.l	#4,a3
-; Appelle la trappe
-	move.l	(sp)+,a1		Ecran en A1
-	SyCall	SprGet
-	Rbne	L_OOfMem
-	Rbsr	L_LoadRegs
-	rts
+	Lib_Empty			GS, now in src/lib/sprites.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					GET ICON
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InGetIcon6
+	Lib_Int	InGetIcon6		src/lib/sprites.cpp
 ; - - - - - - - - - - - - -
-	move.l	4*4(a3),d1
-	EcCall	AdrEc
-	Rbeq	L_ScNOp
-	move.l	d0,-(sp)
-	move.l	d0,a0
-	Rbsr	L_Ritoune
-	move.l	(a3),4(a3)
-	addq.l	#4,a3
-	Rbra	L_GI
+	Lib_Int	InGetIcon5		src/lib/sprites.cpp
 ; - - - - - - - - - - - - -
-	Lib_Par InGetIcon5
+	Lib_Empty			GI, now in src/lib/sprites.cpp
 ; - - - - - - - - - - - - -
-	move.l	ScOnAd(a5),a0
-	move.l	a0,-(sp)
-	Rbeq	L_ScNOp
-	Rbsr	L_Ritoune
-	Rbra	L_GI
-; - - - - - - - - - - - - -
-	Lib_Def	GI
-; - - - - - - - - - - - - -
-	move.l	(a3),d0
-	Rble	L_FonCall
-	Rjsr	L_Bnk.AdIcon
-	beq.s	.New
-	move.l	a0,a2
-	Rjsr	L_Bnk.EffBobA0
-	bra.s	.Suite
-; Appelle l'agrandissement (soit pas banque, soit trop grand)
-.New	moveq	#1,d0			Recopier la banque
-	move.l	(a3),d1			Adresse nouvel icone
-	Rjsr	L_Bnk.ResIco
-	Rbne	L_OOfMem
-	Rjsr	L_Bnk.Change
-	move.l	(a3),d0
-	Rjsr	L_Bnk.AdIcon
-	Rbeq	L_FonCall
-	move.l	a0,a2
-.Suite	addq.l	#4,a3
-; Appelle la trappe
-	move.l	(sp)+,a1		Ecran en A1
-	SyCall	SprGet
-	Rbne	L_OOfMem
-	move.l	#$C0000000,4(a2)	Pas de masque!
-	Rbsr	L_LoadRegs
-	rts
-; - - - - - - - - - - - - -
-	Lib_Def	Ritoune
-; - - - - - - - - - - - - -
-	Rbsr	L_SaveRegs
-	move.l	d3,d5
-	Rbmi	L_FonCall
-	move.l	(a3)+,d4
-	Rbmi	L_FonCall
-	move.l	(a3)+,d3
-	Rbmi	L_FonCall
-	move.l	(a3)+,d2
-	Rbmi	L_FonCall
-* Calcule taille
-	cmp.w	EcTx(a0),d4
-	Rbhi	L_FonCall
-	move.w	d4,d6
-	cmp.w	EcTy(a0),d5
-	Rbhi	L_FonCall
-	sub.w	d2,d4
-	Rbls	L_FonCall
-	sub.w	d3,d5
-	Rbls	L_FonCall
-	rts
+	Lib_Empty			Ritoune, now in src/lib/sprites.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					PUT BOB n
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InPutBob
-; - - - - - - - - - - - - -
-	move.l	d3,d1
-	Rbmi	L_FonCall
-	SyCall	PutBob
-	Rbne	L_FonCall
-	rts
+	Lib_Int	InPutBob		src/lib/sprites.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					FONCTIONS RETOURNEMENT
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par FnHRev
+	Lib_Int	FnHRev		src/lib/sprites.cpp
 ; - - - - - - - - - - - - -
-	bset	#15,d3
-	Ret_Int
+	Lib_Int	FnVRev		src/lib/sprites.cpp
 ; - - - - - - - - - - - - -
-	Lib_Par FnVRev
-; - - - - - - - - - - - - -
-	bset	#14,d3
-	Ret_Int
-; - - - - - - - - - - - - -
-	Lib_Par FnRev
-; - - - - - - - - - - - - -
-	bset	#15,d3
-	bset	#14,d3
-	Ret_Int
+	Lib_Int	FnRev		src/lib/sprites.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					PASTE BOB x,y,n
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InPasteBob
+	Lib_Int	InPasteBob		src/lib/sprites.cpp
 ; - - - - - - - - - - - - -
-	move.l	d3,d1
-	Rbmi	L_FonCall
-	Rbsr	L_AdBob
-	tst.l	(a2)
-	Rbne	L_Paste
-	moveq	#24,d0			Paste bob error
-	Rbra	L_EcWiErr
+	Lib_Int	InPasteIcon		src/lib/sprites.cpp
 ; - - - - - - - - - - - - -
-	Lib_Par InPasteIcon
-; - - - - - - - - - - - - -
-	move.l	d3,d1
-	Rbmi	L_FonCall
-	Rbsr	L_AdIcon
-	tst.l	(a2)
-	beq.s	.Err
-	tst.l	4(a2)
-	Rbne	L_Paste
-	move.l	#$C0000000,4(a2)
-	Rbra	L_Paste
-.Err	moveq	#30,d0
-	Rbra	L_EcWiErr
-; - - - - - - - - - - - - -
-	Lib_Def	Paste
-; - - - - - - - - - - - - -
-	move.l	d3,d1
-	move.l	(a3)+,d3
-	move.l	(a3)+,d2
-	move.l	BufBob(a5),a1
-	moveq	#0,d4
-	moveq	#-1,d5
-	SyCall	Patch
-	rts
+	Lib_Empty			Paste, now in src/lib/sprites.cpp
 
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					=SPRITE / ICON BASE
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par FnSpriteBase
+	Lib_Int	FnSpriteBase		src/lib/sprites.cpp
 ; - - - - - - - - - - - - -
-	Rlea	L_AdBob,0
-	Rbra	L_Sb
+	Lib_Int	FnIconBase		src/lib/sprites.cpp
 ; - - - - - - - - - - - - -
-	Lib_Par FnIconBase
-; - - - - - - - - - - - - -
-	Rlea	L_AdIcon,0
-	Rbra	L_Sb
-; - - - - - - - - - - - - -
-	Lib_Def	Sb
-; - - - - - - - - - - - - -
-	move.l	d3,d1
-	bpl.s	FsBi1
-	neg.l	d1
-FsBi1	jsr	(a0)
-	tst.l	d3
-	bpl.s	FsBi2
-	addq.l	#4,a2
-FsBi2	move.l	(a2),d3
-	Ret_Int
+	Lib_Empty			Sb, now in src/lib/sprites.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; Trouve l'adresse d'un bob / Icone,

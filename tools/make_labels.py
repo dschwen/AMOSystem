@@ -59,6 +59,11 @@ def lint(paths, internals):
                     errors.append(f'{path}:{lineno}: code at line {previous[0]} may fall '
                                   f'through into Lib_Int {m.group(2)}')
                 code = line.split(';')[0].rstrip()
+                if code[:1] not in (' ', '\t', '*', ''):
+                    # a label: look at the instruction after it
+                    code = code[len(code.split(None, 1)[0]):]
+                    if code.strip().lower() in ('equ', 'set') or re.match(r'^\s+(equ|set|rs)', code, re.I):
+                        code = ''
                 if code.strip() and not code.lstrip().startswith('*') and code[:1] in (' ', '\t') \
                         and not re.match(r'^\s+(even|cnop|ifeq|ifne|ifd|ifnd|else|endc|dc(\.[bwl])?|ds(\.[bwl])?|dcb(\.[bwl])?)\b', code, re.I):
                     previous = (lineno, code)

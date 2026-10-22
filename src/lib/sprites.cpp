@@ -5,6 +5,13 @@
 
 using namespace amos;
 
+// banks.cpp
+extern "C" uint32_t lib_bnk_ad_bob(RegFrame &r);
+extern "C" uint32_t lib_bnk_ad_icon(RegFrame &r);
+extern "C" uint32_t lib_bnk_eff_bob_a0(RegFrame &r);
+extern "C" uint32_t lib_bnk_res_bob(RegFrame &r);
+extern "C" uint32_t lib_bnk_res_ico(RegFrame &r);
+
 namespace {
 
 constexpr uint32_t EntNul = 0x80000000;
@@ -18,7 +25,7 @@ void need_screen()
         screen_not_open();
 }
 
-Regs &sy(int function, Regs &r)
+Regs &sy_regs(int function, Regs &r)
 {
     sy_call(function, r);
     return r;
@@ -68,8 +75,6 @@ uint8_t *image_entry(uint32_t n, bool icon, uint16_t *count = nullptr)
         fon_call();
     RegFrame r = {};
     r.d[0] = n;
-    extern uint32_t lib_bnk_ad_bob(RegFrame &) asm("_lib_bnk_ad_bob");
-    extern uint32_t lib_bnk_ad_icon(RegFrame &) asm("_lib_bnk_ad_icon");
     uint32_t entry = icon ? lib_bnk_ad_icon(r) : lib_bnk_ad_bob(r);
     if (!entry) {
         // AdBErr: no bank at all, or no such image
@@ -152,11 +157,6 @@ void grab(Screen *s, uint32_t n, int32_t x1, int32_t y1, int32_t x2, int32_t y2,
         fon_call();
     RegFrame f = {};
     f.d[0] = n;
-    extern uint32_t lib_bnk_ad_bob(RegFrame &) asm("_lib_bnk_ad_bob");
-    extern uint32_t lib_bnk_ad_icon(RegFrame &) asm("_lib_bnk_ad_icon");
-    extern uint32_t lib_bnk_eff_bob_a0(RegFrame &) asm("_lib_bnk_eff_bob_a0");
-    extern uint32_t lib_bnk_res_bob(RegFrame &) asm("_lib_bnk_res_bob");
-    extern uint32_t lib_bnk_res_ico(RegFrame &) asm("_lib_bnk_res_ico");
     uint32_t entry = icon ? lib_bnk_ad_icon(f) : lib_bnk_ad_bob(f);
     if (entry) {
         RegFrame e = {};
@@ -208,10 +208,11 @@ Screen *current_screen()
     return ptr<Screen>(idata().ScOnAd);
 }
 
-// Paste: an image at x,y of the current screen
-void paste(uint32_t x, uint32_t y, uint32_t n)
+// Paste: image n (its bank entry) at x,y of the current screen
+void paste(uint32_t x, uint32_t y, uint32_t n, uint8_t *entry)
 {
     Regs r = {};
+    r.a[2] = address(entry);
     r.d[1] = n;
     r.d[2] = x;
     r.d[3] = y;
@@ -359,26 +360,26 @@ extern "C" void lib_in_ymouse(uint32_t y)
 extern "C" uint32_t lib_fn_xmouse()
 {
     Regs r = {};
-    return static_cast<int16_t>(sy(sy::XyMou, r).d[1]);
+    return static_cast<int16_t>(sy_regs(sy::XyMou, r).d[1]);
 }
 
 extern "C" uint32_t lib_fn_ymouse()
 {
     Regs r = {};
-    return static_cast<int16_t>(sy(sy::XyMou, r).d[2]);
+    return static_cast<int16_t>(sy_regs(sy::XyMou, r).d[2]);
 }
 
 // =MOUSE KEY, =MOUSE CLICK
 extern "C" uint32_t lib_fn_mouse_key()
 {
     Regs r = {};
-    return static_cast<uint16_t>(sy(sy::MouseKey, r).d[1]);
+    return static_cast<uint16_t>(sy_regs(sy::MouseKey, r).d[1]);
 }
 
 extern "C" uint32_t lib_fn_mouse_click()
 {
     Regs r = {};
-    return static_cast<uint16_t>(sy(sy::MouRel, r).d[1]);
+    return static_cast<uint16_t>(sy_regs(sy::MouRel, r).d[1]);
 }
 
 // HIDE [ON], SHOW [ON]
@@ -525,7 +526,7 @@ extern "C" uint32_t lib_fn_hardcol(int32_t n)
         fon_call();
     Regs r = {};
     r.d[1] = static_cast<uint16_t>(n);
-    return sy(sy::GetHCol, r).d[1];
+    return sy_regs(sy::GetHCol, r).d[1];
 }
 
 // =BOB SPRITE COL(n[,from TO to]), =BOB COL, =SPRITE BOB COL, =SPRITE COL
@@ -598,7 +599,7 @@ extern "C" uint32_t lib_fn_col(uint32_t n)
 {
     Regs r = {};
     r.d[1] = n;
-    return sy(sy::ColGet, r).d[0];
+    return sy_regs(sy::ColGet, r).d[0];
 }
 
 // ---- images -------------------------------------------------------------
@@ -672,9 +673,10 @@ extern "C" uint32_t lib_fn_rev(uint32_t n) { return n | 0xC000; }
 extern "C" void lib_in_paste_bob(uint32_t x, uint32_t y, int32_t n)
 {
     check_positive(n);
-    if (!peek_l(image_entry(n, false)))
+    uint8_t *entry = image_entry(n, false);
+    if (!peek_l(entry))
         lib_jump(L_EcWiErr, 24);
-    paste(x, y, n);
+    paste(x, y, n, entry);
 }
 
 extern "C" void lib_in_paste_icon(uint32_t x, uint32_t y, int32_t n)
@@ -685,7 +687,7 @@ extern "C" void lib_in_paste_icon(uint32_t x, uint32_t y, int32_t n)
         lib_jump(L_EcWiErr, 30);
     if (!peek_l(entry + 4))
         poke_l(entry + 4, 0xC0000000u);
-    paste(x, y, n);
+    paste(x, y, n, entry);
 }
 
 // =SPRITE BASE(n), =ICON BASE(n): the image, or (negative n) its mask
