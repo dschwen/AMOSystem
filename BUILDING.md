@@ -261,6 +261,11 @@ Hardware sprites (AMOS.library)
   free sprite channels were left: the search skipped half-free pairs
   without counting the try.
 
+Mouse (AMOS.library)
+- `Limit Mouse n` for a screen that is not opened set limits read from
+  the screen table taken for a screen; it now returns "screen not
+  opened" without changing them.
+
 ARexx
 - A message arriving at the ARexx port that is not an ARexx command was
   taken off the port and never replied to, so its sender waited for ever;
