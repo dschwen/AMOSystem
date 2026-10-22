@@ -7,7 +7,11 @@
 // comes as the argument. The colour functions (w/colours.cpp) change the
 // tables it reads with the interrupt held off.
 
+#include "core/amiga.h"
 #include "w/w.h"
+
+#include <exec/interrupts.h>
+#include <hardware/intbits.h>
 
 using namespace amos;
 using namespace amos::w;
@@ -15,7 +19,7 @@ using namespace amos::w;
 // w/vbl_glue.s: call fn with a5 the data zone and a6 the custom chips
 extern "C" void w_int_call(const void *fn, uint8_t *data);
 // +W.s
-extern "C" uint8_t w_animator[];
+extern "C" uint8_t w_animator[], w_vbl_in[];
 
 namespace {
 
@@ -264,4 +268,56 @@ extern "C" void w_vbl(uint8_t *data)
     fade(d);
     if (!d.SyncOff)
         w_int_call(w_animator, data);
+}
+
+namespace amos::w {
+
+// Add_VBL: the server into the VBL chain (+W.s VblIn calls w_vbl)
+void add_vbl()
+{
+    WData &d = wdata();
+    auto is = reinterpret_cast<struct Interrupt *>(d.VBL_Is);
+    is->is_Node.ln_Type = NT_INTERRUPT;
+    is->is_Node.ln_Pri = 100;
+    is->is_Node.ln_Name = nullptr;
+    is->is_Data = reinterpret_cast<uint8_t *>(&d) + sizeof(WData);
+    is->is_Code = reinterpret_cast<void (*)()>(w_vbl_in);
+    AddIntServer(INTB_VERTB, is);
+}
+
+// Rem_VBL
+void rem_vbl()
+{
+    auto is = reinterpret_cast<struct Interrupt *>(wdata().VBL_Is);
+    if (is->is_Code)
+        RemIntServer(INTB_VERTB, is);
+}
+
+// VblInit: no flash, no shift, the mouse from its bank (hidden), the VBL
+void vbl_init()
+{
+    WData &d = wdata();
+    d.NbFlash = 0;
+    for (uint8_t &b : d.TFlash)
+        b = 0;
+    for (uint8_t &b : d.TShift)
+        b = 0;
+    d.MouDes = d.MouBank;
+    d.MouTy = peek_w(ptr<uint8_t>(d.MouBank) + 2);
+    d.MouXOld = 0;
+    d.MouYOld = 0;
+    d.MouShow = 0xFFFF;
+    add_vbl();
+}
+
+} // namespace amos::w
+
+extern "C" {
+void w_sy_add_vbl(AllRegs *) { add_vbl(); }
+void w_sy_rem_vbl(AllRegs *) { rem_vbl(); }
+void w_sy_wait_vbl(AllRegs *r)
+{
+    wait_vbl();
+    r->d[0] = 0;
+}
 }

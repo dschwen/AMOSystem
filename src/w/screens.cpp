@@ -12,6 +12,7 @@
 #include "core/amiga.h"
 #include "w/w.h"
 
+#include <exec/execbase.h>
 #include <graphics/gfx.h>
 #include <graphics/layers.h>
 #include <graphics/rastport.h>
@@ -24,8 +25,8 @@
 using namespace amos;
 using namespace amos::w;
 
-// +W.s
-extern "C" uint8_t w_wvbl[], w_ec_force_cop[], w_dad_amal[], w_bb_ec_off[], w_wopen[], w_widela[],
+// +W.s, the glue of w/
+extern "C" uint8_t w_ec_in[], w_ec_force_cop[], w_copper_make[], w_sc_close_range[], w_cblocks_delete[], w_blocks_delete[], w_rain_del[], w_dad_amal[], w_bb_ec_off[], w_wopen[], w_widela[],
     w_flash_off[], w_shift_off[], w_fade_stop[], w_close_font[];
 
 namespace {
@@ -37,7 +38,8 @@ constexpr uint16_t Hide = 1 << (8 + 7), Clone = 1 << (8 + 6);
 constexpr uint16_t Interlace = 1 << 2;          // EcCon0
 constexpr uint16_t BitEcrans = 1 << 12;         // T_Actualise
 constexpr uint32_t SwapL = 32;
-constexpr uint32_t CopL1 = 16 * 4 * 2;
+constexpr uint32_t CopL1 = 16 * 4 * 2, CopL2 = 16 * 4, CopML = EcMax * CopL1 + 10 * CopL2;
+constexpr uint32_t EcTCop = 1024;
 
 enum : uint32_t {
     ErrMemory = 1, ErrOpen = 2, ErrNotOpen = 3, ErrParam = 4, ErrDouble = 25, ErrDual = 26, ErrNotDual = 27,
@@ -66,7 +68,6 @@ void activate(Screen *s)
     if (s)
         d.RastPort = s->Ec_RastPort;
 }
-void wait_vbl() { call(w_wvbl); }
 
 // EcTout / EcOtoV: the screens are to be recomputed, or only rebuilt
 void recompute() { wdata().EcYAct++; }
@@ -650,9 +651,81 @@ uint32_t dual_priority(uint16_t a, uint16_t b)
     return 0;
 }
 
+// EcRaz: no screens, no copper marks
+void screens_reset()
+{
+    WData &d = wdata();
+    for (uint32_t &a : d.EcAdr)
+        a = 0;
+    d.EcPri[0] = 0xFFFFFFFF;
+    for (uint32_t i = 0; i < CopML; i += 4)
+        poke_l(d.CopMark + i, 0);
+    d.EcYAct = 1;
+}
+
 } // namespace
 
+namespace amos::w {
+
+// EcInit: the tables of the copper list builder, the first (empty) list,
+// the screen functions' vector
+bool screens_init()
+{
+    WData &d = wdata();
+    d.EcCop = fast_mm(EcTCop);
+    if (!d.EcCop)
+        return false;
+    d.ChipBuf = chip_mm(256);
+    if (!d.ChipBuf)
+        return false;
+    d.EcYMax = 311 + EcYBase;
+    if (reinterpret_cast<struct ExecBase *>(EXEC_BASE_NAME)->VBlankFrequency != 50)
+        d.EcYMax = 261 + EcYBase;               // NTSC
+    screens_reset();
+    call(w_copper_make);
+    if (d.AMOSHere >> 8) {
+        chips().copjmp1 = 0;
+        chips().dmacon = 0x82A0;
+    }
+    d.EcVect = address(w_ec_in);
+    return true;
+}
+
+// EcEnd: the screens closed, the blocks and rainbows deleted
+void screens_end()
+{
+    WData &d = wdata();
+    Regs r;
+    r.d[1] = 0;
+    r.d[2] = EcMax - 1;
+    amos_call(&r, w_sc_close_range);
+    call(w_cblocks_delete);
+    call(w_blocks_delete);
+    Regs t;
+    t.d[1] = 0xFFFFFFFF;
+    amos_call(&t, w_rain_del);
+    if (d.ChipBuf)
+        free_mm(d.ChipBuf, 256);
+    if (d.EcCop)
+        free_mm(d.EcCop, EcTCop);
+}
+
+} // namespace amos::w
+
 extern "C" {
+// EcRaz, EcEnd (screen table entries Raz and Visible)
+void w_ec_reset(AllRegs *r)
+{
+    screens_reset();
+    r->d[0] = 0;
+}
+
+void w_ec_end(AllRegs *r)
+{
+    screens_end();
+    r->d[0] = 0;
+}
+
 void w_ec_open(AllRegs *r)
 {
     uint32_t result = r->a[0];

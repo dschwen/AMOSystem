@@ -260,6 +260,9 @@ Hardware sprites (AMOS.library)
 - A 16-colour sprite above number 7 hung AMOS when no two neighbouring
   free sprite channels were left: the search skipped half-free pairs
   without counting the try.
+- `Set Sprite Buffer` of 2046 lines or more sized the three buffers with
+  a 16-bit multiplication: it reserved too little chip memory and the
+  buffers ran past it.
 
 Mouse (AMOS.library)
 - `Limit Mouse n` for a screen that is not opened set limits read from
@@ -278,6 +281,7 @@ Input handler (AMOS.library)
   80 bytes and the device uses 48: it overran into the key conversion
   buffer that followed. The handler converts into a buffer of its own
   now, so `ConIo` has its full size.
+- console.device was opened at the start and never closed.
 
 ARexx
 - A message arriving at the ARexx port that is not an ARexx command was

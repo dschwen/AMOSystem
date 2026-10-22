@@ -21,7 +21,7 @@ using namespace amos;
 using namespace amos::w;
 
 // +W.s
-extern "C" uint8_t w_dad_amal[], w_hs_rbuf[], w_hs_ebuf[], w_mouse_hide[], w_mouse_show[];
+extern "C" uint8_t w_dad_amal[], w_mouse_hide[], w_mouse_show[];
 
 namespace {
 
@@ -519,6 +519,66 @@ void off(uint16_t n)
 
 } // namespace
 
+namespace amos::w {
+
+// HsRBuf: the three sprite buffers (physical, logical, in between) for
+// sprites of lines lines, and the columns. False if no chip memory.
+bool sprite_buffers(uint16_t lines)
+{
+    WData &d = wdata();
+    d.HsBuffer = 0;
+    d.HsPMax = 0;
+    d.HsTCol = 0;
+    d.HsNLine = lines;
+    // (the original's 16-bit mulu reserved too little from 2046 lines)
+    uint32_t one = uint32_t(lines) * 4 * 8;
+    d.HsTBuf = one * 3;
+    uint32_t buffer = chip_mm(d.HsTBuf);
+    if (!buffer)
+        return false;
+    d.HsBuffer = buffer;
+    d.HsPhysic = buffer;
+    d.HsLogic = buffer + one;
+    d.HsInter = buffer + 2 * one;
+    d.HsTCol = uint16_t(one >> 3);
+    d.HsPMax = uint16_t((one >> 3 & 0xFFFF) >> 2) - 2;
+    return true;
+}
+
+// HsEBuf
+void sprite_buffers_free()
+{
+    WData &d = wdata();
+    if (!d.HsBuffer)
+        return;
+    d.HsPMax = 0;
+    d.HsTCol = 0;
+    uint32_t buffer = d.HsBuffer;
+    d.HsBuffer = 0;
+    free_mm(buffer, d.HsTBuf);
+}
+
+// HsInit: the table of the sprites, the buffers for lines lines
+bool sprites_init(uint16_t lines)
+{
+    uint32_t table = fast_mm(HsNb * HsLong + 4);
+    if (!table)
+        return false;
+    wdata().HsTable = table + 4;
+    return sprite_buffers(lines);
+}
+
+// HsEnd
+void sprites_end()
+{
+    WData &d = wdata();
+    if (d.HsTable)
+        free_mm(d.HsTable - 4, HsNb * HsLong + 4);
+    sprite_buffers_free();
+}
+
+} // namespace amos::w
+
 extern "C" {
 void w_sy_sprite_set(AllRegs *r) { set(r->d[1], r->d[2], r->d[3], ptr<Image>(r->a[1])); }
 
@@ -663,26 +723,17 @@ void w_sy_sprite_buffer(AllRegs *r)
     d.HsChange = address(empty);
     while (*static_cast<volatile uint32_t *>(&d.HsChange))
         ;
-    call(w_hs_ebuf);
-    Regs b;
-    b.d[0] = lines;
-    amos_call(&b, w_hs_rbuf);
+    sprite_buffers_free();
     r->d[0] = 0;
-    if (!b.d[0]) {
+    if (sprite_buffers(lines)) {
         call_d1(w_mouse_show, 0xFFFFFFFF);
         return;
     }
     // At least 16 lines, else 2
     d.HsNLine = 16;
-    b.d[0] = 16;
-    amos_call(&b, w_hs_rbuf);
-    if (b.d[0]) {
-        b.d[0] = 2;
-        amos_call(&b, w_hs_rbuf);
-        if (b.d[0]) {
-            r->d[0] = 1;
-            return;
-        }
+    if (!sprite_buffers(16) && !sprite_buffers(2)) {
+        r->d[0] = 1;
+        return;
     }
     d.MouDes = d.MouBank;
     d.MouSpr = 0;

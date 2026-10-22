@@ -10,6 +10,7 @@
 		XREF	_w_ec_view,_w_ec_offset,_w_ec_hide,_w_ec_clone,_w_ec_double,_w_ec_swap
 		XREF	_w_ec_swap_all,_w_ec_dual,_w_ec_dual_priority,_w_ec_activate,_w_ec_current
 		XREF	_w_ec_address,_w_ec_free_number,_w_ec_max_raw,_w_ec_ntsc
+		XREF	_w_ec_reset,_w_ec_end
 
 		SECTION	.text,CODE
 
@@ -37,3 +38,6 @@ _w_sc_address	WEntry	_w_ec_address,l
 _w_sc_free_number WEntry _w_ec_free_number,l
 _w_sc_max_raw	WEntry	_w_ec_max_raw,l
 _w_sc_ntsc	WEntry	_w_ec_ntsc,l
+		xdef	_w_sc_reset,_w_sc_end
+_w_sc_reset	WEntry	_w_ec_reset,l
+_w_sc_end	WEntry	_w_ec_end,l

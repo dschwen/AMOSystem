@@ -8,7 +8,7 @@ using namespace amos;
 using namespace amos::w;
 
 // w/bobs_glue.s, w/screens_glue.s, +W.s
-extern "C" uint8_t w_bob_update[], w_bob_show[], w_bob_erase[], w_sc_swap_all[], w_wvbl[];
+extern "C" uint8_t w_bob_update[], w_bob_show[], w_bob_erase[], w_sc_swap_all[];
 
 namespace {
 
@@ -32,7 +32,7 @@ void swap_with_bobs()
     call(w_bob_update);
     call(w_bob_show);
     call(w_sc_swap_all);
-    call(w_wvbl);
+    wait_vbl();
 }
 
 // EcAuto - 1 in the low word of d0
@@ -47,7 +47,7 @@ void w_ec_autoback1(AllRegs *r)
     Screen *s = current_screen();
     r->d[0] = mode(s, r->d[0]);
     if (int16_t(r->d[0]) > 0) {
-        call(w_wvbl);
+        wait_vbl();
         call(w_bob_erase);
         r->d[0] = 0;
     }

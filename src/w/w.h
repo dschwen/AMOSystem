@@ -44,6 +44,30 @@ void push_state();
 void pull_state();
 void clear_pattern();
 
+// w/support.cpp: until the next VBL
+void wait_vbl();
+
+// The start and end of the parts (w/startup.cpp calls them): sprites,
+// bobs, copper lists, screens, the VBL server
+bool sprite_buffers(uint16_t lines);
+void sprite_buffers_free();
+bool sprites_init(uint16_t lines);
+void sprites_end();
+bool bobs_init(uint16_t n);
+void bobs_end();
+bool copper_init(uint32_t length);
+void copper_end();
+bool screens_init();
+void screens_end();
+void add_vbl();
+void rem_vbl();
+void vbl_init();
+void open_input(uint8_t *io);
+void close_input(uint8_t *io);
+void open_console();
+void close_console();
+void clear_keys();
+
 // w/system.cpp: TAMOSWb, 0 the Workbench in front, >0 AMOS, <0 nothing;
 // -1 if AMOS is in front, 0 if not
 int32_t amos_wb(int32_t to);

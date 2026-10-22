@@ -2,25 +2,27 @@
 // function keys, Key State, Key Shift, Key Speed. The input handler
 // (w/input.cpp) fills the key buffer: three bytes a key (shifts, scan code,
 // ASCII), T_ClTete the last one written, T_ClQueue the last one read.
-// (ClKWait and TGetDisc answer in the condition codes and stay in +W.s,
-// with ClInit/ClVide, which the start-up uses.)
+// Also the opening of input.device and console.device. (ClKWait and
+// TGetDisc answer in the condition codes and stay in +W.s.)
 
 #include "core/amiga.h"
 #include "w/w.h"
 
 #include <devices/input.h>
 #include <exec/io.h>
+#include <exec/ports.h>
 
 using namespace amos;
 using namespace amos::w;
 
 // +W.s
-extern "C" uint8_t w_open_input[], w_close_input[];
+extern "C" uint8_t w_con_io[];
 
 namespace {
 
 constexpr uint16_t ClLong = 32 * 3;
 constexpr uint16_t FFkLong = 24;
+constexpr uint32_t Lio = 0x30, Lmsg = 0x20;     // +WEqu.s
 
 volatile uint16_t &head() { return *static_cast<volatile uint16_t *>(&wdata().ClTete); }
 
@@ -79,9 +81,54 @@ const uint8_t *put_key(const uint8_t *text)
     return text;
 }
 
+// OpInput: input.device opened with the request io, followed by its
+// reply port (Lio bytes on, the original's layout)
+void open_input(uint8_t *io)
+{
+    for (uint32_t i = 0; i < Lio + Lmsg; i++)
+        io[i] = 0;
+    auto port = reinterpret_cast<struct MsgPort *>(io + Lio);
+    port->mp_SigTask = FindTask(nullptr);
+    AddPort(port);
+    OpenDevice(reinterpret_cast<CONST_STRPTR>("input.device"), 0, reinterpret_cast<struct IORequest *>(io), 0);
+    reinterpret_cast<struct IORequest *>(io)->io_Message.mn_ReplyPort = port;
+}
+
+// ClInput
+void close_input(uint8_t *io)
+{
+    CloseDevice(reinterpret_cast<struct IORequest *>(io));
+    RemPort(reinterpret_cast<struct MsgPort *>(io + Lio));
+}
+
+// OpConsole: console.device, for RawKeyConvert (w/input.cpp)
+void open_console()
+{
+    for (uint32_t i = 0; i < Lio + Lmsg; i++)
+        w_con_io[i] = 0;
+    OpenDevice(reinterpret_cast<CONST_STRPTR>("console.device"), uint32_t(-1), reinterpret_cast<struct IORequest *>(w_con_io), 0);
+}
+
+void close_console() { CloseDevice(reinterpret_cast<struct IORequest *>(w_con_io)); }
+
+// ClVide: the key buffer emptied
+void clear_keys()
+{
+    WData &d = wdata();
+    d.ClQueue = head();
+    reinterpret_cast<uint8_t *>(&d.ClFlag)[0] = 0;
+}
+
 } // namespace amos::w
 
 extern "C" {
+// ClVide: Clear Key
+void w_sy_clear_key(AllRegs *r)
+{
+    clear_keys();
+    r->d[0] = 0;
+}
+
 // ClInky: d1 = shifts and scan code in the high word, ASCII in the low
 // one, 0 if no key
 void w_sy_inkey(AllRegs *r)
@@ -176,18 +223,14 @@ void w_sy_get_function_key(AllRegs *r)
 void w_sy_key_speed(AllRegs *r)
 {
     uint8_t *io = ptr<uint8_t>(r->a[1]);
-    Regs o;
-    o.a[1] = address(io);
-    amos_call(&o, w_open_input);
+    open_input(io);
     set_time(io, r->d[1]);
     reinterpret_cast<struct IOStdReq *>(io)->io_Command = IND_SETTHRESH;
     DoIO(reinterpret_cast<struct IORequest *>(io));
     set_time(io, r->d[2]);
     reinterpret_cast<struct IOStdReq *>(io)->io_Command = IND_SETPERIOD;
     DoIO(reinterpret_cast<struct IORequest *>(io));
-    Regs c;
-    c.a[1] = address(io);
-    amos_call(&c, w_close_input);
+    close_input(io);
     r->d[0] = 0;
 }
 }

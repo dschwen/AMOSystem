@@ -17,7 +17,7 @@
 #include <exec/io.h>
 
 // +W.s
-extern "C" uint8_t w_con_io[], w_add_vbl[], w_rem_vbl[];
+extern "C" uint8_t w_con_io[];
 
 #define CONSOLE_BASE_NAME (amos::ptr<struct Device>(amos::peek_l(w_con_io + 20)))
 #include <proto/console.h>
@@ -268,12 +268,12 @@ void w_sy_test_cyclic(AllRegs *)
     d.Inhibit = 0xFFFF;
     bool was_here = amos_wb(-1);
     amos_wb(0);
-    call(w_rem_vbl);
+    rem_vbl();
     chips().dmacon = 0x000F;
     *reinterpret_cast<volatile char *>(name) = 'W';
     while (*reinterpret_cast<volatile char *>(name) == 'W')
         WaitTOF();
-    call(w_add_vbl);
+    add_vbl();
     if (was_here)
         amos_wb(1);
     d.Inhibit = 0;

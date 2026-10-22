@@ -1223,6 +1223,36 @@ void free_cblock(CBlock *c)
 
 } // namespace
 
+namespace amos::w {
+
+// BbInit: no bobs, the priority tables for n of them
+bool bobs_init(uint16_t n)
+{
+    WData &d = wdata();
+    d.BbDeb = 0;
+    bobs_end();
+    d.BbMax = n;
+    uint32_t size = uint32_t(n) * 4;
+    d.BbPrio = fast_mm(size);
+    if (!d.BbPrio)
+        return false;
+    d.BbPrio2 = fast_mm(size);
+    return d.BbPrio2 != 0;
+}
+
+// BbEnd
+void bobs_end()
+{
+    WData &d = wdata();
+    uint32_t size = uint32_t(d.BbMax) * 4;
+    if (d.BbPrio)
+        free_mm(d.BbPrio, size);
+    if (d.BbPrio2)
+        free_mm(d.BbPrio2, size);
+}
+
+} // namespace amos::w
+
 extern "C" {
 // SyCall functions
 void w_sy_bob_set(AllRegs *r) { r->d[0] = set_bob(r); }

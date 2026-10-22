@@ -77,6 +77,8 @@ Version	MACRO
 		XREF	_w_input,_w_send_fake_event,_w_test_cyclic
 		XREF	_w_tamoswb,_w_joy,_w_request_on_off
 		XREF	_w_bob_col,_w_sprite_col,_w_get_col
+		XREF	_w_ice_start,_w_ice_end,_w_start_all,_w_end_all,_w_copper_on_off,_w_sc_reset,_w_sc_end
+		XREF	_w_add_vbl,_w_rem_vbl,_w_wvbl,_w_clear_key
 		XREF	_w_copper_make,_w_copper_force
 		XREF	_w_tabk1,_w_tabk2,_w_tabk3,_w_tabk4
 		XREF	_w_auto_req,_w_easy_req
@@ -97,6 +99,8 @@ Version	MACRO
 		XREF	_w_sc_hide,_w_sc_clone,_w_sc_double,_w_sc_swap,_w_sc_swap_all,_w_sc_dual,_w_sc_dual_priority
 		XREF	_w_sc_activate,_w_sc_current,_w_sc_address,_w_sc_free_number,_w_sc_max_raw,_w_sc_ntsc
 		XREF	_w_menu_start,_w_menu_stop
+		xdef	_w_debut
+_w_debut
 WDebut	bra	Startall	Cold start
 	bra	Endall		End
 	dc.l	L_Trappe	Length of data zone
@@ -144,49 +148,7 @@ GetCol:	jmp	_w_get_col
 SpotH:	jmp	_w_hot_spot
 GetBob:	jmp	_w_get_bob
 
-***********************************************************
-*	INITIALISATION BOBS / D0= Nombre de bobs!
-BbInit:
-********
-	clr.l	T_BbDeb(a5)
-* Efface ce qui etait reserve
-	move.w	d0,-(sp)
-	bsr	BbEnd
-	move.w	(sp)+,d1
-* Reserve la memoire pour les tables priorites
-	move.w	d1,T_BbMax(a5)
-	ext.l	d1
-	lsl.w	#2,d1
-	move.l	d1,d0
-	bsr	FastMm
-	beq	GFatal
-	move.l	d0,T_BbPrio(a5)
-	move.l	d1,d0
-	bsr	FastMm
-	beq	GFatal
-	move.l	d0,T_BbPrio2(a5)
-	moveq	#0,d0
-	rts
-
-***********************************************************
-*	FIN DES BOBS
-BbEnd:
-*******
-	move.w	T_BbMax(a5),d1
-	ext.l	d1
-	lsl.l	#2,d1
-	move.l	T_BbPrio(a5),d0
-	beq.s	BOBE1
-	move.l	d0,a1
-	move.l	d1,d0
-	bsr	FreeMm
-BOBE1:	move.l	T_BbPrio2(a5),d0
-	beq.s	BOBE2
-	move.l	d0,a1
-	move.l	d1,d0
-	bsr	FreeMm
-BOBE2:	moveq	#0,d0
-	rts
+; BbInit / BbEnd: src/w/bobs.cpp
 
 BobXY:	jmp	_w_bob_xy
 TPatch	jmp	_w_paste
@@ -225,7 +187,6 @@ BobAct:	jmp	_w_bob_update
 *	RETOURNEUR DE SPRITES!
 
 ******* Initialisation: fabrique la table
-RbInit	rts				(src/w/bobs.cpp reverses the bytes itself)
 ******* Fin, libere la memoire
 RbEnd	rts
 
@@ -264,70 +225,14 @@ WScCpy:	jmp	_w_screen_copy		src/w/drawing.cpp
 ; ****  *  **** ****
 ;-----------------------------------------------------------------
 
-***********************************************************
-*	DEMARRAGE A FROID DES ECRANS
-*	D0= taille memoire pour liste copper
-***********************************************************
-EcInit:
-* Reserve la memoire pour liste copper ecrans
-	move.l	#EcTCop,d0
-	bsr	FastMm
-	beq	GFatal
-	move.l	d0,T_EcCop(a5)
-* Petit buffer en CHIP pour les operations graphiques
-	move.l	#256,d0
-	bsr	ChipMm
-	beq	GFatal
-	move.l	d0,T_ChipBuf(a5)
-* Taille affichage par defaut
-	move.w	#311+EcYBase,T_EcYMax(a5)	PAL
-	move.l	$4.w,a0
-	cmp.b	#50,530(a0)			VBlankFrequency=50?
-	beq.s	.NoNTSC
-	move.w	#261+EcYBase,T_EcYMax(a5)	NTSC!
-.NoNTSC
-* Autre inits
-	bsr	EcRaz
-	bsr	EcCopper
-	tst.b	T_AMOSHere(a5)
-	beq.s	.Skip
-	lea	Circuits,a6
-	clr.w	CopJmp1(a6)
-	move.w	#$82A0,DmaCon(a6)
-.Skip
-; Installe le vecteur
-	lea	EcIn(pc),a0
-	move.l	a0,T_EcVect(a5)
-	moveq	#0,d0
-	rts
-
-**********************************************************
-*	ARRET FINAL DES ECRANS
-**********************************************************
-EcEnd:	moveq	#0,d1
-	moveq	#EcMax-1,d2
-	bsr	EcDAll
-	bsr	RazCBloc
-	bsr	RazBloc
-	moveq	#-1,d1
-	bsr	TrDel
-* Efface la memoire du buffer CHIP
-	move.l	T_ChipBuf(a5),d0
-	beq.s	.skip
-	move.l	d0,a1
-	move.l	#256,d0
-	bsr	FreeMm
-.skip
-* Efface la memoire liste copper
-	move.l	T_EcCop(a5),d0
-	beq.s	EcEnd1
-	move.l	d0,a1
-	move.l	#EcTCop,d0
-	bsr	FreeMm
-EcEnd1:	rts
+; EcInit / EcEnd / EcRaz: src/w/screens.cpp
+EcEnd:	jmp	_w_sc_end
+EcRaz:	jmp	_w_sc_reset
 
 
 ******* Jumps to screen functions
+		xdef	_w_ec_in
+_w_ec_in
 EcIn:	bra	EcRaz		;Raz:
 	bra	EcCopper	;CopMake:
 	bra	EcCopper	;*
@@ -432,19 +337,6 @@ EcFirst:	jmp	_w_sc_to_front
 EcLast:	jmp	_w_sc_to_back
 EcDel:	jmp	_w_sc_close
 
-******* Initialisation des ecrans
-EcRaz:	lea	T_EcAdr(a5),a0
-	moveq	#EcMax-1,d0
-EcR1:	clr.l	(a0)+
-	dbra	d0,EcR1
-	move.l	#-1,T_EcPri(a5)
-	lea	T_CopMark(a5),a0
-	move.w	#CopML/4-1,d0
-EcR2:	clr.l	(a0)+
-	dbra	d0,EcR2
-	move.w	#1,T_EcYAct(a5)
-	moveq	#0,d0
-	rts
 
 EcDAll:	jmp	_w_sc_close_range
 EcOffs:	jmp	_w_sc_offset
@@ -551,15 +443,6 @@ SliVer	jmp	_w_slider_v
 SliPour	jmp	_w_slider_knob
 SliSet:	jmp	_w_slider_set
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;         INITIALISATION DU FLASHEUR
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-FlInit: clr 	T_nbflash(a5)
-        move 	#lflash*FlMax-1,d0
-        lea	T_tflash(a5),a0
-razfl1: clr.b 	(a0)+
-        dbra 	d0,razfl1
-        rts
 
 ; Flash Off, Flash: src/w/colours.cpp
 FlStop:	jmp	_w_flash_off
@@ -570,14 +453,6 @@ FlStart	jmp	_w_flash
 ******* Shift: src/w/colours.cpp
 ShStart	jmp	_w_shift
 
-***********************************************************
-*	Initialisation de la table des shifts
-***********************************************************
-ShInit:	lea	T_TShift(a5),a0
-	move.w	#LShift/2-1,d0
-ShI:	clr.w	(a0)+
-	dbra	d0,ShI
-	rts
 
 ShStop:	jmp	_w_shift_off
 
@@ -601,90 +476,15 @@ _w_ec_force_cop
 EcForceCop:	jmp	_w_copper_force		src/w/copperlist.cpp
 EcCopper:	jmp	_w_copper_make
 
-***********************************************************
-*	INITIALISATION GENERALE LISTE COPPERS
-*	D0= longueur des listes (physic et logic)
-CpInit:
-* Reserve la memoire pour les listes
-	move.l	d0,T_CopLong(a5)
-	bsr	ChipMm
-	beq	GFatal
-	move.l	d0,T_CopLogic(a5)
-	move.l	d0,a0
-	move.l	T_CopLong(a5),d0
-	bsr	ChipMm
-	beq	GFatal
-	move.l	d0,T_CopPhysic(a5)
-	move.l	d0,a1
-* Copper en ROUTE!
-	move.w	#-1,T_CopON(a5)
-* Marque les offsets des listes sprites au debut...
-HsCop	move.l	#$1003FFFE,(a0)+		Legere attente!
-	move.l	-4(a0),(a1)+
-	move.w	#$120,d0
-CpI1:	move.w	d0,(a0)+
-	move.w	d0,(a1)+
-	addq.w	#2,d0
-	addq.l	#2,a0
-	addq.l	#2,a1
-	cmp.w	#$13e,d0
-	bls.s	CpI1
-	moveq	#0,d0
-	rts
-
-***********************************************************
-*	LIBERATION DES LISTES COPPER
-CpEnd:	move.l	T_CopLogic(a5),d0
-	beq.s	CpE1
-	move.l	d0,a1
-	move.l	T_CopLong(a5),d0
-	bsr	FreeMm
-CpE1:	move.l	T_CopPhysic(a5),d0
-	beq.s	CpE2
-	move.l	d0,a1
-	move.l	T_CopLong(a5),d0
-	bsr	FreeMm
-CpE2:	rts
+; CpInit / CpEnd: src/w/copper.cpp
 
 
 ***********************************************************
 *	GESTION DIRECTE COPPER
 ***********************************************************
 	IFEQ	EZFlag
-******* COPPER ON/OFF
-TCopOn	tst.w	d1
-	bne.s	ICpo1
-* Copper OFF -> Hide!
-	tst.w	T_CopON(a5)
-	beq.s	ICpoX
-	clr.w	T_CopON(a5)
-	bsr	EcForceCop			* RAZ des pointeurs
-	clr.l	T_HsChange(a5)			* Plus de HS!
-	move.w	#-1,T_MouShow(a5)		* Plus de souris
-	move.l	T_CopLogic(a5),T_CopPos(a5)	* Init!
-	bsr	WVbl
-	bra	TCopSw
-* Copper ON -> Recalcule!
-ICpo1	tst.w	T_CopON(a5)
-	bne.s	ICpoX
-	bsr	WVbl
-	move.l	T_CopLogic(a5),a0		* Remet les listes sprites
-	move.l	a0,a1
-	bsr	HsCop
-	bsr	TCpSw
-	bsr	WVbl
-	move.l	T_CopLogic(a5),a0
-	move.l	a0,a1
-	bsr	HsCop
-	bsr	TCpSw
-	bsr	WVbl
-	move.w	#-1,T_CopON(a5)		* Remet!
-	bsr	HsAff
-	clr.w	T_MouShow(a5)
-	bsr	EcForceCop		* Recalcule les listes
-	bsr	WVbl
-ICpoX	moveq	#0,d0
-	rts
+; Copper On/Off: src/w/copper.cpp
+TCopOn	jmp	_w_copper_on_off
 
 ******* The user copper list: src/w/copper.cpp
 TCopSw	jmp	_w_cop_swap
@@ -1586,6 +1386,8 @@ AniEx1	move.w	0(a4,d1.w),-(sp)
 
 ***********************************************************
 *	INITIALISATION AMAL
+		xdef	_w_amal_init
+_w_amal_init
 AMALInit:
 ********
 	clr.l	T_AmDeb(a5)
@@ -2079,6 +1881,8 @@ DAMAL5:	move.w	AmLong(a1),d0
 ***********************************************************
 *	EFFACEMENT TOUS CANAUX
 DAllAMAL:
+		xdef	_w_amal_end
+_w_amal_end
 AMALEnd:
 ********
 	moveq	#-1,d1
@@ -2917,510 +2721,18 @@ AmAnd:	and.w	d2,d3
 ; 	ROUTINES AU MILIEU!
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-; Icestart: branch system functions only.
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+; IceStart: W_Base and the contexts of the C++ code (AMOSPro's, see
+; src/core/call.s), then src/w/startup.cpp, like StartAll, EndAll, IceEnd
 IceStart
-	move.l	a6,-(sp)
-
-	clr.w	T_WVersion(a5)		Par defaut
-	cmp.l	#"V2.0",d0		Le magic
-	bne.s	.Nomagic
-	move.w	d1,T_WVersion(a5)	La version d'AMOS
-.Nomagic
-
 	lea	W_Base(pc),a0
 	move.l	a5,(a0)
-; The contexts of the C++ code are AMOSPro's (src/core/call.s)
 	move.l	T_CBridge(a5),_amos_bridge
-	lea	SyIn(pc),a0
-	move.l	a0,T_SyVect(a5)
-	bsr	WMemInit
-
-; Recherche et stoppe les programmes AMOS lanc�s... (si AMOSPro V2.0)
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	cmp.w	#$0200,T_WVersion(a5)
-	bcs.s	.No20
-	move.l	$4.w,a6
-	jsr	Forbid(a6)
-	lea	TaskName(pc),a1
-	jsr	FindTask(a6)
-	tst.l	d0
-	beq.s	.skip
-	move.l	d0,a0
-	move.l	10(a0),a1
-	move.b	#"S",(a1)		* STOP!!!
-	move.l	a1,T_Stopped(a5)
-.skip	jsr	Permit(a6)
-; Change son propre nom...
-	sub.l	a1,a1
-	jsr	FindTask(a6)
-	move.l	d0,a0
-	move.l	d0,T_MyTask(a5)
-	move.l	10(a0),T_OldName(a5)
-	lea	TaskName(pc),a1
-	move.l	a1,10(a0)
-	move.l	a5,$58(a0)		Adresse des datas...
-; Fini!
-.No20	move.l	(sp)+,a6
-	move.l	#"W2.0",d0		Retourne des magic
-	move.w	#$0200,d1
-	rts
-
-; Normal cold start: start default system
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-StartAll
-	movem.l	a0-a6/d1-d7,-(sp)
-	move.l	sp,T_GPile(a5)
-
-	move.l	a2,-(sp)			Palette par defaut
-	move.l	a0,-(sp)
-
-; Attend que l'autre AMOS soit arrete! (si v2.0)
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	cmp.w	#$0200,T_WVersion(a5)
-	bcs.s	.No20_a
-	movem.l	a0-a3/d0-d3,-(sp)
-	move.l	T_Stopped(a5),d0
-	beq.s	.Wait2
-	move.l	d0,a2
-	move.w	#50*5,d3
-.Wait1	move.l	T_GfxBase(a5),a6
-	jsr	-270(a6)
-	cmp.b	#"S",(a2)
-	bne.s	.Wait2
-	dbra	d3,.Wait1
-.GoEnd	bra	GFatal
-.Wait2	movem.l	(sp)+,a0-a3/d0-d3
-.No20_a
-
-; Sauve les flags du DMA
-; ~~~~~~~~~~~~~~~~~~~~~~
-	move.b	d0,T_AMOSHere(a5)
-	move.w	Circuits+DmaConR,T_OldDma(a5)
-	bset	#7,T_OldDma(a5)
-
-; Amiga-A
-; ~~~~~~~
-	tst.l	d1
-	bne.s	.Skip
-	move.l	#$00406141,d1
-.Skip	move.b	d1,T_AmigA_Ascii1(a5)
-	lsr.l	#8,d1
-	move.b	d1,T_AmigA_Ascii2(a5)
-	lsr.w	#8,d1
-	move.b	d1,T_AmigA_Shifts(a5)
-
-; Mouse.Abk (si v2.0)
-; ~~~~~~~~~~~~~~~~~~~
-	cmp.w	#2,T_WVersion(a5)
-	bcs.s	.No20_b
-	move.l	a1,d0
-	bne.s	.MSkip
-	move.l	WDebut-4(pc),d0			Prend le HUNK suivant
-	lsl.l	#2,d0
-	move.l	d0,a1
-	addq.l	#4,a1
-.MSkip	cmp.l	#"AmSp",(a1)+
-	bne	GFatal
-	move.w	(a1)+,d1
-	cmp.w	#4,d1
-	bcs	GFatal
-	move.l	a1,T_MouBank(a5)
-; Pointe la palette pour l'ouverture des ecrans
-	subq.w	#1,d1
-.MLoop	move.w	(a1)+,d0
-	mulu	(a1)+,d0
-	mulu	(a1)+,d0
-	lsl.l	#1,d0
-	lea	4(a1,d0.l),a1
-	dbra	d1,.MLoop
-	move.w	#-1,(a1)		Stoppe la mouse.abk
-	lea	16*2(a1),a1		Pointe couleurs 16-32
-	lea	16*2(a2),a2		Couleurs 16-32 de default palette
-	moveq	#15,d0
-.PCopy	move.w	(a1)+,(a2)+
-	dbra	d0,.PCopy
-.No20_b
-
-; Ouverture de la fonte systeme 8x8
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	lea	TopazName(pc),a1	Topaz force si <2.0
-	cmp.w	#$0200,T_WVersion(a5)
-	bcs.s	.Sfont
-	move.l	a3,d0			Sinon, fonte dans a3
-	beq.s	.Sfont
-	tst.b	(a3)
-	beq.s	.Sfont
-	move.l	a3,a1
-.Sfont	lea	-8(sp),sp
-	move.l	sp,a0
-	move.l	a1,(a0)
-	move.w	#8,4(a0)
-	move.w	#$0041,6(a0)
-	move.l	T_GfxBase(a5),a6
-	jsr	_LVOOpenFont(a6)
-	move.l	d0,T_DefaultFont(a5)
-	bne.s	.fOk
-	lea	TopazName(pc),a1
-	move.l	sp,a0			On ressaie avec topaz
-	move.l	a1,(a0)
-	move.w	#8,4(a0)
-	move.w	#$0041,6(a0)
-	jsr	_LVOOpenFont(a6)
-	move.l	d0,T_DefaultFont(a5)
-	beq	GFatal			???
-.fOk	addq.l	#8,sp
-
-; Graphic library
-; ~~~~~~~~~~~~~~~
-	lea	GfxBase(pc),a1
-	move.l	T_GfxBase(a5),a0
-	move.l	a0,(a1)
-	clr.b	T_WFlags(a5)			Flag AA
-	btst	#2,236(a0)
-	beq.s	.PaAA
-	bset	#WFlag_AA,T_WFlags(a5)
-	bset	#WFlag_LoadView,T_WFlags(a5)
-.PaAA	move.l	$4.w,a0				Kickstart >= V39?
-	cmp.w	#39,$14(a0)			Si oui, on fait un LoadView(0)
-	bcs.s	.Pa39
-	bset	#WFlag_LoadView,T_WFlags(a5)
-.Pa39
-	IFNE	Debug=2				Si debug
-	bclr	#WFlag_LoadView,T_WFlags(a5)	AMIGA-A normal...
-	ENDC
+	jmp	_w_ice_start
+StartAll	jmp	_w_start_all
+EndAll		jmp	_w_end_all
+IceEnd		jmp	_w_ice_end
 
 
-; Ma propre tache
-; ~~~~~~~~~~~~~~~
-	sub.l	a1,a1
-	move.l	$4.w,a6
-	jsr	FindTask(a6)
-	move.l	d0,T_MyTask(a5)
-	move.l	d0,a0
-
-; Ouverture du layer.library
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~
-	moveq	#0,d0
-	lea	LayName(pc),a1
-	move.l	$4.w,a6
-	jsr	OpenLib(a6)
-	move.l	d0,T_LayBase(a5)
-	beq	GFatal
-
-; Branche l'input.device
-; ~~~~~~~~~~~~~~~~~~~~~~
-	bsr	ClInit
-; Open Console Device
-; ~~~~~~~~~~~~~~~~~~~
-	lea	ConIo(pc),a1
-	bsr	OpConsole
-; Branche le input_handler
-; ~~~~~~~~~~~~~~~~~~~~~~~~
-	lea	T_IoDevice(a5),a1
-	bsr	OpInput
-	lea	T_Interrupt(a5),a0
-	lea	IoHandler(pc),a1
-	move.l	a1,IS_CODE(a0)
-	clr.l	IS_DATA(a0)
-	move.b	#100,ln_pri(a0)
-	lea	T_IoDevice(a5),a1
-	move.l	a0,io_Data(a1)
-	move.w	#IND_ADDHANDLER,io_command(a1)
-	jsr	_LVODoIo(a6)
-	move.w	#-1,T_DevHere(a5)
-
-; Parametres par defaut des ecrans
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	move.l	(sp),a0
-	move.w	#129,T_DefWX(a5)
-	move.w	#129-16,T_DefWX2(a5)
-	move.w	10(a0),T_DefWY(a5)
-	move.w	10(a0),T_DefWY2(a5)
-	subq.w	#8,T_DefWY2(a5)
-
-	lea 	Circuits,a6
-	move.l	(sp),a0
-	move.l	16(a0),d0
-	bsr	HsInit			Hard sprites
-	move.l	(sp),a0
-	move.w	8(a0),d0
-	bsr	BbInit			Bobs
-	bsr	RbInit			Retourneur de bobs
-	move.l	(sp),a0
-	move.l	12(a0),d0
-	bsr	CpInit			Copper
-	bsr	EcInit			Ecrans
-	bsr	SyInit			Systeme
-	bsr	VBLInit			Interruptions VBL
-	bsr	WiInit			Windows
-
-;	Si AA, change le vecteur LOADVIEW
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	btst	#WFlag_LoadView,T_WFlags(a5)	Si LoadView en route
-	beq.s	.NoLoadView
-	lea	AMOS_LoadView(pc),a0
-	lea	T_AMOSHere(a5),a1		Adresse du test
-	move.l	a1,2(a0)			>>> dans le source...
-	move.l	a0,d0				Nouvelle fonction
-	move.w	#-222,a0			LOADVIEW
-	move.l	T_GfxBase(a5),a1		Librairie
-	move.l	$4.w,a6
-	jsr	-420(a6)			Set function
-	lea	Old_LoadView(pc),a0		Ancien vecteur
-	move.l	d0,(a0)
-	bsr	Sys_ClearCache			Nettoie les caches!
-.NoLoadView
-
-; 	Branche le requester
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~
-	cmp.w	#$0200,T_WVersion(a5)
-	bcs.s	.No20_c
-	move.l	4(sp),a0			Palette par defaut
-	bsr	WRequest_Start
-; 	Fabrique la fonte par defaut
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	bsr	Wi_MakeFonte
-	bne	GFatal
-; 	Envoie le signal a l'AMOS Switcher
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	move.l	T_MyTask(a5),a0
-	move.l	a5,$58(a0)
-	moveq	#Switcher_Signal,d3
-	bsr	Send_Switcher
-.No20_c
-
-; 	Tout fini: AMOS to front ?
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	tst.b	T_AMOSHere(a5)
-	beq.s	.Pafr
-	clr.b	T_AMOSHere(a5)
-	moveq	#1,d1
-	bsr	TAMOSWb
-.Pafr
-; Pas d'erreur
-; ~~~~~~~~~~~~
-	moveq	#0,d0
-	bra.s	GFini
-; 	Erreur: EFFACE TOUT, et revient!
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-GFatal	bsr.s	EndAll
-	moveq	#-1,d0
-GFini	move.l	T_GPile(a5),a7
-	movem.l	(sp)+,a0-a6/d1-d7
-	rts
-
-
-;							Arret general
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-EndAll	lea	Circuits,a6
-
-;	Remet l'ecran du workbench
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	moveq	#0,d1
-	bsr	TAMOSWb
-	moveq	#2,d0
-	bsr	WVbl_d0
-
-; Empeche le switcher de fonctionner (si 2.0)
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	cmp.w	#$0200,T_WVersion(a5)
-	bcs.s	.No20_a
-	moveq	#Switcher_Signal+1,d3
-	bsr	Send_Switcher
-; 	Plus de requester
-; ~~~~~~~~~~~~~~~~~~~~~~~
-	bsr	WRequest_Stop
-;	Efface la fonte
-; ~~~~~~~~~~~~~~~~~~~~~
-	bsr	Wi_DelFonte
-.No20_a
-
-;	Si AA, remet le vecteur LOADVIEW
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	btst	#WFlag_LoadView,T_WFlags(a5)	Si LoadView en route
-	beq.s	.NoLoadView
-	move.l	Old_LoadView(pc),d0		Ancienne fonction
-	beq.s	.NoLoadView
-	move.w	#-222,a0			LOADVIEW
-	move.l	T_GfxBase(a5),a1		Librairie
-	move.l	$4.w,a6
-	jsr	-420(a6)			Set function
-.NoLoadView
-
-;	Debranche l'input.device
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	tst.w	T_DevHere(a5)
-	beq.s	.skip0
-	lea	T_Interrupt(a5),a0
-	lea	T_IoDevice(a5),a1
-	move.l	a0,io_Data(a1)
-	move.w	#IND_REMHANDLER,Io_Command(a1)
-	move.l	$4.w,a6
-	jsr	_LVODoIo(a6)
-	lea	T_IoDevice(a5),a1
-	bsr	ClInput
-.Skip0
-
-; 	Arret des toutes les fonctions AMOS
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	bsr	TFFonts
-;	bsr	WiEnd			Rts!
-	bsr	SyEnd
-	bsr	EcEnd
-	bsr	RbEnd
-	bsr	BbEnd
-	bsr	HsEnd
-	bsr	VBLEnd
-	bsr	CpEnd
-
-;	Ferme les librairies
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~
-	move.l	$4.w,a6
-	move.l	T_FntBase(a5),d0		diskfont.library
-	beq.s	.Lib0
-	move.l	d0,a1
-	jsr 	CloseLib(a6)
-.Lib0	move.l	T_LayBase(a5),d0		layer.library
-	beq.s	.Lib1
-	move.l	d0,a1
-	jsr 	CloseLib(a6)
-.Lib1	move.l	T_GfxBase(a5),d0		graphics.library
-	beq.s	.Lib2
-	move.l	d0,a6				Ferme la fonte par defaut
-	move.l	T_DefaultFont(a5),d0
-	beq.s	.Lib2
-	move.l	d0,a1
-	jsr	_LVOCloseFont(a6)
-.Lib2
-	moveq	#0,d0
-	rts
-
-; Fin d'access au fonctions systeme
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-IceEnd
-; Relance l'ancien AMOS (si 2.0)
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	cmp.w	#$0200,T_WVersion(a5)
-	bcs.s	.No20_a
-	move.l	T_Stopped(a5),d0
-	beq.s	.Skup
-	move.l	d0,a0
-	move.b	#" ",(a0)
-; Remet son ancien nom
-.Skup	move.l	T_MyTask(a5),d0
-	beq.s	.Skiip
-	move.l	d0,a0
-	move.l	T_OldName(a5),10(a0)
-.Skiip
-.No20_a
-; Enleve la gestion memoire si definie
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	bsr	WMemEnd			Plus de memory checking!
-	rts
-
-;	Envoie un signal � l'AMOS_Switcher (D3= signal)
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Send_Switcher
-	lea	Switcher(pc),a1
-	move.l	$4.w,a6
-	jsr	_LVOFindTask(a6)
-	tst.l	d0
-	beq.s	.PaSwi
-	move.l	d0,a1
-	moveq	#0,d0
-	bset	d3,d0
-	jsr	_LVOSignal(a6)
-.PaSwi	rts
-
-;	Fabrique la fonte par defaut
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Wi_MakeFonte
-	movem.l	a2/d2-d7,-(sp)
-	moveq	#0,d1			Ecran 16x8, 2 couleur
-	moveq	#16,d2
-	moveq	#8,d3
-	moveq	#1,d4
-	moveq	#0,d5
-	moveq	#2,d6
-	lea	Wi_MakeFonte(pc),a1
-	bsr	EcCree
-	bne	.Error
-; Boucle de creation
-	move.l	#8*256,d0
-	SyCall	MemFastClear
-	beq	.Error
-	move.l	a0,T_JeuDefo(a5)
-	move.l	a0,a2
-	lea	32*8(a2),a0
-	moveq	#32,d2
-	move.w	#128,d3
-	bsr	.CreeFont
-	lea	160*8(a2),a0
-	move.w	#160,d2
-	move.w	#256,d3
-	bsr	.CreeFont
-; Poke les caracteres specifiques
-	lea	Def_Font(pc),a0
-	move.l	a2,a1
-	moveq	#(8*32)/4-1,d0
-.Copy1	move.l	(a0)+,(a1)+
-	dbra	d0,.Copy1
-	lea	128*8(a2),a1
-	moveq	#(8*32)/4-1,d0
-.Copy2	move.l	(a0)+,(a1)+
-	dbra	d0,.Copy2
-; A y est!
-	moveq	#0,d0
-	bra.s	.Out
-; Erreur
-.Error	moveq	#1,d0
-; Sortie!
-.Out	move.l	d0,-(sp)
-	moveq	#0,d0
-	bsr	EcDel
-	move.l	(sp)+,d0
-	movem.l	(sp)+,a2/d2-d7
-	rts
-; Saisit les caracteres d2-d3
-.CreeFont
-	movem.l	d2/d3/a2/a3/a6,-(sp)
-	move.l	a0,a2
-	move.l	T_EcCourant(a5),a3
-.Car	move.l	T_RastPort(a5),a1		Le rastport
-	move.w	#0,36(a1)			Curseur en 0,0
-	move.w	#6,38(a1)
-	moveq	#1,d0				Un caractere
-	lea	.COut(pc),a0
-	move.b	d2,(a0)
-	move.l	T_GfxBase(a5),a6		La fonction
-	jsr	_LVOText(a6)
-	move.l	EcLogic(a3),a0			Boucle de recopie
-	move.w	EcTligne(a3),d0
-	ext.l	d0
-	moveq	#7,d1
-.Loop	move.b	(a0),(a2)+
-	add.l	d0,a0
-	dbra	d1,.Loop
-	addq.w	#1,d2
-	cmp.w	d3,d2
-	bcs.s	.Car
-	movem.l	(sp)+,d2/d3/a2/a3/a6
-	rts
-.COut	dc.w	0
-
-;	Effacement du jeu de caracteres
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Wi_DelFonte
-	move.l	T_JeuDefo(a5),d0
-	beq.s	.Sip
-	move.l	d0,a1
-	move.l	#8*256,d0
-	SyCall	MemFree
-	clr.l	T_JeuDefo(a5)
-.Sip	rts
-
-***********************************************************
 * Librairies
 DevName		dc.b	"input.device",0
 ConName		dc.b	"console.device",0
@@ -3433,11 +2745,14 @@ TaskName	dc.b	" AMOS",0
 
 ; 	Patch sur LOADVIEW si AMOS TO FRONT si AA
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		xdef	_w_amos_loadview,_w_old_loadview
+_w_amos_loadview
 AMOS_LoadView
 	tst.b	0.l			T_AMOSHere, modifie lors du patch...
 	bne.s	.Wb
 	move.l	Old_LoadView(pc),-(sp)
 .Wb	rts
+_w_old_loadview
 Old_LoadView	dc.l	0		Ici et pas ailleurs...
 
 ; AMOS / WORKBENCH
@@ -3449,16 +2764,6 @@ Old_LoadView	dc.l	0		Ici et pas ailleurs...
 ; AMOS / Workbench: src/w/system.cpp
 TAMOSWb	jmp	_w_tamoswb
 
-;	Clear CPU Caches
-; ~~~~~~~~~~~~~~~~~~~~~~
-Sys_ClearCache
-	movem.l	a0-a1/a6/d0-d1,-(sp)
-	move.l	$4.w,a6
-	cmp.w	#37,$14(a6)			A partir de V37
-	bcs.s	.Exit
-	jsr	-$27c(a6)			CacheClearU
-.Exit	movem.l	(sp)+,a0-a1/a6/d0-d1
-	rts
 
 
 
@@ -3476,6 +2781,8 @@ _w_con_io
 ConIo		ds.b 	Lio+Lmsg
 ConEssai	ds.b	32
 W_Base		ds.l	1
+		xdef	_w_gfx_base_var
+_w_gfx_base_var
 GfxBase		ds.l	1
 		even
 ; Table de retournement bobs
@@ -3483,6 +2790,8 @@ GfxBase		ds.l	1
 
 ;		Caracteres speciaux des fontes AMOS
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		xdef	_w_def_font
+_w_def_font
 Def_Font	IncBin	"bin/+WFont.bin"
 		even
 
@@ -3497,75 +2806,10 @@ Def_Font	IncBin	"bin/+WFont.bin"
 ; ****  *  **** ****
 ;-----------------------------------------------------------------
 
-***********************************************************
-*	DEMARRAGE A FROID DU SYSTEME
-***********************************************************
-SyInit:
-	bsr	AMALInit
-	moveq	#0,d0
-	rts
-***********************************************************
-*	ARRET FINAL DU SYSTEME
-***********************************************************
-SyEnd:	bsr	AMALEnd
-	moveq	#0,d0
-	rts
-
-; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-; 	Initialisation / Fin du requester
-; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-;	Demarrage du requester (a0)= default palette
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-WRequest_Start
-; Copy default palette
-	lea	8*2(a0),a0
-	lea	Req_Pal+8*2(pc),a1
-	moveq	#24-1,d0
-CPal	move.w	(a0)+,(a1)+
-	dbra	d0,CPal
-; Branch the requester
-	lea	AutoReq(pc),a2
-	lea	EasyReq(pc),a3
-	bsr.s	SetJump
-	move.l	a2,T_PrevAuto(a5)
-	move.l	a3,T_PrevEasy(a5)
-	move.w	#-1,T_ReqFlag(a5)	        * Default is AMOS request
-	rts
-
-;	Arret du requester
-; ~~~~~~~~~~~~~~~~~~~~~~~~
-WRequest_Stop
-	tst.l	T_PrevAuto(a5)
-	beq.s	.Skip
-	move.l	T_PrevAuto(a5),a2
-	move.l	T_PrevEasy(a5),a3
-	bsr.s	SetJump
-.Skip	rts
-
-; Branche A2/a3 sur easy/auto request
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-SetJump	movem.l	a0/a1/a6,-(sp)
-	move.l	$4.w,a6
-; AutoRequest
-	move.l	a2,d0
-	lea	-$15c,a0
-	move.l	T_IntBase(a5),a1
-	jsr	SetFunction(a6)
-	move.l	d0,a2
-; EasyRequest, seulement si wb>=2.0
-	move.l	$4.w,a0
-	cmp.w	#36,$14(a0)
-	bcs.s	.skip
-	move.l	a3,d0
-	lea	-$1d4-(20*6),a0
-	move.l	T_IntBase(a5),a1
-	jsr	SetFunction(a6)
-	move.l	d0,a3
-.skip	movem.l	(sp)+,a0/a1/a6
-	rts
 
 ******* Table des sauts
+		xdef	_w_sy_in
+_w_sy_in
 SyIn:	bra 	ClInky			;0 -Inkey:
 	bra	ClVide			;1 -ClearKey:
 	bra 	ClSh			;2 -Shifts:
@@ -3701,56 +2945,14 @@ WCallRoutines	jmp	_w_call_routines
 *	Gestion de la souris
 ***********************************************************
 
-******* Branche les interruptions
-VblInit:
-* Init couleurs
-	bsr	FlInit
-	bsr	ShInit
-* Init souris
-	move.l	T_MouBank(a5),a0
-	move.l	a0,T_MouDes(a5)
-	move.w	2(a0),T_MouTY(a5)
-	clr.w	T_MouXOld(a5)
-	clr.w	T_MouYOld(a5)
-	move.w	#-1,T_MouShow(a5)
-* Branche les interruptions!
-	bsr	Add_VBL
-	rts
-
-******* Branche PROPREMENT les interruptions VBL...
-		xdef	_w_add_vbl
-_w_add_vbl
-Add_VBL
-	move.l	a6,-(sp)
-	lea	T_VBL_Is(a5),a1
-	move.b	#NT_INTERRUPT,Ln_Type(a1)
-	move.b	#100,Ln_Pri(a1)
-	clr.l	Ln_Name(a1)
-	move.l	a5,IS_DATA(a1)
-	lea	VBLIn(pc),a0
-	move.l	a0,IS_CODE(a1)
-	move.l	$4.w,a6
-	move.l	#INTB_VERTB,d0
-	jsr	_LVOAddIntServer(a6)
-	move.l	(sp)+,a6
-	rts
-******* Debranche PROPREMENT les interruptions VBL...
-		xdef	_w_rem_vbl
-_w_rem_vbl
-Rem_VBL
-VBLEnd
-	move.l	a6,-(sp)
-	lea	T_VBL_Is(a5),a1
-	tst.l	IS_CODE(a1)
-	beq.s	.skip
-	move.l	$4.w,a6
-	move.l	#INTB_VERTB,d0
-	jsr	_LVORemIntServer(a6)
-.skip	move.l	(sp)+,a6
-	rts
+; VblInit, Add_VBL, Rem_VBL: src/w/vbl.cpp
+Add_VBL	jmp	_w_add_vbl
+Rem_VBL	jmp	_w_rem_vbl
 
 ******* Entree des interruptions
 ; The VBL server (is_Data in a1): src/w/vbl.cpp
+		xdef	_w_vbl_in
+_w_vbl_in
 VblIn:	movem.l	d2-d7/a2-a4,-(sp)
 	move.l	a1,-(sp)
 	jsr	_w_vbl
@@ -3760,25 +2962,8 @@ VblIn:	movem.l	d2-d7/a2-a4,-(sp)
 	moveq	#0,d0
 	rts
 
-******* WAIT VBL D0, multitache
-WVbl_D0	movem.l	d0-d1/a0-a1/a6,-(sp)
-	move.w	d0,-(sp)
-.Lp	move.l	T_GfxBase(a5),a6
-	jsr	_LVOWaitTOF(a6)
-	subq.w	#1,(sp)
-	bne.s	.Lp
-	addq.l	#2,sp
-	movem.l	(sp)+,d0-d1/a0-a1/a6
-	rts
-
-******* WAIT VBL
-		xdef	_w_wvbl
-_w_wvbl
-WVbl:	move.l	T_VblCount(a5),d0
-WVbl1:	cmp.l	T_VblCount(a5),d0
-	beq.s	WVbl1
-	moveq	#0,d0
-	rts
+; Wait Vbl: src/w/support.cpp
+WVbl	jmp	_w_wvbl
 
 ******* Traitement de la souris
 
@@ -3829,91 +3014,15 @@ SyMouZ:	jmp	_w_zone_mouse
 ;    *  *  *  *    *	******************************************
 ; ****  *  **** ****
 ;-----------------------------------------------------------------
-***********************************************************
-*	INITIALISATION SPRITES HARDWARE / D0= Nbre lignes
-HsInit:	movem.l	d1-d7/a1-a6,-(sp)
-	move.w	d0,-(sp)
-* Reserve la table
-	moveq	#HsNb,d0
-	mulu	#HsLong,d0
-	addq.l	#4,d0
-	bsr	FastMm
-	beq	GFatal
-	addq.l	#4,d0
-	move.l	d0,T_HsTable(a5)
-* Va reserver les buffers
-	move.w	(sp)+,d0
-	bsr	HsRBuf
-	bne	GFatal
-* Pas d'erreur
-HsOk:	movem.l	(sp)+,d1-d7/a1-a6
-	moveq	#0,d0
-	rts
+; HsInit, HsEnd and the sprite buffers: src/w/sprites.cpp
 
 ******* Sprites: src/w/sprites.cpp
 HsSBuf:	jmp	_w_sprite_buffer
 
-******* Reserve le buffer des colonnes
-		xdef	_w_hs_rbuf
-_w_hs_rbuf
-HsRBuf:	clr.l	T_HsBuffer(a5)
-	clr.w	T_HsPMax(a5)
-	clr.w	T_HsTCol(a5)
-	move.w	d0,T_HsNLine(a5)
-	mulu	#4*8,d0
-	move.l	d0,d1
-	mulu	#3,d0
-	move.l	d0,T_HsTBuf(a5)
-	bsr	ChipMm
-	beq.s	HsRBe
-	move.l	d0,T_HsBuffer(a5)
-	move.l	d0,T_HsPhysic(a5)
-	add.l	d1,d0
-	move.l	d0,T_HsLogic(a5)
-	add.l	d1,d0
-	move.l	d0,T_HsInter(a5)
-* Calcule les colonnes
-	lsr.l	#3,d1
-	move.w	d1,T_HsTCol(a5)
-	lsr.w	#2,d1
-	subq.w	#2,d1
-	move.w	d1,T_HsPMax(a5)
-* Ok!
-	moveq	#0,d0
-	rts
-* Erreur!
-HsRbe:	moveq	#1,d0
-	rts
-
-******* Efface le buffer des colonnes
-		xdef	_w_hs_ebuf
-_w_hs_ebuf
-HsEBuf:	tst.l	T_HsBuffer(a5)
-	beq.s	HsEb1
-	clr.w	T_HsPMax(a5)
-	clr.w	T_HsTCol(a5)
-	move.l	T_HsBuffer(a5),a1
-	clr.l	T_HsBuffer(a5)
-	move.l	T_HsTBuf(a5),d0
-	bsr	FreeMm
-HsEb1:	rts
 
 
 HsPri:	jmp	_w_sprite_priority
 
-***********************************************************
-*	ARRET SPRITES HARDWARE
-HsEnd:	movem.l	d1-d7/a1-a6,-(sp)
-	move.l	T_HsTable(a5),d0
-	beq.s	HsE1
-	move.l	d0,a1
-	subq.l	#4,a1
-	moveq	#HsNb,d0
-	mulu	#HsLong,d0
-	addq.l	#4,d0
-	bsr	FreeMm
-HsE1:	bsr	HsEBuf
-	bra	HsOk
 
 HsBank:	jmp	_w_sprite_bank
 HsXOff:	jmp	_w_sprite_off
@@ -3956,68 +3065,13 @@ RevBloc	jmp	_w_block_flip
 ;-----------------------------------------------------------------
 
 
-; OPEN CONSOLE.DEVICE
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-OpConsole
-	lea	ConIo(pc),a1
-	moveq	#(Lio+Lmsg)/2-1,d0
-.Clean	clr.w	(a1)+
-	dbra	d0,.Clean
-	move.l	$4.w,a6
-	lea	ConName(pc),a0
-	lea	ConIo(pc),a1
-	moveq	#-1,d0			Console #= -1
-	moveq	#0,d1
-	jsr	OpenDev(a6)
-	rts
-
-; OPEN INPUT.DEVICE
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-;	A1-> 	pointeur sur zone libre!!!
-		xdef	_w_open_input
-_w_open_input
-OpInput
-	move.l	a1,-(sp)
-* Clean
-	moveq	#(Lio+Lmsg)/2-1,d0
-OpInp1	clr.w	(a1)+
-	dbra	d0,OpInp1
-* Creates port
-	sub.l	a1,a1
-	move.l	$4.w,a6
-	jsr	FindTask(a6)
-	move.l	(sp),a1
-	lea	Lio(a1),a1
-	move.l	d0,$10(a1)
-	jsr	AddPort(a6)
-* Open device
-	lea	DevName(pc),a0
-	move.l	(sp),a1
-	moveq	#0,d0
-	moveq	#0,d1
-	jsr	OpenDev(a6)
-	move.l	(sp)+,a1
-	lea	Lio(a1),a0
-	move.l	a0,14(a1)
-	rts
-
-; CLOSE input.device
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-		xdef	_w_close_input
-_w_close_input
-ClInput	move.l	a1,-(sp)
-; Close device
-	move.l	$4.w,a6
-	jsr	CloseDev(a6)
-; Close port
-	move.l	(sp)+,a1
-	lea	Lio(a1),a1
-	jsr	RemPort(a6)
-	rts
+; console.device, input.device: src/w/keyboard.cpp
 
 ; Input handler, branche sur la chaine des inputs.
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ; The input handler (a0 the events, d0 returned): src/w/input.cpp
+		xdef	_w_io_handler_entry
+_w_io_handler_entry
 IoHandler
 	move.l	a5,-(sp)
 	move.l	W_Base(pc),a5
@@ -4026,13 +3080,8 @@ IoHandler
 	rts
 WSend_FakeEvent	jmp	_w_send_fake_event
 
-; Initialisation / Vide du buffer clavier
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-ClInit
-ClVide	move.w	T_ClTete(a5),T_ClQueue(a5)
-	clr.b	T_ClFlag(a5)
-	moveq	#0,d0
-	rts
+; Clear Key: src/w/keyboard.cpp
+ClVide	jmp	_w_clear_key
 
 ; KEY WAIT, retourne BNE si des touches en attente
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -4068,20 +3117,6 @@ TGetDisc
 ; Cyclic tests outside the interrupts: src/w/input.cpp
 WTest_Cyclique	jmp	_w_test_cyclic
 
-***********************************************************
-*	DEMARRAGE A FROID DES FENETRES
-***********************************************************
-WiInit:	lea	_w_wi_in,a0
-	move.l	a0,T_WiVect(a5)
-	rts
-
-; The window functions are in C++ (src/w/windows.cpp): WiInit points
-; T_WiVect at their table there.
-
-***********************************************************
-*	ARRET FINAL DES FENETRES
-***********************************************************
-WiEnd:	rts
 
 ; Error "illegal function call" of the zone functions
 PErr7:	moveq	#16,d0
@@ -4103,11 +3138,15 @@ T_Size		equ	T_Gad+128
 WRequest_OnOff	jmp	_w_request_on_off
 
 ; System requesters: src/w/requester.cpp (a5 the data zone for it)
+		xdef	_w_auto_req_entry
+_w_auto_req_entry
 AutoReq	move.l	a5,-(sp)
 	move.l	W_Base(pc),a5
 	jsr	_w_auto_req
 	move.l	(sp)+,a5
 	rts
+		xdef	_w_easy_req_entry
+_w_easy_req_entry
 EasyReq	move.l	a5,-(sp)
 	move.l	W_Base(pc),a5
 	jsr	_w_easy_req

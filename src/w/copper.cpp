@@ -1,11 +1,15 @@
-// The user copper list of AMOS.library's screen table (EcCall): Cop
-// Swap, Cop Reset, Cop Wait, Cop Move, Cop Movel, Cop Logic. They work
-// while AMOS's own copper lists are off (Copper Off, +W.s TCopOn).
+// The copper lists of AMOS.library: the two lists reserved at the start,
+// Copper On/Off, and the user copper list of the screen table (EcCall):
+// Cop Swap, Cop Reset, Cop Wait, Cop Move, Cop Movel, Cop Logic. They work
+// while AMOS's own copper lists are off.
 
 #include "w/w.h"
 
 using namespace amos;
 using namespace amos::w;
+
+// w/sprites_glue.s, +W.s
+extern "C" uint8_t w_sprites_show[], w_ec_force_cop[];
 
 namespace {
 
@@ -93,9 +97,83 @@ uint32_t move(uint32_t *reg, uint16_t value)
     return advance(to + 4);
 }
 
+// HsCop: the start of a list: a short wait, then the moves of the sprite
+// pointers (the VBL writes their values)
+void sprite_moves(uint8_t *list)
+{
+    poke_l(list, 0x1003FFFE);
+    for (uint16_t reg = 0x120, *m = ptr<uint16_t>(address(list) + 4); reg <= 0x13E; reg += 2, m += 2)
+        *m = reg;
+}
+
 } // namespace
 
+namespace amos::w {
+
+// CpInit: the two lists of length bytes, copper on
+bool copper_init(uint32_t length)
+{
+    WData &d = wdata();
+    d.CopLong = length;
+    d.CopLogic = chip_mm(length);
+    if (!d.CopLogic)
+        return false;
+    d.CopPhysic = chip_mm(d.CopLong);
+    if (!d.CopPhysic)
+        return false;
+    d.CopON = 0xFFFF;
+    sprite_moves(ptr<uint8_t>(d.CopLogic));
+    sprite_moves(ptr<uint8_t>(d.CopPhysic));
+    return true;
+}
+
+// CpEnd
+void copper_end()
+{
+    WData &d = wdata();
+    if (d.CopLogic)
+        free_mm(d.CopLogic, d.CopLong);
+    if (d.CopPhysic)
+        free_mm(d.CopPhysic, d.CopLong);
+}
+
+} // namespace amos::w
+
 extern "C" {
+// TCopOn: Copper Off (d1 = 0): AMOS's lists stop, the user list starts
+// empty; Copper On: AMOS's lists back, the sprites and screens remade
+void w_ec_copper_on_off(AllRegs *r)
+{
+    WData &d = wdata();
+    r->d[0] = 0;
+    if (!uint16_t(r->d[1])) {
+        if (!d.CopON)
+            return;
+        d.CopON = 0;
+        call(w_ec_force_cop);
+        d.HsChange = 0;
+        d.MouShow = 0xFFFF;
+        d.CopPos = d.CopLogic;
+        wait_vbl();
+        r->d[0] = swap();
+        return;
+    }
+    if (d.CopON)
+        return;
+    wait_vbl();
+    sprite_moves(ptr<uint8_t>(d.CopLogic));
+    swap_lists();
+    wait_vbl();
+    sprite_moves(ptr<uint8_t>(d.CopLogic));
+    swap_lists();
+    wait_vbl();
+    d.CopON = 0xFFFF;
+    call(w_sprites_show);
+    d.MouShow = 0;
+    call(w_ec_force_cop);
+    wait_vbl();
+}
+
 void w_ec_cop_swap(AllRegs *r) { r->d[0] = swap(); }
 void w_ec_cop_swap_lists(AllRegs *r) { r->d[0] = swap_lists(); }
 void w_ec_cop_reset(AllRegs *r) { r->d[0] = reset(); }

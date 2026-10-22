@@ -27,4 +27,13 @@ void copy(void *to, const void *from, uint32_t n)
         *t++ = *f++;
 }
 
+// WVbl: until the next VBL (the interrupt counts them)
+void wait_vbl()
+{
+    const volatile uint32_t &count = wdata().VblCount;
+    uint32_t now = count;
+    while (count == now)
+        ;
+}
+
 } // namespace amos::w
