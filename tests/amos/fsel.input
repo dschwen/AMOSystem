@@ -1,0 +1,8 @@
+sync ready
+wait 3
+shot open
+keys typed
+key Return
+sync again
+wait 3
+key Return

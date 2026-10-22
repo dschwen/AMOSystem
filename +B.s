@@ -375,6 +375,7 @@ UserName	dc.w	14
 ;		Noms des Librairies
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 SaveSp		dc.l 	0
+		XREF	_amos_task
 Panic		dc.l	0
 
 ;		Marqueur de version
@@ -1332,6 +1333,10 @@ Hunk_2
 Cold_Start
 ; - - - - - - - - - - - - -
 	move.l	sp,SaveSp
+
+; The main task, for the C++ code (src/core/call.s)
+	move.l	$4.w,a6
+	move.l	276(a6),_amos_task		ThisTask
 
 ; Reserve un buffer dans la pile, pour travailler
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -284,9 +284,9 @@ void call_procedure(const uint8_t *name, int16_t bx, int16_t by, int16_t &x, int
     d.CallReg[9] = item(d.MnDAd)->MnDatas;
     // The procedure runs with the interpreter registers of MnGere / Menu
     // Calc (MnRA3); its End Proc comes back here through MnPile
-    Ctx keep = amos_ctx;
+    Ctx keep = ctx();
     uint32_t failed = mn_call_procedure(lib_address(L_MenuProcedure), ptr<Ctx>(d.MnRA3), &d.MnPile, name);
-    amos_ctx = keep;
+    ctx() = keep;
     if (!failed) {
         x = static_cast<int16_t>(d.CallReg[0] - bx);
         y = static_cast<int16_t>(d.CallReg[1] - by);
@@ -890,7 +890,7 @@ extern "C" uint32_t lib_mn_gere(RegFrame &frame)
 {
     IData &d = idata();
     // The registers for the procedures of (PR) objects
-    Ctx regs = amos_ctx;
+    Ctx regs = ctx();
     d.MnRA3 = address(&regs);
     d.MnError = 0;
     start();
@@ -1040,7 +1040,7 @@ extern "C" uint32_t lib_omn_eff(RegFrame &)
 extern "C" uint32_t lib_mn_find(RegFrame &r)
 {
     uint16_t depth = static_cast<uint16_t>(r.d[5]);
-    auto coords = reinterpret_cast<const uint32_t *>(amos_ctx.a3);
+    auto coords = reinterpret_cast<const uint32_t *>(ctx().a3);
     if (!coords[0] || coords[0] >= 1024)
         fon_call();
     r.d[0] = 0;
@@ -1072,7 +1072,7 @@ extern "C" uint32_t lib_mn_ins(RegFrame &r)
 {
     IData &d = idata();
     uint16_t depth = static_cast<uint16_t>(r.d[5]);
-    auto coords = reinterpret_cast<const uint32_t *>(amos_ctx.a3);
+    auto coords = reinterpret_cast<const uint32_t *>(ctx().a3);
     int16_t left = static_cast<int16_t>(depth - 1);
     uint16_t i = depth;
     MenuItem *m = nullptr;
@@ -1791,7 +1791,7 @@ extern "C" void lib_in_menu_calc()
         menu_not_opened();
     start();
     // The assembler ran (PR) objects with the registers of the last MnGere
-    Ctx regs = amos_ctx;
+    Ctx regs = ctx();
     d.MnRA3 = address(&regs);
     d.MnProc = -1;
     ec_fn(ec::MnStart);

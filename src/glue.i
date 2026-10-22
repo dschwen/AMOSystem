@@ -14,9 +14,9 @@
 ; between the AMOS registers and the C stack.
 ;
 ; Every call into C++ goes through CCall, which keeps the interpreter
-; registers d6-d7/a3-a6 in amos_ctx (core/amos.h) for the C++ code and its
-; calls back into the assembler, and reloads them afterwards: C++ may have
-; moved a3 or caused a call that changed them.
+; registers d6-d7/a3-a6 in the task's context (core/amos.h) for the C++
+; code and its calls back into the assembler, and reloads them afterwards:
+; C++ may have moved a3 or caused a call that changed them.
 ;
 ; Parameters: the last parameter is in d3, earlier ones on the a3 stack
 ; (first parameter deepest). Results: d3 = value, d2 = type (0 int,
@@ -37,12 +37,28 @@ LibRoutine	MACRO
 \1
 		ENDM
 
-; Call the C function \1. Not for interrupt code: an interrupt would
-; overwrite amos_ctx under the code it interrupted.
+; GetCtx An: An = the context of the running task, where CCall keeps
+; d6-d7/a3-a6: amos_ctx for the main task (amos_task), amos_ctx2 for any
+; other (the file selector's)
+GetCtx		MACRO
+		move.l	$4.w,\1
+		move.l	276(\1),\1		ThisTask
+		cmp.l	_amos_task,\1
+		bne.s	.Other\@
+		lea	_amos_ctx,\1
+		bra.s	.Done\@
+.Other\@	lea	_amos_ctx2,\1
+.Done\@
+		ENDM
+
+; Call the C function \1 (a0 is lost). Not for interrupt code: an
+; interrupt would overwrite the context under the code it interrupted.
 CCall		MACRO
-		movem.l	d6-d7/a3-a6,_amos_ctx
+		GetCtx	a0
+		movem.l	d6-d7/a3-a6,(a0)
 		jsr	\1
-		movem.l	_amos_ctx,d6-d7/a3-a6
+		GetCtx	a0
+		movem.l	(a0),d6-d7/a3-a6
 		ENDM
 
 ; LibCall Name,cfunction,params,result

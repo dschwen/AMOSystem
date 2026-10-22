@@ -646,11 +646,11 @@ extern "C" uint32_t lib_fill_fpoke(RegFrame &r)
 }
 
 // FfComp: a2, a3 = elements; FfComp2: a0, a1 = names. BEQ if the second
-// sorts before or with the first. (a3 is not in the frame: amos_ctx has it.)
+// sorts before or with the first. (a3 is not in the frame: ctx() has it.)
 extern "C" uint32_t lib_ff_comp(RegFrame &r)
 {
     r.a[0] = r.a[2] + FillName;
-    r.a[1] = address(amos_ctx.a3) + FillName;
+    r.a[1] = address(ctx().a3) + FillName;
     return !sorts_before(ptr<uint8_t>(r.a[0]), ptr<uint8_t>(r.a[1]));
 }
 

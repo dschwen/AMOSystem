@@ -1,0 +1,3 @@
+AMOSTEST:typed
+AMOSTEST:default.txt
+end

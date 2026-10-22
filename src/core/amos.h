@@ -1,11 +1,14 @@
 // The bridge between the converted C++ code and the assembler.
 //
 // The glue (src/glue.i, CCall) saves the interpreter registers d6-d7/a3-a6
-// in amos_ctx on every entry into C++ and reloads them on the way out, so
-// C++ always sees the current a5 data zone, a3 parameter stack and a6
-// program pointer, and calls back into the assembler run with them. A call
-// into the assembler leaves amos_ctx as it was: what the callee does to
-// those registers does not come back.
+// in the task's context, ctx(), on every entry into C++ and reloads them on
+// the way out, so C++ always sees the current a5 data zone, a3 parameter
+// stack and a6 program pointer, and calls back into the assembler run with
+// them. A call into the assembler leaves the context as it was: what the
+// callee does to those registers does not come back.
+//
+// The context is per task because the file selector runs Interface code in
+// a task of its own: amos_ctx is the main task's, amos_ctx2 the other's.
 //
 // Rules for C++ that calls back into the assembler:
 // - A library routine may not return: errors reset the stack to the
@@ -30,12 +33,21 @@ struct Ctx {
     uint8_t *a3, *a4, *a5, *a6;
 };
 
-extern "C" Ctx amos_ctx;
+extern "C" Ctx amos_ctx, amos_ctx2;
+extern "C" const void *amos_task;      // the main task
+
+// The context of the running task (ExecBase->ThisTask)
+inline Ctx &ctx()
+{
+    constexpr int ThisTask = 276;
+    auto exec = *reinterpret_cast<const uint8_t *const *>(4);
+    return *reinterpret_cast<const void *const *>(exec + ThisTask) == amos_task ? amos_ctx : amos_ctx2;
+}
 
 // The registers of a call into the assembler: d0-d7/a0-a2. d6/d7 start as
 // the interpreter's (Demande, for one, depends on d7); a3-a6 always are.
 struct Regs {
-    uint32_t d[8] = {0, 0, 0, 0, 0, 0, amos_ctx.d6, amos_ctx.d7};
+    uint32_t d[8] = {0, 0, 0, 0, 0, 0, ctx().d6, ctx().d7};
     uint32_t a[3] = {0, 0, 0};
 };
 
@@ -46,7 +58,6 @@ struct RegFrame {
 };
 
 extern "C" {
-extern Ctx amos_ctx;
 void amos_call(Regs *r, const void *fn);
 void amos_eval(Regs *r, const void *fn);
 [[noreturn]] void amos_goto(const void *fn, uint32_t d0);
@@ -55,9 +66,9 @@ void amos_eval(Regs *r, const void *fn);
 constexpr int LB_Size = 36;
 
 // The interpreter data, above a5
-inline IData &idata() { return *reinterpret_cast<IData *>(amos_ctx.a5); }
+inline IData &idata() { return *reinterpret_cast<IData *>(ctx().a5); }
 // The AMOS.library data, below a5
-inline WData &wdata() { return *reinterpret_cast<WData *>(amos_ctx.a5 - sizeof(WData)); }
+inline WData &wdata() { return *reinterpret_cast<WData *>(ctx().a5 - sizeof(WData)); }
 
 // Address of a routine of AMOSPro.Lib, as JJsr finds it
 inline const void *lib_address(int routine)
