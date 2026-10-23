@@ -1,0 +1,135 @@
+timeout 180
+wait 12
+key ctrl+y
+key ctrl+shift+Up
+key lamiga+shift+s
+wait 1
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+type AMOSTEST:acc.AMOS
+key Return
+key Return
+wait 3
+glide -3000 -3000
+wait 0.3
+button 3 down
+wait 0.5
+glide 20 0
+wait 0.5
+glide 0 79
+wait 0.5
+button 3 up
+wait 1
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+type AMOSTEST:acc.AMOS
+key Return
+key Return
+wait 3
+key ctrl+shift+Down
+type Rem x
+key Return
+wait 0.5
+glide -3000 -3000
+wait 0.3
+button 3 down
+wait 0.5
+glide 80 0
+wait 0.5
+glide 0 47
+wait 0.5
+button 3 up
+wait 0.7
+wait 3
+key ctrl+shift+Up
+glide -3000 -3000
+wait 0.3
+button 3 down
+wait 0.5
+glide 20 0
+wait 0.5
+glide 0 79
+wait 0.5
+glide 120 0
+wait 0.5
+glide 85 -6
+wait 0.5
+button 3 up
+wait 4
+wait 4
