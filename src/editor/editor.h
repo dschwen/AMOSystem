@@ -127,6 +127,7 @@ void auto_mark();
 EditWindow *next_shown(const EditWindow *w);
 EditWindow *previous_shown(const EditWindow *w);
 EditWindow *window_number(uint16_t n);
+EditWindow *hidden(uint16_t n);
 void draw_windows();
 bool activate(EditWindow *w);
 int32_t open_window(bool shown, int32_t size);
@@ -140,10 +141,16 @@ void follow_scroll();
 const uint8_t *message_of(const uint8_t *list, uint16_t n, uint8_t *length);
 const uint8_t *message(uint16_t n);
 const uint8_t *system_message(uint16_t n);
+// Ed_NPrgToBuf: the program's name over the spaces at to; the end of it
+uint8_t *name_into(uint8_t *to, const Program &program);
 void warn(const uint8_t *text);
 void warn_message(uint16_t n);
 void warning_end();
 void all_warnings_end();
+
+// editor/keys.cpp: Ed_Ky2Fonc (from 0, -1 if none), Ed_Fonc2Ky (from 1)
+int32_t key_function(uint32_t key);
+const uint8_t *function_keys(uint8_t n);
 
 // editor/macros.cpp: Ed_MemReserve, Ed_MemFree, Ed_ListeNew, Ed_ListeDel,
 // Ed_ListeDelAll, Ed_IChaine, Ed_DChaine, Ed_AChaine, Ed_Dialogue, EdMa_Adr

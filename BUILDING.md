@@ -295,6 +295,11 @@ Editor
   went on with no buffer and wrote the macro's key at address 8; it is now
   "out of memory" (the recording buffer is freed).
 - A resource bank that failed to load left its file open.
+- Deleting a user menu option took away the key shortcut of the function
+  before it instead of its own, so an option added later in its place got
+  the old shortcut. Test editor_usermenu.
+- A menu object that could not be made (out of memory) stopped the editor
+  on an illegal instruction; the item is now left without it.
 
 Collisions (AMOS.library)
 - The offsets into the masks of the two images were 16-bit: an image whose

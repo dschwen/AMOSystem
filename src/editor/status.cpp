@@ -68,6 +68,31 @@ const uint8_t *message_of(const uint8_t *list, uint16_t n, uint8_t *length)
 const uint8_t *message(uint16_t n) { return message_of(ptr<uint8_t>(idata().Ed_Messages), n, nullptr); }
 const uint8_t *system_message(uint16_t n) { return message_of(ptr<uint8_t>(idata().Ed_Systeme), n, nullptr); }
 
+// Ed_NPrgToBuf: the program's name (or "New project") over the spaces at
+// to, up to the first control code; the end of the name
+uint8_t *name_into(uint8_t *to, const Program &program)
+{
+    const uint8_t *name = program.Prg_NamePrg;
+    if (*name) {
+        Regs r;
+        r.a[0] = address(name);
+        call(ed_name_part_entry, r);
+        name = ptr<uint8_t>(r.a[0]);
+    } else {
+        name = system_message(7);
+    }
+    uint8_t *a1 = to;
+    while (*name) {
+        *a1++ = *name++;
+        if (*a1 < 32)
+            break;
+    }
+    uint8_t *end = a1;
+    while (*a1 >= 32)
+        *a1++ = ' ';
+    return end;
+}
+
 // Ed_AverFin: the last warning taken away; Ed_AllAverFin: all of them
 void warning_end()
 {
@@ -154,30 +179,6 @@ void status_number(uint32_t value, int8_t x, uint16_t digits)
     print(buffer);
 }
 
-// Ed_NPrgToBuf: the program's name (or "New project") over the spaces at
-// to, up to the first control code; the end of the name
-uint8_t *name_into(uint8_t *to)
-{
-    const uint8_t *name = program().Prg_NamePrg;
-    if (*name) {
-        Regs r;
-        r.a[0] = address(name);
-        call(ed_name_part_entry, r);
-        name = ptr<uint8_t>(r.a[0]);
-    } else {
-        name = system_message(7);
-    }
-    uint8_t *a1 = to;
-    while (*name) {
-        *a1++ = *name++;
-        if (*a1 < 32)
-            break;
-    }
-    uint8_t *end = a1;
-    while (*a1 >= 32)
-        *a1++ = ' ';
-    return end;
-}
 
 // Ed_EtOrder / Ed_EtIns / Ed_EtLine / Ed_EtCol / Ed_EtFree / Ed_EtNom: one
 // part of the current window's status line
@@ -221,7 +222,7 @@ void status_name()
         *p++ = ' ';
     while (n-- > 0);
     *p = 0;
-    name_into(buffer);
+    name_into(buffer, program());
     print(buffer);
 }
 
@@ -428,5 +429,5 @@ void ed_status_y(AllRegs *) { status_y(); }
 void ed_status_x(AllRegs *) { status_x(); }
 void ed_status_free(AllRegs *) { status_free(); }
 void ed_status_name(AllRegs *) { status_name(); }
-void ed_name_to_buffer(AllRegs *r) { r->a[0] = address(name_into(ptr<uint8_t>(r->a[0]))); }
+void ed_name_to_buffer(AllRegs *r) { r->a[0] = address(name_into(ptr<uint8_t>(r->a[0]), program())); }
 }

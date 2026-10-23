@@ -910,6 +910,10 @@ void hide_window()
     run_switching(ed_branch_amos);
 }
 
+} // namespace
+
+namespace amos::ed {
+
 // Ed_GetHidden: hidden window number n
 EditWindow *hidden(uint16_t n)
 {
@@ -918,6 +922,10 @@ EditWindow *hidden(uint16_t n)
             return w;
     return nullptr;
 }
+
+} // namespace amos::ed
+
+namespace {
 
 // Ed_FlipSizeWindow / Ed_BiggerWindow / Ed_ExpandWindow /
 // Ed_SchrinkWindow
