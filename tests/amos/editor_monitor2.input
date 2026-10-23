@@ -1,0 +1,94 @@
+timeout 180
+wait 12
+key ctrl+y
+wait 0.5
+glide -3000 -3000
+wait 0.3
+button 3 down
+wait 0.5
+glide 80 0
+wait 0.5
+glide 0 79
+wait 0.5
+button 3 up
+wait 6
+glide -3000 -3000
+wait 0.2
+glide 651 126
+wait 0.4
+click 1
+wait 1
+wait 1
+glide -3000 -3000
+wait 0.2
+glide 580 221
+wait 0.4
+click 1
+wait 1
+glide -3000 -3000
+wait 0.2
+glide 580 221
+wait 0.4
+click 1
+wait 1
+glide -3000 -3000
+wait 0.2
+glide 580 221
+wait 0.4
+click 1
+wait 1
+glide -3000 -3000
+wait 0.2
+glide 580 221
+wait 0.4
+click 1
+wait 1
+glide -3000 -3000
+wait 0.2
+glide 724 173
+wait 0.4
+click 1
+wait 1
+glide -3000 -3000
+wait 0.2
+glide 127 319
+wait 0.4
+click 1
+wait 1
+glide -3000 -3000
+wait 0.2
+glide 724 173
+wait 0.4
+click 1
+wait 1
+glide -3000 -3000
+wait 0.2
+glide 131 303
+wait 0.4
+click 1
+wait 1
+glide -3000 -3000
+wait 0.2
+glide 676 173
+wait 0.4
+click 1
+wait 1
+glide -3000 -3000
+wait 0.2
+glide 131 383
+wait 0.4
+click 1
+wait 1
+glide -3000 -3000
+wait 0.2
+glide 724 221
+wait 0.4
+click 1
+wait 1
+wait 2
+glide -3000 -3000
+wait 0.2
+glide 580 221
+wait 0.4
+click 1
+wait 1.5
