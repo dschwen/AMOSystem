@@ -75,6 +75,16 @@
 		XREF	_ed_load_entry
 		XREF	_ed_reload_entry
 		XREF	_ed_name_part_entry
+		XREF	_ed_new_entry
+		XREF	_ed_new2_entry
+		XREF	_ed_window_new_entry
+		XREF	_ed_save_over_entry
+		XREF	_ed_saved_entry
+		XREF	_ed_set_buffer_entry
+		XREF	_ed_set_buffer_from_entry
+		XREF	_ed_get_place_entry
+		XREF	_ed_file_selector_entry
+		XREF	_ed_open_load_entry
 		XREF	_ed_quit_entry
 		XREF	_ed_do_quit_entry
 		XREF	_ed_warm_start_entry
@@ -4453,106 +4463,12 @@ Ed_AlertDialog
 ;
 ; LOADING: Demande plus de place / D0= Taille voulue
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+; The text buffer's size: editor/program.cpp
 		xdef	_ed_get_place
 _ed_get_place
-Ed_GetPlace
-	move.l	d0,d2
-; Dialogues
-	moveq	#EdD_TooSmall,d0
-	bsr	Ed_Dialogue
-	cmp.w	#1,d0
-	bne.s	.GtPl2
-; Change la taille
-	move.l	Prg_StTTexte(a6),d3
-	move.l	d2,d0
-	JJsr	L_Prg_ChgTTexte
-	beq.s	.GtPl1
-	rts
-; Out of mem, remet l'ancien buffer
-.GtPl1	move.l	d3,d0
-	JJsr	L_Prg_ChgTTexte
-	bne	.GtPl0
-; Vraiment out of mem: TOUT petit buffer!
-	move.l	#1024,d0
-	JJsr	L_Prg_ChgTTexte
-; Totalement Out of Mem!
-.GtPl0	bsr	Ed_NewBufAff
-	bra	Ed_OMm
-; Appelle SETBUFFER, et revient!
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.GtPl2	clr.b	Prg_Change(a6)
-	move.l	d2,d0
-	bra.s	Ed_SB
-;
-; Option SET BUFFER SIZE
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_SetBuffer
-	bsr	Ed_TokCur
-	bsr	Edt_ClearVar
-	move.l	Prg_StTTexte(a6),d0
-Ed_SB
-; Boite de dialogue
-	move.l	Ed_VDialogues(a5),a2
-	move.l	d0,2*4(a2)
-	moveq	#EdD_SetBuf,d0
-	bsr	Ed_Dialogue
-	cmp.w	#1,d0
-	bne	Ed_NotDone
-	moveq	#1,d0
-	moveq	#3,d1
-	moveq	#-1,d2
-	JJsr	L_Dia_GetValue
-	move.l	d1,d0
-	and.l	#$FFFFFFFE,d0
-	cmp.l	#1024,d0
-	bcs	Ed_NotDone
-	move.l	d0,d2
-	move.l	Prg_StTTexte(a6),d3
-	cmp.l	d3,d2
-	beq	Ed_NotDone
-; Peut-on recopier le buffer?
-	bcs.s	.PaCop
-; Essaie de changer sans effacer le programme courant
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	move.l	Prg_StTTexte(a6),-(sp)
-	move.l	Prg_StMini(a6),-(sp)
-	move.l	Prg_StHaut(a6),-(sp)
-	move.l	Prg_StBas(a6),-(sp)
-	clr.l	Prg_StTTexte(a6)	Plus rien
-	move.l	d2,d0			Reserve la nouvelle
-	JJsr	L_Prg_ChgTTexte
-	beq.s	.PaCop
-	move.l	(sp)+,a0		Recopie le programme dans le buffer
-	move.l	(sp)+,d0
-	sub.l	a0,d0
-	moveq	#0,d1
-	bsr	Ed_StoBlock
-	move.l	(sp)+,a1		Libere le precedent
-	move.l	(sp)+,d0
-	SyCall	SyFree
-	bra.s	.Out
-; Change le buffer en effacant le programme
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.PaCop	movem.l	d2/d3,-(sp)
-	bsr	Ed_Saved
-	bsr	Ed_New2
-	movem.l	(sp)+,d2/d3
-	move.l	d2,d0
-	JJsr	L_Prg_ChgTTexte
-	beq.s	.OMm
-; Fini!
-.Out	JJsr	L_Prg_SetBanks
-	bsr	Ed_NewBufAff
-	rts
-; Out of mem!
-; ~~~~~~~~~~~
-.OMm	move.l	d3,d0
-	JJsr	L_Prg_ChgTTexte
-	bne.s	.OMmX
-	move.l	#1024,d0
-	JJsr	L_Prg_ChgTTexte
-.OMmX	bsr	Ed_NewBufAff
-	bra	Ed_OMm
+Ed_GetPlace	jmp	_ed_get_place_entry
+Ed_SetBuffer	jmp	_ed_set_buffer_entry
+Ed_SB	jmp	_ed_set_buffer_from_entry
 
 
 ; ___________________________________________________________________
@@ -4611,47 +4527,16 @@ Ed_Untok	jmp	_ed_untok_entry
 ;
 ; NEW
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+; New: editor/program.cpp
 		xdef	_ed_new
 _ed_new
-Ed_New
-	bsr	Ed_TokCur
-	bsr	Ed_Saved
+Ed_New	jmp	_ed_new_entry
 		xdef	_ed_new2
 _ed_new2
-Ed_New2
-	bsr	EdM_Program
-	moveq	#1,d0
-	tst.b	Ed_Zappeuse(a5)
-	beq.s	.No
-	moveq	#0,d0
-.No	JJsr	L_Prg_New
-	bsr	Edt_New
-	bsr	Ed_NewBufAff
-	rts
-;
-; New du contenu d'une fenetre
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Ed_New2	jmp	_ed_new2_entry
 		xdef	_ed_new_window
 _ed_new_window
-Edt_New
-; Editeur par devant
-	tst.b	Ed_Zappeuse(a5)
-	bne.s	.Skp
-	EcCalD	Last,0
-	bsr	EdReCop
-.Skp	EcCalD	Active,EcEdit
-; Init des donn�es editeur
-	lea	Edt_SInit(a4),a0
-	moveq	#(Edt_EInit-Edt_SInit)/2-1,d0
-.Loop	clr.w	(a0)+
-	dbra	d0,.Loop
-	move.w	#-1,Edt_YBloc(a4)
-	move.w	#-1,Edt_YOldBloc(a4)
-; Init des donnees programme
-	bsr	Prg_UndoCreate		Effacement / Creation du buffer undo
-	bsr	Prg_MarkRaz
-	clr.b	MathFlags(a5)		Simple precision par defaut
-	rts
+Edt_New	jmp	_ed_window_new_entry
 
 ; Ed_StoBlock, Ed_Stocke, Ed_DelChunk, Ed_DeLigne, Ed_StDelChunk,
 ; Ed_FindL, Ed_NextL: src/editor/storage.cpp
@@ -4729,9 +4614,7 @@ Ed_CloseName
 ; Ouvre une nouvelle fenetre+Charge prg
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ;
-Ed_OpenLoad
-	bsr	Ed_OpenWindow
-	bra	Ed_Load
+Ed_OpenLoad	jmp	_ed_open_load_entry
 
 ;
 ; The windows: src/editor/windows.cpp
@@ -4802,48 +4685,13 @@ EnHead	dc.b	"AMOS ProEd.v    "
 ;
 ; NAME1 already exist. Overwrite?
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+; Overwrite? Save first? editor/program.cpp
 		xdef	_ed_save_over
 _ed_save_over
-Ed_SaveOver
-	JJsr	L_RExist
-	beq.s	.Skip
-	move.l	Ed_VDialogues(a5),a0
-	move.l	Name1(a5),(a0)
-	moveq	#EdD_AExist,d0
-	bsr	Ed_Dialogue
-	cmp.w	#1,d0
-	bne	Ed_NotDone
-.Skip	rts
-;
-; Sauve le programme si on l'a change!
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Ed_SaveOver	jmp	_ed_save_over_entry
 		xdef	_ed_saved
 _ed_saved
-Ed_Saved
-	tst.b	Prg_Change(a6)
-	beq.s	.Skip
-; Cree la chaine avec le nom, en 0VA
-	move.l	Buffer(a5),a0
-	move.l	a0,a1
-	moveq	#31,d0
-.Clr	move.b	#" ",(a1)+
-	dbra	d0,.Clr
-	clr.b	(a1)
-	bsr	Ed_NPrgToBuf
-	clr.b	(a0)
-	move.l	Buffer(a5),a0
-	bsr	Ed_DChaine
-	move.l	Ed_VDialogues(a5),a0
-	move.l	a1,0*4(a0)
-; Appelle la boite de dialogue
-	moveq	#EdD_Saved,d0
-	bsr	Ed_Dialogue
-	cmp.w	#2,d0
-	beq.s	.Skip
-	cmp.w	#1,d0
-	bne	Ed_NotDone2
-	bsr	Ed_SaveIt
-.Skip	rts
+Ed_Saved	jmp	_ed_saved_entry
 
 
 ;
@@ -5126,31 +4974,10 @@ ErDisked
 
 ; Appel du selecteur de fichier
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+; The file selector: editor/program.cpp
 		xdef	_ed_file_selector
 _ed_file_selector
-Ed_File_Selector
-	tst.b	Ed_Zappeuse(a5)		Zappeuse>>> on revient !
-	bne.s	.Zap
-	movem.l	a2-a3/d2-d7,-(sp)
-	bsr	Ed_GetMessage
-	pea	-2(a0)
-	bsr	Ed_GetNMessage
-	pea	-2(a0)
-	bsr	Ed_GetNMessage
-	pea	-2(a0)
-	bsr	Ed_GetNMessage
-	pea	-2(a0)
-	move.l	sp,a3
-	move.w	#1,Ed_FSel(a5)
-	bsr	Ed_SetBanks
-	JJsr	L_Dsk.FileSelector
-	clr.w	Ed_FSel(a5)
-	lea	16(sp),sp
-	movem.l	(sp)+,a2-a3/d2-d7
-	tst.w	d0
-	rts
-.Zap	moveq	#1,d0
-	rts
+Ed_File_Selector	jmp	_ed_file_selector_entry
 
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

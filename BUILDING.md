@@ -304,6 +304,10 @@ Editor
   making the program or window structures again left the last one linked
   to its old address, which the clean-up then followed; and the editor went
   on with the current window pointing into the freed loading buffer.
+- Set Text Buffer to a larger size without the memory for it forgot the
+  old buffer and returned with four longs left on the stack (a crash); it
+  now goes on as for a smaller size (the program erased, saved first if
+  asked).
 
 Collisions (AMOS.library)
 - The offsets into the masks of the two images were 16-bit: an image whose
