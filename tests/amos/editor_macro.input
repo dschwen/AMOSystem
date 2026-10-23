@@ -1,0 +1,142 @@
+timeout 180
+wait 12
+key ctrl+y
+key ctrl+y
+key ctrl+y
+wait 0.5
+key ctrl+m
+wait 1
+key ctrl+t
+wait 1
+type xy
+wait 0.3
+glide -3000 -3000
+wait 0.3
+glide 300 380
+wait 0.3
+click 1
+wait 0.3
+key ctrl+t
+wait 0.5
+key ctrl+t
+wait 0.5
+glide -3000 -3000
+wait 0.3
+button 3 down
+wait 0.5
+glide 150 0
+wait 0.5
+glide 0 95
+wait 0.5
+glide 150 0
+wait 0.5
+glide 0 132
+wait 0.5
+button 3 up
+wait 1
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+type AMOSTEST:out/AMOSPro.test
+key Return
+key Return
+wait 2
+glide -3000 -3000
+wait 0.3
+button 3 down
+wait 0.5
+glide 150 0
+wait 0.5
+glide 0 95
+wait 0.5
+glide 150 0
+wait 0.5
+glide 0 52
+wait 0.5
+button 3 up
+wait 1
+key Return
+wait 1
+key ctrl+t
+wait 0.5
+glide -3000 -3000
+wait 0.3
+button 3 down
+wait 0.5
+glide 150 0
+wait 0.5
+glide 0 95
+wait 0.5
+glide 150 0
+wait 0.5
+glide 0 84
+wait 0.5
+button 3 up
+wait 1
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+type AMOSTEST:out/AMOSPro.test
+key Return
+key Return
+wait 2
+key ctrl+t
+wait 0.5
+glide -3000 -3000
+wait 0.3
+button 3 down
+wait 0.5
+glide 150 0
+wait 0.5
+glide 0 95
+wait 0.5
+glide 150 0
+wait 0.5
+glide 0 36
+wait 0.5
+button 3 up
+wait 1
+key ctrl+t
+wait 1
+key ctrl+t
+wait 0.5
+glide -3000 -3000
+wait 0.3
+button 3 down
+wait 0.5
+glide 150 0
+wait 0.5
+glide 0 95
+wait 0.5
+glide 150 0
+wait 0.5
+glide 0 36
+wait 0.5
+button 3 up
+wait 1
+key ctrl+t
+wait 1
+key Return
+wait 1
