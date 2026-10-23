@@ -239,6 +239,17 @@ TheEnd
 ; Sortie d'AMOSPro!
 ; ~~~~~~~~~~~~~~~~~
 Get_Out	move.l	SaveSp(pc),a7
+; The CLI's stack back, AMOSPro's freed
+	tst.w	OwnStack_On
+	beq.s	.OldStack
+	clr.w	OwnStack_On
+	move.l	$4.w,a6
+	lea	OwnStack,a0
+	jsr	-732(a6)			StackSwap
+	move.l	OwnStack,a1			stk_Lower
+	move.l	#OwnStack_Size,d0
+	jsr	_LVOFreeMem(a6)
+.OldStack
 	tst.l	d7
 	beq.s	.PaMe
 	move.l	$4.w,a6
@@ -375,6 +386,11 @@ UserName	dc.w	14
 ;		Noms des Librairies
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 SaveSp		dc.l 	0
+OwnStack_Size	equ	64*1024
+OwnStack	dc.l	0,0,0			StackSwapStruct
+OwnStack_A0	dc.l	0
+OwnStack_D0	dc.l	0
+OwnStack_On	dc.w	0
 		XREF	_amos_task
 		XREF	_amos_bridge
 		XREF	_tk_find_line,_tk_size_line,_tk_editable,_tk_find_address
@@ -1339,6 +1355,27 @@ Hunk_2
 Cold_Start
 ; - - - - - - - - - - - - -
 	move.l	sp,SaveSp
+
+; A stack of its own: the C++ needs more than a CLI's default 4K (it
+; overflowed into the memory below). Given back in Get_Out.
+	move.l	a0,OwnStack_A0
+	move.l	d0,OwnStack_D0
+	move.l	$4.w,a6
+	move.l	#OwnStack_Size,d0
+	moveq	#1,d1				MEMF_PUBLIC
+	jsr	_LVOAllocMem(a6)
+	tst.l	d0
+	beq.s	.NoStack
+	lea	OwnStack,a0
+	move.l	d0,(a0)				stk_Lower
+	add.l	#OwnStack_Size,d0
+	move.l	d0,4(a0)			stk_Upper
+	move.l	d0,8(a0)			stk_Pointer
+	jsr	-732(a6)			StackSwap
+	move.w	#1,OwnStack_On
+.NoStack
+	move.l	OwnStack_A0,a0
+	move.l	OwnStack_D0,d0
 
 ; The main task, for the C++ code (src/core/call.s)
 	move.l	$4.w,a6

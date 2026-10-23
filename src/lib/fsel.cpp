@@ -229,11 +229,12 @@ void task_quit()
         wait_tof();
 }
 
-// The task (amiga.lib's CreateTask): a stack of 2048 bytes
+// The task (amiga.lib's CreateTask), with 16K of stack: the assembler gave
+// it 2048 bytes, too few for the C++ it runs
 void create_task()
 {
     static const char name[] = "AMOSPro File Selector";
-    constexpr uint32_t stack = 4 * 512;
+    constexpr uint32_t stack = 16 * 1024;
     struct Task *t = static_cast<struct Task *>(AllocMem(sizeof(struct Task), MEMF_PUBLIC | MEMF_CLEAR));
     uint8_t *s = static_cast<uint8_t *>(AllocMem(stack, MEMF_PUBLIC | MEMF_CLEAR));
     if (!t || !s) {

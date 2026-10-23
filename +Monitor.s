@@ -1311,6 +1311,11 @@ Tt_Decoupe
 	cmp.w	#_TkExt,d0
 	bcs.s	.skip1
 	beq.s	.jmp1
+; An operator: its definition is in the interpreter's table, not before
+; the instructions' (the original read whatever was there)
+	moveq	#"O",d1
+	tst.w	d0
+	bmi.s	.skip1
 ; Instruction/fonction normale
 	move.l	AdTokens(a5),a0
 	lea	4(a0,d0.w),a0

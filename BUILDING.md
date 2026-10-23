@@ -146,6 +146,12 @@ original behaviour, quirks included (the tests record the original
 binaries' results). Where a fix changes a recorded result, the golden file
 has the corrected one.
 
+AMOSPro starts on a stack of its own (64K, StackSwap in Cold_Start, given
+back in Get_Out): the C++ needs more than the 4K a CLI gives by default,
+and overflowed into the memory below (a menu object of the editor, freed
+later through its broken header; which block it hit depended on where
+things were loaded).
+
 Strings and numbers
 - `Flip$` took its length from a register whose high word was not cleared.
   Depending on what ran before, it failed with "out of string space"
@@ -220,6 +226,7 @@ File selector
   the task read and cleared the command word in two steps.
 - A zone number outside the selector's 20 ran code past the end of the jump
   table; it is ignored.
+- The selector's task has 16K of stack instead of 2K, for the C++ it runs.
 
 Text windows (AMOS.library)
 - Printing with autoback on a double-buffered screen saved and restored
@@ -331,6 +338,15 @@ Monitor
   the one it had not saved yet, 0, so the program's next error jumped to
   address 0; and when even the data could not be reserved, it set the
   current banks from whatever a4 pointed to.
+- Splitting a line into its parts (for the next instruction shown, and
+  for evaluating an expression dragged over) looked an operator up at a
+  negative offset from the instructions' token table. The operators are in
+  the interpreter's own table, so the kind of `=`, `+` and so on was
+  whatever byte lay in memory before the instructions. When that byte was
+  0, the part ended the instruction there ("Next instruction: A$" for
+  `A$="hello"`, and "Cannot evaluate expression"), depending on where
+  things happened to be loaded. Operators are now always 'O', the type
+  their definitions give.
 - Closing help's text reader tested the first long word of its screen
   instead of whether the screen was open, so it read address 0 when the
   screen had failed to open.

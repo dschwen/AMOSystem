@@ -1,0 +1,171 @@
+timeout 300
+wait 12
+shot e0
+key ctrl+y
+wait 0.5
+glide -3000 -3000
+wait 0.3
+button 3 down
+wait 0.5
+glide 80 0
+wait 0.5
+glide 0 47
+wait 0.5
+button 3 up
+wait 2.5
+shot e1
+key ctrl+y
+wait 0.5
+glide -3000 -3000
+wait 0.3
+button 3 down
+wait 0.5
+glide 80 0
+wait 0.5
+glide 0 47
+wait 0.5
+button 3 up
+wait 2.5
+shot e2
+key ctrl+y
+wait 0.5
+glide -3000 -3000
+wait 0.3
+button 3 down
+wait 0.5
+glide 80 0
+wait 0.5
+glide 0 47
+wait 0.5
+button 3 up
+wait 2.5
+shot e3
+key ctrl+y
+wait 0.5
+glide -3000 -3000
+wait 0.3
+button 3 down
+wait 0.5
+glide 80 0
+wait 0.5
+glide 0 47
+wait 0.5
+button 3 up
+wait 2.5
+shot e4
+key ctrl+y
+wait 0.5
+glide -3000 -3000
+wait 0.3
+button 3 down
+wait 0.5
+glide 80 0
+wait 0.5
+glide 0 47
+wait 0.5
+button 3 up
+wait 2.5
+shot e5
+key ctrl+y
+wait 0.5
+glide -3000 -3000
+wait 0.3
+button 3 down
+wait 0.5
+glide 80 0
+wait 0.5
+glide 0 47
+wait 0.5
+button 3 up
+wait 2.5
+shot e6
+key ctrl+y
+wait 0.5
+glide -3000 -3000
+wait 0.3
+button 3 down
+wait 0.5
+glide 80 0
+wait 0.5
+glide 0 47
+wait 0.5
+button 3 up
+wait 2.5
+shot e7
+key ctrl+y
+wait 0.5
+glide -3000 -3000
+wait 0.3
+button 3 down
+wait 0.5
+glide 80 0
+wait 0.5
+glide 0 47
+wait 0.5
+button 3 up
+wait 2.5
+shot e8
+key ctrl+y
+wait 0.5
+glide -3000 -3000
+wait 0.3
+button 3 down
+wait 0.5
+glide 80 0
+wait 0.5
+glide 0 47
+wait 0.5
+button 3 up
+wait 2.5
+shot e9
+key ctrl+y
+wait 0.5
+glide -3000 -3000
+wait 0.3
+button 3 down
+wait 0.5
+glide 80 0
+wait 0.5
+glide 0 47
+wait 0.5
+button 3 up
+wait 2.5
+shot e10
+key ctrl+y
+wait 0.5
+glide -3000 -3000
+wait 0.3
+button 3 down
+wait 0.5
+glide 80 0
+wait 0.5
+glide 0 47
+wait 0.5
+button 3 up
+wait 2.5
+shot e11
+key ctrl+y
+wait 0.5
+glide -3000 -3000
+wait 0.3
+button 3 down
+wait 0.5
+glide 80 0
+wait 0.5
+glide 0 47
+wait 0.5
+button 3 up
+wait 2.5
+shot e12
+key ctrl+y
+wait 0.5
+glide -3000 -3000
+wait 0.3
+button 3 down
+wait 0.5
+glide 80 0
+wait 0.5
+glide 0 47
+wait 0.5
+button 3 up
+wait 2.5

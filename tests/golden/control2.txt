@@ -1,0 +1,22 @@
+ 42 a-b
+exit if 4
+repeat 3
+exit 2 2
+l1l2l3g2
+
+three
+aXYZef
+QXYZRS
+ 1 2 3 5 7 9
+apple pear
+ 2 1
+ 11 6
+ERROR  23
+after error
+ERROR  47
+ERROR  47
+menus
+in leaver
+popped
+sub
+

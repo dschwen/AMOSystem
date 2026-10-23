@@ -33,7 +33,7 @@ wait 0.5
 glide 0 132
 wait 0.5
 button 3 up
-wait 1
+wait 6
 key BackSpace
 key BackSpace
 key BackSpace
@@ -83,7 +83,7 @@ wait 0.5
 glide 0 84
 wait 0.5
 button 3 up
-wait 1
+wait 6
 key BackSpace
 key BackSpace
 key BackSpace

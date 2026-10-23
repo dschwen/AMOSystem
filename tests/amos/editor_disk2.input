@@ -22,7 +22,7 @@ key Right
 key ctrl+s
 wait 1
 key ctrl+shift+s
-wait 3
+wait 6
 type AMOSTEST:blk.AMOS
 key Return
 wait 2
@@ -30,7 +30,7 @@ key Return
 wait 3
 key ctrl+shift+Down
 key ramiga+m
-wait 3
+wait 6
 type AMOSTEST:blk.AMOS
 key Return
 wait 2

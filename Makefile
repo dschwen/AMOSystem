@@ -49,13 +49,14 @@ LDLIBS   := -L$(AMIGA_PREFIX)/m68k-amigaos/libnix/lib -lgcc -lnix13 -lgcc
 # program they are linked into; src/core is linked into all of them.
 #   src/lib      routines moved out of AMOSPro.Lib   -> AMOSPro
 #   src/main     the main program                    -> AMOSPro
+#   src/verif    the verifier (+Verif.s)             -> AMOSPro
 #   src/w        AMOS.library
 #   src/editor   AMOSPro_Editor
 #   src/monitor  AMOSPro_Monitor
 #   src/core     the C++/asm bridge and data layout (an archive)
 src_objs = $(strip $(patsubst %.s,$(OBJ)/%.o,$(sort $(wildcard $(addsuffix /*.s,$(1))))) \
            $(patsubst %.cpp,$(OBJ)/%.o,$(sort $(wildcard $(addsuffix /*.cpp,$(1))))))
-OBJ_AMOSPRO := $(call src_objs,src/lib src/main)
+OBJ_AMOSPRO := $(call src_objs,src/lib src/main src/verif)
 OBJ_W       := $(call src_objs,src/w)
 OBJ_EDITOR  := $(call src_objs,src/editor)
 OBJ_MONITOR := $(call src_objs,src/monitor)

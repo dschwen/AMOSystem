@@ -43,8 +43,8 @@ emulator then grabs the input), one command per line:
                    no comment)
   timeout SECONDS  a longer time limit for this test
   mask X1 Y1 X2 Y2 an editor test's screen and shots compared without
-                   this rectangle too (the memory gauges elsewhere than
-                   at the top, say)
+                   this rectangle too, as the memory gauges at the top
+                   are (the gauges elsewhere, say)
   runs N           AMOS is started N times, the later times with no
                    program (after the editor quit, say); the test gets a
                    writable copy of the AMOS drive of its own
@@ -518,7 +518,7 @@ def compare_files(name, out):
     screen = (name + '.png', name + '_mask.png')
     got = {f: p for f, p in outputs(out, name).items()}
     want = {f: p for f, p in outputs(GOLDEN, name).items() if f not in screen}
-    boxes = extra_masks(name)
+    boxes = [MEMORY_GAUGES] + extra_masks(name)     # (the gauges change with the build)
     problems = []
     for f in sorted(set(got) | set(want)):
         if f not in got:
@@ -534,14 +534,16 @@ def compare_files(name, out):
 
 
 def same_image(a, b, boxes):
-    """Two screenshots alike but in the "mask" rectangles."""
+    """Two screenshots alike but in the "mask" rectangles and in one
+    character cell at most (the editor's cursor blinks)."""
     a, b = Image.open(a).convert('RGB'), Image.open(b).convert('RGB')
     if a.size != b.size:
         return False
     for box in boxes:
         a.paste((0, 0, 0), box)
         b.paste((0, 0, 0), box)
-    return a.tobytes() == b.tobytes()
+    diff = ImageChops.difference(a, b).getbbox()
+    return not diff or (diff[2] - diff[0] <= 8 and diff[3] - diff[1] <= 16)
 
 
 def main():
