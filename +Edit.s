@@ -63,6 +63,13 @@
 		XREF	_ed_store_entry,_ed_store_block_entry,_ed_delete_line_entry,_ed_delete_chunk_at_entry
 		XREF	_ed_delete_chunk_entry,_ed_find_line_entry,_ed_next_line_entry
 		XREF	_ed_indent_entry
+		XREF	_ed_block_save_entry
+		XREF	_ed_block_save_ascii_entry
+		XREF	_ed_print_program_entry
+		XREF	_ed_print_block_entry
+		XREF	_ed_block_limits_2_entry
+		XREF	_ed_printer_open_entry
+		XREF	_ed_printer_print_entry
 		XREF	_ed_rload_hidden_entry
 		XREF	_ed_load_hidden_entry
 		XREF	_ed_load_entry
@@ -4054,303 +4061,12 @@ Ed_BlockCopyA0	jmp	_ed_block_copy_entry
 ;	SAVE BLOCK
 ; ________________________________________
 ;
-Ed_BlocSave
-	bsr	Ed_TokCur
-	tst.l	Ed_Block(a5)
-	beq	Ed_BlocWhat
-; Selecteur de fichier
-; ~~~~~~~~~~~~~~~~~~~~
-	moveq	#90,d0
-	bsr	Ed_File_Selector
-	beq	Ed_NotDone
-	JJsr	L_Dsk.PathIt
-	bsr	Ed_SaveOver
-; Message saving block
-; ~~~~~~~~~~~~~~~~~~~~
-	move.w	#154,d0
-	move.l	Name1(a5),a0
-	bsr	Ed_AvName
-; Ouvre le fichier
-; ~~~~~~~~~~~~~~~~
-	move.l	#1006,d2
-	bsr	Ed_Open
-	beq	Ed_DError
-; Sauve l'entete AMOS BASIC V1.00 illegal
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	lea	EnHead(pc),a0
-	move.b	#"v",11(a0)
-	move.l	a0,d2
-	moveq	#16,d3
-	bsr	Ed_Write
-	bne	Ed_DError
-; Place pour la taille
-; ~~~~~~~~~~~~~~~~~~~~
-	move.l	Ed_BufT(a5),d2
-	moveq	#4,d3
-	bsr	Ed_Write
-	bne	Ed_DError
-; Premiere ligne du bloc
-; ~~~~~~~~~~~~~~~~~~~~~~
-	moveq	#0,d4
-	move.l	Ed_Block(a5),a2
-	movem.w	(a2)+,d4-d6
-	move.l	(a2)+,d7
-	moveq	#0,d4
-	move.w	(a2),d3
-	beq.s	.Pa1
-	lea	2(a2),a0		Tokenise la premiere ligne
-	move.l	Ed_BufT(a5),a1
-	bsr	Tokenise
-	move.l	d1,d3
-	beq.s	.Pa1
-	add.l	d3,d4			Plus taille
-	move.l	Ed_BufT(a5),d2		Sauve
-	bsr	Ed_Write
-	bne	Ed_DError
-.Pa1	add.w	(a2)+,a2
-	move.l	a2,d0
-	Pair	d0
-	move.l	d0,a2
-; Milieu du bloc!
-; ~~~~~~~~~~~~~~~
-	move.l	2(a2),d3		Taille du milieu
-	beq.s	.NoMi
-	add.l	d3,d4			Plus Taille
-	lea	6(a2),a0		Va ecrire le chunk
-	move.l	a0,d2
-	bsr	Ed_Write
-	bne	Ed_DError
-.NoMi	move.l	2(a2),d0
-	lea	6(a2,d0.l),a2
-; Fin du bloc
-; ~~~~~~~~~~~
-	move.w	(a2)+,d3
-	beq.s	.PaF
-	move.l	a2,a0			Tokenise la fin
-	move.l	Ed_BufT(a5),a1
-	bsr	Tokenise
-	move.l	d1,d3			Quelquechose � sauver?
-	beq.s	.PaF
-	add.l	d3,d4			Plus taille
-	move.l	Ed_BufT(a5),d2
-	bsr	Ed_Write		Sauve
-	bne	Ed_DError
-.PaF
-; Banques vides
-; ~~~~~~~~~~~~~
-.Seul	JJsr	L_Bnk.SaveVide
-; Va changer la taille du fichier
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	moveq	#16,d2			Locate au debut
-	moveq	#-1,d3
-	bsr	Ed_Seek
-	move.l	Ed_BufT(a5),a0		Poke et sauve la taille
-	move.l	d4,(a0)
-	move.l	a0,d2
-	moveq	#4,d3
-	bsr	Ed_Write
-	bne	Ed_DError
-; Finito!
-; ~~~~~~~
-	bsr	Ed_Close
-	bsr	Ed_AverFin
-	rts
-
-; ___________________________________________________
-;
-;	SAUVEGARDE BLOC EN ASCII
-; ___________________________________________________
-;
-Ed_BlocSaveAscii
-	bsr	Ed_TokCur
-	tst.l	Ed_Block(a5)
-	beq	Ed_BlocWhat
-; Selecteur de fichier
-; ~~~~~~~~~~~~~~~~~~~~
-	moveq	#82,d0
-	bsr	Ed_File_Selector
-	beq	Ed_NotDone
-	JJsr	L_Dsk.PathIt
-	bsr	Ed_SaveOver
-; Ouvre le fichier MODE_NEW
-; ~~~~~~~~~~~~~~~~~~~~~~~~~
-	move.l	#1006,d2
-	bsr	Ed_Open
-	beq	Ed_DError
-	move.w	#156,d0
-	move.l	Name1(a5),a0
-	bsr	Ed_AvName
-; Detokenise tout le bloc
-; ~~~~~~~~~~~~~~~~~~~~~~~
-	bsr	BlToA0
-	beq.s	.Vide
-.Loop	move.b	#10,(a0)
-	addq.l	#1,d3
-	bsr	Ed_Write
-	bne	Ed_DError
-	bsr	BlToA1
-	bne.s	.Loop
-; Ca y est!
-; ~~~~~~~~~
-.Vide	bsr	Ed_Close
-	bsr	Ed_AverFin
-	rts
-
-;
-; PRINT PROGRAM
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_PrgPrint
-	bsr	Ed_TokCur
-; Boite de dialogue
-; ~~~~~~~~~~~~~~~~~
-	moveq	#EdD_PProg,d0
-	bsr	Ed_Dialogue
-	cmp.w	#1,d0
-	bne	Ed_NotDone
-; Avertissement
-; ~~~~~~~~~~~~~
-	move.w	#217,d0
-	bsr	Ed_AverMess
-	bsr	Ed_PRTOpen
-; Boucle d'impression
-; ~~~~~~~~~~~~~~~~~~~
-	moveq	#0,d0
-	bsr	Ed_FindL
-	beq.s	.Exit
-.Loop	bclr	#BitControl-8,T_Actualise(a5)
-	bne.s	.Exit
-	move.l	Ed_BufT(a5),a1
-	moveq	#0,d0
-	bsr	Detok
-	move.l	Ed_BufT(a5),a0
-	move.w	(a0)+,d0
-	lea	0(a0,d0.w),a1
-	move.b	#13,(a1)+
-	move.b	#10,(a1)+
-	clr.b	(a1)
-	bsr	Ed_PRTPrint
-.In	bsr	Ed_NextL
-	bne.s	.Loop
-; Ca y est!
-; ~~~~~~~~~
-.Exit	bsr	Ed_Close
-	bsr	Ed_AverFin
-	SyCall	ClearKey
-	rts
-;
-; PRINT BLOC
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_BlocPrint
-	bsr	Ed_TokCur
-	tst.l	Ed_Block(a5)
-	beq	Ed_BlocWhat
-; Boite de dialogue
-; ~~~~~~~~~~~~~~~~~
-	moveq	#EdD_PBloc,d0
-	bsr	Ed_Dialogue
-	cmp.w	#1,d0
-	bne	Ed_NotDone
-; Avertissement
-; ~~~~~~~~~~~~~
-	move.w	#157,d0
-	bsr	Ed_AverMess
-	bsr	Ed_PRTOpen
-; Boucle d'impression
-; ~~~~~~~~~~~~~~~~~~~
-	bsr	BlToA0
-	beq.s	.Exit
-.Loop	bclr	#BitControl-8,T_Actualise(a5)
-	bne.s	.Exit
-	move.b	#13,(a0)+
-	move.b	#10,(a0)+
-	clr.b	(a0)
-	move.l	d2,a0
-	bsr	Ed_PRTPrint
-.In	bsr	BlToA1
-	bne.s	.Loop
-; Ca y est!
-; ~~~~~~~~~
-.Exit	bsr	Ed_Close
-	bsr	Ed_AverFin
-	SyCall	ClearKey
-	rts
-
-; Routines de transformation du bloc en ASCII
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-BlToA0	move.l	Ed_Block(a5),a2
-	movem.w	(a2)+,d4-d6
-	move.l	(a2)+,d7
-	moveq	#1,d4
-; Ramene la ligne en D2/D3
-; ~~~~~~~~~~~~~~~~~~~~~~~~
-BlToA1	moveq	#0,d3
-	tst.w	d4
-	beq.s	.Rien
-	cmp.w	#2,d4
-	bge.s	.Deuse
-; Premiere / Derniere ligne
-	move.w	(a2),d0
-	beq.s	.1Vide
-	lea	2(a2),a1
-	move.l	Ed_BufT(a5),a0
-	move.l	a0,d2
-	subq.w	#1,d0
-	bmi.s	.Cp
-.Co	move.b	(a1)+,(a0)+
-	dbra	d0,.Co
-.Cp	move.l	a0,d3
-	sub.l	d2,d3
-	add.w	(a2)+,a2
-	move.l	a2,d0
-	Pair	d0
-	move.l	d0,a2
-.Rien	move.w	d4,d0
-	addq.w	#1,d4
-	tst.w	d0
-	rts
-.1Vide	addq.w	#1,d4
-	addq.l	#2,a2			Saute la longueur
-	bra.s	BlToA1
-; Milieu du bloc
-.Deuse	cmp.w	#2,d4			Le premier?
-	bne.s	.Corps
-	move.w	(a2),d5			Oui, prend la taille
-	addq.l	#6,a2			Pointe la 1ere ligne
-.Corps	subq.w	#1,d5			Encore a faire?
-	bmi.s	.2Vide
-	move.l	a2,a0			Detokenise
-	move.l	Ed_BufT(a5),a1
-	moveq	#0,d0
-	bsr	Detok
-	move.l	a2,a0			Pointe la ligne suivante
-	JJsrP	L_Tk_FindN,a2
-	move.l	a0,a2
-	move.l	Ed_BufT(a5),a0		Retourne la ligne
-	moveq	#0,d3
-	move.w	(a0)+,d3
-	move.l	a0,d2
-	add.w	d3,a0
-	bra.s	.Rien
-.2Vide	moveq	#-1,d4			Derniere ligne
-	bra	BlToA1			Recommence
-
-; Retourne les limites du bloc en d0/d1/d2/d3
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_BlocLimits
-	move.w	Edt_YBloc(a4),d1
-	bmi	Ed_BlocWhat
-	move.w	Edt_YPos(a4),d3
-	add.w	Edt_YCu(a4),d3
-	move.w	Edt_XBloc(a4),d0
-	move.w	Edt_XCu(a4),d2
-	cmp.w	d1,d3
-	bhi.s	.PaSw
-	bne.s	.Sw
-	cmp.w	d0,d2
-	bcc.s	.PaSw
-.Sw	exg	d0,d2
-	exg	d1,d3
-.PaSw	rts
+; The block saved, printed: src/editor/blocksave.cpp
+Ed_BlocSave	jmp	_ed_block_save_entry
+Ed_BlocSaveAscii	jmp	_ed_block_save_ascii_entry
+Ed_PrgPrint	jmp	_ed_print_program_entry
+Ed_BlocPrint	jmp	_ed_print_block_entry
+Ed_BlocLimits	jmp	_ed_block_limits_2_entry
 
 ;____________________________________________________________________
 ;
@@ -8380,12 +8096,16 @@ EdM_Program
 ;
 ; Entete AMOS Basic
 ; ~~~~~~~~~~~~~~~~~
+		xdef	_ed_header
+_ed_header
 EnHead	dc.b	"AMOS ProEd.v    "
 	even
 
 ;
 ; NAME1 already exist. Overwrite?
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		xdef	_ed_save_over
+_ed_save_over
 Ed_SaveOver
 	JJsr	L_RExist
 	beq.s	.Skip
@@ -8664,40 +8384,12 @@ Ed_Seek	move.l	Handle(a5),d1
 ;
 ; Ouverture de l'imprimante
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_PRTOpen
-	moveq	#43,d0
-	JJsr	L_Sys_GetMessage
-	move.l	a0,d1
-	move.l	#1005,d2
-	bsr	Ed_OpenD1
-	beq.s	Ed_PErr
-	rts
+Ed_PRTOpen	jmp	_ed_printer_open_entry
+		xdef	_ed_print_error
+_ed_print_error
 Ed_PErr	move.w	#216,d0
 	bra.s	Ed_DBis
-;
-; Imprime la chaine A0
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_PRTPrint
-	move.l	a0,d2
-	move.l	a0,a1
-.Ip1	move.b	(a0)+,d0
-	move.b	d0,(a1)+
-	beq.s	.Ip2
-	cmp.b	#13,d0
-	bne.s	.Ip1
-	tst.b	PI_PrtRet(a5)
-	bne.s	.Ip1
-	cmp.b	#10,(a0)
-	bne.s	.Ip1
-	move.b	(a0)+,-1(a1)
-	bra.s	.Ip1
-; Nouvelle longueur
-.Ip2	sub.l	d2,a0
-	subq.l	#1,a0
-	move.l	a0,d3
-	bsr	Ed_Write
-	bne	Ed_PErr
-	rts
+Ed_PRTPrint	jmp	_ed_printer_print_entry
 ;
 ; Erreurs dans le chargement programme
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
