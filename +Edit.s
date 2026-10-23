@@ -75,6 +75,30 @@
 		XREF	_ed_load_entry
 		XREF	_ed_reload_entry
 		XREF	_ed_name_part_entry
+		XREF	_ed_get_systeme_entry
+		XREF	_ed_get_message_entry
+		XREF	_ed_get_message_a0_entry
+		XREF	_ed_get_next_message_entry
+		XREF	_ed_status_y_entry
+		XREF	_ed_status_x_entry
+		XREF	_ed_status_free_entry
+		XREF	_ed_status_order_entry
+		XREF	_ed_status_insert_entry
+		XREF	_ed_status_name_entry
+		XREF	_ed_name_to_buffer_entry
+		XREF	_ed_recall_alert_entry
+		XREF	_ed_alert_entry
+		XREF	_ed_zap_alert_entry
+		XREF	_ed_alert_clean_entry
+		XREF	_ed_alert_rts_entry
+		XREF	_ed_warn_name_entry
+		XREF	_ed_warn_message_entry
+		XREF	_ed_warn_entry
+		XREF	_ed_warning_end_entry
+		XREF	_ed_all_warnings_end_entry
+		XREF	_ed_status_line_entry
+		XREF	_ed_status_line_d0_entry
+		XREF	_ed_status_text_entry
 		XREF	_ed_merge_entry
 		XREF	_ed_merge_ascii_entry
 		XREF	_ed_rename_entry
@@ -3082,6 +3106,8 @@ Ed_SamPlay
 
 ; Met les banques de m�moire/dialogue de l'�diteur
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		xdef	_ed_set_banks
+_ed_set_banks
 Ed_SetBanks
 	move.l	a0,-(sp)
 	lea	Ed_Banks(a5),a0
@@ -3556,33 +3582,13 @@ Ed_GetNbMessage
 ;
 ; Get new editor message
 ; ~~~~~~~~~~~~~~~~~~~~~~
+; (editor/status.cpp)
 		xdef	_ed_get_systeme
 _ed_get_systeme
-Ed_GetSysteme
-	move.l	Ed_Systeme(a5),a0
-	bra.s	Ed_GetMessageA0
-Ed_GetMessage
-	move.l	Ed_Messages(a5),a0
-Ed_GetMessageA0
-	move.w	d1,-(sp)
-	clr.w	d1
-	addq.l	#1,a0
-	bra.s	.In
-.Loop	move.b	(a0),d1
-	lea	2(a0,d1.w),a0
-.In	subq.w	#1,d0
-	bgt.s	.Loop
-	move.w	(sp)+,d1
-	move.b	(a0)+,d0
-	rts
-; Get NEXT message
-; ~~~~~~~~~~~~~~~~
-Ed_GetNMessage
-	moveq	#0,d0
-	move.b	-(a0),d0
-	lea	2(a0,d0.w),a0
-	move.b	(a0)+,d0
-	rts
+Ed_GetSysteme	jmp	_ed_get_systeme_entry
+Ed_GetMessage	jmp	_ed_get_message_entry
+Ed_GetMessageA0	jmp	_ed_get_message_a0_entry
+Ed_GetNMessage	jmp	_ed_get_next_message_entry
 
 
 ; ___________________________________________________________________
@@ -4715,405 +4721,40 @@ Edt_SlDrawY
 ;_____________________________________________________________________________
 ;
 
-;
-; Imprime la ligne
-; ~~~~~~~~~~~~~~~~
-Ed_EtLine
-	move.w	Edt_YPos(a4),d0		Ligne #
-	add.w	Edt_YCu(a4),d0
-	addq.w	#1,d0
-	ext.l	d0
-	move.b	Ed_EtXX+3(a5),d1	Position ligne etat
-	moveq	#5,d2			Longueur ligne
-	bra	Et_Chiffre
-;
-; Imprime la colonne
-; ~~~~~~~~~~~~~~~~~~
-Ed_EtCol
-	move.w	Edt_XCu(a4),d0
-	addq.w	#1,d0
-	move.b	Ed_EtXX+4(a5),d1
-	moveq	#3,d2
-	bra	Et_Chiffre
-;
-; Imprime la ligne
-; ~~~~~~~~~~~~~~~~
-Ed_EtFree
-	move.l	Prg_StBas(a6),d0	Place libre
-	sub.l	Prg_StMini(a6),d0
-	move.b	Ed_EtXX+5(a5),d1	Position ligne etat
-	moveq	#7,d2			Longueur
-	bra	Et_Chiffre
-;
-; Imprime le numero d'ordre
-; ~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_EtOrder
-	move.w	Edt_Order(a4),d0
-	ext.l	d0
-	move.b	Ed_EtXX+1(a5),d1
-	moveq	#2,d2
-	bra	Et_Chiffre
-
-
-; Impression d'un chiffre dans la ligne d'etat
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-;	D1.b=	X
-;	D0=	Chiffre
-;	D3=	Nombre de decimales
-Et_Chiffre
-	movem.l	d0/d2,-(sp)
-	ext.w	d1
-	moveq	#0,d2
-	WiCall	Locate
-	move.l	Buffer(a5),a0
-	move.l	a0,a1
-	move.l	#"    ",(a1)
-	move.l	(a1)+,(a1)
-	move.l	(a1)+,(a1)
-	movem.l	(sp)+,d0/d7
-	JJsrP	L_LongToDec,a2
-	move.l	Buffer(a5),a1
-	clr.b	0(a1,d7.w)
-	WiCall	Print
-	rts
-;
-; Insert / Overwrite
-; ~~~~~~~~~~~~~~~~~~
-Ed_EtIns
-	move.b	Ed_EtXX+2(a5),d1
-	ext.w	d1
-	moveq	#0,d2
-	WiCall	Locate
-	moveq	#5,d0
-	tst.b	Ed_Insert(a5)
-	beq.s	.Skip
-	moveq	#6,d0
-.Skip	bsr	Ed_GetSysteme
-	move.l	a0,a1
-	WiCall	Print
-	rts
-;
-; Imprime le NOM DU PROGRAMME
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_EtNom
-	move.b	Ed_EtXX+6(a5),d1
-	ext.w	d1
-	moveq	#0,d2
-	WiCall	Locate
-	moveq	#3,d0
-	move.l	Edt_LinkPrev(a4),d1
-	or.l	Edt_LinkNext(a4),d1
-	beq.s	.Skip
-	moveq	#4,d0
-.Skip	bsr	Ed_GetSysteme
-	move.l	a0,a1
-	WiCall	Print
-	move.b	Ed_EtXX+7(a5),d1
-	ext.w	d1
-	move.w	d1,d7
-	moveq	#0,d2
-	WiCall	Locate
-	move.w	Edt_WindESx(a4),d0
-	lsr.w	#3,d0
-	sub.w	d7,d0
-	subq.w	#2,d0
-	move.l	Buffer(a5),a0
-.Clr	move.b	#" ",(a0)+
-	dbra	d0,.Clr
-	clr.b	(a0)
-	move.l	Buffer(a5),a0
-	bsr	Ed_NPrgToBuf
-	move.l	Buffer(a5),a1
-	WiCall	Print
-	rts
-
-; Copie le nom du programme dans le buffer A0
-; Termine par <32
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_NPrgToBuf
-	move.l	a0,a1
-	lea	Prg_NamePrg(a6),a0
-	tst.b	(a0)
-	beq.s	.Vide
-	move.l	a1,-(sp)
-	bsr	Ed_DNom
-	move.l	(sp)+,a1
-	bra.s	.Suit
-.Vide	moveq	#7,d0			VIDE: "New Project"
-	bsr	Ed_GetSysteme
-.Suit	tst.b	(a0)
-	beq.s	.Glo
-	move.b	(a0)+,(a1)+
-	cmp.b	#32,(a1)
-	bcc.s	.Suit
-.Glo	move.l	a1,a0
-.Fin	cmp.b	#32,(a1)
-	bcs.s	.Out
-	move.b	#" ",(a1)+
-	bra.s	.Fin
-.Out	rts
-;
-; Recall MESSAGE D'ALERTE
-; ~~~~~~~~~~~~~~~~~~~~~~~
+; The parts of the status line (editor/status.cpp)
+Ed_EtLine	jmp	_ed_status_y_entry
+Ed_EtCol	jmp	_ed_status_x_entry
+Ed_EtFree	jmp	_ed_status_free_entry
+Ed_EtOrder	jmp	_ed_status_order_entry
+Ed_EtIns	jmp	_ed_status_insert_entry
+Ed_EtNom	jmp	_ed_status_name_entry
+Ed_NPrgToBuf	jmp	_ed_name_to_buffer_entry
+; Alerts, warnings, the status line (editor/status.cpp)
 		xdef	_ed_r_alert
 _ed_r_alert
-Ed_RAlert
-	moveq	#127,d0
-	move.l	Ed_BufT(a5),a0
-	lea	256(a0),a0
-	cmp.l	#$FFFE0102,(a0)+
-	bne.s	.Skip
-	move.l	a0,Edt_EtAlert(a4)
-	move.w	#150,Edt_EtMess(a4)
-	bset	#EtA_Alert,Edt_EtatAff(a4)
-	bsr	Ed_EtPrintD0
-.Skip	rts
-
-;
-; MESSAGE D'ALERTE
-; ~~~~~~~~~~~~~~~~
-Ed_Alert
-	tst.b	Ed_Zappeuse(a5)
-	bne.s	Ed_ZapAlert
-	moveq	#"G",d0			Va faire du bruit!
-	bsr	Ed_SamPlay
-; Pas de programme en t�l�commande!
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	move.w	d0,Edt_EtMess(a4)
-	move.l	a0,Edt_EtAlert(a4)
-	bset	#EtA_Alert,Edt_EtatAff(a4)
-	move.l	Ed_BufT(a5),a1
-	lea	256(a1),a1
-	move.l	#$FFFE0102,(a1)+
-.Alrt	move.b	(a0)+,(a1)+
-	bne.s	.Alrt
-	bsr	Ed_RazAlert
-	bra	Ed_Loop
-; Un programme en t�l�commande!
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_ZapAlert
-	move.w	d0,Edt_EtMess(a4)
-	move.l	a0,Edt_EtAlert(a4)
-	bset	#EtA_Alert,Edt_EtatAff(a4)
-	move.l	a0,Ed_ZapMessage(a5)
-	move.w	#-1,Ed_ZapError(a5)
-	moveq	#0,d0
-	JJsr	L_ResTempBuffer
-	bsr	Ed_Close
-	bra	Ed_Loop
-; En Cas d'alerte, un peu de menage...
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_RazAlert
-	moveq	#0,d0
-	JJsr	L_ResTempBuffer
-	bsr	Ed_Close
-	rts
-
-; MESSAGE D'ALERTE en routine
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_AlertRts
-	tst.b	Ed_Zappeuse(a5)
-	bne.s	Ed_ZapAlert
-	movem.l	a2-a3/d2-d4,-(sp)
-	move.l	Edt_Current(a5),a4
-	move.l	Edt_Prg(a4),a6
-	move.w	d0,Edt_EtMess(a4)
-	move.l	a0,Edt_EtAlert(a4)
-	bset	#EtA_Alert,Edt_EtatAff(a4)
-	bsr	Ed_EtPrintD0
-	movem.l	(sp)+,a2-a3/d2-d4
-	rts
-
-; Affiche un avertissement avec nom A0=nom / D0=Mess
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Ed_RAlert	jmp	_ed_recall_alert_entry
+Ed_Alert	jmp	_ed_alert_entry
+Ed_ZapAlert	jmp	_ed_zap_alert_entry
+Ed_RazAlert	jmp	_ed_alert_clean_entry
+Ed_AlertRts	jmp	_ed_alert_rts_entry
 		xdef	_ed_av_name
 _ed_av_name
-Ed_AvName
-	movem.l	a0-a1/d0-d1,-(sp)
-	move.l	a0,-(sp)
-	bsr	Ed_GetMessage
-	move.l	Ed_BufT(a5),a1
-	bsr	EdCocop
-	subq.l	#1,a1
-	move.l	(sp)+,a0
-	bsr	EdCocop
-	move.l	Ed_BufT(a5),a0
-	clr.b	72(a0)
-	bsr	Ed_Avertir
-	movem.l	(sp)+,a0-a1/d0-d1
-	rts
-; Avertissement message editeur D0
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Ed_AvName	jmp	_ed_warn_name_entry
 		xdef	_ed_warn
 _ed_warn
-Ed_AverMess
-	move.l	a0,-(sp)
-	bsr	Ed_GetMessage
-	bsr	Ed_Avertir
-	move.l	(sp)+,a0
-	rts
-;
-; Affiche un AVERTISSEMENT, boite de dialogue DEVANT le texte
-; ~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_Avertir
-	movem.l	d0-d6/a0-a2,-(sp)
-	bsr	Ed_SetBanks
-	move.l	#EntNul,d0
-	move.l	d0,d1
-	move.l	a0,d2
-	addq.w	#1,Ed_Avert(a5)
-	move.w	Ed_Avert(a5),d3
-	add.w	#10,d3
-	ext.l	d3
-	moveq	#0,d4
-	moveq	#0,d5				Ne pas copier le programme
-	move.l	#1024,d6
-	move.l	Ed_Resource(a5),a0
-	move.l	a0,a1
-	add.l	2+8(a0),a0		Base des programmes
-	add.l	6(a0),a0		Programme numero deux
-	add.l	2(a1),a1		= Graphiques
-	move.l	Ed_Messages(a5),a2	Base des messages
-	JJsrP	L_Dia_RunQuick,a3
-	movem.l	(sp)+,d0-d6/a0-a2
-	rts
-;
-; Efface le dernier avertissement
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Ed_AverMess	jmp	_ed_warn_message_entry
+Ed_Avertir	jmp	_ed_warn_entry
 		xdef	_ed_aver_fin
 _ed_aver_fin
-Ed_AverFin
-	movem.l	d0-d7/a0-a4,-(sp)
-	move.w	Ed_Avert(a5),d1
-	beq.s	.Out
-	subq.w	#1,Ed_Avert(a5)
-	add.w	#10,d1
-	ext.l	d1
-	move.l	d1,-(sp)
-	move.l	#EntNul,d2
-	move.l	d2,d3
-	move.l	d3,d4
-	move.l	d4,d5
-	move.l	Buffer(a5),a1
-	EcCall	BlPut
-	move.l	(sp)+,d1
-	EcCall	BlDel
-.Out	movem.l	(sp)+,d0-d7/a0-a4
-	tst.w	d0
-	rts
-;
-; Effacement de tous les avertissements
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Ed_AverFin	jmp	_ed_warning_end_entry
 		xdef	_ed_all_aver_fin
 _ed_all_aver_fin
-Ed_AllAverFin
-	tst.w	Ed_Avert(a5)
-	bne.s	.Skip
-	rts
-.Skip	bsr	Ed_AverFin
-	bra.s	Ed_AllAverFin
-;
-; Reaffichage de la ligne d'etat complete
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Ed_AllAverFin	jmp	_ed_all_warnings_end_entry
 		xdef	_ed_status_print
 _ed_status_print
-Ed_EtPrint
-	move.b	#EtA_BAll,Edt_EtatAff(a4)
-Ed_EtPrintD0
-	tst.b	Edt_EtatAff(a4)
-	beq	.EndX
-	tst.b	Edt_Hidden(a4)
-	bne	.EndX
-	movem.l	d2-d7/a2,-(sp)
-; Message d'alerte
-; ~~~~~~~~~~~~~~~~
-	bclr	#EtA_Alert,Edt_EtatAff(a4)
-	beq.s	.Skip0
-	clr.b	Edt_EtatAff(a4)
-	tst.l	Edt_EtAlert(a4)
-	beq	.End2
-	move.w	Edt_WindEtat(a4),d1
-	WiCall	QWindow
-	moveq	#8,d0
-	bsr	Et_Print
-	move.l	Edt_EtAlert(a4),a1
-	WiCall	Centre
-	clr.l	Edt_EtAlert(a4)
-	move.w	Edt_Window(a4),d1
-	WiCall	QWindow
-	bra	.End
-.Skip0	tst.w	Edt_EtMess(a4)
-	bne	.End2
-	move.w	Edt_WindEtat(a4),d1
-	WiCall	QWindow
-; Une macro en route: message dans la fenetre courante
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	tst.w	EdMa_Tape(a5)
-	beq.s	.PaMacro
-	cmp.l	Edt_Current(a5),a4
-	bne.s	.PaMacro
-	moveq	#8,d0
-	bsr	Et_Print
-	moveq	#30,d0
-	bsr	Ed_GetMessage
-	move.l	a0,a1
-	WiCall	Centre
-	clr.b	Edt_EtatAff(a4)
-	bra.s	.End
-.PaMacro
-; Effacement Active/Inactive
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~
-	bclr	#EtA_Clw,Edt_EtatAff(a4)
-	beq.s	.Skip1
-	moveq	#10,d0
-	cmp.l	Edt_Current(a5),a4
-	beq.s	.Okd
-	moveq	#11,d0
-.Okd	bsr	Et_Print		Efface,
-	moveq	#2,d0
-	bsr	Et_Print		Imprime le fond
-	moveq	#12,d0
-	bsr	Et_Print		Met les couleurs des informations
-; Num�ro d'ordre de la fenetre
-	bsr	Ed_EtOrder
-.Skip1
-; Ins
-	bclr	#EtA_Ins,Edt_EtatAff(a4)
-	beq.s	.Skip3
-	bsr	Ed_EtIns
-.Skip3
-; Line, bit 2
-	bclr	#EtA_Y,Edt_EtatAff(a4)
-	beq.s	.Skip4
-	bsr	Ed_EtLine
-.Skip4
-; Col, bit 3
-	bclr	#EtA_X,Edt_EtatAff(a4)
-	beq.s	.Skip5
-	bsr	Ed_EtCol
-.Skip5
-; Free,
-	bclr	#EtA_Free,Edt_EtatAff(a4)
-	beq.s	.Skip6
-	bsr	Ed_EtFree
-.Skip6
-; Nom du programme
-	bclr	#EtA_Nom,Edt_EtatAff(a4)
-	beq.s	.Skip7
-	bsr	Ed_EtNom
-.Skip7
-; Fini! Que de labels....
-.End
-.End2	movem.l	(sp)+,a2/d2-d7
-.EndX	rts
-
-; Routine, imprime le message systeme D0
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Et_Print
-	bsr	Ed_GetSysteme
-	move.l	a0,a1
-	WiCall	Print
-	rts
+Ed_EtPrint	jmp	_ed_status_line_entry
+Ed_EtPrintD0	jmp	_ed_status_line_d0_entry
+Et_Print	jmp	_ed_status_text_entry
 
 
 ;____________________________________________________________________
@@ -8341,6 +7982,8 @@ Ed_OpenD1
 
 ; CLOSE fichier systeme
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		xdef	_ed_close
+_ed_close
 Ed_Close
 	move.l	Handle(a5),d1
 	beq.s	.Skip
