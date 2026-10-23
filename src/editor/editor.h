@@ -134,6 +134,17 @@ void delete_window();
 void update_split(EditWindow *w, uint16_t flags);
 void follow_scroll();
 
+// editor/status.cpp: Ed_GetMessageA0 (text n of a list, from 1),
+// Ed_GetMessage, Ed_GetSysteme, Ed_Avertir, Ed_AverMess, Ed_AverFin,
+// Ed_AllAverFin
+const uint8_t *message_of(const uint8_t *list, uint16_t n, uint8_t *length);
+const uint8_t *message(uint16_t n);
+const uint8_t *system_message(uint16_t n);
+void warn(const uint8_t *text);
+void warn_message(uint16_t n);
+void warning_end();
+void all_warnings_end();
+
 // editor/macros.cpp: Ed_MemReserve, Ed_MemFree, Ed_ListeNew, Ed_ListeDel,
 // Ed_ListeDelAll, Ed_IChaine, Ed_DChaine, Ed_AChaine, Ed_Dialogue, EdMa_Adr
 uint8_t *memory_reserve(uint32_t *at, uint32_t size);
@@ -146,6 +157,14 @@ uint8_t *dialogue_string(const uint8_t *text, const uint8_t **after = nullptr);
 uint8_t *dialogue_string_add(const uint8_t *text, const uint8_t **after = nullptr);
 int32_t dialogue(uint16_t n);
 uint8_t *macro_of(uint32_t key);
+
+// editor/config.cpp: Ed_SetBanks, Ed_SamPlay, Ed_GetNbMessage,
+// Ed_GetFsMessage, EdC_ChangeTexte
+void set_banks();
+void sound_play(uint8_t c);
+uint16_t text_count(const uint8_t *list);
+uint16_t text_free(const uint8_t *list);
+bool text_change(uint32_t *at, const uint8_t *text, uint16_t n);
 
 // editor/indent.cpp
 void indent(uint8_t *program, uint16_t tab);

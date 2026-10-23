@@ -294,6 +294,7 @@ Editor
 - Out of memory, starting to record a macro, or keeping the one recorded,
   went on with no buffer and wrote the macro's key at address 8; it is now
   "out of memory" (the recording buffer is freed).
+- A resource bank that failed to load left its file open.
 
 Collisions (AMOS.library)
 - The offsets into the masks of the two images were 16-bit: an image whose

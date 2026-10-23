@@ -75,6 +75,28 @@
 		XREF	_ed_load_entry
 		XREF	_ed_reload_entry
 		XREF	_ed_name_part_entry
+		XREF	_ed_set_banks_entry
+		XREF	_ed_sound_play_entry
+		XREF	_ed_sounds_changed_entry
+		XREF	_ed_sounds_end_entry
+		XREF	_ed_resource_load_entry
+		XREF	_ed_resource_free_entry
+		XREF	_ed_config_set_palette_entry
+		XREF	_ed_config_load_entry
+		XREF	_ed_config_save_entry
+		XREF	_ed_config_free_entry
+		XREF	_ed_config_save_default_entry
+		XREF	_ed_config_save_default_quiet_entry
+		XREF	_ed_config_save_as_entry
+		XREF	_ed_config_load_default_entry
+		XREF	_ed_config_load_default_quiet_entry
+		XREF	_ed_config_load_as_entry
+		XREF	_ed_config_redraw_entry
+		XREF	_ed_config_save_changed_entry
+		XREF	_ed_wait_input_entry
+		XREF	_ed_text_change_entry
+		XREF	_ed_text_count_entry
+		XREF	_ed_text_free_entry
 		XREF	_ed_mem_reserve_entry
 		XREF	_ed_mem_free_entry
 		XREF	_ed_list_new_entry
@@ -433,6 +455,8 @@ Ed_End	tst.b	Ed_Ok(a5)			Systeme installe?
 ;______________________________________________________________________________
 ;
 
+		xdef	_ed_open_editor
+_ed_open_editor
 Ed_OpenEditor
 	movem.l	d1-d7/a0-a6,-(sp)
 	tst.b	Ed_Opened(a5)
@@ -606,6 +630,8 @@ Ed_KillEditor
 
 ;	Fermeture de l'�diteur
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		xdef	_ed_close_editor
+_ed_close_editor
 Ed_CloseEditor
 	tst.b	Ed_Opened(a5)
 	beq.s	.Skip
@@ -2832,135 +2858,15 @@ Ed_Infos
 ; __________________________________________________________________________
 ;
 ;
-; Chargement/Effacement de la banque de resource (pas de gestion d'erreurs)
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_ResourceLoad
-; Charge la banque
-	bsr	Ed_SetBanks
-	move.l	#1005,d2
-	bsr	Ed_Open
-	beq.s	.DErr
-	moveq	#6,d0
-	JJsr	L_Bnk.Load
-	bne.s	.MErr
-	bsr	Ed_Close
-; Change les adresses
-	moveq	#6,d0
-	JJsr	L_Bnk.GetAdr
-	beq.s	.2Err
-	cmp.l	#"Reso",-8(a0)
-	bne.s	.2Err
-	move.l	a0,Ed_Resource(a5)
-	bsr	EdC_SetPalette
-	moveq	#0,d0
-	rts
-.DErr	moveq	#2,d0
-	rts
-.MErr	moveq	#1,d0
-	rts
-.2Err	moveq	#3,d0
-	rts
-; Effacement de la banque de configuration
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_ResourceFree
-	bsr	Ed_SetBanks
-	moveq	#6,d0
-	JJsr	L_Bnk.Eff
-	rts
-; Change la palette de couleur en fonction des prefs de l'�diteur
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-EdC_SetPalette
-	move.l	Ed_Resource(a5),d0
-	beq.s	.Skip
-	move.l	d0,a0
-	add.l	2(a0),a0
-	move.w	(a0),d0
-	lsl.w	#2,d0
-	lea	2+2+2(a0,d0.w),a0
-	lea	Ed_Palette(a5),a1
-	moveq	#7,d0
-.Copy	move.w	(a1)+,(a0)+
-	dbra	d0,.Copy
-.Skip	rts
-
-; Chargement/Effacement de la banque de samples (pas de gestion d'erreurs)
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_SamChanged
-	bsr	Ed_SetBanks
-	tst.b	Ed_Sounds(a5)
-	bne.s	.Sons
-; Pas de sons, effacer la banque?
-	moveq	#5,d0
-	JJsr	L_Bnk.GetAdr
-	bne.s	Ed_SamEnd
-	bra.s	.Out
-; Il faut faire des sons, charger la banque?
-.Sons	moveq	#5,d0
-	JJsr	L_Bnk.GetAdr
-	bne.s	.Out
-	moveq	#48,d0
-	bsr	Ed_GetSysteme
-	JJsrR	L_Sys_AddPath,a1
-; Charge la banque
-	move.l	#1005,d2
-	bsr	Ed_Open
-	beq.s	.Out
-	bsr	Ed_SetBanks
-	moveq	#5,d0
-	JJsr	L_Bnk.Load
-	bsr	Ed_Close
-; Ok
-.Out	rts
-
-; Effacement de la banque de samples
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_SamEnd
-	bsr	Ed_SetBanks
-	moveq	#5,d0
-	JJsr	L_Bnk.Eff
-	rts
-;
-; Joue le sample D0 (lettre de A � Z)
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+; The resource bank, the sounds: editor/config.cpp
+Ed_ResourceLoad	jmp	_ed_resource_load_entry
+Ed_ResourceFree	jmp	_ed_resource_free_entry
+EdC_SetPalette	jmp	_ed_config_set_palette_entry
+Ed_SamChanged	jmp	_ed_sounds_changed_entry
+Ed_SamEnd	jmp	_ed_sounds_end_entry
 		xdef	_ed_sam_play
 _ed_sam_play
-Ed_SamPlay
-	movem.l	d0-d3/a0-a2,-(sp)
-	tst.b	Ed_Sounds(a5)
-	beq.s	.Out
-	tst.b	Ed_Zappeuse(a5)
-	bne.s	.Out
-	move.w	d0,d2
-	bsr	Ed_SetBanks
-	moveq	#5,d0
-	JJsr	L_Bnk.GetAdr
-	beq.s	.Out
-	cmp.l	#"Samp",-8(a0)
-	bne.s	.Out
-; Trouve le sample
-	move.w	(a0),d1
-	subq.w	#1,d1
-	bmi.s	.Out
-	lea	2(a0),a1
-.Loop	move.l	(a1)+,d0
-	lea	0(a0,d0.l),a2
-	cmp.b	(a2),d2
-	beq.s	.Found
-	dbra	d1,.Loop
-	bra.s	.Out
-; Appelle la trappe
-.Found	moveq	#0,d3
-	move.w	8(a2),d3
-	move.l	10(a2),d2
-	lea	14(a2),a1
-	moveq	#%1111,d1
-	move.l	ExtAdr(a5),d0
-	beq.s	.Out
-	move.l	d0,a0
-	jsr	-4(a0)
-; Fini!
-.Out	movem.l	(sp)+,d0-d3/a0-a2
-	rts
+Ed_SamPlay	jmp	_ed_sound_play_entry
 
 
 ; ___________________________________________________________________
@@ -2973,477 +2879,23 @@ Ed_SamPlay
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 		xdef	_ed_set_banks
 _ed_set_banks
-Ed_SetBanks
-	move.l	a0,-(sp)
-	lea	Ed_Banks(a5),a0
-	move.l	a0,Cur_Banks(a5)
-	lea	Ed_Dialogs(a5),a0
-	move.l	a0,Cur_Dialogs(a5)
-	move.l	(sp)+,a0
-	rts
+Ed_SetBanks	jmp	_ed_set_banks_entry
 
-; Sauvegarde configuration par defaut
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-EdC_SaveDefault
-	bsr	Ed_TokCur
-	moveq	#EdD_SvConf,d0
-	bsr	Ed_Dialogue
-	cmp.w	#1,d0
-	bne	Ed_NotDone
-EdC_SaveDef
-	moveq	#7,d0
-	JJsr	L_Sys_GetMessage
-	JJsrR	L_Sys_AddPath,a1
-	bsr	EdC_SaveIt
-	rts
-; Sauvegarde de la configuration
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-EdC_SaveAs
-	bsr	Ed_TokCur
-	move.w	#130,d0
-	bsr	Ed_File_Selector
-	beq	Ed_NotDone
-	JJsr	L_Dsk.PathIt
-	bsr	Ed_SaveOver
-EdC_SaveIt
-	move.w	#152,d0
-	bsr	Ed_GetMessage
-	bsr	Ed_Avertir
-	bsr	EdC_Save
-	bne.s	.Err
-	bsr	Ed_AverFin
-	clr.b	EdC_Changed(a5)
-	rts
-; Erreur disque
-.Err	move.w	#139,d0
-	bra	Ed_Al100
-
-; Chargement de la configuration par defaut
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-EdC_LoadDefault
-	bsr	Ed_TokCur
-	bsr	EdC_Saved
-EdC_LoadDef
-	moveq	#7,d0
-	JJsr	L_Sys_GetMessage
-	JJsrR	L_Sys_AddPath,a1
-	bsr	EdC_LoadIt
-	move.b	#2,EdC_Changed(a5)
-	rts
-; Chargement de la configuration
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-EdC_LoadAs
-	bsr	Ed_TokCur
-	bsr	EdC_Saved
-	move.w	#134,d0
-	bsr	Ed_File_Selector
-	beq	Ed_NotDone
-	JJsr	L_Dsk.PathIt
-	bsr	EdC_LoadIt
-	move.b	#2,EdC_Changed(a5)
-	rts
-EdC_LoadIt
-	move.w	#153,d0
-	bsr	Ed_AverMess
-	bsr	EdC_Load
-	bne	.Err
-	bsr	Ed_AverFin
-	move.w	#218,d0			Message
-	bsr	Ed_AverMess
-	moveq	#75,d0			Attente
-	bsr	Ed_TiWait
-	bsr	EdC_Redraw
-	rts
-; Erreur
-.Err	move.w	#139,d0
-	bra	Ed_Al100
-
-; Redessin de TOUT l'editeur en cas de changement de config
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-EdC_Redraw
-	bsr	Ed_SamChanged
-	bsr	Ed_Hide
-	bsr	Ed_CloseEditor
-	move.b	#1,EdC_Modified(a5)
-	bsr	Ed_OpenEditor
-	bsr	Ed_Appear
-	rts
-;
-; Sauvegarde de la configuration si modifiee
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-EdC_Saved
-	cmp.b	#1,EdC_Changed(a5)
-	bne.s	.Skip
-	moveq	#EdD_CSaved,d0
-	bsr	Ed_Dialogue
-	cmp.w	#2,d0
-	beq.s	.Skip
-	cmp.w	#1,d0
-	bne	Ed_NotDone
-	bsr	EdC_SaveAs
-.Skip	rts
-
-;
-; Chargement de la configuration A0
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-EdC_Load
-	move.l	#1005,d2
-	bsr	Ed_Open
-	beq	.DErr
-; Charge la config elle meme
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~
-	move.l	Buffer(a5),a0
-	move.l	a0,d2
-	moveq	#4,d3
-	bsr	Ed_Read
-	bne	.DErr
-	move.l	d2,a0
-	move.l	#Ed_FConfig-Ed_DConfig,d3
-	cmp.l	(a0),d3
-	bne	.Err2
-	lea	Ed_DConfig(a5),a0
-	move.l	a0,d2
-	bsr	Ed_Read
-	bne	.DErr
-	move.l	d2,Ed_Config(a5)
-; Charge les chaines systeme
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~
-	lea	Ed_Systeme(a5),a0
-	bsr	EdC_LoadTextes
-	bne	EdC_Out
-; Charge les chaines menus
-; ~~~~~~~~~~~~~~~~~~~~~~~~
-	lea	EdM_Messages(a5),a0
-	bsr	EdC_LoadTextes
-	bne	EdC_Out
-; Charge les messages dialog
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~
-	lea	Ed_Messages(a5),a0
-	bsr	EdC_LoadTextes
-	bne	EdC_Out
-; Charge les messages erreur TEST TIME
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	lea	Ed_TstMessages(a5),a0
-	bsr	EdC_LoadTextes
-	bne	EdC_Out
-; Charge les messages erreur RUN TIME
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	lea	Ed_RunMessages(a5),a0
-	bsr	EdC_LoadTextes
-	bne	EdC_Out
-; Charge les programmes � lancer
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	lea	Ed_MnPrograms(a5),a0
-	bsr	EdC_LoadTextes
-	bne	EdC_Out
-; Charge les user menus
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	lea	EdM_User(a5),a0
-	bsr	EdC_LoadTextes
-	bne	EdC_Out
-; Charge les definitions menus
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	lea	EdM_Definition(a5),a0
-	bsr	EdC_LoadTextes
-	bne	EdC_Out
-; Calcule les positions dans la ligne de config
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	moveq	#1,d0
-	bsr	Ed_GetSysteme
-	moveq	#-1,d1
-	lea	Ed_EtXX(a5),a1
-.Loop1	addq.l	#1,d1
-	move.b	(a0)+,d0
-	beq.s	.Out1
-	cmp.b	#" ",d0
-	beq.s	.Loop1
-	sub.b	#"0",d0
-	cmp.b	#8,d0
-	bcc.s	.Loop1
-	ext.w	d0
-	move.b	d1,0(a1,d0.w)
-	bra.s	.Loop1
-.Out1
-; Ok!
-	moveq	#0,d0
-	bra	EdC_Out
-; File not found
-.DErr	moveq	#1,d0
-	bra	EdC_Out
-; Bad config
-.Err2	moveq	#2,d0
-	bra	EdC_Out
-
-; Effacement de la configuration courante
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-EdC_Free
-	lea	Ed_Systeme(a5),a0		1
-	bsr	Ed_MemFree
-	lea	EdM_Messages(a5),a0		2
-	bsr	Ed_MemFree
-	lea	Ed_Messages(a5),a0		3
-	bsr	Ed_MemFree
-	lea	Ed_TstMessages(a5),a0		4
-	bsr	Ed_MemFree
-	lea	Ed_RunMessages(a5),a0		5
-	bsr	Ed_MemFree
-	lea	Ed_MnPrograms(a5),a0		6
-	bsr	Ed_MemFree
-	lea	EdM_User(a5),a0			7
-	bsr	Ed_MemFree
-	lea	EdM_Definition(a5),a0		8
-	bsr	Ed_MemFree
-	rts
-
-;
-; Sauvegarde de la configuration courante
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-;	A0=	Nom
-EdC_Save
-	move.l	#1006,d2
-	bsr	Ed_Open
-	beq	.DErr
-; Sauve la config elle meme
-; ~~~~~~~~~~~~~~~~~~~~~~~~~
-	move.l	Buffer(a5),a0
-	move.l	#Ed_FConfig-Ed_DConfig,(a0)
-	move.l	a0,d2
-	moveq	#4,d3
-	bsr	Ed_Write
-	bne.s	.DErr
-	lea	Ed_DConfig(a5),a0
-	move.l	a0,d2
-	move.l	#Ed_FConfig-Ed_DConfig,d3
-	bsr	Ed_Write
-	bne.s	.DErr
-; Sauve les chaines systeme
-; ~~~~~~~~~~~~~~~~~~~~~~~~~
-	lea	Ed_Systeme(a5),a0
-	bsr	EdC_SaveTextes
-	bne.s	EdC_Out
-; Sauve les chaines menu
-; ~~~~~~~~~~~~~~~~~~~~~~~~~
-	lea	EdM_Messages(a5),a0
-	bsr	EdC_SaveTextes
-	bne.s	EdC_Out
-; Sauve les messages dialogues
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	lea	Ed_Messages(a5),a0
-	bsr	EdC_SaveTextes
-	bne.s	EdC_Out
-; Sauve les messages d'erreur TEST TIME
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	lea	Ed_TstMessages(a5),a0
-	bsr	EdC_SaveTextes
-	bne.s	EdC_Out
-; Sauve les messages d'erreur RUN TIME
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	lea	Ed_RunMessages(a5),a0
-	bsr	EdC_SaveTextes
-	bne.s	EdC_Out
-; Sauve les programmes � lancer
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	lea	Ed_MnPrograms(a5),a0
-	bsr	EdC_SaveTextes
-	bne.s	EdC_Out
-; Sauve les user menus
-; ~~~~~~~~~~~~~~~~~~~~
-	lea	EdM_User(a5),a0
-	bsr	EdC_SaveTextes
-	bne.s	EdC_Out
-; Sauve les definitions menus
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	lea	EdM_Definition(a5),a0
-	bsr	EdC_SaveTextes
-	bne.s	EdC_Out
-; Ok!
-; ~~~
-	moveq	#0,d0
-	bra	EdC_Out
-.DErr	moveq	#1,d0
-; Sortie chargement/sauvegarde fichier
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-EdC_Out	move.l	d0,-(sp)
-	bsr	Ed_Close
-	move.l	(sp)+,d0
-EdC_Out2
-	tst.l	d0
-	rts
-
-;
-; Charge un fichier de textes
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~
-;	A0=	Adresse du pointeur dans (a5)
-;	D7=	Lock
-EdC_LoadTextes
-	movem.l	a0-a2/d2-d3,-(sp)
-	move.l	a0,a2
-	bsr	Ed_MemFree
-	move.l	Buffer(a5),d2
-	moveq	#4,d3
-	bsr	Ed_Read
-	bne.s	.Err
-	move.l	d2,a0
-	move.l	(a0),d3
-	beq.s	.Skip
-	move.l	d3,d0
-	move.l	a2,a0
-	bsr	Ed_MemReserve
-	beq.s	.Err
-	move.l	a0,d2
-	bsr	Ed_Read
-	bne.s	.Err
-.Skip	moveq	#0,d0
-	bra.s	.Out
-.Err	move.l	a2,a0
-	bsr	Ed_MemFree
-	moveq	#-1,d0
-.Out	movem.l	(sp)+,a0-a2/d2-d3
-	rts
-;
-; Sauve un fichier de textes
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~
-;	A0=	Adresse du pointeur dans (a5)
-;	D7=	Lock
-EdC_SaveTextes
-	movem.l	a0-a2/d2-d3,-(sp)
-	move.l	a0,a2
-	move.l	(a2),d0
-	bne.s	.Plin
-	move.l	a2,d2
-	moveq	#0,d3
-	bra.s	.Wri
-.Plin	move.l	d0,a0
-	move.l	-(a0),d3
-	move.l	a0,d2
-.Wri	addq.l	#4,d3
-	bsr	Ed_Write
-	bne.s	.Err
-	moveq	#0,d0
-	bra.s	.Out
-.Err	moveq	#-1,d0
-.Out	movem.l	(sp)+,a0-a2/d2-d3
-	rts
-
-; Change / Ajoute un message dans un fichier de textes
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-;	A0= 	Base des textes
-;	A1=	Nouveau message
-;	D0=	Numero du message
-EdC_ChangeTexte
-	movem.l	a2-a4/d2-d5,-(sp)
-	move.l	a0,a2
-	move.l	a1,a3
-	move.w	d0,d2
-; Taille du nouveau message
-.Lg	tst.b	(a1)+
-	bne.s	.Lg
-	sub.l	a3,a1
-	subq.l	#1,a1
-	move.l	a1,d3
-; Nombre de messages
-	move.l	(a2),a0
-	bsr	Ed_GetNbMessage
-	cmp.w	d0,d2
-	bhi.s	.New
-; Un ancien message, calcul de la taille
-	move.w	d2,d0
-	move.l	(a2),a0
-	bsr	Ed_GetMessageA0
-	neg.w	d0
-	add.w	d3,d0
-	ext.l	d0
-	bra.s	.Res
-; Un nouveau message
-.New	moveq	#2,d0
-	add.l	d3,d0
-; Reserve la nouvelle memoire
-.Res	move.l	(a2),a0
-	add.l	-(a0),d0
-	move.l	d0,d1
-	addq.l	#4,d0
-	SyCall	MemFastClear
-	beq.s	.Err
-	move.l	d1,(a0)+
-	move.l	a0,d5
-; Recopie les anciens messages
-	move.l	(a2),a1
-	addq.l	#1,a1
-	clr.b	(a0)+
-	moveq	#0,d1
-	moveq	#0,d4
-.Cp0	addq.w	#1,d1
-	moveq	#0,d4
-	move.b	(a1),d4
-	bmi.s	.CpX
-	lea	1(a1),a4
-	lea	2(a1,d4.w),a1
-	cmp.b	d1,d2
-	bne.s	.Cp1
-	move.l	a3,a4
-	move.b	d3,d4
-	moveq	#-1,d2
-.Cp1	move.b	d4,(a0)+
-	beq.s	.Cp3
-	subq.w	#1,d4
-.Cp2	move.b	(a4)+,(a0)+
-	dbra	d4,.Cp2
-.Cp3	clr.b	(a0)+
-	bra.s	.Cp0
-; Le dernier message?
-.CpX	tst.w	d2
-	bmi.s	.CpY
-	move.b	d3,(a0)+
-	beq.s	.Cp5
-.Cp4	move.b	(a3)+,(a0)+
-	subq.b	#1,d3
-	bne.s	.Cp4
-.Cp5	clr.b	(a0)+
-.CpY
-; Marque la fin
-	move.b	#-1,(a0)+
-; Efface l'ancien texte
-	move.l	a2,a0
-	bsr	Ed_MemFree
-; Branche le nouveau, et fini!
-	move.l	d5,(a2)
-	moveq	#0,d0
-	bra.s	.Out
-; Erreur, out of mem!
-.Err	moveq	#-1,d0
-.Out	movem.l	(sp)+,a2-a4/d2-d5
-	rts
-;
-; Get FIRST message free
-; ~~~~~~~~~~~~~~~~~~~~~~
-;	A0=	Base des messages
-Ed_GetFsMessage
-	moveq	#0,d0
-	moveq	#0,d1
-	move.l	a0,a1
-.Loop	addq.l	#1,d0
-	move.b	1(a0),d1
-	beq.s	.Out
-	lea	2(a0,d1.w),a0
-	bpl.s	.Loop
-.New	move.l	a1,a0
-	bsr	Ed_GetNbMessage
-	addq.w	#1,d0
-.Out	rts
-
-;
-; Get number of messages
-; ~~~~~~~~~~~~~~~~~~~~~~
-;	A0=	Base des messages
-Ed_GetNbMessage
-	moveq	#0,d0
-	moveq	#0,d1
-	bra.s	.In
-.Loop	addq.w	#1,d0
-	lea	2(a0,d1.w),a0
-.In	move.b	1(a0),d1
-	bpl.s	.Loop
-	rts
+; The configuration: editor/config.cpp
+EdC_SaveDefault	jmp	_ed_config_save_default_entry
+EdC_SaveDef	jmp	_ed_config_save_default_quiet_entry
+EdC_SaveAs	jmp	_ed_config_save_as_entry
+EdC_LoadDefault	jmp	_ed_config_load_default_entry
+EdC_LoadDef	jmp	_ed_config_load_default_quiet_entry
+EdC_LoadAs	jmp	_ed_config_load_as_entry
+EdC_Redraw	jmp	_ed_config_redraw_entry
+EdC_Saved	jmp	_ed_config_save_changed_entry
+EdC_Load	jmp	_ed_config_load_entry
+EdC_Free	jmp	_ed_config_free_entry
+EdC_Save	jmp	_ed_config_save_entry
+EdC_ChangeTexte	jmp	_ed_text_change_entry
+Ed_GetFsMessage	jmp	_ed_text_free_entry
+Ed_GetNbMessage	jmp	_ed_text_count_entry
 ;
 ; Get new editor message
 ; ~~~~~~~~~~~~~~~~~~~~~~
@@ -5875,6 +5327,8 @@ Es_DisplayD0
 ;
 ; Cache l'�cran de l'�diteur
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		xdef	_ed_hide
+_ed_hide
 Ed_Hide
 	movem.l	a0-a4/a6/d0-d7,-(sp)
 	tst.w	EsFlag(a5)
@@ -5942,6 +5396,8 @@ Ed_Hide
 ;
 ; Apparition de l'�cran l'�diteur
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		xdef	_ed_appear
+_ed_appear
 Ed_Appear
 	movem.l	a2-a4/a6/d2-d7,-(sp)
 	tst.w	EsFlag(a5)
@@ -7447,19 +6903,7 @@ Ed_CopyPal
 ;	Attente souris dans le titre
 ; _____________________________________________________
 ;
-Ed_TiWait
-	move.w	d0,-(sp)
-.loop	JJsr	L_Sys_WaitMul
-	SyCall	Inkey
-	tst.l	d1
-	bne.s	.end
-	SyCall	MouseKey
-	and.w	#%111,d1
-	bne.s	.end
-	subq.w	#1,(sp)
-	bne.s	.loop
-.end	addq.l	#2,sp
-	rts
+Ed_TiWait	jmp	_ed_wait_input_entry
 
 ;
 ; Unpack Image de l'�diteur
