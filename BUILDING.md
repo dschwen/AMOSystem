@@ -300,6 +300,10 @@ Editor
   the old shortcut. Test editor_usermenu.
 - A menu object that could not be made (out of memory) stopped the editor
   on an illegal instruction; the item is now left without it.
+- Restoring the last session (auto-resume): running out of memory while
+  making the program or window structures again left the last one linked
+  to its old address, which the clean-up then followed; and the editor went
+  on with the current window pointing into the freed loading buffer.
 
 Collisions (AMOS.library)
 - The offsets into the masks of the two images were 16-bit: an image whose
