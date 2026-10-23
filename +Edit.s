@@ -75,6 +75,15 @@
 		XREF	_ed_load_entry
 		XREF	_ed_reload_entry
 		XREF	_ed_name_part_entry
+		XREF	_ed_memory_draw_entry
+		XREF	_ed_memory_draw_title_entry
+		XREF	_ed_memory_show_entry
+		XREF	_ed_unpack_entry
+		XREF	_ed_unpack_title_entry
+		XREF	_ed_hide_entry
+		XREF	_ed_appear_entry
+		XREF	_ed_redraw_entry
+		XREF	_ed_limit_mouse_entry
 		XREF	_ed_new_entry
 		XREF	_ed_new2_entry
 		XREF	_ed_window_new_entry
@@ -740,6 +749,8 @@ Ed_WarmStart	jmp	_ed_warm_start_entry
 ;						Dessin du titre
 ;______________________________________________________________________________
 ;
+		xdef	_ed_draw_top
+_ed_draw_top
 Ed_DrawTop
 
 	movem.l	a2/d2-d7,-(sp)
@@ -814,7 +825,6 @@ Ed_DrawTop
 	move.w	d2,d1
 	moveq	#Ed_YTop,d2
 	move.w	d7,d3
-	lea	Ed_Unpack(pc),a2
 	bsr	Ed_MemoryDraw
 	bsr	Ed_MemoryAff
 
@@ -828,90 +838,10 @@ Ed_DrawTop
 ;	D1=	X
 ;	D2=	Y
 ;	D3=	Largeur
-;	A2= 	Adresse UNPACK
-Ed_MemoryDraw
-	move.w	d3,d0
-	sub.w	#Ed_BoutonsSx+7,d0
-	move.w	d0,Ed_MemorySx(a5)
-
-	moveq	#Ed_MemoryPics,d0	La gauche
-	jsr	(a2)
-	add.w	#Ed_BoutonsSx,d1
- 	move.w	d1,Ed_MemoryX(a5)
-
-	divu	#Ed_BoutonsSx,d3
-	subq.w	#2+1,d3
-.Loop	moveq	#Ed_MemoryPics+1,d0
-	jsr	(a2)
-	add.w	#Ed_BoutonsSx,d1
-	dbra	d3,.Loop
-	moveq	#Ed_MemoryPics+2,d0
-	jmp	(a2)
-
-; Dessine le contenu des sliders de memoire.
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_MemoryAff
-	move.l	a6,-(sp)
-	move.l	$4.w,a6
-; Dessin du slider de CHIP MEM
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	move.l	#Chip|Public,d1
-	jsr	_LVOAvailMem(a6)
-	move.l	d0,-(sp)
-	move.l	MemChipTotal(a5),d4
-	move.l	d4,d3
-	sub.l	d0,d3
-	move.w	Ed_MemoryX(a5),d1
-	move.w	#Ed_MemoryY1,d2
-	bsr	.Memory
-; Dessin du slider de FAST MEM
-	move.l	#Public|Fast,d1
-	jsr	_LVOAvailMem(a6)
-	add.l	d0,(sp)
-	move.l	MemFastTotal(a5),d4
-	move.l	d4,d3
-	sub.l	d0,d3
-	move.w	Ed_MemoryX(a5),d1
-	move.w	#Ed_MemoryY2,d2
-	bsr	.Memory
-; Stocke le resultat memoire globale
-	move.l	(sp)+,Ed_MemCurrent(a5)
-	move.l	(sp)+,a6
-	rts
-
-; Routine de dessin
-; ~~~~~~~~~~~~~~~~~
-.Memory
-; Une place dans le buffer
-; ~~~~~~~~~~~~~~~~~~~~~~~~
-	move.l	Buffer(a5),a2
-	move.l	a2,a0
-	moveq	#Sl_Long-1,d0
-.Loop	clr.b	(a0)+
-	dbra	d0,.Loop
-; Longueur du slider
-	lsr.l	#8,d4
-	lsr.l	#8,d3
-	move.w	d4,Sl_Global(a2)
-	move.w	d3,Sl_Window(a2)
-; Position
-	move.w	d1,Sl_X(a2)
-	move.w	d2,Sl_Y(a2)
-	move.w	Ed_MemorySx(a5),Sl_Sx(a2)
-	move.w	#Ed_MemorySy,Sl_Sy(a2)
-; Couleurs
-	moveq	#23,d0
-	bsr	Ed_GetSysteme
-	lea	Sl_Inactive(a2),a1
-	moveq	#16-1,d0
-.Co	moveq	#0,d1
-	move.b	(a0)+,d1
-	move.w	d1,(a1)+
-	dbra	d0,.Co
-; Appelle le dessin
-	move.l	a2,a0
-	JJsrR	L_Sl_Init,a1
-	rts
+; The memory gauges: editor/screen.cpp
+Ed_MemoryDraw	jmp	_ed_memory_draw_entry
+Es_MemoryDraw	jmp	_ed_memory_draw_title_entry
+Ed_MemoryAff	jmp	_ed_memory_show_entry
 
 ;______________________________________________________________________________
 ;
@@ -3905,8 +3835,7 @@ Esc_Appear
 	move.w	d2,d1
 	moveq	#Es_BoutonsY,d2
 	move.w	d7,d3
-	lea	Es_Unpack(pc),a2
-	bsr	Ed_MemoryDraw
+	bsr	Es_MemoryDraw
 	bsr	Ed_MemoryAff
 
 ; Position  du bouton "OUT"
@@ -4088,177 +4017,15 @@ Es_DisplayD0
 ;
 ; Cache l'�cran de l'�diteur
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+; The editor's screen away and back: editor/screen.cpp
 		xdef	_ed_hide
 _ed_hide
-Ed_Hide
-	movem.l	a0-a4/a6/d0-d7,-(sp)
-	tst.w	EsFlag(a5)
-	bne	.Out
-	move.w	#-1,EsFlag(a5)
-; Plus d'avertissements
-; ~~~~~~~~~~~~~~~~~~~~~
-	bsr	Ed_AllAverFin
-; Fait disparaitre lentement
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~
-	move.l	T_EcAdr+EcEdit*4(a5),a2
-	move.w	Ed_VScrol(a5),d7
-	neg.w	d7
-	move.w	EcTy(a2),d6
-	lsr.w	#1,d6
-	move.w	Ed_Wy(a5),d5
-	add.w	d6,d5
-	JJsr	L_AppCentre
-	bset	#BitHide,EcFlags(a2)
-	bsr	EdReCop
-; Efface les d�finitions de l'�diteur
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	EcCalD	Active,EcEdit
-	bsr	Edt_EffWindows
-; Met la couleur du fond
-; ~~~~~~~~~~~~~~~~~~~~~~
-	move.w	ColBack(a5),d1
-	EcCall	SColB
-; Remet les rainbows
-; ~~~~~~~~~~~~~~~~~~
-	EcCalD	RainHide,0
-; Remet les limites souris
-; ~~~~~~~~~~~~~~~~~~~~~~~~
-	lea	LimSave(a5),a0
-	lea	T_MouXMin(a5),a1
-	move.l	(a0)+,(a1)+
-	move.l	(a0)+,(a1)+
-; Remet tous les sprites
-; ~~~~~~~~~~~~~~~~~~~~~~
-	SyCall	RecallM
-	SyCall	ReActHs
-	SyCall	AMALUFrz
-	SyCall	WaitVbl
-	SyCall	ActHs
-	SyCall	AffHs
-; Initialise les touches de fonction AMIGA illegal--> en verif!
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-;	moveq	#0,d1
-;	Alea	AmiDef,a1
-;.Ami	SyCall	SetFunk
-;	move.l	a0,a1
-;	addq.w	#1,d1
-;	cmp.w	#20,d1
-;	bcs.s	.Ami
-; Nettoie les touches / Demarre AMAL
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.Out	SyCall	ClearKey
-	SyCall	AMALUFrz
-; Menus >>> Program
-; ~~~~~~~~~~~~~~~~~
-	bsr	EdM_Program
-	movem.l	(sp)+,a0-a4/a6/d0-d7
-	rts
-
-;
-; Apparition de l'�cran l'�diteur
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Ed_Hide	jmp	_ed_hide_entry
 		xdef	_ed_appear
 _ed_appear
-Ed_Appear
-	movem.l	a2-a4/a6/d2-d7,-(sp)
-	tst.w	EsFlag(a5)
-	beq	.Out
-	clr.w	EsFlag(a5)
-; Enleve les touches de fonction AMIGA
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	moveq	#0,d1
-.Ami	move.l	Buffer(a5),a1
-	clr.b	(a1)
-	SyCall	SetFunk
-	addq.w	#1,d1
-	cmp.w	#20,d1
-	bcs.s	.Ami
-; Enleve tous les sprites
-; ~~~~~~~~~~~~~~~~~~~~~~~
-	SyCall	AMALFrz
-	SyCall	StActHs
-	SyCall	StoreM
-; Enleve les rainbows
-; ~~~~~~~~~~~~~~~~~~~
-	EcCalD	RainHide,-1
-; Remet le fond!
-; ~~~~~~~~~~~~~~
-	move.w	Ed_ColB(a5),d1
-	EcCall	SColB
-; Dessine le fond
-; ~~~~~~~~~~~~~~~
-	EcCalD	Active,EcEdit
-	bsr	Ed_DrawTop
-	move.l	Edt_Current(a5),a4
-	move.l	Edt_Prg(a4),a6
-	bsr	Ed_DrawWindows
-; Apparition de l'�cran
-; ~~~~~~~~~~~~~~~~~~~~~
-	moveq	#0,d2
-	EcCalD	EHide,EcEdit
-	EcCalD	First,EcEdit
-	move.l	T_EcAdr+EcEdit*4(a5),a0
-	move.w	Ed_Wy(a5),EcAWY(a0)
-	bset	#2,EcAW(a0)
-; Fait apparaitre lentement
-; ~~~~~~~~~~~~~~~~~~~~~~~~~
-	move.l	T_EcAdr+EcEdit*4(a5),a2
-	move.w	Ed_VScrol(a5),d7
-	move.w	#1,d6
-	move.w	Ed_Wy(a5),d5
-	move.w	Ed_Sy(a5),d0
-	lsr.w	#1,d0
-	add.w	d0,d5
-	JJsr	L_AppCentre
-; Limite de la souris
-; ~~~~~~~~~~~~~~~~~~~
-	lea	T_MouXMin(a5),a0
-	lea	LimSave(a5),a1
-	move.l	(a0)+,(a1)+
-	move.l	(a0)+,(a1)+
-	bsr	Ed_LimM
-; Affiche le tout!
-; ~~~~~~~~~~~~~~~~
-	bclr	#BitControl-8,T_Actualise(a5)
-	bsr	EdM_Editor
-; Flag si peu de memoire...
-; ~~~~~~~~~~~~~~~~~~~~~~~~~
-	move.b	#2,Ed_NewAppear(a5)
-; Plus de touches
-; ~~~~~~~~~~~~~~~
-.Out	SyCall	ClearKey
-	movem.l	(sp)+,a2-a4/a6/d2-d7
-	rts
-; Redessine le fond, lors de retour d'accessoire
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_Redraw
-	movem.l	a2-a6/d2-d7,-(sp)
-	EcCalD	Active,EcEdit
-;	bsr	Ed_DrawTop			Voir si redessin!
-;	move.l	Edt_Current(a5),a4
-;	move.l	Edt_Prg(a4),a6
-;	bsr	Ed_DrawWindows
-	EcCalD	First,EcEdit
-	bsr	EdReCop
-	bsr	Ed_LimM
-	movem.l	(sp)+,a2-a6/d2-d7
-	rts
-; Routine, limite la souris
-Ed_LimM	moveq	#EcEdit+1,d3
-	move.w	Ed_Sx(a5),d1
-	subq.w	#4,d1
-	move.w	Ed_Sy(a5),d2
-	subq.w	#1,d2
-	SyCall	XyHard
-	movem.w	d1/d2,-(sp)
-	moveq	#EcEdit+1,d3
-	moveq	#2,d1
-	moveq	#2,d2
-	SyCall	XyHard
-	movem.w	(sp)+,d3/d4
-	SyCall	LimitM
-	SyCalD	Show,-1
-	rts
+Ed_Appear	jmp	_ed_appear_entry
+Ed_Redraw	jmp	_ed_redraw_entry
+Ed_LimM	jmp	_ed_limit_mouse_entry
 
 ;_____________________________________________________________________________
 ;
@@ -4789,21 +4556,10 @@ Ed_TiWait	jmp	_ed_wait_input_entry
 ;	D1=	X
 ;	D2=	Y
 ;
-Es_Unpack
-	move.l	T_EcAdr+EcFonc*4(a5),a1
-	bra.s	EdU
+Es_Unpack	jmp	_ed_unpack_title_entry
 		xdef	_ed_unpack
 _ed_unpack
-Ed_Unpack
-	move.l	T_EcAdr+EcEdit*4(a5),a1
-EdU	move.l	Ed_Resource(a5),a0
-	add.l	2(a0),a0
-	lsl.w	#2,d0
-	add.l	-4+2(a0,d0.w),a0
-	ext.l	d1
-	ext.l	d2
-	JJsrP	L_UnPack_Bitmap,a2
-	rts
+Ed_Unpack	jmp	_ed_unpack_entry
 
 ; ___________________________________________________________________
 ;
