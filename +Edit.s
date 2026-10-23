@@ -75,6 +75,10 @@
 		XREF	_ed_load_entry
 		XREF	_ed_reload_entry
 		XREF	_ed_name_part_entry
+		XREF	_ed_quit_options_entry
+		XREF	_ed_about_entry
+		XREF	_ed_about_extensions_entry
+		XREF	_ed_information_entry
 		XREF	_ed_goto_line_entry
 		XREF	_ed_search_dialogue_entry
 		XREF	_ed_search_new_entry
@@ -2686,24 +2690,8 @@ Ed_DoQuit
 	rts
 
 ;
-; Set QUIT OPTIONS
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_QuitOptions
-	bsr	Ed_TokCur
-	move.l	Ed_VDialogues(a5),a0
-	move.b	Ed_QuitFlags(a5),d0
-	moveq	#4,d1
-	JJsrR	L_Dia_SetVFlags,a1
-	moveq	#EdD_OQuit,d0
-	bsr	Ed_Dialogue
-	cmp.w	#1,d0
-	bne	Ed_Loca
-	move.l	Ed_VDialogues(a5),a0
-	moveq	#4,d1
-	JJsrR	L_Dia_GetVFlags,a1
-	move.b	d0,Ed_QuitFlags(a5)
-	move.b	#1,EdC_Changed(a5)
-	rts
+; Quit options: editor/info.cpp
+Ed_QuitOptions	jmp	_ed_quit_options_entry
 
 ; ______________________________________________________________________________
 ;
@@ -2711,130 +2699,10 @@ Ed_QuitOptions
 ; ______________________________________________________________________________
 ;
 
-; About
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_About
-	JLea	L_VersionN,a0
-	bsr	Ed_DChaine
-	move.l	Ed_VDialogues(a5),a2
-	move.l	a1,0*4(a2)
-	lea	AdTokens+4(a5),a0	Compte les extensions
-	moveq	#26-1,d0
-	moveq	#0,d2
-.Cpt	tst.l	(a0)+
-	beq.s	.PaE
-	addq.w	#1,d2
-.PaE	dbra	d0,.Cpt
-	move.l	d2,1*4(a2)
-	JLea	L_UserReg,a0		Registration #
-	move.l	Name2(a5),a1
-	moveq	#$73,d0
-	JJsrP	L_Sys_UnCode,a2
-	move.l	a1,3*4(a2)
-	lea	16(a0),a0		Registred user
-	lea	16(a1),a1
-	move.b	#$A5,d0
-	JJsrP	L_Sys_UnCode,a2
-	move.l	a1,2*4(a2)
-	moveq	#EdD_Title,d0
-	bsr	Ed_Dialogue
-	rts
-
-; About extensions
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_AboutExt
-	move.l	Ed_VDialogues(a5),a2
-; Trouve la premiere extension
-	lea	AdTokens(a5),a3
-	moveq	#0,d3
-	bsr	.Next
-	tst.w	d3
-	beq.s	.Out
-; Appelle le dialogue
-.Loop	move.l	d3,0*4(a2)
-	lea	.Empty(pc),a1
-	move.l	(a3),a0
-	move.l	LB_Title(a0),d0
-	beq.s	.Sk
-	move.l	d0,a1
-.Sk	move.l	a1,1*4(a2)
-	moveq	#EdD_AboutE,d0
-	bsr	Ed_Dialogue
-	cmp.w	#1,d0
-	beq.s	.Prv
-	cmp.w	#2,d0
-	beq.s	.Nxt
-.Out	rts
-; Suivant
-.Nxt	bsr	.Next
-	bra.s	.Loop
-; Precedent
-.Prv	bsr	.Prev
-	bra.s	.Loop
-; Previous extension
-.Prev	move.l	d3,d0
-	move.l	a3,a0
-.Pr1	cmp.w	#1,d0
-	bls.s	.POut
-	subq.w	#1,d0
-	tst.l	-(a0)
-	beq.s	.Pr1
-	move.l	d0,d3
-	move.l	a0,a3
-.POut	rts
-; Next extension
-.Next	move.l	d3,d0
-	move.l	a3,a0
-.Ne1	cmp.w	#26,d0
-	bcc.s	.NOut
-	addq.w	#1,d0
-	addq.l	#4,a0
-	tst.l	(a0)
-	beq.s	.Ne1
-	move.l	d0,d3
-	move.l	a0,a3
-.NOut	rts
-.Empty	dc.w	0
-
-; Informations
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_Infos
-	bsr	Ed_TokCur
-	bsr	Ed_VaTester
-	move.l	Ed_VDialogues(a5),a2
-	move.l	a6,-(sp)
-	move.l	$4.w,a6
-; Chip Free
-	move.l	#Chip,d1
-	jsr	_LVOAvailMem(a6)
-	move.l	d0,0*4(a2)
-; Fast Free
-	move.l	#Fast,d1
-	jsr	_LVOAvailMem(a6)
-	move.l	d0,1*4(a2)
-	move.l	(sp)+,a6
-; Text length
-	move.l	Prg_StHaut(a6),d0
-	sub.l	Prg_StBas(a6),d0
-	move.l	d0,2*4(a2)
-; Bank length
-	JJsr	L_Bnk.GetLength
-	add.l	d2,d0
-	add.l	d1,d0
-	move.l	d0,3*4(a2)		Banques totales
-	move.l	d1,5*4(a2)		Bobs
-	move.l	d2,6*4(a2)		Icones
-; Number of lines
-	moveq	#0,d0
-	move.w	Prg_NLigne(a6),d0
-	move.l	d0,4*4(a2)
-; Number of instructions
-	move.l	BMenage(a5),5*4(a2)
-	move.l	VerNInst(a5),5*4(a2)
-; Appelle les dialogues
-	moveq	#EdD_Infos,d0
-	bsr	Ed_Dialogue
-	rts
+; About, about the extensions, information: editor/info.cpp
+Ed_About	jmp	_ed_about_entry
+Ed_AboutExt	jmp	_ed_about_extensions_entry
+Ed_Infos	jmp	_ed_information_entry
 
 ; __________________________________________________________________________
 ;
@@ -3709,6 +3577,8 @@ Indent	jmp	_ed_indent_entry
 ;
 		xdef	_ed_va_tester
 _ed_va_tester
+		xdef	_ed_test_program
+_ed_test_program
 Ed_VaTester
 	tst.b	Prg_StModif(a6)		Vraiment tester?
 	beq.s	.Ok

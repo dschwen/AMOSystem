@@ -1,0 +1,21 @@
+wait 12
+glide -3000 -3000
+wait 0.3
+button 3 down
+wait 0.5
+glide 20 0
+wait 0.5
+glide 0 47
+wait 0.5
+button 3 up
+wait 1.5
+glide 165 242
+wait 0.3
+click 1
+wait 1
+click 1
+wait 1
+glide -62 0
+wait 0.3
+click 1
+wait 1.5
