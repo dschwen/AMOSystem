@@ -311,6 +311,9 @@ Editor
 - Running an accessory (or a menu option's program) that was running
   already said "out of memory": the result was tested on the flags of the
   instruction clearing Edt_Runned. It now says the program runs already.
+- Call Editor cleared a flag of the data zone (Ed_YaUTest) through the
+  editor window's pointer: one byte 2566 bytes into a 246-byte window
+  structure was zeroed, and the flag itself never was.
 
 Collisions (AMOS.library)
 - The offsets into the masks of the two images were 16-bit: an image whose

@@ -75,6 +75,16 @@
 		XREF	_ed_load_entry
 		XREF	_ed_reload_entry
 		XREF	_ed_name_part_entry
+		XREF	_ed_loop_entry
+		XREF	_ed_function_call_entry
+		XREF	_ed_zap_in_entry
+		XREF	_ed_zap_prepare_entry
+		XREF	_ed_zap_out_entry
+		XREF	_ed_zap_result_entry
+		XREF	_ed_zap_function_entry
+		XREF	_ed_zap_new_config_entry
+		XREF	_ed_zap_new_line_entry
+		XREF	_ed_zap_new_line_tok_entry
 		XREF	_ed_go_monitor_entry
 		XREF	_ed_program_command_entry
 		XREF	_ed_program_reload_entry
@@ -882,303 +892,12 @@ Ed_MemoryAff	jmp	_ed_memory_show_entry
 ;						Boucle principale de l'�diteur
 ;______________________________________________________________________________
 ;
+; The editor's loop: editor/loop.cpp
 		xdef	_ed_loop
 _ed_loop
 Ed_Loop
-
 	move.l	BasSp(a5),sp
-	EcCalD	Active,EcEdit
-
-; Flag: editeur en etat de marche!
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	move.b	#1,Ed_Ok(a5)
- 	move.w	#1,T_AMOState(a5)	Editeur present!
-
-; Efface une fenetre en rab
-; __________________________
-;
-	move.l	Ed_WindowToDel(a5),d0
-	beq.s	.PaDel
-	move.l	d0,a4
-	clr.l	Ed_WindowToDel(a5)
-	tst.b	Edt_Hidden(a4)
-	bne.s	.Visi
-	bsr	Ed_CloseWindow
-	bra	Ed_Loop
-.Visi	bsr	Edt_DelWindow
-	bsr	EdM_BranchAMOS
-	bra	Ed_Loop
-.PaDel
-;
-; Eventuellement, efface tous les avertissements
-; ______________________________________________
-;
-	bsr	Ed_AllAverFin
-;
-; Recharge un programme apres PRG COMMAND
-; _______________________________________
-;
-	move.l	Ed_Prg2ReLoad(a5),d0
-	bne	Ed_PrgReLoad
-
-	move.l	Edt_Current(a5),a4
-	move.l	Edt_Prg(a4),a6
-	move.b	Prg_MathFlags(a6),MathFlags(a5)
-;
-; Securites
-; __________________________
-;
-	clr.b	Ed_FUndo(a5)		Undo
-	clr.b	Ed_RunnedHidden(a5)
-
-;
-; Gestion des multi windows
-; ___________________________
-;
-	moveq	#0,d0
-	move.l	a4,a0
-	or.b	Ed_SCallFlags(a5),d0
-	bsr	Ed_Splitted
-	clr.b	Ed_SCallFlags(a5)
-;
-; Gestion des scrollings lies
-; _____________________________
-;
-	bsr	Ed_LinkeScroll
-;
-; Gestion du curseur avec un bloc
-; _______________________________
-;
-	bsr	Ed_BlocAff
-;
-; Gestion de la fenetre d'informations pour toutes les fenetres
-; _____________________________________________________________
-;
-; Exploration de la liste
-	move.l	Edt_List(a5),d0
-.Liip	move.l	d0,a4
-	tst.b	Edt_Hidden(a4)
-	bne.s	.Naxt
-	move.l	Edt_Prg(a4),a6
-; Affichage general
-; ~~~~~~~~~~~~~~~~
-	move.b	Ed_EtatAff(a5),d0
-	or.b	d0,Edt_EtatAff(a4)
-; Efface le message d'alerte?
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	tst.w	Edt_EtMess(a4)
-	beq.s	.PaMess
-	subq.w	#1,Edt_EtMess(a4)
-	bne.s	.PaMess
-	move.b	#EtA_BAll,Edt_EtatAff(a4)
-.PaMess
-; Va reafficher la fenetre
-; ~~~~~~~~~~~~~~~~~~~~~~~~
-	bsr	Ed_EtPrintD0
-; Affiche le slider
-; ~~~~~~~~~~~~~~~~~
-	tst.b	Edt_ASlY(a4)
-	beq.s	.PaSlY
-	subq.b	#1,Edt_ASlY(a4)
-	bne.s	.PaSlY
-	bsr	Ed_AffSlV
-.PaSlY
-; Suivant
-; ~~~~~~~
-.Naxt	move.l	Edt_Next(a4),d0
-	bne.s	.Liip
-	clr.b	Ed_EtatAff(a5)
-
-;
-; Demarre les menus si pas definis
-; ________________________________
-;
-	tst.b	Ed_Zappeuse(a5)			Pas en zappeuse
-	bne.s	.Menula
-	cmp.l	#1024*72,Ed_MemCurrent(a5)	Si moins de 72k
-	bcc.s	.Domenu
-	tst.b	Ed_NewAppear(a5)		Peut-on essayer un clearvar?
-	beq.s	.Menula
-	subq.b	#1,Ed_NewAppear(a5)
-	bne.s	.Deuse
-; Fait un peu de place
-	JJsr	L_Mon_Free			Plus de moniteur
-	JJsr	L_Math_Close			Plus de librairie math
-	bsr	Prg_RazUndos			Plus d'UNDO
-	SyCall	MemFlush			Flush la memoire...
-; Essaie d'ouvrir les menus...
-.Deuse	move.w	#186,d0				Low memory!
-	bsr	Ed_GetMessage
-	moveq	#125,d0
-	bsr	Ed_AlertRts
-	clr.b	Ed_Sounds(a5)			Plus de sons
-	bsr	Ed_SamChanged
-	bsr	EdM_Program
-	move.l	Edt_Current(a5),a4
-	move.l	Edt_Prg(a4),a6
-	JJsr	L_Prg_SetBanks
-	JJsr	L_MemMaximum
-.Domenu	tst.l	EdM_Table(a5)			Les menus sont la?
-	bne.s	.Menula
-	bsr	EdM_Init
-	bra	Ed_Loop
-.Menula
-
-;
-; Gestion du programme courant
-; ____________________________________
-;
-	move.l	Edt_Current(a5),a4		Fenetre
-	move.l	Edt_Prg(a4),a6
-	move.w	Edt_Window(a4),d1
-	WiCall	QWindow
-	tst.b	Ed_CuFlag(a5)			Curseur
-	bne.s	.PaCu
-	move.b	#1,Ed_CuFlag(a5)
-	bsr	Ed_CuOn
-.PaCu
-
-;
-; Scrolling pour recentrer le curseur?
-; ____________________________________
-;
-; 1. A gauche
-; ~~~~~~~~~~~
-	move.w	Edt_XPos(a4),d0
-	move.w	Edt_XCu(a4),d1
-	sub.w	d0,d1
-	cmp.w	#Ed_XScrollG,d1
-	bcc.s	.SkipL
-	tst.w	d0
-	beq.s	.SkipL
-	bsr	Ed_CuOff
-	bsr	Ed_CGo
-	bra	Ed_Loop
-.SkipL
-; 2. A droite
-; ~~~~~~~~~~~
-	move.w	Edt_WindTx(a4),d1
-	sub.w	Edt_XCu(a4),d1
-	add.w	d0,d1
-	cmp.w	#Ed_XScrollD,d1
-	bcc.s	.SkipD
-	cmp.w	#200,d0
-	bcc.s	.SkipD
-	bsr	Ed_CuOff
-	bsr	Ed_CDr
-	bra	Ed_Loop
-.SkipD
-; Haut / Bas, calcule les tailles
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	move.w	Edt_WindTy(a4),d1
-	cmp.w	#2,d1
-	bls.s	.SEnd
-	moveq	#1,d2
-	moveq	#1,d3
-	cmp.w	#7,d1
-	bcs.s	.SkipT
-	moveq	#Ed_YScrollH/2,d2
-	moveq	#Ed_YScrollB/2,d3
-	cmp.w	#(Ed_YScrollH+Ed_YScrollB)*2,d1
-	bcs.s	.SkipT
-	move.w	d1,d2
-	mulu	#Ed_YScrollH,d2
-	divu	#25,d2
-	move.w	d1,d3
-	mulu	#Ed_YScrollB,d3
-	divu	#25,d3
-.SkipT
-; 3. En haut.
-; ~~~~~~~~~~~
-	cmp.w	Edt_YCu(a4),d2
-	bls.s	.SkipH
-	tst.w	Edt_YPos(a4)
-	beq.s	.SkipH
-	bsr	Ed_CuOff
-	bsr	Ed_SHaut2
-	addq.w	#1,Edt_YCu(a4)
-	bsr	Ed_Loca
-	bra	Ed_Loop
-.SkipH
-; 4. En bas
-; ~~~~~~~~~
-	move.w	Edt_WindTy(a4),d0
-	sub.w	Edt_YCu(a4),d0
-	cmp.w	d0,d3
-	bcs.s	.SEnd
-	move.w	Edt_YPos(a4),d0
-	add.w	Edt_YCu(a4),d0
-	cmp.w	Prg_NLigne(a6),d0
-	bcc	.SEnd
-	bsr	Ed_CuOff
-	bsr	Ed_SBas2
-	subq.w	#1,Edt_YCu(a4)
-	bsr	Ed_Loca
-	bra	Ed_Loop
-.SEnd
-
-;
-; Un programme en t�l�commande?
-; _____________________________
-;
-	tst.b	Ed_Zappeuse(a5)
-	beq.s	.PaProg
-	addq.w	#1,Ed_ZapCounter(a5)	Attend que l'editeur soit stabilis�
-	cmp.w	#5,Ed_ZapCounter(a5)
-	bcs	Ed_Loop
-	clr.w	Ed_ZapCounter(a5)
-	bra	Ed_ZapOut
-.PaProg
-;
-; Gestion du clavier
-; __________________
-;
-	bsr	Ed_Key
-	bne	Ed_Loop
-
-;
-; Gestion de la souris
-; ____________________
-;
-	bsr	Ed_Mouse
-	bne	Ed_Loop
-
-;
-; Reafficher le slider de memoire?
-; ________________________________
-;
-	move.w	T_VblCount+2(a5),d0
-	and.w	#63,d0
-	bne.s	.Skip
-	bsr	Ed_MemoryAff
-	bra	Ed_Loop
-.Skip
-;
-; Autosave?
-;____________
-;
-	move.l	Ed_AutoSave(a5),d0
-	beq.s	.PaAS
-	tst.l	Ed_AutoSaveRef(a5)
-	bpl.s	.Pan
-	move.l	T_VblCount(a5),Ed_AutoSaveRef(a5)
-.Pan	move.l	T_VblCount(a5),d1
-	sub.l	Ed_AutoSaveRef(a5),d1
-	cmp.l	d0,d1
-	bcs.s	.PaAS
-	move.l	Edt_Current(a5),a4
-	tst.w	Edt_LEdited(a4)		Seulement si ligne non editee
-	bne.s	.PaAS
-	move.l	#-1,Ed_AutoSaveRef(a5)
-	bsr	Ed_SaveAuto
-	bra	Ed_Loop
-.PaAS
-;
-; Multitache!
-; ___________
-;
-	JJsr	L_Sys_WaitMul
-	bra	Ed_Loop
+	jmp	_ed_loop_entry
 
 
 ; __________________________________________________________________________
@@ -1279,74 +998,12 @@ Ed_Splitted	jmp	_ed_update_split_entry
 ;	D2	Numero de la fonction
 ; ___________________________________________________________________
 ;
+; A function of the editor (d2): editor/loop.cpp
 		xdef	_ed_function_call
 _ed_function_call
-Ed_FCall
-; Nettoyage
-; ~~~~~~~~~
-	bsr	Ed_ClEProc
-	bsr	EdM_Program
-	bsr	Ed_CuOff
-; Stocke les flags pour le splitter
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	lea	FlagFonc(pc),a0
-	move.b	0(a0,d2.w),d0
-	tst.w	EdMa_Tape(a5)
-	beq.s	.PaM
-	btst	#5,d0
-	beq.s	.NoMacro
-.PaM	move.b	d0,Ed_SCallFlags(a5)
-	btst	#2,d0
-	beq.s	.Notst
-	bsr	Ed_LCourant
-	bne	Ed_NotEdit
-.Notst	move.w	Edt_YCu(a4),d0
-	add.w	Edt_YPos(a4),d0
-	move.w	d0,Edt_YOldBloc(a4)
-; Fonction ou programme?
-; ~~~~~~~~~~~~~~~~~~~~~~
-	move.w	d2,d1
-	ext.l	d1
-	cmp.w	#HiddenCommands-1,d2
-	bcs.s	.Fonc
-; Hidden programs
-	sub.w	#HiddenCommands-1,d1
-	divu	#3,d1
-	swap	d1
-	moveq	#HiddenCall-1,d2		RUN / EDIT ou NEW?
-	add.w	d1,d2
-	clr.w	d1
-	swap	d1
-	add.w	EdM_PosHidden(a5),d1		Plus position courante!
-	bra.s	.Call
-; Autoload?
-.Fonc	move.w	d2,d0
-	mulu	#3,d0
-	lea	Ed_AutoLoad(a5),a0
-	tst.b	0(a0,d0.w)
-	bne.s	.Prg
-; Appelle la fonction!
-.Call	lsl.w	#2,d2
-	clr.w	T_Actualise(a5)
-	lea	JFonc(pc),a0
-	moveq	#0,d0
-	jmp	0(a0,d2.w)
-; Appel d'un programme externe, si pas zappeuse!
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.Prg	tst.b	Ed_Zappeuse(a5)
-	bne.s	.Call
-	lea	0(a0,d0.w),a0
-	tst.w	EdMa_Tape(a5)	Pas si macro record
-	beq	Ed_PrgCommand
-; On ne peut utiliser cette commande dans une macro!
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.NoMacro
-	subq.w	#3,EdMa_Tape(a5)	Recule le pointeur
-	moveq	#EdD_Macro3,d0
-	bsr	Ed_Dialogue
-	bra	Ed_Loop
+Ed_FCall	jmp	_ed_function_call_entry
 
-; Branchement � HELP par F5
+; Branchement a HELP par F5
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~
 Ed_GoHelp
 	moveq	#26,d2
@@ -1361,303 +1018,28 @@ Ed_GoHelp
 ;	Name1	Chaine de commande
 ; ___________________________________________________________________
 ;
+; Programs driving the editor: editor/loop.cpp
 Ed_ZapIn
-; Pas le meme programme!
-; ~~~~~~~~~~~~~~~~~~~~~~
-	move.l	Edt_Runned(a5),a2
-	cmp.l	Edt_Current(a5),a2
-	beq	.NoAcc
-	tst.b	Prg_Accessory(a5)
-	beq	.NoAcc
-; Sauve les donnees du programme appelant
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	move.l	d0,d2
-	move.l	d1,Ed_ZapParam(a5)
-	move.l	Edt_Prg(a2),a0
-	lea	Prg_ZapData(a0),a0
-	JJsrR	L_Prg_DataSave,a1
-	JJsrR	L_Prg_DataNew,a1
-; Prepare le terrain
-; ~~~~~~~~~~~~~~~~~~
-	clr.w	Ed_ZapError(a5)
-	subq.w	#1,d2
-	cmp.w	#HiddenCommands,d2
-	bcc.s	.PaCom
-	lea	FlagFonc(pc),a0
-	move.b	0(a0,d2.w),d1		Commande Zappable?
-	bpl.s	.PaCom
-	btst	#6,d1			Une ligne de commande?
-	beq.s	.Branch
-	move.l	Name2(a5),a0		Oui, est-elle fournie?
-	tst.w	(a0)			Longueur en NAME2,
-	beq.s	.BadCh			String en NAME1...
-; Branche � la fonction!
-; ~~~~~~~~~~~~~~~~~~~~~~
-.Branch	and.b	#$F0,d1			Mode zappeuse!
-	move.b	d1,Ed_Zappeuse(a5)
-	EcCalD	Active,EcEdit		Active l'ecran editeur
-	move.l	BasSp(a5),sp
-	move.l	Edt_Current(a5),a4	Programme courant branche!
-	move.l	Edt_Prg(a4),a6
-	JJsr	L_Prg_SetBanks
-	clr.b	Ed_YaUTest(a4)		Flags utiles
-	move.b	Prg_MathFlags(a6),MathFlags(a5)
-	clr.w	Ed_ZapCounter(a5)
-	bsr	Ed_FCall		Appel de la fonction
-	bra	Ed_Loop
-; Erreur, commande non Zappable
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.PaCom	move.w	#-4,Ed_ZapError(a5)
-	moveq	#13,d0
-	bra.s	.Err
-; Erreur, pas de chaine de commande
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.BadCh	move.w	#-5,Ed_ZapError(a5)
-	moveq	#14,d0
-.Err	bsr	Ed_GetMessage
-	move.l	a0,Ed_ZapMessage(a5)
-	bra.s	Ed_ZapOut
-; Erreur immediate, pas un accessoire / Deja runne
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.NoAcc	move.w	#-6,Ed_ZapError(a5)
-	moveq	#15,d0
-	bsr	Ed_GetMessage
-	move.l	a0,Ed_ZapMessage(a5)
-	bra.s	Ed_ZapX
-; _________________________________________________
-;
-;	SORTIE DE LA TELECOMMANDE
-; _________________________________________________
-;
-Ed_ZapOut
-; Rebranche le programme
-; ~~~~~~~~~~~~~~~~~~~~~~
-	bsr	EdM_Program
-	tst.b	Ed_YaUTest(a5)		Nettoyer les variables
-	beq.s	.NoNew
-	illegal				Ne doit JAMAIS se produire!
-;	bsr	Edt_ClearVar
-.NoNew	move.l	Edt_Runned(a5),a4	Remet les variables du programme
-	move.l	Edt_Prg(a4),a6
-	lea	Prg_ZapData(a6),a0
-	JJsrR	L_Prg_DataLoad,a1
-; Reactive l'�cran courant, si ouvert
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	EcCalD	Last,EcEdit		En dernier!
-	bsr	EdReCop
-	move.w	ScOn(a5),d1
-	beq.s	Ed_ZapX
-	subq.w	#1,d1
-	EcCall	Active
-Ed_ZapX	move.w	Ed_ZapError(a5),d0
-	ext.l	d0
-	move.l	Ed_ZapMessage(a5),a0
-	clr.w	Ed_ZapError(a5)
-; Retour au programme appelant!
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	move.l	BasSp(a5),sp
-	rts
-
-; ZAP: remplacement d'une chaine dans la config
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-EdZ_NewConfig
-	lea	Sys_Messages(a5),a2	Trouve la bonne config
-	move.l	Ed_ZapParam(a5),d0
-	beq.s	.Skp
-	cmp.l	#5,d0			Met le flag seulement
-	bhi.s	.Skip
-	lea	Ed_Systeme-4(a5),a2
-	lsl.w	#2,d0
-	add.l	d0,a2
-.Skp	move.l	(a2),a0			Trouve le nombre de messages
-	bsr	Ed_GetNbMessage
-	move.l	d0,d1
-	move.l	Name1(a5),a1		Pas trop loin?
-	move.l	(a1)+,d0		Numero
-	cmp.l	d1,d0
-	bhi.s	.Skip
-	move.l	a2,a0
-	bsr	EdC_ChangeTexte		Va changer!
-	bne	Ed_OMm
-.Skip	move.b	#1,EdC_Modified(a5)	On a change le menu
-	move.b	#1,EdC_Changed(a5)	On a change la config!
-	rts
-; ZAP: remplacement d'une ligne dans le programme
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-EdZ_NewLineTok
-	bsr.s	EdZ_NewLine
-	bsr	Ed_TokCur
-	rts
-EdZ_NewLine
-; Remplace la ligne par la nouvelle
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	bsr	Ed_LCourant
-	move.l	a0,a1
-	move.l	Name1(a5),a2
-.Loop	move.b	(a2)+,(a1)+
-	bne.s	.Loop
-	subq.l	#1,a1
-	sub.l	a0,a1
-	move.w	a1,-2(a0)
-; Reaffiche la ligne courante
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	addq.w	#1,Edt_LEdited(a4)
-	bsr	Ed_EALiCu
-	rts
-; _________________________________________________
-;
-;	FONCTIONS TELECOMMANDE
-; _________________________________________________
-;
-Ed_ZapFonction
-	tst.b	Prg_Accessory(a5)
-	beq.s	.PaAcc
-	subq.l	#1,d0
-	cmp.l	#EdZ_NFonc,d0
-	bcc	.IlFonc
-	move.l	Edt_Current(a5),a2
-	lsl.w	#2,d0
-	lea	EdZ_Jump(pc),a0
-	moveq	#0,d2
-	jsr	0(a0,d0.w)
-	rts
-; Pas un accessoire
-; ~~~~~~~~~~~~~~~~~
-.PaAcc	moveq	#15,d0
-	moveq	#-6,d1
-	bra.s	.Err
-; Illegal function call
-; ~~~~~~~~~~~~~~~~~~~~~
-.IlFonc	moveq	#16,d0
-	moveq	#-7,d1
-; Retour avec le message
-; ~~~~~~~~~~~~~~~~~~~~~~
-.Err	bsr	Ed_GetMessage
-	move.l	d1,d0
-	moveq	#2,d2
-	rts
-
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-EdZ_Jump
-	bra	EdZ_GetLine		1 La ligne courante
-	bra	EdZ_GetName		2 Nom du programme courant
-	bra	EdZ_GetX		3 Position en X
-	bra	EdZ_GetY		4 Position en Y
-	bra	EdZ_GetNLigne		5 Nombre de lignes
-	bra	EdZ_X1Bloc		6 Debut X du bloc ombre
-	bra	EdZ_Y1Bloc		7 Debut Y du bloc ombre
-	bra	EdZ_X2Bloc		8 Fin X du bloc ombre
-	bra	EdZ_Y2Bloc		9 Fin Y du bloc ombre
-	bra	EdZ_GetFree		10 Espace libre
-	bra	EdZ_GetStruc		11 Adresse de la structure
-	bra	EdZ_Token		12 Tokenise la ligne
-	bra	EdZ_GetConfig		13 Adresse de la config
-EdZ_NFonc	equ	11
-;
-;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-EdZ_GetConfig
-	lea	Ed_Config(a5),a0
-	move.l	a0,d0
-	bra.s	EdZ_Coo
-EdZ_X1Bloc
-	bsr	EdZ_Bloc
-	move.w	d4,d0
-	bra.s	EdZ_Coo
-EdZ_Y1Bloc
-	bsr	EdZ_Bloc
-	bra.s	EdZ_Coo
-EdZ_X2Bloc
-	bsr	EdZ_Bloc
-	move.w	d5,d0
-	bra.s	EdZ_Coo
-EdZ_Y2Bloc
-	bsr	EdZ_Bloc
-	move.w	d1,d0
-	bra.s	EdZ_Coo
-EdZ_GetX
-	move.w	Edt_XCu(a2),d0
-	bra.s	EdZ_Coo
-EdZ_GetY
-	move.w	Edt_YPos(a2),d0
-	add.w	Edt_YCu(a2),d0
-EdZ_Coo	addq.w	#1,d0
-	ext.l	d0
-	rts
-EdZ_GetNLigne
-	move.l	Edt_Prg(a2),a0
-	move.w	Prg_NLigne(a0),d0
-	ext.l	d0
-	rts
-EdZ_GetFree
-	move.l	Edt_Prg(a2),a0
-	move.l	Prg_StBas(a0),d0
-	sub.l	Prg_StMini(a0),d0
-	rts
-EdZ_GetStruc
-	move.l	a2,d0
-	rts
-EdZ_GetName
-	move.l	Edt_Prg(a2),a0
-	lea	Prg_NamePrg(a0),a0
-	moveq	#0,d0
-	moveq	#2,d2
-	rts
-EdZ_GetLine
-	movem.l	a4/a6,-(sp)
-	move.l	a2,a4
-	move.l	Edt_Prg(a4),a6
-	move.l	Ed_BufT(a5),a1
-	clr.w	(a1)
-	move.l	d1,d0
-	ble.s	.LiCu
-; Ligne quelconque
+	jsr	_ed_zap_in_entry
 	subq.w	#1,d0
-	cmp.w	Prg_NLigne(a6),d1
-	bhi.s	.Out
-	bra.s	.Li
-; Ligne sous le curseur
-.LiCu	move.w	Edt_YCu(a4),d0
-	add.w	Edt_YPos(a4),d0
-.Li	bsr	Ed_FindL
-	beq.s	.Out
-	moveq	#0,d0
-	bsr	Detok
-.Out	move.l	Ed_BufT(a5),a0
-	move.w	(a0)+,d0
-	clr.b	0(a0,d0.w)
-	moveq	#0,d0
-	moveq	#2,d2
-	movem.l	(sp)+,a4/a6
+	bmi.s	.Go
+	beq	Ed_ZapOut
+	bra	Ed_ZapX
+.Go	move.l	BasSp(a5),sp
+	jsr	_ed_zap_prepare_entry
+	bsr	Ed_FCall
+	bra	Ed_Loop
+		xdef	_ed_zap_out
+_ed_zap_out
+Ed_ZapOut
+	jsr	_ed_zap_out_entry
+Ed_ZapX	jsr	_ed_zap_result_entry
+	move.l	BasSp(a5),sp
 	rts
-EdZ_Bloc
-	move.w	Edt_YBloc(a2),d0
-	bmi.s	.No
-	move.w	Edt_YCu(a2),d1
-	add.w	Edt_YPos(a2),d1
-	move.w	Edt_XBloc(a2),d4
-	move.w	Edt_XCu(a2),d5
-	cmp.w	d0,d1
-	bhi.s	.Ok
-	bne.s	.Sw
-	cmp.w	d4,d5
-	bcc.s	.Ok
-.Sw	exg	d0,d1
-	exg	d4,d5
-.Ok	rts
-.No	addq.l	#4,sp
-	moveq	#-1,d0
-	rts
-; Tokenise la ligne du buffer
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~
-EdZ_Token
-	move.l	a2,-(sp)
-	move.l	Buffer(a5),a0
-	move.l	Ed_BufT(a5),a1
-	bsr	Tokenise
-	move.l	Ed_BufT(a5),d0
-	moveq	#0,d2
-	move.l	(sp)+,a2
-	rts
+Ed_ZapFonction	jmp	_ed_zap_function_entry
+EdZ_NewConfig	jmp	_ed_zap_new_config_entry
+EdZ_NewLineTok	jmp	_ed_zap_new_line_tok_entry
+EdZ_NewLine	jmp	_ed_zap_new_line_entry
 
 
 ; ______________________________________________________________________
@@ -1712,6 +1094,8 @@ Ed_DoDialog	jmp	_ed_do_dialogue_entry
 ; Jumps aux touches de fonction
 ; _________________________________________________________________________
 ;
+		xdef	_ed_function_table
+_ed_function_table
 JFonc:	bra	Ed_CHaut		* 1  Cur Haut
 	bra	Ed_CBas			* 2  Cur Bas
 	bra	Ed_CGauche		* 3  Cur Gauche
@@ -1908,6 +1292,8 @@ EdM_UserMax		equ	20
 
 ; Flags pour chaque fonction
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~
+		xdef	_ed_function_flags
+_ed_function_flags
 FlagFonc
 ; Bit 0: redessiner le buffer
 ; Bit 1: redessiner la ligne

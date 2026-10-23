@@ -192,6 +192,13 @@ Error get_error(int16_t code, const uint8_t *message);
 // editor/disk.cpp: Ed_RLoadHidden
 void load_hidden();
 
+// editor/menu.cpp: EdM_Init (false if out of memory), EdM_MarkAll
+bool menu_init();
+void menu_marks();
+
+// editor/loop.cpp: Ed_FCall
+void function_call(uint16_t n);
+
 // editor/indent.cpp
 void indent(uint8_t *program, uint16_t tab);
 
