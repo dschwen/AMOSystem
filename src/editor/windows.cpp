@@ -817,6 +817,7 @@ void delete_window()
     IData &d = idata();
     EditWindow *w = &window();
     if (Program *p = program_of(w)) {
+        ctx().a6 = reinterpret_cast<uint8_t *>(p);
         if (!--p->Prg_Edited) {
             run(ed_menu_program);
             Regs r;
