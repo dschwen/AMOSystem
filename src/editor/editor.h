@@ -173,6 +173,13 @@ uint16_t text_count(const uint8_t *list);
 uint16_t text_free(const uint8_t *list);
 bool text_change(uint32_t *at, const uint8_t *text, uint16_t n);
 
+// editor/screen.cpp: Ed_Unpack / Es_Unpack (title: the direct mode's
+// title screen), Ed_MemoryDraw, Ed_MemoryAff, Ed_LimM
+void unpack(uint16_t n, int16_t x, int16_t y, bool title = false);
+void memory_draw(int16_t x, int16_t y, uint16_t width, bool title);
+void memory_show();
+void limit_mouse();
+
 // editor/indent.cpp
 void indent(uint8_t *program, uint16_t tab);
 

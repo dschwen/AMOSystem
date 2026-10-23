@@ -274,16 +274,6 @@ void set_zone(uint16_t n, uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2)
     sy_call(sy::SetZone, r);
 }
 
-void unpack(uint16_t picture, int32_t x, uint16_t y)
-{
-    Regs r;
-    r.d[0] = picture;
-    r.d[1] = uint32_t(x);
-    r.d[2] = y;
-    r.d[3] = 0xFFFFFFFF;
-    call(ed_unpack, r);
-}
-
 void enlarge(uint16_t from, uint16_t to)
 {
     Regs r;
