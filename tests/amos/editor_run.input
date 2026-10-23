@@ -1,0 +1,27 @@
+timeout 150
+mask 536 0 610 432
+wait 12
+key ctrl+y
+wait 0.5
+key F1
+wait 4
+key Return
+wait 6
+key F1
+wait 4
+key Escape
+wait 3
+type Print B;"!"
+key Return
+wait 1
+key Escape
+wait 3
+type B=4 : 
+wait 0.5
+key F1
+wait 4
+key Return
+wait 3
+key F2
+wait 1
+wait 4
