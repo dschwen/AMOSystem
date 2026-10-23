@@ -1,0 +1,59 @@
+timeout 120
+mask 536 0 610 400
+wait 12
+key Escape
+wait 2
+key ctrl+Up
+key ctrl+Up
+key ctrl+Up
+key ctrl+Up
+key ctrl+Up
+key ctrl+Up
+key ctrl+Up
+key ctrl+Up
+key ctrl+Up
+key ctrl+Up
+key ctrl+Up
+key ctrl+Up
+key shift+Down
+key shift+Down
+key shift+Down
+key shift+Down
+key shift+Down
+key shift+Down
+key shift+Down
+key shift+Down
+key shift+Down
+key shift+Down
+key shift+Down
+key shift+Down
+key shift+Down
+key shift+Down
+wait 1
+type Print 1+2
+key Return
+wait 1
+type A=5 : Print A*2
+key Return
+wait 1
+type Foo Bar
+key Return
+wait 1
+type Print "x";
+key Return
+wait 1
+key Up
+key Up
+wait 0.5
+key Return
+wait 1
+key Up
+key Up
+key Up
+key Down
+wait 0.5
+key Return
+wait 1
+key ctrl+Down
+key shift+Up
+wait 1

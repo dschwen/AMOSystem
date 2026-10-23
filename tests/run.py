@@ -42,6 +42,9 @@ emulator then grabs the input), one command per line:
   type TEXT        type the rest of the line as it is (any printable ASCII,
                    no comment)
   timeout SECONDS  a longer time limit for this test
+  mask X1 Y1 X2 Y2 an editor test's screen compared without this
+                   rectangle too (the memory gauges elsewhere than at the
+                   top, say)
   runs N           AMOS is started N times, the later times with no
                    program (after the editor quit, say); the test gets a
                    writable copy of the AMOS drive of its own
@@ -254,10 +257,22 @@ def record_editor(name, shots):
 MEMORY_GAUGES = (536, 0, 610, 32)
 
 
+def extra_masks(name):
+    """The "mask" rectangles of a test's input script."""
+    path = os.path.join(TESTS, name + '.input')
+    if not os.path.exists(path):
+        return []
+    with open(path) as f:
+        cmds = [parse_input_line(line) for line in f]
+    return [tuple(int(v) for v in cmd[1:5]) for cmd in cmds if cmd and cmd[0] == 'mask']
+
+
 def compare_editor(name, shots):
     golden = Image.open(os.path.join(GOLDEN, name + '.png')).convert('RGB')
     mask = Image.open(os.path.join(GOLDEN, name + '_mask.png')).convert('L')
     mask.paste(255, MEMORY_GAUGES)
+    for box in extra_masks(name):
+        mask.paste(255, box)
     keep = mask.point(lambda v: 0 if v else 255)
     best = None
     for path in shots:
@@ -329,7 +344,7 @@ def play_input(script, display, out, deadline, name=None, env=None, stopped=None
                 d.keys([KEYSYMS.get(c, c) for c in ' '.join(args)])
             elif op == 'type':
                 d.keys(type_keys(args[0]), hold=0.03, gap=0.03)
-            elif op in ('timeout', 'runs'):
+            elif op in ('timeout', 'runs', 'mask'):
                 pass
             elif op == 'move':
                 d.move_by(int(args[0]), int(args[1]))
