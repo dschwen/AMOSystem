@@ -17,7 +17,7 @@ using namespace amos::ed;
 
 // +Edit.s
 extern "C" uint8_t ed_block_what[], ed_file_selector[], ed_not_done[], ed_save_over[], ed_av_name[], ed_d_error[],
-    ed_aver_fin[], ed_warn[], ed_dialogue[], ed_print_error[], ed_header[], ed_get_message[];
+    ed_aver_fin[], ed_warn[], ed_print_error[], ed_header[], ed_get_message[];
 
 namespace {
 
@@ -254,19 +254,11 @@ void printer_print(uint8_t *text)
     write(text, int32_t(a0 - text - 1), ed_print_error);
 }
 
-int16_t dialogue(uint16_t n)
-{
-    Regs r;
-    r.d[0] = n;
-    call(ed_dialogue, r);
-    return int16_t(r.d[0]);
-}
-
 // Ed_PrgPrint
 void print_program()
 {
     tokenise_current_line();
-    if (dialogue(EdDPProg) != 1)
+    if (int16_t(dialogue(EdDPProg)) != 1)
         run(ed_not_done);
     run_d0(ed_warn, 217);
     printer_open();
@@ -291,7 +283,7 @@ void print_block()
     tokenise_current_line();
     if (!d.Ed_Block)
         run(ed_block_what);
-    if (dialogue(EdDPBloc) != 1)
+    if (int16_t(dialogue(EdDPBloc)) != 1)
         run(ed_not_done);
     run_d0(ed_warn, 157);
     printer_open();

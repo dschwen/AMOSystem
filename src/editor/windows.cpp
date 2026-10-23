@@ -17,7 +17,7 @@ using namespace amos::ed;
 
 // +Edit.s
 extern "C" uint8_t ed_all_aver_fin[], ed_unpack[], ed_enlarge[], ed_status_print[], ed_slider_routines[],
-    ed_button_routines[], ed_new[], ed_new_window[], ed_do_quit[], ed_dialogue[], ed_too_many_windows[],
+    ed_button_routines[], ed_new[], ed_new_window[], ed_do_quit[], ed_too_many_windows[],
     ed_out_of_memory[], ed_no_hide[], ed_not_done[], ed_branch_amos[], ed_menu_program[], ed_saved[], ed_warn[],
     ed_aver_fin[], ed_get_systeme[], ed_undo_create_entry[], ed_cursor_normal[], ed_sl_update_y[], ed_loop[];
 
@@ -77,14 +77,6 @@ void run_switching(uint8_t *routine)
 {
     AllRegs r = {};
     run_switching(routine, r);
-}
-
-int16_t dialogue(uint16_t n)
-{
-    Regs r;
-    r.d[0] = n;
-    call(ed_dialogue, r);
-    return int16_t(r.d[0]);
 }
 
 void wi_d1(int function, uint32_t d1)
@@ -882,7 +874,7 @@ void close_window(bool quit)
     if (w->Edt_First && w->Edt_Last) {
         if (!quit)
             return;
-        if (!(d.Ed_QuitFlags & 1) || dialogue(EdDWQuit) == 1)
+        if (!(d.Ed_QuitFlags & 1) || int16_t(dialogue(EdDWQuit)) == 1)
             run_switching(ed_do_quit);
         return;
     }
@@ -1405,7 +1397,7 @@ void ed_new_hidden(AllRegs *r)
 void ed_new_all_hidden(AllRegs *r)
 {
     tokenise_current_line();
-    if (dialogue(EdDNAll) != 1)
+    if (int16_t(dialogue(EdDNAll)) != 1)
         run(ed_loop);
 
     while (EditWindow *w = hidden(0)) {

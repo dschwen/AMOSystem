@@ -22,15 +22,6 @@ namespace {
 constexpr uint16_t BitControl = 1 << 8;
 constexpr uint8_t Shf = 0x03, Ctr = 0x08, Alt = 0x30, Ami = 0xC0;
 
-// EdMa_Adr: the macro of key, or 0
-uint8_t *macro_of(uint32_t key)
-{
-    for (uint32_t m = idata().EdMa_List; m; m = peek_l(ptr<uint8_t>(m)))
-        if (peek_l(ptr<uint8_t>(m) + 8) == key)
-            return ptr<uint8_t>(m);
-    return nullptr;
-}
-
 } // namespace
 
 namespace amos::ed {

@@ -75,6 +75,28 @@
 		XREF	_ed_load_entry
 		XREF	_ed_reload_entry
 		XREF	_ed_name_part_entry
+		XREF	_ed_mem_reserve_entry
+		XREF	_ed_mem_free_entry
+		XREF	_ed_list_new_entry
+		XREF	_ed_list_delete_all_entry
+		XREF	_ed_list_delete_entry
+		XREF	_ed_dialogues_open_entry
+		XREF	_ed_dialogues_close_entry
+		XREF	_ed_strings_reset_entry
+		XREF	_ed_string_new_entry
+		XREF	_ed_string_add_entry
+		XREF	_ed_dialogue_entry
+		XREF	_ed_do_dialogue_entry
+		XREF	_ed_macro_load_default_entry
+		XREF	_ed_macro_load_as_entry
+		XREF	_ed_macro_save_default_entry
+		XREF	_ed_macro_save_as_entry
+		XREF	_ed_macro_load_entry
+		XREF	_ed_macro_erase_entry
+		XREF	_ed_macro_erase_all_entry
+		XREF	_ed_macro_record_entry
+		XREF	_ed_macro_stop_entry
+		XREF	_ed_macros_free_entry
 		XREF	_ed_get_systeme_entry
 		XREF	_ed_get_message_entry
 		XREF	_ed_get_message_a0_entry
@@ -1877,85 +1899,12 @@ EdZ_Token
 ;						LISTES / MEMOIRE
 ; ______________________________________________________________________
 
-; Reserve un espace m�moire sur (a5)
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-;	A0=	Adresse dans (a5)
-;	D0=	Longueur
-Ed_MemReserve
-	movem.l	d1/a1,-(sp)
-	move.l	a0,a1
-	move.l	d0,d1
-	addq.l	#4,d0
-	SyCall	MemFastClear
-	beq.s	.Out
-	move.l	d1,(a0)+
-	move.l	a0,(a1)
-.Out	movem.l	(sp)+,d1/a1
-	rts
-; Efface un espace m�moire sur (a5)
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-;	A0=	Adresse dans (a5)
-Ed_MemFree
-	movem.l	a0/a1,-(sp)
-	move.l	(a0),d0
-	beq.s	.Skip
-	clr.l	(a0)
-	move.l	d0,a1
-	move.l	-(a1),d0
-	addq.l	#4,d0
-	SyCall	SyFree
-.Skip	movem.l	(sp)+,a0/a1
-	rts
-
-;
-; Cree un �l�ment en tete de liste A0 / longueur D0
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_ListeNew
-	movem.l	a0/d0/d1,-(sp)
-	addq.l	#8,d0
-	exg	a0,a1
-	SyCall	MemFastClear
-	exg	a0,a1
-	beq.s	.Err
-	move.l	(a0),(a1)
-	move.l	a1,(a0)
-	subq.l	#8,d0
-	move.l	d0,4(a1)
-.Err	movem.l	(sp)+,a0/d0/d1
-	rts
-
-; Efface une liste entiere A0
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_ListeDelAll
-	bra.s	.In
-.Loop	move.l	d0,a1
-	bsr	Ed_ListeDel
-.In	move.l	(a0),d0
-	bne.s	.Loop
-	rts
-; Efface un �l�ment de liste A1 / Debut liste A0
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_ListeDel
-	movem.l	a0/d0-d2,-(sp)
-	move.l	a1,d0
-	move.l	a0,a1
-	move.l	(a1),d2
-	beq.s	.NFound
-.Loop	move.l	a1,d1
-	move.l	d2,a1
-	cmp.l	d0,a1
-	beq.s	.Found
-	move.l	(a1),d2
-	bne.s	.Loop
-	bra.s	.NFound
-; Enleve de la liste
-.Found	move.l	d1,a0
-	move.l	(a1),(a0)
-	move.l	4(a1),d0
-	addq.l	#8,d0
-	SyCall	MemFree
-.NFound	movem.l	(sp)+,a0/d0-d2
-	rts
+; Memory blocks and lists: editor/macros.cpp
+Ed_MemReserve	jmp	_ed_mem_reserve_entry
+Ed_MemFree	jmp	_ed_mem_free_entry
+Ed_ListeNew	jmp	_ed_list_new_entry
+Ed_ListeDelAll	jmp	_ed_list_delete_all_entry
+Ed_ListeDel	jmp	_ed_list_delete_entry
 
 ; Clearvar du programme courant
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1978,100 +1927,16 @@ EdReCop	SyCall	WaitVbl
 ;						BOITES DE DIALOGUE
 ; ______________________________________________________________________
 
-; Initialisation
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_InitDialogues
-	bsr	Ed_SetBanks
-	moveq	#1,d0			Canal #1
-	move.l	#1024,d1		1024 octets
-	moveq	#16,d2			16 variables
-	moveq	#0,d3			Ne pas recopier la chaine
-	move.l	Ed_Resource(a5),a0
-	move.l	a0,a1
-	add.l	2+8(a0),a0		Base des programmes
-	add.l	2+0(a0),a0		Programme numero 1
-	add.l	2(a1),a1		Base des graphiques
-	move.l	Ed_Messages(a5),a2	Base des messages
-	JJsrP	L_Dia_OpenChannel,a3
-	bne.s	.Err
-	move.l	a0,Ed_ADialogues(a5)
-	move.l	a1,Ed_VDialogues(a5)
-	move.l	#Ed_DiaImages,Dia_PuzzleI(a0)
-	bsr	Ed_IChaine
-	moveq	#0,d0
-.Err	rts
-
-; Fin des dialogues
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_EndDialogues
-	bsr	Ed_SetBanks
-	moveq	#1,d0
-	JJsr	L_Dia_CloseChannel
-	rts
-
-; Copie une chaine dans le buffer de dialogue
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_IChaine
-	move.l	Ed_BufT(a5),Ed_DiaCopyC(a5)
-	rts
-Ed_DChaine
-	move.l	Ed_DiaCopyC(a5),Ed_DiaCopyD(a5)
-	addq.l	#2,Ed_DiaCopyC(a5)
-Ed_AChaine
-	move.l	Ed_DiaCopyC(a5),a1
-.Loop	move.b	(a0)+,(a1)+
-	bne.s	.Loop
-	subq.l	#1,a1
-	move.l	a1,Ed_DiaCopyC(a5)
-	move.l	a1,d0
-	move.l	Ed_DiaCopyD(a5),a1
-	sub.l	a1,d0
-	subq.b	#2,d0
-	clr.b	(a1)
-	move.b	d0,1(a1)
-	rts
-
-; Appel general des dialogues, avec protection memoire
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+; The dialogues: editor/macros.cpp
+Ed_InitDialogues	jmp	_ed_dialogues_open_entry
+Ed_EndDialogues	jmp	_ed_dialogues_close_entry
+Ed_IChaine	jmp	_ed_strings_reset_entry
+Ed_DChaine	jmp	_ed_string_new_entry
+Ed_AChaine	jmp	_ed_string_add_entry
 		xdef	_ed_dialogue
 _ed_dialogue
-Ed_Dialogue:
-	tst.b	Ed_Zappeuse(a5)
-	beq.s	.NoZap
-	move.l	Ed_ZapParam(a5),d0		Zappeuse: retourne parametre
-	rts
-; Au moins 48k de CHIP pour un effacement...
-.NoZap	clr.l	Dia_Magic(a5)
-	movem.l	d0/a6,-(sp)
-	move.l	$4.w,a6
-	move.l	#Public|Chip,d1
-	jsr	_LVOAvailMem(a6)
-	move.l	d0,d1
-	movem.l	(sp)+,d0/a6
-	cmp.l	#48*1024,d1
-	bcc.s	Ed_DoDialog
-; Sans effacement!
-	move.l	#"NobL",Dia_Magic(a5)
-	bsr	Ed_DoDialog
-	movem.l	d0-d1/a0-a1,-(sp)
-	bsr	Ed_DrawWindows
-	movem.l	(sp)+,d0-d1/a0-a1
-	rts
-; Appel des dialogues
-; ~~~~~~~~~~~~~~~~~~~
-Ed_DoDialog
-	bsr	Ed_SetBanks
-	movem.l	d2-d3,-(sp)
-	move.l	d0,d1
-	moveq	#1,d0
-	move.l	#EntNul,d2
-	move.l	d2,d3
-	JJsr	L_Dia_RunProgram
-	movem.l	(sp)+,d2-d3
-	clr.l	Dia_Magic(a5)
-	move.l	d1,d0
-	bsr	Ed_IChaine
-	rts
+Ed_Dialogue:	jmp	_ed_dialogue_entry
+Ed_DoDialog	jmp	_ed_do_dialogue_entry
 
 
 ; _________________________________________________________________________
@@ -4079,315 +3944,20 @@ Ed_BlocLimits	jmp	_ed_block_limits_2_entry
 ;						MACROS
 ;____________________________________________________________________
 ;
-; Chargement des macros par defaut
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-EdMa_LoadDefault
-	moveq	#46,d0
-	bsr	Ed_GetSysteme
-	JJsrR	L_Sys_AddPath,a1
-	bsr	EdMa_LoadIt
-	clr.b	EdMa_Changed(a5)
-	rts
-; Chargement des macros
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-EdMa_LoadAs
-	moveq	#55,d0
-	bsr	Ed_File_Selector
-	beq	Ed_NotDone
-	JJsr	L_Dsk.PathIt
-	bsr	EdMa_LoadIt
-	move.b	#1,EdMa_Changed(a5)
-	rts
-
-; Charge le fichier macros
-; ~~~~~~~~~~~~~~~~~~~~~~~~
-EdMa_LoadIt
-	tst.l	EdMa_List(a5)		Erase old macros?
-	beq.s	.Skip
-	moveq	#EdD_MacroEra,d0
-	bsr	Ed_Dialogue
-	cmp.w	#1,d0
-	bne	Ed_NotDone
-; Averti et charge
-.Skip	moveq	#62,d0
-	bsr	Ed_AverMess
-	bsr	EdMa_Load
-	bsr	Ed_AverFin
-	beq	.Ok
-	bmi	Ed_OMm
-	subq.w	#1,d0
-	beq	Ed_DError
-; Pas un fichier MACRO
-	moveq	#EdD_MacroPas,d0
-	bsr	Ed_Dialogue
-	bsr	Ed_Loca
-; Fini
-.Ok	rts
-
-; Sauvegarde des macros par default
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+; Macros: editor/macros.cpp
+EdMa_LoadDefault	jmp	_ed_macro_load_default_entry
+EdMa_LoadAs	jmp	_ed_macro_load_as_entry
 EdMa_SaveDefault
-EdMa_SaveDef
-	moveq	#46,d0
-	bsr	Ed_GetSysteme
-	JJsrR	L_Sys_AddPath,a1
-	bsr	EdMa_SaveIt
-	rts
-; Sauvegarde des macros
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-EdMa_SaveAs
-	moveq	#51,d0
-	bsr	Ed_File_Selector
-	beq	Ed_NotDone
-	JJsr	L_Dsk.PathIt
-	bsr	Ed_SaveOver
-	bsr	EdMa_SaveIt
-	rts
-; Averti et sauve
-EdMa_SaveIt
-	moveq	#61,d0
-	bsr	Ed_AverMess
-	bsr	EdMa_Save
-	bsr	Ed_AverFin
-	bne	Ed_DError
-	clr.b	EdMa_Changed(a5)
-	rts
-
-; Chargement du fichier de macros
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-;	Out	D0=0	Pas d'erreur
-;		D0=-1	Erreur disque
-;		D0=1	Pas macros
-EdMa_Load
-; Effacer les precedentes
-	bsr	EdMa_End
-	clr.b	EdMa_Change(a5)
-; Ouvre le fichier
-	move.l	#1005,d2
-	bsr	Ed_Open
-	beq	.Err
-; Charge l'entete AMOSPro MACROS
-	move.l	Buffer(a5),a2
-	move.l	a2,d2
-	moveq	#4,d3
-	bsr	Ed_Read
-	bne	.Err
-	cmp.l	#EdMa_Head,(a2)
-	bne.s	.Noma
-; Charge les macros une par une
-.Loop	move.l	a2,d2
-	moveq	#8,d3
-	bsr	Ed_Read
-	bne.s	.Err
-	move.l	4(a2),d3
-	beq.s	.End
-	move.l	d3,d0
-	lea	EdMa_List(a5),a0
-	bsr	Ed_ListeNew
-	beq.s	.Out
-	addq.l	#8,a1
-	move.l	a1,d2
-	bsr	Ed_Read
-	bne.s	.Err
-	bra.s	.Loop
-; Ferme le fichier
-.End	bsr	Ed_Close
-	moveq	#0,d0
-	rts
-; Erreur de chargement
-.Err	bsr	Ed_Close
-	moveq	#1,d0
-	rts
-; Pas un fichier macro
-.Noma	bsr	Ed_Close
-	moveq	#2,d0
-	rts
-; Out of memory
-.Out	bsr	Ed_Close
-	moveq	#-1,d0
-	rts
-
-; Sauvegarde du fichier de macros
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-;	OUT	D0=0 	Pas d'erreur
-;		D0=-1	Erreur disque
-EdMa_Save
-	move.l	#1006,d2
-	bsr	Ed_Open
-	beq	Ed_DError
-; Sauve l'entete AMOSPro MACROS
-	move.l	Buffer(a5),a0
-	move.l	#EdMa_Head,(a0)
-	move.l	a0,d2
-	moveq	#4,d3
-	bsr	Ed_Write
-	bne.s	.Err
-; Sauve les macros une par une
-	move.l	EdMa_List(a5),d2
-	beq.s	.Fin
-.Loop	move.l	d2,a2
-	move.l	4(a2),d3
-	addq.l	#8,d3
-	bsr	Ed_Write
-	bne.s	.Err
-	move.l	(a2),d2
-	bne.s	.Loop
-; Fin : 0/0
-.Fin	move.l	Buffer(a5),d2
-	move.l	d2,a0
-	clr.l	(a0)+
-	clr.l	(a0)+
-	moveq	#8,d3
-	bsr	Ed_Write
-	bne.s	.Err
-; Ferme le fichier
-	bsr	Ed_Close
-	moveq	#0,d0
-	rts
-; Erreur disque
-.Err	bsr	Ed_Close
-	moveq	#1,d0
-	rts
-
-; Effacement d'une macro
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-EdMa_Del
-	bsr	Ed_TokCur
-	tst.l	EdMa_List(a5)
-	beq	EdMa_No
-	moveq	#EdD_MacroD,d0
-	bsr	Ed_Dialogue
-	tst.w	d0
-	bne	Ed_NotDone
-	move.l	Ed_ADialogues(a5),a0
-	move.l	Dia_LastKey(a0),d2
-	beq	Ed_NotDone
-	move.l	d2,d1
-	bsr	EdMa_Adr
-	beq.s	.NotA
-	bsr	Ed_ListeDel
-; Marque pour QUIT
-	move.b	#1,EdMa_Change(a5)
-	bra	Ed_Loca
-; Key not assigned to a macro
-.NotA	moveq	#EdD_MacroNA,d0
-	bsr	Ed_Dialogue
-	bra	Ed_Loca
-; Effacement de toutes les macros
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-EdMa_DelAll
-	bsr	Ed_TokCur
-	tst.l	EdMa_List(a5)
-	beq	EdMa_No
-	moveq	#EdD_MacroAll,d0
-	bsr	Ed_Dialogue
-	cmp.w	#1,d0
-	bne	Ed_NotDone
-	bsr	EdMa_End
-; Marque pour QUIT
-	move.b	#1,EdMa_Change(a5)
-	bra	Ed_Loca
-; D�marre l'enregistrement d'une nouvelle macro
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-EdMa_New
-	bsr	Ed_TokCur
-; Boite de dialogue 1
-	moveq	#EdD_Macro1,d0
-	bsr	Ed_Dialogue
-	tst.w	d0
-	bne	Ed_NotDone
-	move.l	Ed_ADialogues(a5),a0
-	move.l	Dia_LastKey(a0),d2
-	beq	Ed_NotDone
-	move.l	d2,d1
-	bsr	EdMa_Adr
-	beq.s	.Skip
-; Key already assigned to a macro
-	move.l	a1,-(sp)
-	moveq	#EdD_Macro2,d0
-	bsr	Ed_Dialogue
-	cmp.w	#1,d0
-	bne	Ed_NotDone
-	move.l	(sp)+,a1
-	lea	EdMa_List(a5),a0
-	bsr	Ed_ListeDel
-; R�serve le buffer temporaire
-.Skip	move.l	#1024,d0
-	move.l	d0,d1
-	lea	EdMa_List(a5),a0
-	bsr	Ed_ListeNew
-	move.w	#1,EdMa_Tape(a5)
-	move.l	d2,8(a1)
-	move.l	#-1,8-4(a1,d1.w)
-; Provoque l'affichage de la ligne infos
-	bsr	Ed_AverFin
-	bsr	Ed_Loca
-	rts
-
-; Termine l'enregistrement de la macro
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+EdMa_SaveDef	jmp	_ed_macro_save_default_entry
+EdMa_SaveAs	jmp	_ed_macro_save_as_entry
+EdMa_Load	jmp	_ed_macro_load_entry
+EdMa_Del	jmp	_ed_macro_erase_entry
+EdMa_DelAll	jmp	_ed_macro_erase_all_entry
+EdMa_New	jmp	_ed_macro_record_entry
 		xdef	_ed_macro_stop
 _ed_macro_stop
-EdMa_Stop
-; Plus de souris
-	JJsr	L_Dia_NoMKey
-	move.b	#1,EdMa_Change(a5)
-; Reserve le buffer d�finitif
-	lea	EdMa_List(a5),a0
-	move.l	(a0),a2
-	move.l	a2,d3
-	lea	8(a2),a2
-	move.w	EdMa_Tape(a5),d2
-	clr.w	EdMa_Tape(a5)
-	subq.w	#1,d2
-	beq	.Vide
-	moveq	#8,d0
-	add.w	d2,d0
-	bsr	Ed_ListeNew
-; Copie le buffer
-	lea	8(a1),a1
-	move.l	(a2)+,(a1)+
-	subq.w	#1,d2
-.Loop	move.b	(a2)+,(a1)+
-	dbra	d2,.Loop
-	move.b	#-1,(a1)+
-; Enleve le buffer temporaire
-	move.l	d3,a1
-	bsr	Ed_ListeDel
-; Avertissement
-	moveq	#45,d0
-	bra	Ed_Al100
-; Pas de touches!
-.Vide	move.l	d3,a1
-	bsr	Ed_ListeDel
-	bra	Ed_NotDone
-
-; Trouve une macro de code D1
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~
-EdMa_Adr
-	lea	EdMa_List(a5),a0
-	move.l	(a0),d0
-	beq.s	.NFound
-.Loop	move.l	d0,a1
-	cmp.l	8(a1),d1
-	beq.s	.Found
-.In	move.l	(a1),d0
-	bne.s	.Loop
-.NFound	rts
-; Trouve
-.Found	move.l	a1,d0
-	rts
-; Efface l'arbre des macros
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-EdMa_End
-	lea	EdMa_List(a5),a0
-	bra	Ed_ListeDelAll
-; Pas une macro
-; ~~~~~~~~~~~~~
-EdMa_No
-	moveq	#EdD_MacroNo,d0
-	bsr	Ed_Dialogue
-	bra	Ed_Loca
+EdMa_Stop	jmp	_ed_macro_stop_entry
+EdMa_End	jmp	_ed_macros_free_entry
 
 ;_____________________________________________________________________________
 ;
@@ -6573,6 +6143,8 @@ Ed_NoFound
 _ed_not_done
 Ed_NotDone
 	bsr	Ed_NewBuf
+		xdef	_ed_not_done2
+_ed_not_done2
 Ed_NotDone2
 	move.w	#206,d0			***- Not done
 	bsr	Ed_GetMessage

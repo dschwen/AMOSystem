@@ -134,6 +134,19 @@ void delete_window();
 void update_split(EditWindow *w, uint16_t flags);
 void follow_scroll();
 
+// editor/macros.cpp: Ed_MemReserve, Ed_MemFree, Ed_ListeNew, Ed_ListeDel,
+// Ed_ListeDelAll, Ed_IChaine, Ed_DChaine, Ed_AChaine, Ed_Dialogue, EdMa_Adr
+uint8_t *memory_reserve(uint32_t *at, uint32_t size);
+void memory_release(uint32_t *at);
+uint8_t *list_new(uint32_t *list, uint32_t size);
+void list_delete(uint32_t *list, uint8_t *e);
+void list_delete_all(uint32_t *list);
+void dialogue_strings_reset();
+uint8_t *dialogue_string(const uint8_t *text, const uint8_t **after = nullptr);
+uint8_t *dialogue_string_add(const uint8_t *text, const uint8_t **after = nullptr);
+int32_t dialogue(uint16_t n);
+uint8_t *macro_of(uint32_t key);
+
 // editor/indent.cpp
 void indent(uint8_t *program, uint16_t tab);
 

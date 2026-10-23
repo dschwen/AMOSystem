@@ -291,6 +291,9 @@ Editor
 - Hexadecimal and binary constants were listed with as many digits as a
   register left over from other code said; they are now always listed
   without leading zeros, as that register usually made them.
+- Out of memory, starting to record a macro, or keeping the one recorded,
+  went on with no buffer and wrote the macro's key at address 8; it is now
+  "out of memory" (the recording buffer is freed).
 
 Collisions (AMOS.library)
 - The offsets into the masks of the two images were 16-bit: an image whose
