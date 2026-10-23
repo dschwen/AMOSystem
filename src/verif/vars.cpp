@@ -242,10 +242,3 @@ void globals()
 }
 
 } // namespace amos::verif
-
-// The entries from the assembler
-extern "C" {
-void ver_reloc_free(AllRegs *) { reloc_free(); }
-void ver_locals(AllRegs *) { locals(); }
-void ver_globals(AllRegs *) { globals(); }
-}

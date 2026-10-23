@@ -21,3 +21,6 @@ _ver_direct_test_entry WEntry _ver_direct_test,l
 _ver_program_test_entry WEntry _ver_program_test,l
 		xdef	_ver_free_tables_entry
 _ver_free_tables_entry WEntry _ver_free_tables,l
+		XREF	_ver_tables_run
+		xdef	_ver_tables_run_entry
+_ver_tables_run_entry WEntry _ver_tables_run,l

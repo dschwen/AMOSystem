@@ -315,8 +315,3 @@ void label_skip()
 }
 
 } // namespace amos::verif
-
-// The entries from the assembler
-extern "C" {
-void ver_tables_free(AllRegs *) { tables_free(); }
-}

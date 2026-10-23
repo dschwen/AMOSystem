@@ -31,7 +31,7 @@ directory:
 
 | program | assembler | C++ / glue | linker script |
 |---|---|---|---|
-| AMOSPro | `+B.s` (+ `+Verif.s`) | `src/lib`, `src/main` | `link/amospro.ld` |
+| AMOSPro | `+B.s` (+ `+Verif.s`) | `src/lib`, `src/verif` | `link/amospro.ld` |
 | AMOS.library | `+W.s` | `src/w` | `link/module.ld` |
 | AMOSPro_Editor | `+Edit.s` | `src/editor` | `link/module.ld` |
 | AMOSPro_Monitor | `+Monitor.s` | `src/monitor` | `link/module.ld` |
@@ -364,6 +364,15 @@ Input handler (AMOS.library)
   buffer that followed. The handler converts into a buffer of its own
   now, so `ConIo` has its full size.
 - console.device was opened at the start and never closed.
+
+Programs in memory (+Verif.s)
+- `Prg_Save` left the file open when writing it failed (a full disk, say),
+  so it stayed locked until AMOS quit. It is closed now.
+- The table of `Include`s had room for 15 of them, and a program with more
+  wrote past its end. The table is now made as large as the program needs.
+- The variables of direct mode (`ResDir`), with less than 6 bytes free
+  between the strings and the variables, took a size of -6 and cleared
+  64K of memory. They are now left out, as with no room at all.
 
 ARexx
 - A message arriving at the ARexx port that is not an ARexx command was

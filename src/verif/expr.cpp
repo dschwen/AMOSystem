@@ -15,7 +15,7 @@ using namespace amos::verif;
 
 // +Verif.s: the operators' table (a test kind before each, see Tst_Jumps)
 // and the operands still in the assembler, entered as from Ver_Operande
-extern "C" uint8_t ver_operators[], ver_equate[], ver_equ_nul[], ver_equ_lvo[];
+extern "C" uint8_t ver_operators[], ver_equ_nul[], ver_equ_lvo[];
 
 namespace {
 
@@ -219,17 +219,6 @@ uint8_t menu_function()
 }
 
 } // namespace
-
-// Equ_Verif: the equate (a string constant at pc, header before its name)
-// of data (its value, its type, a flag) found in the equates' file once,
-// then kept; pc past the string
-void amos::verif::equate(const uint8_t *header, uint8_t *data)
-{
-    AllRegs r = {};
-    r.a[0] = address(header);
-    r.a[1] = address(data);
-    call(ver_equate, r);
-}
 
 // VStru: Struc(address,"equate"): the type of the equate
 uint8_t amos::verif::structure()

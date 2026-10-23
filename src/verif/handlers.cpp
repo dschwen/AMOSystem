@@ -9,9 +9,6 @@
 using namespace amos;
 using namespace amos::verif;
 
-// +Verif.s
-extern "C" uint8_t ver_resize_variables[], ver_decode_procedure[], ver_relocate_compiled[];
-
 namespace {
 
 constexpr uint16_t MnNDim = 8;
@@ -243,9 +240,7 @@ int32_t set_buffer(uint16_t)
     if (d.VarBufFlg & (1 << 10))
         fail(ENoBuffer);
     d.VarBufFlg |= 1 << 10;
-    AllRegs r = {};
-    r.d[1] = size;
-    call(ver_resize_variables, r);
+    resize_variables(size);
     return -1;
 }
 
@@ -875,6 +870,37 @@ int32_t procedure_in()
     return AfterInstruction;
 }
 
+// ProCode: the lines of a locked procedure (at its Procedure token)
+// coded or decoded, but for their first token; the flag changed. Not a
+// compiled one.
+void decode_procedure(uint8_t *proc)
+{
+    if (proc[8] & (1 << 4))
+        return;
+    const uint8_t *end = proc + 10 + 2 + 4 + peek_l(proc + 2);
+    uint8_t *next = proc - 2 + 2 * proc[-2];
+    uint32_t key = peek_l(proc + 2);
+    key = ((key << 8) | (key >> 24)) & 0xFFFFFF00u;
+    key |= proc[9];
+    uint16_t step = 1;
+    const uint16_t step2 = peek_w(proc + 6);
+    for (;;) {
+        uint8_t *line = next;
+        next = line + 2 * line[0];
+        uint8_t *p = line + 4;
+        if (p == end)
+            break;
+        do {
+            poke_w(p, peek_w(p) ^ uint16_t(key));
+            p += 2;
+            key = (key & 0xFFFF0000u) | uint16_t(key + step);
+            step += step2;
+            key = (key >> 1) | (key << 31);
+        } while (p != next);
+    }
+    proc[8] ^= 1 << 5;
+}
+
 // V1_Procedure: in the main program, the procedure's name as a label (its
 // address the start), its parameters, its Shared and Global; its body
 // skipped to End Proc, the distance poked. Encrypted ones decoded first.
@@ -887,10 +913,8 @@ int32_t procedure_start(uint16_t)
     if (d.Phase)
         return procedure_in();
     d.VerNInst--;
-    if ((pc[8] & (1 << 6)) && (pc[8] & (1 << 5))) {
-        AllRegs r = {};
-        call(ver_decode_procedure, r);
-    }
+    if ((pc[8] & (1 << 6)) && (pc[8] & (1 << 5)))
+        decode_procedure(pc);
     Entry *e = table_add(0, tk::Proc, 4, 1 << 2);
     uint8_t *start = pc;
     pc += 10;
@@ -915,9 +939,7 @@ int32_t procedure_start(uint16_t)
     if (start[8] & (1 << 4)) {
         // in machine code (compiled by APCmp: relocated)
         if (word(pc + 2) == tk::APCmp) {
-            AllRegs r = {};
-            r.a[0] = address(pc + 2);
-            call(ver_relocate_compiled, r);
+            relocate_compiled(pc + 2);
             not_13();
         }
         pc = start + 12 + peek_l(start + 2);

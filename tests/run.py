@@ -9,6 +9,9 @@ resumes with the next instruction. A first line "Set Double Precision" stays
 the first line of the program, as AMOS requires. Tests may also
 save screens, e.g. Save Iff "AMOSTEST:out/<name>_1.iff". Every file a test
 writes whose name starts with <name> is compared with tests/golden/.
+Procedures named ZLOCK... are locked (encoded), as the verifier decodes them.
+Programs a test uses (Include "AMOSTEST:x.AMOS", Run...) are listings in
+tests/amos/<name>.d/x.asc, tokenised to AMOSTEST:x.AMOS.
 
 Every test boots its own emulator from a small boot drive (AMOSTEST:) with
 the AMOS tree on a shared read-only drive (AMOSPRO:) and the Workbench drive
@@ -63,6 +66,7 @@ import argparse
 import concurrent.futures
 import os
 import shutil
+import struct
 import subprocess
 import sys
 import threading
@@ -74,6 +78,7 @@ sys.path.insert(0, os.path.join(ROOT, 'tools'))
 from PIL import Image, ImageChops, ImageFilter  # noqa: E402
 
 import amostok  # noqa: E402
+TK_ENDPROC = 0x0390
 import xinput   # noqa: E402
 import uaem     # noqa: E402
 
@@ -381,6 +386,39 @@ def play_input(script, display, out, deadline, name=None, env=None, stopped=None
         d.close()
 
 
+def lock_procedures(program):
+    """Lock (encode) the procedures whose names start with ZLOCK, as the
+    verifier's ProCode decodes them: each line's words after its first
+    token XORed with a running key, flags 6 and 5 set."""
+    lines = program.lines
+    for n, line in enumerate(lines):
+        if len(line) < 20 or struct.unpack_from('>H', line, 2)[0] != amostok.TK_PROC \
+                or not line[18:].lower().startswith(b'zlock'):
+            continue
+        end = n + 1
+        while struct.unpack_from('>H', lines[end], 2)[0] != TK_ENDPROC:
+            end += 1
+        body = b''.join(lines[n:end + 1])
+        head = bytearray(line)
+        size = len(body) - 14
+        struct.pack_into('>LH', head, 4, size, 0x0321)
+        head[11] = 0x5A
+        key = ((size << 8) | (size >> 24)) & 0xFFFFFF00 | head[11]
+        step, step2 = 1, 0x0321
+        coded = [bytes(head)]
+        for l in lines[n + 1:end + 1]:
+            l = bytearray(l)
+            for i in range(4, len(l), 2):
+                w = struct.unpack_from('>H', l, i)[0] ^ (key & 0xFFFF)
+                struct.pack_into('>H', l, i, w)
+                key = (key & 0xFFFF0000) | ((key + step) & 0xFFFF)
+                step = (step + step2) & 0xFFFF
+                key = ((key >> 1) | (key << 31)) & 0xFFFFFFFF
+            coded.append(bytes(l))
+        coded[0] = coded[0][:10] + bytes([coded[0][10] | 0x60]) + coded[0][11:]
+        lines[n:end + 1] = coded
+
+
 def run_test(name, tables, amos, kickstart, workbench, timeout, visible):
     """Boot an emulator for one test. Returns (finished, seconds, out dir,
     screenshots of an editor test)."""
@@ -413,7 +451,16 @@ def run_test(name, tables, amos, kickstart, workbench, timeout, visible):
         listing = body
     else:
         listing = head + PROLOGUE.format(name=name) + body.rstrip('\n') + '\n' + EPILOGUE
-    amostok.tokenize_program(listing, tables).save(os.path.join(hd, name + '.AMOS'))
+    program = amostok.tokenize_program(listing, tables)
+    lock_procedures(program)
+    program.save(os.path.join(hd, name + '.AMOS'))
+    # programs the test uses (Include, Run...): tests/amos/<name>.d/*.asc
+    extra = os.path.join(TESTS, name + '.d')
+    if os.path.isdir(extra):
+        for f in sorted(os.listdir(extra)):
+            if f.endswith('.asc'):
+                with open(os.path.join(extra, f), encoding='latin-1') as src:
+                    amostok.tokenize_program(src.read(), tables).save(os.path.join(hd, f[:-4] + '.AMOS'))
     with open(os.path.join(hd, name + '.AMOS'), 'rb') as f:
         listing_bytes = f.read()
     with open(os.path.join(hd, 'S', 'startup-sequence'), 'w', encoding='latin-1') as f:

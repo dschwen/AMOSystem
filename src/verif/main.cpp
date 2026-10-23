@@ -13,9 +13,6 @@
 using namespace amos;
 using namespace amos::verif;
 
-// +Verif.s: Ver_Verif
-extern "C" uint8_t ver_tables_verify[];
-
 
 namespace {
 
@@ -175,6 +172,41 @@ void pass_two()
 
 namespace amos::verif {
 
+// Ver_Verif / Ver_Run: the token tables of AMOS and the extensions that
+// have one for the verifier (LB_Verif: its length, then a long per token)
+// swapped with it, the first long of each token's entry, so that the
+// tokens lead to the verifier's routines; or back for running
+void tables_swap(bool verify)
+{
+    constexpr int LBVerif = -24, LBFlags = -12;
+    IData &d = data();
+    for (int i = 0; i < 27; i++) {
+        uint8_t *tokens = ptr<uint8_t>(d.AdTokens[i]);
+        if (!tokens || !peek_l(tokens + LBVerif))
+            continue;
+        uint8_t &flags = tokens[LBFlags];
+        if (bool(flags & 1) == verify)
+            continue;
+        flags ^= 1;
+        uint8_t *table = ptr<uint8_t>(peek_l(tokens + LBVerif));
+        const uint8_t *table_end = table + 2 + int16_t(peek_w(table));
+        table += 2;
+        uint8_t *t = tokens;
+        do {
+            uint32_t v = peek_l(t);
+            poke_l(t, peek_l(table));
+            poke_l(table, v);
+            t += 4;
+            table += 4;
+            while (!(*t++ & 0x80))
+                ;
+            while (!(*t++ & 0x80))
+                ;
+            t += address(t) & 1;
+        } while (table < table_end);
+    }
+}
+
 // SsTest: 0, or -1 to verify again
 int32_t test()
 {
@@ -183,8 +215,7 @@ int32_t test()
     d.Passe = 0;
     d.Ver_NBoucles = 0;
     d.Ver_PBoucles = 0;
-    AllRegs v = {};
-    call(ver_tables_verify, v);
+    tables_swap(true);
     reloc_reserve();
     tables_reserve();
     pc = ptr<uint8_t>(d.Prg_Test);
@@ -261,19 +292,7 @@ void ver_test(AllRegs *r)
 }
 }
 
-// +Verif.s: the buffers of the variables and names, the includes, the
-// tokens' tables back to running
-extern "C" uint8_t ver_resize_variables[], ver_direct_variables[], ver_resize_names[], ver_includes[],
-    ver_tables_run[];
-
 namespace {
-
-void assembler(const uint8_t *routine, uint32_t d1 = 0)
-{
-    AllRegs r = {};
-    r.d[1] = d1;
-    call(routine, r);
-}
 
 // Free_VerTables
 void free_tables()
@@ -304,12 +323,12 @@ void program_test()
     IData &d = data();
     d.VerNot1_3 = 0;
     d.Prg_Run = d.Prg_Source;
-    assembler(ver_includes);
+    includes_get();
     if (d.Prg_FullSource)
         d.Prg_Run = d.Prg_FullSource;
     d.Prg_Test = d.Prg_Run;
-    assembler(ver_resize_variables, 8 * 1024);
-    assembler(ver_resize_names, d.PI_VNmMax);
+    resize_variables(8 * 1024);
+    resize_names(d.PI_VNmMax);
     d.Phase = 0;
     // (the high word of ErrRet only)
     poke_w(reinterpret_cast<uint8_t *>(&d.ErrRet), 0);
@@ -359,7 +378,7 @@ void program_test()
         *v = 0;
     globals();
     free_tables();
-    assembler(ver_tables_run);
+    tables_swap(false);
 
     // AMOS 1.3 has 16 banks
     d.VerCheck1_3 = 0;
@@ -376,10 +395,10 @@ void direct_test()
 {
     IData &d = data();
     if (!d.VarBuf)
-        assembler(ver_resize_variables, 4 * 1024);
-    assembler(ver_direct_variables);
+        resize_variables(4 * 1024);
+    direct_variables();
     if (!d.VNmMini)
-        assembler(ver_resize_names, d.PI_VNmMax);
+        resize_names(d.PI_VNmMax);
     if (!d.Stack_Size)
         d.Stack_Size = 10;
     d.Prg_Test = d.Ed_BufT;
@@ -390,7 +409,7 @@ void direct_test()
     d.DirFlag = 1;
     test();
     free_tables();
-    assembler(ver_tables_run);
+    tables_swap(false);
 }
 
 } // namespace
@@ -410,3 +429,5 @@ void ver_direct_test(AllRegs *r)
 
 void ver_free_tables(AllRegs *) { free_tables(); }
 }
+
+extern "C" void ver_tables_run(AllRegs *) { tables_swap(false); }

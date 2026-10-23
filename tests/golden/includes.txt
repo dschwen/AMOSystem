@@ -1,0 +1,6 @@
+before
+in include 1
+A= 6
+proc from include 21
+ 42
+after

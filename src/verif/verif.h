@@ -111,4 +111,35 @@ void reloc_reserve();                            // Reserve_Reloc
 void reloc(uint8_t code);                        // New_Reloc
 void reloc_byte(uint8_t b);                      // Out_Reloc
 
+// verif/program.cpp: memory at a long of the data zone (A5_Reserve: after
+// a long, the size; false if out of memory; A5_Free), the current file
+// (D_Open on Name1, D_Read... of +B.s), the kind of a program file's
+// header (0 AMOS 1.3, 1 AMOS Pro, -1 neither)
+bool a5_reserve(uint32_t *slot, uint32_t size, uint32_t flags);
+void a5_free(uint32_t *slot);
+bool file_open(uint32_t mode);
+bool file_read(void *to, uint32_t length);
+bool file_write(const void *from, uint32_t length);
+int32_t file_seek(int32_t offset, int32_t mode);
+void file_close();
+int program_kind(const char *header);
+
+void tables_swap(bool verify);                   // Ver_Verif / Ver_Run (verif/main.cpp)
+void decode_procedure(uint8_t *proc);            // ProCode (verif/handlers.cpp)
+
+// verif/buffers.cpp
+uint16_t stack_reserve();                        // Stack_Reserve
+void direct_variables();                         // ResDir
+void resize_variables(uint32_t size);            // ResVarBuf
+void resize_names(uint32_t size);                // ResVNom
+void clear_buffers();                            // ClearBuffers
+void clear_variables();                          // ClearVar
+
+// verif/includes.cpp
+void includes_get();                             // Get_Includes
+void includes_clear();                           // Includes_Clear
+uint32_t includes_address(uint32_t at);          // Includes_Adr
+void equates_free();                             // Equ_Free
+void relocate_compiled(uint8_t *procedure);      // Ver_APCmp
+
 } // namespace amos::verif
