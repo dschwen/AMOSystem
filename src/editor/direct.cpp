@@ -293,11 +293,6 @@ namespace amos::ed {
 
 // Ed_GetError: the message of error code (when message is 0): a test-time
 // one for a code below 0, a run-time one above; the code as a word
-struct Error {
-    const uint8_t *message;
-    int16_t code;
-};
-
 Error get_error(int16_t code, const uint8_t *message)
 {
     IData &d = idata();

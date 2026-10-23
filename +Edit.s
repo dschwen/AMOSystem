@@ -75,6 +75,28 @@
 		XREF	_ed_load_entry
 		XREF	_ed_reload_entry
 		XREF	_ed_name_part_entry
+		XREF	_ed_go_monitor_entry
+		XREF	_ed_program_command_entry
+		XREF	_ed_program_reload_entry
+		XREF	_ed_window_of_name_entry
+		XREF	_ed_run_hidden_entry
+		XREF	_ed_run_hide_entry
+		XREF	_ed_run_direct_entry
+		XREF	_ed_run_entry
+		XREF	_ed_error_direct_run_entry
+		XREF	_ed_error_run_hidden_entry
+		XREF	_ed_error_test_entry
+		XREF	_ed_error_run_entry
+		XREF	_ed_error_edit_entry
+		XREF	_ed_error_line_entry
+		XREF	_ed_test_entry
+		XREF	_ed_check_13_entry
+		XREF	_ed_indent_program_entry
+		XREF	_ed_test_program_fn_entry
+		XREF	_ed_test_shown_entry
+		XREF	_ed_test_end_entry
+		XREF	_ed_test_run_entry
+		XREF	_ed_procedure_machine_code_entry
 		XREF	_ed_escape_entry
 		XREF	_ed_escape_loop_entry
 		XREF	_ed_escape_leave_entry
@@ -1662,6 +1684,8 @@ Edt_ClearVar
 ;
 ; Actualisation des ecrans
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		xdef	_ed_recop
+_ed_recop
 EdReCop	SyCall	WaitVbl
 	EcCall	CopForce
 	rts
@@ -2488,619 +2512,43 @@ Et_Print	jmp	_ed_status_text_entry
 ;
 ; 	APPEL DU MONITEUR PAR LE MENU
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_GoMonitor
-	bsr	Ed_TokCur
-	bsr	Edt_ClearVar		Plus aucune variable, si HELP!
-	bsr	Ed_Hide			Plein de memoire
-	bsr	Ed_CloseEditor
-	JJsr	L_Prg_SetBanks
-	JJsr	L_Mon_Load		Va charger le moniteur
-	bne.s	.Load
-	move.l	a4,Edt_Runned(a5)	Programme >> runn�
-	lea	Ed_ErrRun(pc),a0	Retour du moniteur
-	move.l	a0,Prg_JError(a5)
-	JJsr	L_Mon_In_Editor
-	clr.l	Edt_Runned(a5)		Revient >>> Out of memory!
-.Mem	move.w	#204,d0
-.Err	move.l	d0,-(sp)
-	bsr	Ed_OpenEditor		Rouvre l'editeur
-	bsr	Ed_Appear
-	move.l	(sp)+,d0
-	bra	Ed_Al100
-.Load	cmp.w	#-1,d0
-	beq.s	.Mem
-	move.w	#222,d0
-	bra.s	.Err
-
-; ___________________________________________________________________
-;
-; 	LANCE/CHARGE UN PROGRAMME COMME OPTION EDITEUR
-; ___________________________________________________________________
-;
-;	A0=	Definition du programme
-;
-Ed_PrgCommand
-	move.l	a0,a2
-; Gestion ligne de commande
-; ~~~~~~~~~~~~~~~~~~~~~~~~~
-	moveq	#0,d0
-	move.b	2(a2),d0
-	beq.s	.NoCom
-; Copie la ligne de commande
-	move.l	Ed_MnPrograms(a5),a0
-	bsr	Ed_GetMessageA0
-	moveq	#0,d0
-	move.b	-1(a0),d0
-	bra.s	.Cop
-; Copie la ligne courante � partir du curseur
-.NoCom	bsr	Ed_LCourant
-	move.l	a0,d0
-	sub.l	a1,d0
-	add.w	-2(a0),d0
-	move.l	a1,a0
-; Copie
-.Cop	move.l	Buffer(a5),a1
-	lea	TBuffer-256-6(a1),a1
-	move.l	#"CmdL",(a1)+
-	move.w	d0,(a1)+
-	subq.w	#1,d0
-	bmi.s	.Sko
-.Loop	move.b	(a0)+,(a1)+
-	dbra	d0,.Loop
-.Sko
-; On peut tokeniser maintenant
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	bsr	Ed_TokCur
-	btst	#0,(a2)
-	bne	.Hidden
-; Charger le programme dans la fenetre courante
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	move.l	a2,-(sp)
-	bsr	Ed_Saved		Va sauver le programme
-	move.l	(sp)+,a2
-; Recharger le programme?
-	btst	#2,(a2)
-	beq.s	.Sauv
-	lea	Ed_ErrRun(pc),a0	Un message de fin...
-	bra.s	.NLRun
-; Sauve le programme
-.Sauv	move.l	#Edt_EReload-Edt_SReload+4+4*10+128,d0
-	lea	Ed_Prg2ReLoad(a5),a0
-	bsr	Ed_MemReserve
-	beq	Ed_OMm
-	move.l	Prg_StTTexte(a6),(a0)+
-	lea	Prg_Marks(a6),a1
-	moveq	#9,d0
-.Cm	move.l	(a1)+,(a0)+
-	dbra	d0,.Cm
-	lea	Edt_SReload(a4),a1
-	move.w	#Edt_EReload-Edt_SReload-1,d0
-.Cc	move.b	(a1)+,(a0)+
-	dbra	d0,.Cc
-	lea	Prg_NamePrg(a6),a1
-.Cn	move.b	(a1)+,(a0)+
-	bne.s	.Cn
-	lea	Ed_ErrRunHidden(pc),a0		Pas de message
-	move.b	#1,Ed_RunnedHidden(a5)		Flag, si Kill Editor
-; NEW + LOAD + RUN!
-; ~~~~~~~~~~~~~~~~~
-.NLRun	move.l	a0,-(sp)
-; Copie le nom
-	moveq	#0,d0
-	move.b	1(a2),d0
-	move.l	Ed_MnPrograms(a5),a0	Prend le nom
-	bsr	Ed_GetMessageA0
-	move.l	Name1(a5),a1
-.Bli	move.b	(a0)+,(a1)+
-	bne.s	.Bli
-	bsr	Ed_New2			New!
-; Charge le programme
-	move.w	#155,d0			Message, je charge!
-	move.l	Name1(a5),a0
-	bsr	Ed_AvName
-	moveq	#-1,d0			Adapter la taille
-	JJsr	L_Prg_Load
-	bne	Ed_PrgLoadErr
-	bsr	Ed_AverFin
-; Run special
-	move.l	Ed_BufT(a5),a0		Plus de Ed_RAlert
-	clr.l	256(a0)
-	bsr	Ed_BlocFree		Un peu de place
-	bsr	Prg_RazUndos
-	bsr	EdM_End
-	bsr	EdM_Program
-	move.l	a4,Edt_Runned(a5)	Programme runn�
-	move.l	(sp)+,a1		Retour de fin variable!
-	lea	Ed_TestMessage(pc),a2	Affichage tests
-	moveq	#0,d0			Programme normal
-	JJsr	L_Prg_RunIt
-	clr.l	Edt_Runned(a5)		Si revient!
-	bra	Ed_OMm			Out of mem si revient
-
-; Charger le programme en HIDDEN
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.Hidden	moveq	#0,d0
-	move.b	1(a2),d0
-	move.l	Ed_MnPrograms(a5),a0
-	bsr	Ed_GetMessageA0
-	move.l	Name1(a5),a1
-.Copy	move.b	(a0)+,(a1)+
-	bne.s	.Copy
-; Recherche un accessoire deja charge
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	bsr	Edt_AccAdr
-	bne.s	.Deja
-; Charge dans une fenetre cachee
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	JJsr	L_Dsk.PathIt
-	bsr	Ed_RLoadHidden
-	clr.l	Ed_WindowToDel(a5)
-	btst	#2,(a2)
-	bne.s	.Garde
-	move.b	#-1,Edt_PrgDelete(a4)
-	bra.s	.Skip
-.Garde	bsr	EdM_BranchAMOS
-	bsr	EdM_Program
-.Skip	move.l	a4,a0
-; Branche au RUN HIDDEN normal!
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.Deja	bra	Ed_RunHide
-;
-; Recharge le programme pr�c�dent
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_PrgReLoad
-; New du programme pr�c�dent
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~
-	bsr	Ed_New2
-; Taille du buffer
-; ~~~~~~~~~~~~~~~~
-	move.l	Ed_Prg2ReLoad(a5),a2
-	move.l	(a2)+,d0
-	JJsr	L_Prg_ChgTTexte
-	beq.s	.Out
-; Marks
-; ~~~~~
-	lea	Prg_Marks(a6),a0
-	moveq	#9,d0
-.Cm	move.l	(a2)+,(a0)+
-	dbra	d0,.Cm
-; Donnee d'edition
-; ~~~~~~~~~~~~~~~~
-	lea	Edt_SReload(a4),a0
-	move.w	#Edt_EReload-Edt_SReload-1,d0
-.Cc	move.b	(a2)+,(a0)+
-	dbra	d0,.Cc
-; Recharge le programme
-; ~~~~~~~~~~~~~~~~~~~~~~
-	tst.b	(a2)
-	beq.s	.Nol
-	move.l	Name1(a5),a0
-.Cn	move.b	(a2)+,(a0)+
-	bne.s	.Cn
-; Chargement!
-; ~~~~~~~~~~~
-	move.w	#155,d0
-	move.l	Name1(a5),a0
-	bsr	Ed_AvName
-	moveq	#1,d0			Revenir si pas assez grand
-	JJsr	L_Prg_Load
-	bne.s	.Nol
-	move.b	#1,Prg_StModif(a6)	Force le test
-	bsr	Ed_AverFin
-	bsr	Ed_NewBufAff
-.Nol	bsr	Ed_AverFin
-	bsr.s	.Free			Liberation de la structure
-	bsr	Ed_RAlert		Si erreur dans le programme precedent
-	bra	Ed_Loop
-; Out of mem
-; ~~~~~~~~~~
-.Out	move.l	#1024,d0
-	JJsr	L_Prg_ChgTTexte
-	bsr	Edt_New
-	bsr	.Free
-	bra	Ed_OMm
-; Libere la structure + reaffiche le buffer
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.Free	lea	Ed_Prg2ReLoad(a5),a0
-	bsr	Ed_MemFree
-	move.l	a4,a0
-	moveq	#%10,d0
-	bsr	Ed_Splitted
-	rts
-
-;
-; TROUVE L'ADRESSE DU PROGRAMME NAME1
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-;	In	Name1	Nom � cherche
-;	Out	Trouve	BNE, A0=adresse
-;		Non	BEQ
-;
-Edt_AccAdr
-	movem.l	a2/d2,-(sp)
-	move.l	Name1(a5),a0
-	bsr	Ed_DNom
-	move.l	a0,d2
-	move.l	Edt_List(a5),d0
-	beq.s	.Out
-.Loop0	move.l	d0,a2
-	move.l	Edt_Prg(a2),a0
-	lea	Prg_NamePrg(a0),a0
-	bsr	Ed_DNom
-	move.l	d2,a1
-.Loop1	move.b	(a0)+,d0
-	bsr	MajD0ed
-	move.b	d0,d1
-	move.b	(a1)+,d0
-	bsr	MajD0ed
-	cmp.b	d0,d1
-	bne.s	.Next
-	or.b	d1,d0
-	bne.s	.Loop1
-	move.l	a2,d0
-	bra.s	.Ok
-.Next	move.l	Edt_Next(a2),d0
-	bne.s	.Loop0
-.Out	moveq	#0,d0
-.Ok	move.l	d0,a0
-	movem.l	(sp)+,a2/d2
-	rts
-
-
-; ___________________________________________________________________
-;
-; 						RUN / TEST / INDENT
-; ___________________________________________________________________
-;
-
-;
-; RUN HIDDEN PROGRAM
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-;
-Ed_RunHidden
-	bsr	Ed_TokCur		Ligne courante
-	bsr	Ed_GetHidden		Cherche le programme
-	beq	Ed_NotDone
-	move.l	Buffer(a5),a1		Pas de command line!
-	lea	TBuffer-256-6(a1),a1
-	clr.l	(a1)
-; Entree 2: run le programme A0
-Ed_RunHide
-	move.l	a0,Edt_Runned(a5)	Programme editeur runne
-	move.l	Edt_Prg(a0),a6		Structure programme
-	bsr	Ed_BlocFree		Un peu de place
-	bsr	Prg_RazUndos
-	bsr	EdM_End
-	bsr	EdM_Program
-	move.b	#1,Ed_RunnedHidden(a5)	Flag en cas de KILL EDITOR
-	lea	Ed_ErrRunHidden(pc),a1	Retour de fin, sans ligne
-	lea	Ed_TestMessage(pc),a2	Affichage tests
-	moveq	#1,d0			Accessoire!
-	JJsr	L_Prg_RunIt
-	clr.l	Edt_Runned(a5)		Si revient
-	beq	Ed_OMm			Out of memory
-	bra	Ed_AlRunned		Already runned
-
-;
-; RUN EN MODE DIRECT
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_RunDirect
-	move.l	Edt_Current(a5),a4	Prend le programme courant
-	move.l	Edt_Prg(a4),a6
-	bsr	Ed_BlocFree		Un peu de place
-	bsr	Prg_RazUndos
-	bsr	EdM_End
-	bsr	EdM_Program
-	move.l	Buffer(a5),a1		Pas de command line!
-	lea	TBuffer-256-6(a1),a1
-	clr.l	(a1)
-	move.l	a4,Edt_Runned(a5)	Programme runn�
-	lea	Ed_DErrRun(pc),a1	Retour de fin normal
-	lea	Ed_DTestMessage(pc),a2	Affichage tests
-	moveq	#0,d0			Programme normal
-	JJsr	L_Prg_RunIt
-	clr.l	Edt_Runned(a5)		Si revient!
-	bsr	Esc_Hide
-	bsr	Ed_Appear
-	bra	Ed_OMm			Out of mem si revient
-Ed_DErrRun
-	tst.w	Direct(a5)		Si ESC plus la >>> Erreurs normales
-	beq	Ed_ErrRun
-	bne	Ed_ErrDirect
+; Run, test, the programs of the menu, the returns: editor/run.cpp
+Ed_GoMonitor	jmp	_ed_go_monitor_entry
+Ed_PrgCommand	jmp	_ed_program_command_entry
+Ed_PrgReLoad	jmp	_ed_program_reload_entry
+Edt_AccAdr	jmp	_ed_window_of_name_entry
+Ed_RunHidden	jmp	_ed_run_hidden_entry
+Ed_RunHide	jmp	_ed_run_hide_entry
+Ed_RunDirect	jmp	_ed_run_direct_entry
+Ed_Run	jmp	_ed_run_entry
+		xdef	_ed_err_direct_run
+_ed_err_direct_run
+Ed_DErrRun	jmp	_ed_error_direct_run_entry
+		xdef	_ed_direct_test_message
+_ed_direct_test_message
 Ed_DTestMessage
 	rts				0 -> Rien
 	nop
 	rts				1 -> Rien
 	nop
 	bra	Esc_Hide		2 -> Fermeture de l'ecran
-
-;
-; RUN PROGRAMME COURANT
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_Run	bsr	Ed_TokCur		Ligne courante
-	bsr	Ed_BlocFree		Un peu de place
-	bsr	Prg_RazUndos
-	bsr	EdM_End
-	bsr	EdM_Program
-	move.l	Buffer(a5),a1		Pas de command line!
-	lea	TBuffer-256-6(a1),a1
-	clr.l	(a1)
-	move.l	a4,Edt_Runned(a5)	Programme runn�
-	lea	Ed_ErrRun(pc),a1	Retour de fin normal
-	lea	Ed_TestMessage(pc),a2	Affichage tests
-	moveq	#0,d0			Programme normal
-	JJsr	L_Prg_RunIt
-	clr.l	Edt_Runned(a5)		Si revient!
-	bra	Ed_OMm			Out of mem si revient
-
-; RETOUR DE PROGRAMME HIDDEN SOUS EDITEUR
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_ErrRunHidden
-	move.l	Edt_Runned(a5),a4	Prend le programme courant
-	move.l	Edt_Prg(a4),a6
-	clr.l	Edt_Runned(a5)
-	clr.b	Ed_RunnedHidden(a5)	Enleve le flag
-; Prend le message
-	bsr	Ed_GetError
-	move.l	a0,-(sp)
-	move.l	d0,-(sp)
-; Configuration modifiee?
-	tst.b	EdC_Modified(a5)	Tout modifie?
-	beq.s	.Normal
-	bsr	EdC_Redraw		Ferme et ouvre!
-	bra.s	.Suite
-; Configuration non modifiee
-.Normal	tst.b	Prg_Accessory(a5)	Si accessoire
-	beq.s	.Paac
-	bsr	Ed_Redraw		Redessin de l'editeur
-	bra.s	.Suite
-.Paac	bsr	Ed_OpenEditor		ROuvre l'editeur
-	bsr	Esc_Hide		Inutile, mais bon
-	bsr	Ed_Appear
-; Efface le programme si necessaire
-.Suite	bsr	Edt_ClearVar
-	tst.b	Edt_PrgDelete(a4)
-	beq.s	.No
-	bsr	Edt_DelWindow
-	bsr	EdM_BranchAMOS
-; Affiche le message dans le programme courant
-.No	move.l	Edt_Current(a5),a4
-	move.l	Edt_Prg(a4),a6
-	JJsr	L_Prg_SetBanks		Change les banques
-	JJsr	L_Bnk.Change		Envoie aux trappes / Musiques
-	bsr	Ed_SetBanks		Retour aux banques editeur
-	move.l	(sp)+,d0
-	bmi.s	.Aue
-	cmp.w	#10,d0			END / EDIT
-	beq	Ed_Loop
-	cmp.w	#1000,d0		Retour simple � l'editeur
-	beq	Ed_Loop
-	cmp.w	#1002,d0		Retour au workbench
-	beq	Ed_System
-.Aue	move.l	(sp)+,a0
-; Fabrique le message Error in hidden
-	move.l	a0,-(sp)
-	moveq	#9,d0
-	bsr	Ed_GetMessage
-	move.l	Ed_BufT(a5),a1
-.CopM1	move.b	(a0)+,(a1)+
-	bne.s	.CopM1
-	subq.l	#1,a1
-	move.l	(sp)+,a0
-.CopM2	move.b	(a0)+,(a1)+
-	bne.s	.CopM2
-	move.b	#".",-1(a1)
-	clr.b	(a1)
-; Imprime
-	move.l	Ed_BufT(a5),a0
-	move.w	#200,d0
-	bra	Ed_Alert
-
-; RETOUR DE TEST SOUS EDITEUR
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_ErrTest
-	move.l	Edt_Current(a5),a4	Pas d'effacement Edt_Runned!
-	move.l	Edt_Prg(a4),a6
-	bra.s	Ed_Errr
-; RETOUR DE PROGRAMME NORMAL SOUS EDITEUR
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_ErrRun
-	tst.b	Ed_RunnedHidden(a5)
-	bne	Ed_ErrRunHidden
-	move.l	Edt_Runned(a5),a4	Prend le programme courant
-	move.l	Edt_Prg(a4),a6
-	clr.l	Edt_Runned(a5)
-	tst.b	Prg_Reloaded(a6)	On a change le programme???
-	beq.s	Ed_Errr
-	clr.b	Prg_Reloaded(a6)
-	move.w	#-1,Edt_YBloc(a4)
-Ed_Errr	tst.l	d0			Error TESTING
-	bmi	Ed_ErrEdit
-	cmp.w	#1000,d0		Edit
-	beq	Ed_ErrEdit
-	cmp.w	#1001,d0		Direct
-	beq	Ed_ErrDirect
-	cmp.w	#1002,d0		System
-	beq	Ed_System
-	bsr	Ed_Ligne		Ligne de choix direct / edit
-	cmp.w	#1,d1
-	beq	Ed_ErrDirect
-; Retour � l'�diteur
-; ~~~~~~~~~~~~~~~~~~
-Ed_ErrEdit
-	bsr	Ed_GetError
-	move.l	a0,-(sp)
-	move.l	d0,-(sp)
-; Apparition de l'�diteur
-	bsr	Ed_OpenEditor		ROuvre l'editeur
-	bsr	Esc_Hide
-	bsr	Ed_Appear
-; Retour � l'editeur si END ou EDIT
-	move.l	(sp)+,d0		Message de test?
-	bmi.s	.Skip
-	cmp.w	#10,d0
-	beq	Ed_Loop
-	cmp.w	#1000,d0
-	beq	Ed_Loop
-; Positionne le curseur sur l'erreur
-.Skip	move.l	VerPos(a5),a0
-	bsr	Ed_FindA		Cherche le numero / adresse
-	clr.l	Prg_AdEProc(a6)
-	tst.l	d1
-	beq.s	.Ski
-	move.l	a0,Prg_AdEProc(a6)	Si procedure fermee--> Stocke!
-	move.w	d0,-(sp)
-	move.l	d1,-(sp)
-	move.l	Buffer(a5),a1
-	move.l	VerPos(a5),d0
-	bsr	Detok
-	move.w	d0,Prg_XEProc(a6)
-	clr.l	VerPos(a5)
-	move.l	(sp)+,a0
-	move.w	(sp)+,d0
-.Ski	bsr	Ed_SetY			Localise en Y
-	move.l	Buffer(a5),a1		Offset de l'erreur
-	move.l	VerPos(a5),d0
-	bsr	Detok
-	bsr	Ed_SetX
-	bsr	Ed_NewBufAff
-	move.l	(sp)+,a0		Affiche le message
-	move.l	Ed_BufT(a5),a1		Avec un "." a la fin
-	bsr	EdCocop
-	move.b	#".",-1(a1)
-	clr.b	(a1)
-	move.l	Ed_BufT(a5),a0
-	move.w	#200,d0
-	bra	Ed_Alert
-
-; Trouve le libelle de l'erreur en retour de programme
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		xdef	_ed_err_run_hidden
+_ed_err_run_hidden
+Ed_ErrRunHidden	jmp	_ed_error_run_hidden_entry
+		xdef	_ed_err_test
+_ed_err_test
+Ed_ErrTest	jmp	_ed_error_test_entry
+		xdef	_ed_err_run
+_ed_err_run
+Ed_ErrRun	jmp	_ed_error_run_entry
+Ed_ErrEdit	jmp	_ed_error_edit_entry
 Ed_GetError	jmp	_ed_get_error_entry
 
-; Ligne EDITOR <-> DIRECT
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_Ligne
-	movem.l	a0/d0,-(sp)
-	bsr	Ed_GetError
-	movem.l	a0/d0,-(sp)
-; Ouvre l'editeur
-	bsr	Ed_OpenEditor
-; Fabrique les chaines de caractere
-	move.l	Ed_VDialogues(a5),a2
-	move.l	4(sp),a0		Message d'erreur
-	bsr	Ed_DChaine
-	move.l	a1,(a2)
+Ed_Ligne	jmp	_ed_error_line_entry
 
-	move.l	VerPos(a5),a0
-	bsr	Ed_FindA
-	addq.l	#1,d0
-	move.l	d0,1*4(a2)		Numero de la ligne
-
-	move.l	Buffer(a5),a1
-	move.l	VerPos(a5),d0
-	bsr	Detok
-	move.w	d0,d3
-
-	move.l	Buffer(a5),a3
-	move.w	(a3)+,d2
-	clr.b	0(a3,d2.w)
-	moveq	#60,d4
-	add.w	d3,d4
-	clr.b	0(a3,d4.w)
-	sub.w	#73,d4
-	bpl.s	.S1
-	moveq	#0,d4
-.S1	lea	0(a3,d3.w),a0
-	bsr	Ed_DChaine
-	move.l	a1,3*4(a2)
-	clr.b	0(a3,d3.w)
-	lea	0(a3,d4.w),a0
-	bsr	Ed_DChaine
-	move.l	a1,2*4(a2)
-	lea	EdReCop(pc),a0
-	move.l	a0,4*4(a2)
-
-; Fait apparaitre l'ecran
-	moveq	#0,d2
-	EcCalD	EHide,EcEdit
-	EcCalD	First,EcEdit
-	move.w	Ed_Wx(a5),d2
-	move.w	Es_Y1(a5),d3
-	move.l	#EntNul,d4
-	moveq	#56,d5
-	EcCalD	AView,EcEdit
-	moveq	#0,d2
-	moveq	#0,d3
-	EcCalD	OffSet,EcEdit
-; Fait apparaitre la souris
-	SyCalD	Show,-1
-	bsr	Esc_MaxMouse
-; Positionne la souris sur l'ecran
-	move.w	Ed_Wx(a5),d1
-	move.w	Es_Y1(a5),d2
-	addq.w	#1,d1
-	addq.w	#1,d2
-	SyCall	SetM
-; Va demarrer le dialogue
-	moveq	#EdD_Ligne,d0
-	bsr	Ed_DoDialog
-	move.w	d0,-(sp)
-; Efface l'ecran
-	moveq	#-1,d2
-	EcCalD	EHide,EcEdit
-	bsr	EdReCop
-	move.w	(sp)+,d1
-; Retourne a l'appelant
-	addq.l	#8,sp
-	movem.l	(sp)+,a0/d0
-	rts
-
-;
-; TEST
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-;
-Ed_Test	bsr	Ed_TokCur
-	moveq	#-1,d0
-	bsr	Ed_VaTester
-; Message de warning si mix de constantes float
-	move.w	#197,d0			***-No Errors
-	move.b	Ver_SPConst(a5),d1
-	tst.b	MathFlags(a5)
-	bmi.s	.Test
-	move.b	Ver_DPConst(a5),d1
-.Test	tst.b	d1
-	beq	Ed_Al100
-	move.w	#221,d0			***-Precision mismatch
-	bra	Ed_Al100
-
-;
-; CHECK 1.3
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_Check1.3
-	bsr	Ed_TokCur
-	move.b	#1,VerCheck1.3(a5)	Force l'arret
-	move.b	#1,Prg_StModif(a6)	Force le test
-	bsr	Ed_VaTester
-	moveq	#49,d0			Compatible
-	tst.b	VerNot1.3(a5)
-	beq.s	.Go
-	moveq	#48,d0			Too many banks
-.Go	move.l	Ed_TstMessages(a5),a0
-	bsr	Ed_GetMessageA0
-	moveq	#127,d0
-	bra	Ed_Alert
-
-;
-; INDENTATION AUTOMATIQUE
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_Indent
-	bsr	Ed_TokCur
-	bsr	Ed_VaTester
-	move.w	Ed_Tabs(a5),d0
-	move.l	Prg_StBas(a6),a0
-	bsr	Indent
-	bsr	Ed_NewBuf
-	rts
-
+Ed_Test	jmp	_ed_test_entry
+Ed_Check1.3	jmp	_ed_check_13_entry
+Ed_Indent	jmp	_ed_indent_program_entry
 ; Indentation du programme (a0 the program, d0 the tab): src/editor/indent.cpp
 Indent	jmp	_ed_indent_entry
 
@@ -3113,53 +2561,16 @@ Indent	jmp	_ed_indent_entry
 _ed_va_tester
 		xdef	_ed_test_program
 _ed_test_program
-Ed_VaTester
-	tst.b	Prg_StModif(a6)		Vraiment tester?
-	beq.s	.Ok
-	move.b	#1,Ed_YaUTest(a5)	Un test!
-	lea	Ed_ErrTest(pc),a1	En cas d'erreur
-	lea	Ed_TestMessage(pc),a2	Affichage
-	JJsr	L_Prg_TestIt		Va tester
-	bne	Ed_AlRunned		Seule erreur possible
-.Ok	rts
-
-
+Ed_VaTester	jmp	_ed_test_program_fn_entry
+		xdef	_ed_test_message
+_ed_test_message
 Ed_TestMessage
 	bra	Ed_Test1
 	bra	Ed_Test2
 	bra	Ed_Test3
-; Affiche le test si programme > 8K
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_Test1
-	movem.l	a0-a6/d0-d7,-(sp)
-	clr.b	Ed_TstMesOn(a5)		Plus de flag
-	move.l	Prg_StHaut(a6),d0
-	sub.l	Prg_StBas(a6),d0
-	cmp.l	#1024*4,d0
-	bcs.s	.Non
-	addq.b	#1,Ed_TstMesOn(a5)
-	move.w	#198,d0
-	bsr	Ed_GetMessage
-	bsr	Ed_Avertir
-	JJsr	L_Prg_SetBanks
-.Non	movem.l	(sp)+,a0-a6/d0-d7
-Ed_Rts	rts
-; Effacement du message
-; ~~~~~~~~~~~~~~~~~~~~~
-Ed_Test2
-	movem.l	a0-a6/d0-d7,-(sp)
-	tst.b	Ed_TstMesOn(a5)
-	beq.s	.Non
-	clr.b	Ed_TstMesOn(a5)
-	bsr	Ed_AverFin
-	JJsr	L_Prg_SetBanks
-.Non	movem.l	(sp)+,a0-a6/d0-d7
-	rts
-; Effacement de l'editeur
-; ~~~~~~~~~~~~~~~~~~~~~~~
-Ed_Test3
-	bsr	EdM_End
-	bra	Ed_Hide
+Ed_Test1	jmp	_ed_test_shown_entry
+Ed_Test2	jmp	_ed_test_end_entry
+Ed_Test3	jmp	_ed_test_run_entry
 
 
 ; ___________________________________________________________________
@@ -3176,128 +2587,7 @@ Ed_Procs	jmp	_ed_procs_entry
 ;
 ; INSERT MACHINE LANGAGE
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_ProcML
-	bsr	Ed_TokCur
-; Selecteur de fichier
-; ~~~~~~~~~~~~~~~~~~~~
-	move.w	#178,d0
-	bsr	Ed_File_Selector
-	beq	Ed_NotDone
-	JJsr	L_Dsk.PathIt
-; Trouve la ligne
-; ~~~~~~~~~~~~~~~
-.Reloop	move.w	Edt_YPos(a4),d0
-	add.w	Edt_YCu(a4),d0
-	bsr	Ed_FindL
-	move.l	Edt_DebProc(a4),d0
-	beq	Ed_FoE
-	move.l	d0,a2
-; Va fermer la procedure, s'il faut
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	btst	#7,10(a2)
-	bne.s	.PaOu
-	bsr	Ed_ProcOpen
-	bra.s	.Reloop
-.PaOu
-; Trouve la longueur du fichier
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	move.l	#1005,d2
-	bsr	Ed_Open
-	beq	Ed_DError
-; Saute les premiers HUNKS!
-	bsr	.GetH
-	cmp.l	#$3F3,d0
-	bne	.NoGood
-.Plo0	bsr	.GetH
-	cmp.l	#$3E9,d0
-	bne.s	.Plo0
-	bsr	.GetH
-	lsl.l	#2,d0
-	move.l	d0,d3
-	add.l	#512,d0
-	JJsr	L_ResTempBuffer
-	move.l	a0,a3
-	move.l	a0,a1
-; Cree le faux programme
-; ~~~~~~~~~~~~~~~~~~~~~~
-	move.l	a2,a0
-	moveq	#0,d0				Copie PROCEDURE
-	move.b	(a0),d0
-	lsl.w	#1,d0
-	subq.w	#1,d0
-.Cp1	move.b	(a0)+,(a1)+
-	dbra	d0,.Cp1
-	or.w	#%0101000000000000,10(a3)	Procedure machine langage
-	move.w	#$0301,(a1)+
-	move.w	#_TkML,(a1)+
-	lea	10+6(a3),a0			Pointe les parametres
-	moveq	#0,d0
-	move.b	(a0),d0
-	lea	2+2(a0,d0.w),a0
-	move.l	a0,d0
-	sub.l	a1,d0
-	cmp.w	#_TkBra1,-2(a0)
-	beq.s	.Par
-	moveq	#0,d0
-.Par	move.w	d0,(a1)+
-; Charge le langage machine dans le buffer
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	move.l	a1,d2
-	bsr	Ed_Read
-	bne	Ed_DError
-	bsr	Ed_Close
-; Met le ENDPROC
-; ~~~~~~~~~~~~~~
-	move.l	d2,a1
-	add.l	d3,a1
-	move.w	#$0301,(a1)+
-	move.w	#_TkEndP,(a1)+
-	clr.w	(a1)+
-	move.l	a1,d0
-	sub.l	a3,d0
-	sub.l	#14,d0
-	move.l	d0,4(a3)
-	move.l	a1,d3
-	sub.l	a3,d3				D3= Longueur totale
-; Efface l'ancienne proc�dure
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	move.w	Edt_YCu(a4),d0
-	add.w	Edt_YPos(a4),d0
-	bsr	Ed_FindL
-	move.l	a0,-(sp)
-	bsr	Ed_NextL
-	move.l	a0,a1
-	move.l	(sp)+,a0
-	bsr	Ed_StDelChunk
-; Insere la nouvelle procedure
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	move.l	a3,a0
-	move.l	d3,d0
-	move.w	Edt_YCu(a4),d1
-	add.w	Edt_YPos(a4),d1
-	bsr	Ed_StoBlock
-; Voili Voila
-; ~~~~~~~~~~~
-	moveq	#0,d0
-	JJsr	L_ResTempBuffer
-	JJsr	L_Prg_CptLines
-	bsr	Ed_AverFin
-	rts
-; Routinette
-; ~~~~~~~~~~
-.GetH	move.l	Buffer(a5),d2
-	moveq	#4,d3
-	bsr	Ed_Read
-	bne	Ed_DError
-	move.l	Buffer(a5),a0
-	move.l	(a0),d0
-	rts
-; Pas un bon programme!
-; ~~~~~~~~~~~~~~~~~~~~~
-.NoGood	move.w	#182,d0
-	bsr	Ed_GetMessage
-	move.w	#250,d0
-	bra	Ed_Alert
+Ed_ProcML	jmp	_ed_procedure_machine_code_entry
 
 ;
 ; Open / close the procedure, no more centring on an error: src/editor/procs.cpp
@@ -3509,6 +2799,8 @@ Ed_NoHide
 
 ; Program already runned
 ;~~~~~~~~~~~~~~~~~~~~~~~
+		xdef	_ed_already_runned
+_ed_already_runned
 Ed_AlRunned
 	moveq	#12,d0
 	bra	Ed_Al100

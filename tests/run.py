@@ -180,7 +180,7 @@ def stop(proc, group=False):
         proc.wait()
 
 
-def prepare(amos_tree, kickstart, rom_key):
+def prepare(amos_tree, kickstart, rom_key, workbench):
     """Shared, read-only parts of a run: the AMOS tree and the Kickstart."""
     if os.path.exists(RUN):
         shutil.rmtree(RUN)
@@ -189,6 +189,12 @@ def prepare(amos_tree, kickstart, rom_key):
     config = os.path.join(amos, 'AMOSPro_Interpreter_Config')
     if not os.path.exists(config):
         shutil.copy(os.path.join(ROOT, 'build', 'AMOSPro_Interpreter_Config'), config)
+    # the monitor's resource bank is not in the sources: the one of the
+    # Workbench drive's AMOS Pro, read only
+    resource = os.path.join(amos, 'APSystem', 'AMOSPro_Monitor_Resource.Abk')
+    installed = os.path.join(workbench, 'AMOS_Pro', 'APSystem', 'AMOSPro_Monitor_Resource.Abk')
+    if not os.path.exists(resource) and os.path.exists(installed):
+        shutil.copy(installed, resource)
     uaem.add_sidecars(amos)
     # FS-UAE looks for rom.key next to the ROM, so give both a private home
     kickdir = os.path.join(RUN, 'Kickstarts')
@@ -559,7 +565,7 @@ def main():
             if os.path.exists(a) and (not os.path.exists(b) or open(a, 'rb').read() != open(b, 'rb').read()):
                 sys.exit(f'{b} is older than build/{built}: run "make dist" first')
     tables = amostok.Tables([os.path.join(amos_tree, 'APSystem')])
-    amos, kickstart = prepare(amos_tree, args.kickstart, args.rom_key)
+    amos, kickstart = prepare(amos_tree, args.kickstart, args.rom_key, args.workbench)
 
     failed = 0
     with concurrent.futures.ThreadPoolExecutor(args.jobs) as pool:

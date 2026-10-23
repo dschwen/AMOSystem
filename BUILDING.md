@@ -308,6 +308,9 @@ Editor
   old buffer and returned with four longs left on the stack (a crash); it
   now goes on as for a smaller size (the program erased, saved first if
   asked).
+- Running an accessory (or a menu option's program) that was running
+  already said "out of memory": the result was tested on the flags of the
+  instruction clearing Edt_Runned. It now says the program runs already.
 
 Collisions (AMOS.library)
 - The offsets into the masks of the two images were 16-bit: an image whose

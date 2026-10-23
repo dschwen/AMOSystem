@@ -641,6 +641,19 @@ Detokenised detokenise(const uint8_t *a6, uint8_t *a1, const uint8_t *at, bool m
     for (;;) {
         if (a6 == at)
             position = uint16_t(a4 - a2);
+        if (int32_t(address(at)) < 0) {
+            // a routine to call at each token, its address negated (the
+            // monitor's Tt_Decoupe, which notes where its instructions are)
+            Ctx &c = ctx();
+            AllRegs r = {};
+            r.a[3] = address(c.a3);
+            r.a[4] = address(a4);
+            r.a[5] = address(c.a5);
+            r.a[6] = address(a6);
+            r.d[6] = c.d6;
+            r.d[7] = c.d7;
+            amos_call_all(&r, ptr<uint8_t>(-int32_t(address(at))));
+        }
         uint16_t t = peek_w(a6);
         a6 += 2;
         if (!t)
@@ -857,8 +870,8 @@ void ed_tokenise(AllRegs *r)
 
 // Detok / Mon_Detok: a0 the line, a1 the buffer, d0 the address whose
 // position in the text is wanted; d0 that position (low word), a0 the
-// length. (The original's other use of d0, a routine to call at each
-// token when negative, had no users and is gone.)
+// length. A negative d0 is the address, negated, of a routine to call at
+// each token, with a6 the token and a4 where its text goes.
 void ed_detok(AllRegs *r, bool monitor)
 {
     Detokenised t = detokenise(ptr<uint8_t>(r->a[0]), ptr<uint8_t>(r->a[1]), ptr<uint8_t>(r->d[0]), monitor);

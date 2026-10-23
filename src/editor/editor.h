@@ -163,6 +163,7 @@ void dialogue_strings_reset();
 uint8_t *dialogue_string(const uint8_t *text, const uint8_t **after = nullptr);
 uint8_t *dialogue_string_add(const uint8_t *text, const uint8_t **after = nullptr);
 int32_t dialogue(uint16_t n);
+int32_t run_dialogue(uint16_t n);
 uint8_t *macro_of(uint32_t key);
 
 // editor/config.cpp: Ed_SetBanks, Ed_SamPlay, Ed_GetNbMessage,
@@ -179,6 +180,17 @@ void unpack(uint16_t n, int16_t x, int16_t y, bool title = false);
 void memory_draw(int16_t x, int16_t y, uint16_t width, bool title);
 void memory_show();
 void limit_mouse();
+
+// editor/direct.cpp: Ed_GetError: the message of an error (a negative
+// code: one of the test)
+struct Error {
+    const uint8_t *message;
+    int16_t code;
+};
+Error get_error(int16_t code, const uint8_t *message);
+
+// editor/disk.cpp: Ed_RLoadHidden
+void load_hidden();
 
 // editor/indent.cpp
 void indent(uint8_t *program, uint16_t tab);
