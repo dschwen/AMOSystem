@@ -61,6 +61,7 @@ void delete_lines(uint16_t n, uint32_t bytes);
 uint8_t *undo_start();
 uint8_t *undo_text(const uint8_t *text, uint16_t n);
 void undo_reset();
+void undo_free();
 
 // editor/lines.cpp: Ed_PKey, Ed_Delete; what undo and redo do
 void type_key(uint8_t c, bool insert, uint8_t *redone);
@@ -84,6 +85,7 @@ void goto_x(uint16_t x);
 void goto_y(uint16_t y);
 void show_column(uint16_t x);
 void cursor_off();
+void show_slider();
 
 // editor/block.cpp: Ed_BlocOn
 void block_on();
@@ -120,6 +122,17 @@ void join_lines();
 // n), Ed_AutoMarks
 void marks_change(uint16_t n, int16_t delta);
 void auto_mark();
+
+// editor/windows.cpp
+EditWindow *next_shown(const EditWindow *w);
+EditWindow *previous_shown(const EditWindow *w);
+EditWindow *window_number(uint16_t n);
+void draw_windows();
+bool activate(EditWindow *w);
+int32_t open_window(bool shown, int32_t size);
+void delete_window();
+void update_split(EditWindow *w, uint16_t flags);
+void follow_scroll();
 
 // editor/indent.cpp
 void indent(uint8_t *program, uint16_t tab);

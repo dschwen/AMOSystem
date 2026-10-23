@@ -10,7 +10,7 @@ using namespace amos;
 using namespace amos::ed;
 
 // +Edit.s
-extern "C" uint8_t ed_macro_stop[], ed_menu[], ed_menu_error[], ed_function_call[], ed_window_active[],
+extern "C" uint8_t ed_macro_stop[], ed_menu[], ed_menu_error[], ed_function_call[],
     ed_separation_top[], ed_separation_bottom[], ed_get_systeme[];
 
 namespace {
@@ -136,7 +136,7 @@ bool mouse()
     if (window_number != w.Edt_Window) {
         tokenise_current_line();
         if (EditWindow *e = window_of(window_number)) {
-            call_a0(ed_window_active, address(e));
+            activate(e);
             return done();
         }
     }

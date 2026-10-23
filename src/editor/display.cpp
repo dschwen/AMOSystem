@@ -368,6 +368,20 @@ void show_character(uint16_t x, uint16_t y)
 
 namespace amos::ed {
 
+// Ed_AffSlV: the vertical slider
+void show_slider()
+{
+    EditWindow &w = window();
+    if (!w.Edt_WindTy)
+        return;
+    Regs u;
+    call(ed_sl_update_y, u);
+    Regs r;
+    r.a[0] = address(w.Edt_SlV);
+    r.d[0] = 0;
+    lib_call(L_Sl_Draw, r);
+}
+
 // Ed_CuOff: the cursor hidden
 void cursor_off()
 {
@@ -464,19 +478,7 @@ void ed_labels_around(AllRegs *r)
     r->d[3] = (r->d[3] & 0xFFFF0000) | l.here;
 }
 
-// Ed_AffSlV: the vertical slider
-void ed_show_slider(AllRegs *)
-{
-    EditWindow &w = window();
-    if (!w.Edt_WindTy)
-        return;
-    Regs u;
-    call(ed_sl_update_y, u);
-    Regs r;
-    r.a[0] = address(w.Edt_SlV);
-    r.d[0] = 0;
-    lib_call(L_Sl_Draw, r);
-}
+void ed_show_slider(AllRegs *) { show_slider(); }
 
 // Ed_CuOn / Ed_CuOff: the cursor shown or not
 void ed_cursor_on(AllRegs *) { print(ed_cursor_on_text); }

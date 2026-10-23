@@ -11,7 +11,7 @@ using namespace amos;
 using namespace amos::ed;
 
 // +Edit.s
-extern "C" uint8_t ed_not_edit[], ed_l_to_long[], ed_oof_buf[], ed_splitted[], ed_sam_play[];
+extern "C" uint8_t ed_not_edit[], ed_l_to_long[], ed_oof_buf[], ed_sam_play[];
 
 namespace {
 
@@ -100,10 +100,7 @@ void tokenise_current_line()
         return;
     store_line(0);
     place_cursor();
-    Regs r;
-    r.a[0] = address(&window());
-    r.d[0] = 1;
-    call(ed_splitted, r);
+    update_split(&window(), 1);
 }
 
 // Ed_InsLine: an empty line inserted at the cursor

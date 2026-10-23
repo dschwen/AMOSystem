@@ -63,6 +63,42 @@
 		XREF	_ed_store_entry,_ed_store_block_entry,_ed_delete_line_entry,_ed_delete_chunk_at_entry
 		XREF	_ed_delete_chunk_entry,_ed_find_line_entry,_ed_next_line_entry
 		XREF	_ed_indent_entry
+		XREF	_ed_top_up_entry
+		XREF	_ed_top_down_entry
+		XREF	_ed_bottom_up_entry
+		XREF	_ed_bottom_down_entry
+		XREF	_ed_drag_top_entry
+		XREF	_ed_drag_bottom_entry
+		XREF	_ed_link_cursor_entry
+		XREF	_ed_unlink_scroll_entry
+		XREF	_ed_follow_scroll_entry
+		XREF	_ed_split_entry
+		XREF	_ed_update_split_entry
+		XREF	_ed_open_shown_window_entry
+		XREF	_ed_open_window_entry
+		XREF	_ed_hide_window_entry
+		XREF	_ed_button_close_entry
+		XREF	_ed_button_hide_entry
+		XREF	_ed_button_size_entry
+		XREF	_ed_close_window_quit_entry
+		XREF	_ed_close_window_entry
+		XREF	_ed_new_hidden_entry
+		XREF	_ed_new_all_hidden_entry
+		XREF	_ed_edit_hidden_entry
+		XREF	_ed_get_hidden_entry
+		XREF	_ed_delete_window_entry
+		XREF	_ed_delete_windows_entry
+		XREF	_ed_draw_windows_entry
+		XREF	_ed_erase_windows_entry
+		XREF	_ed_delete_all_zones_entry
+		XREF	_ed_empty_next_entry
+		XREF	_ed_next_window_entry
+		XREF	_ed_previous_window_entry
+		XREF	_ed_flip_size_entry
+		XREF	_ed_window_number_entry
+		XREF	_ed_shrink_all_entry
+		XREF	_ed_max_size_entry
+		XREF	_ed_activate_entry
 		XREF	_ed_mouse_entry
 		XREF	_ed_key_entry,_ed_key_function_entry,_ed_function_keys_entry
 		XREF	_ed_marks_clear_entry,_ed_auto_marks_entry,_ed_set_mark_entry,_ed_goto_mark_entry
@@ -965,6 +1001,8 @@ Ed_MemoryAff
 ;						Boucle principale de l'�diteur
 ;______________________________________________________________________________
 ;
+		xdef	_ed_loop
+_ed_loop
 Ed_Loop
 
 	move.l	BasSp(a5),sp
@@ -1271,143 +1309,17 @@ Ed_Loop
 Ed_Mouse	jmp	_ed_mouse_entry
 ; ____________________________
 ;
-; CHANGEMENT DE LA SEPARATION du haut, fenetre A0
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+; The separations of the windows: src/editor/windows.cpp
+Ed_EtatUp	jmp	_ed_top_up_entry
+Ed_EtatDown	jmp	_ed_top_down_entry
+Ed_BasUp	jmp	_ed_bottom_up_entry
+Ed_BasDown	jmp	_ed_bottom_down_entry
 		xdef	_ed_separation_top
 _ed_separation_top
-Ed_MSepHaut
-	movem.l	a2-a6/d2-d7,-(sp)
-	move.l	a0,a4
-	tst.b	Edt_First(a4)
-	bne.s	.NoMve
-	bsr	Ed_RShLimits
-	bsr	Ed_MSep
-; Calcule les changements
-	bsr	Edt_WChangeHaut
-	beq.s	.NoMve
-	bsr	Edt_WVideNext
-; Modifie l'affichage
-	bsr	Ed_DrawWindows
-	moveq	#-1,d0
-	bra.s	.EMve
-.NoMve	moveq	#0,d0
-.EMve	movem.l	(sp)+,a2-a6/d2-d7
-	rts
-; Routine
-Ed_RShLimits
-	moveq	#0,d0
-	bsr	Edt_WMaxSize			; Positions max et min
-	tst.b	Edt_Last(a4)
-	bne.s	.Last
-; Une fenetre au milieu, bouge tout!
-	move.w	Edt_WindTy(a4),d0
-	lsl.w	#3,d0
-	add.w	#Edt_EtatSy+Edt_BasSy,d0	; Taille � bouger
-	sub.w	d0,d2				; D2 max
-	move.w	Edt_Y(a4),d3			; Position initiale
-	rts
-; La derniere, bouge juste le haut
-.Last	moveq	#Edt_EtatSy,d0			; Taille � bouger
-	sub.w	#Edt_EtatSy+Edt_BasSy,d2	; D2 max
-	move.w	Edt_Y(a4),d3			; Position initiale
-	rts
-
-;
-; CHANGEMENT DE LA SEPARATION du bas, fenetre A0
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Ed_MSepHaut	jmp	_ed_drag_top_entry
 		xdef	_ed_separation_bottom
 _ed_separation_bottom
-Ed_MSepBas
-	movem.l	a2-a6/d2-d7,-(sp)
-	move.l	a0,a4
-	tst.b	Edt_Last(a4)
-	bne.s	.NoMve
-	bsr	Ed_RSbLimits
-	bsr	Ed_MSep
-; Va calculer les changements
-	bsr	Edt_WChangeBas
-	beq.s	.NoMve
-	bsr	Edt_WVideNext
-; Modifie l'affichage
-	bsr	Ed_DrawWindows
-	moveq	#-1,d0
-	bra.s	.EMve
-.NoMve	moveq	#0,d0
-.EMve	movem.l	(sp)+,a2-a6/d2-d7
-	rts
-; Routine
-Ed_RSbLimits
-	moveq	#0,d0
-	bsr	Edt_WMaxSize			; Positions max et min
-	moveq	#Edt_BasSy,d0			; Taille � bouger
-	add.w	#Edt_EtatSy,d1
-	move.w	Edt_BasY(a4),d3			; Position initiale
-	rts
-; Separation du haut vers le haut
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_EtatUp
-	moveq	#-8,d0
-	bra.s	Ed_EtatMove
-;
-; Separation du haut vers le bas
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_EtatDown
-	moveq	#8,d0
-	bra.s	Ed_EtatMove
-;
-; Separation du bas vers le haut
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_BasUp
-	moveq	#-8,d0
-	bra.s	Ed_BasMove
-;
-; Separation du bas vers le bas
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_BasDown
-	moveq	#8,d0
-	bra.s	Ed_BasMove
-;
-; Mouvement relatif de la separation du haut
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_EtatMove
-	bsr	Ed_TokCur
-	tst.b	Edt_First(a4)
-	bne.s	.NoMve
-	move.w	d0,d4
-	bsr	Ed_RShLimits
-	add.w	d4,d3
-	cmp.w	d1,d3
-	bls.s	.NoMve
-	cmp.w	d2,d3
-	bge.s	.NoMve
-; Calcule les changements
-	move.w	d3,d0
-	bsr	Edt_WChangeHaut
-	beq.s	.NoMve
-	bsr	Edt_WVideNext
-	bsr	Ed_DrawWindows
-.NoMve	rts
-;
-; CHANGEMENT relatif de la DE LA SEPARATION du bas
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_BasMove
-	bsr	Ed_TokCur
-	tst.b	Edt_Last(a4)
-	bne.s	.NoMve
-	move.w	d0,d4
-	bsr	Ed_RSbLimits
-	add.w	d4,d3
-	cmp.w	d1,d3
-	bls.s	.NoMve
-	cmp.w	d2,d3
-	bge.s	.NoMve
-; Va calculer les changements
-	move.w	d3,d0
-	bsr	Edt_WChangeBas
-	beq.s	.NoMve
-	bsr	Edt_WVideNext
-	bsr	Ed_DrawWindows
-.NoMve	rts
+Ed_MSepBas	jmp	_ed_drag_bottom_entry
 
 
 ; __________________________________________________________________________
@@ -1516,233 +1428,12 @@ Un_Next		jmp	_ed_undo_next_entry
 
 ; __________________________________________________________________________
 ;
-;	GESTION DES FENETRES LIEES EN SCROLLING
-; __________________________________________________________________________
-;
-
-;
-; Link cursor's movements
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_LinkCursor
-	bsr	Ed_TokCur
-	moveq	#1,d0
-	bsr	Ed_AverMess
-	clr.l	Edt_LinkScroll(a4)
-; Attend le choix
-; ~~~~~~~~~~~~~~~
-.Loop	JJsr	L_Sys_WaitMul
-	SyCall	MouseKey
-	btst	#0,d1
-	beq.s	.Loop
-	SyCall	GetZone
-	cmp.w	#EcEdit,d1
-	bne	Ed_NotDone
-	swap	d1
-	cmp.w	Edt_Window(a4),d1
-	beq	Ed_NotDone
-	move.w	d1,d0
-	bsr	Edt_GetAd
-	beq	Ed_NotDone
-	bsr	Edt_DelLinkScroll
-	move.l	a0,Edt_LinkScroll(a4)
-	move.w	Edt_YPos(a4),d0
-	add.w	Edt_YCu(a4),d0
-	move.w	d0,Edt_LinkYOld(a4)
-	bsr	Ed_AverFin
-	JJsr	L_Dia_NoMKey
-	rts
-;
-; Enleve les links de scrolling sur la fenetre A0
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Edt_DelLinkScroll
-	move.l	Edt_List(a5),d1
-.Loop	move.l	d1,a1
-	cmp.l	Edt_LinkScroll(a1),a0
-	bne.s	.Skip
-	clr.l	Edt_LinkScroll(a1)
-.Skip	move.l	Edt_Next(a1),d1
-	bne.s	.Loop
-	rts
-
-; Gestion proprement dite
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_LinkeScroll
-	tst.l	Edt_LinkScroll(a4)
-	beq.s	.Nolink
-	bsr	.Recurse		Fait le changement
-	move.w	Edt_Window(a4),d1	Reactive la fenetre
-	WiCall	QWindow
-.Nolink	rts
-; Routine recursive
-; ~~~~~~~~~~~~~~~~~
-.Recurse
-	move.l	Edt_LinkScroll(a4),d0
-	beq.s	.Out
-	move.w	Edt_YCu(a4),d1
-	add.w	Edt_YPos(a4),d1
-	cmp.w	Edt_LinkYOld(a4),d1
-	beq.s	.Out
-; Fait les changements
-	move.w	d1,d2
-	sub.w	Edt_LinkYOld(a4),d1
-	move.w	d2,Edt_LinkYOld(a4)
-	move.b	#1,Edt_LinkFlag(a4)
-	movem.l	a4/a6,-(sp)
-	move.l	d0,a4
-	move.l	Edt_Prg(a4),a6
-	tst.b	Edt_LinkFlag(a4)
-	bne.s	.PaBoucle
-	move.w	Edt_YPos(a4),d0
-	add.w	d1,d0
-	bpl.s	.Plus
-	moveq	#0,d0
-.Plus	move.w	d0,d1
-	add.w	Edt_YCu(a4),d1
-	cmp.w	Prg_NLigne(a6),d1
-	bcs.s	.2Dan
-	move.w	Prg_NLigne(a6),d0
-	sub.w	Edt_YCu(a4),d0
-	bpl.s	.2Dan
-	move.w	Prg_NLigne(a6),Edt_YCu(a4)
-	moveq	#0,d0
-.2Dan	move.w	d0,Edt_YPos(a4)
-	tst.w	Edt_WindTy(a4)
-	beq.s	.Skip
-	bsr	Ed_NewBuf
-.Skip	bset	#EtA_Y,Edt_EtatAff(a4)
-; Appelle la fenetre suivante - RECURSIF : youpi youpla
-	bsr	.Recurse
-; Revient � la precedente fenetre
-.PaBoucle
-	movem.l	(sp)+,a4/a6
-	clr.b	Edt_LinkFlag(a4)
-; Revient � le precedente
-.Out	rts
-
-
-; __________________________________________________________________________
-;
-;	GESTION DES FENETRES SPLITTEES
-; __________________________________________________________________________
-;
-
-;
-; Split program's view
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_SplitWindow
-	bsr	Ed_TokCur
-; Ouvre la fenetre
-	move.l	a4,-(sp)
-	moveq	#-1,d0			Vue
-	moveq	#-1,d1			Pas de structure programme
-	bsr	Edt_OpWindow		Va ouvrir
-	blt	Ed_OMm
-	bgt	Ed_2ManyWindow
-; Insere la fenetre dans la liste LINK
-	move.l	(sp),a0
-	move.l	a0,Edt_LinkPrev(a4)
-	move.l	Edt_LinkNext(a0),d0
-	move.l	a4,Edt_LinkNext(a0)
-	move.l	d0,Edt_LinkNext(a4)
-	beq.s	.Skip
-	move.l	d0,a1
-	move.l	a4,Edt_LinkPrev(a1)
-.Skip
-; Copie la zone de donnees
-	move.l	a6,Edt_Prg(a4)		Met le programme
-	addq.b	#1,Prg_Edited(a6)	Une fenetre de plus sur le prog.
-	lea	Edt_SSplit(a0),a0	Copie positions curseur / texte
-	lea	Edt_SSplit(a4),a1
-	move.w	#(Edt_ESplit-Edt_SSplit)/2-1,d0
-.Loop	move.w	(a0)+,(a1)+
-	dbra	d0,.Loop
-; Affiche
-	bsr	Ed_DrawWindows
-.Out	addq.l	#4,sp
-.Out2	rts
-
-;
-; 	Gestion proprement dite
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-; 	D0=	Flags
-;	A0= 	Fenetre origine
-		xdef	_ed_splitted
-_ed_splitted
-Ed_Splitted
-	move.l	Edt_LinkPrev(a0),d1
-	or.l	Edt_LinkNext(a0),d1
-	beq	.SplitX
-	movem.l	a2-a6/d2-d7,-(sp)
-	move.w	d0,-(sp)
-	move.l	a0,a3
-; Trouve la premiere
-	move.l	a3,a4
-	bra.s	.Deuse
-.Preums	move.l	d0,a4
-.Deuse	move.l	Edt_LinkPrev(a4),d0
-	bne.s	.Preums
-; Actualise les fenetres une a une
-.Autre	cmp.l	a3,a4
-	beq	.Next
-	tst.w	Edt_WindTy(a4)
-	beq	.Next
-	move.l	Edt_Prg(a4),a6
-; Changer les flags comme l'autre fenetre
-	move.b	Edt_EtatAff(a3),Edt_EtatAff(a4)
-; Redessiner tout le buffer, en verifiant la position
-	move.w	(sp),d0
-	btst	#1,d0
-	beq.s	.PaAll
-	move.w	Edt_YPos(a4),d0
-	add.w	Edt_YCu(a4),d0
-	cmp.w	Prg_NLigne(a6),d0
-	bcs.s	.2dan
-	move.w	Prg_NLigne(a6),d0
-	sub.w	Edt_YCu(a4),d0
-	bpl.s	.Sz
-	move.w	Prg_NLigne(a6),Edt_YCu(a4)
-	moveq	#0,d0
-.Sz	move.w	d0,Edt_YPos(a4)
-.2dan	bsr	Ed_NewBuf
-.PaAll
-; Update simple de la ligne courante
-	move.w	(sp),d0
-	btst	#0,d0
-	beq.s	.PaLicu
-	move.w	Edt_YPos(a3),d1
-	add.w	Edt_YCu(a3),d1
-	sub.w	Edt_YPos(a4),d1
-	bmi.s	.Next
-	cmp.w	Edt_WindTy(a4),d1
-	bcc.s	.Next
-	move.w	d1,-(sp)
-	move.w	Edt_YCu(a3),d0
-	lsl.w	#8,d0
-	lsl.w	#8,d1
-	move.l	Edt_BufE(a3),a0
-	move.l	Edt_BufE(a4),a1
-	add.w	d0,a0
-	add.w	d1,a1
-	moveq	#256/4-1,d0
-.Copy	move.l	(a0)+,(a1)+
-	dbra	d0,.Copy
-	move.w	Edt_Window(a4),d1
-	WiCall	QWindow
-	move.w	(sp)+,d1
-	bsr	Ed_EALigne
-.PaLicu
-; Encore une fenetre?
-.Next	move.l	Edt_LinkNext(a4),d0
-	move.l	d0,a4
-	bne	.Autre
-; Reactive la fenetre originelle
-	move.w	Edt_Window(a3),d1
-	WiCall	QWindow
-	addq.l	#2,sp
-	movem.l	(sp)+,a2-a6/d2-d7
-; Fini
-.SplitX	rts
-
+;	Linked and split windows: src/editor/windows.cpp
+Ed_LinkCursor	jmp	_ed_link_cursor_entry
+Edt_DelLinkScroll	jmp	_ed_unlink_scroll_entry
+Ed_LinkeScroll	jmp	_ed_follow_scroll_entry
+Ed_SplitWindow	jmp	_ed_split_entry
+Ed_Splitted	jmp	_ed_update_split_entry
 
 
 ; ___________________________________________________________________
@@ -2292,6 +1983,8 @@ Ed_AChaine
 
 ; Appel general des dialogues, avec protection memoire
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		xdef	_ed_dialogue
+_ed_dialogue
 Ed_Dialogue:
 	tst.b	Ed_Zappeuse(a5)
 	beq.s	.NoZap
@@ -2896,6 +2589,8 @@ Ed_Quit	bsr	Ed_TokCur
 	bne	Ed_Loop
 .NoDia
 
+		xdef	_ed_do_quit
+_ed_do_quit
 Ed_DoQuit
 	bsr	Ed_TokCur
 	bsr	Edt_ClearVar
@@ -5256,6 +4951,8 @@ RepBuffer	jmp	_ed_replace_text_entry
 ;					Procedures actualisations sliders
 ;_____________________________________________________________________________
 ;
+		xdef	_ed_slider_routines
+_ed_slider_routines
 Edt_SliderY
 	bra	Edt_SlUpdateY
 	bra	Edt_SlMinusY
@@ -5508,6 +5205,8 @@ Ed_AvName
 	rts
 ; Avertissement message editeur D0
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		xdef	_ed_warn
+_ed_warn
 Ed_AverMess
 	move.l	a0,-(sp)
 	bsr	Ed_GetMessage
@@ -5577,6 +5276,8 @@ Ed_AllAverFin
 ;
 ; Reaffichage de la ligne d'etat complete
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		xdef	_ed_status_print
+_ed_status_print
 Ed_EtPrint
 	move.b	#EtA_BAll,Edt_EtatAff(a4)
 Ed_EtPrintD0
@@ -7596,6 +7297,8 @@ Ed_NoFound
 ;
 ; NOT DONE
 ; ~~~~~~~~
+		xdef	_ed_not_done
+_ed_not_done
 Ed_NotDone
 	bsr	Ed_NewBuf
 Ed_NotDone2
@@ -7632,6 +7335,8 @@ Ed_BlocWhat
 	bra.s	Ed_ProAlert
 ; Too many windows
 ; ~~~~~~~~~~~~~~~~
+		xdef	_ed_too_many_windows
+_ed_too_many_windows
 Ed_2ManyWindow
 	moveq	#3,d0
 	bsr	Ed_GetMessage
@@ -7639,6 +7344,8 @@ Ed_2ManyWindow
 
 ; Hide window, last window
 ;~~~~~~~~~~~~~~~~~~~~~~~~~
+		xdef	_ed_no_hide
+_ed_no_hide
 Ed_NoHide
 	moveq	#2,d0
 	bra	Ed_Al100
@@ -7849,6 +7556,8 @@ Ed_Untok	jmp	_ed_untok_entry
 ;
 ; NEW
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		xdef	_ed_new
+_ed_new
 Ed_New
 	bsr	Ed_TokCur
 	bsr	Ed_Saved
@@ -7865,6 +7574,8 @@ Ed_New2
 ;
 ; New du contenu d'une fenetre
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		xdef	_ed_new_window
+_ed_new_window
 Edt_New
 ; Editeur par devant
 	tst.b	Ed_Zappeuse(a5)
@@ -7966,1328 +7677,34 @@ Ed_OpenLoad
 	bra	Ed_Load
 
 ;
-; Ouvre une nouvelle fenetre
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_OpenWindow
-	bsr	Ed_TokCur
-	moveq	#-1,d0				Visible
-	move.l	PI_DefSize(a5),d1		Taille par defaut
-	bsr	Edt_OpWindow
-	blt	Ed_OMm
-	bgt	Ed_2ManyWindow
-	bsr	Ed_DrawWindows
-	rts
-
-;
-; Routine d'ouverture de fenetre
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-;	D0=	Hidden(0) / Vue(-1)
-;	D1=	Taille buffer voulue
-;	A4=	Edt Courant
-Edt_OpWindow
-	movem.l	d2-d7/a2-a3,-(sp)
-	move.l	d1,d3
-	move.w	d0,d2
-	beq.s	.Res
-; Si fenetre visible, peut-on l'ouvrir?
-	sub.l	a0,a0
-	bsr	Edt_WCount		Nombre de fenetres ouvertes
-	cmp.w	Ed_WMax(a5),d0
-	bcc	.Rate
-; Ouvre la structure EDT
-; ~~~~~~~~~~~~~~~~~~~~~~
-.Res	move.l	#Edt_Long,d0
-	SyCall	MemFastClear
-	beq	.Omm2
-; Insere dans la liste
-	move.l	a4,d0
-	beq.s	.First
-	move.l	Edt_Next(a4),d0		Branche dans la liste
-	move.l	d0,Edt_Next(a0)
-	move.l	a0,Edt_Next(a4)
-	bra.s	.Prg
-.First	move.l	Edt_List(a5),Edt_Next(a0)
-	move.l	a0,Edt_List(a5)
-; Ouvre la structure Prg
-; ~~~~~~~~~~~~~~~~~~~~~~
-.Prg	move.l	a0,a4
-	move.l	d3,d0			Taille
-	bmi.s	.NoStru
-	JJsr	L_Prg_NewStructure	Fabrique une structure fenetre
-	beq.s	.Omm1
-	move.l	d0,Edt_Prg(a4)		Branche dans la structure!
-	move.l	d0,a6
-	addq.b	#1,Prg_Edited(a6)	Flag: edite!
-; Active la fenetre si visible
-.NoStru	move.b	#2,Edt_Hidden(a4)	2 car aucune zone cr��e
-	tst.w	d2
-	beq.s	.Skip2
-	clr.b	Edt_Hidden(a4)
-	move.l	a4,Edt_Current(a5)
-	moveq	#1,d0
-	bsr	Edt_WSchrinkAll		Reduit toutes les fenetres
-	moveq	#-1,d0
-	bsr	Edt_WMaxSize
-	move.w	d0,Edt_WindTy(a4)
-; New des donnees
-.Skip2	bsr	Edt_New
-	moveq	#0,d0			Pas d'erreur
-.Out	movem.l	(sp)+,d2-d7/a2-a3
-	rts
-; Trop de fenetres
-.Rate	moveq	#1,d0
-	bra.s	.Out
-; Out of memory
-.Omm1	bsr	Edt_DelWindow
-.Omm2	moveq	#-1,d0
-	bra.s	.Out
-
-;
-; Cache la fenetre editeur courante
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-;
-Ed_WindowHide
-	bsr	Ed_TokCur
-; Si fenetre link�e, on ferme d'abord!
-	move.l	Edt_LinkPrev(a4),d0
-	or.l	Edt_LinkNext(a4),d0
-	beq.s	.PaLink
-; Ferme toutes les fenetres linkees
-.Loop	move.l	Edt_LinkPrev(a4),d0
-	bne.s	.Skip
-	move.l	Edt_LinkNext(a4),d0
-	beq.s	.PaLink
-.Skip	move.l	a4,-(sp)
-	move.l	d0,a4
-	bsr	Ed_CloseWindow
-	move.l	(sp)+,a4
-	move.l	a4,Edt_Current(a5)
-	bra.s	.Loop
-.PaLink
-; Une fenetre seule?
-	bsr	Edt_WAlone
-	bne	Ed_NoHide
-; Enleve les links de scrolling, et cache
-	move.l	a4,a0
-	bsr	Edt_DelLinkScroll
-	move.b	#1,Edt_Hidden(a4)
-; Active une autre fenetre, quelle que soit sa taille!
-	bsr	Edt_WAutre		D'abord une fenetre OUVERTE!
-	bne.s	.Ok
-	moveq	#0,d1
-	move.l	a4,a0
-	bsr	Edt_WAutre3		Sinon meme une fermee!
-.Ok	moveq	#-1,d0
-	bsr	Edt_WMaxSize
-	move.w	d0,Edt_WindTy(a4)
-	bsr	Ed_DrawWindows
-	bsr	EdM_BranchAMOS
-	rts
-
-;
-; Bouton de fermeture d'un fenetre
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-;
-Ed_BtWindowClose
-	move.w	Bt_Number(a2),d0
-	bsr	Edt_GetAd
-	beq.s	.Skip
-	move.l	a0,a4
-	move.l	Edt_Prg(a4),a6
-	bsr	Ed_CloseWindowQuit
-.Skip	rts
-
-;
-; Bouton Hide fenetre
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-;
-Ed_BtWindowHide
-	bsr	Ed_TokCur
-	move.w	Bt_Number(a2),d0
-	bsr	Edt_GetAd
-	beq.s	.Skip
-	move.l	a0,a4
-	move.l	Edt_Prg(a4),a6
-	bsr	Ed_WindowHide
-.Skip	rts
-
-;
-; Bouton Scrhink / Expand fenetre
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-;
-Ed_BtWindowSize
-	bsr	Ed_TokCur
-	move.w	Bt_Number(a2),d0
-	bsr	Edt_GetAd
-	beq.s	.Skip
-	move.l	a0,a4
-	move.l	Edt_Prg(a4),a6
-	bsr	Ed_FlipSizeWindow
-.Skip	rts
-
-;
-; Ferme la fenetre editeur courante
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_CloseWindowQuit			* Avec option QUIT
-	tst.b	Ed_Zappeuse(a5)		Pas si zappeuse!
-	bne.s	Ed_CloseWindow
-	move.w	#-1,-(sp)
-	bra.s	EdClo
-Ed_CloseWindow				* Sans option QUIT
-	clr.w	-(sp)
-EdClo	bsr	Ed_TokCur
-; Fenetre linkee?
-	move.l	Edt_LinkPrev(a4),d0
-	or.l	Edt_LinkNext(a4),d0
-	bne.s	.Linked
-; Pas linkee, fait un new
-	bsr	Ed_New
-; Derniere fenetre
-.Linked	tst.b	Edt_First(a4)			Derniere fenetre?
-	beq.s	.Closit
-	tst.b	Edt_Last(a4)
-	beq.s	.Closit
-	tst.w	(sp)				Quitter?
-	beq.s	.Fini
-	tst.b	Ed_Zappeuse(a5)			Pas si zappeuse
-	bne.s	.Fini
-; Derniere fenetre: Quit AMOSPRO?
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	btst	#0,Ed_QuitFlags(a5)
-	beq	Ed_DoQuit
-	moveq	#EdD_WQuit,d0
-	bsr	Ed_Dialogue
-	cmp.w	#1,d0
-	beq	Ed_DoQuit
-	bra.s	.Fini
-; Ferme la fenetre
-; ~~~~~~~~~~~~~~~~
-.Closit	bsr	Edt_EffWindows
-	bsr	Edt_DelWindow
-	moveq	#-1,d0
-	bsr	Edt_WMaxSize
-	move.w	d0,Edt_WindTy(a4)
-	bsr	Ed_DrawWindows
-.Fini	addq.l	#2,sp
-	rts
-
-;
-; Ferme un programme cach�
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_NewHidden
-	bsr	Ed_TokCur
-	bsr	Ed_GetHidden
-	beq	Ed_NotDone
-	move.l	a0,a4
-	move.l	Edt_Prg(a4),a6
-	bsr	Ed_Saved
-	bsr	Edt_DelWindow
-	bsr	EdM_BranchAMOS
-	rts
-
-;
-; Ferme TOUS les programmes cach�s
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_NewAllHidden
-	bsr	Ed_TokCur
-	moveq	#EdD_NAll,d0
-	bsr	Ed_Dialogue
-	cmp.w	#1,d0
-	bne	Ed_Loop
-	bra.s	.In
-.Loop	move.l	a0,a4
-	move.l	Edt_Prg(a4),a6
-	bsr	Ed_Saved
-	bsr	Edt_DelWindow
-.In	moveq	#0,d1
-	bsr	Ed_GetHidden
-	bne.s	.Loop
-	bsr	EdM_BranchAMOS
-	rts
-
-;
-; Montre un programme cach�
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_EditHidden
-	bsr	Ed_TokCur
-	bsr	Ed_GetHidden
-	beq	Ed_NotDone
-	move.l	a0,-(sp)
-	sub.l	a0,a0
-	bsr	Edt_WCount		Nombre de fenetres ouvertes
-	cmp.w	Ed_WMax(a5),d0
-	bcc	Ed_2ManyWindow
-	move.l	(sp)+,a4
-	move.l	a4,Edt_Current(a5)
-	move.l	Edt_Prg(a4),a6
-	clr.b	Edt_Hidden(a4)
-	moveq	#1,d0
-	bsr	Edt_WSchrinkAll		Reduit toutes les fenetres
-	moveq	#-1,d0
-	bsr	Edt_WMaxSize
-	move.w	d0,Edt_WindTy(a4)
-	bsr	Prg_UndoCreate		Cree le buffer UNDO
-	bsr	Ed_DrawWindows
-	bsr	EdM_BranchAMOS
-	rts
-
-;
-; Trouve le programme cach� en venant de l'appel des fonctions
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-;	D1=	Numero du programme
-Ed_GetHidden
-	move.l	Edt_List(a5),d0
-.Loop	move.l	d0,a0
-	tst.b	Edt_Hidden(a0)
-	beq.s	.Next
-	subq.w	#1,d1
-	bmi.s	.Ok
-.Next	move.l	Edt_Next(a0),d0
-	bne.s	.Loop
-	rts
-.Ok	move.l	a0,d0
-	rts
-
-;
-; Efface une structure fenetre quelconque (A4)
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Edt_DelWindow
-
-; Ferme la structure programme
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	move.l	Edt_Prg(a4),d0
-	beq.s	.NoProg
-	move.l	d0,a6
-; Si derniere fenetre sur le programme, enleve la structure
-	subq.b	#1,Prg_Edited(a6)
-	bne.s	.NoProg
-	bsr	EdM_Program
-	JJsr	L_Prg_DelStructure
-	bsr	Prg_UndoFree
-.NoProg
-
-; Ferme la fenetre Editeur
-; ~~~~~~~~~~~~~~~~~~~~~~~~
-	cmp.l	Edt_Current(a5),a4
-	bne.s	.Split
-	move.l	a4,a0				Qui suit
-	bsr	Edt_WNext
-	bne.s	.Link
-	move.l	a4,a0				Qui precede
-	bsr	Edt_WPrev
-.Link	move.l	Edt_LinkPrev(a4),d1		Linke?
-	bne.s	.Skp
-	move.l	Edt_LinkNext(a4),d1
-	beq.s	.Act
-.Skp	move.l	d1,d0
-.Act	move.l	d0,Edt_Current(a5)
-; Enleve les SPLITS
-.Split	move.l	Edt_LinkNext(a4),d0
-	move.l	d0,a0
-	beq.s	.Skip1
-	move.l	Edt_LinkPrev(a4),Edt_LinkPrev(a0)
-.Skip1	move.l	Edt_LinkPrev(a4),d0
-	beq.s	.Scrol
-	move.l	d0,a0
-	move.l	Edt_LinkNext(a4),Edt_LinkNext(a0)
-; Enleve les links de scroll sur cette fenetre
-.Scrol	move.l	a4,a0
-	bsr	Edt_DelLinkScroll
-; Enleve les zones de cette fenetre
-	bsr	Edt_DelZones
-; Enleve de la liste
-	move.l	Edt_List(a5),d0
-	cmp.l	d0,a4
-	beq.s	.First
-.Loop	move.l	d0,a0
-	move.l	Edt_Next(a0),d0
-	cmp.l	d0,a4
-	bne.s	.Loop
-	move.l	Edt_Next(a4),Edt_Next(a0)
-	bra.s	.End
-.First	move.l	Edt_Next(a4),Edt_List(a5)
-.End	move.l	#Edt_Long,d0		Efface la structure
-	move.l	a4,a1
-	SyCall	SyFree
-; Prend la fenetre active maintenant
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	sub.l	a4,a4
-	sub.l	a6,a6
-	move.l	Edt_Current(a5),d0
-	beq.s	.Ss
-	move.l	d0,a4
-	move.l	Edt_Prg(a4),a6
-.Ss	rts
-
-; Efface toutes les fenetres editeur
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Edt_DelWindows
-	movem.l	a4/a6,-(sp)
-.Loop	move.l	Edt_List(a5),d0
-	beq.s	.End
-	move.l	d0,a4
-	bsr	Edt_DelWindow
-	bra.s	.Loop
-.End	movem.l	(sp)+,a4/a6
-	rts
-
-;
-; Dessine les fenetres editeur
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_DrawWindows
-
-	movem.l	a2-a4/d2-d7,-(sp)
-
-	bsr	Ed_CuOff
-	bsr	Ed_AllAverFin
-	bsr	Edt_EffWindows
-	bsr	Edt_OrderWindows
-	bsr	Edt_WFirstLast
-
-;
-; Boucle de dessin des programmes
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	move.l	Ed_BufE(a5),-(sp)
-	move.w	#16+Ed_YTop,-(sp)
-	move.l	Edt_List(a5),a4
-
-.PLoop
-	move.l	Edt_Prg(a4),a6
-; Programme visible?
-; ~~~~~~~~~~~~~~~~~~
-	tst.b	Edt_Hidden(a4)
-	bne	.NextP
-; Pas plus loin que la longueur du programme
-	move.w	Edt_YCu(a4),d0
-	add.w	Edt_YPos(a4),d0
-	cmp.w	Prg_NLigne(a6),d0
-	ble.s	.Sl
-	clr.w	Edt_YCu(a4)
-	clr.w	Edt_YPos(a4)
-; Centre le curseur dans la fenetre
-.Sl	move.w	Edt_YCu(a4),d0
-	move.w	Edt_WindTy(a4),d1
-	subq.w	#1,d1
-	bmi.s	.Dedans
-	cmp.w	d1,d0
-	bls.s	.Dedans
-	move.w	d1,Edt_YCu(a4)
-	sub.w	d1,d0
-	add.w	d0,Edt_YPos(a4)
-.Dedans
-;
-; Numero fenetre >>> numero zones
-	move.w	Edt_Order(a4),d0
-	lsl.w	#3,d0
-	move.w	d0,Edt_Zones(a4)
-	move.w	d0,Edt_Window(a4)
-	addq.w	#1,d0
-	move.w	d0,Edt_WindEtat(a4)
-;
-; Tailles / Positions de la fenetre
-	move.w	(sp),d7
-	move.w	d7,Edt_Y(a4)
-	move.w	#0,Edt_WindX(a4)
-	move.w	d7,Edt_WindY(a4)
-	add.w	#Edt_EtatSy,Edt_WindY(a4)
-	moveq	#32,d1
-	move.w	d1,Edt_WindEX(a4)
-	move.w	Ed_Sx(a5),d0
-	sub.w	d1,d0
-	sub.w	#64,d0
-	move.w	d0,Edt_WindESx(a4)
-	move.w	d7,Edt_WindEY(a4)
-	addq.w	#1,Edt_WindEY(a4)
-	move.w	Ed_Sx(a5),d0
-	sub.w	#16,d0
-	move.w	d0,Edt_WindSx(a4)
-	lsr.w	#3,d0
-	move.w	d0,Edt_WindTx(a4)
-	move.w	Edt_WindTy(a4),d0
-	lsl.w	#3,d0
-	move.w	d0,Edt_WindSy(a4)
-	add.w	#Edt_EtatSy+Edt_BasSy,d0
-	move.w	d0,Edt_Sy(a4)
-	move.w	Edt_WindTy(a4),d6
-
-	move.w	Edt_WindY(a4),d0
-	add.w	Edt_WindSy(a4),d0
-	move.w	d0,Edt_BasY(a4)
-
-	move.w	Edt_Zones(a4),Edt_ZEtat(a4)
-	addq.w	#1,Edt_ZEtat(a4)
-	move.w	Edt_Zones(a4),Edt_ZBas(a4)
-	addq.w	#2,Edt_ZBas(a4)
-
-; Initialisation du slider vertical
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-; Position / Taille
-	move.w	Edt_WindX(a4),d0
-	add.w	Edt_WindSx(a4),d0
-	add.w	#Ed_SlVDeltaG,d0
-	move.w	d0,Edt_SlV+Sl_X(a4)
-	move.w	d7,Edt_SlV+Sl_Y(a4)
-	add.w	#Ed_SlVDeltaH,Edt_SlV+Sl_Y(a4)
-	move.w	#Ed_SlVSx,Edt_SlV+Sl_Sx(a4)
-	move.w	Edt_WindSy(a4),d0
-	add.w	#Ed_SlVDeltaB,d0
-	move.w	d0,Edt_SlV+Sl_Sy(a4)
-	move.w	Edt_WindTy(a4),Edt_SlV+Sl_Scroll(a4)
-	sub.w	#2,Edt_SlV+Sl_Scroll(a4)
-	move.w	#Ed_SlVDx,Edt_SlV+Sl_ZDx(a4)
-; Zone
-	move.w	Edt_Zones(a4),Edt_SlV+Sl_Zone(a4)
-	addq.w	#3,Edt_SlV+Sl_Zone(a4)
-; Adresses des routines
-	lea	Edt_SliderY(pc),a1
-	move.l	a1,Edt_SlV+Sl_Routines(a4)
-	bset	#Sl_FlagVertical,Edt_SlV+Sl_Flags(a4)
-; Couleurs active / inactive
-	moveq	#19,d0
-	bsr	Ed_GetSysteme
-	move.l	a0,a1
-	lea	Edt_SlV+Sl_Inactive(a4),a0
-	moveq	#16-1,d0
-.Co	moveq	#0,d1
-	move.b	(a1)+,d1
-	move.w	d1,(a0)+
-	dbra	d0,.Co
-
-; Initialisation des boutons
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~
-	move.w	Ed_Sx(a5),d0
-	sub.w	#Edt_BtSx,d0
-	move.w	d0,Edt_Bt3+Bt_X(a4)
-	sub.w	#Edt_BtSx,d0
-	move.w	d0,Edt_Bt2+Bt_X(a4)
-	clr.w	Edt_Bt1+Bt_X(a4)
-	move.w	Edt_Y(a4),d1
-	move.w	d1,Edt_Bt1+Bt_Y(a4)
-	move.w	d1,Edt_Bt2+Bt_Y(a4)
-	move.w	d1,Edt_Bt3+Bt_Y(a4)
-; Prepare les boutons
-	moveq	#Ed_BtPics,d0
-	move.w	Edt_Zones(a4),d1
-	addq.w	#4,d1
-	moveq	#2,d2
-	lea	Edt_Bt1(a4),a1
-.BLoop	move.w	Edt_Window(a4),Bt_Number(a1)
-	addq.w	#1,d1
-	move.w	d1,Bt_Zone(a1)
-	move.w	d0,Bt_Image(a1)
-	move.b	#24,Bt_Sx(a1)
-	move.b	#Edt_EtatSy,Bt_Sy(a1)
-	lea	Bt_RoutIn(pc),a0
-	move.l	a0,Bt_Routines(a1)
-	move.b	#6,Bt_RDraw(a1)
-	addq.w	#2,d0
-	lea	Bt_Long(a1),a1
-	dbra	d2,.BLoop
-; Routines de branchement boutons
-	move.b	#1,Edt_Bt1+Bt_RChange(a4)
-	move.b	#2,Edt_Bt2+Bt_RChange(a4)
-	move.b	#3,Edt_Bt3+Bt_RChange(a4)
-;
-; Fond de l'image
-; ~~~~~~~~~~~~~~~
-; Unpack le haut
-	moveq	#Ed_Pics+1,d0
-	moveq	#0,d1
-	move.w	d7,d2
-	moveq	#-1,d3
-	bsr	Ed_Unpack
-	move.w	d7,d0
-	add.w	#11,d7
-	move.w	d7,d1
-	bsr	Ed_Enlarge
-	tst.w	d6
-	beq.s	.Skip0
-.Loop1	moveq	#Ed_Pics+2,d0
-	move.w	Ed_Sx(a5),d1
-	sub.w	#16,d1
-	ext.l	d1
-	move.w	d7,d2
-	moveq	#-1,d3
-	bsr	Ed_Unpack
-	addq.w	#8,d7
-	subq.w	#1,d6
-	bne.s	.Loop1
-; Met le bas
-.Skip0	moveq	#Ed_Pics+3,d0
-	moveq	#0,d1
-	move.w	d7,d2
-	moveq	#-1,d3
-	bsr	Ed_Unpack
-	move.w	d7,d0
-	addq.w	#5,d7
-	move.w	d7,d1
-	bsr	Ed_Enlarge
-	move.w	d7,(sp)
-; Initialise la fenetre d'etat
-	move.w	Edt_WindEtat(a4),d1
-	move.w	Edt_WindEX(a4),d2
-	move.w	Edt_WindEY(a4),d3
-	move.w	Edt_WindESx(a4),d4
-	lsr.w	#3,d4
-	moveq	#1,d5
-	moveq	#0,d6
-	moveq	#0,d7
-	sub.l	a1,a1
-	WiCall	WindOp
-	bsr	Ed_EtPrint
-	move.w	Edt_ZEtat(a4),d1
-	move.w	Edt_WindEX(a4),d2
-	move.w	Edt_WindEY(a4),d3
-	move.w	d2,d4
-	move.w	d3,d5
-	add.w	Edt_WindESx(a4),d4
-	add.w	#Edt_EtatSy,d5
-	SyCall	SetZone
-; Initialise la zone du bas
-	move.w	Edt_ZBas(a4),d1
-	moveq	#0,d2
-	move.w	Edt_BasY(a4),d3
-	move.w	d2,d4
-	move.w	d3,d5
-	add.w	Ed_Sx(a5),d4
-	add.w	#Edt_BasSy,d5
-	SyCall	SetZone
-; Initialise la fenetre de fond, si pas vide
-	tst.w	Edt_WindTy(a4)
-	beq	.Vide
-	move.w	Edt_Window(a4),d1
-	move.w	Edt_WindX(a4),d2
-	move.w	Edt_WindY(a4),d3
-	move.w	Edt_WindTx(a4),d4
-	move.w	Edt_WindTy(a4),d5
-	moveq	#0,d6
-	moveq	#0,d7
-	sub.l	a1,a1
-	WiCall	WindOp
-	moveq	#20,d0
-	bsr	Ed_GetSysteme
-	move.l	a0,a1
-	WiCall	Print
-	bsr	Ed_CuNor
-	move.w	Edt_Zones(a4),d1
-	move.w	Edt_WindX(a4),d2
-	move.w	Edt_WindY(a4),d3
-	move.w	d2,d4
-	move.w	d3,d5
-	add.w	Edt_WindSx(a4),d4
-	add.w	Edt_WindSy(a4),d5
-	SyCall	SetZone
-	bsr	Edt_SlUpdateY
-	lea	Edt_SlV(a4),a0
-	JJsrR	L_Sl_Init,a1
-	clr.b	Edt_ASlY(a4)
-;
-; Affiche le texte
-; ~~~~~~~~~~~~~~~~
-	move.l	2(sp),d0
-	move.l	d0,Edt_BufE(a4)
-	move.w	Edt_WindTy(a4),d0
-	mulu	#256,d0
-	add.l	d0,2(sp)
-	bsr	Ed_NewBuf
-.Vide
-;
-; Active les boutons
-; ~~~~~~~~~~~~~~~~~~
-	lea	Edt_Bt1(a4),a0
-	moveq	#0,d0
-	JJsrR	L_Bt_InitList,a1
-;
-; Programme suivant?
-; ~~~~~~~~~~~~~~~~~~
-.NextP	move.l	Edt_Next(a4),d0
-	move.l	d0,a4
-	bne	.PLoop
-;
-; Active le premier programme
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	move.l	Edt_Current(a5),a4
-	move.l	Edt_Prg(a4),a6
-	move.w	Edt_Window(a4),d1
-	WiCall	QWindow
-	bsr	Ed_Loca
-; Fini!
-; ~~~~~
-	addq.l	#6,sp
-	movem.l	(sp)+,a2-a4/d2-d7
-	rts
-
-;
-; Boucle d'effacement des fenetres
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Edt_EffWindows
-	move.l	a4,-(sp)
-	move.l	Edt_List(a5),d0
-	beq.s	.Out
-.ELoop	move.l	d0,a4
-	tst.w	Edt_Window(a4)			Initialisee?
-	beq.s	.ENext
-	cmp.b	#2,Edt_Hidden(a4)		Deja fermee?
-	beq.s	.ENext
-	cmp.b	#1,Edt_Hidden(a4)
-	bne.s	.Cl
-	move.b	#2,Edt_Hidden(a4)		On ferme!
-; Ferme les anciennes fenetres
-.Cl	move.w	Edt_Window(a4),d1
-	WiCall	QWindow
-	WiCall	WinDel
-	move.w	Edt_WindEtat(a4),d1
-	WiCall	QWindow
-	WiCall	WinDel
-; Efface les zones
-	bsr	Edt_DelZones
-; Fenetre non initialisee
-	clr.w	Edt_Window(a4)
-; Fenetre suivante
-.ENext	move.l	Edt_Next(a4),d0
-	bne.s	.ELoop
-.Out	move.l	(sp)+,a4
-	rts
-;
-; Numerote les fenetres affichees
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Edt_OrderWindows
-	moveq	#1,d1
-	move.l	Edt_List(a5),d0
-	beq.s	.Out
-.Loop	move.l	d0,a0
-	tst.b	Edt_Hidden(a0)
-	bne.s	.Hid
-	move.w	d1,Edt_Order(a0)
-	addq.w	#1,d1
-.Hid	move.l	Edt_Next(a0),d0
-	bne.s	.Loop
-.Out	rts
-
-;
-; Enleve toutes les zones de toutes les fenetres
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Edt_DelAllZones
-	move.l	Edt_List(a5),d0
-	beq.s	.Skip
-.Loop	move.l	d0,a0
-	clr.w	Edt_Zones(a0)
-	move.l	Edt_Next(a0),d0
-	bne.s	.Loop
-.Skip	rts
-
-;
-; Enleve les zones de la fenetre A4
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Edt_DelZones
-	move.w	Edt_Zones(a4),d2
-	beq.s	.NIni
-	moveq	#7,d3
-.Zraz	move.w	d2,d1
-	SyCall	RazZone
-	addq.w	#1,d2
-	dbra	d3,.Zraz
-	clr.w	Edt_Zones(a4)
-.NIni	rts
-
-;
-; Si la fenetre courante est vide, active la suivante
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Edt_WVideNext
-	move.l	Edt_Current(a5),a0
-	tst.w	Edt_WindTy(a0)
-	beq.s	Edt_WAutre2
-	rts
-; Active une autre fenetre que la courante
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Edt_WAutre
-	move.l	a4,a0
-Edt_WAutre2
-	moveq	#1,d1
-Edt_WAutre3
-; Prend la fenetre suivante
-.Loop1	bsr	Edt_WNext
-	beq.s	.Loop2
-	move.l	d0,a0
-	cmp.w	Edt_WindTy(a0),d1
-	bgt.s	.Loop1
-	bra.s	.Exit
-; Prend la fenetre pr�cedente
-.Loop2	bsr	Edt_WPrev
-	beq.s	.Skip
-	move.l	d0,a0
-	cmp.w	Edt_WindTy(a0),d1
-	bgt.s	.Loop2
-.Exit	move.l	a0,Edt_Current(a5)
-	move.l	a0,a4
-	move.l	Edt_Prg(a4),a6
-.Skip	rts
-
-;
-; Routine de bougeation de la s�paration
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_MSep
-	move.w	d0,-(sp)
-	move.w	d1,-(sp)
-	move.w	d2,-(sp)
-	move.w	d3,-(sp)
-	bsr	XYMouEced
-	move.w	(sp)+,d0
-	sub.w	d0,d2
-	move.w	d2,-(sp)		Decalage souris/bloc
-	move.w	d0,-(sp)		Ancien bloc
-	move.w	d0,-(sp)		Nouveau bloc
-; Fabrique le bloc de dessin
-	moveq	#0,d2
-	move.w	(sp),d3
-	ext.l	d3
-	move.w	Ed_Sx(a5),d4
-	move.w	10(sp),d5
-	ext.l	d5
-	moveq	#0,d6
-	move.l	Ed_BufT(a5),a1
-	move.w	#128,d1
-	EcCall	BlGet
-.Loop0
-; Fabrique le bloc de sauvegarde
-	moveq	#0,d2
-	move.w	(sp),d3
-	ext.l	d3
-	move.w	Ed_Sx(a5),d4
-	move.w	10(sp),d5
-	ext.l	d5
-	moveq	#0,d6
-	move.l	Ed_BufT(a5),a1
-	move.l	#129,d1
-	EcCall	BlGet
-	move.w	(sp),2(sp)
-; Dessine l'image
-	moveq	#0,d2
-	move.w	(sp),d3
-	ext.l	d3
-	move.l	#EntNul,d4
-	move.l	d4,d5
-	move.l	Ed_BufT(a5),a1
-	move.w	#128,d1
-	EcCall	BlPut
-; Prend la souris
-.Loop1	SyCall	MouseKey
-	btst	#0,d1
-	beq.s	.Skip
-	bsr	XYMouEced
-	sub.w	4(sp),d2
-	cmp.w	8(sp),d2
-	bge.s	.In1
-	move.w	8(sp),d2
-.In1	cmp.w	6(sp),d2
-	ble.s	.In2
-	move.w	6(sp),d2
-.In2	cmp.w	(sp),d2
-	beq.s	.Loop1
-	move.w	d2,(sp)
-; Efface l'ancien
-.Skip	moveq	#0,d2
-	move.w	2(sp),d3
-	ext.l	d3
-	move.l	#EntNul,d4
-	move.l	d4,d5
-	move.l	Buffer(a5),a1
-	move.w	#129,d1
-	EcCall	BlPut
-; Lache la souris?
-	SyCall	MouseKey
-	btst	#0,d1
-	bne	.Loop0
-; Efface les bloc
-	move.w	#128,d1
-	EcCall	BlDel
-	move.w	#129,d1
-	EcCall	BlDel
-; Fini
-	move.w	(sp)+,d0
-	lea	10(sp),sp
-	rts
-
-;
-; XY Mouse dans l'ecran courant
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-XYMouEced
-	SyCall	XyMou
-	moveq	#0,d3
-	SyCall	XyScr
-	rts
-;
-; Active la fenetre A0, si on peut
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+; The windows: src/editor/windows.cpp
+Ed_OpenWindow	jmp	_ed_open_shown_window_entry
+Edt_OpWindow	jmp	_ed_open_window_entry
+Ed_WindowHide	jmp	_ed_hide_window_entry
+Ed_BtWindowClose	jmp	_ed_button_close_entry
+Ed_BtWindowHide	jmp	_ed_button_hide_entry
+Ed_BtWindowSize	jmp	_ed_button_size_entry
+Ed_CloseWindowQuit	jmp	_ed_close_window_quit_entry
+Ed_CloseWindow	jmp	_ed_close_window_entry
+Ed_NewHidden	jmp	_ed_new_hidden_entry
+Ed_NewAllHidden	jmp	_ed_new_all_hidden_entry
+Ed_EditHidden	jmp	_ed_edit_hidden_entry
+Ed_GetHidden	jmp	_ed_get_hidden_entry
+Edt_DelWindow	jmp	_ed_delete_window_entry
+Edt_DelWindows	jmp	_ed_delete_windows_entry
+Ed_DrawWindows	jmp	_ed_draw_windows_entry
+Edt_EffWindows	jmp	_ed_erase_windows_entry
+Edt_DelAllZones	jmp	_ed_delete_all_zones_entry
+Edt_WVideNext	jmp	_ed_empty_next_entry
+Ed_NextWindow	jmp	_ed_next_window_entry
+Ed_PrevWindow	jmp	_ed_previous_window_entry
+Ed_FlipSizeWindow	jmp	_ed_flip_size_entry
+Edt_GetAd	jmp	_ed_window_number_entry
+Edt_WSchrinkAll	jmp	_ed_shrink_all_entry
+Edt_WMaxSize	jmp	_ed_max_size_entry
 		xdef	_ed_window_active
 _ed_window_active
-Edt_Active
-	bsr	Ed_TokCur
-	tst.w	Edt_WindTy(a0)
-	beq.s	.Out
-; Inactive la fenetre courante
-	move.l	a0,Edt_Current(a5)
-	clr.b	Edt_ASlY(a4)
-	bsr	Ed_AffSlV
-	bsr	Ed_EtPrint
-; Active la nouvelle
-	move.l	Edt_Current(a5),a4
-	move.l	Edt_Prg(a4),a6
-	bsr	Ed_NewBufAff
-	moveq	#-1,d0
-.Out	rts
-
-;
-; Passage � la fenetre suivante (ouverte)
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_NextWindow
-	bsr	Ed_TokCur
-	move.l	a4,a0
-.Loop	bsr	Edt_WNext
-	bne.s	.Skip
-	move.l	Edt_List(a5),a0
-.Skip	cmp.l	a4,a0
-	beq.s	.Out
-	move.l	a0,-(sp)
-	bsr	Edt_Active
-	move.l	(sp)+,a0
-	beq.s	.Loop
-.Out	rts
-;
-; Passage � la fenetre precedente (ouverte)
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_PrevWindow
-	bsr	Ed_TokCur
-	move.l	a4,a0
-.Loop	bsr	Edt_WPrev
-	bne.s	.Skip
-	tst.b	Edt_Last(a4)
-	bne.s	.Out
-	move.l	a4,d0
-.Loop2	move.l	d0,a0
-	bsr	Edt_WNext
-	bne.s	.Loop2
-	move.l	a0,d0
-.Skip	cmp.l	a4,d0
-	beq.s	.Out
-	move.l	d0,a0
-	move.l	d0,-(sp)
-	bsr	Edt_Active
-	move.l	(sp)+,a0
-	beq.s	.Loop
-.Out	rts
-
-;
-; Ferme/Ouvre la fenetre courante
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_FlipSizeWindow
-	bsr	Ed_TokCur
-	move.w	Edt_WindTy(a4),d1
-	beq.s	.Big
-	move.w	d1,Edt_WindOldTy(a4)
-	moveq	#0,d0
-	bsr	Ed_SchrinkWindow
-	rts
-; Agrandi?
-.Big	move.w	Edt_WindOldTy(a4),d0
-	bne.s	.Skip
-	moveq	#1,d0
-	bsr	Edt_WMaxSize
-.Skip	move.w	d0,Edt_WindTy(a4)
-	moveq	#1,d1
-	bsr	Edt_WPlaceBas
-	beq.s	.Out
-	moveq	#1,d1
-	bsr	Edt_WPlaceHaut
-	beq.s	.Out
-	sub.w	d0,Edt_WindTy(a4)
-.Out	bsr	Ed_DrawWindows
-	rts
-
-; Fenetre courante aussi grande que possible
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_BiggerWindow
-	bsr	Ed_TokCur
-	bsr	Edt_WAlone
-	bne.s	.Out
-	moveq	#0,d0
-	bsr	Edt_WSchrinkAll
-	add.w	d0,Edt_WindTy(a4)
-	bsr	Ed_DrawWindows
-.Out	rts
-;
-; Agrandi la fenetre courante
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_ExpandWindow
-	bsr	Ed_TokCur
-	bsr	Edt_WAlone
-	bne.s	.Out
-	moveq	#1,d0
-	bsr	Edt_WSchrinkAll
-	add.w	d0,Edt_WindTy(a4)
-	bsr	Ed_DrawWindows
-.Out	rts
-;
-; Reduit la fenetre courante, D0=valeur mini
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_SchrinkWindow
-	bsr	Ed_TokCur
-	bsr	Edt_WAlone
-	bne.s	.Out
-	move.w	Edt_WindTy(a4),d2
-	cmp.w	d2,d0
-	bcc.s	.Out
-	move.w	d0,Edt_WindTy(a4)
-	sub.w	d0,d2
-; Retreci en haut
-	move.l	a4,a0
-	bsr	Edt_WNext
-	beq.s	.Bas
-	move.l	d0,a0
-	add.w	d2,Edt_WindTy(a0)
-	bra.s	.Aff
-; Retreci en bas
-.Bas	move.l	a4,a0
-	bsr	Edt_WPrev
-	move.l	d0,a0
-	add.w	d2,Edt_WindTy(a0)
-; Affiche
-.Aff	bsr	Edt_WVideNext
-	bsr	Ed_DrawWindows
-.Out	rts
-
-;
-; Ramene VRAI si la fenetre est la seule sur l'ecran
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Edt_WAlone
-	tst.b	Edt_First(a4)
-	beq.s	.Out
-	tst.b	Edt_Last(a4)
-.Out	rts
-
-;
-; Changement en haut de la fenetre
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Edt_WChangeHaut
-	and.w	#$FFF8,d0
-	move.w	d0,d2
-	cmp.w	Edt_Y(a4),d0
-	beq.s	.Rien
-	tst.b	Edt_Last(a4)
-	bne.s	.Last
-; Une fenetre au milieu, bouge tout
-	sub.w	Edt_Y(a4),d0
-	beq.s	.Rien
-	move.w	Edt_BasY(a4),d3
-	add.w	d0,d3
-	bra	Edt_WChange
-; La derniere, juste le haut
-.Last	move.w	Edt_BasY(a4),d3
-	add.w	#Edt_EtatSy,d0
-	cmp.w	d0,d3
-	bcc	Edt_WChange
-	move.w	d0,d3
-	bra	Edt_WChange
-.Rien	rts
-
-; Changement en bas de la fenetre
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Edt_WChangeBas
-	addq.w	#Edt_BasSy,d0
-	and.w	#$FFF8,d0
-	subq.w	#Edt_BasSy,d0
-	cmp.w	Edt_BasY(a4),d0
-	beq.s	.Rien
-	move.w	d0,d3
-	move.w	Edt_Y(a4),d2
-	sub.w	#Edt_EtatSy,d0
-.Skip	cmp.w	d2,d0
-	bcc.s	Edt_WChange
-	move.w	d0,d2
-	bra.s	Edt_WChange
-.Rien 	rts
-; Calcule la nouvelle taille de la fenetre
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Edt_WChange
-	move.w	d3,d0
-	sub.w	d2,d0
-	sub.w	#Edt_EtatSy,d0
-	lsr.w	#3,d0
-	move.w	d0,Edt_WindTy(a4)
-; Modifications en haut
-; ~~~~~~~~~~~~~~~~~~~~~
-	move.w	Edt_Y(a4),d0
-	move.w	d2,Edt_Y(a4)
-	cmp.w	d0,d2
-	beq.s	.Bas
-	bcc.s	.HBas
-; On remonte le haut
-	sub.w	d2,d0
-	lsr.w	#3,d0
-	moveq	#1,d1
-	bsr	Edt_WPlaceHaut
-	beq.s	.Bas
-	moveq	#0,d1
-	bsr	Edt_WPlaceHaut
-	bra.s	.Bas
-; On descend le haut
-.HBas	sub.w	d0,d2
-	lsr.w	#3,d2
-	move.l	a4,a0
-	bsr	Edt_WPrev
-	move.l	d0,a0
-	add.w	d2,Edt_WindTy(a0)
-; Modifications en bas?
-; ~~~~~~~~~~~~~~~~~~~~~
-.Bas	move.w	Edt_BasY(a4),d0
-	move.w	d3,Edt_BasY(a4)
-	cmp.w	d0,d3
-	beq.s	.Fini
-	bcc.s	.BBas
-; On remonte le bas
-	sub.w	d3,d0
-	lsr.w	#3,d0
-	move.w	d0,d3
-	move.l	a4,a0
-	bsr	Edt_WNext
-	move.l	d0,a0
-	add.w	d3,Edt_WindTy(a0)
-	bra.s	.Fini
-; On descend le bas
-.BBas	sub.w	d0,d3
-	lsr.w	#3,d3
-	move.w	d3,d0
-	moveq	#1,d1
-	bsr	Edt_WPlaceBas
-	beq.s	.Fini
-	moveq	#0,d1
-	bsr	Edt_WPlaceBas
-; Ouf
-; ~~~
-.Fini	moveq	#-1,d0
-	rts
-
-;
-; Fait D0 lignes de place en haut de A4, minimum D1
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Edt_WPlaceHaut
-	move.w	d2,-(sp)
-	move.w	d1,d2
-	move.w	d0,d1
-	move.l	a4,a0
-.Loop	bsr	Edt_WPrev
-	beq.s	.Out
-	move.l	d0,a0
-	cmp.w	Edt_WindTy(a0),d2
-	bge.s	.Loop
-	sub.w	Edt_WindTy(a0),d1
-	bcs.s	.Ok
-	add.w	d2,d1
-	move.w	d2,Edt_WindTy(a0)
-	bra.s	.Loop
-.Ok	neg.w	d1
-	move.w	d1,Edt_WindTy(a0)
-	moveq	#0,d1
-.Out	move.w	(sp)+,d2
-	move.w	d1,d0
-	rts
-;
-; Fait D0 lignes de place en bas de A4
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Edt_WPlaceBas
-	move.w	d2,-(sp)
-	move.w	d1,d2
-	move.l	d0,d1
-	move.l	a4,a0
-.Loop	bsr	Edt_WNext
-	beq.s	.Out
-	move.l	d0,a0
-	cmp.w	Edt_WindTy(a0),d2
-	bge.s	.Loop
-	sub.w	Edt_WindTy(a0),d1
-	bcs.s	.Ok
-	add.w	d2,d1
-	move.w	d2,Edt_WindTy(a0)
-	bra.s	.Loop
-.Ok	neg.w	d1
-	move.w	d1,Edt_WindTy(a0)
-	moveq	#0,d1
-.Out	move.w	(sp)+,d2
-	move.w	d1,d0
-	rts
-
-;
-; Verifie la validite des WindTy
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-;Edt_WOk
-;	move.l	Prg_List(a5),a0
-;	moveq	#Ed_TitreSy,d0
-;.Loop	tst.b	Edt_Hidden(a0)
-;	bne.s	.Skip
-;	add.w	#Edt_EtatSy+Edt_BasSy,d0
-;	move.w	Edt_WindTy(a0),d1
-;	lsl.w	#3,d1
-;	add.w	d1,d0
-;.Skip	move.l	Edt_Next(a0),d1
-;	move.l	d1,a0
-;	bne.s	.Loop
-;; Verification
-;	cmp.w	Ed_Sy(a5),d0
-;	rts
-
-;
-; Trouve l'adresse d'une fenetre
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Edt_GetAd
-	move.l	Edt_List(a5),d1
-	beq.s	.Out
-.Loop	move.l	d1,a0
-	cmp.w	Edt_Window(a0),d0
-	beq.s	.Out
-	move.l	Edt_Next(a0),d1
-	move.l	d1,a0
-	bne.s	.Loop
-	moveq	#0,d0
-	rts
-.Out	moveq	#-1,d1
-	rts
-;
-; Calcule les flags first et last
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Edt_WFirstLast
-	move.l	Edt_List(a5),d0
-	beq.s	.Out
-	moveq	#0,d1
-.Loop	move.l	d0,a0
-	clr.b	Edt_First(a0)
-	clr.b	Edt_Last(a0)
-	tst.b	Edt_Hidden(a0)
-	bne.s	.Next
-	tst.l	d1
-	bne.s	.Skip
-	addq.b	#1,Edt_First(a0)
-.Skip	move.l	a0,d1
-.Next	move.l	Edt_Next(a0),d0
-	bne.s	.Loop
-	move.l	d1,a0
-	addq.b	#1,Edt_Last(a0)
-.Out	rts
-;
-; Compte le nombre de fenetres affichees >>> A0
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Edt_WCount
-	moveq	#0,d0
-	move.l	Edt_List(a5),d1
-	beq.s	.Out
-.Loop	move.l	d1,a1
-	tst.b	Edt_Hidden(a1)
-	bne.s	.Skip
-	addq.w	#1,d0
-.Skip	cmp.l	d1,a0
-	beq.s	.Out
-	move.l	Edt_Next(a1),d1
-	bne.s	.Loop
-.Out	rts
-;
-;
-; Reduit toutes les fenetres � la taille D0
-; Retourne le gain en taille
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Edt_WSchrinkAll
-	move.l	d2,-(sp)
-	move.w	d0,d1
-	moveq	#0,d0
-	move.l	Edt_List(a5),d2
-	beq.s	.Out
-.Loop	move.l	d2,a0
-	tst.b	Edt_Hidden(a0)
-	bne.s	.Skip
-	cmp.w	Edt_WindTy(a0),d1
-	bcc.s	.Skip
-	add.w	Edt_WindTy(a0),d0
-	sub.w	d1,d0
-	move.w	d1,Edt_WindTy(a0)
-.Skip	move.l	Edt_Next(a0),d2
-	bne.s	.Loop
-.Out	move.l	(sp)+,d2
-	rts
-;
-; Ramene la fenetre affich�e precedent A0
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Edt_WPrev
-	movem.l	d1/a1,-(sp)
-	moveq	#0,d0
-	move.l	Edt_List(a5),d1
-	beq.s	.Out
-.Loop	cmp.l	a0,d1
-	beq.s	.Out
-	move.l	d1,a1
-	tst.b	Edt_Hidden(a1)
-	bne.s	.Next
-	move.l	a1,d0
-.Next	move.l	Edt_Next(a1),d1
-	bne.s	.Loop
-.Out	movem.l	(sp)+,d1/a1
-	tst.l	d0
-	rts
-;
-; Ramene la fenetre affiche suivant A0
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Edt_WNext
-	movem.l	d1/a1,-(sp)
-	moveq	#0,d0
-.Next	move.l	Edt_Next(a0),d1
-	beq.s	.Out
-	move.l	d1,a0
-	tst.b	Edt_Hidden(a0)
-	bne.s	.Next
-	move.l	a0,d0
-.Out	movem.l	(sp)+,d1/a1
-	tst.l	d0
-	rts
-;
-; Ramene la taille maximum admissible pour la fenetre courante
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-; 	Entree, D0>=0 si taille reduite � D0
-;		D0<1 si taille sans reduire les autres
-;	D0=	WindTy
-;	D1=	WindY
-;	D2=	WindSy
-Edt_WMaxSize
-	move.w	d0,-(sp)
-	moveq	#0,d1
-	moveq	#Ed_TitreSy,d2
-; Exploration de la liste
-	move.l	Edt_List(a5),d0
-	beq.s	.Exit
-.Loop	move.l	d0,a0
-	cmp.l	a0,a4			Stocke position fenetre courante
- 	bne.s	.Skip0
-	move.w	d2,d1
-	add.w	#Edt_EtatSy+Edt_BasSy,d2
-	bra.s	.Skip2
-.Skip0	tst.b	Edt_Hidden(a0)
-	bne.s	.Skip2
-	add.w	#Edt_EtatSy+Edt_BasSy,d2
-	move.w	Edt_WindTy(a0),d0
-	tst.w	(sp)
-	bmi.s	.Skip1
-	cmp.w	(sp),d0
-	bls.s	.Skip1
-	move.w	(sp),d0
-.Skip1	lsl.w	#3,d0
-	add.w	d0,d2
-.Skip2	move.l	Edt_Next(a0),d0
-	bne.s	.Loop
-; Calcule la taille
-.Exit	addq.l	#2,sp
-	move.w	Ed_Sy(a5),d0
-	sub.w	d2,d0
-	move.w	d1,d2
-	add.w	d0,d2
-	add.w	#Edt_EtatSy+Edt_BasSy,d2
-	asr.w	#3,d0
-	rts
+Edt_Active	jmp	_ed_activate_entry
 
 ; __________________________________________________________________________
 ;
@@ -9506,6 +7923,8 @@ EdM_NextHidden
 ; Efface / Cree la branche de menu AMOS
 ; _____________________________________
 ;
+		xdef	_ed_branch_amos
+_ed_branch_amos
 EdM_BranchAMOS
 	movem.l	a2-a4/d2-d7,-(sp)
 	bsr	EdM_Editor
@@ -10018,6 +8437,8 @@ EdM_Editor
 ; Copie la zone de menus programme
 ; _______________________________________________
 ;
+		xdef	_ed_menu_program
+_ed_menu_program
 EdM_Program
 	tst.b	EdM_Flag(a5)
 	beq.s	.Done
@@ -10059,6 +8480,8 @@ Ed_SaveOver
 ;
 ; Sauve le programme si on l'a change!
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		xdef	_ed_saved
+_ed_saved
 Ed_Saved
 	tst.b	Prg_Change(a6)
 	beq.s	.Skip
@@ -10537,6 +8960,8 @@ Ed_SaveIcon
 ; 	D0=	Y1
 ;	D1= 	Y2
 ;
+		xdef	_ed_enlarge
+_ed_enlarge
 Ed_Enlarge
 	movem.l	a0-a2/d0-d5,-(sp)
 	move.l	T_EcAdr+EcEdit*4(a5),a0
@@ -10596,6 +9021,8 @@ Ed_TiWait
 Es_Unpack
 	move.l	T_EcAdr+EcFonc*4(a5),a1
 	bra.s	EdU
+		xdef	_ed_unpack
+_ed_unpack
 Ed_Unpack
 	move.l	T_EcAdr+EcEdit*4(a5),a1
 EdU	move.l	Ed_Resource(a5),a0
@@ -10612,6 +9039,8 @@ EdU	move.l	Ed_Resource(a5),a0
 ; 						ROUTINES BOUTONS
 ; ___________________________________________________________________
 ;
+		xdef	_ed_button_routines
+_ed_button_routines
 Bt_RoutIn
 	bra	Ed_BtWindowClose		1- Close window
 	bra	Ed_BtWindowHide			2- Hide window
