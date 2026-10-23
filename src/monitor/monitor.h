@@ -38,8 +38,17 @@ constexpr uint16_t Ecran1 = 9, Ecran2 = 8;      // Tt_Ecran1 (EcEdit), Tt_Ecran2
 // The window strings (+Monitor.s Ttt_WInit...)
 extern const uint8_t ScrollUp[], ScrollDown[], InverseOn[], InverseOff[], UnderOn[], UnderOff[], NextMark[];
 
+// monitor/listing.cpp
+void listing_show();
+void listing_new();
+void listing_centre();
+void listing_size(uint16_t y);
+bool listing_screen();
+void split(uint16_t n);
+
 // monitor/info.cpp
 const uint8_t *message(uint16_t n, uint32_t *d0 = nullptr);
+void scroll_up(uint16_t lines);
 void banks_monitor();
 void banks_program();
 void activate(uint16_t screen);

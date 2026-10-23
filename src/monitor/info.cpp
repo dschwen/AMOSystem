@@ -185,6 +185,16 @@ const uint8_t *message(uint16_t n, uint32_t *d0)
     return ptr<uint8_t>(r.a[0]);
 }
 
+// The window scrolled up, its last line (of lines) cleared
+void scroll_up(uint16_t lines)
+{
+    uint8_t up[sizeof(ScrollUp)];
+    for (unsigned i = 0; i < sizeof(ScrollUp); i++)
+        up[i] = ScrollUp[i];
+    up[2] = uint8_t('0' + lines - 1);
+    print(up);
+}
+
 // Tt_TtBanks / Tt_PrgBanks: the monitor's banks and dialogues, the
 // program's
 void banks_monitor()
@@ -479,11 +489,7 @@ void info_slider_click()
         print(ScrollDown);
         show(false, 0);
     } else if (moved == -1) {
-        uint8_t up[sizeof(ScrollUp)];
-        for (unsigned i = 0; i < sizeof(ScrollUp); i++)
-            up[i] = ScrollUp[i];
-        up[2] = uint8_t('0' + m.Ttt_Tlb - 1);
-        print(up);
+        scroll_up(m.Ttt_Tlb);
         show(false, int16_t(m.Ttt_Tlb - 1));
     } else {
         info_show_all();
