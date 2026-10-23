@@ -75,6 +75,14 @@
 		XREF	_ed_load_entry
 		XREF	_ed_reload_entry
 		XREF	_ed_name_part_entry
+		XREF	_ed_goto_line_entry
+		XREF	_ed_search_dialogue_entry
+		XREF	_ed_search_new_entry
+		XREF	_ed_search_previous_entry
+		XREF	_ed_search_next_entry
+		XREF	_ed_replace_new_entry
+		XREF	_ed_replace_next_entry
+		XREF	_ed_replace_previous_entry
 		XREF	_ed_menu_entry
 		XREF	_ed_menus_end_entry
 		XREF	_ed_menu_error_entry
@@ -2964,294 +2972,21 @@ EdMa_End	jmp	_ed_macros_free_entry
 ;_____________________________________________________________________________
 ;
 
-; Goto line number
-; ~~~~~~~~~~~~~~~~
-Ed_GotoL
-	bsr	Ed_TokCur
-	tst.b	Ed_Zappeuse(a5)
-	beq.s	.PaZap
-	move.l	Ed_ZapParam(a5),d0
-	bra.s	.Zap
-.PaZap	moveq	#EdD_GotoL,d0
-	bsr	Ed_Dialogue
-	cmp.w	#1,d0
-	bne	Ed_NotDone
-	moveq	#1,d0
-	moveq	#3,d1
-	moveq	#-1,d2
-	JJsr	L_Dia_GetValue
-	move.l	d1,d0
-.Zap	subq.l	#1,d0
-	bmi	Ed_NotDone
-	cmp.w	Prg_NLigne(a6),d0
-	bcs.s	.Skip
-	move.w	Prg_NLigne(a6),d0
-.Skip	bsr	Ed_AutoMarks
-	bsr	Ed_GotoY
-	rts
-
-
-; Appel le dialogue pour SEARCH, d0DIALOG A APPELER
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_DiaS	move.w	d0,d2
-	lea	Ed_SchBuf(a5),a0		Chaine d'origine
-	bsr	Ed_DChaine
-	move.l	Ed_VDialogues(a5),a2
-	move.l	a1,(a2)+
-	move.l	#32,(a2)+			Taille de la ligne
-	move.w	Ed_SchMode(a5),d0		Met les flags
-	and.w	#%0001,d0			Garde LOWUP / Bloc limits
-	moveq	#4,d1
-	move.l	a2,a0
-	JJsrP	L_Dia_SetVFlags,a2
-; Appelle les dialogues
-	move.w	d2,d0
-	bsr	Ed_Dialogue
-	move.w	d0,-(sp)
-; Reprend les variables
-	move.l	Ed_VDialogues(a5),a0
-	lea	2*4(a0),a0
-	moveq	#4,d1
-	JJsrP	L_Dia_GetVFlags,a2
-	move.w	d0,Ed_SchMode(a5)
-; Reprend la chaine
-	moveq	#1,d0
-	moveq	#3,d1
-	moveq	#-1,d2
-	JJsr	L_Dia_GetValue
-	move.l	d1,a0
-	lea	Ed_SchBuf(a5),a1
-.Loop	move.b	(a0)+,(a1)+
-	bne.s	.Loop
-; Ramene le retour
-	move.w	(sp)+,d0
-	rts
-
-; SEARCH
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_Search
-	bsr	Ed_TokCur
-	moveq	#EdD_Search,d0
-	bsr	Ed_DiaS
-	cmp.w	#1,d0
-	bne	Ed_NotDone
-	move.w	Ed_SchMode(a5),d5	Garde Low/UP, et direction!
-	and.w	#%0011,d5
-	bra	Ed_SR
-; SEARCH PREVIOUS
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_SearchPrev
-	bsr	Ed_TokCur
-	tst.b	Ed_SchBuf(a5)			Quelque chose � trouver?
-	beq.s	Ed_Search
-	move.w	Ed_SchMode(a5),d5
-	and.w	#%0001,d5			Garde LowUp
-	bset	#1,d5				En arriere!
-	bra.s	Ed_SR
-; SEARCH NEXT
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_SearchNext
-	bsr	Ed_TokCur
-	tst.b	Ed_SchBuf(a5)			Quelque chose � trouver?
-	beq.s	Ed_Search
-	move.w	Ed_SchMode(a5),d5
-	and.w	#%0001,d5			Garde LowUp, en avant!
-; Fait la recherche / Remplacement, D5flags
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_SR
-	bsr	Ed_SRCompte
-; Fait le remplacement
-	move.w	Edt_YPos(a4),d7
-	add.w	Edt_YCu(a4),d7
-	move.w	Edt_XCu(a4),d6
-	move.w	#32000,d4			Limites en bas
-	move.w	#32000,d3
-; Va chercher
-	moveq	#36,d0
-	bsr	Ed_AverMess
-	bsr	Ed_SchBoth
-	beq	Ed_NoFound
-; Positionne le curseur
-	bsr	Ed_AutoMarks
-	movem.w	d2-d7,-(sp)
-	move.w	d7,d0
-	bsr	Ed_GotoY
-	movem.w	(sp),d2-d7
-	move.w	d6,d0
-	bsr	Ed_GotoX
-	movem.w	(sp)+,d2-d7
-; Trouve, faire une remplacement?
-	btst	#15,d5
-	beq.s	.NoRep
-	bsr	Ed_LCourant
-	move.w	d6,d0
-	bsr	RepBuffer
-	bne	Ed_LToLong
-	addq.w	#1,Edt_LEdited(a4)
-	bsr	Ed_TokCur
-	move.w	d6,d0
-	bsr	Ed_GotoX
-.NoRep
-; Fini!
-	bsr	Ed_AverFin
-	bsr	Ed_Loca
-	rts
-
-
-; Compte les buffers SEARCH/REPLACE
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_SRCompte
-	lea	Ed_SchBuf(a5),a0
-	moveq	#-1,d0
-.LoopS	addq.w	#1,d0
-	tst.b	(a0)+
-	bne.s	.LoopS
-	move.b	d0,Ed_SchLong(a5)
-	lea	Ed_RepBuf(a5),a0
-	moveq	#-1,d0
-.LoopR	addq.w	#1,d0
-	tst.b	(a0)+
-	bne.s	.LoopR
-	move.b	d0,Ed_RepLong(a5)
-	rts
+; Goto, search and replace: src/editor/search.cpp
+Ed_GotoL	jmp	_ed_goto_line_entry
+Ed_DiaS	jmp	_ed_search_dialogue_entry
+Ed_Search	jmp	_ed_search_new_entry
+Ed_SearchPrev	jmp	_ed_search_previous_entry
+Ed_SearchNext	jmp	_ed_search_next_entry
+Ed_Replace	jmp	_ed_replace_new_entry
+Ed_ReplaceNext	jmp	_ed_replace_next_entry
+Ed_ReplacePrev	jmp	_ed_replace_previous_entry
 
 ; Ed_SchBoth, Ed_SchFront, Ed_SchBack: src/editor/search.cpp
 Ed_SchBoth	jmp	_ed_search_entry
 Ed_SchFront	jmp	_ed_search_front_entry
 Ed_SchBack	jmp	_ed_search_back_entry
 
-
-; REPLACE
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_Replace
-	bsr	Ed_TokCur
-	lea	Ed_RepBuf(a5),a0		Buffer d'edition
-	bsr	Ed_DChaine
-	move.l	Ed_VDialogues(a5),a2
-	move.l	a1,8*4(a2)
-	moveq	#EdD_Replace,d0
-	bsr	Ed_DiaS
-	move.w	d0,-(sp)
-; Reprend la chaine Replace
-	moveq	#1,d0
-	moveq	#4,d1
-	moveq	#1,d2
-	JJsr	L_Dia_GetValue
-	move.l	d1,a0
-	lea	Ed_RepBuf(a5),a1
-.Bli	move.b	(a0)+,(a1)+
-	bne.s	.Bli
-; Ou se brancher?
-	cmp.w	#1,(sp)+
-	bne	Ed_Loop
-	move.w	Ed_SchMode(a5),d5		Mode TURBO?
-	move.w	d5,d0
-	and.w	#%1100,d0
-	bne.s	.Turbo
-; Mode normal, quelle dir?
-; ~~~~~~~~~~~~~~~~~~~~~~~~
-	btst	#1,d5
-	beq	Ed_ReplaceNext
-	bne	Ed_ReplacePrev
-; En mode turbo
-; ~~~~~~~~~~~~~
-.Turbo
-; Boite de dialogue, pour confirmer...
-	move.l	Ed_VDialogues(a5),a0
-	moveq	#EdD_WBlock,d0
-	btst	#2,d5
-	bne.s	.Skip
-	moveq	#EdD_WText,d0
-.Skip	bsr	Ed_Dialogue
-	cmp.w	#1,d0
-	bne	Ed_NotDone
-; Quelque chose � chercher?
-	tst.b	Ed_SchBuf(a5)
-	beq.s	Ed_Replace
-	tst.b	Ed_RepBuf(a5)
-	beq.s	Ed_Replace
-	bsr	Ed_SRCompte
-; Fait le remplacement
-	moveq	#0,d7				Limites en haut
-	moveq	#0,d6
-	move.w	#32000,d4			Limites en bas
-	move.w	#32000,d3
-; Dans le bloc?
-	btst	#2,d5				Si bloc
-	beq.s	.Pab
-	bsr	Ed_BlocLimits
-	move.w	d1,d7
-	move.w	d0,d6
-	move.w	d3,d4
-	move.w	d2,d3
-	beq.s	.Pab
-	subq.b	#1,d3
-.Pab
-; Averti
-	moveq	#37,d0
-	bsr	Ed_AverMess
-; Boucle de recherche / remplacement
-	clr.w	-(sp)
-.Loop	subq.w	#1,d6			Reste sur la derniere lettre
-	bpl.s	.Pos
-	moveq	#0,d6
-.Pos	bsr	Ed_SchFront
-	beq	.Finish
-	move.l	Ed_BufT(a5),a0
-	addq.l	#2,a0
-	move.w	d6,d0
-	bsr	RepBuffer
-	bne	Ed_LToLong
-	move.l	Ed_BufT(a5),a0
-	addq.l	#2,a0
-	move.l	Buffer(a5),a1
-	bsr	Tokenise
-	beq.s	.Llong
-	move.l	Buffer(a5),a1
-	move.w	d7,d1
-	moveq	#0,d0
-	bsr	Ed_Stocke
-	bne	.Outb
-	addq.w	#1,(sp)
-	bra.s	.Loop
-; Fini, et une boite de dialogue!
-.Finish	bsr	Ed_NewBuf
-	bsr	Ed_AverFin
-	move.b	#EtA_BAll,Edt_EtatAff(a4)
-	move.b	#SlDelai,Edt_ASlY(a4)
-	move.w	(sp)+,d0
-	beq	Ed_NoFound
-	ext.l	d0
-	move.l	Ed_VDialogues(a5),a0
-	move.l	d0,(a0)
-	moveq	#EdD_Changes,d0
-	bsr	Ed_Dialogue
-	rts
-; Line too long
-.Llong	bsr	Ed_NewBufAff
-	bra	Ed_LToLong
-; Out of buffer space
-.Outb	bsr	Ed_NewBufAff
-	bra	Ed_OofBuf
-; REPLACE NEXT
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_ReplaceNext
-	move.w	Ed_SchMode(a5),d5
-	and.w	#$0001,d5		Vers le bas,
-	or.w	#$8000,d5		Flag remplacer
-Ed_RSR	bsr	Ed_TokCur
-	tst.b	Ed_SchBuf(a5)
-	beq	Ed_Replace
-	tst.b	Ed_RepBuf(a5)
-	beq	Ed_Replace
-	bra	Ed_SR
-; REPLACE PREVIOUS
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_ReplacePrev
-	move.w	Ed_SchMode(a5),d5
-	and.w	#$0001,d5		Vers le haut
-	or.w	#$8002,d5		Flag remplacer
-	bra.s	Ed_RSR
 
 ; Routine REPLACE (a0 the line, d0 the column): src/editor/search.cpp
 RepBuffer	jmp	_ed_replace_text_entry
@@ -5133,6 +4868,8 @@ Ed_OMm	move.w	#204,d0			***- Out of memory
 ;
 ; Not found
 ; ~~~~~~~~~
+		xdef	_ed_no_found
+_ed_no_found
 Ed_NoFound
 	bsr	Ed_NewBuf
 	move.w	#205,d0			***- Not found
