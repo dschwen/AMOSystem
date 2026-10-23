@@ -27,7 +27,7 @@ import subprocess
 import sys
 import tempfile
 
-FILES = ['+Equ.s', '+CEqu.s', '+WEqu.s']
+FILES = ['+Equ.s', '+CEqu.s', '+WEqu.s', '+MEqu.s']
 
 # First field of a block -> struct name
 NAMES = {
@@ -55,6 +55,7 @@ NAMES = {
     'RnDY': 'Rainbow',
     'Short_Name': 'ShortSave',
     'APrg_MathFlags': 'CompiledProc',
+    'Inf_Sly': 'MonData',
 }
 
 # Element size of the equ-chain fields that are arrays
@@ -170,6 +171,7 @@ def evaluate(blocks, vasm, vasm_args):
         out = os.path.join(tmp, 'probe.bin')
         with open(src, 'w', encoding='latin-1') as f:
             f.write('\t\tInclude\t"+AMOS_Includes.s"\n')
+            f.write('\t\tInclude\t"+MEqu.s"\n')
             for e in exprs:
                 f.write(f'\t\tdc.l\t{e}\n')
         subprocess.run([vasm, '-quiet', '-devpac', '-Fbin', '-o', out, *vasm_args, src], check=True, stdout=subprocess.DEVNULL)

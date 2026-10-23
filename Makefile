@@ -106,7 +106,7 @@ $(LIB_GEN) &: +ILib.s +Lib.s tools/make_labels.py | $(GEN)
 # The C++ view of the assembler data structures
 CXX_GEN := $(GEN)/core/layout.h $(GEN)/lib_routines.h
 
-$(GEN)/core/layout.h: +Equ.s +CEqu.s +WEqu.s tools/gen_layout.py $(LIB_GEN) $(CI)/.stamp
+$(GEN)/core/layout.h: +Equ.s +CEqu.s +WEqu.s +MEqu.s tools/gen_layout.py $(LIB_GEN) $(CI)/.stamp
 	@mkdir -p $(dir $@)
 	$(PYTHON) tools/gen_layout.py --out $@ --vasm $(VASM) -DEzFlag=0 $(INCLUDES)
 
