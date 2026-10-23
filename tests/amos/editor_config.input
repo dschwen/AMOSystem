@@ -1,0 +1,123 @@
+timeout 150
+wait 12
+key ctrl+y
+key ctrl+y
+key ctrl+y
+wait 0.5
+glide -3000 -3000
+wait 0.3
+button 3 down
+wait 0.5
+glide 340 0
+wait 0.5
+glide 0 85
+wait 0.5
+glide 150 0
+wait 0.5
+glide 0 147
+wait 0.5
+button 3 up
+wait 1
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+type AMOSTEST:out/editor_config.cfg
+key Return
+key Return
+wait 3
+glide -3000 -3000
+wait 0.3
+button 3 down
+wait 0.5
+glide 340 0
+wait 0.5
+glide 0 85
+wait 0.5
+glide 150 0
+wait 0.5
+glide 0 99
+wait 0.5
+button 3 up
+wait 1
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+type AMOSTEST:out/editor_config.cfg
+key Return
+key Return
+wait 3
+wait 5
