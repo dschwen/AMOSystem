@@ -315,6 +315,12 @@ Editor
   editor window's pointer: one byte 2566 bytes into a 246-byte window
   structure was zeroed, and the flag itself never was.
 
+Monitor
+- Each alert in the information window also stored a separation line of
+  a kind nothing showed or deleted (its kind was the message's length,
+  left over in a register): the information buffer filled up with them,
+  and after enough alerts no expression could be added.
+
 Collisions (AMOS.library)
 - The offsets into the masks of the two images were 16-bit: an image whose
   mask row times the lines above the crossing reached 32K (a 320-pixel

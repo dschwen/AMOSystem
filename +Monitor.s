@@ -61,6 +61,28 @@
 ; Branchements internes au moniteur
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 		XREF	_amos_bridge
+		XREF	_mon_info_centre_entry
+		XREF	_mon_info_click_entry
+		XREF	_mon_info_show_line_entry
+		XREF	_mon_info_count_lines_entry
+		XREF	_mon_info_show_all_entry
+		XREF	_mon_info_begin_entry
+		XREF	_mon_info_print_entry
+		XREF	_mon_info_end_entry
+		XREF	_mon_info_delete_entry
+		XREF	_mon_info_insert_entry
+		XREF	_mon_info_slider_click_entry
+		XREF	_mon_info_slider_entry
+		XREF	_mon_alert_entry
+		XREF	_mon_alert_delete_entry
+		XREF	_mon_delete_show_entry
+		XREF	_mon_activate_info_entry
+		XREF	_mon_activate_text_entry
+		XREF	_mon_activate_entry
+		XREF	_mon_message_entry
+		XREF	_mon_wait_release_entry
+		XREF	_mon_banks_monitor_entry
+		XREF	_mon_banks_program_entry
 MDebut		dc.l	In_Editor-MDebut	0- Depuis l'editeur
 		dc.l	In_Program-MDebut	1- Depuis le programme
 		dc.l	MonitorChr-MDebut	2- Entree du moniteur
@@ -1660,21 +1682,7 @@ Ttt_Separ
 	bsr	Ttt_Cls
 	bsr	Ttt_NewBuf
 ; Recentre les infos?
-Inf_Centre
-	bsr	Inf_CptLines
-	move.w	Inf_YPos(a4),d0
-	add.w	Ttt_Tlb(a4),d0
-	move.w	Inf_NLigne(a4),d1
-	cmp.w	d0,d1
-	bcc.s	.sss
-	sub.w	d1,d0
-	sub.w	d0,Inf_YPos(a4)
-	bpl.s	.sss
-	clr.w	Inf_YPos(a4)
-.sss	bsr	Ttt_InfAct
-	bsr	Inf_AffAll
-	bsr	Inf_Slider
-	rts
+Inf_Centre	jmp	_mon_info_centre_entry
 
 
 ; 	Effacement / Redessin de l'ecran de texte
@@ -1765,18 +1773,9 @@ Ttt_SetSize
 	move.w	d1,Ttt_Tlb(a4)
 	rts
 
-;	Active l'ecran / la fenetre infos
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ttt_InfAct
-	bsr	Ttt_Act
-	WiCalD	QWindow,2
-	rts
-;	Active l'ecran / la fenetre ttt
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ttt_TttAct
-	bsr	Ttt_Act
-	WiCalD	QWindow,1
-	rts
+; The windows of the text screen: monitor/info.cpp
+Ttt_InfAct	jmp	_mon_activate_info_entry
+Ttt_TttAct	jmp	_mon_activate_text_entry
 
 ; ___________________________________________________________________
 ;
@@ -3192,6 +3191,8 @@ Tt_Decoupe
 
 ;	Va evaluer une expression
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		xdef	_mon_evaluate
+_mon_evaluate
 Tt_Evalue
 	movem.l	d1/d4-d7/a0-a5,-(sp)
 	move.l	a6,Tt_EvDebut(a4)
@@ -3244,408 +3245,21 @@ Tt_Menage
 ;	GESTION INFORMATIONS
 ; ___________________________________________________________________
 
-;	TOUCHE: clique sur une expression dans les infos
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Inf_Clic
-	bsr	XYMouEc
-	lsr.w	#3,d2
-	sub.w	Ttt_Tlh(a4),d2
-	subq.w	#2,d2
-; Recherche la ligne dans le buffer
-	move.l	Inf_Buf(a4),a0
-	moveq	#100,d0
-	moveq	#0,d1
-.loop	add.w	d1,a0
-	move.w	(a0),d1
-	beq.s	.out
-	cmp.w	4(a0),d2
-	bne.s	.loop
-	cmp.w	#3,2(a0)		Enleve 1 ligne PARAM
-	beq.s	.skip
-	cmp.w	#1,2(a0)		... et TOUTES les infos
-	bne.s	.out
-	moveq	#1,d0
-.skip	move.w	d0,2(a0)
-	bsr	Inf_Del
-	bsr	Inf_Centre
-.out	bsr	Wmky
-	rts
-
-
-;	Affichage de la ligne ecran D0
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Inf_AffLine
-	moveq	#0,d6
-	move.w	d0,d3
-	bra.s	ginf2
-;	Comptage des lignes infos
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Inf_CptLines
-	bset	#31,d6
-	bra.s	ginf1
-;	Affichage du contenu du buffer dans l'ordre des lignes!
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Inf_AffAll
-	moveq	#0,d6
-ginf1	moveq	#-1,d3
-ginf2	moveq	#0,d7
-	move.w	Inf_YPos(a4),d6
-	move.w	d6,d7
-	add.w	Ttt_Tlb(a4),d7
-	moveq	#0,d5
-	moveq	#0,d4
-.loop	bsr	InfAf
-	addq.w	#1,d4
-	cmp.w	#6,d4
-	bcs.s	.loop
-	move.w	d5,Inf_NLigne(a4)
-; Efface jusqu'� la fin
-.llop	tst.l	d6
-	bmi.s	.skip2
-	cmp.w	d7,d5
-	bcc.s	.skip
-	moveq	#0,d1
-	move.w	d5,d2
-	sub.w	d6,d2
-	WiCall	Locate
-	WiCalD	ChrOut,7
-	addq.w	#1,d5
-	bra.s	.llop
-; Va dessiner le slider
-.skip
-.skip2	rts
-;	Imprime toutes les lignes num�ro D4
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-InfAf	move.l	Inf_Buf(a4),a2
-	tst.w	(a2)
-	beq.s	.out
-.loop0	cmp.w	2(a2),d4
-	bne.s	.next
-	move.w	#-1,4(a2)
-	cmp.w	#1,d4
-	bne.s	.nxt1
-	bset	#31,d7
-.nxt1	cmp.w	#3,d4
-	bne.s	.nxt2
-	bset	#30,d7
-.nxt2	cmp.w	d6,d5
-	bcs.s	.nexta
-	cmp.w	d7,d5
-	bcc.s	.nexta
-	move.w	d5,d2
-	sub.w	d6,d2
-	tst.w	d3
-	bmi.s	.jd
-	cmp.w	d3,d2
-	bne.s	.nexta
-.jd	move.w	d2,4(a2)
-	bsr	InfA
-.nexta	addq.w	#1,d5
-.next	add.w	(a2),a2
-	tst.w	(a2)
-	bne.s	.loop0
-.out	rts
-
-;	Imprime la ligne info D2/A2
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-InfA	moveq	#0,d1
-	ext.l	d2
-	WiCall	Locate
-	cmp.w	#2,2(a2)		Separation INFOS / LISTING
-	beq.s	.sep1
-	cmp.w	#4,2(a2)
-	beq.s	.sep2
-	cmp.w	#3,2(a2)
-	beq.s	Iparam
-; Impression simple...
-.simple	tst.l	d6
-	bmi.s	ttnp
-	lea	6(a2),a1
-	WiCall	Print
-.out	rts
-; Separation Infos1/Infos2
-.sep1	bclr	#31,d7
-	bne.s	.simple
-	bra.s	.nosep
-; Separation Infos2/Listing
-.sep2	bclr	#30,d7
-	bne.s	.simple
-.nosep	move.w	#-1,4(a2)
-	subq.w	#1,d5
-ttnp	rts
-; Affiche un parametre
-Iparam	tst.l	d6
-	bmi.s	ttnp
-	movem.l	a2/d3-d7,-(sp)
-	bclr	#31,d7
-	tst.w	Tt_Init(a4)
-	beq.s	.noi
-	move.l	BasA3(a5),d0		Invalide???
-	cmp.l	6(a2),d0
-	beq.s	.ok
-.noi	WiCalA	Print,Inf_Shade(pc)
-	bset	#31,d7
-.ok	lea	10(a2),a0
-	move.l	Tt_BufT(a4),a1
-	moveq	#0,d0
-	move.l	a2,-(sp)
-	JJsrR	L_Mon_Detok,a2
-	move.l	(sp)+,a2
-	move.l	Tt_BufT(a4),a0
-	move.w	(a0)+,d4
-	cmp.w	#60,d4
-	bcs.s	.skip0
-	moveq	#60,d4
-.skip0	add.w	d4,a0
-	btst	#31,d7
-	bne	.suit
-	lea	10(a2),a6
-	bsr	Tt_Evalue
-	bne	.suit
-	move.b	#":",(a0)+
-	move.b	#" ",(a0)+
-	move.l	d3,d0
-	subq.b	#1,d2
-	bmi.s	.ent
-	bne.s	.str
-* Chiffre FLOAT
-	JJsrR	L_Float2Ascii,a1
-	bra.s	.suit
-* Chiffre ENTIER
-.ent	cmp.l	#EntNul,d3
-	beq.s	.entD
-	JJsrR	L_LongToDec,a1
-	bra.s	.suit
-.entD	exg	a0,a1
-	moveq	#13,d0
-	bsr	Tt_Message
-	exg	a0,a1
-.entE	move.b	(a1)+,(a0)+
-	bne.s	.entE
-	subq.l	#1,a0
-	bra.s	.suit
-* Chaine
-.str	moveq	#'"',d1
-	move.b	d1,(a0)+
-	sub.w	#78-6,d4
-	neg.w	d4
-	move.l	d0,a1
-	move.w	(a1)+,d2
-	cmp.w	d4,d2
-	bcs.s	.skip1
-	move.w	d4,d2
-	moveq	#">",d1
-.skip1	subq.w	#1,d2
-	bmi.s	.skip2
-.loop	move.b	(a1)+,d0
-	cmp.b	#32,d0
-	bcc.s	.skip3
-	moveq	#".",d0
-.skip3	move.b	d0,(a0)+
-	dbra	d2,.loop
-.skip2	move.b	d1,(a0)+
-* Imprime la chaine...
-.suit	btst	#31,d7
-	beq.s	.suit1
-	lea	Inf_ShadOff(pc),a1
-.suit0	move.b	(a1)+,(a0)+
-	bne.s	.suit0
-	subq.l	#1,a0
-.suit1	move.b	#7,(a0)+
-	clr.b	(a0)
-	move.l	Tt_BufT(a4),a1
-	addq.l	#2,a1
-	WiCall	Print
- 	movem.l	(sp)+,a2/d3-d7
-	rts
-
-;	Impression dans le buffer infos
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Inf_PrDeb
-	movem.l	a0/d0,-(sp)
-	move.l	Inf_Pos(a4),a0
-	clr.w	(a0)
-	move.w	d0,2(a0)
-	move.w	#-1,4(a0)
-	movem.l	(sp)+,a0/d0
-	rts
-Inf_Print
-	movem.l	a0-a2/d0,-(sp)
-	move.l	Inf_Pos(a4),a1
-	move.l	a1,a2
-	move.w	(a2),d0
-	lea	6(a1,d0.w),a1
-	subq.w	#1,d0
-.loop	addq.w	#1,d0
-	cmp.b	#76,d0
-	bcc.s	.out
-	move.b	(a0)+,(a1)+
-	bne.s	.loop
-.out	clr.b	(a1)
-	move.w	d0,(a2)
-	movem.l	(sp)+,a0-a2/d0
-	rts
-Inf_PrFin
-	move.l	d0,-(sp)
-	move.l	Inf_Pos(a4),a0
-	move.w	(a0),d0
-	cmp.w	#76,d0
-	bcc.s	.skip
-	move.b	#7,6(a0,d0.w)
-	clr.b	7(a0,d0.w)
-	addq.w	#1,d0
-.skip	addq.w	#8,d0
-	and.w	#$FFFE,d0
-	move.w	d0,(a0)
-	add.w	d0,a0
-	move.l	a0,Inf_Pos(a4)
-	clr.w	(a0)
-	move.l	(sp)+,d0
-	rts
-
-;	Supression ligne dans buffer...
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-;	D0=	numero des lignes a supprimer...
-Inf_Del
-	move.l	Inf_Buf(a4),a0
-	move.l	Inf_Pos(a4),d1
-	moveq	#0,d2
-	moveq	#0,d3
-.loop	move.l	a0,a1
-	cmp.l	d1,a0
-	bcc.s	.out
-	cmp.w	2(a0),d0
-	beq.s	.del
-	add.w	(a0),a0
-	bra.s	.loop
-.del	add.w	(a1),d2
-	lea	0(a0,d2.w),a1
-	cmp.l	d1,a1
-	bcc.s	.dele
-	cmp.w	2(a1),d0
-	beq.s	.del
-.dele	sub.l	d2,d1
-.loopD	move.w	(a1)+,(a0)+
-	cmp.l	d1,a0
-	bls.s	.loopD
-	subq.l	#2,a0
-	addq.w	#1,d3
-	bra.s	.loop
-.out	move.l	d1,Inf_Pos(a4)
-	move.w	d3,d0
-	rts
-;	Insere D octets au debut des infos
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Inf_Ins	movem.l	a1/a2,-(sp)
-	move.l	Inf_Buf(a4),a0
-	move.l	Inf_Pos(a4),a1
-	lea	0(a1,d0.w),a2
-	move.l	a2,Inf_Pos(a4)
-	clr.w	(a2)
-.loop	move.w	-(a1),-(a2)
-	cmp.l	a0,a1
-	bcc.s	.loop
-; Empeche les plantages...
-	move.w	d0,(a0)+
-	clr.l	(a0)
-	clr.w	4(a0)
-	movem.l	(sp)+,a1/a2
-	rts
-
-;	TOUCHE: Slider infos
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~
-Inf_Sliclic
-	bsr	Ttt_InfAct
-	move.l	#Tt_ChannelN,d0		Demande la position slider
-	moveq	#3,d1
-	moveq	#0,d2
-	JJsr	L_Dia_GetValue
-	move.w	Inf_YPos(a4),d0
-	move.w	d1,Inf_YPos(a4)
-	sub.w	d1,d0
-	cmp.w	#1,d0
-	beq.s	.Bas
-	cmp.w	#-1,d0
-	beq.s	.Haut
-; Positionnement direct
-; ~~~~~~~~~~~~~~~~~~~~~
-	bsr	Inf_AffAll
-	rts
-; Scroll vers le bas
-; ~~~~~~~~~~~~~~~~~~
-.Bas	WiCalA	Print,Ttt_Scrdown(pc)	Scroll graphique
-	moveq	#0,d0			Affiche la derniere ligne
-	bsr	Inf_AffLine
-	rts
-; Scroll vers le haut
-; ~~~~~~~~~~~~~~~~~~~
-.Haut	lea	Ttt_Scrup(pc),a1	Scroll graphique
-	move.w	Ttt_Tlb(a4),d0
-	add.b	#48-1,d0
-	move.b	d0,2(a1)
-	WiCall	Print
-	move.w	Ttt_Tlb(a4),d0		Affiche la derniere ligne
-	subq.w	#1,d0
-	bsr	Inf_AffLine
-	rts
-
-;	Actualisation du slider informations
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Inf_Slider
-	move.l	#Tt_ChannelN,d0		Re-actualise le slider, donc la liste
-	moveq	#3,d1
-	move.w	Inf_YPos(a4),d2		Position
-	move.w	Ttt_Tlb(a4),d3		Nouvelle window
-	move.w	Inf_NLigne(a4),d4	Nouveu global
-	JJsr	L_Dia_Update
-	rts
-
-;	Alertes
-; ~~~~~~~~~~~~~
-Ttt_Alert
-	move.l	a0,-(sp)
-	moveq	#0,d0
-	bsr	Inf_Del
-	move.l	(sp)+,a0
-	moveq	#0,d0
-	addq.w	#1,Inf_AlertOn(a4)
-	clr.w	Inf_YPos(a4)
-	bsr	Inf_PrDeb
-	move.l	a0,-(sp)
-	lea	Inf_Mark(pc),a0
-	bsr	Inf_Print
-	move.l	(sp)+,a0
-	bsr	Inf_Print
-	bsr	Inf_PrFin
-	moveq	#5,d0
-	bsr	Tt_Message
-	bsr	Inf_PrDeb
-	bsr	Inf_Print
-	bsr	Inf_PrFin
-	rts
-;	Effacement des alertes
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ttt_AlertDel
-	movem.l	a0-a6/d0-d7,-(sp)
-	tst.w	Inf_AlertOn(a4)
-	beq.s	.out
-	clr.w	Inf_AlertOn(a4)
-	moveq	#0,d0
-	bsr	Inf_Del
-	bsr	Ttt_InfAct
-	bsr	Inf_AffAll
-	bsr	Inf_Slider
-.out	movem.l	(sp)+,a0-a6/d0-d7
-	rts
-;	Supression / Affichage lignes du buffer
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ttt_DelAff
-	bsr	Inf_Del
-	beq.s	.skip
-	bsr	Ttt_InfAct
-	bsr	Inf_AffAll
-	bsr	Inf_Slider
-.skip	rts
+; The information window: monitor/info.cpp
+Inf_Clic	jmp	_mon_info_click_entry
+Inf_AffLine	jmp	_mon_info_show_line_entry
+Inf_CptLines	jmp	_mon_info_count_lines_entry
+Inf_AffAll	jmp	_mon_info_show_all_entry
+Inf_PrDeb	jmp	_mon_info_begin_entry
+Inf_Print	jmp	_mon_info_print_entry
+Inf_PrFin	jmp	_mon_info_end_entry
+Inf_Del	jmp	_mon_info_delete_entry
+Inf_Ins	jmp	_mon_info_insert_entry
+Inf_Sliclic	jmp	_mon_info_slider_click_entry
+Inf_Slider	jmp	_mon_info_slider_entry
+Ttt_Alert	jmp	_mon_alert_entry
+Ttt_AlertDel	jmp	_mon_alert_delete_entry
+Ttt_DelAff	jmp	_mon_delete_show_entry
 
 ; ___________________________________________________________________
 ;
@@ -3914,16 +3528,9 @@ View_Inter
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Ttt_Act	moveq	#Tt_Ecran2,d1
 	bra	Tt_EcAct
-;	Activation de l'ecran des touches
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 View_Act
 	moveq	#Tt_Ecran1,d1
-Tt_EcAct
-	cmp.w	Tt_Ecran(a4),d1
-	beq.s	.skip
-	move.w	d1,Tt_Ecran(a4)
-	EcCall	Active
-.skip	rts
+Tt_EcAct	jmp	_mon_activate_entry
 
 ;	CLS de l'�cran de zoom
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -4108,22 +3715,11 @@ Tt_UPack
 
 ;	Trouve le message D0 >>> A0
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Tt_Message
-	move.l	Mon_Base(a5),a0
-	move.l	Tt_Resource(a0),a0
-	add.l	2+4(a0),a0
-	move.l	a1,-(sp)
-	JJsrR	L_GetMessage,a1
-	move.l	(sp)+,a1
-	rts
+Tt_Message	jmp	_mon_message_entry
 
 ;	Attente souris
 ; ~~~~~~~~~~~~~~~~~~~~~
-RWmky	bsr	Tt_Multi
-Wmky	bsr	Tt_MBout
-	btst	#0,d1
-	bne.s	RWmky
-	rts
+Wmky	jmp	_mon_wait_release_entry
 ; 	Entree souris moniteur
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Tt_MBout
@@ -4144,23 +3740,8 @@ Tt_Multi
 
 ; 	Banques de m�moire/dialogue du moniteur
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Tt_TtBanks
-	move.l	a0,-(sp)
-	lea	Mon_Banks(a5),a0
-	move.l	a0,Cur_Banks(a5)
-	lea	Tt_Dialogs(a4),a0
-	move.l	a0,Cur_Dialogs(a5)
-	move.l	(sp)+,a0
-	rts
-;	Banques de memoire/dialogue du programme
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Tt_PrgBanks
-	move.l	a0,-(sp)
-	move.l	Mon_Base(a5),a0
-	move.l	Tt_CurBanks(a0),Cur_Banks(a5)
-	move.l	Tt_CurDialogs(a0),Cur_Dialogs(a5)
-	move.l	(sp)+,a0
-	rts
+Tt_TtBanks	jmp	_mon_banks_monitor_entry
+Tt_PrgBanks	jmp	_mon_banks_program_entry
 
 ;		Donnees tutor
 		Even
