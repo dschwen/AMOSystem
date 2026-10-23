@@ -320,6 +320,20 @@ Monitor
   a kind nothing showed or deleted (its kind was the message's length,
   left over in a register): the information buffer filled up with them,
   and after enough alerts no expression could be added.
+- Help's loading of AMOSPro_Help.Map had its two errors swapped: a file
+  that could not be opened or read said "Out of memory", and too little
+  memory said "Cannot load help .Map file". A failed read also left the
+  file open.
+- A monitor that failed to start (too little memory, no resource bank)
+  freed its data but left Mon_Base pointing at it: a program calling the
+  monitor afterwards took it as running and wrote into the freed memory.
+  Its clean-up also set the interpreter's error routine (Prg_JError) to
+  the one it had not saved yet, 0, so the program's next error jumped to
+  address 0; and when even the data could not be reserved, it set the
+  current banks from whatever a4 pointed to.
+- Closing help's text reader tested the first long word of its screen
+  instead of whether the screen was open, so it read address 0 when the
+  screen had failed to open.
 
 Collisions (AMOS.library)
 - The offsets into the masks of the two images were 16-bit: an image whose

@@ -61,6 +61,40 @@
 ; Branchements internes au moniteur
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 		XREF	_amos_bridge
+		XREF	_mon_view_show_entry
+		XREF	_mon_view_next_entry
+		XREF	_mon_view_clear_entry
+		XREF	_mon_view_info_entry
+		XREF	_mon_view_sizes_entry
+		XREF	_mon_unpack_entry
+		XREF	_mon_button_entry
+		XREF	_mon_all_buttons_entry
+		XREF	_mon_stop_button_entry
+		XREF	_mon_show_entry
+		XREF	_mon_hide_entry
+		XREF	_mon_mouse_free_entry
+		XREF	_mon_recop_entry
+		XREF	_mon_move_up_entry
+		XREF	_mon_move_down_entry
+		XREF	_mon_move_left_entry
+		XREF	_mon_move_right_entry
+		XREF	_mon_change_screen_entry
+		XREF	_mon_see_entry
+		XREF	_mon_to_front_entry
+		XREF	_mon_to_back_entry
+		XREF	_mon_screen_copy_entry
+		XREF	_mon_tests_patch_entry
+		XREF	_mon_free_map_entry
+		XREF	_mon_set_help_entry
+		XREF	_mon_set_break_entry
+		XREF	_mon_set_evaluate_entry
+		XREF	_mon_mode_buttons_entry
+		XREF	_mon_no_init_entry
+		XREF	_mon_tested_entry
+		XREF	_mon_step_show_entry
+		XREF	_mon_cold_start_entry
+		XREF	_mon_free_entry
+		XREF	_mon_test_error_entry
 		XREF	_mon_centre_click_entry
 		XREF	_mon_slider_horizontal_click_entry
 		XREF	_mon_slider_vertical_click_entry
@@ -108,7 +142,7 @@ MDebut		dc.l	In_Editor-MDebut	0- Depuis l'editeur
 Ttt_MinTy	equ	8
 Ttt_MaxTy	equ	16
 
-* Num�ro des ecrans
+* NumÃÂÃÂÃÂÃÂ¯ÃÂÃÂÃÂÃÂ¿ÃÂÃÂÃÂÃÂ½ro des ecrans
 Tt_Ecran1	equ	EcEdit
 Tt_Ecran2	equ	EcFonc
 E1_Sx		equ	640
@@ -132,7 +166,7 @@ Tjsr	MACRO
 	ENDM
 
 ;					------------------------------------
-;--------------------------------------    Zone de donnees sp�cifique TUTOR
+;--------------------------------------    Zone de donnees spÃÂÃÂÃÂÃÂ¯ÃÂÃÂÃÂÃÂ¿ÃÂÃÂÃÂÃÂ½cifique TUTOR
 ;					------------------------------------
 		Include	"+MEqu.s"
 
@@ -303,246 +337,15 @@ J_DBL	bra	Ttt_Slhclic		1 : Slider horizontal
 ;	INITIALISATION GENERALE
 ; ___________________________________________________________________
 ;
+; The monitor started and stopped: monitor/start.cpp
+; (a4 the monitor's data after the start; the flags: out of memory)
 Tt_ColdStart
-; Reservation de la zone de datas
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	move.l	#Tt_DzLong,d0
-	SyCall	MemFastClear
-	beq	.Out
-	move.l	a0,a4
-	move.l	a0,Mon_Base(a5)
-; Init de donnees
-; ~~~~~~~~~~~~~~~
-	move.l	a3,Tt_Program(a4)
-	move.l	Cur_Banks(a5),Tt_CurBanks(a4)
-	move.l	Cur_Dialogs(a5),Tt_CurDialogs(a4)
-	move.w	#-1,Tt_Ecran(a4)
-	move.w	#-1,Tt_View(a4)
-	move.w	#-1,Tt_YMark(a4)
-	move.w	#-1,Tt_YNext(a4)
-	clr.b	Tt_NotHere(a4)
-	move.w	Ed_Sy(a5),d0
-	sub.w	#E1_Sy,d0
-	tst.b	Ed_Inter(a5)
-	beq.s	.S0
-	sub.w	#E1_Sy,d0
-.S0	and.w	#$FFF0,d0
-	cmp.w	#E2_MinY,d0
-	bcc.s	.Skip
-	move.w	#E2_MinY,d0
-.Skip	move.w	d0,Ttt_Sy(a4)
-; Reservation des autres buffers
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	lsr.w	#3,d0			Buffer d'edition
-	mulu	#256,d0
-	SyCall	MemFastClear
-	beq	.Out
-	move.l	a0,Ttt_BufE(a4)
-	move.l	#1024+512,d0		Buffer Tokenisation / Lignes
-	SyCall	MemFastClear
-	beq	.Out
-	move.l	a0,Tt_BufT(a4)
-	lea	512(a0),a0
-	move.l	a0,Tt_Ligne(a4)
-	move.l	#Inf_Size,d0		Buffer infos
-	SyCall	MemFastClear
-	beq	.Out
-	move.l	a0,Inf_Buf(a4)
-; Trouve l'adresse de la banque de resource
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	bsr	Tt_TtBanks
-	moveq	#16,d0
-	JJsr	L_Bnk.GetAdr
-	beq	.Out
-	move.l	a0,Tt_Resource(a4)
-; Ouvre l'�cran du haut
-; ~~~~~~~~~~~~~~~~~~~~~
-	moveq	#Tt_Ecran1,d0
-	move.l	#E1_Sx,d1
-	move.l	#E1_Sy,d2
-	moveq	#0,d3
-	moveq	#0,d4			Force non interlaced!
-	move.l	Tt_Resource(a4),a0
-	add.l	2(a0),a0
-	JJsrR	L_Dia_RScOpen,a1
-	bne	.Out
-	move.l	T_EcCourant(a5),a0
-	move.w	Ed_Wy(a5),EcAWY(a0)
-	SyCalD	ResZone,NBoutons
-	bne	.Out
-; Affiche les boutons
-; ~~~~~~~~~~~~~~~~~~~
-	moveq	#1,d0
-	moveq	#0,d1
-	moveq	#0,d2
-	bsr	Tt_UPack
-	bsr	ABoutons
-	bsr	Tt_SEval
-	bsr	View_Cls
-	bsr	TtReCop
-
-; Ouvre l'ecran du bas
-; ~~~~~~~~~~~~~~~~~~~~
-	moveq	#Tt_Ecran2,d0
-	move.l	#E2_Sx,d1
-	move.w	Ttt_Sy(a4),d2
-	ext.l	d2
-	moveq	#0,d3
-	moveq	#0,d4			Interlaced?
-	move.b	Ed_Inter(a5),d4
-	move.l	Ed_Resource(a5),a0
-	add.l	2(a0),a0
-	JJsrR	L_Dia_RScOpen,a1
-	bne	.Out
-	move.l	T_EcCourant(a5),a0
-	move.w	Ed_Wy(a5),EcAWY(a0)
-	add.w	#E1_Sy,EcAWY(a0)
-	SyCalD	ResZone,4
-	bne	.Out
-	WiCalA	Print,Ttt_WInit(pc)
-; Ouvre le DBL
-	lea	DBL(pc),a0		Programme d'essai!
-	move.l	Ed_Resource(a5),a1
-	add.l	2(a1),a1
-	move.l	#Tt_ChannelN,d0		Numero du canal
-	move.l	#512,d1			Buffer
-	moveq	#12,d2			Nombre de variables
-	moveq	#0,d3			Ne PAS recopier
-	JJsrR	L_Dia_OpenChannel,a2
-	tst.l	d0			Une erreur?
-	bne	.Out
-	move.l	a0,Tt_Channel(a4)
-	move.l	a1,Tt_Variables(a4)
-; Initialisation du fond
-	move.w	Ttt_Sy(a4),d0
-	lsr.w	#1,d0
-	addq.w	#8,d0
-	bsr	Ttt_SetSize
-	bsr	Ttt_Cls
-	bne	.Out
-	bsr	Ttt_NewBuf
-	move.l	Inf_Buf(a4),a0
-	move.l	a0,Inf_Pos(a4)
-	moveq	#5,d0
-	bsr	Tt_Message
-	move.l	a0,-(sp)
-	moveq	#2,d0
-	bsr	Inf_PrDeb
-	bsr	Inf_Print
-	bsr	Inf_PrFin
-	move.l	(sp)+,a0
-	moveq	#4,d0
-	bsr	Inf_PrDeb
-	bsr	Inf_Print
-	bsr	Inf_PrFin
-; Poke les patches
-	lea	TstPatch(pc),a0
-	move.l	a0,ExtTests+4(a5)
-	lea	Tt_PScFront(pc),a0
-	move.l	a0,Patch_ScFront(a5)
-	lea	Tt_PScCopy(pc),a0
-	move.l	a0,Patch_ScCopy(a5)
-	move.w	#L_Mon_MonitorChr,d0		Branche le moniteur
-	JJsr	L_SetChrPatch
-	move.l	Prg_JError(a5),Tt_JError(a4)
-	bsr	Set_WPatch
-; Branche les interruptions couleurs...
-	lea	VblRout(a5),a0
-.loopI	tst.l	(a0)+
-	bne.s	.loopI
-	lea	View_Inter(pc),a1
-	move.l	a1,-4(a0)
-; Prepare les affichage des ecrans
-	bsr	View_ScUpdate
-	bsr	View_Act
-	bsr	View_Aff
-; Force la souris...
-	bsr	Tt_Mouse
-; Verifie, au moins 4K de chip
-	move.l	a6,-(sp)
-	move.l	#Public|Chip,d1
-	move.l	$4.w,a6
-	jsr	_LVOAvailMem(a6)
-	move.l	(sp)+,a6
-	cmp.l	#1024*4,d0
-	bcs.s	.Out
-; Fin, pas d'erreur, flag moniteur present!
-	bsr	TtReCop
-	moveq	#0,d0
+	jsr	_mon_cold_start_entry
+	move.l	Mon_Base(a5),a4
 	rts
-; Out of mem!
-.Out	bsr	Tt_Free
-	bsr	Tt_MonFree
-	moveq	#1,d0
-	rts
+Tt_Free	jmp	_mon_free_entry
 
-; 	Effacement de la zone de donnee monitor
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Tt_MonFree
-	move.l	Mon_Base(a5),d0
-	beq.s	.Skip
-	move.l	d0,a1
-	move.l	#Tt_DzLong,d0
-	SyCall	MemFree
-.Skip	rts
-
-;	Effacement des donnees
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Tt_Free	move.l	Mon_Base(a5),d0
-	beq	.PaInit
-	move.l	d0,a4
-	bsr	Del_WPatch
-	moveq	#0,d0
-	JJsr	L_SetChrPatch
-	clr.l	ExtTests+4(a5)
-	bclr	#1,T_Actualise+1(a5)
-	bclr	#1,ActuMask+1(a5)
-	clr.l	Patch_Menage(a5)
-	clr.l	Patch_Errors(a5)
-	clr.l	Patch_ScFront(a5)
-	clr.l	Patch_ScCopy(a5)
-	move.l	Tt_JError(a4),Prg_JError(a5)
-; Enleve les interruptions
-	lea	VblRout(a5),a0
-	lea	View_Inter(pc),a1
-	moveq	#8-1,d0
-.loopI	cmp.l	(a0)+,a1
-	dbeq	d0,.loopI
-	tst.w	d0
-	bmi.s	.Sk
-	clr.l	-4(a0)
-; Enleve le canal DBL
-.Sk	bsr	Tt_TtBanks
-	move.l	#Tt_ChannelN,d0		Numero du canal
-	JJsr	L_Dia_CloseChannel
-; Enleve les ecrans
-	EcCalD	Del,Tt_Ecran1
-	EcCalD	Del,Tt_Ecran2
-; Enleve les buffers
-	bsr	Hlp_FreeMap		Enleve les HELP
-	move.l	Ttt_BufE(a4),d0
-	beq.s	.B1
-	move.l	d0,a1
-	move.w	Ttt_Sy(a4),d0
-	lsr.w	#3,d0			Buffer d'edition
-	mulu	#256,d0
-	SyCall	MemFree
-.B1	move.l	Tt_BufT(a4),d0
-	beq.s	.B2
-	move.l	d0,a1
-	move.l	#1024+512,d0		Buffer Tokenisation / Lignes
-	SyCall	MemFree
-.B2	move.l	Inf_Buf(a4),d0
-	beq.s	.B3
-	move.l	d0,a1
-	move.l	#Inf_Size,d0		Buffer infos
-	SyCall	MemFree
-.B3
-; Remet les banques du programme, et basta!
-.PaInit	bsr	Tt_PrgBanks
-	rts
-
-;	TOUCHE: quit/ Retour � l'editeur
+;	TOUCHE: quit/ Retour ÃÂÃÂÃÂÃÂ¯ÃÂÃÂÃÂÃÂ¿ÃÂÃÂÃÂÃÂ½ l'editeur
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Tt_Quit
 ; Si Break Off >>> on peut pas!!!
@@ -562,14 +365,14 @@ Tt_Quit
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	bsr	Tt_Free
 	bsr	TtReCop
-; Retour � l'editeur ou au programme???
+; Retour ÃÂÃÂÃÂÃÂ¯ÃÂÃÂÃÂÃÂ¿ÃÂÃÂÃÂÃÂ½ l'editeur ou au programme???
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	move.l	a4,a1
 	move.l	#Tt_DzLong,d0
 	clr.l	Mon_Base(a5)
 	tst.w	Tt_Run(a4)
 	bne.s	.torun
-; Retour � l'�diteur
+; Retour ÃÂÃÂÃÂÃÂ¯ÃÂÃÂÃÂÃÂ¿ÃÂÃÂÃÂÃÂ½ l'ÃÂÃÂÃÂÃÂ¯ÃÂÃÂÃÂÃÂ¿ÃÂÃÂÃÂÃÂ½diteur
 .parun	SyCall	MemFree			Plus de datazone
 	clr.l	Prg_Runned(a5)		Plus de programme courant
 	JJsr	L_Includes_Clear	Libere la memoire
@@ -597,43 +400,10 @@ Tt_Quit
 
 ;
 ; Actualisation des ecrans
-TtReCop	SyCall	WaitVbl
-	EcCall	CopForce
-	rts
-
-;	Montre les deux ecrans
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Tt_Show	moveq	#0,d2
-	bra.s	Tth
-;	Cache les deux ecrans
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Tt_Hide	moveq	#-1,d2			Ne PAS changer!
-Tth	movem.l	d0-d7/a0-a4,-(sp)
-	move.l	Mon_Base(a5),a0
-	cmp.b	Tt_NotHere(a0),d2	D2=0 si show, -1 si hide!
-	beq.s	.Skip
-	move.b	d2,Tt_NotHere(a0)
-	EcCalD	EHide,Tt_Ecran1
-	EcCalD	EHide,Tt_Ecran2
-	bsr	TtReCop
-.Skip	movem.l	(sp)+,d0-d7/a0-a4
-	rts
-
-;	Force la souris en marche
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Tt_Mouse
-	movem.l	d0-d7/a0-a3,-(sp)
-	SyCall	Show,-1
-	moveq	#64,d1			Nouvelles limites
-	moveq	#30,d2
-	move.l	#510,d3
-	move.l	#312,d4
-	move.l	#$01234567,d5		Magic!
-	SyCall	LimitM
-	movem.l	(sp)+,d0-d7/a0-a3
-	rts
-
+TtReCop	jmp	_mon_recop_entry
+Tt_Show	jmp	_mon_show_entry
+Tt_Hide	jmp	_mon_hide_entry
+Tt_Mouse	jmp	_mon_mouse_free_entry
 
 ; ___________________________________________________________________
 ;
@@ -642,6 +412,8 @@ Tt_Mouse
 ;
 ;	Branche le patch sur W
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		xdef	_mon_set_wpatch
+_mon_set_wpatch
 Set_WPatch
 	move.l	a0,-(sp)
 	lea	Old_EcVect(pc),a0
@@ -656,6 +428,8 @@ Set_WPatch
 	rts
 ;	Enleve le patch sur W
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		xdef	_mon_del_wpatch
+_mon_del_wpatch
 Del_WPatch
 	move.l	a0,-(sp)
 	lea	Old_EcVect(pc),a0
@@ -1038,7 +812,7 @@ TT_SGSIn
 ;	movem.l	(sp)+,d2-d7/a1-a2
 ;.Skip	rts
 
-;	Conversion coordonn�es hard (d1/d2/d3) -> coordonn�es ecran
+;	Conversion coordonnÃÂÃÂÃÂÃÂ¯ÃÂÃÂÃÂÃÂ¿ÃÂÃÂÃÂÃÂ½es hard (d1/d2/d3) -> coordonnÃÂÃÂÃÂÃÂ¯ÃÂÃÂÃÂÃÂ¿ÃÂÃÂÃÂÃÂ½es ecran
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 TT_Hard2Screen
 	bsr	TT_EcToA1
@@ -1067,7 +841,7 @@ XY2Ec	movem.w	d1-d3,-(sp)
 	moveq	#0,d0
 	rts
 
-;	Trouve l'�cran sous les coordonnees hard...
+;	Trouve l'ÃÂÃÂÃÂÃÂ¯ÃÂÃÂÃÂÃÂ¿ÃÂÃÂÃÂÃÂ½cran sous les coordonnees hard...
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ;	D1/D2= X/Y HARD
 ;	D3= 1er ecran
@@ -1146,111 +920,28 @@ TT_SHere
 ;	Patch SCREEN TO FRONT
 ; ___________________________________________________________________
 ;
+		xdef	_mon_screen_front
+_mon_screen_front
 Tt_PScFront
 	bra	ToFront
 	bra	ToBack
 ; Passe devant
 ; ~~~~~~~~~~~~
-ToFront	lea	Mon_Banks(a5),a0	Mode moniteur?
-	cmp.l	Cur_Banks(a5),a0
-	beq.s	.Skip
-	movem.l	d1-d7/a1-a6,-(sp)
-	move.l	Mon_Base(a5),a4
-	bsr	Tt_Hide
-.Quit	movem.l	(sp)+,d1-d7/a1-a6
-.Skip	rts
-; Passe derriere
-; ~~~~~~~~~~~~~~
-ToBack	lea	Mon_Banks(a5),a0	Mode moniteur?
-	cmp.l	Cur_Banks(a5),a0
-	beq.s	.Skip
-	movem.l	d1-d7/a1-a6,-(sp)
-	move.l	Mon_Base(a5),a4
-	bsr	Tt_Show
-.Quit	movem.l	(sp)+,d1-d7/a1-a6
-.Skip	rts
+ToFront	jmp	_mon_to_front_entry
+ToBack	jmp	_mon_to_back_entry
 ; ___________________________________________________________________
 ;
 ;	Patch SCREEN COPY
 ; ___________________________________________________________________
 ;
-Tt_PScCopy
-	move.l	Mon_Base(a5),a0		Mode moniteur?
-	tst.b	Tt_NotHere(a0)		Deja la?
-	bne.s	.Skip
-	lea	Mon_Banks(a5),a0
-	cmp.l	Cur_Banks(a5),a0
-	beq.s	.Skip
-; Recopie l'ecran
-	movem.l	d1-d7/a1-a6,-(sp)
-	move.l	Mon_Base(a5),a4
-	bsr	Tt_TtBanks
-	move.l	T_EcCourant(a5),d0
-	beq.s	.Quit
-	move.l	d0,a0
-	move.w	EcNumber(a0),-(sp)
-	move.w	#-1,Tt_Ecran(a4)
-	bsr	View_Act
-	move.w	(sp),d1
-	subq.w	#1,d1
-	bsr	View_Ec
-	bsr	View_Aff
-	move.w	(sp)+,d1
-	EcCall	Active
-.Quit	bsr	Tt_PrgBanks
-	movem.l	(sp)+,d1-d7/a1-a6
-.Skip	rts
-
+Tt_PScCopy	jmp	_mon_screen_copy_entry
 ; ___________________________________________________________________
 ;
 ;	Patch branche sur tests: reaffiche l'ecran (mode 3)
 ; ___________________________________________________________________
 ;
-TstPatch
-	movem.l	d0-d7/a0-a6,-(sp)
-; Actualise
-	move.l	Mon_Base(a5),a4
-	bsr	Tt_TtBanks
-	move.w	#-1,Tt_Ecran(a4)
-	bsr	View_Act
-*	move.w	ScOn(a5),d1
-*	subq.w	#2,d1
-*	bsr	View_Ec
-	bsr	View_Aff
-; Verifie que l'on appuie pas sur la souris
-;	cmp.w	#2,Step_Mode(a4)		illegal
-;	bcs.s	.skip
-	bsr	Tt_MBout
-	btst	#0,d1
-	beq.s	.skip
-	SyCall	GetZone
-	cmp.w	#Tt_Ecran1,d1
-	bne.s	.skip
-	swap	d1
-	tst.w	d1
-	beq.s	.skip
-	cmp.w	#13,d1
-	beq.s	.skip
-	addq.w	#1,Step_Stop(a4)
-	bsr	BoutStop
-; Empeche les boucles
-.skip	move.w	ScOn(a5),d1
-	beq.s	.skip1
-	subq.w	#1,d1
-	EcCall	Active
-.skip1	bclr	#7,T_Actualise(a5)
-; Retour aux tests
-	bsr	Tt_PrgBanks
-	movem.l	(sp)+,d0-d7/a0-a6
-	rts
-BoutStop
-	move.w	Tt_Active(a4),d0
-	moveq	#0,d1
-	bsr	ABouton
-	moveq	#1,d0
-	move.w	d0,Tt_Active(a4)
-	moveq	#1,d1
-	bra	ABouton
+TstPatch	jmp	_mon_tests_patch_entry
+BoutStop	jmp	_mon_stop_button_entry
 
 
 ; ___________________________________________________________________
@@ -1296,29 +987,10 @@ Ttt_TttAct	jmp	_mon_activate_text_entry
 
 ;	TOUCHES: help / break / eval
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Tt_SHelp
-	clr.w	Ttt_Mode(a4)
-	bra.s	Ttt_AMod
-Tt_SBreak
-	move.w	#1,Ttt_Mode(a4)
-	bra.s	Ttt_AMod
-Tt_SEval
-	move.w	#2,Ttt_Mode(a4)
-; Affiche les boutons
-Ttt_AMod
-	moveq	#14,d0
-	moveq	#0,d2
-.loop	moveq	#0,d1
-	cmp.w	Ttt_Mode(a4),d2
-	bne.s	.skip
-	moveq	#-1,d1
-.skip	bsr	ABouton
-	addq.w	#1,d0
-	addq.w	#1,d2
-	cmp.w	#3,d2
-	bne.s	.loop
-	moveq	#-1,d0
-	rts
+Tt_SHelp	jmp	_mon_set_help_entry
+Tt_SBreak	jmp	_mon_set_break_entry
+Tt_SEval	jmp	_mon_set_evaluate_entry
+Ttt_AMod	jmp	_mon_mode_buttons_entry
 
 ;	TOUCHE: une instruction
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1327,14 +999,7 @@ Tt_Step0
 	tst.w	Tt_Init(a4)
 	ble.s	NoInit
 	bra	Step_Out
-		xdef	_mon_no_init
-_mon_no_init
-NoInit	moveq	#11,d0
-	bsr	Tt_Message
-	bsr	Ttt_Alert
-	bsr	Ttt_InfAct
-	bsr	Inf_AffAll
-	bra	Wmky
+NoInit	jmp	_mon_no_init_entry
 ;	TOUCHE: deroulement semi-rapide
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Tt_Step1
@@ -1412,20 +1077,7 @@ Tt_Testing
 ; Enleve le message de test
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~
 Tt_Tst1	rts
-Tt_Tst2	movem.l	a0-a6/d0-d7,-(sp)
-	move.l	Mon_Base(a5),a4
-	move.l	Tt_Program(a4),a3
-	bsr	Tt_TtBanks
-; Efface le message
-	bsr	Ttt_AlertDel
-; Passe aux ecrans du programme
-	move.w	#-1,Tt_Ecran(a4)
-	clr.w	Tt_MFlag(a4)
-	move.w	#1,Tt_Init(a4)
-; Revient au test
-	bsr	Tt_PrgBanks
-	movem.l	(sp)+,a0-a6/d0-d7
-	rts
+Tt_Tst2	jmp	_mon_tested_entry
 Tt_Tst3	rts
 
 ;	Entree du pas a pas...
@@ -1476,12 +1128,12 @@ MonitorChr
 	bne.s	.skipB2
 	bsr	TstPatch			Reaffiche + sort
 	bra.s	.GoBack
-; Rebranche � l'instruction
+; Rebranche ÃÂÃÂÃÂÃÂ¯ÃÂÃÂÃÂÃÂ¿ÃÂÃÂÃÂÃÂ½ l'instruction
 .GoOut	bset	#1,T_Actualise+1(a5)		Reaffichage si long...
 	bset	#1,ActuMask+1(a5)
 .GoBack	move.l	d4,d0				Recharge les registres
 	move.l	d5,d1
-.Back	rts					Rebranche � l'instruction
+.Back	rts					Rebranche ÃÂÃÂÃÂÃÂ¯ÃÂÃÂÃÂÃÂ¿ÃÂÃÂÃÂÃÂ½ l'instruction
 ; Localise l'instruction
 .skipB2	move.l	Prg_Run(a5),a1
 	move.l	d7,a0				Adresse de la ligne
@@ -1510,180 +1162,9 @@ MonitorChr
 	move.l	Prg_InsRet(a5),-(sp)
 	move.l	Mon_Base(a5),a4		Sauve la pile / Flag general
 	move.l	Tt_Program(a4),a3
-	bsr	Tt_TtBanks
-	move.w	d0,Tt_YNext(a4)
-	move.l	d1,Tt_Adress(a4)
-	move.w	d2,Tt_Locked(a4)
-	move.l	a2,Tt_DCurLine(a4)
-; Empeche les appels du test
-	bclr	#1,T_Actualise+1(a5)
-	bclr	#1,ActuMask+1(a5)
-	clr.w	Step_Stop(a4)
-; Actualise l'affichage
-	move.w	#-1,Tt_Ecran(a4)
-	bsr	View_Act
-	bsr	View_Aff
-	bsr	Tt_Show
-
-;	Affichage complet de la prochaine instruction
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	moveq	#0,d0
-	bsr	Inf_Del
-	moveq	#5,d0
-	bsr	Inf_Del
-; Programme initialise?
-	tst.w	Tt_Init(a4)
-	beq	.nopar
-; Pointe dans le programme
-	move.w	Tt_YNext(a4),d0
-	bsr	Tt_Decoup
-	move.l	Tt_Adress(a4),a0
-	sub.l	Tt_ALine(a4),a0
-	move.l	Tt_Ligne(a4),a1
-	subq.l	#4,a1
-.loop	addq.l	#4,a1
-	cmp.w	2(a1),a0
-	bhi.s	.loop
-	moveq	#0,d0
-	move.b	1(a1),d0
-	move.w	d0,Tt_XNext(a4)
-	bsr	Ttt_TttAct
-	bsr	Ttt_Centre
-	bsr	Ttt_AffBuf
-; Fin du programme?
-	tst.w	Tt_Init(a4)
-	bmi	.nopar
-; Affiche le NOM de l'instruction
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	moveq	#5,d0
-	bsr	Inf_PrDeb
-; Procedure fermee
-	tst.w	Tt_Locked(a4)
-	beq.s	.palok
-	moveq	#2,d0
-	bsr	Tt_Message
-	bsr	Inf_Print
-	move.l	Tt_BufT(a4),a0
-	move.b	1(a0),d0
-	addq.l	#2,a0
-	clr.b	0(a0,d0.w)
-	bsr	Inf_Print
-	bsr	Inf_PrFin
-	bra	.nopar
-; Met le nom
-.palok	moveq	#1,d0
-	bsr	Tt_Message
-	bsr	Inf_Print
-	move.l	Tt_Ligne(a4),a2
-	move.l	Tt_Adress(a4),d0
-	sub.l	Tt_ALine(a4),d0
-.loopA2	cmp.w	2(a2),d0
-	beq.s	.outA2
-	addq.l	#4,a2
-	tst.b	(a2)
-	bne.s	.loopA2
-.outA2	moveq	#0,d0
-	move.b	1(a2),d0
-.loopA3	addq.l	#4,a2
-	tst.b	(a2)
-	beq.s	.outA3
-	cmp.b	#":",(a2)
-	bne.s	.loopA3
-.outA3	moveq	#0,d1
-	move.b	1(a2),d1
-	move.l	Tt_BufT(a4),a0
-	addq.l	#2,a0
-	clr.b	0(a0,d1.w)
-	add.w	d0,a0
-	bsr	Inf_Print
-	bsr	Inf_PrFin
-; Affiche la liste des parametres
-	move.l	AdTokens(a5),a0
-	move.l	Tt_Adress(a4),a6
-	move.w	(a6)+,d0
-	lea	4(a0,d0.w),a3
-	moveq	#0,d7
-	cmp.w	#_TkRem1,d0
-	beq	.nopar
-	cmp.w	#_TkRem2,d0
-	beq	.nopar
-	cmp.w	#_TkFade,d0
-	beq	.fade
-	cmp.w	#_TkPal,d0
-	beq	.fade
-	cmp.w	#_TkExt,d0
-	bne.s	.noext
-; Appel d'une extension
-	move.b	(a6)+,d1
-	move.b	(a6)+,d0
-	move.w	(a6)+,d2
-	ext.w	d1
-	lsl.w	#2,d1
-	move.l	AdTokens(a5,d1.w),a0
-	lea	4(a0,d2.w),a3
-.noext
-	btst	#LBF_20,LB_Flags(a0)		Une nouvelle librarie?
-	beq.s	.floop1
-	tst.w	-2(a3)				Des parametres?
-	beq.s	.nopar
-.floop1	tst.b	(a3)+
-	bpl.s	.floop1
-	move.b	(a3)+,d0
-	cmp.b	#"I",d0
-	bne	.nopar
-.floop2	tst.b	(a3)+
-	bmi	.nopar
-	bsr	Tt_ImpParam
-	tst.b	(a3)+
-	bpl	.floop2
-	bra.s	.nopar
-; FADE / PALETTE
-.fade	bsr	Tt_ImpParam
-	subq.l	#2,a6
-	JJsr	L_Finie
-	addq.l	#2,a6
-	bne.s	.fade
-.nopar
-; Afficher un message???
-	move.l	Step_Mess(a4),d0
-	beq.s	.jij
-	clr.l	Step_Mess(a4)
-	move.l	d0,a0
-	bsr	Ttt_Alert
-.jij
-; Va tout imprimer...
-	bsr	Ttt_InfAct
-	bsr	Inf_AffAll
-	bsr	Inf_Slider
-
-;	Attente de commande
-; ~~~~~~~~~~~~~~~~~~~~~~~~~
-	bsr	View_Act
-	move.w	Step_Mode(a4),d0
-; Pas a pas: libere le bouton, et branche aux tests
-	bne.s	.skiu
-	bsr	Tt_Mouse
-	bra	Tt_ReLoop
-; Deroulement semi-rapide: appui sur STOP?
-.skiu	bsr	Tt_MBout
-	btst	#0,d1
-	beq.s	Step_Out
-	SyCall	GetZone
-	cmp.w	#Tt_Ecran1,d1
-	bne.s	Step_Out
-	swap	d1
-	tst.w	d1
-	beq.s	Step_Out
-	cmp.w	#13,d1
-	beq.s	Step_Out
-	bsr	Tt_Mouse
-	clr.w	Step_Mode(a4)
-	bsr	View_Act
-	bsr	BoutStop
-	moveq	#10,d2
-.Loap	SyCall	WaitVbl
-	dbra	d2,.Loap
-	bra	Tt_ReLoop
+; The screens, the listing, the instruction: monitor/step.cpp
+	jsr	_mon_step_show_entry
+	beq	Tt_ReLoop
 
 ;	Sortie du mode pas a pas, reactive l'ancien ecran
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1711,78 +1192,6 @@ Step_Out2
 	movem.l	Step_Data+4(a4),a3-a6/d0-d1/d6-d7
 	jmp	(a0)
 
-;	Routine : Imprime "Param #1="
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Tt_ImpParam
-	moveq	#5,d0
-	bsr	Inf_PrDeb
-	moveq	#3,d0
-	bsr	Tt_Message
-	bsr	Inf_Print
-	addq.l	#1,d7
-	move.l	d7,d0
-	move.l	Buffer(a5),a0
-	JJsrR	L_LongToDec,a1
-	clr.b	(a0)
-	move.l	Buffer(a5),a0
-	bsr	Inf_Print
-	lea	Inf_Par2(pc),a0
-	bsr	Inf_Print
-; Va evaluer...
-	bsr	Tt_Evalue
-	beq.s	.paer
-	moveq	#4,d0
-	bsr	Tt_Message
-.parer	move.b	(a1)+,(a0)+
-	bne.s	.parer
-	subq.l	#1,a0
-	bra.s	.suit
-.paer	addq.l	#2,a6
-	move.l	d3,d0
-	move.l	Buffer(a5),a0
-	subq.b	#1,d2
-	bmi.s	.ent
-	beq.s	.fl
-; Une chaine...
-	moveq	#'"',d2
-	move.b	d2,(a0)+
-	move.l	d0,a1
-	move.w	(a1)+,d0
-	beq.s	.Bla
-	cmp.w	#60,d0
-	bcs.s	.Ble
-	moveq	#60,d0
-	moveq	#">",d2
-.Ble	subq.w	#1,d0
-.Bli	move.b	(a1)+,d1
-	cmp.b	#32,d1
-	bcc.s	.Blo
-	moveq	#".",d1
-.Blo	move.b	d1,(a0)+
-	dbra	d0,.Bli
-.Bla	move.b	d2,(a0)+
-	bra.s	.suit
-; Chiffre FLOAT
-.fl	JJsrR	L_Float2Ascii,a1
-	bra.s	.suit
-; Chiffre ENTIER
-.ent	cmp.l	#EntNul,d3
-	beq.s	.entD
-	JJsrR	L_LongToDec,a1
-	bra.s	.suit
-.entD	exg	a0,a1
-	moveq	#14,d0
-	bsr	Tt_Message
-	exg	a0,a1
-.entE	move.b	(a1)+,(a0)+
-	bne.s	.entE
- 	subq.l	#1,a0
-; Imprime
-.suit	clr.b	(a0)
-	move.l	Buffer(a5),a0
-	bsr	Inf_Print
-	bsr	Inf_PrFin
-	rts
 
 ;	Entree generale des erreurs "Patch2"
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1814,29 +1223,9 @@ Tt_Error
 	beq	Tt_ReInit
 	move.w	#-1,Tt_Init(a1)		Arret du STEP, pas des expressions
 	bra	MonitorChr
-; Erreurs lors du test!
-; ~~~~~~~~~~~~~~~~~~~~~
-.Test	move.l	a0,-(sp)
+; Erreurs lors du test! (monitor/step.cpp)
+.Test	jsr	_mon_test_error_entry
 	move.l	Mon_Base(a5),a4
-	move.l	Tt_Program(a4),a3
-	bsr	Tt_TtBanks
-	clr.w	Tt_XNext(a4)
-	move.l	VerPos(a5),a0
-	move.l	Prg_StBas(a3),a1
-	JJsrR	L_Tk_FindA,a2
-	move.w	d0,Tt_YNext(a4)
-
-	move.w	#-1,Tt_Ecran(a4)
-	bsr	Ttt_TttAct
-	bsr	Ttt_Centre
- 	bsr	Ttt_AffBuf
-
-	move.l	(sp)+,a0
-	bsr	Ttt_Alert
-	bsr	Ttt_InfAct
-	bsr	Inf_AffAll
-	bsr	Inf_Slider
-
 	bra	Tt_ReLoop
 
 ; Trouve le message d'erreur en retour de programme
@@ -1862,449 +1251,8 @@ Ttt_ListClic	jmp	_mon_listing_click_entry
 Tt_Souligne	jmp	_mon_choose_entry
 Tt_MouMou	jmp	_mon_mouse_position_entry
 
-;	Demande de HELP sur un mot...
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-		xdef	_mon_run_help
-_mon_run_help
-Tt_RunHelp
-	bsr	Tt_Souligne
-	beq	Wmky
-	cmp.w	#2,d0
-	bcs	.NFnd
-; Copie la chaine dans le buffer
-	move.l	Buffer(a5),a1
-	move.l	a1,d0
-.Loop	move.b	(a0)+,(a1)+
-	bne.s	.Loop
-	move.l	d0,a0
-	sub.l	a1,d0
-	neg.l	d0
-; Charge les fichiers .MAP
-; ~~~~~~~~~~~~~~~~~~~~~~~~
-	movem.l	a0/d0,-(sp)
-	moveq	#20,d0			Loading Help files
-	bsr	Tt_IMes
-	movem.l	(sp)+,a0/d0
-	bsr	Hlp_LoadTexte		Une erreur!
-	bne	.Error
-	bsr	Ttt_AlertDel		Plus d'alertes
-; Ouverture de l'ecran
-; ~~~~~~~~~~~~~~~~~~~~
-	moveq	#0,d7
-	bsr	Hlp_GetPuzzle
-	move.l	a1,a0
-	moveq	#EcFsel,d0
-	move.w	PI_RtSx(a5),d1
-	move.w	PI_RtSy(a5),d2
-	ext.l	d1
-	ext.l	d2
-	moveq	#0,d3
-	moveq	#-1,d4
-	JJsrP	L_Dia_RScOpen,a2
-	bne	.OutM
-; Trouve le bon numero de canal dialogue
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	move.l	#65536,d7
-.Find	move.l	d7,d0
-	JJsr	L_Dia_GetChannel
-	beq.s	.Ok
-	addq.l	#1,d7
-	bra.s	.Find
-; Appel du DBL
-; ~~~~~~~~~~~~
-.Ok	bsr	Hlp_GetPuzzle
-	add.l	2+0(a0),a0		Programme numero 1
-	move.l	d7,d0
-	move.l	#1024*8,d1		Longueur du bufer
-	moveq	#8,d2			Variables internes
-	moveq	#0,d3			Pas de recopie
-	JJsrR	L_Dia_OpenChannel,a2
-	bne	.OutM
-	moveq	#23,d0
-	bsr	Tt_Message
-	subq.l	#2,a0
-	move.l	a0,4(a1)		Message de titre
-	move.l	#4,8(a1)		4 Boutons par ligne
-	move.l	Hlp_Texte(a4),0(a1)	Base de l'hyper texte
-; Demarre le programme
-; ~~~~~~~~~~~~~~~~~~~~
-	move.l	d7,d0
-	moveq	#-1,d1
-	moveq	#0,d2
-	moveq	#0,d3
-	JJsr	L_Dia_RunProgram
-	tst.l	d0
-	bne	.OutM
-; Ouverture de l'ecran
-; ~~~~~~~~~~~~~~~~~~~~
-	move.l	d7,-(sp)
-	move.l	T_EcAdr+EcFsel*4(a5),a2
-	move.w	PI_RtSpeed(a5),d7
-	moveq	#1,d6
-	move.w	PI_RtWy(a5),d5
-	move.w	PI_RtSy(a5),d0
-	lsr.w	#1,d0
-	add.w	d0,d5
-	JJsr	L_AppCentre
-	move.l	(sp)+,d7
-; Animation de l'ecran, uniquement READ TEXT
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.Lop	move.l	d7,-(sp)
-	JJsr	L_Sys_WaitMul
-	JJsr	L_Test_PaSaut
-	move.l	(sp)+,d7
-	move.l	d7,d0
-	JJsr	L_Dia_GetReturn
-	bne.s	.OutM
-	tst.l	d1
-	bpl.s	.Lop
-	moveq	#0,d0
-	bra.s	.Quit
-; Fermeture du canal
-; ~~~~~~~~~~~~~~~~~~
-.OutM	moveq	#17,d0
-.Quit	move.l	d0,-(sp)
-	move.l	d7,d0
-	beq.s	.Skk
-	JJsr	L_Dia_CloseChannel
-; Fermeture de l'ecran
-; ~~~~~~~~~~~~~~~~~~~~
-.Skk	move.l	T_EcAdr+EcFsel*4(a5),a2
-	tst.l	(a2)
-	beq.s	.Skkk
-	move.w	PI_RtSpeed(a5),d7
-	neg.w	d7
-	move.w	EcTy(a2),d6
-	lsr.w	#1,d6
-	move.w	EcAWY(a2),d5
-	add.w	d6,d5
-	JJsr	L_AppCentre
-	EcCalD	Del,EcFsel
-; La fin...
-; ~~~~~~~~~
-.Skkk	bsr	Hlp_FreeTexte
-	move.l	(sp)+,d0
-	beq.s	.Fin
-.Error	bsr	Tt_Message
-	bsr	Ttt_Alert
-.Fin	move.l	Tt_Program(a4),a3
-	move.w	#-1,Tt_Ecran(a4)
-	move.w	#-1,Tt_YInfo(a4)
-	bsr	Ttt_TttAct
-	bsr	Ttt_AffBuf
-	bsr	Ttt_InfAct
-	bsr	Inf_AffAll
-	bsr	Inf_Slider
-	rts
-.NFnd	moveq	#21,d0
-	bra.s	.Error
-
-; 	Get default resource bank
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Hlp_GetPuzzle
-	move.l	Sys_Resource(a5),a0
-	move.l	a0,a1
-	add.l	2+0(a0),a1		Base des graphiques
-	move.l	a0,a2
-	add.l	2+4(a0),a2		Base des messages
-	add.l	2+8(a0),a0		Base des programmes
-	rts
-
-
-
-;	Charge la partie de texte HELP dans un buffer
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-;	A0/D0	Nom � rechercher
-Hlp_LoadTexte
-	movem.l	d2-d7/a2-a3,-(sp)
-
-	movem.l	a0/d0,-(sp)
-	bsr	Hlp_FreeTexte
-	bsr	Hlp_GetMap
-	movem.l	a1/d1,-(sp)
-	bne	.Out
-
-; Explore methodiquement les possibilites
-	movem.l	8(sp),a0/d0
-	moveq	#2,d7
-	move.b	(a0),d0			* Si operateur >>> 1 seul car!
-	bsr	Hlp_D0Maj
-	cmp.b	#"A",d0
-	bcs.s	.Gli0
-	cmp.b	#"Z",d0
-	bls.s	.Gli1
-.Gli0	subq.w	#1,d7
-.Gli1	moveq	#0,d6
-.loop0	move.l	Buffer(a5),a2
-	lea	128(a2),a2
-	move.w	#$00FF,(a2)+
-	moveq	#0,d2
-	moveq	#0,d5
-.loop1	move.w	d0,d3
-.loop2	move.b	(a0)+,d0
-	bsr	Hlp_D0Maj
-	cmp.b	#32,d0
-	beq.s	.skip
-	move.b	d0,(a2)+
-	addq.w	#1,d2
-.skip	addq.w	#1,d5
-	subq.w	#1,d3
-	beq.s	.loop3
-	cmp.w	d2,d7
-	bne.s	.loop2
-.loop3	moveq	#0,d4
-	move.l	Buffer(a5),a2
-	lea	128(a2),a2
-	addq.w	#2,d2
-	JJsr	L_InstrFind
-	movem.l	(sp),a1/d1
-	movem.l	8(sp),a0/d0
-	tst.l	d3
-	beq.s	.Nf
-
-; Trouve, explore une lettre de plus
-	move.l	d3,d6
-	addq.w	#1,d7
-	cmp.w	d0,d7
-	bls.s	.loop0
-	bra.s	.Trouve
-; Pas trouve, peut-on revenir en arriere?
-.Nf	move.l	d6,d3
-	bne.s	.Trouve
-.NFound	moveq	#21,d0
-	bra	.Out
-
-; Charge la portion demandee
-.Trouve	lea	-4(a1,d3.w),a1
-	moveq	#0,d5		D3>>> offset
-	move.b	(a1)+,d5
-	lsl.l	#8,d5
-	move.b	(a1)+,d5
-	lsl.l	#8,d5
-	move.b	(a1)+,d5
-	moveq	#0,d4		D4>>> Longueur
-	addq.l	#2,a1
-.Next	tst.b	(a1)+		Recherche le debut suivant
-	bne.s	.Next
-	move.b	(a1)+,d4
-	lsl.l	#8,d4
-	move.b	(a1)+,d4
-	lsl.l	#8,d4
-	move.b	(a1)+,d4
-	sub.l	d5,d4
-
-; Chargement du texte dans un buffer
-	move.l	d4,d0
-	add.l	#512,d0
-	SyCall	MemFastClear
-	beq	.OutM
-	move.l	a0,d2
-	move.l	a0,Hlp_Texte(a4)
-	move.l	d0,Hlp_LTexte(a4)
-
-	moveq	#12,d0			Nom de AMOSPro_Help.Txt
-	JJsr	L_Sys_GetMessage
-	lea	NomTxt(pc),a1
-	bsr	AddSuffix
-	move.l	#1005,d2
-	bsr	Hlp_Open
-	beq	.DErr1
-
-; Cree les trois lignes de titre
-	moveq	#22,d0
-	bsr	Tt_Message
-	move.l	Hlp_Texte(a4),a2
-	moveq	#2,d0
-.Lp1	move.l	a0,a1
-.Lp2	move.b	(a1)+,(a2)+
-	bne.s	.Lp2
-	move.b	#10,-1(a2)
-	dbra	d0,.Lp1
-	move.b	#10,-1(a2)
-	move.b	#10,(a2)+
-	move.l	d5,d2			Charge le titre
-	moveq	#-1,d3
-	bsr	Hlp_Seek
-	move.l	Buffer(a5),d2
-	moveq	#64,d3
-	bsr	Hlp_Read
-	move.l	d2,a0
-.Lp3	cmp.b	#32,(a0)+
-	bcc.s	.Lp3
-	move.l	a0,d0
-	move.l	d2,a0
-	sub.l	d2,d0
-	move.l	d0,d2
-	add.l	d2,d5			Position + Titre
-	sub.l	d2,d4			Taille - Titre
-	lsr.w	#1,d0
-	move.l	Hlp_Texte(a4),a1
-	lea	132(a1),a1
-	sub.w	d0,a1
-	subq.w	#1+1,d2
-	bmi.s	.Lp5
-.Lp4	move.b	(a0)+,(a1)+
-	dbra	d2,.Lp4
-.Lp5
-; Charge le titre
-	move.l	d5,d2			Charge le titre
-	moveq	#-1,d3
-	bsr	Hlp_Seek
-	move.l	a2,d2
-	move.l	d4,d3
-	bsr	Hlp_Read
-	bne	.DErr0
-	bsr	Hlp_Close
-; Pas d'erreur / A1-D1= buffer + Longueur
-	move.l	Hlp_Texte(a4),a1
-	move.l	Hlp_LTexte(a4),d1
-	subq.l	#8,d1
-	moveq	#0,d0
-	bra.s	.Out
-; Out of memory: libere la .MAP
-.OutM	bsr	Hlp_FreeMap
-	moveq	#17,d0
-	bra	.Out
-; Cannot load .TXT
-.DErr0	bsr	Hlp_Close
-.DErr1	bsr	Hlp_FreeTexte
-	moveq	#19,d0
-; Sortie
-.Out	lea	16(sp),sp
-	movem.l	(sp)+,a2-a3/d2-d7
-	tst.l	d0
-	rts
-
-;	Charge le fichier .MAP en memoire
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Hlp_GetMap
-	movem.l	a2-a3/d2-d7,-(sp)
-	tst.l	Hlp_Map(a4)		Deja chargee?
-	bne.s	.NoLoad
-; Charge...
-	moveq	#12,d0			Nom du .MAP
-	JJsr	L_Sys_GetMessage
-	lea	NomMap(pc),a1
-	bsr	AddSuffix
-	move.l	#1005,d2
-	bsr	Hlp_Open
-	beq	.Err2
-	moveq	#0,d2			Trouve la longueur du fichier
-	moveq	#1,d3
-	bsr	Hlp_Seek
-	moveq	#0,d2
-	moveq	#-1,d3
-	bsr	Hlp_Seek
-	move.l	d0,d3
-	SyCall	MemFast
-	beq	.Err1
-	move.l	a0,Hlp_Map(a4)
-	move.l	d3,Hlp_LMap(a4)
-	move.l	a0,d2
-	bsr	Hlp_Read
-	bne	.Err2
-	bsr	Hlp_Close		Ferme le fichier
-; Ramene l'adresse et la longueur...
-.NoLoad	move.l	Hlp_Map(a4),a1
-	move.l	Hlp_LMap(a4),d1
-	moveq	#0,d0
-	bra.s	.Out
-; Erreurs de chargement!
-.Err1	bsr	Hlp_Close		Cannot load .MAP file
-	bsr	Hlp_FreeMap
-	moveq	#18,d0
-	bra.s	.Out
-.Err2	bsr	Hlp_FreeMap		Out of memory
-	moveq	#17,d0
-; Sortie
-.Out	movem.l	(sp)+,d2-d7/a2-a3
-	tst.l	d0
-	rts
-
-;	Efface le buffer MAP
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~
-Hlp_FreeMap
-	bsr	Hlp_FreeTexte
-	move.l	Hlp_Map(a4),d1
-	beq.s	.skip
-	move.l	d1,a1
-	move.l	Hlp_LMap(a4),d0
-	clr.l	Hlp_Map(a4)
-	clr.l	Hlp_LMap(a4)
-	SyCall	MemFree
-.skip	rts
-;	Efface le buffer TEXTE
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Hlp_FreeTexte
-	move.l	Hlp_Texte(a4),d1
-	beq.s	.skip
-	move.l	d1,a1
-	move.l	Hlp_LTexte(a4),d0
-	clr.l	Hlp_Texte(a4)
-	clr.l	Hlp_LTexte(a4)
-	SyCall	MemFree
-.skip	rts
-;	Additionne le suffixe au nom de fichier
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-AddSuffix
-	move.l	a1,d0
-	move.l	Buffer(a5),a1
-	lea	512(a1),a1
-	move.l	a1,d1
-.Copy	move.b	(a0)+,(a1)+
-	bne.s	.Copy
-	subq.l	#1,a1
-	move.l	d0,a0
-.Loop	move.b	(a0)+,(a1)+
-	bne.s	.Loop
-	rts
-
-;	Open file
-; ~~~~~~~~~~~~~~~
-Hlp_Open
-	move.l	a6,-(sp)
-	move.l	DosBase(a5),a6
-	jsr	_LVOOpen(a6)
-	move.l	(sp)+,a6
-	move.l	d0,d1
-	rts
-;	Close file
-; ~~~~~~~~~~~~~~~
-Hlp_Close
-	move.l	a6,-(sp)
-	move.l	DosBase(a5),a6
-	jsr	_LVOClose(a6)
-	move.l	(sp)+,a6
-	rts
-;	Read file
-; ~~~~~~~~~~~~~~~
-Hlp_Read
-	movem.l	d1/a0/a1/a6,-(sp)
-	move.l	DosBase(a5),a6
-	jsr	_LVORead(a6)
-	movem.l	(sp)+,d1/a0/a1/a6
-	cmp.l	d0,d3
-	rts
-;	Seek file
-; ~~~~~~~~~~~~~~~
-Hlp_Seek
-	movem.l	d1/a0/a1/a6,-(sp)
-	move.l	DosBase(a5),a6
-	jsr	_LVOSeek(a6)
-	movem.l	(sp)+,d1/a0/a1/a6
-	rts
-; 	D0 > majuscule
-; ~~~~~~~~~~~~~~~~~~~~
-Hlp_D0Maj
-	cmp.b	#"a",d0
-	bcs.s	.skip
-	cmp.b	#"z",d0
-	bhi.s	.skip
-	sub.b	#$20,d0
-.skip	rts
-
-
-
+; The help: monitor/help.cpp
+Hlp_FreeMap	jmp	_mon_free_map_entry
 
 ; A line split into its parts: monitor/listing.cpp
 Tt_Decoup	jmp	_mon_split_entry
@@ -2491,198 +1439,15 @@ Ttt_DelAff	jmp	_mon_delete_show_entry
 
 ;	TOUCHE: changement d'ecran view
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Tt_CEc	bsr	View_GEc
-	bsr	View_Aff
-	moveq	#-1,d0
-	rts
-;	TOUCHE: mouvement vers le bas dans l'ecran
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Tt_Down	bsr	View_ScAd
-	bmi.s	TtMvX
-	bsr	Accel
-	move.w	6(a0),d0
-	move.w	d0,d2
-	sub.w	2(a0),d0
-	sub.w	d1,d0
-	cmp.w	#RedTY,d0
-	bcs.s	TtMvS
-	add.w	d1,2(a0)
-	bsr	View_Aff
-	bra.s	TtMvX
-;	TOUCHE: mouvement vers le haut dans l'ecran
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Tt_Up	bsr	View_ScAd
-	bmi.s	TtMvX
-	bsr	Accel
-	move.w	2(a0),d0
-	sub.w	d1,d0
-	bmi.s	TtMvS
-	move.w	d0,2(a0)
-	bsr	View_Aff
-	bra.s	TtMvX
-TtMvS	clr.w	Tt_Accel(a4)
-TtMvX	moveq	#0,d0
-	rts
-;	TOUCHE: mouvement vers la gauche dans l'ecran
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Tt_Left	bsr	View_ScAd
-	bmi.s	TtMvX
-	bsr	Accel
-	move.w	(a0),d0
-	sub.w	d1,d0
-	bmi.s	TtMvS
-	move.w	d0,(a0)
-	bsr	View_Aff
-	bra.s	TtMvX
-;	TOUCHE: mouvement vers la droite dans l'ecran
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Tt_Right
-	bsr	View_ScAd
-	bmi.s	TtMvX
-	bsr	Accel
-	move.w	4(a0),d0
-	sub.w	(a0),d0
-	sub.w	d1,d0
-	cmp.w	#RedTX,d0
-	bcs.s	TtMvS
-	add.w	d1,(a0)
-	bsr	View_Aff
-	bra.s	TtMvX
-; Acceleration
-Accel	move.w	Tt_Accel(a4),d1
-	cmp.w	#15,d1
-	bcc.s	.skip
-	addq.w	#1,d1
-	move.w	d1,Tt_Accel(a4)
-.skip	lsr.w	#2,d1
-	lea	Tablacc(pc),a1
-	move.b	0(a1,d1.w),d1
-	ext.w	d1
-	rts
-;	TOUCHE: passe aux ecrans du programme
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Tt_See	bsr	Tt_Hide
-	bsr	Wmky
-	bsr	Tt_Show
-	moveq	#-1,d0
-	rts
+Tt_CEc	jmp	_mon_change_screen_entry
+Tt_Down	jmp	_mon_move_down_entry
+Tt_Up	jmp	_mon_move_up_entry
+Tt_Left	jmp	_mon_move_left_entry
+Tt_Right	jmp	_mon_move_right_entry
+Tt_See	jmp	_mon_see_entry
+View_Aff	jmp	_mon_view_show_entry
+View_Ec	jmp	_mon_view_next_entry
 
-;	Affichage de l'ecran du programme
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-View_Aff
-	movem.l	a0-a6/d0-d7,-(sp)
-
-; Trouve l'ecran actuel
-	move.w	Tt_View(a4),d1
-	bmi	.closed
-
-; L'ecran est-il encore ouvert?
-.Again	lea	T_EcAdr(a5),a0
-	lsl.w	#2,d1
-	move.l	0(a0,d1.w),d0
-	beq	.closed
-	move.l	d0,a2
-	cmp.l	Tt_ViewAd(a4),a2
-	bne.s	.new
-	move.w	EcTx(a2),d0
-	cmp.w	Tt_ViewTX(a4),d0
-	bne.s	.new
-	move.w	EcTy(a2),d0
-	cmp.w	Tt_ViewTY(a4),d0
-	bne.s	.new
-	move.w	EcNPlan(a2),d0
-	cmp.w	Tt_ViewNP(a4),d0
-	beq.s	.old
-* Nouvel ecran!
-.new	bsr	View_Cls
-
-;	Ok, fait la copie
-; ~~~~~~~~~~~~~~~~~~~~~~~
-.old	move.w	EcTx(a2),Tt_ViewTX(a4)
-	move.w	EcTy(a2),Tt_ViewTY(a4)
-	move.w	EcNPlan(a2),Tt_ViewNP(a4)
-	move.l	a2,Tt_ViewAd(a4)
-
-; Prend la position du scrolling
-	SyCall	WaitVbl
-	bsr	View_ScAd
-	move.w	(a0),d0
-	move.w	2(a0),d1
-
-	tst.w	EcCon0(a2)
-	bmi	.OHi
-; Origine LOWRES : veritable reduce, ultra rapide (he he!)
-	move.l	a2,a0
-	move.l	T_EcAdr+Tt_Ecran1*4(a5),a1
-	move.l	a0,SccEcO(a5)
-	move.l	a1,SccEcD(a5)
-	move.w	#RedX,d2
-	move.w	#RedY,d3
-	move.w	#RedTX,d4
-	add.w	d0,d4
-	move.w	#RedTY,d5
-	add.w	d1,d5
-	move.w	#$CC,d6
-	move.w	EcTy(a0),-(sp)
-	move.w	EcTLigne(a0),-(sp)
-	move.l	a0,-(sp)
-	move.w	EcTy(a0),d7
-	lsr.w	#1,d7
-	move.w	d7,EcTy(a0)
-	move.w	EcTLigne(a0),d7
-	lsl.w	#1,d7
-	move.w	d7,EcTLigne(a0)
-	JJsrR	L_Sco0,a2
-	move.l	(sp)+,a0
-	move.w	(sp)+,EcTLigne(a0)
-	move.w	(sp)+,EcTy(a0)
-	bsr	TtReCop
-	bra	TtRx
-; Origine HIRES : simple recopie
-.OHi	move.l	a2,a0
-	move.l	T_EcAdr+Tt_Ecran1*4(a5),a1
-	move.l	a0,SccEcO(a5)
-	move.l	a1,SccEcD(a5)
-	move.w	#RedX,d2
-	move.w	#RedY,d3
-	move.w	#RedTX,d4
-	add.w	d0,d4
-	move.w	#RedTY,d5
-	add.w	d1,d5
-	move.w	#$CC,d6
-	JJsrR	L_Sco0,a2
-	bsr	TtReCop
-	bra.s	TtRx
-; Plus d'ecran. Trouve un nouveau ou sort...
-.closed	bsr	View_GEc
-	move.w	Tt_View(a4),d1
-	bpl	.Again
-	bsr	View_Cls
-	clr.l	Tt_ViewAd(a4)
-; Sortie
-TtRx	movem.l	(sp)+,a0-a6/d0-d7
-	rts
-
-;	Trouve le prochain ecran ouvert
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-View_GEc
-	move.w	Tt_View(a4),d1
-View_Ec
-	moveq	#7,d0
-.loop	addq.w	#1,d1
-	cmp.w	#8,d1
-	bcs.s	.skip
-	moveq	#0,d1
-.skip	move.w	d1,d2
-	lsl.w	#2,d2
-	lea	T_EcAdr(a5),a0
-	tst.l	0(a0,d2.w)
-	bne.s	.skip1
-	dbra	d0,.loop
-	moveq	#-1,d1
-.skip1	move.w	d1,Tt_View(a4)
-	bsr	View_Info
-	rts
 ;	Trouve l'adresse des positions de scrolling.
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ;	D1->	A0
@@ -2698,29 +1463,12 @@ View_ScAd
 	rts
 ;	Calcule la table lors d'init!
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-View_ScUpdate
-	movem.l	a0-a2/d0-d1,-(sp)
-	lea	T_EcAdr(a5),a2
-	lea	ViewScrols(a4),a1
-	moveq	#7,d1
-.loop	clr.l	(a1)
-	tst.l	(a2)
-	beq.s	.skip
-	move.l	(a2),a0
-	move.w	EcTx(a0),4(a1)
-	move.w	EcTy(a0),d0
-	tst.w	EcCon0(a0)
-	bmi.s	.sk
-	lsr.w	#1,d0
-.sk	move.w	d0,6(a1)
-.skip	addq.l	#8,a1
-	addq.l	#4,a2			BUG dans TUTOR! ILLEGAL
-	dbra	d1,.loop
-	movem.l	(sp)+,a0-a2/d0-d1
-	rts
+View_ScUpdate	jmp	_mon_view_sizes_entry
 
 ;	Routine d'interruption, recopie la palette...
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		xdef	_mon_view_inter
+_mon_view_inter
 View_Inter
 	move.l	Mon_Base(a5),a0
 	move.w	Tt_View(a0),d2
@@ -2753,84 +1501,10 @@ View_Act
 	moveq	#Tt_Ecran1,d1
 Tt_EcAct	jmp	_mon_activate_entry
 
-;	CLS de l'�cran de zoom
+;	CLS de l'ÃÂÃÂÃÂÃÂ¯ÃÂÃÂÃÂÃÂ¿ÃÂÃÂÃÂÃÂ½cran de zoom
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-View_Cls
-	movem.l	d0-d5/a0-a1,-(sp)
-	moveq	#0,d1
-	move.w	#RedX,d2
-	move.w	#RedY,d3
-	move.w	d2,d4
-	move.w	d3,d5
-	add.w	#RedTX,d4
-	add.w	#RedTY,d5
-	EcCall	ClsEc
-	movem.l	(sp)+,d0-d5/a0-a1
-	rts
-
-;	Affiche la position de l'ecran
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-View_Info
-	tst.w	Tt_View(a4)
-	bpl.s	.Ok
-	lea	Info_ViewOff(pc),a0
-	bra.s	.Skip
-.Ok	lea	Info_View(pc),a0
-	bsr	Tt_Text
-	move.l	Buffer(a5),a0
-	lea	TBuffer-16(a0),a0
-	move.l	#$20202020,(a0)
-	clr.l	4(a0)
-	move.w	Tt_View(a4),d0
-	ext.l	d0
-	move.l	a1,-(sp)
-	JJsrR	L_LongToDec,a1
-	move.l	(sp)+,a1
-	lea	Info_Buf(pc),a0
-.Skip	bsr	Tt_Text
-	rts
-
-;	PRINT TEXT A0
-; ~~~~~~~~~~~~~~~~~~~
-Tt_Text	movem.l	a0-a2/d0-d2,-(sp)
-	move.l	T_RastPort(a5),a1
-	move.w	(a0)+,d0
-	bmi.s	.skip1
-	move.w	d0,36(a1)
-.skip1	move.w	(a0)+,d0
-	bmi.s	.skip2
-	move.w	d0,38(a1)
-.skip2	move.b	(a0)+,d0
-	bmi.s	.skip3
-	ext.w	d0
-	GfxCa5	SetBPen
-.skip3	move.b	(a0)+,d0
-	bmi.s	.skip4
-	ext.w	d0
-	GfxCa5	SetAPen
-.skip4	move.w	(a0)+,d0
-	bmi.s	.skop5
-	ext.l	d0
-	GfxCa5	SetDrMd
-.skop5	move.l	a0,a2
-	moveq	#-1,d0
-.loop	addq.w	#1,d0
-	tst.b	(a2)+
-	bne.s	.loop
-	tst.w	d0
-	bne.s	.skip5
-	move.l	Buffer(a5),a0
-	lea	TBuffer-16(a0),a0
-	bra.s	.skop5
-.skip5	ext.l	d0
-	movem.l	a0/d0,-(sp)
-	GfxCa5	Text
-	movem.l	(sp)+,a0/d0
-	GfxCa5	TextLength
-	subq.w	#8,d0
-	add.w	d0,36(a1)
-	movem.l	(sp)+,a0-a2/d0-d2
-	rts
+View_Cls	jmp	_mon_view_clear_entry
+View_Info	jmp	_mon_view_info_entry
 
 ; ___________________________________________________________________
 ;
@@ -2839,100 +1513,9 @@ Tt_Text	movem.l	a0-a2/d0-d2,-(sp)
 
 ;	Impression de tous les boutons
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-ABoutons
-	moveq	#NBoutons,d0
-	moveq	#0,d1
-.loop	bsr	ABouton
-	subq.w	#1,d0
-	bne.s	.loop
-	rts
-
-;	Impression du bouton D0, active: D1
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-ABouton	movem.l	a0/d2-d3,-(sp)
-	move.l	#BtX,d2
-	moveq	#BtY,d3
-	lea	Tt_Boutons(pc),a0
-	bsr	Aff_Bouton
-	movem.l	(sp)+,a0/d2-d3
-	rts
-
-;------ Bouton g�n�ral
-;	A0=table
-;	A1= images
-;	D0= numero
-;	D1= on/off
-;	D2= offset x
-;	D3= offset y
-Aff_Bouton
-	movem.l	a0-a1/d0-d5,-(sp)
-	move.w	d2,d4
-	move.w	d3,d5
-	mulu	#18,d0
-	lea	-18+4(a0,d0.w),a0
-	move.w	-4(a0),d0
-	tst.w	d1
-	beq.s	.skip
-	move.w	-2(a0),d0
-.skip	move.w	(a0)+,d1
-	bclr	#0,d1
-	bne.s	.sku
-	add.w	d2,d1
-.sku	ext.l	d1
-	move.w	(a0)+,d2
-	bclr	#0,d2
-	bne.s	.sko
-	add.w	d3,d2
-.sko	ext.l	d2
-	moveq	#-1,d3
-	tst.w	d0
-	beq.s	.ski
-	bsr	Tt_UPack
-.ski
-* Fixe la zone D0
-	move.w	d2,d3
-	move.w	d1,d2
-	move.w	(a0)+,d1
-	beq.s	.slip
-	move.w	(a0)+,d0
-	bclr	#0,d0
-	beq.s	.sl
-	move.w	d4,d2
-.sl	add.w	d0,d2
-	move.w	(a0)+,d0
-	bclr	#0,d0
-	beq.s	.sm
-	move.w	d5,d3
-.sm	add.w	d0,d3
-	move.w	(a0)+,d0
-	bclr	#0,d0
-	bne.s	.sn
-	move.w	d2,d4
-.sn	add.w	d0,d4
-	move.w	(a0)+,d0
-	bclr	#0,d0
-	bne.s	.so
-	move.w	d3,d5
-.so	add.w	d0,d5
-	SyCall	SetZone
-.slip
-* Fini!
-	movem.l	(sp)+,a0-a1/d0-d5
-	rts
-
-;	Unpack un bouton
-; ~~~~~~~~~~~~~~~~~~~~~~
-Tt_UPack
-	movem.l	a0-a2/d0-d1,-(sp)
-	move.l	Tt_Resource(a4),a0
-	add.l	2(a0),a0
-	lsl.w	#2,d0
-	move.l	-4+2(a0,d0.w),d0
-	add.l	d0,a0
-	move.l	T_EcCourant(a5),a1
-	JJsrR	L_UnPack_Bitmap,a2
-	movem.l	(sp)+,a0-a2/d0-d1
-	rts
+ABoutons	jmp	_mon_all_buttons_entry
+ABouton	jmp	_mon_button_entry
+Tt_UPack	jmp	_mon_unpack_entry
 
 ;	Trouve le message D0 >>> A0
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -2959,7 +1542,7 @@ XYMouEc	SyCall	XyMou
 Tt_Multi
 	JJmp	L_Sys_WaitMul
 
-; 	Banques de m�moire/dialogue du moniteur
+; 	Banques de mÃÂÃÂÃÂÃÂ¯ÃÂÃÂÃÂÃÂ¿ÃÂÃÂÃÂÃÂ½moire/dialogue du moniteur
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Tt_TtBanks	jmp	_mon_banks_monitor_entry
 Tt_PrgBanks	jmp	_mon_banks_program_entry
@@ -2969,59 +1552,16 @@ Tt_PrgBanks	jmp	_mon_banks_program_entry
 * Ancien vecteur ECRANS
 Old_EcVect	dc.l	0
 Old_SyVect	dc.l	0
-* Definition des bouttons
-* X,Y unpack / X,Y,TX,TY zones
-Tt_Boutons	dc.w	18,19,0*48,2*24,1,0,0,48,24
-		dc.w	20,21,1*48,2*24,2,0,0,48,24
-		dc.w	22,23,2*48,2*24,3,0,0,48,24
-		dc.w	24,25,3*48,2*24,4,0,0,48,24
-		dc.w	26,27,4*48,2*24,5,0,0,48,24
-
-		dc.w	2,3,0*48,0*24,6,32,0,32,16
-		dc.w	2,4,0*48,0*24,7,32,32,32,16
-		dc.w	2,5,0*48,0*24,8,0,16,32,16
-		dc.w	2,6,0*48,0*24,9,64,16,32,16
-		dc.w	2,7,0*48,0*24,10,32,16,32,16
-
-		dc.w	8,9,2*48,0*24,11,0,0,96,24
-		dc.w	10,11,4*48,0*24,12,0,0,48,24
-		dc.w	0,0,0+1,0+1,13,16,8,320,100
-
-		dc.w	16,17,2*48,1*24,14,0,0,48,24
-		dc.w	14,15,3*48,1*24,15,0,0,48,24
-		dc.w	12,13,4*48,1*24,16,0,0,48,24
-
-* Table d'acceleration des deplacements
-Tablacc		dc.b	1,2,4,8
-
-* Info ecran
-Info_View	dc.w	134,6,$0D0E,%001
-		dc.b	"Screen # ",0
-Info_Buf	dc.w	134+8*9-3,6,$0D0E,%001
-		dc.b	0
-Info_ViewOff	dc.w	126,6,$0D0E,%001
-		dc.b	" No screens ",0
-
 * Textes fenetre listing
+		xdef	_mon_window_init
+_mon_window_init
 Ttt_WInit	dc.b	27,"C0",27,"B2",27,"P3",25,27,"V0",0
-Ttt_Scrup	dc.b	27,"Y0",22,0
-Ttt_Scrdown	dc.b	12,20,0
-Ttt_IOn		dc.b	27,"I1",0
-Ttt_IOff	dc.b	27,"I0",0
-Ttt_InOn	dc.b	27,"U1",0
-Ttt_InOff	dc.b	27,"U0",0
-Ttt_Mark	dc.b	27,"B0",27,"P1>>>",27,"B2",27,"P3",0
 
-* Textes fenetre info
-Inf_Shade	dc.b	27,"S1",0
-Inf_ShadOff	dc.b	27,"S0",0
-Inf_Par2	dc.b	" = ",0
-Inf_Mark	dc.b	">>> ",0
-NomMap		dc.b	".Map",0
-NomTxt		dc.b	".Txt",0
 		Even
 ; 		Petit DBL pour dessiner le fond
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		xdef	_mon_dbl
+_mon_dbl
 DBL		dc.w	.Fin-.Debut
 .Debut		dc.b	"BA	0,0;"
 		dc.b	"SI	SW,SH;"

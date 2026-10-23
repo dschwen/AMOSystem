@@ -42,9 +42,9 @@ emulator then grabs the input), one command per line:
   type TEXT        type the rest of the line as it is (any printable ASCII,
                    no comment)
   timeout SECONDS  a longer time limit for this test
-  mask X1 Y1 X2 Y2 an editor test's screen compared without this
-                   rectangle too (the memory gauges elsewhere than at the
-                   top, say)
+  mask X1 Y1 X2 Y2 an editor test's screen and shots compared without
+                   this rectangle too (the memory gauges elsewhere than
+                   at the top, say)
   runs N           AMOS is started N times, the later times with no
                    program (after the editor quit, say); the test gets a
                    writable copy of the AMOS drive of its own
@@ -518,15 +518,30 @@ def compare_files(name, out):
     screen = (name + '.png', name + '_mask.png')
     got = {f: p for f, p in outputs(out, name).items()}
     want = {f: p for f, p in outputs(GOLDEN, name).items() if f not in screen}
+    boxes = extra_masks(name)
     problems = []
     for f in sorted(set(got) | set(want)):
         if f not in got:
             problems.append(f'{f} missing')
         elif f not in want:
             problems.append(f'{f} not in golden')
+        elif f.endswith('.png') and boxes:
+            if not same_image(got[f], want[f], boxes):
+                problems.append(f'{f} differs')
         elif open(got[f], 'rb').read() != open(want[f], 'rb').read():
             problems.append(f'{f} differs')
     return problems
+
+
+def same_image(a, b, boxes):
+    """Two screenshots alike but in the "mask" rectangles."""
+    a, b = Image.open(a).convert('RGB'), Image.open(b).convert('RGB')
+    if a.size != b.size:
+        return False
+    for box in boxes:
+        a.paste((0, 0, 0), box)
+        b.paste((0, 0, 0), box)
+    return a.tobytes() == b.tobytes()
 
 
 def main():

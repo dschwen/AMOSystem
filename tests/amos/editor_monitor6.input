@@ -1,0 +1,50 @@
+timeout 240
+mask 0 0 640 20
+mask 620 20 640 400
+wait 12
+key ctrl+y
+wait 0.5
+glide -3000 -3000
+wait 0.3
+button 3 down
+wait 0.5
+glide 80 0
+wait 0.5
+glide 0 79
+wait 0.5
+button 3 up
+wait 6
+glide -3000 -3000
+wait 0.2
+glide 628 173
+wait 0.4
+click 1
+wait 1
+glide -3000 -3000
+wait 0.2
+glide 134 303
+wait 0.4
+button 1 down
+wait 0.3
+move 34 0
+wait 0.5
+button 1 up
+wait 12
+shot h1
+glide -3000 -3000
+wait 0.2
+glide 135 42
+wait 0.4
+click 1
+wait 5
+shot h2
+glide -3000 -3000
+wait 0.2
+glide 126 319
+wait 0.4
+button 1 down
+wait 0.3
+move 34 0
+wait 0.5
+button 1 up
+wait 3

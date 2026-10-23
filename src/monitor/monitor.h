@@ -45,6 +45,28 @@ void listing_centre();
 void listing_size(uint16_t y);
 bool listing_screen();
 void split(uint16_t n);
+struct Chosen {
+    uint16_t length;
+    const uint8_t *text;
+    uint16_t y, x;
+};
+Chosen choose(uint16_t x, uint16_t y, uint16_t row);
+
+// monitor/view.cpp
+void view_update();
+void screens_show(bool show);
+void mouse_free();
+void stop_button();
+void picture(uint16_t n, int32_t x, int32_t y);     // Tt_UPack
+void buttons_draw();                                // ABoutons
+void mode_set(uint16_t mode);                       // Tt_SHelp / Tt_SBreak / Tt_SEval
+void view_erase();                                  // View_Cls
+void screens_refresh();                             // TtReCop
+void view_reset();                                  // View_ScUpdate
+
+// monitor/help.cpp
+void run_help(uint16_t x, uint16_t y, uint16_t row);
+void help_free();                                   // Hlp_FreeMap
 
 // monitor/info.cpp
 const uint8_t *message(uint16_t n, uint32_t *d0 = nullptr);

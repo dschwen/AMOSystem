@@ -16,7 +16,7 @@ using namespace amos;
 using namespace amos::monitor;
 
 // +Monitor.s
-extern "C" uint8_t mon_split_hook[], mon_no_init[], mon_run_help[];
+extern "C" uint8_t mon_split_hook[];
 
 namespace {
 
@@ -340,12 +340,6 @@ Position mouse_position()
 
 // Tt_Souligne: an expression chosen by dragging (underlined); its text and
 // length, 0 if none
-struct Chosen {
-    uint16_t length;
-    const uint8_t *text;
-    uint16_t y, x;
-};
-
 Chosen choose(uint16_t x, uint16_t y, uint16_t row)
 {
     MonData &m = mon();
@@ -420,10 +414,13 @@ void slider_horizontal_click()
     listing_show();
 }
 
+// NoInit: "not initialised"
 void no_init()
 {
-    Regs r;
-    call(mon_no_init, r);
+    alert(message(11));
+    activate_info();
+    info_show_all();
+    wait_release();
 }
 
 // Ttt_CText: the window on the next instruction
@@ -652,12 +649,7 @@ void listing_click()
     if (m.Tt_MKey == 2 || m.Ttt_Mode == 1)
         return set_breakpoint(p);
     if (!m.Ttt_Mode) {
-        Regs r;
-        r.d[1] = p.x;
-        r.d[2] = p.y;
-        r.d[4] = p.row;
-        call(mon_run_help, r);
-        return;
+        return run_help(p.x, p.y, p.row);
     }
     evaluate_click(p);
 }
@@ -665,6 +657,7 @@ void listing_click()
 } // namespace
 
 extern "C" {
+void mon_no_init(AllRegs *) { no_init(); }
 void mon_listing_show(AllRegs *) { listing_show(); }
 void mon_listing_new(AllRegs *) { listing_new(); }
 void mon_listing_centre(AllRegs *) { listing_centre(); }

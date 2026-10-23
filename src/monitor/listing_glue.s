@@ -20,6 +20,7 @@
 		XREF	_mon_choose
 		XREF	_mon_mouse_position
 		XREF	_mon_split
+		XREF	_mon_no_init
 
 		SECTION	.text,CODE
 
@@ -51,3 +52,5 @@ _mon_choose_entry WEntry _mon_choose,l
 _mon_mouse_position_entry WEntry _mon_mouse_position,l
 		xdef	_mon_split_entry
 _mon_split_entry WEntry _mon_split,l
+		xdef	_mon_no_init_entry
+_mon_no_init_entry WEntry _mon_no_init,l
