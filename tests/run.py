@@ -42,6 +42,9 @@ emulator then grabs the input), one command per line:
   type TEXT        type the rest of the line as it is (any printable ASCII,
                    no comment)
   timeout SECONDS  a longer time limit for this test
+  runs N           AMOS is started N times, the later times with no
+                   program (after the editor quit, say); the test gets a
+                   writable copy of the AMOS drive of its own
   move DX DY       move the mouse by DX,DY in one event
   glide DX DY      the same in small steps (large moves)
   button N up|down / click N
@@ -106,7 +109,7 @@ Assign ENV: RAM:ENV
 Copy ENVARC: ENV: ALL QUIET
 CD AMOSPRO:
 AMOSPRO:AMOSPro AMOSTEST:{name}.AMOS
-Echo "done" >AMOSTEST:out/DONE
+{again}Echo "done" >AMOSTEST:out/DONE
 '''
 
 FS_UAE_CONFIG = '''[fs-uae]
@@ -125,7 +128,7 @@ hard_drive_0_label = AMOSTEST
 hard_drive_0_priority = 10
 hard_drive_1 = {amos}
 hard_drive_1_label = AMOSPRO
-hard_drive_1_read_only = 1
+hard_drive_1_read_only = {read_only}
 hard_drive_1_priority = -128
 hard_drive_2 = {workbench}
 hard_drive_2_label = Workbench
@@ -326,7 +329,7 @@ def play_input(script, display, out, deadline, name=None, env=None, stopped=None
                 d.keys([KEYSYMS.get(c, c) for c in ' '.join(args)])
             elif op == 'type':
                 d.keys(type_keys(args[0]), hold=0.03, gap=0.03)
-            elif op == 'timeout':
+            elif op in ('timeout', 'runs'):
                 pass
             elif op == 'move':
                 d.move_by(int(args[0]), int(args[1]))
@@ -375,6 +378,7 @@ def run_test(name, tables, amos, kickstart, workbench, timeout, visible):
         head += '\n'
     editor = is_editor_test(name)
     script = None
+    runs = 1
     if os.path.exists(os.path.join(TESTS, name + '.input')):
         with open(os.path.join(TESTS, name + '.input')) as f:
             script = [parse_input_line(line) for line in f]
@@ -382,6 +386,8 @@ def run_test(name, tables, amos, kickstart, workbench, timeout, visible):
         for cmd in script:
             if cmd[0] == 'timeout':
                 timeout = max(timeout, int(cmd[1]))
+            elif cmd[0] == 'runs':
+                runs = int(cmd[1])
     if editor:
         listing = body
     else:
@@ -390,13 +396,19 @@ def run_test(name, tables, amos, kickstart, workbench, timeout, visible):
     with open(os.path.join(hd, name + '.AMOS'), 'rb') as f:
         listing_bytes = f.read()
     with open(os.path.join(hd, 'S', 'startup-sequence'), 'w', encoding='latin-1') as f:
-        f.write(STARTUP.format(name=name))
+        f.write(STARTUP.format(name=name, again='AMOSPRO:AMOSPro\n' * (runs - 1)))
     uaem.add_sidecars(hd)
+    read_only = 1
+    if runs > 1:
+        # AMOS writes to its own drive then (the configuration, the session)
+        private = os.path.join(base, 'AMOS')
+        shutil.copytree(amos, private)
+        amos, read_only = private, 0
 
     config = os.path.join(base, 'test.fs-uae')
     with open(config, 'w') as f:
         f.write(FS_UAE_CONFIG.format(kickstart=kickstart, hd=hd, amos=amos,
-                                     workbench=workbench, base=os.path.join(base, 'fsuae'),
+                                     workbench=workbench, base=os.path.join(base, 'fsuae'), read_only=read_only,
                                      grab=1 if script else 0))
     env = dict(os.environ)
     env['ALSOFT_DRIVERS'] = 'null'      # no sound device: keep OpenAL quiet

@@ -1,0 +1,42 @@
+timeout 180
+runs 2
+wait 12
+key ctrl+y
+key ctrl+y
+key ctrl+y
+type Rem SESSION
+key Return
+wait 0.5
+key ramiga+shift+w
+wait 2
+type Print 2
+key Return
+wait 0.5
+glide -3000 -3000
+wait 0.3
+button 3 down
+wait 0.5
+glide 340 0
+wait 0.5
+glide 0 127
+wait 0.5
+button 3 up
+wait 1
+key F1
+key F2
+key F4
+wait 0.3
+key Return
+wait 1
+glide -3000 -3000
+wait 0.3
+button 3 down
+wait 0.5
+glide 20 0
+wait 0.5
+glide 0 127
+wait 0.5
+button 3 up
+wait 25
+click 1
+wait 3
