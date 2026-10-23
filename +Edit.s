@@ -63,6 +63,7 @@
 		XREF	_ed_store_entry,_ed_store_block_entry,_ed_delete_line_entry,_ed_delete_chunk_at_entry
 		XREF	_ed_delete_chunk_entry,_ed_find_line_entry,_ed_next_line_entry
 		XREF	_ed_indent_entry
+		XREF	_ed_procs_open_entry,_ed_procs_close_entry,_ed_procs_entry,_ed_proc_open_entry,_ed_clear_error_proc_entry
 		XREF	_ed_top_up_entry
 		XREF	_ed_top_down_entry
 		XREF	_ed_bottom_up_entry
@@ -5120,6 +5121,8 @@ Ed_NPrgToBuf
 ;
 ; Recall MESSAGE D'ALERTE
 ; ~~~~~~~~~~~~~~~~~~~~~~~
+		xdef	_ed_r_alert
+_ed_r_alert
 Ed_RAlert
 	moveq	#127,d0
 	move.l	Ed_BufT(a5),a0
@@ -6023,6 +6026,8 @@ Indent	jmp	_ed_indent_entry
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ;	D0	Flag affichage ou non
 ;
+		xdef	_ed_va_tester
+_ed_va_tester
 Ed_VaTester
 	tst.b	Prg_StModif(a6)		Vraiment tester?
 	beq.s	.Ok
@@ -6078,61 +6083,10 @@ Ed_Test3
 ; ___________________________________________________________________
 
 ;
-; OPEN / CLOSE ALL PROCEDURES
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_ProcsOpen
-	moveq	#0,d2
-	bra.s	Ed_Procs
-Ed_ProcsClose
-	moveq	#-1,d2
-Ed_Procs
-	bsr	Ed_TokCur
-	tst.w	d2
-	beq.s	.Skip
-	moveq	#-1,d0
-	bsr	Ed_VaTester
-.Skip
-; Sauve les marques
-; ~~~~~~~~~~~~~~~~~
-	bsr	Ed_Marks2Adress
-; Trouve la position actuelle du curseur
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	move.w	Edt_YPos(a4),d0
-	add.w	Edt_YCu(a4),d0
-	bsr	Ed_FindL
-	move.l	a0,d3
-; Boucle d'exploration du programme
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	clr.w	d0
-	bsr	Ed_FindL
-	beq.s	.EdFa3
-.EdFa1	cmp.w	#_TkProc,2(a0)
-	bne.s	.EdFa2
-	btst	#6,10(a0)
-	bne.s	.EdFa2
-	bclr	#7,10(a0)
-	tst.w	d2
-	beq.s	.EdFa2
-	bset	#7,10(a0)
-.EdFa2	bsr	Ed_NextL
-	bne.s	.EdFa1
-; Reaffiche le programme
-; ~~~~~~~~~~~~~~~~~~~~~~
-.EdFa3	JJsr	L_Prg_CptLines
-; Recalcule les marques
-; ~~~~~~~~~~~~~~~~~~~~~
-	bsr	Ed_Marks2Number
-; Recentre le curseur
-; ~~~~~~~~~~~~~~~~~~~
-	move.w	Edt_YPos(a4),d0
-	add.w	Edt_YCu(a4),d0
-	tst.l	d3
-	beq.s	.EdFa4
-	move.l	d3,a0
-	bsr	Ed_FindA
-.EdFa4	bsr	Ed_SetY
-	bsr	Ed_NewBuf
-	rts
+; Open / close all procedures: src/editor/procs.cpp
+Ed_ProcsOpen	jmp	_ed_procs_open_entry
+Ed_ProcsClose	jmp	_ed_procs_close_entry
+Ed_Procs	jmp	_ed_procs_entry
 
 ;
 ; INSERT MACHINE LANGAGE
@@ -6261,70 +6215,9 @@ Ed_ProcML
 	bra	Ed_Alert
 
 ;
-; OPEN / CLOSE PROCEDURE
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_ProcOpen
-	bsr	Ed_TokCur
-; Trouve la ligne
-; ~~~~~~~~~~~~~~~
-	move.w	Edt_YPos(a4),d0
-	add.w	Edt_YCu(a4),d0
-	bsr	Ed_FindL
-	move.l	Edt_DebProc(a4),d0
-	beq	Ed_FoE
-; Peut-on ouvrir?
-; ~~~~~~~~~~~~~~~
-	move.l	d0,a2
-	btst	#6,10(a2)
-	bne.s	.Out
-; Ouverture ou fermeture?
-; ~~~~~~~~~~~~~~~~~~~~~~~
-	btst	#7,10(a2)
-	bne.s	.PaOu
-	move.l	a2,-(sp)		Si fermeture, on teste
-	moveq	#-1,d0
-	bsr	Ed_VaTester
-	move.l	(sp)+,a2
-.PaOu
-; Sauve les marques
-; ~~~~~~~~~~~~~~~~~
-	bsr	Ed_Marks2Adress
-; Change la procedure
-; ~~~~~~~~~~~~~~~~~~~
-	bchg	#7,10(a2)
-; Recalcule les marques
-; ~~~~~~~~~~~~~~~~~~~~~
-	bsr	Ed_Marks2Number
-; Recentre (autour de l'erreur s'il faut)!
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	JJsr	L_Prg_CptLines
-	move.l	a2,a0
-	tst.w	10(a0)
-	bmi.s	.Skip
-	tst.l	Prg_AdEProc(a6)
-	beq.s	.Out
-	bsr	Ed_RAlert
-	move.w	Prg_XEProc(a6),d0
-	bsr	Ed_SetX
-	move.l	Prg_AdEProc(a6),d0
-	bclr	#31,d0
-	move.l	d0,a0
-.Skip	bsr	Ed_FindA
-	bsr	Ed_SetY
-.Out	bsr	Ed_NewBuf
-	rts
-
-;
-; Arret de l'auto-centrage en cas d'erreur
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_ClEProc
-	tst.l	Prg_AdEProc(a6)
-	beq.s	.Out
-	bmi.s	.Skip
-	bset	#7,Prg_AdEProc(a6)
-	rts
-.Skip	clr.l	Prg_AdEProc(a6)
-.Out	rts
+; Open / close the procedure, no more centring on an error: src/editor/procs.cpp
+Ed_ProcOpen	jmp	_ed_proc_open_entry
+Ed_ClEProc	jmp	_ed_clear_error_proc_entry
 
 ;_____________________________________________________________________________
 ;
@@ -7269,6 +7162,8 @@ Ed_OofBuf
 ;
 ; Can't fold procedure
 ; ~~~~~~~~~~~~~~~~~~~~
+		xdef	_ed_fo_e
+_ed_fo_e
 Ed_FoE	move.w	#203,d0			***- Not a procedure
 		xdef	_ed_alert_100
 _ed_alert_100
