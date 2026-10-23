@@ -75,6 +75,18 @@
 		XREF	_ed_load_entry
 		XREF	_ed_reload_entry
 		XREF	_ed_name_part_entry
+		XREF	_ed_set_tab_entry
+		XREF	_ed_slider_update_entry
+		XREF	_ed_slider_draw_entry
+		XREF	_ed_close_name_entry
+		XREF	_ed_enlarge_fn_entry
+		XREF	_ed_button_draw_entry
+		XREF	_ed_button_draw_title_entry
+		XREF	_ed_disk_error_entry
+		XREF	_ed_load_error_entry
+		XREF	_ed_print_error_fn_entry
+		XREF	_ed_close_fn_entry
+		XREF	_ed_workbench_entry
 		XREF	_ed_cold_entry
 		XREF	_ed_title_entry
 		XREF	_ed_end_entry
@@ -1091,21 +1103,8 @@ Ed_ShTab	jmp	_ed_untab_entry
 ;
 ; SET TAB VALUE
 ; ~~~~~~~~~~~~~
-Ed_STab	bsr	Ed_TokCur
-	move.l	Ed_VDialogues(a5),a2
-	moveq	#0,d0
-	move.w	Ed_Tabs(a5),d0
-	move.l	d0,2*4(a2)
-	moveq	#EdD_SetTab,d0
-	bsr	Ed_Dialogue
-	moveq	#1,d0
-	moveq	#3,d1
-	moveq	#-1,d2
-	JJsr	L_Dia_GetValue
-	move.w	d1,Ed_Tabs(a5)
-; Flag pour QUIT
-	move.b	#1,EdC_Changed(a5)
-	bra	Ed_Loca
+; The tab value: editor/misc.cpp
+Ed_STab	jmp	_ed_set_tab_entry
 
 ;
 ; Cursor movement: src/editor/cursor.cpp
@@ -1150,14 +1149,6 @@ EdCocop	move.b	(a0)+,(a1)+
 	bne.s	EdCocop
 	rts
 ;
-; D0 > majuscule
-; ~~~~~~~~~~~~~~
-MajD0ed	cmp.b	#"a",d0
-	bcs.s	.skip
-	cmp.b	#"z",d0
-	bhi.s	.skip
-	sub.b	#$20,d0
-.skip	rts
 ;
 ; Ramene VRAI si D2 est une lettre ou un chiffre
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1417,21 +1408,13 @@ Edt_SliderY
 	bra	Edt_SlMinusY
 	bra	Edt_SlPlusY
 	bra	Edt_SlDrawY
+; The windows' sliders: editor/misc.cpp
 		xdef	_ed_sl_update_y
 _ed_sl_update_y
-Edt_SlUpdateY
-	move.w	Edt_WindTy(a4),Edt_SlV+Sl_Window(a4)
-	move.w	Edt_YPos(a4),Edt_SlV+Sl_Position(a4)
-	move.w	Prg_NLigne(a6),Edt_SlV+Sl_Global(a4)
-	rts
+Edt_SlUpdateY	jmp	_ed_slider_update_entry
 Edt_SlMinusY
 Edt_SlPlusY
-Edt_SlDrawY
-	movem.l	a2-a6/d2-d7,-(sp)
-	move.w	Edt_SlV+Sl_Position(a4),Edt_YPos(a4)
-	bsr	Ed_NewBuf
-	movem.l	(sp)+,a2-a6/d2-d7
-	rts
+Edt_SlDrawY	jmp	_ed_slider_draw_entry
 
 ;_____________________________________________________________________________
 ;
@@ -1728,6 +1711,8 @@ Ed_NotDone2
 ;
 ; Not an AMOS Program
 ; ~~~~~~~~~~~~~~~~~~~
+		xdef	_ed_not_amos
+_ed_not_amos
 Ed_PaAMOS
 	bsr	Ed_Close
 	move.w	#207,d0			***- Not an amos program
@@ -1905,32 +1890,7 @@ Ed_StDelChunk	jmp	_ed_delete_chunk_entry
 Ed_FindL	jmp	_ed_find_line_entry
 Ed_NextL	jmp	_ed_next_line_entry
 
-; Trouve la taille de la CURLIGNE
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_SizeL
-	move.l	Edt_CurLigne(a4),a0
-	JJsrP	L_Tk_SizeL,a1
-	rts
 
-; La ligne courante est-elle editable?
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_EditL
-	move.l	Edt_CurLigne(a4),a0
-	JJsrP	L_Tk_EditL,a1
-	rts
-
-;
-; TROUVE LE NUMERO ET LE DEBUT DE LA LIGNE A0
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-; D0-> Numero
-; D1-> Adresse debut proc
-;
-Ed_FindA
-	movem.l	a1/a2,-(sp)
-	move.l	Prg_StBas(a6),a1
-	JJsrR	L_Tk_FindA,a2
-	movem.l	(sp)+,a1/a2
-	rts
 ;
 ; Ramene l'adresse de la ligne sous le curseur
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1953,22 +1913,12 @@ Ed_LCourant:	jmp	_ed_current_line_entry
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 		xdef	_ed_wb
 _ed_wb
-Ed_Wb	EcCalD	AMOS_WB,0
-	rts
+Ed_Wb	jmp	_ed_workbench_entry
 
 
 ; ZAP: Ferme un fenetre contenant un programme donne
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_CloseName
-	bsr	Edt_AccAdr		Deja en memoire?
-	beq.s	.Fini
-	move.l	a0,a4			Active la fenetre
-	move.l	Edt_Prg(a4),a6
-	JJsr	L_Prg_DejaRunned	En train de tourner?
-	bne.s	.Fini
-	bsr	Ed_CloseWindow		Ferme la fenetre
-	bra.s	Ed_CloseName		Encore une fenetre a fermer?
-.Fini	rts
+Ed_CloseName	jmp	_ed_close_name_entry
 
 ; Ouvre une nouvelle fenetre+Charge prg
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -2104,36 +2054,13 @@ Ed_SaveIcon	jmp	_ed_save_icon_entry
 ;
 		xdef	_ed_enlarge
 _ed_enlarge
-Ed_Enlarge
-	movem.l	a0-a2/d0-d5,-(sp)
-	move.l	T_EcAdr+EcEdit*4(a5),a0
-	move.l	a0,a1
-	ext.l	d0
-	ext.l	d1
-	move.l	d1,d5
-	move.l	d0,d1
-	move.l	d0,d3
-	move.l	#160,d0
-	move.l	#480,d4
-	move.w	Ed_Sx(a5),d2
-	sub.w	#480-160,d2
-	ext.l	d2
-	JJsrR	L_ScCopy,a2
-	movem.l	(sp)+,a0-a2/d0-d5
-	rts
+Ed_Enlarge	jmp	_ed_enlarge_fn_entry
 
 ;
 ; Copie la palette de la souris dans l'�cran A0
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ;	A0=	Ecran Destination
 ;
-Ed_CopyPal
-	lea	EcPal+32(a0),a0
-	lea	PI_DefEPa+32(a5),a1
-	moveq	#16-1,d0
-.loop	move.w	(a1)+,(a0)+
-	dbra	d0,.loop
-	rts
 ; _____________________________________________________
 ;
 ;	Attente souris dans le titre
@@ -2169,26 +2096,8 @@ Bt_RoutIn
 	bra	Bt_EdDraw			6- Dessin d'un bouton
 ; Dessin d'un bouton ESCAPE!
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~
-Bt_EsCDraw
-	move.l	d2,-(sp)
-	move.w	Bt_Image(a2),d0
-	add.w	Bt_Pos(a2),d0
-	move.w	Bt_X(a2),d1
-	move.w	Bt_Y(a2),d2
-	bsr	Es_Unpack
-	move.l	(sp)+,d2
-	rts
-; Dessin d'un bouton EDITOR!
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~
-Bt_EdDraw
-	move.l	d2,-(sp)
-	move.w	Bt_Image(a2),d0
-	add.w	Bt_Pos(a2),d0
-	move.w	Bt_X(a2),d1
-	move.w	Bt_Y(a2),d2
-	bsr	Ed_Unpack
-	move.l	(sp)+,d2
-	rts
+Bt_EsCDraw	jmp	_ed_button_draw_title_entry
+Bt_EdDraw	jmp	_ed_button_draw_entry
 
 ;
 ; Gestion des boutons speciaux
@@ -2205,120 +2114,26 @@ EdK_MarkAll	jmp	_ed_insert_button_entry
 
 ; OPEN: ouvre le fichier systeme (diskname1) access mode D2
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_Open	move.l 	Name1(a5),d1
-Ed_OpenD1
-	move.l	a6,-(sp)
-	move.l	DosBase(a5),a6
-	jsr	_LVOOpen(a6)
-	move.l	(sp)+,a6
-	move.l	d0,Handle(a5)
-	rts
-
-; CLOSE fichier systeme
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 		xdef	_ed_close
 _ed_close
-Ed_Close
-	move.l	Handle(a5),d1
-	beq.s	.Skip
-	clr.l	Handle(a5)
-	move.l	a6,-(sp)
-	move.l	DosBase(a5),a6
-	jsr	_LVOClose(a6)
-	move.l	(sp)+,a6
-.Skip	rts
-
-; READ fichier systeme D3 octets dans D2
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_Read	movem.l	d1/a0/a1/a6,-(sp)
-	move.l	Handle(a5),d1
-	move.l	DosBase(a5),a6
-	jsr	_LVORead(a6)
-	movem.l	(sp)+,d1/a0/a1/a6
-	cmp.l	d0,d3
-	rts
-
-; WRITE fichier systeme D3 octets de D2
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_Write
-	movem.l	d1/a0/a1/a6,-(sp)
-	move.l	Handle(a5),d1
-	move.l	DosBase(a5),a6
-	jsr	_LVOWrite(a6)
-	movem.l	(sp)+,d1/a0/a1/a6
-	cmp.l	d0,d3
-	rts
-
-; SEEK fichier system D3 mode D2 deplacement
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_Seek	move.l	Handle(a5),d1
-	move.l	a6,-(sp)
-	move.l	DosBase(a5),a6
-	jsr	_LVOSeek(a6)
-	move.l	(sp)+,a6
-	tst.l	d0
-	rts
+Ed_Close	jmp	_ed_close_fn_entry
 ;
 ; Ouverture de l'imprimante
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Ed_PRTOpen	jmp	_ed_printer_open_entry
 		xdef	_ed_print_error
 _ed_print_error
-Ed_PErr	move.w	#216,d0
-	bra.s	Ed_DBis
+Ed_PErr	jmp	_ed_print_error_fn_entry
 Ed_PRTPrint	jmp	_ed_printer_print_entry
 ;
 ; Erreurs dans le chargement programme
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 		xdef	_ed_prg_load_err
 _ed_prg_load_err
-Ed_PrgLoadErr
-	cmp.w	#-2,d0
-	beq	Ed_OMm
-	cmp.w	#-3,d0
-	beq	Ed_PaAMOS
-;
-; Gestion des erreurs disque
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Ed_PrgLoadErr	jmp	_ed_load_error_entry
 		xdef	_ed_d_error
 _ed_d_error
-Ed_DError
-	move.l	a6,-(sp)
-	move.l	DosBase(a5),a6
-	jsr	_LVOIoErr(a6)
-	move.l	(sp)+,a6
-	lea	ErDisked(pc),a0
-	moveq	#DEBase-1,d1
-.Explo	addq.l	#1,d1
-	move.b	(a0)+,d2
-	beq.s	Paerr
-	cmp.b	d0,d2
-	bne.s	.Explo
-	move.w	d1,d0
-	addq.w	#1,d0
-; Imprime le message
-Ed_DBis	move.l	Ed_RunMessages(a5),a0
-	bsr	Ed_GetMessageA0
-; En cas de ZAPPEUSE, branche � ALERT normal
-	tst.b	Ed_Zappeuse(a5)
-	bne	Ed_ZapAlert
-; Boite de dialogue
-	move.l	Ed_VDialogues(a5),a1
-	move.l	a0,0*4(a1)
-	bsr	Ed_RazAlert
-	moveq	#"G",d0			Va faire du bruit!
-	bsr	Ed_SamPlay
-	moveq	#EdD_DiskErr,d0
-	bsr	Ed_Dialogue
-	bra	Ed_Loop
-Paerr	moveq	#DEBase+22+1,d0
-	bra.s	Ed_DBis
-; Table des erreurs reconnues
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~
-ErDisked
-	dc.b 203,204,205,210,213,214,216,218
-	dc.b 220,221,222,223,224,225,226,0
-	even
+Ed_DError	jmp	_ed_disk_error_entry
 
 ; Appel du selecteur de fichier
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -2346,14 +2161,6 @@ Detok:		jmp	_ed_detok_entry
 TInst:		jmp	_ed_tinst_entry
 
 
-;	Passe en minuscules
-; ~~~~~~~~~~~~~~~~~~~~~~~~~
-Minus:	cmp.b 	#"A",d0
-	bcs.s	.Skip
-	cmp.b	#"Z",d0
-	bhi.s	.Skip
-	add.b	#"a"-"A",d0
-.Skip	rts
 
 
 ;						Table des operateurs
