@@ -1,0 +1,171 @@
+timeout 200
+wait 12
+key ctrl+y
+key ctrl+y
+key ctrl+y
+wait 0.5
+glide -3000 -3000
+wait 0.3
+button 3 down
+wait 0.5
+glide 340 0
+wait 0.5
+glide 0 85
+wait 0.5
+glide 150 0
+wait 0.5
+button 3 up
+wait 1
+glide -3000 -3000
+wait 0.3
+button 3 down
+wait 0.5
+glide 150 0
+wait 0.5
+glide 0 190
+wait 0.5
+glide 150 0
+wait 0.5
+button 3 up
+wait 1
+key ctrl+t
+wait 1
+key Up
+key ctrl+t
+wait 0.5
+glide -3000 -3000
+wait 0.3
+button 3 down
+wait 0.5
+glide 385 0
+wait 0.5
+glide 0 222
+wait 0.5
+button 3 up
+wait 1
+type Hello
+key Return
+wait 0.5
+key Return
+wait 1
+glide -3000 -3000
+wait 0.3
+button 3 down
+wait 0.5
+glide 385 0
+wait 0.5
+glide 0 95
+wait 0.5
+button 3 up
+wait 1
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+key BackSpace
+type AMOSTEST:out/x.AMOS
+key Return
+key Return
+wait 1
+key Return
+wait 0.5
+key Return
+wait 1
+glide -3000 -3000
+wait 0.3
+button 3 down
+wait 0.5
+glide 385 0
+wait 0.5
+glide 0 95
+wait 0.5
+button 3 up
+wait 1
+key ctrl+e
+wait 1
+glide -3000 -3000
+wait 0.3
+button 3 down
+wait 0.5
+glide 385 0
+wait 0.5
+glide 0 255
+wait 0.5
+button 3 up
+wait 1
+glide -3000 -3000
+wait 0.3
+button 3 down
+wait 0.5
+glide 385 0
+wait 0.5
+glide 0 207
+wait 0.5
+button 3 up
+wait 1
+glide -3000 -3000
+wait 0.3
+button 3 down
+wait 0.5
+glide 340 0
+wait 0.5
+glide 0 143
+wait 0.5
+button 3 up
+wait 1
+key BackSpace
+key BackSpace
+key BackSpace
+type 7
+key Return
+key Return
+wait 1
+key lamiga+k
+wait 1
+key lamiga+k
+wait 1
+key F8
+wait 0.5
+key F8
+wait 0.5
+glide -3000 -3000
+wait 0.3
+button 3 down
+wait 0.5
+glide 385 0
+wait 1

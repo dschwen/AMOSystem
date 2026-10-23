@@ -14,6 +14,7 @@
 #include "core/amiga.h"
 #include "lib/banks.h"
 #include "lib/dos.h"
+#include "lib/menus.h"
 #include "lib/sprites.h"
 
 #include <graphics/gfx.h>
@@ -26,6 +27,7 @@
 #undef NTSC
 
 using namespace amos;
+using namespace amos::menu;
 
 // AMOS's screen (intuition.library has a struct Screen too)
 using EcScreen = amos::Screen;
@@ -41,17 +43,6 @@ constexpr uint16_t BitMenu = 1 << 9, BitJump = 1 << 10;
 constexpr int MnNDim = 8;
 constexpr uint32_t MnLong = MenuItem::MnLong;
 
-// MnFlag: the flags are its high byte; the low byte is set by Menu Called
-enum : uint8_t {
-    MnFlat = 1 << 0,    // first item of a branch: MnPrev is the parent
-    MnFixed = 1 << 1,   // position set by the program or dragged
-    MnSep = 1 << 2,     // starts a new box (Menu Separate)
-    MnBar = 1 << 3,     // the next item goes below (else to the right)
-    MnOff = 1 << 4,     // inactive
-    MnTotal = 1 << 5,   // the box is as wide as the screen
-    MnTBouge = 1 << 6,  // the whole branch can be dragged
-    MnBouge = 1 << 7,   // the item can be dragged in its box
-};
 
 // MnDraw flags (bits of d7 in the assembler)
 enum : uint32_t {
@@ -66,7 +57,6 @@ enum : uint32_t {
 [[noreturn]] void menu_not_opened() { error(38); }
 
 MenuItem *item(uint32_t a) { return ptr<MenuItem>(a); }
-uint8_t &flags(MenuItem *m) { return reinterpret_cast<uint8_t *>(&m->MnFlag)[0]; }
 uint8_t &called(MenuItem *m) { return reinterpret_cast<uint8_t *>(&m->MnFlag)[1]; }
 uint32_t &object(MenuItem *m, int n) { return (&m->MnObF)[n]; }   // MnObF, MnOb1-3
 uint16_t object_size(uint32_t object) { return peek_w(ptr<void>(object)); }
@@ -1035,15 +1025,12 @@ extern "C" uint32_t lib_omn_eff(RegFrame &)
     return 0;
 }
 
-// MnFind: the item at the coordinates on the parameter stack (a3, the
-// first one deepest), d5 of them. Out: a2 = the item, d0 = -1, or d0 = 0.
-extern "C" uint32_t lib_mn_find(RegFrame &r)
+// MnFind: the item at coords (the first one deepest), depth of them; 0 if
+// none. *last the last item looked at.
+MenuItem *amos::menu::find(const uint32_t *coords, uint16_t depth, uint32_t *last)
 {
-    uint16_t depth = static_cast<uint16_t>(r.d[5]);
-    auto coords = reinterpret_cast<const uint32_t *>(ctx().a3);
     if (!coords[0] || coords[0] >= 1024)
         fon_call();
-    r.d[0] = 0;
     uint32_t next = idata().MnBase;
     for (uint16_t i = depth; next;) {
         uint32_t n = coords[--i];
@@ -1052,27 +1039,36 @@ extern "C" uint32_t lib_mn_find(RegFrame &r)
         MenuItem *m;
         for (;;) {
             m = item(next);
-            r.a[2] = next;
+            if (last)
+                *last = next;
             if (static_cast<uint16_t>(n) == m->MnNb)
                 break;
             if (static_cast<uint16_t>(n) < m->MnNb || !m->MnNext)
-                return 0;
+                return nullptr;
             next = m->MnNext;
         }
         if (!i)
-            return r.d[0] = -1u;
+            return m;
         next = m->MnLat;
     }
-    return 0;
+    return nullptr;
 }
 
-// MnIns: insert a new item at the coordinates on the parameter stack (as
-// MnFind), with the default flags of its level. Out: a2 = the item.
-extern "C" uint32_t lib_mn_ins(RegFrame &r)
+// MnFind: the coordinates on the parameter stack (a3), d5 of them. Out:
+// a2 = the item, d0 = -1, or d0 = 0.
+extern "C" uint32_t lib_mn_find(RegFrame &r)
+{
+    uint32_t last = r.a[2];
+    MenuItem *m = menu::find(reinterpret_cast<const uint32_t *>(ctx().a3), static_cast<uint16_t>(r.d[5]), &last);
+    r.a[2] = last;
+    return r.d[0] = m ? -1u : 0;
+}
+
+// MnIns: insert a new item at coords (as MnFind), with the default flags
+// of its level
+MenuItem *amos::menu::insert(const uint32_t *coords, uint16_t depth)
 {
     IData &d = idata();
-    uint16_t depth = static_cast<uint16_t>(r.d[5]);
-    auto coords = reinterpret_cast<const uint32_t *>(ctx().a3);
     int16_t left = static_cast<int16_t>(depth - 1);
     uint16_t i = depth;
     MenuItem *m = nullptr;
@@ -1138,7 +1134,14 @@ extern "C" uint32_t lib_mn_ins(RegFrame &r)
 done:
     flags(n) |= d.MnDFlags[depth - 1];
     n->MnNb = static_cast<uint16_t>(coords[0]);
-    r.a[2] = address(n);
+    return n;
+}
+
+// MnIns: the coordinates on the parameter stack (a3), d5 of them. Out: a2
+// = the item.
+extern "C" uint32_t lib_mn_ins(RegFrame &r)
+{
+    r.a[2] = address(menu::insert(reinterpret_cast<const uint32_t *>(ctx().a3), static_cast<uint16_t>(r.d[5])));
     return 0;
 }
 
@@ -1191,6 +1194,8 @@ static void erase_items(uint32_t first, uint16_t &siblings)
     }
 }
 
+void amos::menu::erase(uint32_t first, uint16_t siblings) { erase_items(first, siblings); }
+
 // MnEff: d0 = item, d5 = 0 for the item alone, else the items after it too
 extern "C" uint32_t lib_mn_eff(RegFrame &r)
 {
@@ -1211,6 +1216,8 @@ static void menu_erase()
     d.MnAdEc = 0;
     d.ActuMask &= ~BitMenu;
 }
+
+void amos::menu::erase_all() { menu_erase(); }
 
 extern "C" uint32_t lib_mn_raz(RegFrame &)
 {
@@ -1471,14 +1478,13 @@ struct ObjectCompiler {
 // MnObjet: a1 = the AMOS string of an object. Out: d0 = the compiled
 // object (its size first), 0 out of memory (the assembler returned the
 // length instead), -1 syntax error.
-extern "C" uint32_t lib_mn_objet(RegFrame &r)
+uint32_t amos::menu::compile_object(const uint8_t *s)
 {
-    const uint8_t *s = ptr<uint8_t>(r.a[1]);
     uint8_t *buffer = ptr<uint8_t>(idata().Buffer);
     ObjectCompiler oc{s + 2, static_cast<int16_t>(peek_w(s)), buffer};
     uint8_t *end = oc.compile();
     if (!end)
-        return r.d[0] = -1u;
+        return -1u;
     uint16_t size = static_cast<uint16_t>(end - buffer + 2);
     uint8_t *object = mem_fast(size, true);
     if (object) {
@@ -1486,8 +1492,10 @@ extern "C" uint32_t lib_mn_objet(RegFrame &r)
         for (uint16_t i = 0; i < size - 2; i++)
             object[2 + i] = buffer[i];
     }
-    return r.d[0] = address(object);
+    return address(object);
 }
+
+extern "C" uint32_t lib_mn_objet(RegFrame &r) { return r.d[0] = menu::compile_object(ptr<uint8_t>(r.a[1])); }
 
 // ---- Menu Key --------------------------------------------------------------
 
