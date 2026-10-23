@@ -63,6 +63,22 @@
 		XREF	_ed_store_entry,_ed_store_block_entry,_ed_delete_line_entry,_ed_delete_chunk_at_entry
 		XREF	_ed_delete_chunk_entry,_ed_find_line_entry,_ed_next_line_entry
 		XREF	_ed_indent_entry
+		XREF	_ed_rload_hidden_entry
+		XREF	_ed_load_hidden_entry
+		XREF	_ed_load_entry
+		XREF	_ed_reload_entry
+		XREF	_ed_name_part_entry
+		XREF	_ed_merge_entry
+		XREF	_ed_merge_ascii_entry
+		XREF	_ed_rename_entry
+		XREF	_ed_save_as_name_entry
+		XREF	_ed_save_as_entry
+		XREF	_ed_save_entry
+		XREF	_ed_save_it_entry
+		XREF	_ed_save_program_entry
+		XREF	_ed_save_program2_entry
+		XREF	_ed_make_bak_entry
+		XREF	_ed_save_icon_entry
 		XREF	_ed_procs_open_entry,_ed_procs_close_entry,_ed_procs_entry,_ed_proc_open_entry,_ed_clear_error_proc_entry
 		XREF	_ed_top_up_entry
 		XREF	_ed_top_down_entry
@@ -1912,6 +1928,8 @@ Ed_ListeDel
 
 ; Clearvar du programme courant
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		xdef	_ed_clear_var
+_ed_clear_var
 Edt_ClearVar
 	bsr	EdM_Program
 	JJsr	L_Prg_SetBanks
@@ -5192,6 +5210,8 @@ Ed_AlertRts
 
 ; Affiche un avertissement avec nom A0=nom / D0=Mess
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		xdef	_ed_av_name
+_ed_av_name
 Ed_AvName
 	movem.l	a0-a1/d0-d1,-(sp)
 	move.l	a0,-(sp)
@@ -7295,6 +7315,8 @@ Ed_AlertDialog
 ;
 ; LOADING: Demande plus de place / D0= Taille voulue
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		xdef	_ed_get_place
+_ed_get_place
 Ed_GetPlace
 	move.l	d0,d2
 ; Dialogues
@@ -7456,6 +7478,8 @@ _ed_new
 Ed_New
 	bsr	Ed_TokCur
 	bsr	Ed_Saved
+		xdef	_ed_new2
+_ed_new2
 Ed_New2
 	bsr	EdM_Program
 	moveq	#1,d0
@@ -8405,425 +8429,23 @@ Ed_Saved
 
 
 ;
-; Routine LOAD HIDDEN PROGRAM
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_RLoadHidden
-	move.w	#155,d0
-	move.l	Name1(a5),a0
-	bsr	Ed_AvName
-; Ouvre la structure fenetre cachee
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	moveq	#0,d0				Hidden
-	moveq	#0,d1				Structure vide
-	bsr	Edt_OpWindow
-	bne	Ed_OMm
-	move.l	a4,Ed_WindowToDel(a5)
-; Va charger le programme
-; ~~~~~~~~~~~~~~~~~~~~~~~
-	moveq	#-1,d0				Adapter la taille du buffer
-	JJsr	L_Prg_Load
-	bne	Ed_PrgLoadErr
-	move.b	#1,Prg_StModif(a6)		Force le test
-; C'est bon!
-; ~~~~~~~~~~
-	bsr	Ed_AverFin
-	rts
-
-;
-; LOAD HIDDEN PROGRAM
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_LoadHidden
-	bsr	Ed_TokCur
-; Selecteur de fichier
-; ~~~~~~~~~~~~~~~~~~~~
-	moveq	#66,d0
-	bsr	Ed_File_Selector
-	beq	Ed_NotDone
-	JJsr	L_Dsk.PathIt
-; Appelle la routine
-; ~~~~~~~~~~~~~~~~~~
-	bsr	Ed_RLoadHidden
-	clr.l	Ed_WindowToDel(a5)
-; Recalcule le menu
-; ~~~~~~~~~~~~~~~~~
-	bsr	EdM_BranchAMOS
-	rts
-
-;
-; LOAD PROGRAMME
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_Load
-	bsr	Ed_TokCur
-	bsr	Ed_Saved
-; Selecteur de fichier
-; ~~~~~~~~~~~~~~~~~~~~
-	moveq	#70,d0
-	bsr	Ed_File_Selector
-	beq	Ed_NotDone
-	JJsr	L_Dsk.PathIt
-; NEW
-; ~~~
-	bsr	Ed_New2
-; Message LOADING
-; ~~~~~~~~~~~~~~~
-Ed_ReLoad
-	move.w	#155,d0
-	move.l	Name1(a5),a0
-	bsr	Ed_AvName
-; Charge
-; ~~~~~~
-	moveq	#1,d0			Revenir si pas assez grand
-	JJsr	L_Prg_Load
-	beq.s	EdLok
-	bmi	Ed_PrgLoadErr
-	move.l	d1,d0
-	bsr	Ed_GetPlace
-	bsr	Ed_AverFin
-	bra.s	Ed_ReLoad
-; Chargement correct
-; ~~~~~~~~~~~~~~~~~~
-EdLok	move.b	#1,Prg_StModif(a6)		Force le test
-	bsr	Ed_AverFin
-	bsr	Ed_NewBufAff
-	rts
-
-;
-; Pointe le debut du nom reel du fichier
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_DNom
-	move.l	a0,a1
-.FaL1	tst.b	(a0)+
-	bne.s	.FaL1
-	subq.l	#1,a0
-.FaL2	move.b	-(a0),d0
-	cmp.b	#"/",d0
-	beq.s	.FaL3
-	cmp.b	#":",d0
-	beq.s	.FaL3
-	cmp.l	a1,a0
-	bcc.s	.FaL2
-.FaL3	addq.l	#1,a0
-	rts
-
-;
-; MERGE PROGRAMME
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_Merge
-	bsr	Ed_TokCur
-; Selecteur de fichier
-; ~~~~~~~~~~~~~~~~~~~~
-	moveq	#78,d0
-	bsr	Ed_File_Selector
-	beq	Ed_NotDone
-	JJsr	L_Dsk.PathIt
-; Libere de la memoire
-; ~~~~~~~~~~~~~~~~~~~~
-	bsr	Edt_ClearVar
-	bsr	Ed_BlocFree
-	bsr	Prg_UndoRaz
-; Charge le programme dans une fenetre cach�e
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	bsr	Ed_RLoadHidden
-; Copie le bout dans le programme
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	move.l	Prg_StBas(a6),a0		Bas du source
-	move.l	Prg_StHaut(a6),d0		Longueur du source
-	sub.l	a0,d0
-	subq.l	#2,d0
-	ble.s	.Skip
-	move.w	Prg_NLigne(a6),d7		Nombre de lignes
-	move.l	Edt_Current(a5),a4		Program courant
-	move.l	Edt_Prg(a4),a6
-	move.w	Edt_YPos(a4),d1
-	add.w	Edt_YCu(a4),d1
-	move.w	d1,d6				Insere le programme
-	bsr	Ed_StoBlock
-	bne	Ed_OofBuf
-	move.w	d6,d0				Change les marques
-	move.w	d7,d1
-	bsr	Ed_MarksChange
-; La fenetre sera lib�r�e au retour
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.Skip	JJsr	L_Prg_CptLines
-	bsr	Ed_NewBufAff
-	rts
-
-;
-; CHARGEMENT FICHIER ASCII
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_LoadA:
-	bsr	Ed_TokCur
-	bsr	Prg_UndoRaz
-; Selecteur de fichier
-; ~~~~~~~~~~~~~~~~~~~~
-	moveq	#86,d0
-	bsr	Ed_File_Selector
-	beq	Ed_NotDone
-	JJsr	L_Dsk.PathIt
-; Message
-; ~~~~~~~
-	move.w	#158,d0
-	move.l	Name1(a5),a0
-	bsr	Ed_AvName
-; Charge tout le fichier dans un buffer
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	move.l	#1005,d2		Mode OLD
-	bsr	Ed_Open
-	beq	Ed_DError
-	moveq	#0,d2			Seek --> fin
-	moveq	#1,d3
-	bsr	Ed_Seek
-	move.l	d0,d2			Seek --> debut!
-	moveq	#-1,d3
-	bsr	Ed_Seek
-	move.l	d0,d3			Reserve le buffer
-	addq.l	#4,d0			Plus zero � la fin
-	JJsr	L_ResTempBuffer
-	beq	Ed_OMm
-	move.l	a0,d2			Charge tout d'un bloc
-	bsr	Ed_Read
-	bne	Ed_DError		Ferme le fichier
-	bsr	Ed_Close
-; Boucle de tokenisation dans le buffer
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	move.w	Edt_YPos(a4),d7
-	add.w	Edt_YCu(a4),d7
-	move.l	TempBuffer(a5),a3	Cherche la fin
-; Control-C?
-.MergL	bclr	#BitControl-8,T_Actualise(a5)
-	bne	.MergX
-; Trouve la longueur de la ligne
-	lea	-1(a3),a2
-.Fin1	addq.l	#1,a2
-	move.b	(a2),d0
-	beq.s	.Fin4
-	cmp.b	#32,d0
-	bcc.s	.Fin1
-	cmp.b	#10,d0
-	beq.s	.Fin2
-	cmp.b	#13,d0
-	beq.s	.Fin2
-	cmp.b	#9,d0			Tabs >>> Espace
-	bne	.Bad
-	move.b	#" ",(a2)
-	bra.s	.Fin1
-.Fin2	clr.b	(a2)
-	cmp.b	#32,1(a2)
-	bcc.s	.Fin4
-	addq.l	#1,a2
-.Fin4	move.l	a2,d0			Verifie la longueur
-	sub.l	a3,d0
-	cmp.l	#250,d0
-	bcc.s	.Long
-; Va tokeniser
-	move.l	a3,a0
-	lea	1(a2),a3
-	move.l	Ed_BufT(a5),a1
-	bsr	Tokenise
-	bmi.s	.Long
-; Stocke!
-	moveq	#-1,d0			Insert
-	move.w	d7,d1			Ligne courante
-	move.l	Ed_BufT(a5),a1
-	bsr	Ed_Stocke
-	bne	.OBuf
-	addq.w	#1,d7
-	addq.w	#1,Prg_NLigne(a6)
-; Reaffiche le slider
-	movem.l	a2/a3/d7,-(sp)
-	bsr	Ed_AffSlV
-	movem.l	(sp)+,a2/a3/d7
-; Encore une ligne?
-	tst.b	(a3)
-	bne	.MergL
-; Termine
-.MergX	moveq	#0,d0
-	JJsr	L_ResTempBuffer
-	bsr	Ed_AverFin
-	JJsr	L_Prg_CptLines
-	bsr	Ed_NewBufAff
-	SyCall	ClearKey
-	rts
-; Out of buffer space
-.OBuf	bsr	.MergX
-	bra	Ed_OofBuf
-; Line too long / Bad file
-.Bad
-.Long	bsr	.MergX
-	bra	Ed_LToLong
-
-;
-; SAUVEGARDE PROGRAMME
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-; Rename le programme cournant
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_Rename
-	move.l	Name1(a5),a0
-	lea	Prg_NamePrg(a6),a1
-.Copy	move.b	(a0)+,(a1)+
-	bne.s	.Copy
-	move.b	#1,Prg_Change(a6)
-	bset	#EtA_Nom,Edt_EtatAff(a4)
-	rts
-
-; Sauvegarde speciale COMPILER_SHELL.AMOS
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_SaveAsName
-; Sauvegarde le non dans la pile
-	lea	Prg_NamePrg(a6),a0
-	lea	-128(sp),sp
-	move.l	sp,a1
-.Copy	move.b	(a0)+,(a1)+
-	bne.s	.Copy
-; Sauve le programme, sans .BAK
-	bsr	Ed_SavePrg2
-; Remet le nom
-	move.l	sp,a0
-	lea	Prg_NamePrg(a6),a1
-.Copy1	move.b	(a0)+,(a1)+
-	bne.s	.Copy1
-	lea	128(sp),sp
-; Erreur?
-	tst.w	d0
-	bne	Ed_DError
-	rts
-
-Ed_SaveAs
-	bsr	Ed_TokCur
-	bra.s	Ed_SvAs
-Ed_Save
-	bsr	Ed_TokCur
-Ed_SaveIt
-; Demander le nom?
-; ~~~~~~~~~~~~~~~~
-	lea	Prg_NamePrg(a6),a0
-	tst.b	(a0)
-	beq.s	Ed_SvAs
-	move.l	Name1(a5),a1
-	bsr	EdCocop
-	JJsr	L_Dsk.PathIt
-	bra.s	Ed_Sv
-; Ouvre le selecteur de fichiers
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_SvAs	moveq	#74,d0
-	bsr	Ed_File_Selector
-	beq	Ed_NotDone
-	JJsr	L_Dsk.PathIt
-; Sauve le programme!
-; ~~~~~~~~~~~~~~~~~~~
-Ed_Sv	move.w	#154,d0
-	move.l	Name1(a5),a0
-	bsr	Ed_AvName
-	bsr	Ed_SavePrg
-	bne	Ed_DError
-	bsr	Ed_AverFin
-	bset	#EtA_Nom,Edt_EtatAff(a4)
-	rts
-; Sauve le programme (a4), nom NAME1
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_SavePrg
-; Fabrique NOM.BAK
-; ~~~~~~~~~~~~~~~~
-	tst.b	Ed_SvBak(a5)
-	beq	.PaBak
-	bsr	Ed_MakeBak
-	bne.s	SError
-.PaBak
-Ed_SavePrg2
-; Fait le m�nage!
-; ~~~~~~~~~~~~~~~
-	bsr	Edt_ClearVar
-	JJsr	L_Prg_CptLines
-; Va sauver
-; ~~~~~~~~~
-	JJsr	L_Prg_Save
-	bne.s	SError
-	move.b	#1,Prg_StModif(a6)	Force le menage
-; Sauve l'icone
-; ~~~~~~~~~~~~~
-	bsr	Ed_SaveIcon
-; Pas d'erreur
-; ~~~~~~~~~~~~
-	moveq	#0,d0
-SOut	rts
-; Erreur dans la sauvegarde
-; ~~~~~~~~~~~~~~~~~~~~~~~~~
-SError	moveq	#-1,d0
-	bra.s	SOut
-
-
-;
-; FABRIQUE UN .BAK de NAME1
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_MakeBak
-	movem.l	a0-a2/a6/d0-d2,-(sp)
-	move.l	Name1(a5),a0
-	move.l	Name2(a5),a1
-.Bak1	move.b	(a0)+,(a1)+
-	bne.s	.Bak1
-; Trouve le DERNIER "."
-	move.l	a1,a0
-	subq.l	#1,a1
-.Bak2	cmp.l	Name2(a5),a0
-	ble.s	.Bak3
-	cmp.b	#".",-(a0)
-	bne.s	.Bak2
-	move.l	a0,a1
-; Recopie le .BAK
-; ~~~~~~~~~~~~~~~
-.Bak3	moveq	#21,d0
-	bsr	Ed_GetSysteme
-.Bak4	move.b	(a0)+,(a1)+
-	bne.s	.Bak4
-; Renomme NOM.AMOS si present
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.Bak5	move.l	DosBase(a5),a6
-	move.l	Name1(a5),d1
-	move.l	Name2(a5),d2
-	jsr	_LVORename(a6)
-	tst.l	d0
-	bne.s	.Ok
-	jsr	_LVOIoErr(a6)
-	cmp.w	#215,d0			D'un periph � l'autre?
-	beq.s	.Ok
-	cmp.w	#205,d0			Existe pas
-	beq.s	.Ok
-	cmp.w	#203,d0			Existe DEJA
-	bne	.Err
-; Efface NOM.BAK et recommence!
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	move.l	Name2(a5),d1
-	jsr	_LVODeleteFile(a6)
-	tst.l	d0
-	bne	.Bak5
-; Une erreur!
-; ~~~~~~~~~~~
-.Err	moveq	#-1,d0
-	bra.s	.Out
-; Ok!
-; ~~~
-.Ok	moveq	#0,d0
-.Out	movem.l	(sp)+,a0-a2/a6/d0-d2
-	rts
-
-;
-; SAUVEGARDE ICONE PROGRAMME
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_SaveIcon
-	movem.l	d0-d1/a0-a1/a6,-(sp)
-	tst.b	PI_Icons(a5)
-	beq.s	.Ok
-	move.l	IconBase(a5),d0
-	beq.s	.Ok
-	move.l	d0,a6
-	move.l	AdrIcon(a5),d0
-	beq.s	.Ok
-	move.l	d0,a1
-	move.l	Name1(a5),a0
-	jsr	-84(a6)
-.Ok	movem.l	(sp)+,d0-d1/a0-a1/a6
-	rts
+; Loading and saving: src/editor/disk.cpp
+Ed_RLoadHidden	jmp	_ed_rload_hidden_entry
+Ed_LoadHidden	jmp	_ed_load_hidden_entry
+Ed_Load	jmp	_ed_load_entry
+Ed_ReLoad	jmp	_ed_reload_entry
+Ed_DNom	jmp	_ed_name_part_entry
+Ed_Merge	jmp	_ed_merge_entry
+Ed_LoadA	jmp	_ed_merge_ascii_entry
+Ed_Rename	jmp	_ed_rename_entry
+Ed_SaveAsName	jmp	_ed_save_as_name_entry
+Ed_SaveAs	jmp	_ed_save_as_entry
+Ed_Save	jmp	_ed_save_entry
+Ed_SaveIt	jmp	_ed_save_it_entry
+Ed_SavePrg	jmp	_ed_save_program_entry
+Ed_SavePrg2	jmp	_ed_save_program2_entry
+Ed_MakeBak	jmp	_ed_make_bak_entry
+Ed_SaveIcon	jmp	_ed_save_icon_entry
 
 ;
 ; ERREUR DISQUE SOUS EDITEUR
@@ -9079,6 +8701,8 @@ Ed_PRTPrint
 ;
 ; Erreurs dans le chargement programme
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		xdef	_ed_prg_load_err
+_ed_prg_load_err
 Ed_PrgLoadErr
 	cmp.w	#-2,d0
 	beq	Ed_OMm
@@ -9087,6 +8711,8 @@ Ed_PrgLoadErr
 ;
 ; Gestion des erreurs disque
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		xdef	_ed_d_error
+_ed_d_error
 Ed_DError
 	move.l	a6,-(sp)
 	move.l	DosBase(a5),a6
@@ -9127,6 +8753,8 @@ ErDisked
 
 ; Appel du selecteur de fichier
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		xdef	_ed_file_selector
+_ed_file_selector
 Ed_File_Selector
 	tst.b	Ed_Zappeuse(a5)		Zappeuse>>> on revient !
 	bne.s	.Zap
