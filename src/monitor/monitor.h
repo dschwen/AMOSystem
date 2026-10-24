@@ -59,6 +59,7 @@ void mouse_free();
 void stop_button();
 void picture(uint16_t n, int32_t x, int32_t y);     // Tt_UPack
 void buttons_draw();                                // ABoutons
+void button_set(uint16_t n, bool on);               // ABouton
 void mode_set(uint16_t mode);                       // Tt_SHelp / Tt_SBreak / Tt_SEval
 void view_erase();                                  // View_Cls
 void screens_refresh();                             // TtReCop

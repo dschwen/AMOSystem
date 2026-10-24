@@ -431,6 +431,7 @@ void mouse_free() { free_mouse(); }
 void stop_button() { light_stop(); }
 void picture(uint16_t n, int32_t x, int32_t y) { unpack(n, x, y); }
 void buttons_draw() { all_buttons(); }
+void button_set(uint16_t n, bool on) { button(n, on); }
 void mode_set(uint16_t mode) { set_mode(mode); }
 void view_erase() { view_clear(); }
 void screens_refresh() { recop(); }

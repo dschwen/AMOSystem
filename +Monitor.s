@@ -160,6 +160,22 @@ RedTY		equ	100
 BoutInfos	equ	12
 NBoutons	equ	16
 
+; The interpreter registers of the task's context (GetCtx, CCall of
+; src/glue.i)
+MGetCtx		MACRO
+		move.l	$4.w,a0
+		move.l	276(a0),-(sp)
+		move.l	_amos_bridge,a0
+		cmpm.l	(a0)+,(sp)+
+		beq.s	.Main\@
+		lea	24(a0),a0
+.Main\@	movem.l	(a0),d6-d7/a3-a6
+		ENDM
+
+		XREF	_mon_tests_entry,_mon_reloop_entry,_mon_quit_entry
+		XREF	_mon_step0_entry,_mon_step1_entry,_mon_step2_entry,_mon_step3_entry
+		XREF	_mon_initialise_entry,_mon_reinit_entry
+
 Tjsr	MACRO
 	jsr	\1
 	move.l	Mon_Base(a5),a4
@@ -211,126 +227,57 @@ In_Program
 
 ;	Boucle de tests du moniteur
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Tt_Tests
+; The command loop: monitor/shell.cpp
+Tt_Tests	jmp	_mon_tests_entry
+Tt_ReLoop	jmp	_mon_reloop_entry
+
+; The routines of the buttons of the view screen, of the zones of the
+; text screen and of its dialogue (for the loop)
+		xdef	_mon_keys,_mon_text_zones
+_mon_keys	dc.l	Tt_Rien			1:  STOP, teste separement
+		dc.l	Tt_Step0		2:  mode pas a pas
+		dc.l	Tt_Step1		3:  mode semi-rapide
+		dc.l	Tt_Step2		4:  mode rapide
+		dc.l	Tt_Step3		5:  mode ultra-rapide
+		dc.l	Tt_Up			6:
+		dc.l	Tt_Down			7:
+		dc.l	Tt_Left			8:
+		dc.l	Tt_Right		9:
+		dc.l	Tt_CEc			10: Change ecran
+		dc.l	Tt_Initialise		11: Init
+		dc.l	Tt_Quit			12: Quit
+		dc.l	Tt_See			13: Voir l'affichage
+		dc.l	Tt_SHelp		14: Set Help
+		dc.l	Tt_SBreak		15: Set break
+		dc.l	Tt_SEval		16: Set evalue
+_mon_text_zones	dc.l	Ttt_ListClic		1 : Zone de listing
+		dc.l	Ttt_Separ		2 : Zone de separation
+		dc.l	Inf_Clic		3 : Zone d'information
+		dc.l	Ttt_Slhclic		1 : Slider horizontal
+		dc.l	Ttt_Slvclic		2 : Slider vertical
+		dc.l	Inf_Sliclic		3 : Slider infos
+		dc.l	Ttt_CText		4 : Bouton de centrage
+Tt_Rien	moveq	#1,d0
+	rts
+
+; int32_t mon_dispatch(routine, d0, d1): a routine of the loop, with a3
+; the program and a4 the monitor's data; 1 if it answers "not equal"
+		xdef	_mon_dispatch
+_mon_dispatch
+	movem.l	d2-d7/a2-a6,-(sp)
+	MGetCtx
 	move.l	Mon_Base(a5),a4
-	clr.w	Tt_Active(a4)
-Tt_ReLoop
-	bsr	Tt_TtBanks
 	move.l	Tt_Program(a4),a3
-	bsr	View_Act
-	clr.w	Tt_Accel(a4)
-	tst.w	Tt_Active(a4)
-	beq.s	Tt_Loop
-.loop	bsr	Tt_Multi
-	bsr	Tt_MBout
-	btst	#0,d1
-	beq.s	.Out
-	SyCall	GetZone
-	cmp.w	#Tt_Ecran1,d1
-	bne.s	.Out
-	swap	d1
-	cmp.w	Tt_Active(a4),d1
-	beq.s	.loop
-.Out	move.w	Tt_Active(a4),d0
-	clr.w	Tt_Active(a4)
-	moveq	#0,d1
-	bsr	ABouton
-Tt_Loop
-; Attente multitache
-	bsr	Tt_Multi
-; Gestion des zones actives!
-	bsr	Tt_MBout
-	move.w	d1,Tt_MKey(a4)
-	and.w	#$03,d1			Bouton de gauche--> normal
-	beq	Tt_ReLoop
-
-	bsr	Ttt_InfAct
-	bsr	Ttt_AlertDel		Enleve les alertes
-	bsr	View_Act
-
-	SyCall	GetZone
-	cmp.w	#Tt_Ecran2,d1
-	beq	Ttt_E2
-	cmp.w	#Tt_Ecran1,d1
-	bne	Tt_DBL
-	swap 	d1
-	tst.w	d1
-	beq	Tt_DBL
-	move.w	d1,d0
-; Touches HELP/BREAK/EVAL?
-	cmp.w	#14,d0
-	bcc.s	.Skip
-	cmp.w	Tt_Active(a4),d1
-	beq.s	.Skip
-; Active la touche
-	tst.w	Tt_Active(a4)
-	bne	Tt_ReLoop
-	move.w	d1,Tt_Active(a4)
-	moveq	#1,d1
-	bsr	ABouton
-; Appel des fonctions
-.Skip	lsl.w	#2,d0
-	lea	Tt_Bra-4(pc),a0
-	jsr	0(a0,d0.w)
-	bne	Tt_ReLoop
-	bra	Tt_Loop
-
-; 	Ecran de texte
-; ~~~~~~~~~~~~~~~~~~~~
-Ttt_E2	swap 	d1
-	subq.w	#1,d1
-	bmi	Tt_ReLoop
-	move.w	d1,-(sp)
-	bsr	Ttt_TttAct
-	move.w	(sp)+,d1
-	lsl.w	#2,d1
-	lea	Ttt_Bra(pc),a0
-	jsr	0(a0,d1.w)
-	bra	Tt_ReLoop
-
-; 	Une zone DBL?
-; ~~~~~~~~~~~~~~~~~~~
-Tt_DBL	moveq	#1,d0
-	JJsr	L_Dia_AutoTest2
-	move.l	#Tt_ChannelN,d0
-	JJsr	L_Dia_GetReturn
-	lsl.w	#2,d1
-	beq	Tt_ReLoop
-	move.w	d1,-(sp)
-	bsr	Ttt_TttAct
-	move.w	(sp)+,d1
-	lea	J_DBL(pc),a0
-	jsr	-4(a0,d1.w)
-	bra	Tt_ReLoop
-
-;	Table des sauts
-; ~~~~~~~~~~~~~~~~~~~~~
-Tt_Bra
-	bra	Tt_Rien			1:  STOP, teste separement
-	bra	Tt_Step0		2:  mode pas a pas
-	bra	Tt_Step1		3:  mode semi-rapide
-	bra	Tt_Step2		4:  mode rapide
-	bra	Tt_Step3		5:  mode ultra-rapide
-	bra	Tt_Up			6:
-	bra	Tt_Down			7:
-	bra	Tt_Left			8:
-	bra	Tt_Right		9:
-	bra	Tt_CEc			10: Change ecran
-	bra	Tt_Initialise		11: Init
-	bra	Tt_Quit			12: Quit
-	bra	Tt_See			13: Voir l'affichage
-	bra	Tt_SHelp		14: Set Help
-	bra	Tt_SBreak		15: Set break
-	bra	Tt_SEval		16: Set evalue
-Tt_Rien	rts
-
-Ttt_Bra	bra	Ttt_ListClic		1 : Zone de listing
-	bra	Ttt_Separ		2 : Zone de separation
-	bra	Inf_Clic		3 : Zone d'information
-J_DBL	bra	Ttt_Slhclic		1 : Slider horizontal
-	bra	Ttt_Slvclic		2 : Slider vertical
-	bra	Inf_Sliclic		3 : Slider infos
-	bra	Ttt_CText		4 : Bouton de centrage
+	move.l	4+44(sp),a0
+	move.l	8+44(sp),d0
+	move.l	12+44(sp),d1
+	jsr	(a0)
+	beq.s	.Eq
+	moveq	#1,d0
+	bra.s	.Out
+.Eq	moveq	#0,d0
+.Out	movem.l	(sp)+,d2-d7/a2-a6
+	rts
 
 ; ___________________________________________________________________
 ;
@@ -347,25 +294,13 @@ Tt_Free	jmp	_mon_free_entry
 
 ;	TOUCHE: quit/ Retour ÃÂÃÂÃÂÃÂ¯ÃÂÃÂÃÂÃÂ¿ÃÂÃÂÃÂÃÂ½ l'editeur
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Tt_Quit
-; Si Break Off >>> on peut pas!!!
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	tst.w	Tt_Init(a4)
-	ble.s	.Quit
-	move.w	ActuMask(a5),d0
-	btst	#BitControl,d0
-	bne.s	.Quit
-	moveq	#7,d0
-	bsr	Tt_Message
-	bsr	Ttt_Alert
-	bsr	Ttt_InfAct
-	bra	Inf_AffAll
-.Quit
-; Effacement de tous les buffers
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	bsr	Tt_Free
-	bsr	TtReCop
-; Retour ÃÂÃÂÃÂÃÂ¯ÃÂÃÂÃÂÃÂ¿ÃÂÃÂÃÂÃÂ½ l'editeur ou au programme???
+; QUIT: monitor/shell.cpp, then mon_quit_back(data) here
+Tt_Quit	jmp	_mon_quit_entry
+		xdef	_mon_quit_back
+_mon_quit_back
+	MGetCtx
+	move.l	4(sp),a4
+; Retour a l'editeur ou au programme???
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	move.l	a4,a1
 	move.l	#Tt_DzLong,d0
@@ -994,82 +929,19 @@ Ttt_AMod	jmp	_mon_mode_buttons_entry
 
 ;	TOUCHE: une instruction
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Tt_Step0
-	bsr	Wmky
-	tst.w	Tt_Init(a4)
-	ble.s	NoInit
-	bra	Step_Out
+; The step keys and INIT: monitor/shell.cpp
+Tt_Step0	jmp	_mon_step0_entry
+Tt_Step1	jmp	_mon_step1_entry
+Tt_Step2	jmp	_mon_step2_entry
+Tt_Step3	jmp	_mon_step3_entry
 NoInit	jmp	_mon_no_init_entry
-;	TOUCHE: deroulement semi-rapide
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Tt_Step1
-	bsr	Wmky
-	tst.w	Tt_Init(a4)
-	ble.s	NoInit
-	move.w	#1,Step_Mode(a4)
-	bra	Step_Out
-;	TOUCHE: deroulement rapide
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Tt_Step2
-	bsr	Wmky
-	tst.w	Tt_Init(a4)
-	ble.s	NoInit
-	move.w	#2,Step_Mode(a4)
-	bra	Step_Out
-;	TOUCHE: deroulement ultra-rapide
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Tt_Step3
-	bsr	Wmky
-	tst.w	Tt_Init(a4)
-	ble.s	NoInit
-	bsr	Tt_Hide
-	move.w	#3,Step_Mode(a4)
-	bra	Step_Out2
-
-;	TOUCHE:	Init
-; ~~~~~~~~~~~~~~~~~~
-Tt_Initialise
-	tst.w	Tt_Init(a4)		Arrete?
-	ble.s	Tt_ReInit
-	move.w	ActuMask(a5),d0		En marche, Break-Off mode?
-	btst	#BitControl,d0
-	beq.s	Tt_Noq
-; Stoppe le programme
-	move.w	#1003,d0		Erreur 1003= moniteur!
-	JJmp	L_Error
-; Fait l'initialisation!
-Tt_ReInit
-	clr.l	Step_Mess(a4)
-	clr.w	Tt_Init(a4)
-	moveq	#1,d0			Message d'info
-	bsr	Inf_Del
-	moveq	#3,d0
-	bsr	Inf_Del
-	moveq	#12,d0			Testing program
-	bsr	Tt_Message
-	bsr	Ttt_Alert
-	bsr	Ttt_InfAct
-	bsr	Inf_AffAll
-	bsr	Inf_Slider
-; Lance le programme
-	bsr	Tt_PrgBanks
-	moveq	#0,d0			Programme normal
-	lea	Tt_Error(pc),a1		Adresse routine d'erreur
-	lea	Tt_Testing(pc),a2	Messages
-	move.l	Tt_Program(a4),a6	Structure programme
-	JJsr	L_Prg_RunIt		Lance le programme!
-; Out of memory, si revient
-	moveq	#17,d0
-	bra.s	Tt_IMes
-; No break mode
-Tt_Noq	moveq	#16,d0			No initialise mode!
-Tt_IMes	bsr	Tt_Message
-	bsr	Ttt_Alert
-	bsr	Ttt_InfAct
-	bra	Inf_AffAll
+Tt_Initialise	jmp	_mon_initialise_entry
+Tt_ReInit	jmp	_mon_reinit_entry
 
 ; Branchement aux messages de testing
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		xdef	_mon_testing
+_mon_testing
 Tt_Testing
 	bra	Tt_Tst1
 	bra	Tt_Tst2
@@ -1168,6 +1040,16 @@ MonitorChr
 
 ;	Sortie du mode pas a pas, reactive l'ancien ecran
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+; mon_step_out(), mon_step_out2(): from the C++
+		xdef	_mon_step_out,_mon_step_out2
+_mon_step_out
+	MGetCtx
+	move.l	Mon_Base(a5),a4
+	bra.s	Step_Out
+_mon_step_out2
+	MGetCtx
+	move.l	Mon_Base(a5),a4
+	bra.s	Step_Out2
 Step_Out
 	bset	#1,T_Actualise+1(a5)
 	bset	#1,ActuMask+1(a5)
@@ -1195,6 +1077,8 @@ Step_Out2
 
 ;	Entree generale des erreurs "Patch2"
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		xdef	_mon_error
+_mon_error
 Tt_Error
 	move.l	BasSp(a5),sp
 	move.l	Prg_InsRet(a5),-(sp)
@@ -1258,110 +1142,7 @@ Hlp_FreeMap	jmp	_mon_free_map_entry
 Tt_Decoup	jmp	_mon_split_entry
 ; Partie appelle par la detokenisation...
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-		xdef	_mon_split_hook
-_mon_split_hook
-Tt_Decoupe
-	movem.l	a0-a1/d0-d3,-(sp)
-	moveq	#0,d1
-	move.w	(a6),d0
-	beq	.skip1
-	moveq	#"-",d1
-	cmp.w	#_TkM,d0
-	beq	.skip1
-	moveq	#":",d1
-	cmp.w	#_TkDP,d0
-	beq	.skip1
-	cmp.w	#_TkThen,d0
-	beq	.skip1
-	cmp.w	#_TkElse,d0
-	beq	.skip1
-	moveq	#"V",d1
-	cmp.w	#_TkVar,d0
-	beq.s	.skip1
-	moveq	#"X",d1
-	cmp.w	#_TkPro,d0
-	beq.s	.skip1
-	moveq	#"G",d1
-	cmp.w	#_TkLGo,d0
-	beq.s	.skip1
-	moveq	#"2",d1
-	cmp.w	#_TkCh1,d0
-	beq.s	.skip1
-	cmp.w	#_TkCh2,d0
-	beq.s	.skip1
-	moveq	#"1",d1
-	cmp.w	#_TkFl,d0
-	beq.s	.skip1
-	moveq	#"(",d1
-	cmp.w	#_TkPar1,d0
-	beq.s	.skip1
-	moveq	#")",d1
-	cmp.w	#_TkPar2,d0
-	beq.s	.skip1
-	moveq	#",",d1
-	cmp.w	#_TkVir,d0
-	beq.s	.skip1
-	cmp.w	#_TkPVir,d0
-	beq.s	.skip1
-	cmp.w	#_TkTo,d0
-	beq.s	.skip1
-	cmp.w	#_TkAs,d0
-	beq.s	.skip1
-	moveq	#"0",d1
-	cmp.w	#_TkExt,d0
-	bcs.s	.skip1
-	beq.s	.jmp1
-; An operator: its definition is in the interpreter's table, not before
-; the instructions' (the original read whatever was there)
-	moveq	#"O",d1
-	tst.w	d0
-	bmi.s	.skip1
-; Instruction/fonction normale
-	move.l	AdTokens(a5),a0
-	lea	4(a0,d0.w),a0
-.loop1	tst.b	(a0)+
-	bpl.s	.loop1
-	move.b	(a0)+,d1
-	bpl.s	.skip2
-.skip0	moveq	#"I",d1
-.skip2	cmp.b	#"V",d1
-	bne.s	.skip1
-	move.b	(a0)+,d1
-; Poke l'adresse dans la table
-.skip1	move.l	Mon_Base(a5),a1
-	move.l	Tt_PLine(a1),a0
-	cmp.b	#"V",d1
-	beq.s	.skup
-	cmp.b	#"0",d1
-	beq.s	.skup
-	cmp.b	#"1",d1
-	beq.s	.skup
-	cmp.b	#"2",d1
-	bne.s	.skip3
-.skup	cmp.b	#":",-4(a0)
-	bne.s	.skip3
-	moveq	#"W",d1
-.skip3	move.b	d1,(a0)+
-	move.l	a4,d0
-	sub.l	Tt_BufT(a1),d0
-	subq.l	#2,d0
-	move.b	d0,(a0)+
-	move.l	a6,d0
-	sub.l	Tt_ALine(a1),d0
-	move.w	d0,(a0)+
-	move.l	a0,Tt_PLine(a1)
-	movem.l	(sp)+,a0-a1/d0-d3
-	rts
-; Detokenise une extension
-.jmp1	move.w	4(a6),d1
-	move.b	2(a6),d2
-	ext.w	d2
-	lsl.w	#2,d2
-	tst.l	AdTokens(a5,d2.w)
-	beq.s	.skip0
-	move.l	AdTokens(a5,d2.w),a0
-	lea	4(a0,d1.w),a0
-	bra.s	.loop1
+; Tt_Decoupe, the detokeniser's hook: monitor/shell.cpp (_mon_split_hook)
 
 ;	Va evaluer une expression
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
