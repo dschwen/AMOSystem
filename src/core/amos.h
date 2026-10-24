@@ -88,8 +88,30 @@ inline const void *lib_address(int routine)
     return table[-routine];
 }
 
-// JJsr: call a routine of AMOSPro.Lib
-inline void lib_call(int routine, Regs &r) { amos_call(&r, lib_address(routine)); }
+// The C++ function of a routine of AMOSPro.Lib whose glue is a RegRoutine
+// (build/gen/lib_direct.cpp), or null
+using RegFunction = uint32_t (*)(RegFrame &);
+extern const RegFunction lib_direct[];
+// Its glue (build/gen/lib_direct_entries.s), or 0
+extern const uint32_t lib_direct_entry[];
+
+// JJsr: call a routine of AMOSPro.Lib. A routine in C++ is called
+// directly, as through the glue: d6/d7 from r in the context during the
+// call, the context as it was afterwards.
+inline void lib_call(int routine, Regs &r)
+{
+    RegFunction f = lib_direct[routine];
+    if (f && lib_direct_entry[routine] == reinterpret_cast<uint32_t>(lib_address(routine))) {
+        Ctx &c = ctx();
+        Ctx saved = c;
+        c.d6 = r.d[6];
+        c.d7 = r.d[7];
+        f(reinterpret_cast<RegFrame &>(r));
+        ctx() = saved;
+        return;
+    }
+    amos_call(&r, lib_address(routine));
+}
 
 // JJsr to a routine that answers in the condition codes: -1 "less than",
 // 0 "equal", 1 "greater than"
