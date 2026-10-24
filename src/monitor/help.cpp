@@ -44,7 +44,7 @@ const char *file_name(const char *suffix)
 {
     Regs m;
     m.d[0] = 12;
-    lib_call(L_Sys_GetMessage, m);
+    m.a[0] = address(boot::sys_message(m.d[0]));
     char *to = ptr<char>(idata().Buffer) + 512;
     char *name = to;
     for (const char *s = ptr<char>(m.a[0]); (*to++ = *s++);) {
@@ -273,8 +273,7 @@ uint16_t show_text()
                 a.d[5] = uint16_t(d.PI_RtWy + (d.PI_RtSy >> 1));
                 lib_call(L_AppCentre, a);
                 for (;;) {
-                    Regs w;
-                    lib_call(L_Sys_WaitMul, w);
+                    boot::wait_vbl_multi();
                     Regs t;
                     lib_call(L_Test_PaSaut, t);
                     Regs g;

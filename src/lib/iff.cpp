@@ -30,7 +30,7 @@ enum Chunk { BMHD, CAMG, CMAP, CCRT, BODY, AMSC, ANHD, DLTA, ChunkCount };
 constexpr uint32_t ChunkIds[ChunkCount] = {id("BMHD"), id("CAMG"), id("CMAP"), id("CCRT"),
                                            id("BODY"), id("AMSC"), id("ANHD"), id("DLTA")};
 
-[[noreturn]] void bad_iff() { lib_jump(L_IffFor, 0); }
+[[noreturn]] void bad_iff() { error(30); }
 
 uint32_t even(uint32_t n) { return (n + 1) & ~1u; }
 
@@ -116,14 +116,13 @@ Screen *current_screen()
 {
     uint16_t n = idata().ScOn;
     if (!n)
-        lib_jump(L_ScNOp, 0);
+        screen_error(3);
     Regs r = {};
     r.d[1] = n - 1u;
     ec_call(ec::Active, r);
     return ptr<Screen>(r.a[0]);
 }
 
-[[noreturn]] void ec_wi_error(uint32_t code) { lib_jump(L_EcWiErr, code); }
 
 // IffScreen: open screen IffParam as BMHD/CAMG describe. False without
 // a BMHD.
@@ -241,7 +240,7 @@ void iff_shift()
     r.d[6] = 1;
     ec_call(ec::Shift, r);
     if (r.d[0])
-        ec_wi_error(r.d[0]);
+        screen_error(r.d[0]);
 }
 
 // The BODY chunk: the picture, in IffParam's new screen or the current one
@@ -254,18 +253,18 @@ void iff_body(const uint8_t *data)
             bad_iff();
         r.d[1] = d.IffParam;
         if (r.d[1] >= 8)
-            lib_jump(L_IllScN, 0);
+            screen_error(6);
         r.a[1] = address(d.DefPal);
         ec_call(ec::Cree, r);
         if (r.d[0])
-            ec_wi_error(r.d[0]);
+            screen_error(r.d[0]);
         Screen *s = ptr<Screen>(r.a[0]);
         d.ScOnAd = address(s);
         d.ScOn = s->EcNumber + 1;
         iff_centre();
     }
     if (!d.ScOn)
-        lib_jump(L_ScNOp, 0);
+        screen_error(3);
     iff_palette();
     iff_shift();
     Screen *s = current_screen();
@@ -274,13 +273,13 @@ void iff_body(const uint8_t *data)
     const uint8_t *bmhd = ptr<uint8_t>(d.BufBMHD);
     uint16_t width = peek_w(bmhd);
     if (width > s->EcTx)
-        lib_jump(L_CantFit, 0);
+        error(32);
     uint16_t height = peek_w(bmhd + 2);
     if (height > s->EcTy)
         height = s->EcTy;
     int16_t planes = static_cast<int8_t>(bmhd[8]);
     if (static_cast<uint16_t>(planes) > s->EcNPlan)
-        lib_jump(L_CantFit, 0);
+        error(32);
     uint16_t row = (width + 7) >> 3;
     // cursor off
     Regs c = {};
@@ -300,7 +299,7 @@ void iff_body(const uint8_t *data)
         return;
     }
     if (compression != 1)
-        lib_jump(L_IffCmp, 0);
+        error(31);
     // ByteRun1
     uint32_t offset = 0;
     for (uint16_t y = 0; y < height; y++, offset += static_cast<int16_t>(s->EcTLigne)) {
@@ -355,7 +354,7 @@ void iff_delta(const uint8_t *data)
     if (anhd[0] != 5)
         bad_iff();
     if (!d.ScOn)
-        lib_jump(L_ScNOp, 0);
+        screen_error(3);
     Screen *s = ptr<Screen>(wdata().EcCourant);
     uint32_t line = static_cast<int16_t>(s->EcTLigne);
     d.IffReturn = peek_l(anhd + 14);
@@ -420,7 +419,7 @@ uint8_t *temp_buffer(uint32_t size)
 {
     Regs r = {};
     r.d[0] = size;
-    lib_call(L_ResTempBuffer, r);
+    r.a[0] = boot::temp_buffer(r.d[0]);
     return ptr<uint8_t>(idata().TempBuffer);
 }
 
@@ -442,9 +441,9 @@ BPTR form_channel(uint32_t n)
     RegFrame r = {};
     r.d[0] = n;
     if (!lib_get_file(r))
-        lib_jump(L_FilNO, 0);
+        error(79 + 18);
     if (ptr<uint8_t>(r.a[2])[4] & 4)
-        lib_jump(L_FilTM, 0);
+        error(79 + 19);
     return static_cast<BPTR>(r.d[1]);
 }
 
@@ -693,7 +692,7 @@ extern "C" uint32_t lib_fn_form_load3(uint32_t channel, int32_t where, int32_t c
         uint8_t *bank = bank_reserve(where, 0, size, static_cast<const char *>(lib_address(L_BkIff)));
         bank_changed();
         if (!bank)
-            lib_jump(L_OOfMem, 0);
+            error(24);
         to = bank;
     }
     return form_load(file, to, count);
@@ -755,12 +754,12 @@ extern "C" void lib_in_iff_anim3(const uint8_t *name, uint32_t screen, int32_t t
     if (length < 0)
         disk_error();
     if (!temp_buffer(length + 8))
-        lib_jump(L_OOfMem, 0);
+        error(24);
     form_load(static_cast<BPTR>(d.Handle), ptr<uint8_t>(d.TempBuffer), 32767);
     file_close();
     uint8_t *anim = ptr<uint8_t>(d.TempBuffer);
     if (peek_l(anim + 8) != id("ILBM"))
-        lib_jump(L_IffFor2, 0);
+        error(30);
     uint8_t *next = form_play(anim, 1);
     Regs dbl = {};
     ec_call(ec::Double, dbl);
@@ -792,7 +791,7 @@ extern "C" void lib_in_iff_anim2(const uint8_t *name, uint32_t screen) { lib_in_
 extern "C" void lib_in_save_iff2(const uint8_t *name, uint32_t compression)
 {
     if (!idata().ScOnAd)
-        lib_jump(L_ScNOp, 0);
+        screen_error(3);
     if (compression >= 3)
         fon_call();
     name_disc(name);

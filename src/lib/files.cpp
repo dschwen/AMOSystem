@@ -36,10 +36,10 @@ constexpr uint8_t ChanOut = 1 << 0, ChanIn = 1 << 1, ChanPort = 1 << 2, ChanRand
 
 constexpr int32_t OffsetBeginning = -1, OffsetCurrent = 0, OffsetEnd = 1;
 
-[[noreturn]] void not_open() { lib_jump(L_FilNO, 0); }
-[[noreturn]] void already_open() { lib_jump(L_FilOO, 0); }
-[[noreturn]] void type_mismatch() { lib_jump(L_FilTM, 0); }
-[[noreturn]] void end_of_file() { lib_jump(L_EOFil, 0); }
+[[noreturn]] void not_open() { error(79 + 18); }
+[[noreturn]] void already_open() { error(79 + 17); }
+[[noreturn]] void type_mismatch() { error(79 + 19); }
+[[noreturn]] void end_of_file() { error(79 + 21); }
 
 // GetFile: channel n (1-10)
 Channel &channel(uint32_t n)
@@ -697,7 +697,7 @@ extern "C" void lib_in_pload(const uint8_t *name, int32_t number)
     if (!file_open(ModeOldFile))
         disk_error();
     if (read_header_long() != 0x3F3)
-        lib_jump(L_DiForm, 0);
+        error(79 + 16);
     while (read_header_long() != 0x3E9)
         ;
     uint32_t length = read_header_long() << 2;
@@ -705,7 +705,7 @@ extern "C" void lib_in_pload(const uint8_t *name, int32_t number)
                                  static_cast<const char *>(lib_address(L_BkAsm)));
     bank_changed();
     if (!bank)
-        lib_jump(L_OOfMem, 0);
+        error(24);
     if (!file_read(bank, length))
         disk_error();
     file_close();

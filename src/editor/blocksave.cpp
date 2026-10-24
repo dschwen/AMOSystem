@@ -46,8 +46,7 @@ bool select_file(uint16_t message)
     call(ed_file_selector, r);
     if (!uint16_t(r.d[0]))
         return false;
-    Regs p;
-    lib_call(L_Dsk_PathIt, p);
+    path_it();
     return true;
 }
 
@@ -230,7 +229,7 @@ void printer_open()
 {
     Regs m;
     m.d[0] = 43;
-    lib_call(L_Sys_GetMessage, m);
+    m.a[0] = address(boot::sys_message(m.d[0]));
     BPTR f = Open(ptr<char>(m.a[0]), MODE_OLDFILE);
     idata().Handle = uint32_t(f);
     if (!f)

@@ -72,10 +72,10 @@ uint32_t prt_open()
         return d.PrtHandle;
     Regs m;
     m.d[0] = 43;
-    lib_call(L_Sys_GetMessage, m);
+    m.a[0] = address(boot::sys_message(m.d[0]));
     d.PrtHandle = uint32_t(Open(ptr<char>(m.a[0]), 1005));
     if (!d.PrtHandle)
-        lib_jump(L_DiskError, 0);
+        disk_error();
     Regs r;
     r.a[1] = address(lib_prt_close_record);
     r.a[2] = address(&d.Sys_ClearRoutines);
@@ -99,7 +99,7 @@ void prt_print(char *text)
     }
     int32_t n = from - text - 1;
     if (n && Write(h, text, n) < 0)
-        lib_jump(L_DiskError, 0);
+        disk_error();
 }
 
 } // namespace
@@ -214,7 +214,7 @@ uint32_t lib_imp_chaine(RegFrame &r)
         return 0;
     }
     if (!d.ScOn)
-        lib_jump(L_ScNOp, 0);
+        screen_error(3);
     wi_call(wi::Print, p);
     return 0;
 }

@@ -54,7 +54,7 @@ extern "C" void interp_in_field()
     m.d[0] = count * 6u + 8;
     sy_call(sy::MemFastClear, m);
     if (!m.a[0])
-        lib_jump(L_OOfMem, 0);
+        error(24);
     uint8_t *record = ptr<uint8_t>(m.a[0]);
     poke_l(channel + 6, m.a[0]);
     poke_w(record, count);

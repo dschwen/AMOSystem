@@ -81,7 +81,7 @@ uint32_t char_string(uint8_t c)
 }
 
 // "Illegal function call" of the window library (L_WFonCall)
-[[noreturn]] void w_fon_call() { lib_jump(L_WFonCall, 0); }
+[[noreturn]] void w_fon_call() { screen_error(16); }
 
 } // namespace
 

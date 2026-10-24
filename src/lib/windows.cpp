@@ -9,21 +9,20 @@ namespace {
 constexpr uint32_t EntNul = 0x80000000;
 
 // Errors of the screen and window functions of AMOS.library
-[[noreturn]] void ec_wi_error(uint32_t code) { lib_jump(L_EcWiErr, code); }
-[[noreturn]] void w_fon_call() { lib_jump(L_WFonCall, 0); }
+[[noreturn]] void w_fon_call() { screen_error(16); }
 
 // The current screen, or the "screen not opened" error
 void check_screen()
 {
     if (!idata().ScOn)
-        lib_jump(L_ScNOp, 0);
+        screen_error(3);
 }
 
 Regs &wi_check(int function, Regs &r)
 {
     wi_call(function, r);
     if (r.d[0])
-        ec_wi_error(r.d[0]);
+        screen_error(r.d[0]);
     return r;
 }
 
@@ -88,7 +87,7 @@ extern "C" void lib_in_windopen5(uint32_t n, uint32_t x, uint32_t y, uint32_t w,
 extern "C" void lib_in_windsave()
 {
     if (!idata().ScOnAd)
-        lib_jump(L_ScNOp, 0);
+        screen_error(3);
     ptr<Screen>(idata().ScOnAd)->EcWiDec = 0xFFFF;
 }
 

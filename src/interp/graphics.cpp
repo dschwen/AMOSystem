@@ -17,7 +17,7 @@ namespace {
 constexpr int32_t PolyDraw = -336;      // graphics.library
 constexpr int AAreaSize = 16;           // AreaDraw's points
 
-[[noreturn]] void screen_not_open() { lib_jump(L_ScNOp, 0); }
+[[noreturn]] void screen_not_open() { screen_error(3); }
 
 uint16_t *buffer() { return ptr<uint16_t>(idata().Buffer); }
 
@@ -65,7 +65,7 @@ void palette()
     r.a[1] = address(p);
     ec_call(ec::SPal, r);
     if (r.d[0])
-        lib_jump(L_EcWiErr, r.d[0]);
+        screen_error(r.d[0]);
 }
 
 // Fade speed [To screen/-1 for the sprites [,mask] | ,colours...]
@@ -81,7 +81,7 @@ void fade()
         if (from < 0) {
             uint8_t *bank = bank_bobs();
             if (!bank)
-                lib_jump(L_BkNoRes, 0);
+                error(36);
             colours_from = bank + 2 + 8 * peek_w(bank);
         } else {
             Regs e;

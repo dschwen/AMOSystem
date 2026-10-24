@@ -18,7 +18,7 @@ namespace {
 constexpr uint32_t EntNul = 0x80000000;
 constexpr uint16_t BitBobs = 1 << 13, BitSprites = 1 << 14;
 
-[[noreturn]] void screen_not_open() { lib_jump(L_ScNOp, 0); }
+[[noreturn]] void screen_not_open() { screen_error(3); }
 
 void need_screen()
 {
@@ -59,7 +59,7 @@ void sy_set_bob(Regs &r)
 {
     sy_call(sy::SetBob, r);
     if (static_cast<int32_t>(r.d[0]) < 0)
-        lib_jump(L_OOfMem, 0);
+        error(24);
     if (r.d[0])
         fon_call();
 }
@@ -76,7 +76,7 @@ void make_masks(uint8_t *entry, uint16_t count)
         r.a[2] = address(entry);
         sy_call(sy::MaskMk, r);
         if (r.d[0])
-            lib_jump(L_OOfMem, 0);
+            error(24);
     }
 }
 
@@ -147,7 +147,7 @@ void grab(Screen *s, uint32_t n, int32_t x1, int32_t y1, int32_t x2, int32_t y2,
         g.d[0] = 1;
         g.d[1] = n;
         if (icon ? lib_bnk_res_ico(g) : lib_bnk_res_bob(g))
-            lib_jump(L_OOfMem, 0);
+            error(24);
         bank_changed();
         RegFrame h = {};
         h.d[0] = n;
@@ -165,7 +165,7 @@ void grab(Screen *s, uint32_t n, int32_t x1, int32_t y1, int32_t x2, int32_t y2,
     r.a[2] = entry;
     sy_call(sy::SprGet, r);
     if (r.d[0])
-        lib_jump(L_OOfMem, 0);
+        error(24);
     if (icon)
         poke_l(ptr<uint8_t>(entry) + 4, 0xC0000000u);
 }
@@ -224,7 +224,7 @@ uint8_t *amos::image_entry(uint32_t n, bool icon, uint16_t *count)
     if (!entry) {
         // AdBErr: no bank at all, or no such image
         if (!static_cast<uint16_t>(r.d[1]))
-            lib_jump(L_BkNoRes, 0);
+            error(36);
         error(45 + 30 - 1);
     }
     if (count)
@@ -397,7 +397,7 @@ static void limit_mouse_screen(uint32_t d1)
     r.d[1] = d1;
     sy_call(sy::LimitMEc, r);
     if (r.d[0])
-        lib_jump(L_EcWiErr, r.d[0]);
+        screen_error(r.d[0]);
 }
 
 extern "C" void lib_in_limit_mouse0() { limit_mouse_screen(0); }
@@ -471,7 +471,7 @@ extern "C" void lib_in_set_sprite_buffer(uint32_t lines)
     r.d[1] = lines;
     sy_call(sy::SBufHs, r);
     if (r.d[0])
-        lib_jump(L_SpErr, r.d[0]);
+        error(79 + 25);
 }
 
 // SPRITE PRIORITY n
@@ -676,7 +676,7 @@ extern "C" void lib_in_paste_bob(uint32_t x, uint32_t y, int32_t n)
     check_positive(n);
     uint8_t *entry = image_entry(n, false);
     if (!peek_l(entry))
-        lib_jump(L_EcWiErr, 24);
+        screen_error(24);
     paste(x, y, n, entry);
 }
 
@@ -685,7 +685,7 @@ extern "C" void lib_in_paste_icon(uint32_t x, uint32_t y, int32_t n)
     check_positive(n);
     uint8_t *entry = image_entry(n, true);
     if (!peek_l(entry))
-        lib_jump(L_EcWiErr, 30);
+        screen_error(30);
     if (!peek_l(entry + 4))
         poke_l(entry + 4, 0xC0000000u);
     paste(x, y, n, entry);

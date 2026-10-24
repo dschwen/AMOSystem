@@ -133,7 +133,7 @@ void defrun1()
     // colour 3 flashes
     Regs m;
     m.d[0] = 46;
-    lib_call(L_Sys_GetMessage, m);
+    m.a[0] = address(boot::sys_message(m.d[0]));
     Regs fl;
     fl.d[1] = 3;
     fl.a[1] = m.a[0];

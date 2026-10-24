@@ -84,7 +84,7 @@ extern "C" uint32_t lib_fn_fire(uint32_t port) { return joy_bit(port, 4); }
 extern "C" void lib_in_put_key(const uint8_t *s)
 {
     if (str_len(s) >= 64)
-        lib_jump(L_StooLong, 0);
+        error(21);
     Regs r = {};
     r.a[1] = address(str_to_buffer(s));
     sy_call(sy::PutKey, r);

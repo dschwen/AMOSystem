@@ -221,7 +221,7 @@ uint32_t bank_or_address(int32_t value)
         return value;
     uint8_t *bank = bank_find(value);
     if (!bank)
-        lib_jump(L_BkNoRes, 0);
+        error(36);
     return address(bank);
 }
 
@@ -649,8 +649,8 @@ extern "C" uint32_t lib_bnk_un_rev(RegFrame &r)
 
 namespace {
 
-[[noreturn]] void bank_not_reserved() { lib_jump(L_BkNoRes, 0); }
-[[noreturn]] void out_of_memory() { lib_jump(L_OOfMem, 0); }
+[[noreturn]] void bank_not_reserved() { error(36); }
+[[noreturn]] void out_of_memory() { error(24); }
 
 // Bnk.List: the next bank after number min, as a line of text in Buffer.
 // Returns its number, or 0 if there is none.

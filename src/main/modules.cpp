@@ -65,7 +65,7 @@ bool first_run()
 {
     IData &d = idata();
     if (d.Direct)
-        lib_jump(L_Error, 17);              // illegal direct mode
+        error(17);              // illegal direct mode
     if (d.Prg_Accessory)
         return false;
     return !ptr<Program>(d.Prg_Runned)->Prg_Previous;
@@ -309,18 +309,18 @@ void main_in_monitor()
     if (!first_run())
         return;
     if (!d.Edit_Segment)
-        lib_jump(L_Error, 13);
+        error(13);
     lib(L_Ed_CloseEditor);
     lib(L_Prg_ReSetBanks);
     if (int32_t e = mon_load()) {
         if (int16_t(e) == -1)
-            lib_jump(L_OOfMem, 0);
-        lib_jump(L_DiskError, 0);
+            error(24);
+        disk_error();
     }
     Regs r;
     lib_call(L_Mon_In_Program, r);
     if (r.d[0])
-        lib_jump(L_OOfMem, 0);
+        error(24);
 }
 
 // KILL EDITOR: closes the editor and, if allowed and the monitor is not

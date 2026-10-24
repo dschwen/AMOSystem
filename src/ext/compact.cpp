@@ -302,7 +302,7 @@ void ext_unpack2(uint32_t b, uint32_t s)
     if (!uint16_t(r.d[0])) {
         if (!uint16_t(r.d[1]))
             not_packed();
-        lib_jump(L_OOfMem, 0);
+        error(24);
     }
     Screen *e = ptr<Screen>(r.a[0]);
     IData &d = idata();

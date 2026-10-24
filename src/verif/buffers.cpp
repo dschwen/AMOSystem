@@ -174,7 +174,7 @@ void clear_variables()
     d.IffMask = 0xFFFFFFFF;
     Regs m;
     m.d[0] = 47;
-    lib_call(L_Sys_GetMessage, m);
+    m.a[0] = address(boot::sys_message(m.d[0]));
     const char *from = ptr<char>(m.a[0]);
     char *to = ptr<char>(d.DirFNeg);
     while ((*to++ = *from++))

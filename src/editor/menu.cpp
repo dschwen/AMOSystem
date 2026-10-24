@@ -631,8 +631,7 @@ Option get_option(uint16_t n)
     lib_call(L_Dia_EffChannel, e);
     Choice c = {0, nullptr, 0};
     for (;;) {
-        Regs w;
-        lib_call(L_Sys_WaitMul, w);
+        boot::wait_vbl_multi();
         Regs k;
         sy_call(sy::Inkey, k);
         if (k.d[1])
@@ -726,8 +725,7 @@ void program_to_menu()
     f.d[0] = 100;
     if (!uint16_t(call(ed_file_selector, f)))
         not_done();
-    Regs p;
-    lib_call(L_Dsk_PathIt, p);
+    path_it();
     uint32_t *v = dialogue_variables();
     v[0] = address(o.text);
     v[1] = d.Name1;

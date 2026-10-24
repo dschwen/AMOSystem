@@ -23,6 +23,32 @@ namespace {
 // The message past the end of a list: a byte, then ""
 const uint8_t no_message[4] = {0, 0, 0, 0};
 
+char *name1() { return ptr<char>(idata().Name1); }
+
+// ResTempBuffer's records, to free the buffer when the program stops or is
+// cleared (main_glue.s)
+extern "C" uint8_t main_temp_on_clear[], main_temp_on_error[];
+
+void add_routine(uint8_t *record, uint32_t *list)
+{
+    Regs r;
+    r.a[1] = address(record);
+    r.a[2] = address(list);
+    sy_call(sy::AddRoutine, r);
+}
+
+uint32_t memory(int function, uint32_t size)
+{
+    Regs r;
+    r.d[0] = size;
+    sy_call(function, r);
+    return r.a[0];
+}
+
+} // namespace
+
+namespace amos::boot {
+
 // GetMessage: a list is a byte, then the messages: a byte, the length of
 // the text, the text and a 0. Message n (from 1); d0 gets the length of
 // it in its low byte, the count of the search above.
@@ -46,30 +72,9 @@ const uint8_t *get_message(const uint8_t *list, uint32_t &d0)
     return p + 1;
 }
 
-char *name1() { return ptr<char>(idata().Name1); }
-
-// ResTempBuffer's records, to free the buffer when the program stops or is
-// cleared (main_glue.s)
-extern "C" uint8_t main_temp_on_clear[], main_temp_on_error[];
-
-void add_routine(uint8_t *record, uint32_t *list)
-{
-    Regs r;
-    r.a[1] = address(record);
-    r.a[2] = address(list);
-    sy_call(sy::AddRoutine, r);
-}
-
-uint32_t memory(int function, uint32_t size)
-{
-    Regs r;
-    r.d[0] = size;
-    sy_call(function, r);
-    return r.a[0];
-}
-
 // ResTempBuffer: the temporary buffer of size bytes (after a long, its
-// size), freed with a size of 0. Returns the size, 0 if out of memory.
+// size), freed with a size of 0. Returns its address, 0 if out of memory
+// (or freed).
 uint32_t temp_buffer(uint32_t size)
 {
     IData &d = idata();
@@ -86,12 +91,8 @@ uint32_t temp_buffer(uint32_t size)
     d.TempBuffer = at + 4;
     add_routine(main_temp_on_clear, &d.Sys_ClearRoutines);
     add_routine(main_temp_on_error, &d.Sys_ErrorRoutines);
-    return size;
+    return d.TempBuffer;
 }
-
-} // namespace
-
-namespace amos::boot {
 
 const char *message(uint32_t list, uint32_t n)
 {
@@ -100,6 +101,13 @@ const char *message(uint32_t list, uint32_t n)
 }
 
 const char *sys_message(uint32_t n) { return message(idata().Sys_Messages, n); }
+
+const uint8_t *def_message(uint32_t n)
+{
+    uint32_t resource = idata().Sys_Resource;
+    uint32_t d0 = n;
+    return get_message(ptr<uint8_t>(resource + peek_l(ptr<void>(resource + 6))), d0);
+}
 
 void sys_add_path(const char *name)
 {
@@ -331,10 +339,12 @@ extern "C" uint32_t main_ram_free(RegFrame &r)
 // ResTempBuffer: d0 = size. Out: d0 = size (BEQ: none), a0 = the buffer.
 extern "C" uint32_t main_res_temp_buffer(RegFrame &r)
 {
-    r.d[0] = temp_buffer(r.d[0]);
-    if (r.d[0])
-        r.a[0] = idata().TempBuffer;
-    return r.d[0];
+    uint32_t size = r.d[0];
+    if (uint32_t buffer = temp_buffer(size)) {
+        r.a[0] = buffer;
+        return r.d[0] = size;
+    }
+    return r.d[0] = 0;
 }
 
 extern "C" void main_free_temp_buffer() { temp_buffer(0); }

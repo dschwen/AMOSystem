@@ -351,8 +351,7 @@ Chosen choose(uint16_t x, uint16_t y, uint16_t row)
     m.Tt_YInfo = y;
     listing_show();
     while (mouse_keys() & 1) {
-        Regs w;
-        lib_call(L_Sys_WaitMul, w);
+        boot::wait_vbl_multi();
         if (!(mouse_keys() & 1))
             break;
         Position p = mouse_position();
@@ -469,8 +468,7 @@ void separation_drag()
         old = now;
         put(126, now);
         while (mouse_keys() & 1) {
-            Regs w;
-            lib_call(L_Sys_WaitMul, w);
+            boot::wait_vbl_multi();
             if (!(mouse_keys() & 1))
                 break;
             mouse_screen(mx, my);

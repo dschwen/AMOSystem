@@ -88,8 +88,7 @@ volatile uint16_t &input() { return fs()->Fs_Input; }
 
 void wait_tof()
 {
-    Regs r = {};
-    lib_call(L_Sys_WaitMul, r);
+    boot::wait_vbl_multi();
 }
 
 // Fs_Multi: wait for the display (both tasks: no AMOS tests)
@@ -962,7 +961,7 @@ void show_disk_error()
     Regs m = {};
     m.a[0] = address(p.messages);
     m.d[0] = message;
-    lib_call(L_GetMessage, m);
+    m.a[0] = address(boot::get_message(ptr<uint8_t>(m.a[0]), m.d[0]));
     clear_names();
     DiaResult r = dia_run_quick(p.programs + peek_l(p.programs + 10), p.graphics, p.messages, 0, 0, 0,
                                 m.a[0] - 2, 0, false, 256);

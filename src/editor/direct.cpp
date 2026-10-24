@@ -565,8 +565,7 @@ void show()
     for (;;) {
         ec_fn(ec::Active, EcEdit);
     again:
-        Regs w;
-        lib_call(L_Sys_WaitMul, w);
+        boot::wait_vbl_multi();
         Regs l;
         l.a[0] = address(line_editor());
         lib_call(L_LEd_Loop, l);

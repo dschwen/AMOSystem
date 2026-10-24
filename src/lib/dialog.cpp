@@ -2708,8 +2708,7 @@ uint16_t run_events(Run &r, int32_t timer, int32_t flags)
     edit_first(d);
     uint16_t exits;
     for (;;) {
-        Regs m = {};
-        lib_call(L_Sys_WaitMul, m);
+        boot::wait_vbl_multi();
         if (d->Dia_Timer && w.VblCount - d->Dia_TimerPos >= d->Dia_Timer)
             break;
         if (w.Actualise & BitControl) {
@@ -3377,7 +3376,7 @@ uint8_t *amos::dia_resource_screen(const uint8_t *puzzle, uint32_t number, uint3
         }
         Regs m = {};
         m.d[0] = 46;
-        lib_call(L_Sys_GetMessage, m);
+        m.a[0] = address(boot::sys_message(m.d[0]));
         Regs f = {};
         f.d[1] = flash;
         f.a[1] = m.a[0];

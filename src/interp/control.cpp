@@ -382,7 +382,7 @@ void test_force()
         Regs r;
         lib_call(L_Dia_AutoTest, r);
         if (r.d[0])
-            lib_jump(L_Error, r.d[0] + IDiaErrors);
+            error(r.d[0] + IDiaErrors);
     }
     if ((mask & (1 << BitMenu)) && d.MnBase && !d.MnProc) {
         if (w.ClLast && !d.Direct) {
@@ -394,7 +394,7 @@ void test_force()
             Regs g;
             lib_call(L_MnGere, g);
             if (g.d[0])
-                lib_jump(L_Error, g.d[0]);
+                error(g.d[0]);
         }
     }
     uint16_t actualise = w.Actualise;
@@ -1036,7 +1036,7 @@ void interp_in_on_menu()
     m.d[0] = n * 4u;
     sy_call(sy::MemFast, m);
     if (!m.a[0])
-        lib_jump(L_OOfMem, 0);
+        error(24);
     d.OMnBase = m.a[0];
     uint32_t *to = ptr<uint32_t>(m.a[0]) + n;
     for (uint16_t i = 0; i < n; i++)

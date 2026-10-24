@@ -242,7 +242,7 @@ void fill_first()
     d.LockSave = 0;
     uint8_t *e = mem_fast_clear(6 + 4 + 128);
     if (!e)
-        lib_jump(L_OOfMem, 0);
+        error(24);
     d.BufFillF = address(e);
     poke_w(e + 4, 6 + 4 + 128);
     const char *from = ptr<char>(d.Buffer) + 384;
@@ -387,7 +387,7 @@ void nom_dir(const uint8_t *s)
 {
     uint16_t len = str_len(s);
     if (len >= 256)
-        lib_jump(L_StooLong, 0);
+        error(21);
     IData &d = idata();
     char *name = ptr<char>(d.Name1);
     char *filter = ptr<char>(d.Name2);
@@ -427,7 +427,7 @@ const char *message(uint32_t n)
 {
     Regs r = {};
     r.d[0] = n;
-    lib_call(L_Def_GetMessage, r);
+    r.a[0] = address(boot::def_message(r.d[0]));
     return ptr<char>(r.a[0]);
 }
 
@@ -540,7 +540,7 @@ void dir_wide()
 {
     idata().DirComp = 1;
     if (!idata().ScOnAd)
-        lib_jump(L_ScNOp, 0);
+        screen_error(3);
     auto screen = ptr<Screen>(idata().ScOnAd);
     idata().FillFSize = ptr<Window>(screen->EcWindow)->WiTx >> 1;
     list_directory();
@@ -799,7 +799,7 @@ extern "C" void lib_in_set_dir2(uint32_t length, const uint8_t *filter)
     if (address(filter) != 0x80000000u) {
         uint16_t len = str_len(filter);
         if (len >= 106)
-            lib_jump(L_StooLong, 0);
+            error(21);
         char *to = ptr<char>(idata().DirFNeg);
         const uint8_t *from = str_chars(filter);
         if (len > 510)
@@ -878,7 +878,7 @@ void assign_lock(const uint8_t *name, const uint8_t *path)
         if (n >= 108)
             fon_call();
         to_text(ptr<char>(d.Name1), path);
-        lib(L_Dsk_PathIt);
+        path_it();
         lib(L_LockGet);
     }
     uint16_t n = peek_w(name);
@@ -894,7 +894,7 @@ void assign_lock(const uint8_t *name, const uint8_t *path)
     end[-1] = 0;
     if (!AssignLock(b, BPTR(d.LockSave))) {
         lib(L_LockFree);
-        lib_jump(L_DiskError, 0);
+        disk_error();
     }
     d.LockSave = 0;
 }
@@ -910,13 +910,13 @@ void assign_command(const uint8_t *name, const uint8_t *path)
     Regs e;
     lib_call(L_RExist, e);
     if (!e.d[3])
-        lib_jump(L_DiskError, 0);
+        disk_error();
     *n1 = 0;
     if (uint16_t n = peek_w(path)) {
         if (n >= 108)
             fon_call();
         to_text(n1, path);
-        lib(L_Dsk_PathIt);
+        path_it();
         lib(L_LockGet);
         lib(L_LockFree);
     }
@@ -947,12 +947,12 @@ void assign_command(const uint8_t *name, const uint8_t *path)
     o.d[2] = 1005;
     lib_call(L_D_OpenD1, o);
     if (!d.Handle)
-        lib_jump(L_DiskError, 0);
+        disk_error();
     BPTR nil = BPTR(d.Handle);
     int32_t ok = Execute(b, nil, nil);
     lib(L_D_Close);
     if (!ok)
-        lib_jump(L_DiskError, 0);
+        disk_error();
 }
 
 } // namespace

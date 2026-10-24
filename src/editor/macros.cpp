@@ -89,7 +89,7 @@ void system_file(uint16_t n)
     call(ed_get_systeme, m);
     Regs p;
     p.a[0] = m.a[0];
-    lib_call(L_Sys_AddPath, p);
+    boot::sys_add_path(ptr<char>(p.a[0]));
 }
 
 } // namespace
@@ -353,8 +353,7 @@ bool select_file(uint16_t message)
     r.d[0] = message;
     if (!uint16_t(call(ed_file_selector, r)))
         return false;
-    Regs p;
-    lib_call(L_Dsk_PathIt, p);
+    path_it();
     return true;
 }
 

@@ -34,8 +34,7 @@ constexpr uint16_t BitControl = 8;
 
 void wait_vbl()
 {
-    Regs r;
-    lib_call(L_Sys_WaitMul, r);
+    boot::wait_vbl_multi();
 }
 
 // GetZone: the screen in the low word, the zone in the high one
@@ -178,7 +177,7 @@ void mon_initialise(AllRegs *r)
 {
     if (int16_t(mon().Tt_Init) > 0) {
         if (idata().ActuMask & (1 << BitControl))
-            lib_jump(L_Error, 1003);
+            error(1003);
         alert_message(16);              // no initialise in this mode
         r->d[0] = 1;
         return;

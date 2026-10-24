@@ -103,7 +103,7 @@ int32_t match()
         if (a.type == TFloat)
             v = to_float(v);
         else if (a.type > TFloat)
-            lib_jump(L_TypeMis, 0);
+            error(34);
         else
             v = to_integer(v);
     }

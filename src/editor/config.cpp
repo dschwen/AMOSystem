@@ -76,7 +76,7 @@ void add_path(uint32_t text)
 {
     Regs p;
     p.a[0] = text;
-    lib_call(L_Sys_AddPath, p);
+    boot::sys_add_path(ptr<char>(p.a[0]));
 }
 
 uint8_t *bank(uint32_t n)
@@ -400,8 +400,7 @@ bool select_file(uint16_t message)
     r.d[0] = message;
     if (!uint16_t(call(ed_file_selector, r)))
         return false;
-    Regs p;
-    lib_call(L_Dsk_PathIt, p);
+    path_it();
     return true;
 }
 
@@ -410,7 +409,7 @@ void default_name()
 {
     Regs m;
     m.d[0] = 7;
-    lib_call(L_Sys_GetMessage, m);
+    m.a[0] = address(boot::sys_message(m.d[0]));
     add_path(m.a[0]);
 }
 
@@ -462,8 +461,7 @@ void redraw()
 void wait_input(uint16_t n)
 {
     do {
-        Regs w;
-        lib_call(L_Sys_WaitMul, w);
+        boot::wait_vbl_multi();
         Regs k;
         sy_call(sy::Inkey, k);
         if (k.d[1])

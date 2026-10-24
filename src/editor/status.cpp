@@ -293,7 +293,7 @@ void alert_clean()
 {
     Regs t;
     t.d[0] = 0;
-    lib_call(L_ResTempBuffer, t);
+    t.a[0] = boot::temp_buffer(t.d[0]);
     close_file();
 }
 

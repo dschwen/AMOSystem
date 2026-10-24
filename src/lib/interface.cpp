@@ -17,7 +17,7 @@ namespace {
 constexpr uint32_t EntNul = 0x80000000;
 
 // Dia_GoError: an Interface error (AMOS errors 120-131)
-[[noreturn]] void dia_error(uint32_t error) { lib_jump(L_Error, error + IDiaErrors); }
+[[noreturn]] void dia_error(uint32_t n) { error(n + IDiaErrors); }
 
 // The resource the Interface uses: graphics, messages, programs
 struct Resource {
@@ -32,7 +32,7 @@ Resource default_resource()
 {
     uint32_t r = idata().Sys_Resource;
     if (!r)
-        lib_jump(L_BkNoRes, 0);
+        error(36);
     const uint8_t *b = ptr<uint8_t>(r);
     return {b + peek_l(b + 10), b + peek_l(b + 2), b + peek_l(b + 6), 0};
 }
@@ -45,7 +45,7 @@ Resource resource()
         return default_resource();
     uint8_t *bank = bank_find(n);
     if (!bank || peek_l(bank - 8) != 0x5265736F)       // "Reso"
-        lib_jump(L_BkNoRes, 0);
+        error(36);
     Resource r = default_resource();
     uint16_t parts = peek_w(bank);
     if (parts >= 1 && peek_l(bank + 2))
@@ -272,11 +272,11 @@ extern "C" void lib_in_resource_screen_open(uint32_t n, uint32_t w, uint32_t h, 
 {
     Resource r = resource();
     if (n >= 8)
-        lib_jump(L_IllScN, 0);
+        screen_error(6);
     uint32_t error;
     uint8_t *s = dia_resource_screen(r.graphics, n, w, h, flash, -1, &error);
     if (static_cast<uint16_t>(error))
-        lib_jump(L_EcWiErr, error);
+        screen_error(error);
     idata().ScOnAd = address(s);
     idata().ScOn = static_cast<uint16_t>(reinterpret_cast<Screen *>(s)->EcNumber + 1);
 }
@@ -297,7 +297,7 @@ extern "C" void lib_in_resource_unpack(int32_t n, uint32_t x, uint32_t y)
         fon_call();
     g += peek_l(g + 2 + (static_cast<uint16_t>(n - 1) << 2));
     if (!idata().ScOnAd)
-        lib_jump(L_ScNOp, 0);
+        screen_error(3);
     RegFrame f = {};
     f.a[0] = address(g);
     f.a[1] = idata().ScOnAd;
@@ -337,7 +337,7 @@ static void read_text(uint32_t title, uint32_t text_address, uint32_t length)
     dia_resource_screen(r.graphics, EcFsel, static_cast<uint32_t>(static_cast<int16_t>(d.PI_RtSx)),
                         static_cast<uint32_t>(static_cast<int16_t>(d.PI_RtSy)), 0, -1, &error);
     if (static_cast<uint16_t>(error))
-        lib_jump(L_EcWiErr, error);
+        screen_error(error);
     uint32_t channel = 65536;
     while (dia_channel(channel))
         channel++;
@@ -360,8 +360,7 @@ static void read_text(uint32_t title, uint32_t text_address, uint32_t length)
             lib_call(L_AppCentre, a);
             d.ParamC = d.ChVide;
             for (;;) {
-                Regs w = {};
-                lib_call(L_Sys_WaitMul, w);
+                boot::wait_vbl_multi();
                 Regs t = {};
                 lib_call(L_Test_PaSaut, t);
                 DiaValue v = dia_value(channel, 5, 0);
@@ -404,9 +403,9 @@ static void read_text(uint32_t title, uint32_t text_address, uint32_t length)
         ec_call(ec::Active, act);
     }
     Regs tb = {};
-    lib_call(L_ResTempBuffer, tb);
+    tb.a[0] = boot::temp_buffer(tb.d[0]);
     if (failed)
-        lib_jump(L_OOfMem, 0);
+        amos::error(24);
     Regs lr = {};
     lib_call(L_LoadRegs, lr);
 }
@@ -419,7 +418,7 @@ extern "C" void lib_in_read_text1(const uint8_t *name)
     name_disc(name);
     Regs m = {};
     m.d[0] = 20;
-    lib_call(L_Def_GetMessage, m);      // "AMOS Professional Text Reader"
+    m.a[0] = address(boot::def_message(m.d[0]));      // "AMOS Professional Text Reader"
     uint32_t title = m.a[0] - 2;
     if (!file_open(ModeOldFile))
         disk_error();
@@ -427,10 +426,10 @@ extern "C" void lib_in_read_text1(const uint8_t *name)
     uint32_t size = static_cast<uint32_t>(file_seek(0, -1));
     Regs t = {};
     t.d[0] = size + 4;
-    lib_call(L_ResTempBuffer, t);
+    t.a[0] = boot::temp_buffer(t.d[0]);
     // (The assembler read into whatever a0 held when there was no memory)
     if (!idata().TempBuffer)
-        lib_jump(L_OOfMem, 0);
+        error(24);
     if (!file_read(ptr<void>(idata().TempBuffer), size))
         disk_error();
     file_close();

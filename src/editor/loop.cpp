@@ -275,8 +275,7 @@ namespace {
                 continue;
             }
         }
-        Regs s;
-        lib_call(L_Sys_WaitMul, s);
+        boot::wait_vbl_multi();
     }
 }
 

@@ -66,7 +66,7 @@ void add_path(uint32_t text)
 {
     Regs p;
     p.a[0] = text;
-    lib_call(L_Sys_AddPath, p);
+    boot::sys_add_path(ptr<char>(p.a[0]));
 }
 
 uint32_t system_text(uint16_t n)
@@ -84,7 +84,7 @@ bool tokens_init()
     auto end = [](bool ok) {
         Regs t;
         t.d[0] = 0;
-        lib_call(L_ResTempBuffer, t);
+        t.a[0] = boot::temp_buffer(t.d[0]);
         return ok;
     };
     if (d.Ed_BufT)
@@ -94,7 +94,7 @@ bool tokens_init()
         return end(false);
     Regs t;
     t.d[0] = 1024 * 12;
-    lib_call(L_ResTempBuffer, t);
+    t.a[0] = boot::temp_buffer(t.d[0]);
     if (!d.TempBuffer)
         return end(false);
     for (int slot = 0; slot < Extensions; slot++) {
@@ -332,7 +332,7 @@ uint32_t load_all_config()
 {
     Regs m;
     m.d[0] = 7;
-    lib_call(L_Sys_GetMessage, m);
+    m.a[0] = address(boot::sys_message(m.d[0]));
     add_path(m.a[0]);
     if (uint32_t e = run(ed_config_load_entry))
         return e;

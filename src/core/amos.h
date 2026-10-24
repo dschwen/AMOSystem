@@ -102,16 +102,40 @@ inline void lib_eval(int routine, Regs &r) { amos_eval(&r, lib_address(routine))
 // Rjmp to a routine of AMOSPro.Lib that does not come back (errors)
 [[noreturn]] inline void lib_jump(int routine, uint32_t d0) { amos_goto(lib_address(routine), d0); }
 
-// Raise run-time error n (L_GoError)
-[[noreturn]] inline void error(uint32_t n) { lib_jump(L_GoError, n); }
+extern "C" [[noreturn]] void interp_error(uint32_t n, uint32_t first, uint32_t extension, uint32_t messages);
+
+// Raise run-time error n (L_GoError, L_Error: interp/control.cpp)
+[[noreturn]] inline void error(uint32_t n) { interp_error(n, 19, uint32_t(-1), 0); }
 // "Illegal function call"
 [[noreturn]] inline void fon_call() { error(23); }
+// EcWiErr: an error of the screens and windows (1: out of memory)
+[[noreturn]] inline void screen_error(uint32_t e)
+{
+    error(uint16_t(e) == 1 ? 24 : uint16_t(uint16_t(e) + 45 - 1));
+}
 
 // SyCall, EcCall, WiCall: a function of the AMOS.library vector tables
 // (amos::sy::X, amos::ec::X, amos::wi::X). Most return an error code in d0.
 inline void sy_call(int function, Regs &r) { amos_call(&r, reinterpret_cast<const uint8_t *>(wdata().SyVect) + 4 * function); }
 inline void ec_call(int function, Regs &r) { amos_call(&r, reinterpret_cast<const uint8_t *>(wdata().EcVect) + 4 * function); }
 inline void wi_call(int function, Regs &r) { amos_call(&r, reinterpret_cast<const uint8_t *>(wdata().WiVect) + 4 * function); }
+
+// Files (lib/dos.cpp): Dsk.PathIt, the name in Name1 with the current
+// directory; DiskError, the error of the last DOS call
+void path_it();
+[[noreturn]] void disk_error();
+
+// AMOSPro's system routines (main/system.cpp), for all its parts
+namespace boot {
+void wait_vbl_multi();      // Sys_WaitMul: the next frame, the AMOS.library's tests first
+const char *sys_message(uint32_t n);        // Sys_GetMessage: message n of the configuration
+// GetMessage: message n of a list (d0 as the routine leaves it); Def_GetMessage:
+// of the default resource's
+const uint8_t *get_message(const uint8_t *list, uint32_t &d0);
+const uint8_t *def_message(uint32_t n);
+void sys_add_path(const char *name);        // Sys_AddPath: into Name1, with the system's path
+uint32_t temp_buffer(uint32_t size);        // ResTempBuffer: its address, 0 (none, freed)
+} // namespace boot
 
 // Big-endian memory access. The Amiga is big-endian and AMOS data is
 // word-aligned, so these are plain loads and stores here; a port to a

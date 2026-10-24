@@ -257,8 +257,7 @@ void program_command(const uint8_t *def)
             ;
         EditWindow *w = window_of_name1();
         if (!w) {
-            Regs p;
-            lib_call(L_Dsk_PathIt, p);
+            path_it();
             load_hidden();
             d.Ed_WindowToDel = 0;
             w = &window();
@@ -649,8 +648,7 @@ void procedure_machine_code()
     f.d[0] = 178;
     if (!uint16_t(call(ed_file_selector, f)))
         jump(ed_not_done);
-    Regs pi;
-    lib_call(L_Dsk_PathIt, pi);
+    path_it();
     uint8_t *procedure;
     for (;;) {
         find_line(uint16_t(w.Edt_YPos + w.Edt_YCu));
@@ -679,7 +677,7 @@ void procedure_machine_code()
     uint32_t size = get() << 2;
     Regs t;
     t.d[0] = size + 512;
-    lib_call(L_ResTempBuffer, t);
+    t.a[0] = boot::temp_buffer(t.d[0]);
     uint8_t *proc = ptr<uint8_t>(t.a[0]);
     // the procedure's line, marked machine code, then the code
     uint8_t *a1 = proc;
@@ -714,7 +712,7 @@ void procedure_machine_code()
     store_block(proc, length, y);
     Regs c;
     c.d[0] = 0;
-    lib_call(L_ResTempBuffer, c);
+    c.a[0] = boot::temp_buffer(c.d[0]);
     Regs n;
     lib_call(L_Prg_CptLines, n);
     warning_end();

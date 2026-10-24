@@ -43,7 +43,7 @@ Field field()
 void even(const Field &f)
 {
     if (address(f.at) & 1)
-        lib_jump(L_AdrErr, 0);
+        error(25);
 }
 
 } // namespace

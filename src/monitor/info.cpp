@@ -179,7 +179,7 @@ const uint8_t *message(uint16_t n, uint32_t *d0)
     Regs r;
     r.d[0] = n;
     r.a[0] = address(resource + peek_l(resource + 2 + 4));
-    lib_call(L_GetMessage, r);
+    r.a[0] = address(boot::get_message(ptr<uint8_t>(r.a[0]), r.d[0]));
     if (d0)
         *d0 = r.d[0];
     return ptr<uint8_t>(r.a[0]);
@@ -246,8 +246,7 @@ uint32_t mouse_keys()
 void wait_release()
 {
     while (mouse_keys() & 1) {
-        Regs w;
-        lib_call(L_Sys_WaitMul, w);
+        boot::wait_vbl_multi();
     }
 }
 

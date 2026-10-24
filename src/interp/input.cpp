@@ -165,7 +165,7 @@ void input(uint8_t separator, bool file)
             poke_l(d.DeFloat, 0);
             d.PrintFile = 0;
             if (!d.ScOn)
-                lib_jump(L_ScNOp, 0);
+                screen_error(3);
             *ptr<uint8_t>(d.Buffer) = 0;
             prompt();
         }
@@ -176,11 +176,11 @@ void input(uint8_t separator, bool file)
         if (o == Outcome::Done)
             break;
         if (d.PrintFile)
-            lib_jump(L_TypeMis, 0);
+            error(34);
         window_print("\r\n");
         Regs m;
         m.d[0] = 15;
-        lib_call(L_Def_GetMessage, m);
+        m.a[0] = address(boot::def_message(m.d[0]));
         window_print(ptr<char>(m.a[0]));
         window_print("\r\n");
         pc() = ptr<uint8_t>(ctx().d7);

@@ -34,10 +34,9 @@ constexpr uint16_t DoubleBuffer = 1 << (8 + 5);
 constexpr int16_t LVOWritePixel = -324, LVODraw = -246, LVODrawEllipse = -180, LVOPolyDraw = -336,
                   LVOText = -60, LVORectFill = -306;
 
-[[noreturn]] void screen_not_open() { lib_jump(L_ScNOp, 0); }
-[[noreturn]] void ec_wi_error(uint32_t code) { lib_jump(L_EcWiErr, code); }
-[[noreturn]] void block_fon_call() { lib_jump(L_BFonCall, 0); }
-[[noreturn]] void cop_error(uint32_t code) { lib_jump(L_CopErr, code); }
+[[noreturn]] void screen_not_open() { screen_error(3); }
+[[noreturn]] void block_fon_call() { screen_error(22); }
+[[noreturn]] void cop_error(uint32_t code) { error(uint16_t(uint16_t(code) + 45 + 32 - 2)); }
 
 void need_screen()
 {
@@ -57,7 +56,7 @@ EcScreen *screen0()
 void check_screen_number(uint32_t n)
 {
     if (n >= (idata().Prg_Accessory ? 10u : 8u))
-        lib_jump(L_IllScN, 0);
+        screen_error(6);
 }
 
 struct RastPort *rastport() { return ptr<struct RastPort>(wdata().RastPort); }
@@ -67,7 +66,7 @@ Regs &ec_check(int function, Regs &r)
 {
     ec_call(function, r);
     if (r.d[0])
-        ec_wi_error(r.d[0]);
+        screen_error(r.d[0]);
     return r;
 }
 
@@ -140,7 +139,7 @@ void tmp_ras_get()
             r.d[0] = length;
             sy_call(sy::MemChip, r);
             if (!r.a[0])
-                lib_jump(L_OOfMem, 0);
+                error(24);
             d.RasAd = buffer = r.a[0];
             d.RasLong = length;
         }
@@ -508,7 +507,7 @@ extern "C" void lib_in_screen_open(uint32_t n, uint32_t width, uint32_t height, 
         while (colours != c) {
             c <<= 1;
             if (++planes >= 7)
-                ec_wi_error(5);         // illegal number of colours
+                screen_error(5);         // illegal number of colours
         }
     }
     check_screen_number(n);
@@ -527,7 +526,7 @@ extern "C" void lib_in_screen_open(uint32_t n, uint32_t width, uint32_t height, 
     if (planes != 1) {
         Regs g = {};
         g.d[0] = 46;
-        lib_call(L_Sys_GetMessage, g);
+        g.a[0] = address(boot::sys_message(g.d[0]));
         Regs f = {};
         f.d[1] = 3;
         f.a[1] = g.a[0];
@@ -680,7 +679,7 @@ static void set_palette(const uint16_t *palette, uint32_t mask)
 static const uint16_t *bank_palette(uint8_t *bank)
 {
     if (!bank)
-        lib_jump(L_BkNoRes, 0);
+        error(36);
     return reinterpret_cast<const uint16_t *>(bank + 2 + peek_w(bank) * 8u);
 }
 
@@ -767,7 +766,7 @@ extern "C" void lib_in_set_rainbow7(uint32_t n, int32_t colour, uint32_t length,
     x.d[7] = extra;
     ec_call(ec::RainSet, x);
     if (static_cast<int32_t>(x.d[0]) < 0)
-        lib_jump(L_OOfMem, 0);
+        error(24);
     if (x.d[0])
         fon_call();
 }
@@ -1029,7 +1028,7 @@ static void get_fonts(uint32_t which)
     r.a[1] = idata().Buffer;
     ec_call(ec::GFonts, r);
     if (r.d[0])
-        lib_jump(L_OOfMem, 0);
+        error(24);
 }
 
 extern "C" void lib_in_get_rom_fonts() { get_fonts(1); }
@@ -1045,7 +1044,7 @@ extern "C" uint32_t lib_fn_font(int32_t n)
     r.d[1] = n;
     ec_call(ec::GFont, r);
     if (static_cast<int32_t>(r.d[0]) < 0)
-        lib_jump(L_FftE, 0);
+        error(37);
     if (r.d[0])
         return str_empty();
     const uint8_t *font = ptr<uint8_t>(r.a[0]);
@@ -1076,9 +1075,9 @@ extern "C" void lib_in_set_font(int32_t n)
     r.d[1] = n;
     ec_call(ec::SFont, r);
     if (static_cast<int32_t>(r.d[0]) < 0)
-        lib_jump(L_FftE, 0);
+        error(37);
     if (r.d[0])
-        lib_jump(L_FnfE, 0);
+        error(44);                  // font not found
 }
 
 // TEXT x,y,a$
@@ -1312,7 +1311,7 @@ extern "C" void lib_in_scroll(uint32_t n)
         fon_call();
     const uint16_t *entry = idata().DScrolls + (n - 1) * 6;
     if (entry[0] == 0x8000)
-        ec_wi_error(28);
+        screen_error(28);
     EcScreen *s = screen0();
     if (!s->EcAuto) {
         do_scroll(entry, s);
@@ -1485,7 +1484,7 @@ extern "C" void lib_in_zoom(int32_t from, int32_t x1, int32_t y1, int32_t x2, in
     sy_call(sy::MemFast, m);
     uint16_t *table_x = ptr<uint16_t>(m.a[0]);
     if (!table_x)
-        lib_jump(L_OOfMem, 0);
+        error(24);
     auto fail = [&]() {
         Regs f = {};
         f.a[1] = address(table_x);
@@ -1568,7 +1567,7 @@ static uint32_t xy(int function, uint32_t d1, uint32_t d2, uint32_t screen, bool
     r.d[3] = screen;
     sy_call(function, r);
     if (r.d[0])
-        ec_wi_error(r.d[0]);
+        screen_error(r.d[0]);
     return want_x ? r.d[1] : r.d[2];
 }
 
@@ -1654,7 +1653,7 @@ extern "C" void lib_in_reserve_zone1(int32_t n)
     r.d[1] = n;
     sy_call(sy::ResZone, r);
     if (r.d[0])
-        lib_jump(L_OOfMem, 0);
+        error(24);
 }
 
 extern "C" void lib_in_reserve_zone0() { lib_in_reserve_zone1(0); }
@@ -1701,7 +1700,7 @@ static uint32_t zone(int function, uint32_t screen, uint32_t x, uint32_t y, int 
     r.d[count_reg] = 8;
     sy_call(function, r);
     if (function == sy::ScIn ? r.d[0] != 0 : static_cast<uint16_t>(r.d[0]) != 0)
-        ec_wi_error(r.d[0]);
+        screen_error(r.d[0]);
     return r.d[1];
 }
 

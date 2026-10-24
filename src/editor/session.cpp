@@ -60,7 +60,7 @@ void system_file(uint16_t n)
 {
     Regs p;
     p.a[0] = address(system_text(n));
-    lib_call(L_Sys_AddPath, p);
+    boot::sys_add_path(ptr<char>(p.a[0]));
 }
 
 // EdCocop: from copied to, the end past its zero
@@ -98,7 +98,7 @@ void temp_buffer(uint32_t size)
 {
     Regs r;
     r.d[0] = size;
-    lib_call(L_ResTempBuffer, r);
+    r.a[0] = boot::temp_buffer(r.d[0]);
 }
 
 // .StructureSave: a structure with its address first (0: the end)
@@ -139,8 +139,7 @@ bool save_session()
             lib_call(L_LongToDec, r);
             copy(ptr<uint8_t>(r.a[0]), system_text(22));
         }
-        Regs pi;
-        lib_call(L_Dsk_PathIt, pi);
+        path_it();
         Regs s;
         lib_call(L_Prg_Save, s);
         if (s.d[0])

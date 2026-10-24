@@ -42,7 +42,7 @@ enum : uint32_t {
 
 [[noreturn]] void ifonc() { error(23); }
 [[noreturn]] void out_of_memory() { error(24); }
-[[noreturn]] void disk_error() { error(DEBase + 15); }
+[[noreturn]] void music_disk_error() { error(DEBase + 15); }
 
 // The default envelopes, after the periods in the extension
 const uint16_t EnvDef[] = {1, 64, 4, 55, 5, 50, 25, 0, 0, 0};
@@ -720,8 +720,7 @@ void file_name(const uint8_t *name)
     for (uint16_t i = 0; i <= n; i++)
         to[i] = char(from[i]);
     to[n + 1] = 0;
-    Regs r;
-    lib_call(L_Dsk_PathIt, r);
+    path_it();
 }
 
 // A file loaded into a new bank (Track Load, Med Load): its address
@@ -730,7 +729,7 @@ uint8_t *load_bank(const uint8_t *name, uint32_t number, uint16_t flags, uint32_
     file_name(name);
     BPTR file = Open(ptr<char>(idata().Name1), MODE_OLDFILE);
     if (!file)
-        disk_error();
+        music_disk_error();
     int32_t size = Seek(file, Seek(file, 0, OFFSET_END), OFFSET_BEGINNING);
     uint8_t *bank = bank_reserve(number, flags, uint32_t(size) + extra, bank_name);
     if (!bank) {
@@ -1215,7 +1214,7 @@ void ext_sload(uint32_t file, uint32_t at, int32_t length)
     uint32_t to = bank_or_address(int32_t(at));
     BPTR handle = program_file(file);
     if (Read(handle, ptr<void>(to), length) < 0)
-        disk_error();
+        music_disk_error();
 }
 
 // SSAVE file,start TO end
@@ -1226,7 +1225,7 @@ void ext_ssave(uint32_t file, uint32_t start, uint32_t end)
         ifonc();
     BPTR handle = program_file(file);
     if (Write(handle, ptr<void>(start), length) < 0)
-        disk_error();
+        music_disk_error();
 }
 
 // ---- the narrator ----------------------------------------------------------

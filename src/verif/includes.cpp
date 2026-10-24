@@ -59,8 +59,8 @@ const uint8_t *equates_load(uint32_t *length)
         sy_call(sy::AddFlushRoutine, f);
         Regs m;
         m.d[0] = 9;
-        lib_call(L_Sys_GetMessage, m);
-        lib_call(L_Sys_AddPath, m);
+        m.a[0] = address(boot::sys_message(m.d[0]));
+        boot::sys_add_path(ptr<char>(m.a[0]));
         bool ok = file_open(1005);
         if (ok) {
             file_seek(0, 1);

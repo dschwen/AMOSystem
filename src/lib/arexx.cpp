@@ -103,7 +103,7 @@ extern "C" void lib_in_arexx_open(const uint8_t *name)
     IData &d = idata();
     uint16_t length = str_len(name);
     if (length >= 32)
-        lib_jump(L_StooLong, 0);
+        error(21);
     char *to = reinterpret_cast<char *>(d.Arx_PortName);
     for (uint16_t i = 0; i < length; i++) {
         int8_t c = static_cast<int8_t>(str_chars(name)[i]);
@@ -139,8 +139,7 @@ extern "C" uint32_t lib_fn_arexx()
 extern "C" void lib_in_arexx_wait()
 {
     do {
-        Regs w = {};
-        lib_call(L_Sys_WaitMul, w);
+        boot::wait_vbl_multi();
         Regs t = {};
         lib_call(L_Test_Normal, t);
     } while (!message());

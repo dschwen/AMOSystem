@@ -236,7 +236,7 @@ void print()
         if (d.PrintFile) {
             BPTR file = BPTR(peek_l(ptr<void>(d.PrintFile)));
             if (Write(file, buffer(), n) != n)
-                lib_jump(L_DiskError, 0);
+                disk_error();
         } else {
             Regs r;
             r.a[0] = d.Buffer;
@@ -280,7 +280,7 @@ void interp_in_print_h()
     if (!peek_l(channel))
         error(97);
     if (!(channel[4] & 1) || uint16_t(r.d[0]) == 1)
-        lib_jump(L_FilTM, 0);
+        error(79 + 19);
     d.PrintFile = address(channel);
     d.ImpFlg = 0;
     print();

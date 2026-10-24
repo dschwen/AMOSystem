@@ -48,8 +48,7 @@ bool select_file(uint16_t message)
     call(ed_file_selector, r);
     if (!uint16_t(r.d[0]))
         return false;
-    Regs p;
-    lib_call(L_Dsk_PathIt, p);
+    path_it();
     return true;
 }
 
@@ -176,7 +175,7 @@ void merge_ascii()
     int32_t length = Seek(file, 0, OFFSET_BEGINNING);
     Regs t;
     t.d[0] = uint32_t(length + 4);
-    lib_call(L_ResTempBuffer, t);
+    t.a[0] = boot::temp_buffer(t.d[0]);
     if (!t.a[0])
         run(ed_out_of_memory);
     if (Read(file, ptr<void>(t.a[0]), length) != length)
@@ -191,7 +190,7 @@ void merge_ascii()
     auto finish = [&] {
         Regs f;
         f.d[0] = 0;
-        lib_call(L_ResTempBuffer, f);
+        f.a[0] = boot::temp_buffer(f.d[0]);
         run(ed_aver_fin);
         count_lines();
         new_buffer_all();
@@ -333,8 +332,7 @@ void save()
         return;
     }
     copy_name(name1(), p.Prg_NamePrg);
-    Regs r;
-    lib_call(L_Dsk_PathIt, r);
+    path_it();
     save_as_name1();
 }
 

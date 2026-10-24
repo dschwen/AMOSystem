@@ -239,7 +239,7 @@ extern "C" void lib_in_save2(const uint8_t *name, uint32_t n)
     open_or_error(name, ModeNewFile);
     uint8_t *bank = bank_find(n);
     if (!bank)
-        lib_jump(L_BkNoRes, 0);
+        error(36);
     save_bank(bank);
     file_close();
 }

@@ -65,12 +65,12 @@ uint32_t program_call(int routine, uint32_t program, uint32_t d0)
 // The file of the program in Name1 must be there (D_Open, closed again)
 void check_file()
 {
-    lib(L_Dsk_PathIt);
+    path_it();
     Regs o;
     o.d[2] = 1005;
     lib_call(L_D_Open, o);
     if (!o.d[0])
-        lib_jump(L_DiskError, 0);
+        disk_error();
     lib(L_D_Close);
 }
 
@@ -128,7 +128,7 @@ int32_t interp_fn_prg_under()
 void interp_in_run0()
 {
     if (!idata().Direct)
-        lib_jump(L_Syntax, 0);
+        error(22);
     lib_jump(L_Ed_RunDirect, 0);
 }
 
@@ -142,9 +142,9 @@ void interp_in_run0()
     lib(L_Prg_Pull);
     ptr<Program>(program)->Prg_Reloaded = 1;
     int16_t loaded = int16_t(program_call(L_Prg_Load, program, uint32_t(-1)));
-    uint32_t error = 36;                            // out of memory
+    uint32_t failure = 36;                          // out of memory
     if (loaded == -1) {
-        error = 101;
+        failure = 101;
     } else if (loaded > -2) {
         AllRegs r = {};
         Ctx &c = ctx();
@@ -159,7 +159,7 @@ void interp_in_run0()
         amos_call_all(&r, lib_address(L_Prg_RunIt));
     }
     Regs e;
-    e.d[0] = error;
+    e.d[0] = failure;
     e.a[0] = 0;
     interp_jump(&e, ptr<void>(d.Prg_JError));
 }
@@ -171,7 +171,7 @@ void interp_in_run1(uint32_t name)
     if (d.Direct)
         illegal_direct();
     if (d.Mon_Base || d.Prg_Accessory)
-        lib_jump(L_Error, 102);
+        error(102);
     program_name(name);
     check_file();
     Regs i;
@@ -190,7 +190,7 @@ void interp_in_prun(uint32_t name)
     if (d.Direct)
         illegal_direct();
     if (d.Mon_Base)
-        lib_jump(L_Error, 102);
+        error(102);
     program_name(name);
     Regs a;
     lib_call(L_Prg_AccAdr, a);
@@ -199,15 +199,15 @@ void interp_in_prun(uint32_t name)
     if (program) {
         run = !program_call(L_Prg_DejaRunned, program, 0);
     }
-    uint32_t error;
+    uint32_t failure;
     if (!run) {
         check_file();
         program = program_call(L_Prg_NewStructure, 0, 0);
         if (!program)
-            lib_jump(L_OOfMem, 0);
+            error(24);
         int16_t loaded = int16_t(program_call(L_Prg_Load, program, uint32_t(-1)));
         if (loaded) {
-            error = loaded == -1 ? 101 : 36;
+            failure = loaded == -1 ? 101 : 36;
             goto failed;
         }
         program_call(L_Prg_SetBanks, d.Prg_Runned, 0);
@@ -227,16 +227,16 @@ void interp_in_prun(uint32_t name)
             return;
         }
     }
-    error = 36;
+    failure = 36;
 failed:
     if (!ptr<Program>(program)->Prg_Edited)
         program_call(L_Prg_DelStructure, program, 0);
     program_call(L_Prg_SetBanks, d.Prg_Runned, 0);
     lib(L_Bnk_Change);
     Regs m;
-    m.d[0] = error;
+    m.d[0] = failure;
     m.a[0] = d.Ed_RunMessages;
-    lib_call(L_GetMessage, m);
+    m.a[0] = address(boot::get_message(ptr<uint8_t>(m.a[0]), m.d[0]));
     zap_return(m.d[0], m.a[0]);
 }
 
@@ -246,7 +246,7 @@ void interp_in_ask_editor3(uint32_t function, uint32_t parameter, uint32_t text)
     IData &d = idata();
     editor_parameters(text);
     if (!d.Edit_Segment)
-        lib_jump(L_FonCall, 0);
+        error(23);
     Regs r;
     r.d[0] = function;
     r.d[1] = parameter;
@@ -271,7 +271,7 @@ void interp_in_call_editor3(uint32_t function, uint32_t parameter, uint32_t text
     IData &d = idata();
     editor_parameters(text);
     if (!d.Edit_Segment)
-        lib_jump(L_FonCall, 0);
+        error(23);
     Regs r;
     r.d[0] = function;
     r.d[1] = parameter;

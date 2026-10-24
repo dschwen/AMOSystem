@@ -19,8 +19,7 @@ void test_normal()
 // Sleep until something happens (L_Sys_WaitMul), then look at it
 void wait_multi()
 {
-    Regs r = {};
-    lib_call(L_Sys_WaitMul, r);
+    boot::wait_vbl_multi();
     test_normal();
 }
 
@@ -64,7 +63,7 @@ extern "C" uint32_t lib_fn_err(uint32_t n)
     Regs r = {};
     r.d[0] = n + 1;
     r.a[0] = idata().Ed_RunMessages;
-    lib_call(L_GetMessage, r);
+    r.a[0] = address(boot::get_message(ptr<uint8_t>(r.a[0]), r.d[0]));
     const uint8_t *text = ptr<uint8_t>(r.a[0]);
     uint8_t len = text[-1];
     if (!len || len == 0xFF)

@@ -1134,8 +1134,7 @@ void link_cursor()
     EditWindow &w = window();
     w.Edt_LinkScroll = 0;
     for (;;) {
-        Regs r;
-        lib_call(L_Sys_WaitMul, r);
+        boot::wait_vbl_multi();
         Regs k;
         sy_call(sy::MouseKey, k);
         if (k.d[1] & 1)

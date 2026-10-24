@@ -131,7 +131,7 @@ void button_draw(const Button *b, bool title)
 }
 
 // Ed_DError: the message of the last DOS error
-[[noreturn]] void disk_error()
+[[noreturn]] void editor_disk_error()
 {
     static const uint8_t known[] = {203, 204, 205, 210, 213, 214, 216, 218, 220, 221, 222, 223, 224, 225, 226};
     int32_t error = IoErr();
@@ -151,7 +151,7 @@ void button_draw(const Button *b, bool title)
         jump(ed_out_of_memory);
     if (error == -3)
         jump(ed_not_amos);
-    disk_error();
+    editor_disk_error();
 }
 
 } // namespace
@@ -164,7 +164,7 @@ void ed_close_name(AllRegs *) { close_name(); }
 void ed_enlarge_fn(AllRegs *r) { enlarge(int16_t(r->d[0]), int16_t(r->d[1])); }
 void ed_button_draw(AllRegs *r) { button_draw(ptr<Button>(r->a[2]), false); }
 void ed_button_draw_title(AllRegs *r) { button_draw(ptr<Button>(r->a[2]), true); }
-void ed_disk_error(AllRegs *) { disk_error(); }
+void ed_disk_error(AllRegs *) { editor_disk_error(); }
 void ed_load_error(AllRegs *r) { load_error(int16_t(r->d[0])); }
 void ed_print_error_fn(AllRegs *) { disk_message(216); }
 

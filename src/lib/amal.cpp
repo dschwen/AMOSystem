@@ -46,7 +46,7 @@ void start(uint32_t type, uint32_t n, uint32_t program, uint32_t target)
     if (program < 1024) {
         // the bank's program
         if (!bank)
-            lib_jump(L_BkNoRes, 0);
+            error(36);
         if (!peek_l(bank))
             fon_call();
         uint8_t *table = bank + peek_l(bank);
@@ -88,8 +88,8 @@ void start(uint32_t type, uint32_t n, uint32_t program, uint32_t target)
         error(SpEBase + 2 + uint32_t(e));
     }
     if (e == -1)
-        lib_jump(L_OOfMem, 0);
-    lib_jump(L_EcWiErr, uint32_t(-e));
+        error(24);
+    screen_error(uint32_t(-e));
 }
 
 // The address of a register: AmRR

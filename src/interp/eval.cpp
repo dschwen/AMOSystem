@@ -141,7 +141,7 @@ Value concatenate(const Value &a, const Value &b)
         return b;
     uint32_t total = la + lb;
     if (total >= StringMax)
-        lib_jump(L_StooLong, 0);
+        error(21);
     Regs r = demande(total);
     uint8_t *to = ptr<uint8_t>(r.a[0]);
     poke_w(to, uint16_t(total));

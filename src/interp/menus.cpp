@@ -54,7 +54,7 @@ void object(uint32_t *slot)
         return;
     uint32_t o = menu::compile_object(s);
     if (!o)
-        lib_jump(L_OOfMem, 0);
+        error(24);
     if (int32_t(o) < 0)
         fon_call();
     *slot = o;
@@ -104,7 +104,7 @@ void interp_in_menu()
     c.a3 = a3;
     if (d.ScOnAd != d.MnAdEc) {
         if (d.MnAdEc)
-            lib_jump(L_ScNOp, 0);
+            screen_error(3);
         d.MnAdEc = d.ScOnAd;
     }
     // the colours of the current window

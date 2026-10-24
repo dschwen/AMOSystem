@@ -183,7 +183,7 @@ void dim()
                 fon_call();
             product = count;
             if (peek_token() != tk::Vir)
-                lib_jump(L_Syntax, 0);
+                error(22);
         }
         uint32_t bytes = count << shift;
         uint32_t header = dimensions * 4 + 2;
@@ -321,12 +321,12 @@ Value call_function()
             uint8_t type = uint8_t(f.type);
             if (kind(x) != type) {
                 if (type > TFloat)
-                    lib_jump(L_TypeMis, 0);
+                    error(34);
                 if (type == TFloat) {
                     x = to_float(x);
                 } else {
                     if (kind(x) > TFloat)
-                        lib_jump(L_TypeMis, 0);
+                        error(34);
                     x = to_integer(x);
                 }
             }

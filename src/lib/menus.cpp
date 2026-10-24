@@ -52,8 +52,8 @@ enum : uint32_t {
     DrawBackground = 1u << 29,  // the background object too
 };
 
-[[noreturn]] void screen_not_open() { lib_jump(L_ScNOp, 0); }
-[[noreturn]] void out_of_memory() { lib_jump(L_OOfMem, 0); }
+[[noreturn]] void screen_not_open() { screen_error(3); }
+[[noreturn]] void out_of_memory() { error(24); }
 // MnNOp: "menu not opened"
 [[noreturn]] void menu_not_opened() { error(38); }
 
@@ -1677,7 +1677,7 @@ extern "C" void lib_in_bank_to_menu(uint32_t n)
         screen_not_open();
     uint8_t *bank = bank_find(n);
     if (!bank)
-        lib_jump(L_BkNoRes, 0);
+        error(36);
     if (peek_l(bank - 8) != 0x4D656E75)     // "Menu"
         fon_call();
     MenuItem *base = reinterpret_cast<MenuItem *>(mem_fast(MnLong));
