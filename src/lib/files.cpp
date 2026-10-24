@@ -77,7 +77,7 @@ void close_channel(Channel &c)
             Regs r = {};
             r.a[1] = fields;
             r.d[0] = peek_w(ptr<void>(fields)) * 6u + 8;
-            sy_call(sy::MemFree, r);
+            w::release(r.a[1], r.d[0]);
         }
     }
 }
@@ -95,7 +95,7 @@ Channel &open_file(uint32_t n, const uint8_t *name)
     Regs r = {};
     r.a[1] = address(lib_close_all_on_clear);
     r.a[2] = address(&idata().Sys_ClearRoutines);
-    sy_call(sy::AddRoutine, r);
+    w::add_routine(r.a[1], r.a[2]);
     name_disc(name);
     Channel &c = channel(n);
     if (c.handle())

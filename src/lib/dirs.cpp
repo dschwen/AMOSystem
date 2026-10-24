@@ -52,7 +52,7 @@ uint8_t *mem_fast_clear(uint32_t length)
 {
     Regs r = {};
     r.d[0] = length;
-    sy_call(sy::MemFastClear, r);
+    r.a[0] = w::reserve(r.d[0], w::FastClear);
     return ptr<uint8_t>(r.a[0]);
 }
 
@@ -198,7 +198,7 @@ void fill_free()
         Regs r = {};
         r.a[1] = e;
         r.d[0] = static_cast<int16_t>(peek_w(ptr<uint8_t>(e) + 4));
-        sy_call(sy::MemFree, r);
+        w::release(r.a[1], r.d[0]);
         e = next;
     }
     if (d.BufFillF) {
@@ -217,7 +217,7 @@ void fill_first()
     Regs r = {};
     r.a[1] = address(lib_fill_free_on_clear);
     r.a[2] = address(&idata().Sys_ClearRoutines);
-    sy_call(sy::AddRoutine, r);
+    w::add_routine(r.a[1], r.a[2]);
     IData &d = idata();
     lock_get();
     auto fib = ptr<struct FileInfoBlock>(d.Buffer);

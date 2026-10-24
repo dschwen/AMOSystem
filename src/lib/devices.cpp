@@ -180,7 +180,7 @@ void open_device(DeviceChannel &d, const char *name, uint32_t length, uint32_t u
     Regs r = {};
     r.a[1] = address(lib_close_devs_on_clear);
     r.a[2] = address(&idata().Sys_ClearRoutines);
-    sy_call(sy::AddRoutine, r);
+    w::add_routine(r.a[1], r.a[2]);
     d.state() = 0;
     d.first_error() = first_error;
     d.errors() = errors;
@@ -361,7 +361,7 @@ extern "C" void lib_in_lib_open(uint32_t n, const uint8_t *name, uint32_t versio
     Regs r = {};
     r.a[1] = address(lib_close_libs_on_clear);
     r.a[2] = address(&idata().Sys_ClearRoutines);
-    sy_call(sy::AddRoutine, r);
+    w::add_routine(r.a[1], r.a[2]);
 }
 
 // LIB CLOSE [channel], =LIB BASE(channel)

@@ -15,7 +15,7 @@ uint8_t *mem_reserve(uint32_t length, uint32_t flags)
     Regs r = {};
     r.d[0] = length;
     r.d[1] = flags;
-    sy_call(sy::MemReserve, r);
+    r.a[0] = w::reserve(r.d[0], r.d[1]);
     return ptr<uint8_t>(r.a[0]);
 }
 
@@ -24,7 +24,7 @@ void mem_free(void *address, uint32_t length)
     Regs r = {};
     r.a[1] = amos::address(address);
     r.d[0] = length;
-    sy_call(sy::MemFree, r);
+    w::release(r.a[1], r.d[0]);
 }
 
 // The element before element in the list (the list head itself for the

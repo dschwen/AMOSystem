@@ -48,7 +48,7 @@ void object(uint32_t *slot)
         Regs r;
         r.a[1] = old;
         r.d[0] = peek_w(ptr<void>(old));
-        sy_call(sy::MemFree, r);
+        w::release(r.a[1], r.d[0]);
     }
     if (!peek_w(s))
         return;

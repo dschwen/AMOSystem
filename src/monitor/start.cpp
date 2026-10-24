@@ -27,7 +27,7 @@ uint32_t memory(uint32_t size)
 {
     Regs r;
     r.d[0] = size;
-    sy_call(sy::MemFastClear, r);
+    r.a[0] = w::reserve(r.d[0], w::FastClear);
     return r.a[0];
 }
 
@@ -36,7 +36,7 @@ void free_memory(uint32_t address, uint32_t size)
     Regs r;
     r.a[1] = address;
     r.d[0] = size;
-    sy_call(sy::MemFree, r);
+    w::release(r.a[1], r.d[0]);
 }
 
 uint32_t edit_buffer_size() { return uint32_t(uint16_t(mon().Ttt_Sy >> 3)) * 256; }

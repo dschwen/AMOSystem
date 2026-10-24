@@ -29,7 +29,7 @@ bool a5_reserve(uint32_t *slot, uint32_t size, uint32_t flags)
     Regs r;
     r.d[0] = size + 4;
     r.d[1] = flags;
-    sy_call(sy::MemReserve, r);
+    r.a[0] = w::reserve(r.d[0], r.d[1]);
     if (!r.a[0])
         return false;
     poke_l(ptr<void>(r.a[0]), size);
@@ -45,7 +45,7 @@ void a5_free(uint32_t *slot)
         Regs r;
         r.a[1] = m - 4;
         r.d[0] = peek_l(ptr<void>(r.a[1])) + 4;
-        sy_call(sy::MemFree, r);
+        w::release(r.a[1], r.d[0]);
     }
 }
 
@@ -134,14 +134,14 @@ uint32_t change_text(Program &p, uint32_t size, uint32_t a0)
         Regs f;
         f.d[0] = p.Prg_StTTexte;
         f.a[1] = p.Prg_StMini;
-        sy_call(sy::MemFree, f);
+        w::release(f.a[1], f.d[0]);
         p.Prg_StTTexte = 0;
     }
     if (!size)
         return a0;
     Regs r;
     r.d[0] = size;
-    sy_call(sy::MemFastClear, r);
+    r.a[0] = w::reserve(r.d[0], w::FastClear);
     if (!r.a[0])
         return 0;
     p.Prg_StTTexte = size;

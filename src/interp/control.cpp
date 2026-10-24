@@ -1034,7 +1034,7 @@ void interp_in_on_menu()
     d.OMnNb = n;
     Regs m;
     m.d[0] = n * 4u;
-    sy_call(sy::MemFast, m);
+    m.a[0] = w::reserve(m.d[0], w::Fast);
     if (!m.a[0])
         error(24);
     d.OMnBase = m.a[0];
@@ -1046,7 +1046,7 @@ void interp_in_on_menu()
     Regs r;
     r.a[1] = address(interp_omn_record);
     r.a[2] = address(&d.Sys_ClearRoutines);
-    sy_call(sy::AddRoutine, r);
+    w::add_routine(r.a[1], r.a[2]);
 }
 
 // MenuProcedure: the procedure named a0 (an AMOS string) called by a menu;
@@ -1079,7 +1079,7 @@ void interp_menu_procedure(EvalOut *o)
     }
     Regs routines;
     routines.a[1] = address(&d.Sys_ErrorRoutines);
-    sy_call(sy::CallRoutines, routines);
+    w::call_routines(ptr<uint32_t>(routines.a[1]));
     if (d.Patch_Errors) {
         Regs r;
         r.d[0] = n;

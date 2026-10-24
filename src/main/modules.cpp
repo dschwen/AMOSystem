@@ -109,7 +109,7 @@ void memory_maximum()
     lines = kept;
     Regs m;
     m.d[0] = 10000 * 1024;          // that is too much: the system gives memory back
-    sy_call(sy::MemChip, m);
+    m.a[0] = w::reserve(m.d[0], w::Chip);
     if (!d.Mon_Base)
         mon_free();
 }

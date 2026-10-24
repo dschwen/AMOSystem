@@ -49,6 +49,20 @@ uint32_t reserve(uint32_t size, uint32_t flags)
 
 void release(uint32_t address, uint32_t size) { FreeMem(ptr<void>(address), size); }
 
+// WAddRoutine: the routine into the list, if it is in none; returns its
+// link
+uint32_t add_routine(uint32_t routine, uint32_t list)
+{
+    uint8_t *r = ptr<uint8_t>(routine);
+    if (int32_t(peek_l(r)) < 0)
+        return peek_l(r);
+    uint32_t *l = ptr<uint32_t>(list);
+    uint32_t link = (*l >> 1) | 0x80000000;
+    poke_l(r, link);
+    *l = routine;
+    return link;
+}
+
 } // namespace amos::w
 
 extern "C" {
@@ -62,13 +76,9 @@ void w_sy_mem_free(AllRegs *r) { release(r->a[1], r->d[0]); }
 // WAddRoutine: routine a1 into the list a2 (if not in one)
 void w_sy_add_routine(AllRegs *r)
 {
-    uint8_t *routine = ptr<uint8_t>(r->a[1]);
-    if (int32_t(peek_l(routine)) < 0)
+    if (int32_t(peek_l(ptr<void>(r->a[1]))) < 0)
         return;
-    uint32_t *list = ptr<uint32_t>(r->a[2]);
-    r->d[0] = (*list >> 1) | 0x80000000;
-    poke_l(routine, r->d[0]);
-    *list = address(routine);
+    r->d[0] = add_routine(r->a[1], r->a[2]);
 }
 
 void w_sy_add_flush_routine(AllRegs *r)

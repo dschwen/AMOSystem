@@ -28,7 +28,7 @@ uint32_t memory(uint32_t size)
 {
     Regs r;
     r.d[0] = size;
-    sy_call(sy::MemFast, r);
+    r.a[0] = w::reserve(r.d[0], w::Fast);
     return r.a[0];
 }
 
@@ -37,7 +37,7 @@ void free_memory(uint32_t address, uint32_t size)
     Regs r;
     r.a[1] = address;
     r.d[0] = size;
-    sy_call(sy::MemFree, r);
+    w::release(r.a[1], r.d[0]);
 }
 
 Entry *entry(uint32_t a) { return ptr<Entry>(a); }

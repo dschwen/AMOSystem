@@ -34,7 +34,7 @@ void add_routine(uint8_t *record, uint32_t *list)
     Regs r;
     r.a[1] = address(record);
     r.a[2] = address(list);
-    sy_call(sy::AddRoutine, r);
+    w::add_routine(r.a[1], r.a[2]);
 }
 
 uint32_t memory(int function, uint32_t size)
@@ -144,7 +144,7 @@ void ram_free(uint32_t address, uint32_t size)
     Regs r;
     r.d[0] = size;
     r.a[1] = address;
-    sy_call(sy::MemFree, r);
+    w::release(r.a[1], r.d[0]);
 }
 
 uint32_t a5_reserve(uint32_t &slot, uint32_t size, uint32_t flags)
@@ -152,7 +152,7 @@ uint32_t a5_reserve(uint32_t &slot, uint32_t size, uint32_t flags)
     Regs r;
     r.d[0] = size + 4;
     r.d[1] = flags;
-    sy_call(sy::MemReserve, r);
+    r.a[0] = w::reserve(r.d[0], r.d[1]);
     if (!r.a[0])
         return 0;
     poke_l(ptr<void>(r.a[0]), size);

@@ -38,7 +38,7 @@ void clear_animations()
     IData &d = data();
     Regs r;
     r.a[1] = address(&d.Sys_DefaultRoutines);
-    sy_call(sy::CallRoutines, r);
+    w::call_routines(ptr<uint32_t>(r.a[1]));
 }
 
 void reset_channels()

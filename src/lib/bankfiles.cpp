@@ -123,7 +123,7 @@ int16_t load_images(uint32_t number, bool icons)
             continue;
         Regs m = {};
         m.d[0] = size + 10;
-        sy_call(sy::MemChip, m);
+        m.a[0] = w::reserve(m.d[0], w::Chip);
         uint8_t *image = ptr<uint8_t>(m.a[0]);
         if (!image)
             return LoadMemory;

@@ -81,7 +81,7 @@ bool fast()
         return false;
     Regs m;
     m.d[0] = size;
-    sy_call(sy::MemFast, m);
+    m.a[0] = w::reserve(m.d[0], w::Fast);
     if (!m.a[0])
         return false;
     uint8_t *buffer = ptr<uint8_t>(m.a[0]);
@@ -120,7 +120,7 @@ bool fast()
     Regs f;
     f.a[1] = m.a[0];
     f.d[0] = size;
-    sy_call(sy::MemFree, f);
+    w::release(f.a[1], f.d[0]);
     return true;
 }
 
@@ -132,7 +132,7 @@ void slow()
     IData &d = data();
     Regs m;
     m.d[0] = TMenage + 16;
-    sy_call(sy::MemFast, m);
+    m.a[0] = w::reserve(m.d[0], w::Fast);
     uint32_t table;
     if (m.a[0]) {
         d.BMenage = table = m.a[0];
@@ -224,7 +224,7 @@ void slow()
         Regs f;
         f.a[1] = d.BMenage;
         f.d[0] = TMenage + 16;
-        sy_call(sy::MemFree, f);
+        w::release(f.a[1], f.d[0]);
     }
     d.BMenage = 0;
 }

@@ -87,7 +87,7 @@ uint32_t pack(const Area &a, uint16_t car, uint16_t ty, uint8_t *h, bool store)
     // one of PacSize and the last ones, went into the packing)
     Regs m;
     m.d[0] = size;
-    sy_call(sy::MemFastClear, m);
+    m.a[0] = w::reserve(m.d[0], w::FastClear);
     uint8_t *bits = ptr<uint8_t>(m.a[0]);
     if (!bits)
         error(24);
@@ -163,7 +163,7 @@ uint32_t pack(const Area &a, uint16_t car, uint16_t ty, uint8_t *h, bool store)
     Regs f;
     f.a[1] = address(bits);
     f.d[0] = size;
-    sy_call(sy::MemFree, f);
+    w::release(f.a[1], f.d[0]);
     return (uint32_t(a5 - h) + 3) & ~1u;
 }
 

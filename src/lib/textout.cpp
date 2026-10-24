@@ -79,7 +79,7 @@ uint32_t prt_open()
     Regs r;
     r.a[1] = address(lib_prt_close_record);
     r.a[2] = address(&d.Sys_ClearRoutines);
-    sy_call(sy::AddRoutine, r);
+    w::add_routine(r.a[1], r.a[2]);
     return d.PrtHandle;
 }
 

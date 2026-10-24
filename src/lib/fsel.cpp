@@ -283,7 +283,7 @@ void delete_store(uint32_t e)
         Regs r = {};
         r.a[1] = f;
         r.d[0] = static_cast<uint32_t>(static_cast<int16_t>(peek_w(ptr<uint8_t>(f) + 4)));
-        sy_call(sy::MemFree, r);
+        w::release(r.a[1], r.d[0]);
         f = next;
     }
     lst_del(&idata().Fs_Liste, ptr<uint8_t>(e));
@@ -1095,7 +1095,7 @@ void close_selector()
     Regs fr = {};
     fr.a[1] = address(f);
     fr.d[0] = FileSelector::Fs_Long;
-    sy_call(sy::MemFree, fr);
+    w::release(fr.a[1], fr.d[0]);
     d.Fs_Base = 0;
 }
 
@@ -1108,11 +1108,11 @@ uint32_t file_selector(const uint32_t *params)
         fon_call();
     Regs fl = {};
     fl.a[1] = address(lib_fs_flush_record);
-    sy_call(sy::AddFlushRoutine, fl);
+    w::add_routine(fl.a[1], address(&wdata().MemFlush));
     add_routine(lib_fs_end_record, address(&d.Sys_EndRoutines));
     Regs m = {};
     m.d[0] = FileSelector::Fs_Long;
-    sy_call(sy::MemFastClear, m);
+    m.a[0] = w::reserve(m.d[0], w::FastClear);
     // (Without memory the assembler cancelled through a null structure)
     if (!m.a[0]) {
         *name1() = 0;

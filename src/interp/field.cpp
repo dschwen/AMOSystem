@@ -52,7 +52,7 @@ extern "C" void interp_in_field()
     } while (peek_token() == tk::Vir);
     Regs m;
     m.d[0] = count * 6u + 8;
-    sy_call(sy::MemFastClear, m);
+    m.a[0] = w::reserve(m.d[0], w::FastClear);
     if (!m.a[0])
         error(24);
     uint8_t *record = ptr<uint8_t>(m.a[0]);

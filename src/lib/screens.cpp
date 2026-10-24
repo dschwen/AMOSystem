@@ -106,7 +106,7 @@ int32_t tmp_ras_free()
         Regs r = {};
         r.a[1] = d.RasAd;
         r.d[0] = d.RasLong;
-        sy_call(sy::MemFree, r);
+        w::release(r.a[1], r.d[0]);
         d.RasAd = 0;
         d.RasLong = 0;
         rastport()->TmpRas = nullptr;
@@ -137,7 +137,7 @@ void tmp_ras_get()
         if (length > 1024) {
             Regs r = {};
             r.d[0] = length;
-            sy_call(sy::MemChip, r);
+            r.a[0] = w::reserve(r.d[0], w::Chip);
             if (!r.a[0])
                 error(24);
             d.RasAd = buffer = r.a[0];
@@ -1481,7 +1481,7 @@ extern "C" void lib_in_zoom(int32_t from, int32_t x1, int32_t y1, int32_t x2, in
     int16_t nplanes = static_cast<int16_t>((s->EcNPlan <= d->EcNPlan ? s->EcNPlan : d->EcNPlan) - 1);
     Regs m = {};
     m.d[0] = 4096;
-    sy_call(sy::MemFast, m);
+    m.a[0] = w::reserve(m.d[0], w::Fast);
     uint16_t *table_x = ptr<uint16_t>(m.a[0]);
     if (!table_x)
         error(24);
@@ -1489,7 +1489,7 @@ extern "C" void lib_in_zoom(int32_t from, int32_t x1, int32_t y1, int32_t x2, in
         Regs f = {};
         f.a[1] = address(table_x);
         f.d[0] = 4096;
-        sy_call(sy::MemFree, f);
+        w::release(f.a[1], f.d[0]);
         fon_call();
     };
     if (x4 < 0)
@@ -1554,7 +1554,7 @@ done:
     Regs f = {};
     f.a[1] = address(table_x);
     f.d[0] = 4096;
-    sy_call(sy::MemFree, f);
+    w::release(f.a[1], f.d[0]);
 }
 
 // ---- coordinates ----------------------------------------------------------

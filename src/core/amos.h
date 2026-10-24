@@ -120,6 +120,19 @@ inline void sy_call(int function, Regs &r) { amos_call(&r, reinterpret_cast<cons
 inline void ec_call(int function, Regs &r) { amos_call(&r, reinterpret_cast<const uint8_t *>(wdata().EcVect) + 4 * function); }
 inline void wi_call(int function, Regs &r) { amos_call(&r, reinterpret_cast<const uint8_t *>(wdata().WiVect) + 4 * function); }
 
+// The memory of AMOS.library (w/memory.cpp): SyCall MemReserve (size, the
+// AllocMem flags; 0 if none), MemFree
+namespace w {
+uint32_t reserve(uint32_t size, uint32_t flags);
+void release(uint32_t address, uint32_t size);
+// The flags of MemFastClear, MemFast, MemChipClear, MemChip
+constexpr uint32_t FastClear = 0x10001, Fast = 0x1, ChipClear = 0x10003, Chip = 0x3;
+// Routine lists (Sys_ClearRoutines...): AddRoutine (a link, then the code;
+// added if in no list), CallRoutines (the list empties)
+uint32_t add_routine(uint32_t routine, uint32_t list);
+void call_routines(uint32_t *list);
+} // namespace w
+
 // Files (lib/dos.cpp): Dsk.PathIt, the name in Name1 with the current
 // directory; DiskError, the error of the last DOS call
 void path_it();

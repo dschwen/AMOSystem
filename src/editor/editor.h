@@ -19,21 +19,8 @@ inline uint32_t call(uint8_t *routine, Regs &r)
 }
 
 // AMOS.library's memory (SyCall MemFast, MemFastClear, MemFree): 0 if none
-inline uint32_t memory(uint32_t size, bool clear)
-{
-    Regs r;
-    r.d[0] = size;
-    sy_call(clear ? sy::MemFastClear : sy::MemFast, r);
-    return r.a[0];
-}
-
-inline void free_memory(uint32_t address, uint32_t size)
-{
-    Regs r;
-    r.a[1] = address;
-    r.d[0] = size;
-    sy_call(sy::MemFree, r);
-}
+inline uint32_t memory(uint32_t size, bool clear) { return w::reserve(size, clear ? w::FastClear : w::Fast); }
+inline void free_memory(uint32_t address, uint32_t size) { w::release(address, size); }
 
 // TInst (core/source.cpp)
 using source::skip_token;

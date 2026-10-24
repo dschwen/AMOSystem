@@ -84,10 +84,7 @@ uint32_t ec_fn(int function, uint32_t d1 = 0)
 
 uint8_t *mem_fast(uint32_t length, bool clear = false)
 {
-    Regs r = {};
-    r.d[0] = length;
-    sy_call(clear ? sy::MemFastClear : sy::MemFast, r);
-    return ptr<uint8_t>(r.a[0]);
+    return ptr<uint8_t>(w::reserve(length, clear ? w::FastClear : w::Fast));
 }
 
 void mem_free(uint32_t address, uint32_t length)
@@ -95,7 +92,7 @@ void mem_free(uint32_t address, uint32_t length)
     Regs r = {};
     r.a[1] = address;
     r.d[0] = length;
-    sy_call(sy::MemFree, r);
+    w::release(r.a[1], r.d[0]);
 }
 
 MenuItem *new_item()

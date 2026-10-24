@@ -90,7 +90,7 @@ void remove_masks(uint8_t *entry, uint16_t count)
             Regs r = {};
             r.a[1] = static_cast<uint32_t>(mask);
             r.d[0] = peek_l(ptr<void>(mask));
-            sy_call(sy::MemFree, r);
+            w::release(r.a[1], r.d[0]);
         }
         poke_l(entry + 4, 0xC0000000u);
     }

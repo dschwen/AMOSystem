@@ -1637,7 +1637,7 @@ uint8_t *mem_fast(uint32_t length)
 {
     Regs r = {};
     r.d[0] = length;
-    sy_call(sy::MemFast, r);
+    r.a[0] = w::reserve(r.d[0], w::Fast);
     return ptr<uint8_t>(r.a[0]);
 }
 
@@ -1646,7 +1646,7 @@ void mem_free(uint32_t address, uint32_t length)
     Regs r = {};
     r.a[1] = address;
     r.d[0] = length;
-    sy_call(sy::MemFree, r);
+    w::release(r.a[1], r.d[0]);
 }
 
 // The monitor's hook to bring its screen to the front, while RUn waits

@@ -34,7 +34,7 @@ void free_memory(uint32_t address, uint32_t size)
     Regs r;
     r.a[1] = address;
     r.d[0] = size;
-    sy_call(sy::MemFree, r);
+    w::release(r.a[1], r.d[0]);
 }
 
 uint8_t upper(uint8_t c) { return c >= 'a' && c <= 'z' ? uint8_t(c - 0x20) : c; }

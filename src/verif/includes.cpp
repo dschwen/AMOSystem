@@ -56,7 +56,7 @@ const uint8_t *equates_load(uint32_t *length)
     if (!d.Equ_Base) {
         Regs f;
         f.a[1] = address(ver_equ_flush);
-        sy_call(sy::AddFlushRoutine, f);
+        w::add_routine(f.a[1], address(&wdata().MemFlush));
         Regs m;
         m.d[0] = 9;
         m.a[0] = address(boot::sys_message(m.d[0]));

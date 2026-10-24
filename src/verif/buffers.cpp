@@ -21,7 +21,7 @@ uint32_t reserve(uint32_t size)
 {
     Regs r;
     r.d[0] = size;
-    sy_call(sy::MemFastClear, r);
+    r.a[0] = w::reserve(r.d[0], w::FastClear);
     return r.a[0];
 }
 
@@ -30,7 +30,7 @@ void release(uint32_t address, uint32_t size)
     Regs r;
     r.d[0] = size;
     r.a[1] = address;
-    sy_call(sy::MemFree, r);
+    w::release(r.a[1], r.d[0]);
 }
 
 } // namespace
@@ -196,7 +196,7 @@ void clear_variables()
     d.CallReg[3] = address(&d.Ed_Config);
     Regs c;
     c.a[1] = address(&d.Sys_ClearRoutines);
-    sy_call(sy::CallRoutines, c);
+    w::call_routines(ptr<uint32_t>(c.a[1]));
     lib(L_Bnk_EffTemp);
     lib(L_Bnk_Change);
     lib(L_MenuReset);

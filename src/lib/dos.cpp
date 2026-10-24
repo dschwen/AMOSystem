@@ -41,7 +41,7 @@ void add_routine(uint8_t *record, uint32_t list)
     Regs r = {};
     r.a[1] = address(record);
     r.a[2] = list;
-    sy_call(sy::AddRoutine, r);
+    w::add_routine(r.a[1], r.a[2]);
 }
 
 void path_it()

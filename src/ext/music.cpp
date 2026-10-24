@@ -228,7 +228,7 @@ void delete_wave(const Found &f)
     Regs r;
     r.d[0] = MusWave::WaveLong;
     r.a[1] = f.wave;
-    sy_call(sy::MemFree, r);
+    w::release(r.a[1], r.d[0]);
 }
 
 // NoWave
@@ -259,7 +259,7 @@ bool new_wave(uint16_t n, const uint8_t *data)
     }
     Regs r;
     r.d[0] = MusWave::WaveLong;
-    sy_call(sy::MemChipClear, r);
+    r.a[0] = w::reserve(r.d[0], w::ChipClear);
     uint32_t w = r.a[0];
     if (!w)
         return false;
