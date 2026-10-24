@@ -41,8 +41,11 @@ the assembler code in the first hunk: it holds the entry point or entry
 table. AMOSPro's init hunk `I` must come second, because `Init_Fin` frees it.
 This `ld` writes no memory flags, so `tools/chiphunks.py` marks the
 `.datachip`/`.bsschip` hunks as chip memory after linking, using the map
-file. AMOSPro.Lib and the extensions are still assembled directly. AMOSPro
-loads them raw and patches them, and they cannot contain linked code.
+file. The extensions are still assembled directly: AMOSPro loads them raw
+and patches them, and they cannot contain linked code. AMOSPro.Lib is
+assembled the same way, but also linked into AMOSPro as data
+(`src/main/library.s`): the loader takes library 0 from that image, and
+the file is only built for the tools (the tokenizer reads its token table).
 
 C++ is compiled for the 68000 with `-Os`, without exceptions, RTTI or a C
 library startup. libgcc and libnix13 supply arithmetic helpers such as

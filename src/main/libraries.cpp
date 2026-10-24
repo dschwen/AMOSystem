@@ -18,6 +18,8 @@ using namespace amos::boot;
 // for the extensions in AMOSPro (a word, the slot, a long, its list: the
 // number of routines of the extension, then its routines as AMOSJmps).
 extern "C" const uint8_t main_amos_jmps[], main_ext_jmps[];
+// main/library.s: AMOSPro.Lib, linked in (the file without its hunk header)
+extern "C" const uint8_t main_library[];
 
 namespace {
 
@@ -60,15 +62,51 @@ uint8_t *skip_definition(uint8_t *p)
     return p + (address(p) & 1);
 }
 
-// Library_Load: library n from the file Name1; its command line
-int library_load(uint32_t n, const char *command)
+// Where a library comes from: its file (Name1), or its image in memory
+struct Source {
+    const uint8_t *image;
+
+    bool read(void *to, uint32_t length)
+    {
+        if (!image)
+            return sys_read(to, length);
+        const uint8_t *from = image;
+        for (uint8_t *p = static_cast<uint8_t *>(to); length--;)
+            *p++ = *from++;
+        image = from;
+        return true;
+    }
+    void back(uint32_t length)
+    {
+        if (image)
+            image -= length;
+        else
+            sys_seek(-int32_t(length), 0);
+    }
+    void close()
+    {
+        if (!image)
+            sys_close();
+    }
+};
+
+// Library_Load: library n from the file Name1 (or the image of AMOSPro.Lib
+// linked in, for library 0); its command line
+int library_load(uint32_t n, const char *command, const uint8_t *image)
 {
     IData &d = idata();
-    if (!sys_open(ptr<char>(d.Name1), 1005))
-        return 1;
+    Source source = {image};
     uint8_t *buffer = ptr<uint8_t>(d.Buffer);
-    if (!sys_read(buffer, 0x20 + 18))
-        return 1;
+    if (image) {
+        // as if the hunk header had been read
+        if (!source.read(buffer + 0x20, 18))
+            return 1;
+    } else {
+        if (!sys_open(ptr<char>(d.Name1), 1005))
+            return 1;
+        if (!sys_read(buffer, 0x20 + 18))
+            return 1;
+    }
     // after the hunk header: the size of the routines' sizes, of the token
     // table, of the routines, of the title
     const uint8_t *header = buffer + 0x20;
@@ -90,14 +128,14 @@ int library_load(uint32_t n, const char *command)
     // a new or an old library?
     lb_word(tokens, LB_Flags) = 0;
     tokens[LB_Flags] |= 1 << LBF_20;
-    if (!sys_read(buffer, 4))
+    if (!source.read(buffer, 4))
         return 1;
     if (peek_l(buffer) != 0x41503230) {     // "AP20"
         tokens[LB_Flags] &= uint8_t(~(1 << LBF_20));
-        sys_seek(-4, 0);
+        source.back(4);
     }
     // the sizes of the routines, then their addresses
-    if (!sys_read(ptr<void>(sizes + 4), peek_l(ptr<void>(sizes))))
+    if (!source.read(ptr<void>(sizes + 4), peek_l(ptr<void>(sizes))))
         return 1;
     const uint16_t *length = ptr<uint16_t>(sizes + 4);
     uint32_t code = address(tokens) + peek_l(header + 4);
@@ -110,9 +148,9 @@ int library_load(uint32_t n, const char *command)
         code += 2 * uint32_t(words);
     }
     // the rest
-    if (!sys_read(tokens, peek_l(header + 4) + peek_l(header + 8) + peek_l(header + 12)))
+    if (!source.read(tokens, peek_l(header + 4) + peek_l(header + 8) + peek_l(header + 12)))
         return 1;
-    sys_close();
+    source.close();
     lb_word(tokens, LB_NRout) = uint16_t(routines);
     lb_long(tokens, LB_Title) = address(tokens) + peek_l(header + 4) + peek_l(header + 8);
     lb_long(tokens, LB_Command) = address(command);
@@ -455,16 +493,17 @@ namespace amos::boot {
 
 int libraries_load()
 {
-    // the main library, then the extensions, from the configuration
+    // the main library (linked in: its name in the configuration only
+    // gives its command line), then the extensions, from the configuration
     const char *command = sys_add_path_com(sys_message(14));
-    if (int e = library_load(0, command))
+    if (int e = library_load(0, command, main_library))
         return e;
     for (uint32_t n = 1; n < Libraries; n++) {
         const char *name = sys_message(16 + n - 1);
         if (!*name)
             continue;
         command = sys_add_path_com(name);
-        if (int e = library_load(n, command))
+        if (int e = library_load(n, command, nullptr))
             return e;
     }
     return 0;

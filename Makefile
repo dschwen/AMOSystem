@@ -169,6 +169,12 @@ $(BUILD)/AMOS.library: $(OBJ)/W.o $(OBJ_W) $(COMMON_LIB) link/module.ld tools/ch
 $(BUILD)/AMOSPro.Lib: +Lib.s +ILib.s $(PREREQ) $(TOKTAB) bin/+Dialog_Funcs.bin
 	$(VASM) $(EXEFLAGS) -o $@ $<
 
+# The same library, linked into AMOSPro (main/libraries.cpp loads it from
+# there)
+$(OBJ)/src/main/library.o: src/main/library.s +Lib.s +ILib.s $(PREREQ) $(TOKTAB) bin/+Dialog_Funcs.bin
+	@mkdir -p $(dir $@)
+	$(VASM) $(OBJFLAGS) -o $@ $<
+
 $(OBJ)/Edit.o: +Edit.s $(PREREQ)
 	@mkdir -p $(dir $@)
 	$(VASM) $(OBJFLAGS) -o $@ $<
