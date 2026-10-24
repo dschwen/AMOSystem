@@ -294,7 +294,7 @@ uint32_t demande(uint32_t length)
     }
     if (int32_t(c.d7) <= 0)
         c.d7 = d.MenA4;
-    lib_jump(L_OOfBuf, 0);
+    error(EOofBuf);
 }
 
 // DDemande: the same without the restart

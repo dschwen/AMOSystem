@@ -30,4 +30,11 @@ struct Number {
 };
 Number find_address(uint8_t *start, const uint8_t *at);
 
+// TInst: past the data of token t at a (0: the end of the line)
+const uint8_t *skip_token(uint16_t t, const uint8_t *a);
+inline uint8_t *skip_token(uint16_t t, uint8_t *a)
+{
+    return const_cast<uint8_t *>(skip_token(t, static_cast<const uint8_t *>(a)));
+}
+
 } // namespace amos::source

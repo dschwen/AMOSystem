@@ -52,7 +52,7 @@ uint32_t read_line(uint8_t separator)
             }
             *to++ = c;
             if (++n >= 1000)
-                lib_jump(L_InpTL, 0);
+                error(EInpTL);
         }
         *to = 0;
         return n;

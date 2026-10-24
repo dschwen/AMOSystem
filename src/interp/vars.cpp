@@ -70,7 +70,7 @@ uint8_t *array_element(uint8_t *at)
 {
     uint8_t *block = ptr<uint8_t>(peek_l(at));
     if (!block)
-        lib_jump(L_NonDim, 0);
+        error(ENonDim);
     uint16_t dimensions = block[0];
     uint8_t shift = block[1];
     uint8_t *limits = block + 2;
@@ -160,7 +160,7 @@ void dim()
         pc() += 2;
         Variable v = variable();
         if (peek_l(v.at))
-            lib_jump(L_AlrDim, 0);
+            error(EAlrDim);
         uint8_t type = v.flags & 0x0F;
         uint8_t shift = type == TFloat && doubles() ? 3 : 2;
         uint16_t limits[255];
@@ -192,7 +192,7 @@ void dim()
             Regs m;
             lib_call(L_Menage, m);
             if (address(block) < d.HiChaine)
-                lib_jump(L_OOfBuf, 0);
+                error(EOofBuf);
         }
         poke_l(v.at, address(block));
         d.TabBas = address(block);
@@ -235,7 +235,7 @@ uint32_t array_address()
     Variable v = variable();
     uint32_t block = peek_l(v.at);
     if (!block)
-        lib_jump(L_NonDim, 0);
+        error(ENonDim);
     pc() -= 2;
     for (uint8_t n = ptr<uint8_t>(block)[0]; n; n--)
         evaluate_after();

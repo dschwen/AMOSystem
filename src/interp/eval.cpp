@@ -37,8 +37,8 @@ enum : uint16_t {
 // Math library entries (mathffp / mathieeedoubbas, mathtrans / mathieeedoubtrans)
 constexpr int32_t LVOAdd = -66, LVOSub = -72, LVOMul = -78, LVODiv = -84, LVOPow = -90;
 
-[[noreturn]] void overflow() { lib_jump(L_OverFlow, 0); }
-[[noreturn]] void division_by_zero() { lib_jump(L_DByZero, 0); }
+[[noreturn]] void overflow() { error(EOverFlow); }
+[[noreturn]] void division_by_zero() { error(EDByZero); }
 
 Value result(const Regs &r) { return {r.d[2], r.d[3], r.d[4]}; }
 

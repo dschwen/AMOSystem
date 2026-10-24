@@ -18,6 +18,11 @@ struct Value {
 constexpr uint8_t TInt = 0, TFloat = 1, TString = 2;
 inline uint8_t kind(const Value &v) { return uint8_t(v.type); }
 
+// Run-time errors raised in several places
+enum : uint32_t {
+    EOofBuf = 11, EDByZero = 20, ENonDim = 27, EAlrDim = 28, EOverFlow = 29, EOofData = 33, EInpTL = 79 + 20,
+};
+
 inline uint8_t *&pc() { return ctx().a6; }
 inline uint16_t peek_token() { return peek_w(pc()); }
 inline uint16_t next_token()

@@ -20,7 +20,7 @@ void data()
 [[noreturn]] void out_of_data()
 {
     idata().PData = 0;
-    lib_jump(L_OOfData, 0);
+    error(EOofData);
 }
 
 // The next item to read, pc there

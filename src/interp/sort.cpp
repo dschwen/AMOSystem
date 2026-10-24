@@ -28,7 +28,7 @@ Array array()
     pc() += length;
     uint8_t *block = ptr<uint8_t>(peek_l(at));
     if (!block)
-        lib_jump(L_NonDim, 0);
+        error(ENonDim);
     uint8_t dimensions = block[0];
     Array a = {nullptr, uint8_t(flags & 0x0F), block[1], 1};
     uint8_t *p = block + 2;

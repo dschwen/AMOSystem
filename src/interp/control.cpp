@@ -14,6 +14,7 @@
 // with a new instruction: interp_continue resets the stack to BasSp and
 // returns into the ChrGet loop with the registers of the context.
 
+#include "core/source.h"
 #include "interp/interp.h"
 
 using namespace amos;
@@ -460,15 +461,7 @@ void test_force()
 
 namespace {
 
-// The token's size (L_TInst): past token t at at
-uint8_t *skip_token(uint16_t t, uint8_t *at)
-{
-    Regs r;
-    r.d[0] = t;
-    r.a[0] = address(at);
-    lib_call(L_TInst, r);
-    return ptr<uint8_t>(r.a[0]);
-}
+using source::skip_token;
 
 // Resume Next: the instruction after the one at from
 uint8_t *next_instruction(uint8_t *from)

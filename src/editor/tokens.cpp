@@ -19,6 +19,7 @@
 //   structure tokens (For, If...): 2 to 8 bytes the verifier fills in
 
 #include "core/amos.h"
+#include "core/source.h"
 
 using namespace amos;
 
@@ -47,45 +48,10 @@ bool next_token(const uint8_t *&a1)
 
 } // namespace
 
-namespace amos::ed {
-
-// TInst: past the data of token t at a (0: the end of the line)
-const uint8_t *skip_token(uint16_t t, const uint8_t *a)
-{
-    if (!t)
-        return a;
-    if (t <= tk::LGo)
-        return a + 4 + a[2];
-    if (t == tk::Ch1 || t == tk::Ch2 || t == tk::Rem1 || t == tk::Rem2) {
-        a += 2 + int16_t(peek_w(a));
-        if (address(a) & 1)
-            a++;
-        return a;
-    }
-    if (t == tk::DFl)
-        return a + 8;
-    if (t <= tk::Fl || t == tk::Ext)
-        return a + 4;
-    if (t == tk::For || t == tk::Rpt || t == tk::Whl || t == tk::Do)
-        return a + 2;
-    if (t == tk::Exit || t == tk::ExIf)
-        return a + 4;
-    if (t == tk::If || t == tk::Else || t == tk::ElsI || t == tk::Data)
-        return a + 2;
-    if (t == tk::Proc)
-        return a + 8;
-    if (t == tk::On)
-        return a + 4;
-    if (t >= tk::Equ && t <= tk::StruS)
-        return a + 6;
-    return a;
-}
-
-} // namespace amos::ed
 
 namespace {
 
-using amos::ed::skip_token;
+using amos::source::skip_token;
 
 // The result of Tokenise: 1 tokens, 0 an empty line, -1 too long; the
 // length of the line in bytes

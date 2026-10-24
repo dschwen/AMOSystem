@@ -560,122 +560,28 @@ _POk	subq.w	#1,(sp)
 
 
 ; - - - - - - - - - - - - -
-ErrMLibs
-; - - - - - - - - - - - - -		Cannot open math libraries
-	move.l	Prg_Run(a5),a6		Au debut du programme!
-	moveq	#12,d0
-	bra	RunErr
-; - - - - - - - - - - - - -
-MnINDef
-; - - - - - - - - - - - - -
-	moveq	#39,d0
-	bra	RunErr
-; - - - - - - - - - - - - -
 	Lib_Def	RIllDir
 RIllDir
 ; - - - - - - - - - - - - -
 	moveq	#17,d0
-	bra.s	RunErr
-; - - - - - - - - - - - - -
-	Lib_Def	OOfData
-; - - - - - - - - - - - - -
-OOfData	moveq	#33,d0
-	bra.s	RunErr
-; - - - - - - - - - - - - -
-	Lib_Def	OOfBuf
-; - - - - - - - - - - - - -
-OOfBuf	moveq	#11,d0			Out of buffer space
-	bra.s	RunErr
-; - - - - - - - - - - - - -
-	Lib_Def	InpTL
-InpTL
-; - - - - - - - - - - - - -
-	moveq	#DEBase+20,d0
-	bra.s	RunErr
-; - - - - - - - - - - - - -
-	Lib_Def	EProErr
-EProErr
-; - - - - - - - - - - - - -
-	moveq	#8,d0
-	bra.s	RunErr
-; - - - - - - - - - - - - -
-	Lib_Def	ResLNo
-ResLNo
-; - - - - - - - - - - - - -
-	moveq	#6,d0
-	bra.s	RunErr
-; - - - - - - - - - - - - -
-	Lib_Def	NoOnErr
-NoOnErr
-; - - - - - - - - - - - - -
-	moveq	#5,d0
-	bra.s	RunErr
-; - - - - - - - - - - - - -
-	Lib_Def	ResPLab
-ResPLab
-; - - - - - - - - - - - - -
-	moveq	#4,d0
-	bra.s	RunErr
-; - - - - - - - - - - - - -
-	Lib_Def	NoResume
-NoResum
-; - - - - - - - - - - - - -
-	moveq	#3,d0
-	bra.s	RunErr
-; - - - - - - - - - - - - -
-	Lib_Def	NoErr
-NoErr
-; - - - - - - - - - - - - -
-	moveq	#7,d0
-	bra.s	RunErr
-; - - - - - - - - - - - - -
-	Lib_Def	OofStack
-OofStack
-; - - - - - - - - - - - - -
-	moveq 	#13,d0
-	bra.s	RunErr
-; - - - - - - - - - - - - -
-	Lib_Def	NonDim
-NonDim
-; - - - - - - - - - - - - -
-	moveq 	#27,d0
-	bra.s 	RunErr
-; - - - - - - - - - - - - -
-	Lib_Def	AlrDim
-AlrDim
-; - - - - - - - - - - - - -
-	moveq 	#28,d0
-	bra.s 	RunErr
-; - - - - - - - - - - - - -
-	Lib_Def	DByZero
-DByZero
-; - - - - - - - - - - - - -
-	moveq 	#20,d0
-	bra.s 	RunErr
-; - - - - - - - - - - - - -
-	Lib_Def	OverFlow
-OverFlow
-; - - - - - - - - - - - - -
-	moveq 	#29,d0
-	bra.s 	RunErr
-; - - - - - - - - - - - - -
-	Lib_Def	RetGsb
-RetGsb
-; - - - - - - - - - - - - -
-	moveq	#1,d0
-	bra.s	RunErr
-; - - - - - - - - - - - - -
-	Lib_Def	PopGsb
-PopGsb
-; - - - - - - - - - - - - -
-	moveq	#2,d0
-	bra.s	RunErr
-; - - - - - - - - - - - - -
-TypeMis
-; - - - - - - - - - - - - -
-	moveq	#34,d0
-; The errors: interp/control.cpp (the local labels are for the stubs
-; above)
+	bra	RunErr
+	Lib_Empty			OOfData, now an error() in src/interp
+	Lib_Empty			OOfBuf, now an error() in src/interp
+	Lib_Empty			InpTL, now an error() in src/interp
+	Lib_Empty			EProErr, now an error() in src/interp
+	Lib_Empty			ResLNo, now an error() in src/interp
+	Lib_Empty			NoOnErr, now an error() in src/interp
+	Lib_Empty			ResPLab, now an error() in src/interp
+	Lib_Empty			NoResume, now an error() in src/interp
+	Lib_Empty			NoErr, now an error() in src/interp
+	Lib_Empty			OofStack, now an error() in src/interp
+	Lib_Empty			NonDim, now an error() in src/interp
+	Lib_Empty			AlrDim, now an error() in src/interp
+	Lib_Empty			DByZero, now an error() in src/interp
+	Lib_Empty			OverFlow, now an error() in src/interp
+	Lib_Empty			RetGsb, now an error() in src/interp
+	Lib_Empty			PopGsb, now an error() in src/interp
+; The errors: interp/control.cpp
 RunErr:	moveq	#19,d1
 	moveq	#-1,d2
 RunErrExt
@@ -1339,75 +1245,7 @@ FinieB	beq.s	.Skip
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ;	RAMENE LA TAILLE DE L'INSTRUCTION D0 en D1
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	TInst
-TInst
-; - - - - - - - - - - - - -
-	tst.w	d0
-	beq	TFin
-	cmp.w	#_TkLGo,d0
-	bls	TVar
-	cmp.w	#_TkCh1,d0
-	beq	TCh
-	cmp.w	#_TkCh2,d0
-	beq	TCh
-	cmp.w	#_TkRem1,d0
-	beq	TCh
-	cmp.w	#_TkRem2,d0
-	beq	TCh
-	cmp.w	#_TkDFl,d0
-	beq.s	T8
-	cmp.w	#_TkFl,d0
-	bls.s	T4
-	cmp.w	#_TkExt,d0
-	beq.s	T4
-	cmp.w	#_TkFor,d0
-	beq.s	T2
-	cmp.w	#_TkRpt,d0
-	beq.s	T2
-	cmp.w	#_TkWhl,d0
-	beq.s	T2
-	cmp.w	#_TkDo,d0
-	beq.s	T2
-	cmp.w	#_TkExit,d0
-	beq.s	T4
-	cmp.w	#_TkExIf,d0
-	beq.s	T4
-	cmp.w	#_TkIf,d0
-	beq.s	T2
-	cmp.w	#_TkElse,d0
-	beq.s	T2
-	cmp.w	#_TkElsI,d0
-	beq.s	T2
-	cmp.w	#_TkData,d0
-	beq.s	T2
-	cmp.w	#_TkProc,d0
-	beq.s	T8
-	cmp.w	#_TkOn,d0
-	beq.s	T4
-	cmp.w	#_TkEqu,d0
-	bcs.s	T0
-	cmp.w	#_TkStruS,d0
-	bls.s	T6
-T0:	moveq	#1,d1
-TFin:	rts
-T2:	addq.l	#2,a0
-	bra.s	T0
-T4:	addq.l	#4,a0
-	bra.s	T0
-T8:	addq.l	#8,a0
-	bra.s	T0
-T6:	addq.l	#6,a0
-	bra.s	T0
-TCh:	add.w	(a0)+,a0
-	move.w	a0,d1
-	btst	#0,d1
-	beq.s	T0
-	addq.l	#1,a0
-	bra.s	T0
-TVar:	moveq	#0,d1
-	move.b	2(a0),d1
-	lea	4(a0,d1.w),a0
-	bra.s	T0
+	Lib_Empty			TInst, now skip_token in src/core/source.cpp
 
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

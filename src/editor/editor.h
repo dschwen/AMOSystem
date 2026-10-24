@@ -4,6 +4,7 @@
 #pragma once
 
 #include "core/amos.h"
+#include "core/source.h"
 
 namespace amos::ed {
 
@@ -34,9 +35,10 @@ inline void free_memory(uint32_t address, uint32_t size)
     sy_call(sy::MemFree, r);
 }
 
-// editor/tokens.cpp: TInst; Detok of a line into buffer (the length word,
-// the text), its length
-const uint8_t *skip_token(uint16_t t, const uint8_t *a);
+// TInst (core/source.cpp)
+using source::skip_token;
+// editor/tokens.cpp: Detok of a line into buffer (the length word, the
+// text), its length
 uint32_t detok(const uint8_t *line, uint8_t *buffer);
 // Tokenise: 1, 0 for an empty line, -1 if too long
 int32_t tokenise_line(uint8_t *text, uint8_t *buffer);
