@@ -1753,36 +1753,21 @@ C_Lib
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 	Lib_Int FnSgn			Integer: src/lib/maths.cpp
 ; - - - - - - - - - - - - -
-	Lib_Def	FnSgnF			Float / Double
-; - - - - - - - - - - - - -
-	Rjsrt	L_Float_Test
-	move.l	d0,d3
-	Ret_Int
+	Lib_Int	FnSgnF		src/lib/maths.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					=STR$ (fmath)
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 	Lib_Int	FnStrE		src/lib/system.cpp
 ; - - - - - - - - - - - - -
-	Lib_Def FnStrF			FLOAT/DOUBLE
-; - - - - - - - - - - - - -
-	movem.l	d3/d4,-(sp)
-        moveq 	#40,d3
-        Rjsr 	L_Demande
-        movem.l	(sp)+,d3/d4
-	lea	2(a0),a0
-	RjsrtR	L_Float2Ascii,2
-        Rbra 	L_FinBin
+	Lib_Int	FnStrF		src/lib/maths.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					ABS (FMath)
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 	Lib_Int FnAbs			Integer: src/lib/maths.cpp
 ; - - - - - - - - - - - - -
-	Lib_Def FnAbsF			Float + DFloat
-; - - - - - - - - - - - - -
-	moveq	#_LVOSPAbs,d2
-	Rjmpt	L_Float_Fonction
+	Lib_Int	FnAbsF		src/lib/maths.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					INT (FMath)
@@ -1791,117 +1776,72 @@ C_Lib
 ; - - - - - - - - - - - - -
 	rts
 ; - - - - - - - - - - - - -
-	Lib_Def FnIntF			Float + DFloat
-; - - - - - - - - - - - - -
-	moveq	#_LVOSPFloor,d2
-	Rjmpt	L_Float_Fonction
+	Lib_Int	FnIntF		src/lib/maths.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					TAN
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par	FnTan
-; - - - - - - - - - - - - -
-	moveq	#_LVOSPTan,d2		Float + DFloat
-	Rjmpt	L_Math_Fonction
+	Lib_Int	FnTan		src/lib/maths.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					SQR
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par	FnSqr
-; - - - - - - - - - - - - -
-	Rjsrt	L_FlPos
-	moveq	#_LVOSPSqrt,d2
-	Rjmpt	L_Math_Fonction
+	Lib_Int	FnSqr		src/lib/maths.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					Log10
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par	FnLog
-; - - - - - - - - - - - - -
-	Rjsrt	L_FlPos
-	moveq	#_LVOSPLog10,d2
-	Rjmpt	L_Math_Fonction
+	Lib_Int	FnLog		src/lib/maths.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					Ln
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par	FnLn
-; - - - - - - - - - - - - -
-	Rjsrt	L_FlPos
-	moveq	#_LVOSPLog,d2
-	Rjmpt	L_Math_Fonction
+	Lib_Int	FnLn		src/lib/maths.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					EXP
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par	FnExp
-; - - - - - - - - - - - - -
-	moveq	#_LVOSPExp,d2
-	Rjmpt	L_Math_Fonction
+	Lib_Int	FnExp		src/lib/maths.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					SIN
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par	FnSin
-; - - - - - - - - - - - - -
-	moveq	#_LVOSPSin,d2
-	Rjmpt	L_Math_Fonction
+	Lib_Int	FnSin		src/lib/maths.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					COS
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par	FnCos
-; - - - - - - - - - - - - -
-	moveq	#_LVOSPCos,d2
-	Rjmpt	L_Math_Fonction
+	Lib_Int	FnCos		src/lib/maths.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					ASIN
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par	FnASin
-; - - - - - - - - - - - - -
-	moveq	#_LVOSPAsin,d2
-	Rjmpt	L_AAngle
+	Lib_Int	FnASin		src/lib/maths.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					ACOS
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par	FnACos
-; - - - - - - - - - - - - -
-	moveq	#_LVOSPAcos,d2
-	Rjmpt	L_AAngle
+	Lib_Int	FnACos		src/lib/maths.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					ATAN
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par	FnATan
-; - - - - - - - - - - - - -
-	moveq	#_LVOSPAtan,d2
-	Rjmpt	L_AAngle
+	Lib_Int	FnATan		src/lib/maths.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					HSIN
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par	FnHSin
-; - - - - - - - - - - - - -
-	moveq	#_LVOSPSinh,d2
-	Rjmpt	L_Math_Fonction
+	Lib_Int	FnHSin		src/lib/maths.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					HCOS
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par	FnHCos
-; - - - - - - - - - - - - -
-	moveq	#_LVOSPCosh,d2
-	Rjmpt	L_Math_Fonction
+	Lib_Int	FnHCos		src/lib/maths.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					HTAN
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par	FnHTan
-; - - - - - - - - - - - - -
-	moveq	#_LVOSPTanh,d2
-	Rjmpt	L_Math_Fonction
+	Lib_Int	FnHTan		src/lib/maths.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					RADIUS
@@ -2203,42 +2143,18 @@ C_Lib
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					Appel librarie A0 / D3=fonction
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	Lib.Call
-; - - - - - - - - - - - - -
-	movem.l	a3-a6/d6-d7,-(sp)
-	pea	.Return(pc)
-	pea	0(a0,d3.l)
-	move.l	a0,-(sp)
-	lea	CallReg(a5),a6
-	movem.l	(a6),d0-d7/a0-a5
-	move.l	(sp)+,a6
-	rts
-.Return	movem.l	(sp)+,a3-a6/d6-d7
-	move.l	d0,d3
-	Ret_Int
+	Lib_Int	Lib.Call		src/lib/devices.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					EXEDOSINTGFXCALL
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par	FnExeCall
+	Lib_Int	FnExeCall		src/lib/devices.cpp
 ; - - - - - - - - - - - - -
-	move.l	$4.W,a0
-	Rbra	L_Lib.Call
+	Lib_Int	FnGfxCall		src/lib/devices.cpp
 ; - - - - - - - - - - - - -
-	Lib_Par	FnGfxCall
+	Lib_Int	FnDosCall		src/lib/devices.cpp
 ; - - - - - - - - - - - - -
-	move.l	T_GfxBase(a5),a0
-	Rbra	L_Lib.Call
-; - - - - - - - - - - - - -
-	Lib_Par	FnDosCall
-; - - - - - - - - - - - - -
-	move.l	DosBase(a5),a0
-	Rbra	L_Lib.Call
-; - - - - - - - - - - - - -
-	Lib_Par	FnIntCall
-; - - - - - - - - - - - - -
-	move.l	T_IntBase(a5),a0
-	Rbra	L_Lib.Call
+	Lib_Int	FnIntCall		src/lib/devices.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					LIB OPEN canal,"lib",flags
@@ -2255,15 +2171,7 @@ C_Lib
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					=LIB CALL lib,function
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par	FnLibCall
-; - - - - - - - - - - - - -
-	move.l	(a3)+,d0
-	Rjsr	L_Lib.GetA2
-	move.l	(a2),a0
-	bne.s	.Ok
-	move.w	#169,d0			Library not opened
-	Rbra	L_GoError
-.Ok	Rbra	L_Lib.Call
+	Lib_Int	FnLibCall		src/lib/devices.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					=LIB BASE
@@ -2439,115 +2347,36 @@ C_Lib
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					CHVERBUF
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	ChVerBuf
+	Lib_Int	ChVerBuf		src/lib/textout.cpp
 ; - - - - - - - - - - - - -
-	move.l	Buffer(a5),a0
-	Rbra	L_ChVerBuf2
-; - - - - - - - - - - - - -
-	Lib_Def	ChVerBuf2
-; - - - - - - - - - - - - -
-	move.l	a2,a1
-	move.w	d2,d0
-	beq.s	Chv2
-	subq.w	#1,d0
-	cmp.w	#510,d0
-	bcs.s	Chv1
-	move.w	#509,d0
-Chv1:	move.b	(a1)+,(a0)+
-	dbra	d0,Chv1
-Chv2:	clr.b	(a0)+
-	rts
+	Lib_Int	ChVerBuf2		src/lib/textout.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					Str2Chaine
 ; Recopie un message systeme (a0) fini par zero dans le buffer chaines
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	Str2Chaine
-; - - - - - - - - - - - - -
-	move.l	a2,a0
-.c	tst.b	(a0)+
-	bne.s	.c
-	sub.l	a2,a0
-	move.l	a0,d3
-	subq.l	#1,d3
-	Rbne	L_MCSuit
-	Rbra	L_Ret_ChVide
+	Lib_Int	Str2Chaine		src/lib/textout.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					Chaine (a2) >>> buffer chaines
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	Mes2Chaine
+	Lib_Int	Mes2Chaine		src/lib/textout.cpp
 ; - - - - - - - - - - - - -
-	moveq	#0,d3
-	move.b	-1(a2),d3
-	Rbeq	L_Ret_ChVide
-	cmp.b	#$FF,d3
-	Rbne	L_MCSuit
-	Rbra	L_Ret_ChVide
-; - - - - - - - - - - - - -
-	Lib_Def	MCSuit
-; - - - - - - - - - - - - -
-	Rjsr	L_Demande
-	move.w	d3,(a0)+
-	move.w	d3,d0
-	move.l	a1,d3
-.Loop	move.b	(a2)+,(a0)+
-	subq.w	#1,d0
-	bne.s	.Loop
-	Rbra	L_Set_HiChaine
+	Lib_Int	MCSuit		src/lib/textout.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					Retourne une chaine > hichaine
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	Set_HiChaine
-; - - - - - - - - - - - - -
-	move.l	d3,a0
-	moveq	#0,d0
-	move.w	(a0)+,d0
-	addq.w	#1,d0
-	and.w	#$FFFE,d0
-	add.l	d0,a0
-	move.l	a0,HiChaine(a5)
-	Ret_String
+	Lib_Int	Set_HiChaine		src/lib/textout.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					Retourne une chaine vide
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	Ret_ChVide
-; - - - - - - - - - - - - -
-	move.l	ChVide(a5),d3
-	Ret_String
+	Lib_Int	Ret_ChVide		src/lib/textout.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					Copie A0 en chaine AMOS + RTS
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	A0ToChaine
-; - - - - - - - - - - - - -
-	move.l	a0,a2
-.Count	tst.b	(a0)+
-	bne.s	.Count
-	subq.l	#1,a0
-	move.l	a0,d3
-	sub.l	a2,d3
-	Rjsr	L_DDemande
-	move.w	d3,(a1)+
-	move.w	d3,d0
-.Copy	move.b	(a2)+,(a1)+
-	dbra	d0,.Copy
-	move.l	a1,d0
-	Pair	d0
-	move.l	d0,HiChaine(a5)
-	rts
+	Lib_Int	A0ToChaine		src/lib/textout.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					Fin de BIN, HEX et autres
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	FinBin
-; - - - - - - - - - - - - -
-        move.l 	a0,d0        	;rend pair
-        btst 	#0,d0
-        beq.s 	hx5
-        addq.l 	#1,d0
-hx5:    move.l 	d0,HiChaine(a5)
-        sub.l 	a1,a0
-        subq.l 	#2,a0
-        move 	a0,(a1)        	;poke la longueur
-        move.l	a1,d3		;Ramene la chaine
-	Ret_String
+	Lib_Int	FinBin		src/lib/textout.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ;			Demande l'espace chaine, positionne Hichaine
@@ -2853,103 +2682,22 @@ hx5:    move.l 	d0,HiChaine(a5)
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					IMPRESSION CHAINE A0
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	ImpChaine
-; - - - - - - - - - - - - -
-	tst.w	ImpFlg(a5)		Imprimante?
-	Rbne	L_PRT_Print
-	tst.w	Direct(a5)
-	bne.s	.Dir
-.Norm	tst.w	ScOn(a5)		Mode programme
-	Rbeq	L_ScNOp
-	move.l	a0,a1
-	WiCall	Print
-	rts
-.Dir	tst.b	Esc_Output(a5)		Mode direct > ESC / Normal
-	beq.s	.Norm
-	move.l	a0,-(sp)
-	EcCalD	Active,EcEdit
-        move.l	(sp)+,a1
-	WiCall	Print
-	move.w	ScOn(a5),d1
-	beq.s	.Skip
-	subq.w	#1,d1
-	EcCall	Active
-.Skip	rts
+	Lib_Int	ImpChaine		src/lib/textout.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					OUVERTURE DE L'IMPRIMANTE
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	PRT_Open
-; - - - - - - - - - - - - -
-	move.l	PrtHandle(a5),d1
-	bne.s	.OpPrx
-	movem.l	a0-a2/d2-d7,-(sp)
-	moveq	#43,d0
-	Rjsr	L_Sys_GetMessage
-	move.l	a0,d1
-	move.l	#1005,d2
-	DosCall	_LVOOpen
-	move.l	d0,PrtHandle(a5)
-	bne.s	*+8
-	Rjmp	L_DiskError
-; Branche la routine de fermeture
-	lea	.Struc(pc),a1
-	lea	Sys_ClearRoutines(a5),a2
-	SyCall	AddRoutine
-; Ok!
-	move.l	PrtHandle(a5),d0
-	move.l	d0,d1
-	movem.l	(sp)+,a0-a2/d2-d7
-.OpPrx	rts
-.Struc	dc.l	0
-	Rbra	L_PRT_Close
+	Lib_Int	PRT_Open		src/lib/textout.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					FERMETURE IMPRIMANTE
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	PRT_Close
-; - - - - - - - - - - - - -
-	movem.l	a0-a1/a6/d0-d1,-(sp)
-	move.l	DosBase(a5),a6
-	move.l	PrtHandle(a5),d1
-	beq.s	.Skip
-	clr.l	PrtHandle(a5)
-	jsr	DosClose(a6)
-.Skip	movem.l	(sp)+,a0-a1/a6/d0-d1
-	rts
+	Lib_Int	PRT_Close		src/lib/textout.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					Imprime la chaine A0 > imprimante
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	PRT_Print
-; - - - - - - - - - - - - -
-	Rbsr	L_PRT_Open
-	movem.l	a0-a2/d2-d7,-(sp)
-	move.l	a0,d2
-	move.l	a0,a1
-* Compte et enleve les CARRIAGE RETURN
-Ip1:	move.b	(a0)+,d0
-	move.b	d0,(a1)+
-	beq.s	Ip2
-	cmp.b	#13,d0
-	bne.s	Ip1
-	tst.b	PI_PrtRet(a5)
-	bne.s	Ip1
-	cmp.b	#10,(a0)
-	bne.s	Ip1
-	move.b	(a0)+,-1(a1)
-	bra.s	Ip1
-* Envoie!
-Ip2	sub.l	d2,a0
-	subq.l	#1,a0
-	move.l	a0,d3
-	beq.s	Ip3
-	DosCall	_LVOWrite
-	tst.l	d0
-	bpl.s	*+8
-	Rjmp	L_DiskError
-Ip3:	movem.l	(sp)+,a0-a2/d2-d7
-	rts
+	Lib_Int	PRT_Print		src/lib/textout.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					SET DIR A,[a$]
@@ -2980,113 +2728,7 @@ Ip3:	movem.l	(sp)+,a0-a2/d2-d7
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					ASSIGN "name" TO "pathname"
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par	InAssign
-; - - - - - - - - - - - - -
-	tst.w	WB2.0(a5)
-	beq.s	.1_3
-; WB2.0, appel direct de l'instruction ASSIGN
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	Rjsr	L_LockFree		Plus de LOCK
-	move.l	d3,a2
-	move.w	(a2)+,d2
-	beq.s	.Vide
-	cmp.w	#108,d2
-	Rbcc	L_FonCall
-	move.l	Name1(a5),a0
-	Rbsr	L_ChVerBuf2
-	Rjsr	L_Dsk.PathIt
-	Rjsr	L_LockGet
-.Vide	move.l	(a3)+,a2		Prend l'assign
-	move.w	(a2)+,d2
-	Rbeq	L_FonCall
-	cmp.w	#108,d2
-	Rbcc	L_FonCall
-	Rbsr	L_ChVerBuf
-	move.l	Buffer(a5),a0
-.DP	tst.b	(a0)+			Enleve le ":"
-	bne.s	.DP
-	cmp.b	#":",-2(a0)
-	Rbne	L_FonCall
-	clr.b	-2(a0)
-	move.l	Buffer(a5),d1		Appelle la fonction
-	move.l	LockSave(a5),d2
-	move.l	a6,-(sp)
-	move.l	DosBase(a5),a6
-	jsr	_LVOAssignLock(a6)
-	move.l	(sp)+,a6
-	tst.l	d0
-	beq.s	.Err
-	clr.l	LockSave(a5)		Success: enleve le lock!
-	rts
-.Err	Rjsr	L_LockFree
-	Rjmp	L_DiskError
-; Version 1.3: appelle la commande ASSIGN dans le directory C:
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.1_3	move.l	d3,-(a3)
-; Assign disponible?
-	lea	.AssI(pc),a0
-	move.l	Name1(a5),a1
-	CoCopy
-	Rjsr	L_RExist
-	bne.s	*+8
-	Rjmp	L_DiskError
-; Pathname
-	move.l	Name1(a5),a0
-	clr.b	(a0)
-	move.l	(a3)+,a2		Prend le pathname
-	move.w	(a2)+,d2
-	beq.s	.Vide2
-	cmp.w	#108,d2
-	Rbcc	L_FonCall
-	Rbsr	L_ChVerBuf2
-	Rjsr	L_Dsk.PathIt
-	Rjsr	L_LockGet		Verifie le path
-	Rjsr	L_LockFree
-; Nom
-.Vide2	move.l	Buffer(a5),a2
-	lea	.AssI(pc),a0		Command ASSIGN
-.Copy1	move.b	(a0)+,(a2)+
-	bne.s	.Copy1
-	move.b	#" ",-1(a2)
-	move.l	(a3)+,a1		Nom a affecter
-	move.w	(a1)+,d1
-	Rbeq	L_FonCall
-	cmp.w	#64,d1
-	Rbcc	L_FonCall
-.Copy2	move.b	(a1)+,d0		Nom disque
-	move.b	d0,(a2)+
-	cmp.b	#32,d0
-	Rbls	L_FonCall
-	cmp.b	#":",d0
-	beq.s	.Fini
-	subq.w	#1,d1
-	bne.s	.Copy2
-	Rbra	L_FonCall
-.Fini	move.b	#" ",(a2)+
-	move.l	Name1(a5),a1
-.Copy3	move.b	(a1)+,(a2)+
-	bne.s	.Copy3
-; Appel de la fonction
-	lea	.AssC(pc),a0		Ouvre le NIL:
-	move.l	a0,d1
-	Rjsr	L_D_OpenD1
-	bne.s	*+8
-	Rjmp	L_DiskError
-	move.l	Buffer(a5),d1		Execute >NIL: >NIL:
-	move.l	Handle(a5),d2
-	move.l	d2,d3
-	move.l	a6,-(sp)
-	move.l	DosBase(a5),a6
-	jsr	_LVOExecute(a6)
-	move.l	(sp)+,a6
-	Rjsr	L_D_Close
-	tst.l	d0
-	bne.s	*+8
-	Rjmp	L_DiskError
-	rts
-.AssI	dc.b	"c:assign",0
-.AssC	dc.b	"NIL:",0
-	even
+	Lib_Int	InAssign		src/lib/dirs.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					=EXIST("name")

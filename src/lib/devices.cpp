@@ -414,3 +414,47 @@ extern "C" void lib_in_exec(const uint8_t *command)
     if (!ok)
         disk_error();
 }
+
+// ---- Library calls -------------------------------------------------------
+
+namespace {
+
+// Lib.Call: function offset of the library at base, with d0-d7/a0-a5 from
+// CallReg (they are not written back); its d0
+uint32_t library_call(uint32_t base, uint32_t offset)
+{
+    IData &d = idata();
+    AllRegs r;
+    for (int i = 0; i < 8; i++)
+        r.d[i] = d.CallReg[i];
+    for (int i = 0; i < 6; i++)
+        r.a[i] = d.CallReg[8 + i];
+    r.a[6] = base;
+    amos_call_all(&r, ptr<uint8_t>(base) + offset);
+    return r.d[0];
+}
+
+} // namespace
+
+// Lib.Call: a0 the base, d3 the offset. Out: d3 the result.
+extern "C" uint32_t lib_lib_call(RegFrame &r)
+{
+    r.d[3] = library_call(r.a[0], r.d[3]);
+    r.d[2] = 0;
+    return 0;
+}
+
+// =EXECALL(f), =GFXCALL(f), =DOSCALL(f), =INTCALL(f)
+extern "C" uint32_t lib_fn_exe_call(uint32_t f) { return library_call(peek_l(ptr<void>(4)), f); }
+extern "C" uint32_t lib_fn_gfx_call(uint32_t f) { return library_call(wdata().GfxBase, f); }
+extern "C" uint32_t lib_fn_dos_call(uint32_t f) { return library_call(idata().DosBase, f); }
+extern "C" uint32_t lib_fn_int_call(uint32_t f) { return library_call(wdata().IntBase, f); }
+
+// =LIB CALL(channel,f)
+extern "C" uint32_t lib_fn_lib_call(uint32_t channel, uint32_t f)
+{
+    uint32_t base = library(channel);
+    if (!base)
+        error(169);
+    return library_call(base, f);
+}

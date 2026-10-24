@@ -177,6 +177,10 @@ Strings and numbers
   with the corrected version.
 
 Banks, files and directories
+- `=Lib Call(channel,f)` on a channel with no library open crashed AMOS
+  instead of giving error 169 ("Library not opened"); it gives the error
+  now (`tests/golden/libcalls.txt` has that line from the corrected
+  version).
 - `Bank Swap` of two banks that do not exist crashed; it is now an error.
 - `Dir`/`Dir First$` on a file name relative to the current directory took
   the file part from a stale register and lost the filter.

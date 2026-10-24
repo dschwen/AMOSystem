@@ -68,3 +68,9 @@ _interp_lvo
 		RegRoutine DDemande,_interp_ddemande
 		RegRoutine Menage,_interp_menage
 		RegRoutine ValRout,_interp_val_rout
+
+; The graphic set-up before running: interp/defrun.cpp
+		RegRoutine DefRun1,_interp_defrun1
+		RegRoutine DefRun2,_interp_defrun2
+		RegRoutine DefRunAcc,_interp_defrun_acc
+		RegRoutine DefRunExtensions,_interp_defrun_extensions

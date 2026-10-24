@@ -194,3 +194,12 @@ _lib_fill_free_on_clear
 		LibCall	InSaveIff2,_lib_in_save_iff2,2,None		SAVE IFF a$,c
 		LibCall	InCommandLine,_lib_in_command_line,1,None	COMMAND LINE$=a$
 		LibCall	FnCommandLine,_lib_fn_command_line,0,String	=COMMAND LINE$
+
+; Library calls: lib/devices.cpp
+		RegRoutine Lib.Call,_lib_lib_call
+		LibCall	FnExeCall,_lib_fn_exe_call,1,Int	=EXECALL(f)
+		LibCall	FnGfxCall,_lib_fn_gfx_call,1,Int	=GFXCALL(f)
+		LibCall	FnDosCall,_lib_fn_dos_call,1,Int	=DOSCALL(f)
+		LibCall	FnIntCall,_lib_fn_int_call,1,Int	=INTCALL(f)
+		LibCall	FnLibCall,_lib_fn_lib_call,2,Int	=LIB CALL(n,f)
+		LibCall	InAssign,_lib_in_assign,2,None		ASSIGN "n:" To "path"

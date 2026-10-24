@@ -847,3 +847,120 @@ extern "C" uint32_t lib_fn_dev_first(const uint8_t *filter)
     check_no_monitor();
     return fill_next_string();
 }
+
+// ---- ASSIGN "name:" To "path" ------------------------------------------
+
+namespace {
+
+void lib(int routine)
+{
+    Regs r;
+    lib_call(routine, r);
+}
+
+// The string s into to, zero-terminated (ChVerBuf2: at most 510)
+void to_text(char *to, const uint8_t *s)
+{
+    Regs r;
+    r.a[0] = address(to);
+    r.a[2] = address(s + 2);
+    r.d[2] = peek_w(s);
+    lib_call(L_ChVerBuf2, r);
+}
+
+// Workbench 2.0: AssignLock with a lock on the path (none: the assign
+// removed)
+void assign_lock(const uint8_t *name, const uint8_t *path)
+{
+    IData &d = idata();
+    lib(L_LockFree);
+    if (uint16_t n = peek_w(path)) {
+        if (n >= 108)
+            fon_call();
+        to_text(ptr<char>(d.Name1), path);
+        lib(L_Dsk_PathIt);
+        lib(L_LockGet);
+    }
+    uint16_t n = peek_w(name);
+    if (!n || n >= 108)
+        fon_call();
+    char *b = ptr<char>(d.Buffer);
+    to_text(b, name);
+    char *end = b;
+    while (*end)
+        end++;
+    if (end[-1] != ':')
+        fon_call();
+    end[-1] = 0;
+    if (!AssignLock(b, BPTR(d.LockSave))) {
+        lib(L_LockFree);
+        lib_jump(L_DiskError, 0);
+    }
+    d.LockSave = 0;
+}
+
+// Workbench 1.3: the command c:assign, output to NIL:
+void assign_command(const uint8_t *name, const uint8_t *path)
+{
+    IData &d = idata();
+    static const char command[] = "c:assign";
+    char *n1 = ptr<char>(d.Name1);
+    for (int i = 0; (n1[i] = command[i]); i++)
+        ;
+    Regs e;
+    lib_call(L_RExist, e);
+    if (!e.d[3])
+        lib_jump(L_DiskError, 0);
+    *n1 = 0;
+    if (uint16_t n = peek_w(path)) {
+        if (n >= 108)
+            fon_call();
+        to_text(n1, path);
+        lib(L_Dsk_PathIt);
+        lib(L_LockGet);
+        lib(L_LockFree);
+    }
+    char *b = ptr<char>(d.Buffer);
+    char *to = b;
+    for (const char *c = command; *c; c++)
+        *to++ = *c;
+    *to++ = ' ';
+    uint16_t n = peek_w(name);
+    if (!n || n >= 64)
+        fon_call();
+    const uint8_t *s = name + 2;
+    for (;;) {
+        uint8_t c = *s++;
+        *to++ = char(c);
+        if (c <= 32)
+            fon_call();
+        if (c == ':')
+            break;
+        if (!--n)
+            fon_call();
+    }
+    *to++ = ' ';
+    while ((*to++ = *n1++))
+        ;
+    Regs o;
+    o.d[1] = address("NIL:");
+    o.d[2] = 1005;
+    lib_call(L_D_OpenD1, o);
+    if (!d.Handle)
+        lib_jump(L_DiskError, 0);
+    BPTR nil = BPTR(d.Handle);
+    int32_t ok = Execute(b, nil, nil);
+    lib(L_D_Close);
+    if (!ok)
+        lib_jump(L_DiskError, 0);
+}
+
+} // namespace
+
+extern "C" void lib_in_assign(const uint8_t *name, const uint8_t *path)
+{
+    if (idata().WB2_0)
+        assign_lock(name, path);
+    else
+        assign_command(name, path);
+}
