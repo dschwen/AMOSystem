@@ -1,0 +1,7 @@
+timeout 150
+mask 536 0 610 432
+wait 12
+key ctrl+y
+wait 0.5
+key F1
+wait 15

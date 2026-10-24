@@ -31,7 +31,7 @@ directory:
 
 | program | assembler | C++ / glue | linker script |
 |---|---|---|---|
-| AMOSPro | `+B.s` (+ `+Verif.s`) | `src/lib`, `src/verif` | `link/amospro.ld` |
+| AMOSPro | `+B.s` (+ `+Verif.s`) | `src/lib`, `src/main`, `src/verif`, `src/interp`, `src/ext` | `link/amospro.ld` |
 | AMOS.library | `+W.s` | `src/w` | `link/module.ld` |
 | AMOSPro_Editor | `+Edit.s` | `src/editor` | `link/module.ld` |
 | AMOSPro_Monitor | `+Monitor.s` | `src/monitor` | `link/module.ld` |
@@ -57,7 +57,7 @@ linked into the AMOSPro program instead:
    body with `Lib_Int Name` (`tools/move_to_cpp.py` does this). The routine keeps its number. A helper routine
    that nothing else uses any more becomes `Lib_Empty`, which keeps the
    numbering. `tools/make_labels.py` lists every `Lib_Int` in
-   `+Internal_Jumps.s` (`AMOSJmps`), and `Library_Patch` writes the address
+   `+Internal_Jumps.s` (`AMOSJmps`), and `Library_Patch` (src/main/libraries.cpp) writes the address
    from that list into the jump table at start-up.
 2. Write the entry point in `src/lib/*_glue.s` with the macros in
    `src/glue.i`. For an instruction or function this is one line,
@@ -83,7 +83,7 @@ their routines move into AMOSPro the same way: `Lib_Int` in the
 extension, the entry `Ext_<Extension>_<routine>` in `src/ext/*_glue.s`.
 `tools/library_digest.py` writes the extension's list
 (`+<Extension>_Jumps.s`: its number of routines, then each number and
-entry), and `Library_Patch` (+B.s, `ExtJmps`) writes them into the jump
+entry), and `Library_Patch` (`ExtJmps` in +B.s) writes them into the jump
 table of the slot the extension is loaded in, when that library has the
 same number of routines and those are empty. An extension reaches its own
 routines PC-relatively (`Rbsr`), its `Rjsr` goes to the main library: a
@@ -466,6 +466,18 @@ ARexx
 - A message arriving at the ARexx port that is not an ARexx command was
   taken off the port and never replied to, so its sender waited for ever;
   it is now replied to.
+
+Start-up and system files (`+B.s`)
+- A mouse file named in the interpreter configuration was never loaded:
+  the start measured its size by seeking to its end, then stayed there and
+  read nothing, so AMOS stopped with "Cannot read system files". It now
+  seeks back to the start.
+- If the monitor program could not be loaded, `Monitor` (and the editor's
+  monitor) went on as if it had been, and jumped into routines that were
+  not there; it now gives a disk error. When its resource bank failed to
+  load, its file was left open; it is now closed.
+- A name on the command line (or `-c` configuration name) longer than 127
+  characters overran the start's buffer; it is now cut there.
 
 ## Assembler compatibility notes
 

@@ -1,0 +1,619 @@
+// The start and the end of AMOSPro (+B.s Cold_Start, Init_Fin, TheEnd):
+// the command line or the Workbench message, AMOS.library, the data zone,
+// the configuration, the system libraries, the libraries and extensions,
+// the automatic assigns; then the program to run or the editor. At the
+// end, everything is given back in the reverse order. The stack parts
+// (the stack of its own, the way out) stay in +B.s.
+
+#include "main/main.h"
+
+#include "core/amiga.h"
+
+#include <dos/dosextens.h>
+#include <workbench/startup.h>
+#include <workbench/workbench.h>
+#include <intuition/intuition.h>
+
+// The system libraries, in variables: some are used before the data zone
+// exists, or after it is freed
+namespace {
+Library *dos_base, *intuition_base, *icon_base;
+}
+#define DOS_BASE_NAME (reinterpret_cast<struct DosLibrary *>(dos_base))
+#include <proto/dos.h>
+#define INTUITION_BASE_NAME (reinterpret_cast<struct IntuitionBase *>(intuition_base))
+#include <proto/intuition.h>
+#define ICON_BASE_NAME icon_base
+#include <proto/icon.h>
+
+namespace {
+
+// The requester of a panic under the Workbench (FrontPen, BackPen and
+// DrawMode as the original's bytes)
+void panic_requester(const char *text)
+{
+    IntuiText body = {2, 0, 0, 8, 7, nullptr, const_cast<char *>(text), nullptr};
+    IntuiText click = {0, 1, 0, 5, 4, nullptr, const_cast<char *>(" Cancel "), nullptr};
+    AutoRequest(nullptr, &body, nullptr, &click, 0, 0, 560, 50);
+}
+
+} // namespace
+
+using namespace amos;
+using namespace amos::boot;
+
+
+extern "C" {
+// +B.s: the way out: the stack back, the Workbench message (if any)
+// replied
+[[noreturn]] void main_get_out(uint32_t message);
+// main_glue.s: where the errors of a program run at the start go
+extern uint8_t main_run_error_run_only[];
+}
+
+namespace amos::boot {
+
+const char panic_oomem[] = "Not enough free memory";
+const char panic_editor[] = "Cannot load editor";
+const char panic_install[] = "Program not installed, start \"Install.AMOS\" first";
+const char panic_apsystem[] = "Cannot find APSystem folder.";
+const char panic_cantread[] = "Cannot read system files: check APSystem folder.";
+const char panic_badext[] = "Cannot load extension: use default interpreter config.";
+
+} // namespace amos::boot
+
+namespace {
+
+const char panic_lib[] = "Cannot find AMOS.library.";
+const char panic_config[] = "Cannot find AMOSPro_Interpreter_Config.";
+const char panic_command[] = "Bad command line.";
+const char panic_version[] = "I need AMOS.library V2.0 or over!";
+
+// The message shown when AMOSPro stops
+const char *panic;
+
+constexpr uint32_t TBuffer = 1024;
+constexpr uint32_t AAreaSize = 16;
+// The work buffers below the AMOS.library data
+constexpr uint32_t LDataWork = 32 + Bob::BbLong + 12 * 2 + (AAreaSize * 5 + 6) + 24 + 16 + 12 + 70 * 3 + 4 +
+                               20 + 108 + 108 + 256 + TBuffer;
+
+// What the start finds before the data zone exists (the SP_ buffer)
+struct Start {
+    WBStartup *message = nullptr;
+    BPTR auto_lock = 0;
+    char auto_name[128] = {};
+    char config[128] = {};
+    BPTR w_segment = 0;
+    bool workbench = true;
+    const char *command_line = nullptr;
+};
+
+// The registers of a call with all of them: the context's d6-d7/a3-a6
+AllRegs context_regs()
+{
+    Ctx &c = ctx();
+    AllRegs r = {};
+    r.d[6] = c.d6;
+    r.d[7] = c.d7;
+    r.a[3] = address(c.a3);
+    r.a[4] = address(c.a4);
+    r.a[5] = address(c.a5);
+    r.a[6] = address(c.a6);
+    return r;
+}
+
+// Panic_Message: the message of the panic, in the CLI's window or in a
+// requester under the Workbench
+void panic_message(bool from_workbench)
+{
+    if (!panic)
+        return;
+    if (!from_workbench) {
+        BPTR out = Output();
+        if (!out)
+            return;
+        char line[128];
+        char *to = line;
+        for (const char *p = panic; (*to = *p++); to++)
+            ;
+        *to++ = 10;
+        *to = 0;
+        Write(out, line, to - line);
+        return;
+    }
+    panic_requester(panic);
+}
+
+// Boot_Fatal: an error before the data zone
+[[noreturn]] void fatal(const Start &s, const char *message)
+{
+    panic = message;
+    if (s.w_segment)
+        UnLoadSeg(s.w_segment);
+    panic_message(s.message);
+    CloseLibrary(dos_base);
+    CloseLibrary(intuition_base);
+    main_get_out(address(s.message));
+}
+
+// .CliNom: a name of the command line, maybe in quotes
+const char *command_name(const char *p, char *to)
+{
+    char end = ' ';
+    if (*p == '"' || *p == '\'')
+        end = *p++;
+    char *last = to + 127;      // (the original had no limit)
+    while (char c = *p) {
+        p++;
+        if (c == end)
+            break;
+        if (to < last)
+            *to++ = c;
+    }
+    *to = 0;
+    return p;
+}
+
+// The command line: [-c config] [-w] [program [its command line]]
+void command_line(Start &s, char *p, uint32_t length)
+{
+    if (uint16_t(length) <= 1)
+        return;
+    p[uint16_t(length) - 1] = 0;
+    for (;;) {
+        char c = *p++;
+        if (!c)
+            return;
+        if (c == ' ')
+            continue;
+        if (c != '-') {
+            p = const_cast<char *>(command_name(p - 1, s.auto_name));
+            while (*p++ == ' ')
+                ;
+            s.command_line = p - 1;
+            return;
+        }
+        c = *p++;
+        if (c >= 'a' && c <= 'z')
+            c = char(c - 0x20);
+        if (c == 'C')
+            p = const_cast<char *>(command_name(p, s.config));
+        else if (c == 'W')
+            s.workbench = false;
+        else
+            fatal(s, panic_command);
+    }
+}
+
+// The Workbench's message: the program's icon's directory, the program to
+// load if an icon was given with it
+void workbench_message(Start &s, Process *process)
+{
+    WaitPort(&process->pr_MsgPort);
+    s.message = reinterpret_cast<WBStartup *>(GetMsg(&process->pr_MsgPort));
+    int32_t lock = -1;
+    WBArg *args = s.message->sm_ArgList;
+    if (args) {
+        lock = int32_t(args[0].wa_Lock);
+        if (lock)
+            CurrentDir(BPTR(lock));
+    }
+    if (s.message->sm_NumArgs != 2 || !args)
+        return;
+    s.auto_lock = args[1].wa_Lock;
+    if (const char *name = reinterpret_cast<const char *>(args[1].wa_Name)) {
+        char *to = s.auto_name;
+        while ((*to++ = *name++))
+            ;
+        if (!lock && s.auto_lock)
+            CurrentDir(s.auto_lock);
+    }
+}
+
+// The interpreter's configuration: "PId1" its values, "PIt1" its texts
+void load_config(const Start &s)
+{
+    IData &d = idata();
+    static const char *const names[] = {"AMOSPro_Interpreter_Config", "s/AMOSPro_Interpreter_Config",
+                                        "s:AMOSPro_Interpreter_Config"};
+    bool open = false;
+    if (*s.config) {
+        open = sys_open(s.config, 1005);
+    } else {
+        for (const char *name : names)
+            if ((open = sys_open(name, 1005)))
+                break;
+    }
+    if (!open)
+        the_end(panic_config);
+    uint8_t *buffer = ptr<uint8_t>(d.Buffer);
+    if (!sys_read(buffer, 8) || peek_l(buffer) != 0x50496431)      // "PId1"
+        the_end(panic_cantread);
+    if (!sys_read(reinterpret_cast<uint8_t *>(&d) + IData::PI_Start, peek_l(buffer + 4)))
+        the_end(panic_cantread);
+    sys_read(buffer, 8);
+    if (peek_l(buffer) != 0x50497431)                               // "PIt1"
+        the_end(panic_cantread);
+    uint32_t texts = a5_reserve(d.Sys_Messages, peek_l(buffer + 4), MemClear | MemPublic);
+    if (!texts)
+        the_end(panic_oomem);
+    sys_read(ptr<void>(texts), peek_l(buffer + 4));
+    sys_close();
+}
+
+// RExist: Name1 exists
+bool name1_exists()
+{
+    Regs r;
+    lib_call(L_RExist, r);
+    return r.d[3];
+}
+
+char *copy(char *to, const char *from)
+{
+    while ((*to++ = *from++))
+        ;
+    return to - 1;
+}
+
+// DoAssign: name (then its folder, next to APSystem) assigned with
+// c:assign, unless it exists already or the folder does not. 1 if done.
+int assign(const char *name, BPTR nil)
+{
+    IData &d = idata();
+    char *name1 = ptr<char>(d.Name1);
+    copy(name1, name);
+    if (name1_exists())
+        return 0;
+    const char *folder = name;
+    while (*folder++)
+        ;
+    char *to = copy(name1, reinterpret_cast<const char *>(d.Sys_Pathname));
+    *to++ = '/';                // up a folder
+    copy(to, folder);
+    if (!name1_exists())
+        return 0;
+    char *buffer = ptr<char>(d.Buffer);
+    to = copy(copy(buffer, "c:assign "), name);
+    *to++ = ' ';
+    *to++ = '"';
+    to = copy(to, name1);
+    *to++ = '"';
+    *to = 0;
+    Execute(buffer, nil, nil);
+    return 1;
+}
+
+// AutoAssigns: the folders of AMOSPro, if c:assign is there
+void auto_assigns()
+{
+    IData &d = idata();
+    copy(ptr<char>(d.Name1), "c:assign");
+    if (!name1_exists())
+        return;
+    Regs a;
+    lib_call(L_AskDir, a);
+    BPTR nil = Open("NIL:", MODE_READWRITE);
+    if (!nil)
+        return;
+    d.ParamE = uint32_t(nil);
+    static const char *const folders[] = {
+        "AMOSPro_Accessories:\0Accessories", "AMOSPro_Productivity1:\0Productivity1",
+        "AMOSPro_Productivity2:\0Productivity2", "AMOSPro_Tutorial:\0Tutorial",
+        "AMOSPro_Examples:\0Examples", "AMOSPro_Compiler:\0Compiler", "AMOSPro_Extras:\0Extras"};
+    int done = 0;
+    for (const char *f : folders)
+        done += assign(f, nil);
+    if (done)
+        assign("AMOSPro_System:\0", nil);
+    Close(nil);
+}
+
+// The data zone: the work buffers, the AMOS.library's data, the
+// interpreter's. Returns a5.
+uint8_t *data_zone(uint32_t w_data)
+{
+    uint32_t size = LDataWork + w_data + IData::DataLong;
+    uint8_t *zone = static_cast<uint8_t *>(AllocMem(size, MemPublic | MemClear));
+    if (!zone)
+        return nullptr;
+    uint8_t *a5 = zone + LDataWork + w_data;
+    ctx().a5 = a5;
+    IData &d = idata();
+    d.Sys_AData = address(zone);
+    d.Sys_LData = size;
+    uint32_t p = address(zone + LDataWork);
+    auto buffer = [&p](void *field, uint32_t length) {
+        p -= length;
+        poke_l(field, p);
+    };
+    buffer(&d.BufLabel, 32);
+    buffer(&d.BufBob, Bob::BbLong);
+    buffer(&d.MnTDraw, 12 * 2);
+    buffer(&d.AAreaBuf, AAreaSize * 5 + 6);
+    buffer(&d.AAreaInfo, 24);
+    buffer(&d.BufAMSC, 16);
+    buffer(&d.BufCCRT, 12);
+    buffer(&d.BufCMAP, 70 * 3);
+    buffer(&d.BufCAMG, 4);
+    buffer(&d.BufBMHD, 20);
+    buffer(&d.DirFNeg, 108);
+    buffer(&d.Name2, 108);
+    buffer(&d.Name1, 256);
+    buffer(&d.Buffer, TBuffer);
+    if (d.Buffer & 3)
+        asm volatile("illegal");
+    return a5;
+}
+
+} // namespace
+
+extern "C" {
+
+// Cold_Start, from its stack (+B.s): command/length of a CLI, sp the stack
+// of the interpreter (BasSp)
+void main_cold_start(char *command, uint32_t length, uint32_t sp)
+{
+    Start s;
+    dos_base = OpenLibrary("dos.library", 0);
+    intuition_base = OpenLibrary("intuition.library", 0);
+
+    auto process = reinterpret_cast<Process *>(FindTask(nullptr));
+    if (!process->pr_CLI)
+        workbench_message(s, process);
+    else
+        command_line(s, command, length);
+
+    // AMOS.library: in APSystem, else in libs
+    static const char *const libraries[] = {"APSystem/amos.library", "libs/amos.library", "libs:amos.library"};
+    for (const char *name : libraries)
+        if ((s.w_segment = LoadSeg(name)))
+            break;
+    if (!s.w_segment)
+        fatal(s, panic_lib);
+    uint32_t w = (uint32_t(s.w_segment) << 2) + 4;
+    ctx().a4 = ptr<uint8_t>(w);
+
+    if (!data_zone(peek_l(ptr<void>(w + 8))))
+        fatal(s, panic_oomem);
+    IData &d = idata();
+    d.Sys_WSegment = uint32_t(s.w_segment);
+    d.Sys_Message = address(s.message);
+    d.DosBase = address(dos_base);
+    wdata().IntBase = address(intuition_base);
+
+    // the AMOS.library's system start
+    d.Sys_WAd = w;
+    wdata().CBridge = address(amos_bridge);
+    Regs v;
+    v.d[0] = 0x56322E30;        // "V2.0"
+    v.d[1] = 0x0200;
+    amos_call(&v, ptr<void>(w + 12));
+    if (v.d[0] != 0x57322E30)   // "W2.0"
+        the_end(panic_version);
+
+    uint16_t version = reinterpret_cast<Library *>(EXEC_BASE_NAME)->lib_Version;
+    if (version >= 36)
+        d.WB2_0 = version;
+
+    load_config(s);
+    if (!a5_reserve(d.PathAct, 256, MemPublic | MemClear))
+        the_end(panic_oomem);
+
+    // the full path of the system folder
+    BPTR lock = Lock(sys_message(1), ACCESS_READ);
+    if (!lock)
+        the_end(panic_apsystem);
+    ask_dir2(uint32_t(lock));
+    copy(reinterpret_cast<char *>(d.Sys_Pathname), ptr<char>(d.Buffer + 384));
+
+    d.FloatBase = address(OpenLibrary("mathffp.library", 0));
+    if (!(wdata().GfxBase = address(OpenLibrary("graphics.library", 0))))
+        the_end(panic_cantread);
+    if (d.PI_Icons && (icon_base = OpenLibrary("icon.library", 0))) {
+        d.IconBase = address(icon_base);
+        sys_add_path(sys_message(4));
+        if (DiskObject *icon = GetDiskObject(ptr<char>(d.Name1))) {
+            d.AdrIcon = address(icon);
+            icon->do_CurrentX = NO_ICON_POSITION;
+            icon->do_CurrentY = NO_ICON_POSITION;
+        }
+    }
+
+    if (libraries_load())
+        the_end(panic_badext);
+    library_patch();
+    if (libraries_reloc())
+        the_end(panic_badext);
+    d.Sys_LibStarted = 1;
+
+    load_mouse();
+    load_fsel();
+    auto_assigns();
+
+    // the interrupts: the AMOS.library started
+    AllRegs r = context_regs();
+    r.a[3] = address(sys_message(3));      // the font
+    r.a[0] = address(&d.PI_ParaTrap);
+    r.a[1] = d.PI_AdMouse;
+    r.a[2] = address(d.PI_DefEPa);
+    r.d[0] = 0;
+    r.d[1] = d.PI_DefAmigA;
+    r.a[4] = w;
+    r.a[5] = address(ctx().a5);
+    r.a[6] = d.Sys_WAd;
+    amos_call_all(&r, ptr<void>(d.Sys_WAd));
+    if (r.d[0])
+        the_end(nullptr);
+    d.Sys_WStarted = 0xFF;
+
+    if (libraries_init())
+        the_end(panic_badext);
+    *ptr<char>(d.PathAct) = 0;
+
+    // the program to load: the one asked for, or the autoexec
+    char *name1 = ptr<char>(d.Name1);
+    poke_w(name1, 0);
+    if (s.auto_lock)
+        CurrentDir(s.auto_lock);
+    copy(name1, *s.auto_name ? s.auto_name : sys_message(5));
+    d.WBench = s.workbench;
+
+    // its command line, for COMMAND LINE$
+    if (const char *line = s.command_line) {
+        uint8_t *to = ptr<uint8_t>(d.Buffer + TBuffer - 256 - 6);
+        poke_l(to, 0x436D644C);                // "CmdL"
+        char *end = copy(reinterpret_cast<char *>(to + 6), line);
+        poke_w(to + 4, uint16_t(end - (reinterpret_cast<char *>(to + 6))));
+    }
+
+    d.BasSp = sp;
+
+    // the memory there is
+    if (!d.WB2_0) {
+        // under 1.3, about it
+        uint32_t chip = AvailMem(MemPublic | MemChip) + 38 * 1024;
+        uint32_t fast = AvailMem(MemPublic | MemFast);
+        if (fast)
+            fast += 256 * 1024;
+        else
+            chip += 256 * 1024;
+        d.MemFastTotal = fast;
+        d.MemChipTotal = chip;
+    } else {
+        d.MemChipTotal = AvailMem(MemPublic | MemChip | MEMF_TOTAL);
+        d.MemFastTotal = AvailMem(MemPublic | MemFast | MEMF_TOTAL);
+    }
+
+    Regs a;
+    lib_call(L_AskDir, a);
+    Regs c;
+    lib_call(L_CopyPath, c);
+    if (d.PI_AutoWB) {
+        w_option();
+        Regs b;
+        lib_call(L_WB_Close, b);
+    }
+}
+
+// Init_Fin, the init hunk freed (+B.s): the program asked for (or the
+// autoexec) is run, else the editor starts
+[[noreturn]] void main_init_fin()
+{
+    IData &d = idata();
+    AllRegs r = context_regs();
+    r.d[0] = d.PI_DefSize;
+    amos_call_all(&r, lib_address(L_Prg_NewStructure));
+    uint32_t program = r.d[0];
+    if (!program)
+        the_end(panic_oomem);
+    auto call = [program](int routine, uint32_t d0) {
+        AllRegs p = context_regs();
+        p.d[0] = d0;
+        p.a[6] = program;
+        amos_call_all(&p, lib_address(routine));
+        return p.d[0];
+    };
+    call(L_Prg_New, uint32_t(-2));                      // no screen behind
+    if (!call(L_Prg_Load, uint32_t(-1))) {
+        AllRegs p = context_regs();
+        p.d[0] = uint32_t(-1);
+        p.a[1] = address(main_run_error_run_only);
+        p.a[6] = program;
+        amos_call_all(&p, lib_address(L_Prg_RunIt));    // back if out of memory
+    }
+    // no program: the editor
+    if (!installed())
+        the_end(panic_install);
+    if (edit_load())
+        the_end(panic_editor);
+    call(L_Prg_New, uint32_t(-1));
+    Regs c;
+    c.d[0] = uint32_t(-1);                              // the title
+    lib_call(L_Ed_Cold, c);
+    if (c.d[0])
+        the_end(panic_editor);
+    w_option();
+    Regs t;
+    lib_call(L_Ed_Title, t);
+    amos_goto(lib_address(L_Ed_Loop), 0);
+}
+
+// TheEnd: the general way out
+[[noreturn]] void main_the_end() { the_end(nullptr); }
+
+} // extern "C"
+
+namespace amos::boot {
+
+[[noreturn]] void the_end(const char *message)
+{
+    if (message)
+        panic = message;
+    IData &d = idata();
+    if (d.Sys_LibStarted) {
+        Regs e;
+        e.a[1] = address(d.Sys_EndRoutines);
+        sy_call(sy::CallRoutines, e);
+        static const int routines[] = {L_CloAll, L_PRT_Close, L_Equ_Free, L_Includes_Clear};
+        for (int routine : routines) {
+            Regs r;
+            lib_call(routine, r);
+        }
+        if (d.Edit_Segment) {
+            Regs r;
+            lib_call(L_Ed_End, r);
+        }
+        // the edition structures left (after KILL EDITOR)
+        for (uint32_t edt = d.Edt_List; edt;) {
+            uint32_t next = ptr<EditWindow>(edt)->Edt_Next;
+            ram_free(edt, EditWindow::Edt_Long);
+            edt = next;
+        }
+        while (uint32_t program = d.Prg_List) {
+            AllRegs p = context_regs();
+                p.a[6] = program;
+            amos_call_all(&p, lib_address(L_Prg_DelStructure));
+        }
+        edit_free();
+        mon_free();
+        erase_fsel();
+        erase_mouse();
+        Regs w;
+        lib_call(L_WB_Open, w);
+        libraries_stop();
+    }
+    sys_close();
+    if (d.Sys_WStarted) {
+        Regs r;
+        amos_call(&r, ptr<void>(d.Sys_WAd + 4));
+    }
+    a5_free(d.Sys_Messages);
+    a5_free(d.PathAct);
+    icon_base = ptr<Library>(d.IconBase);
+    if (d.AdrIcon)
+        FreeDiskObject(ptr<DiskObject>(d.AdrIcon));
+    if (icon_base)
+        CloseLibrary(icon_base);
+    if (d.FloatBase)
+        CloseLibrary(ptr<Library>(d.FloatBase));
+    math_close();
+    libraries_free();
+    // the AMOS.library out
+    Regs r;
+    amos_call(&r, ptr<void>(d.Sys_WAd + 16));
+    dos_base = ptr<Library>(d.DosBase);
+    UnLoadSeg(BPTR(d.Sys_WSegment));
+    intuition_base = ptr<Library>(wdata().IntBase);
+    panic_message(d.Sys_Message);
+    if (uint32_t gfx = wdata().GfxBase)
+        CloseLibrary(ptr<Library>(gfx));
+    CloseLibrary(dos_base);
+    CloseLibrary(intuition_base);
+    uint32_t wb = d.Sys_Message;
+    FreeMem(ptr<void>(d.Sys_AData), d.Sys_LData);
+    main_get_out(wb);
+}
+
+} // namespace amos::boot
