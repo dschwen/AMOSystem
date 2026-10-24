@@ -66,6 +66,18 @@ linked into the AMOSPro program instead:
    length word), and its return value becomes the AMOS result.
 3. Implement the routine in `src/lib/*.cpp` as an `extern "C"` function.
 
+The ChrGet, the loop that runs a program's instructions, is C++
+(`src/interp/chrget.cpp`). Each `LibCall` entry has a tag before it (its C
+function, parameters and result, then `"LCal"`, then the `"GetP"` slot of
+the loader). The loop and the evaluator recognise an instruction or
+function whose routine is a tagged entry with integer parameters (the
+collectors `Ent_1`...`Ent_N` of `L_Parameters`, which the loader put in
+front of it) or none, and evaluate its parameters and call the C function
+themselves. Every other routine is called through `interp_exec`
+(`chrget_glue.s`), with the parameter collector in front of it and the
+interpreter registers of the context. `Prg_InsRet`, where instructions
+that jump go back to, is `interp_iret`, which enters the loop again at a6.
+
 A helper that +ILib.s reaches with local branches (`bsr FindVar`) keeps a
 one-line `Label Rjmp L_Label` in the library. If it had no number of its
 own, it takes the slot of a routine of the dropped compiler: the empty

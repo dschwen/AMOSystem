@@ -79,6 +79,10 @@ struct MenuDim {
 };
 MenuDim menu_dim();
 
+// interp/chrget.cpp: function t (its routine r) called directly, if it is
+// a C++ one; v its value
+bool native_function(uint16_t t, const void *r, Value &v);
+
 // What C++ hands back to the assembler that called it (eval_glue.s):
 // d0-d4, a0
 struct EvalOut {

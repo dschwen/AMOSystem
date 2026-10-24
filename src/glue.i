@@ -60,6 +60,20 @@ CCall		MACRO
 		movem.l	(a0),d6-d7/a3-a6
 		ENDM
 
+; The tag before a LibCall entry, for the ChrGet (interp/chrget.cpp),
+; which calls cfunction itself: cfunction, params, result, "LCal" (then
+; "GetP" and the entry)
+LC_Int		equ	0
+LC_Float	equ	1
+LC_String	equ	2
+LC_None		equ	3
+LC_Double	equ	4
+LibCallTag	MACRO
+		dc.l	\1
+		dc.w	\2,LC_\3
+		dc.l	"LCal"
+		ENDM
+
 ; LibCall Name,cfunction,params,result
 ;
 ; The whole entry of an instruction or function Name implemented by the C
@@ -68,6 +82,7 @@ CCall		MACRO
 ; value becomes the result. result is Int, Float, String, None or Double
 ; (a 64-bit value for d3/d4: a float in either precision).
 LibCall		MACRO
+		LibCallTag \2,\3,\4
 		LibEntry \1
 		IFNE	\3
 		move.l	d3,-(sp)

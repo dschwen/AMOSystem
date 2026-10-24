@@ -217,117 +217,13 @@ Init
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					Set Patch sur CHRGET
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	SetChrPatch
-; - - - - - - - - - - - - -
-	move.w	d0,Cur_ChrJump(a5)
-	lea	_Poke(pc),a1
-	tst.w	d0
-	beq.s	.Norm
-	move.w	.Mon(pc),(a1)+
-	lsl.w	#2,d0
-	neg.w	d0
-	sub.w	#LB_Size+4,d0
-	move.w	d0,(a1)+
-	bra.s	.Clear
-.Norm	move.l	.Chr(pc),(a1)+
-.Clear	Rjsr	L_Sys_ClearCache
-	rts
-.Chr	move.l	-LB_Size(a4,d1.w),a0
-.Mon	move.l	0(a4),a0
+	Lib_Int	SetChrPatch		src/interp/chrget.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-; 						ENTREE DU CHRGET
+;						ENTREE DU CHRGET
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	Pos_IRet
-; - - - - - - - - - - - - -
-	dc.w	_IRet-_DChr
-; - - - - - - - - - - - - -
-	Lib_Def	New_ChrGet
-; - - - - - - - - - - - - - - -
-_DChr	move.l	BasSp(a5),sp
-	move.l	AdTokens(a5),a4
-
-; Adresse du retour d'instructions
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	lea	_IRet(pc),a0
-	move.l	a0,Prg_InsRet(a5)
-; Buffer des boucles
-; ~~~~~~~~~~~~~~~~~~
-	Rjsrt	L_Stack_Reserve
-;	beq	VerOut				*** Illegal!
-	move.l	HoLoop(a5),a3
-	move.l	a3,PLoop(a5)
-	move.l	a3,BasA3(a5)
-	move.l	BaLoop(a5),MinLoop(a5)
-	add.l	#64,MinLoop(a5)
-
-; Ouverture des librairies mathematiques / Choix des routines dans la librarie
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	Rjsr	L_Open_MathLibraries
-
-; Autres inits
-; ~~~~~~~~~~~~
-	clr.w	T_Actualise(a5)
-	clr.l	AData(a5)
-	move.w	#1,DefFlag(a5)
-	move.l	Prg_Run(a5),a6
-	move.l	a6,DProc(a5)
-	move.l	a6,PData(a5)
-
-; Debuggage
-	IFNE	Debug>1
-	move.l	VarBufL(a5),d0
-	cmp.l	#1024*1,d0
-	bne.s	.NoBug
-	Rjsr	L_PreBug
-.NoBug
-	ENDC
-
-;	Boucle du ChrGet
-; ~~~~~~~~~~~~~~~~~~~~~~
-	move.l	AdTokens(a5),a4
-_NLine	tst.w	(a6)+
-	beq.s	InEnd
-_ILoop	move.w	(a6)+,d0
-	beq.s	_NLine
-_Inst	move.l	a6,d7
-	move.w	0(a4,d0.w),d1		Pointe la table de tokens
-_Poke	move.l	-LB_Size(a4,d1.w),a0
-	IFNE	Debug
-	move.l	a3,Chr_Debug(a5)
-	movem.l	d6/d7,Chr_Debug+4(a5)
-	ENDC
-	jsr	(a0)
-_IRet
-	IFNE	Debug>1
-	move.l	Chr_Debug(a5),a0
-	movem.l	Chr_Debug+4(a5),d0/d1
- 	cmp.l	a0,a3			Test valide PLOOP
-	bne.s	.Bug
-	cmp.l	d0,d6			Test sauvegarde D6/D7
-	bne.s	.Bug
-	cmp.l	d1,d7
-	beq.s	.Skip
-.Bug	Rjsr	L_BugBug
-	Rjsr	L_InMonitor
-	ENDC
-	IFNE	Debug
-	move.l	Chr_Debug(a5),a0
-	movem.l	Chr_Debug+4(a5),d0/d1
- 	cmp.l	a0,a3			Test valide PLOOP
-	bne.s	.Bug1
-	cmp.l	d0,d6			Test sauvegarde D6/D7
-	bne.s	.Bug1
-	cmp.l	d1,d7
-	beq.s	.Skip
-.Bug1	Rjsr	L_InMonitor
-	ENDC
-.Skip
-	move.w	(a6)+,d0
-	bne.s	_Inst
-	tst.w	(a6)+
-	bne.s	_ILoop
-	bra.s	InEnd
+	Lib_Empty			Pos_IRet, no longer needed
+	Lib_Int	New_ChrGet		src/interp/chrget.cpp
 
 ; - - - - - - - - - - - - -
 	Lib_Par InEnd

@@ -344,6 +344,9 @@ Value function(uint16_t t)
     uint8_t *tokens = ctx().a4;
     int16_t offset = int16_t(peek_w(tokens + t));
     const void *routine = ptr<void>(peek_l(tokens + offset - LB_Size - 4));
+    Value v;
+    if (native_function(t, routine, v))
+        return v;
     Regs r;
     r.d[0] = t;
     r.d[1] = uint16_t(offset);
