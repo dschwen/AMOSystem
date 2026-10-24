@@ -27,7 +27,7 @@ import subprocess
 import sys
 import tempfile
 
-FILES = ['+Equ.s', '+CEqu.s', '+WEqu.s', '+MEqu.s']
+FILES = ['+Equ.s', '+CEqu.s', '+WEqu.s', '+MEqu.s', 'extensions/+Music_Data.s']
 
 # First field of a block -> struct name
 NAMES = {
@@ -56,6 +56,12 @@ NAMES = {
     'Short_Name': 'ShortSave',
     'APrg_MathFlags': 'CompiledProc',
     'Inf_Sly': 'MonData',
+    'EnvNb': 'MusEnvelope',
+    'WaveNext': 'MusWave',
+    'VoiAdr': 'MusVoice',
+    'MuVoices': 'MusTable',
+    'Sami_is': 'SampleInt',
+    'MuVu': 'MusicData',
 }
 
 # Element size of the equ-chain fields that are arrays
@@ -172,6 +178,7 @@ def evaluate(blocks, vasm, vasm_args):
         with open(src, 'w', encoding='latin-1') as f:
             f.write('\t\tInclude\t"+AMOS_Includes.s"\n')
             f.write('\t\tInclude\t"+MEqu.s"\n')
+            f.write('\t\tInclude\t"+Music_Data.s"\n')
             for e in exprs:
                 f.write(f'\t\tdc.l\t{e}\n')
         subprocess.run([vasm, '-quiet', '-devpac', '-Fbin', '-o', out, *vasm_args, src], check=True, stdout=subprocess.DEVNULL)

@@ -2939,13 +2939,16 @@ Panic_Version	dc.b	"I need AMOS.library V2.0 or over!",0
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 AMOSJmps	Include	"+Internal_Jumps.s"
 ; The extensions': slot, list
-ExtJmps		dc.w	2
+ExtJmps		dc.w	1
+		dc.l	MusicJmps
+		dc.w	2
 		dc.l	CompactJmps
 		dc.w	3
 		dc.l	RequestJmps
 		dc.w	6
 		dc.l	IOPortsJmps
 		dc.w	0
+MusicJmps	Include	"+Music_Jumps.s"
 CompactJmps	Include	"+Compact_Jumps.s"
 RequestJmps	Include	"+Request_Jumps.s"
 IOPortsJmps	Include	"+IO_Ports_Jumps.s"

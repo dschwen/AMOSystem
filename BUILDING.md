@@ -438,6 +438,13 @@ Compact extension
   its start): the temporary buffer was not cleared. It now is, so a bank
   packs the same every time; pictures unpack the same as before.
 
+Music extension
+- After any change of the banks, a MED module playing was always stopped:
+  the check compared the second half of the bank's name with the first.
+  It now stops only when the module's bank has gone.
+- The tracker's arpeggio on a voice without a period read past the table
+  of periods, into the player's variables; it now reads zeros there.
+
 IO_Ports extension
 - `Printer Dump x1,y1 To x2,y2,columns,rows,special` left three registers
   on the stack and crashed AMOS on its return; it now prints.
