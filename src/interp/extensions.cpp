@@ -1,0 +1,80 @@
+// Instructions and functions of the extensions (+ILib.s InExtCall,
+// FnExtCall): the extension token, the extension's number and then
+//   - an AMOSPro extension (the second byte negative): the offset of the
+//     token in the extension's table, whose routine is called as the
+//     interpreter calls its own (it collects its parameters itself);
+//   - an AMOS 1.3 one: the number of parameters and the offset; the
+//     parameters (integers or strings) are evaluated onto the a3 stack
+//     here, and the routine runs with the interpreter's d6/d7 kept in
+//     ErrorSave (it may use them).
+
+#include "interp/interp.h"
+
+using namespace amos;
+using namespace amos::interp;
+
+namespace {
+
+Value run(const void *routine, Regs &r)
+{
+    amos_eval(&r, routine);
+    return {r.d[2], r.d[3], r.d[4]};
+}
+
+Value call(bool function)
+{
+    IData &d = idata();
+    Ctx &c = ctx();
+    uint8_t number = *pc()++;
+    int8_t n = int8_t(*pc()++);
+    uint8_t *table = ptr<uint8_t>(d.AdTokens[number]);
+    Regs r;
+    if (n < 0) {
+        uint16_t token = next_token();
+        int16_t jump = int16_t(peek_w(table + token));
+        r.d[0] = token;
+        r.d[1] = uint16_t(jump);
+        r.d[2] = peek_w(table + token + 2);
+        r.a[0] = peek_l(table + jump - LB_Size - (function ? 4 : 0));
+        return run(ptr<void>(r.a[0]), r);
+    }
+    uint16_t token = next_token();
+    const void *routine = table + int16_t(peek_w(table + token + (function ? 2 : 0)));
+    Value v = {};
+    for (int8_t i = 0; i < n; i++) {
+        v = function ? evaluate_after() : evaluate();
+        if (kind(v) == TFloat)
+            v = to_integer(v);
+        c.a3 -= 4;
+        poke_l(c.a3, v.v1);
+        if (!function)
+            pc() += 2;
+    }
+    if (n && !function)
+        pc() -= 2;
+    d.ErrorSave[0] = c.d6;
+    d.ErrorSave[1] = c.d7;
+    d.ErrorRegs = 1;
+    r.d[2] = v.type;
+    r.d[3] = v.v1;
+    r.d[4] = v.v2;
+    r.d[0] = uint16_t(n);
+    r.d[1] = number * 4u;
+    r.a[0] = address(routine);
+    Value x = run(routine, r);
+    c.d6 = d.ErrorSave[0];
+    c.d7 = d.ErrorSave[1];
+    d.ErrorRegs = 0;
+    return x;
+}
+
+} // namespace
+
+extern "C" {
+void interp_in_ext_call() { call(false); }
+void interp_fn_ext_call(EvalOut *o)
+{
+    Value v = call(true);
+    *o = {0, 0, v.type, v.v1, v.v2, 0};
+}
+}

@@ -1,0 +1,4 @@
+[Alice ][30  ][Paris     ]
+[Bob   ][41  ][Rome and m]
+ 40
+ERROR  23

@@ -185,3 +185,21 @@ RoutineCall	MACRO
 		addq.l	#4,sp
 		movem.l	(sp)+,d0-d4/a0
 		rts
+
+; [[noreturn]] void interp_restart(uint32_t sp, uint32_t ret,
+;                                  const AllRegs *r)
+;
+; An instruction started again: the stack at sp, ret (Prg_InsRet) its
+; return, then the instruction's routine (r->a[0]) with all of r
+		xdef	_interp_restart
+_interp_restart
+		move.l	4(sp),d0
+		move.l	8(sp),d1
+		move.l	12(sp),a0
+		move.l	d0,sp
+		move.l	d1,-(sp)
+		move.l	8*4(a0),-(sp)
+		movem.l	(a0),d0-d7
+		movem.l	9*4(a0),a1-a6
+		move.l	8*4(a0),a0
+		rts

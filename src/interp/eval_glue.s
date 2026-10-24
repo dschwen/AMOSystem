@@ -162,3 +162,9 @@ FnCallD3	MACRO
 		InCall	InMenuKey,_interp_in_menu_key
 		InCall	InMenuDel,_interp_in_menu_del
 		InCall	InSetMenu,_interp_in_set_menu
+
+; The extensions' instructions and functions: interp/extensions.cpp
+		InCall	InExtCall,_interp_in_ext_call
+		LibRoutine FnExtCall
+		EvalCall _interp_fn_ext_call
+		InCall	InField,_interp_in_field

@@ -62,3 +62,9 @@ _interp_lvo
 		RegRoutine FAngleD,_interp_fangle_d
 		RegRoutine FnParamF,_interp_fn_param_f
 		RegRoutine FnParamD,_interp_fn_param_d
+
+; The string space: interp/heap.cpp
+		RegRoutine Demande,_interp_demande
+		RegRoutine DDemande,_interp_ddemande
+		RegRoutine Menage,_interp_menage
+		RegRoutine ValRout,_interp_val_rout
