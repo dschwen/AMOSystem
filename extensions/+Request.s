@@ -117,7 +117,9 @@ BadVer	moveq	#-1,d0			* Bad version number
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Warm
 ; - - - - - - - - - - - - -
-	Rbra	L_InRequestOn
+	moveq	#-1,d0				Request On
+	SyCall	Request_OnOff
+	rts
 
 ;--------------------------------------------------------------------
 
@@ -130,29 +132,17 @@ Warm
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ;	REQUEST WB
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par	InRequestWb
-; - - - - - - - - - - - - -
-	moveq	#1,d0
-	SyCall	Request_OnOff
-	rts
+	Lib_Int	InRequestWb		src/ext/request.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ;	REQUEST ON
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par	InRequestOn
-; - - - - - - - - - - - - -
-	moveq	#-1,d0
-	SyCall	Request_OnOff
-	rts
+	Lib_Int	InRequestOn		src/ext/request.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ;	REQUEST OFF
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par	InRequestOff
-; - - - - - - - - - - - - -
-	moveq	#0,d0
-	SyCall	Request_OnOff
-	rts
+	Lib_Int	InRequestOff		src/ext/request.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ;	Even if you do not have error messages, you MUST

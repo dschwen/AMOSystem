@@ -78,6 +78,18 @@ themselves. Every other routine is called through `interp_exec`
 interpreter registers of the context. `Prg_InsRet`, where instructions
 that jump go back to, is `interp_iret`, which enters the loop again at a6.
 
+The extensions (`extensions/+*.s`) are still libraries of their own, but
+their routines move into AMOSPro the same way: `Lib_Int` in the
+extension, the entry `Ext_<Extension>_<routine>` in `src/ext/*_glue.s`.
+`tools/library_digest.py` writes the extension's list
+(`+<Extension>_Jumps.s`: its number of routines, then each number and
+entry), and `Library_Patch` (+B.s, `ExtJmps`) writes them into the jump
+table of the slot the extension is loaded in, when that library has the
+same number of routines and those are empty. An extension reaches its own
+routines PC-relatively (`Rbsr`), its `Rjsr` goes to the main library: a
+call from extension code into one of its routines in AMOSPro goes
+through the jump table at `AdTokens+slot*4(a5)`.
+
 A helper that +ILib.s reaches with local branches (`bsr FindVar`) keeps a
 one-line `Label Rjmp L_Label` in the library. If it had no number of its
 own, it takes the slot of a routine of the dropped compiler: the empty
@@ -419,6 +431,20 @@ Single precision floats as text
 - `Val` of a double with a huge exponent (`1e999999999`) multiplied by 10
   that many times, which took hours. The power of 10 now stops once it
   has overflowed, with the same result.
+
+Compact extension
+- `Pack`/`Spack` packed one or two bytes of uninitialised memory at the end
+  of the picture (and the size estimate counted an uninitialised byte at
+  its start): the temporary buffer was not cleared. It now is, so a bank
+  packs the same every time; pictures unpack the same as before.
+
+IO_Ports extension
+- `Printer Dump x1,y1 To x2,y2,columns,rows,special` left three registers
+  on the stack and crashed AMOS on its return; it now prints.
+- `Printer Dump` without the memory for its colour map took a word off the
+  stack that was never put there; it now does nothing.
+- `Parallel Out` sent the printer's raw-write command, which for the
+  parallel device is a status query: nothing was written. It now writes.
 
 ARexx
 - A message arriving at the ARexx port that is not an ARexx command was

@@ -2,6 +2,7 @@
 // the amiga.lib port and IO request routines
 
 #include "core/amiga.h"
+#include "lib/devices.h"
 #include "lib/dos.h"
 #include "lib/strings.h"
 
@@ -114,22 +115,11 @@ void close_libraries()
         close_library(n);
 }
 
+} // namespace
+
 // ---- devices ------------------------------------------------------------
 
-// A device channel (Dev_List, 12 bytes): the IO request, its port, opened,
-// what was done (0 nothing, 1 Do, 2 Send), the first error message and the
-// number of them. Channel 7 overlaps the libraries, as in the assembler.
-struct DeviceChannel {
-    uint8_t b[12];
-    struct IORequest *io() const { return ptr<struct IORequest>(peek_l(b)); }
-    void set_io(struct IORequest *io) { poke_l(b, address(io)); }
-    struct MsgPort *port() const { return ptr<struct MsgPort>(peek_l(b + 4)); }
-    void set_port(struct MsgPort *p) { poke_l(b + 4, address(p)); }
-    uint8_t &opened() { return b[8]; }
-    uint8_t &state() { return b[9]; }
-    uint8_t &first_error() { return b[10]; }
-    uint8_t &errors() { return b[11]; }
-};
+namespace amos::dev {
 
 DeviceChannel &device(uint32_t n)
 {
@@ -252,7 +242,9 @@ uint32_t check_device(DeviceChannel &d)
     return address(CheckIO(io));
 }
 
-} // namespace
+} // namespace amos::dev
+
+using namespace amos::dev;
 
 // ---- register entries ---------------------------------------------------
 

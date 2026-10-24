@@ -2265,7 +2265,35 @@ Library_Patch
 	move.l	(a1)+,(a0)
 	move.w	(a1)+,d0
 	bne.s	.Loop
-	moveq	#0,d0
+; The extensions' routines in AMOSPro (src/ext), for the slots that hold
+; them: the same number of routines, the routines empty
+	lea	ExtJmps,a4
+.Ext	move.w	(a4)+,d0		Slot
+	beq.s	.ExtEnd
+	move.l	(a4)+,a1		Its list
+	lsl.w	#2,d0
+	move.l	AdTokens(a5,d0.w),d1
+	beq.s	.Ext
+	move.l	d1,a2
+	move.w	(a1)+,d0
+	cmp.w	LB_NRout(a2),d0
+	bne.s	.Ext
+	move.l	LB_LibSizes(a2),a3
+	move.l	a1,a0
+.Chk	move.w	(a0)+,d0
+	beq.s	.Put
+	lsl.w	#1,d0
+	tst.w	0(a3,d0.w)
+	bne.s	.Ext
+	addq.l	#4,a0
+	bra.s	.Chk
+.Put	move.w	(a1)+,d0
+	beq.s	.Ext
+	lsl.w	#2,d0
+	neg.w	d0
+	move.l	(a1)+,-LB_Size-4(a2,d0.w)
+	bra.s	.Put
+.ExtEnd	moveq	#0,d0
 	bra	Ll_Out
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -2910,3 +2938,14 @@ Panic_Version	dc.b	"I need AMOS.library V2.0 or over!",0
 ;		Adresses des routines accessibles aux extensions
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 AMOSJmps	Include	"+Internal_Jumps.s"
+; The extensions': slot, list
+ExtJmps		dc.w	2
+		dc.l	CompactJmps
+		dc.w	3
+		dc.l	RequestJmps
+		dc.w	6
+		dc.l	IOPortsJmps
+		dc.w	0
+CompactJmps	Include	"+Compact_Jumps.s"
+RequestJmps	Include	"+Request_Jumps.s"
+IOPortsJmps	Include	"+IO_Ports_Jumps.s"

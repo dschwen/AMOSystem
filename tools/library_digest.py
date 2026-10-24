@@ -5,6 +5,9 @@ Numbers the routines of an extension source (Lib_Ini/Lib_Def/Lib_Par/...)
 and writes, next to the source or into --out:
   <Source>_Size.s    Lib_Size of the extension
   <Source>_Labels.s  L_<name>: set <n> for every named routine
+  <Source>_Jumps.s   for AMOSPro (+B.s Library_Patch): Lib_Size, then the
+                     number and the address (Ext_<Name>_<routine>) of every
+                     Lib_Int routine, 0-terminated
 """
 
 import argparse
@@ -35,6 +38,13 @@ def main():
     with open(os.path.join(out, f'{base}_Labels.s'), 'w', encoding='latin-1') as f:
         f.write(header(f'{name}, list of the library functions', stamp)
                 + ''.join(label_line(lab, num) for lab, num in n.labels))
+    ext = base.lstrip('+')
+    numbers = dict(n.labels)
+    with open(os.path.join(out, f'{base}_Jumps.s'), 'w', encoding='latin-1') as f:
+        f.write(header(f'{name}, routines in AMOSPro', stamp) + f'\tdc.w\t{n.count}\n'
+                + ''.join(f'\tdc.w\t{numbers[r]}\n\tdc.l\tExt_{ext}_{r.replace(".", "_")}\n'
+                          for r in n.internals)
+                + '\tdc.w\t0\n')
     print(f'{name}: {len(n.labels)} labels, Lib_Size {n.count}')
 
 

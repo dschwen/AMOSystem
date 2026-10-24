@@ -57,7 +57,7 @@ LDLIBS   := -L$(AMIGA_PREFIX)/m68k-amigaos/libnix/lib -lgcc -lnix13 -lgcc
 #   src/core     the C++/asm bridge and data layout (an archive)
 src_objs = $(strip $(patsubst %.s,$(OBJ)/%.o,$(sort $(wildcard $(addsuffix /*.s,$(1))))) \
            $(patsubst %.cpp,$(OBJ)/%.o,$(sort $(wildcard $(addsuffix /*.cpp,$(1))))))
-OBJ_AMOSPRO := $(call src_objs,src/lib src/main src/verif src/interp)
+OBJ_AMOSPRO := $(call src_objs,src/lib src/main src/verif src/interp src/ext)
 OBJ_W       := $(call src_objs,src/w)
 OBJ_EDITOR  := $(call src_objs,src/editor)
 OBJ_MONITOR := $(call src_objs,src/monitor)
@@ -78,7 +78,7 @@ LIB_GEN := $(GEN)/+LEqu.s $(GEN)/+Internal_Jumps.s $(GEN)/+Lib_Size.s \
            $(GEN)/+ILib_Size.s $(GEN)/+ILib_Functions.s $(GEN)/lib_routines.h
 TOKTAB  := $(GEN)/+Toktab_Verif.Bin
 EXTENSIONS := Music Compact Request IO_Ports
-EXT_GEN := $(foreach e,$(EXTENSIONS),$(GEN)/+$(e)_Size.s $(GEN)/+$(e)_Labels.s)
+EXT_GEN := $(foreach e,$(EXTENSIONS),$(GEN)/+$(e)_Size.s $(GEN)/+$(e)_Labels.s $(GEN)/+$(e)_Jumps.s)
 
 COMMON_SRC := +AMOS_Includes.s +Equ.s +CEqu.s +WEqu.s +Debug.s +Version.s
 
@@ -115,7 +115,7 @@ $(GEN)/core/layout.h: +Equ.s +CEqu.s +WEqu.s +MEqu.s tools/gen_layout.py $(LIB_G
 $(TOKTAB): +Lib.s tools/make_toktable.py | $(GEN)
 	$(PYTHON) tools/make_toktable.py $< $@
 
-$(GEN)/+%_Size.s $(GEN)/+%_Labels.s &: extensions/+%.s tools/library_digest.py tools/make_labels.py | $(GEN)
+$(GEN)/+%_Size.s $(GEN)/+%_Labels.s $(GEN)/+%_Jumps.s &: extensions/+%.s tools/library_digest.py tools/make_labels.py | $(GEN)
 	$(PYTHON) tools/library_digest.py $< --out $(GEN) --stamp '$(STAMP)'
 
 # Symlinks for includes whose case differs from the file on disk
@@ -151,7 +151,7 @@ $(COMMON_LIB): $(OBJ_COMMON)
 
 -include $(ALL_CXX:%.cpp=$(OBJ)/%.d)
 
-$(OBJ)/B.o: +B.s +Verif.s $(PREREQ)
+$(OBJ)/B.o: +B.s +Verif.s $(PREREQ) $(EXT_GEN)
 	@mkdir -p $(dir $@)
 	$(VASM) $(OBJFLAGS) -o $@ $<
 

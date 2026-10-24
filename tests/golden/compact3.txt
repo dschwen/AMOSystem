@@ -1,0 +1,13 @@
+error 23 at 0
+bank 10 7752 2195194
+bank 11 2112 558464
+bank 12 2632 744169
+bank 13 7662 2182323
+bank 14 32 820
+bank 15 308 79121
+ 2 0
+error 512 at 0
+error 512 at 0
+ 2 320 200
+error 23 at 0
+error 23 at 0
