@@ -263,7 +263,7 @@ _DChr	move.l	BasSp(a5),sp
 
 ; Ouverture des librairies mathematiques / Choix des routines dans la librarie
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	bsr	Open_MathLibraries
+	Rjsr	L_Open_MathLibraries
 
 ; Autres inits
 ; ~~~~~~~~~~~~
@@ -335,12 +335,6 @@ _IRet
 InEnd	moveq	#NbEnd,d0
 	bra	RunErr
 
-;		Librairies ouvertes par le ChrGet
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-MathName	dc.b 	"mathtrans.library",0
-DFloatName	dc.b 	"mathieeedoubbas.library",0
-DMathName	dc.b 	"mathieeedoubtrans.library",0
-		even
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 	EXTENSION INSTRUCTION CALL
@@ -354,93 +348,7 @@ DMathName	dc.b 	"mathieeedoubtrans.library",0
 
 ;	Ouverture / Echange des routines mathemetiques
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-; - - - - - - - - - - - - -
-	Lib_Def	Open_MathLibraries
-; - - - - - - - - - - - - -
-Open_MathLibraries
-	move.l	a6,-(sp)
-	move.l	#$c90fd942,ValPi(a5)		Simple precision
-	move.l	#$b4000048,Val180(a5)
-	move.l	#$04040404,Long_Var(a5)
-	move.l	$4.w,a6
-	btst	#1,MathFlags(a5)		Simple precision
-	beq.s	.M1
-	tst.l	MathBase(a5)
-	bne.s	.M1
-	moveq	#0,d0
-	lea	MathName(pc),a1
-	jsr	_LVOOpenLibrary(a6)
-	move.l	d0,MathBase(a5)
-	beq	ErrMLibs
-.M1	tst.b	MathFlags(a5)			Double precicion
-	bpl.s	.M3
-	move.l	#$40668000,Val180(a5)
-	move.l	#$00000000,Val180+4(a5)
-	move.l	#$400921fb,ValPi(a5)
-	move.l	#$54442eea,ValPi+4(a5)
-	move.l	#$04080404,Long_Var(a5)
-	tst.l	DFloatBase(a5)
-	bne.s	.M2
-	moveq	#0,d0
-	lea	DFloatName(pc),a1
-	jsr	_LVOOpenLibrary(a6)
-	move.l	d0,DFloatBase(a5)
-	beq	ErrMLibs
-.M2	tst.l	DMathBase(a5)
-	bne.s	.M3
-	moveq	#0,d0
-	lea	DMathName(pc),a1
-	jsr	_LVOOpenLibrary(a6)
-	move.l	d0,DMathBase(a5)
-	beq	ErrMLibs
-.M3	bsr	Lib_FloatSwap		Echange les routines float
-	Rjsr	L_Sys_ClearCache
-	move.l	(sp)+,a6
-	rts
-
-; 			Echange des routines float dans la librarie
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Lib_FloatSwap
-	movem.l	a2/d2,-(sp)
-	lea	AdTokens(a5),a2
-	moveq	#27-1,d2
-.Loop	tst.l	(a2)
-	beq.s	.MSkip
-	move.l	(a2),a1
-	tst.w	LB_FFloatSwap(a1)
-	beq.s	.MSkip
-	tst.b	MathFlags(a5)
-	bmi.s	.MDble
-	btst	#LBF_DFloat,LB_Flags(a4)
-	bne.s	.MSwap
-	beq.s	.MSkip
-.MDble	btst	#LBF_DFloat,LB_Flags(a4)
-	bne.s	.MSkip
-.MSwap	bsr	Lib_FSwap
-.MSkip	addq.l	#4,a2
-	dbra	d2,.Loop
-	movem.l	(sp)+,a2/d2
-	rts
-; Routine d'echange
-; ~~~~~~~~~~~~~~~~~
-Lib_FSwap
-	bchg	#LBF_DFloat,LB_Flags(a4)
-	move.w	LB_DFloatSwap(a1),d0
-	lsl.w	#2,d0
-	neg.w	d0
-	lea	-LB_Size-4(a1,d0.w),a0
-	move.w	LB_FFloatSwap(a1),d1
-	sub.w	LB_DFloatSwap(a1),d1
-	ext.l	d1
-	lsr.l	#1,d1
-	subq.w	#1,d1
-	bmi.s	.Skip
-.Loop	move.l	-4(a0),d0
-	move.l	-8(a0),-4(a0)
-	move.l	d0,-8(a0)
-	lea	-8(a0),a0
-	dbra	d1,.Loop
-.Skip	rts
+	Lib_Int	Open_MathLibraries	src/interp/float.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 	INTERPRETEUR SEUL: recuperation des parametres...
@@ -965,7 +873,7 @@ PRun_Errors
 	movem.l	d6/d7,Chr_Debug+4(a5)	Pour empecher le plantage
 	ENDC
 	movem.l	a0-a1/d0-d1,-(sp)
-	bsr	Open_MathLibraries	Rouvre les libraries
+	Rjsr	L_Open_MathLibraries	Rouvre les libraries
 	movem.l	(sp)+,a0-a1/d0-d1
 
 	cmp.w	#10,d0
@@ -2245,59 +2153,14 @@ GetTablo	Rjmp	L_GetTablo
 ; 	ASCII Vers Float
 ;	A0	Buffer
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	Ascii2Float
-; - - - - - - - - - - - - -
-	move.l	a0,-(sp)
-	Rjsr	L_AscToFloat
-	addq.l	#4,sp
-	rts
-; - - - - - - - - - - - - -
-	Lib_Def	Ascii2FloatD
-; - - - - - - - - - - - - -
-	move.l	a0,-(sp)
-	Rjsr	L_AscToDouble
-	addq.l	#4,sp
-	rts
+	Lib_Int	Ascii2Float		src/interp/float.cpp
+	Lib_Int	Ascii2FloatD		src/interp/float.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 	Float vers ascii
-;	D3/D4	Float
-;	A0	Buffer
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	Float2Ascii
-; - - - - - - - - - - - - -
-	move.l 	d3,d0			Simple precision
-	move.w	FixFlg(a5),d4
-        move.w 	ExpFlg(a5),d5
-	bclr	#31,d4
-	Rjmp	L_FloatToAsc
-; - - - - - - - - - - - - -
-	Lib_Def	Float2AsciiD
-; - - - - - - - - - - - - -
-	moveq	#2,d0			Double precision
-	moveq	#15,d1
-	tst.w	FixFlg(a5)
-	bmi.s	.Ok
-	move.w	FixFlg(a5),d1		Nombre de chiffres
-	tst.w	ExpFlg(a5)
-	beq.s	.Ok
-	moveq	#0,d0
-.Ok	movem.l	a0-a1,-(sp)
-	btst	#31,d3			Si positif
-	bne.s	.Neg
-	move.b	#" ",(a0)+		Un espace devant
-.Neg	move.l	d0,-(sp)
-	move.l	d1,-(sp)
-	move.l	a0,-(sp)
-	move.l	d4,-(sp)
-	move.l	d3,-(sp)
-	Rjsr	L_DoubleToAsc
-	lea	20(sp),sp
-	movem.l	(sp)+,a0/a1
-.Lop	tst.b	(a0)+
-	bne.s	.Lop
-	subq.l	#1,a0
-	rts
+	Lib_Int	Float2Ascii		src/interp/float.cpp
+	Lib_Int	Float2AsciiD		src/interp/float.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 	Pour le compilateur, fonctions internes

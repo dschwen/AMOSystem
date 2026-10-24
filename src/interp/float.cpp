@@ -10,6 +10,7 @@
 // d2. Comparisons and tests answer in the condition codes (the glue tests
 // the C function's -1 / 0 / 1).
 
+#include "core/amiga.h"
 #include "interp/interp.h"
 
 using namespace amos;
@@ -391,3 +392,131 @@ uint32_t double_to_single(uint32_t d0, uint32_t d1)
 }
 
 } // namespace amos::interp
+
+// control.cpp: run-time error n
+extern "C" [[noreturn]] void interp_error(uint32_t n, uint32_t first, uint32_t extension, uint32_t messages);
+
+// Open_MathLibraries (+ILib.s): the math libraries of the program's
+// precision, and the float routines of the libraries swapped to it
+namespace {
+
+constexpr int LB_Flags = -12, LB_DFloatSwap = -30, LB_FFloatSwap = -32, LBF_DFloat = 1;
+
+uint32_t open_library(const char *name)
+{
+    uint32_t base = address(OpenLibrary(name, 0));
+    if (!base) {
+        // Cannot open math libraries, at the start of the program
+        ctx().a6 = ptr<uint8_t>(data().Prg_Run);
+        interp_error(12, 19, uint32_t(-1), 0);
+    }
+    return base;
+}
+
+// Lib_FSwap: the pairs of routines from DFloatSwap to FFloatSwap of the
+// library at lib exchanged in its jump table (the flag of the main
+// library changed)
+void float_swap(uint8_t *lib, uint8_t *main)
+{
+    main[LB_Flags] ^= 1 << LBF_DFloat;
+    int16_t first = int16_t(peek_w(lib + LB_DFloatSwap));
+    auto *entry = reinterpret_cast<uint32_t *>(lib - LB_Size - 4 - 4 * first);
+    uint16_t n = uint16_t((uint32_t(int32_t(int16_t(peek_w(lib + LB_FFloatSwap) - first))) >> 1) - 1);
+    if (int16_t(n) < 0)
+        return;
+    do {
+        uint32_t t = entry[-1];
+        entry[-1] = entry[-2];
+        entry[-2] = t;
+        entry -= 2;
+    } while (n--);
+}
+
+} // namespace
+
+extern "C" void interp_open_math_libraries()
+{
+    IData &d = data();
+    d.ValPi[0] = 0xC90FD942;
+    d.Val180[0] = 0xB4000048;
+    d.Long_Var = 0x04040404;
+    if ((d.MathFlags & 2) && !d.MathBase)
+        d.MathBase = open_library("mathtrans.library");
+    bool dble = int8_t(d.MathFlags) < 0;
+    if (dble) {
+        d.Val180[0] = 0x40668000;
+        d.Val180[1] = 0;
+        d.ValPi[0] = 0x400921FB;
+        d.ValPi[1] = 0x54442EEA;
+        d.Long_Var = 0x04080404;
+        if (!d.DFloatBase)
+            d.DFloatBase = open_library("mathieeedoubbas.library");
+        if (!d.DMathBase)
+            d.DMathBase = open_library("mathieeedoubtrans.library");
+    }
+    // Lib_FloatSwap: by the flag of the main library (a4)
+    uint8_t *main = ctx().a4;
+    for (uint32_t lib : d.AdTokens) {
+        if (!lib || !peek_w(ptr<uint8_t>(lib) + LB_FFloatSwap))
+            continue;
+        bool swapped = main[LB_Flags] & (1 << LBF_DFloat);
+        if (dble != swapped)
+            float_swap(ptr<uint8_t>(lib), main);
+    }
+    Regs r;
+    lib_call(L_Sys_ClearCache, r);
+}
+
+// The conversions of the float layer: lib/floatasc.cpp, lib/doubleasc.cpp
+extern "C" {
+uint32_t lib_float_to_asc(RegFrame &r);
+uint32_t lib_asc_to_float(const char *s);
+void lib_double_to_asc(uint32_t hi, uint32_t lo, char *to, int32_t digits, uint32_t mode);
+uint64_t lib_asc_to_double(const char *text);
+
+// Ascii2Float(D): the number at a0 in d0 (d0:d1)
+uint32_t interp_ascii2float(RegFrame &r)
+{
+    r.d[0] = lib_asc_to_float(ptr<char>(r.a[0]));
+    return 0;
+}
+uint32_t interp_ascii2float_d(RegFrame &r)
+{
+    uint64_t v = lib_asc_to_double(ptr<char>(r.a[0]));
+    r.d[0] = uint32_t(v >> 32);
+    r.d[1] = uint32_t(v);
+    return 0;
+}
+
+// Float2Ascii(D): d3(/d4) at a0 as Print shows it (Fix, Exp), a space
+// before a positive number; a0 its end
+uint32_t interp_float2ascii(RegFrame &r)
+{
+    IData &d = data();
+    r.d[0] = r.d[3];
+    r.d[4] = (r.d[4] & 0x7FFF0000) | d.FixFlg;
+    r.d[5] = (r.d[5] & 0xFFFF0000) | d.ExpFlg;
+    return lib_float_to_asc(r);
+}
+uint32_t interp_float2ascii_d(RegFrame &r)
+{
+    IData &d = data();
+    // mode 2: 15 digits (no Fix) or Fix's; with Exp mode 0, Fix's decimals
+    uint32_t mode = 2, digits = 15;
+    if (int16_t(d.FixFlg) >= 0) {
+        digits = d.FixFlg;
+        if (d.ExpFlg)
+            mode = 0;
+    }
+    r.d[0] = mode;
+    r.d[1] = digits;
+    char *to = ptr<char>(r.a[0]);
+    if (!(r.d[3] & 0x80000000u))
+        *to++ = ' ';
+    lib_double_to_asc(r.d[3], r.d[4], to, int32_t(r.d[1]), mode);
+    while (*to)
+        to++;
+    r.a[0] = address(to);
+    return 0;
+}
+}

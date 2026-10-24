@@ -74,3 +74,14 @@ _interp_lvo
 		RegRoutine DefRun2,_interp_defrun2
 		RegRoutine DefRunAcc,_interp_defrun_acc
 		RegRoutine DefRunExtensions,_interp_defrun_extensions
+
+; The math libraries and the float routines' swap: interp/float.cpp
+		LibRoutine Open_MathLibraries
+		CCall	_interp_open_math_libraries
+		rts
+
+; Floats <-> text
+		RegRoutine Ascii2Float,_interp_ascii2float
+		RegRoutine Ascii2FloatD,_interp_ascii2float_d
+		RegRoutine Float2Ascii,_interp_float2ascii
+		RegRoutine Float2AsciiD,_interp_float2ascii_d
