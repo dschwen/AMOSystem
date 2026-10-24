@@ -157,7 +157,7 @@ $(OBJ)/B.o: +B.s +Verif.s $(PREREQ) $(EXT_GEN)
 # AMOS.library, the editor and the monitor are linked in too (main/boot.cpp
 # starts AMOS.library from _w_debut, main/modules.cpp finds the entry
 # tables of the others)
-AMOSPRO_LINK := $(OBJ)/B.o $(OBJ_AMOSPRO) $(OBJ)/gen/lib_direct.o $(OBJ)/gen/lib_direct_entries.o $(OBJ)/W.o $(OBJ_W) $(OBJ)/Edit.o $(OBJ_EDITOR) \
+AMOSPRO_LINK := $(OBJ)/B.o $(OBJ_AMOSPRO) $(OBJ)/gen/lib_direct.o $(OBJ)/gen/lib_direct_entries.o $(OBJ)/gen/w_direct.o $(OBJ)/W.o $(OBJ_W) $(OBJ)/Edit.o $(OBJ_EDITOR) \
                 $(OBJ)/Monitor.o $(OBJ_MONITOR)
 $(BUILD)/AMOSPro: $(AMOSPRO_LINK) $(COMMON_LIB) link/amospro.ld tools/chiphunks.py
 	$(call link_program,$@,link/amospro.ld,$(AMOSPRO_LINK))
@@ -212,6 +212,11 @@ $(GEN)/lib_direct.cpp $(GEN)/lib_direct_entries.s: tools/lib_direct.py $(wildcar
 	$(PYTHON) tools/lib_direct.py --out $(GEN)/lib_direct.cpp --entries $(GEN)/lib_direct_entries.s \
 		--routines $(GEN)/lib_routines.h $(wildcard src/*/*_glue.s)
 $(OBJ)/gen/lib_direct.o: $(GEN)/lib_direct.cpp $(CXX_GEN)
+	@mkdir -p $(dir $@)
+	$(CXX) $(CXXFLAGS) -c -o $@ $<
+$(GEN)/w_direct.cpp: tools/w_direct.py +W.s $(wildcard src/w/*_glue.s)
+	$(PYTHON) tools/w_direct.py --out $@ +W.s $(wildcard src/w/*_glue.s)
+$(OBJ)/gen/w_direct.o: $(GEN)/w_direct.cpp $(CXX_GEN)
 	@mkdir -p $(dir $@)
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
 $(OBJ)/gen/lib_direct_entries.o: $(GEN)/lib_direct_entries.s

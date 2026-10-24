@@ -25,6 +25,9 @@
 #include "core/layout.h"
 #include "lib_routines.h"
 
+// AMOS.library's vector tables of SyCall and EcCall (+W.s)
+extern "C" uint8_t w_sy_in[], w_ec_in[];
+
 namespace amos {
 
 // The interpreter registers, as saved by the glue
@@ -138,8 +141,49 @@ extern "C" [[noreturn]] void interp_error(uint32_t n, uint32_t first, uint32_t e
 
 // SyCall, EcCall, WiCall: a function of the AMOS.library vector tables
 // (amos::sy::X, amos::ec::X, amos::wi::X). Most return an error code in d0.
-inline void sy_call(int function, Regs &r) { amos_call(&r, reinterpret_cast<const uint8_t *>(wdata().SyVect) + 4 * function); }
-inline void ec_call(int function, Regs &r) { amos_call(&r, reinterpret_cast<const uint8_t *>(wdata().EcVect) + 4 * function); }
+//
+// While the vectors are AMOS.library's own (the monitor patches them), a
+// function in C++ is called directly, as through its glue (w/wglue.i,
+// _w_go): all the registers, d6/d7 and a3-a6 its context during the call,
+// the context as it was afterwards (build/gen/w_direct.cpp).
+using WFunction = void (*)(AllRegs *);
+extern const WFunction sy_direct[], ec_direct[];
+inline void w_direct_call(WFunction f, Regs &r)
+{
+    Ctx &c = ctx();
+    AllRegs a;
+    for (int i = 0; i < 8; i++)
+        a.d[i] = r.d[i];
+    for (int i = 0; i < 3; i++)
+        a.a[i] = r.a[i];
+    a.a[3] = reinterpret_cast<uint32_t>(c.a3);
+    a.a[4] = reinterpret_cast<uint32_t>(c.a4);
+    a.a[5] = reinterpret_cast<uint32_t>(c.a5);
+    a.a[6] = reinterpret_cast<uint32_t>(c.a6);
+    Ctx saved = c;
+    c.d6 = r.d[6];
+    c.d7 = r.d[7];
+    f(&a);
+    ctx() = saved;
+    for (int i = 0; i < 8; i++)
+        r.d[i] = a.d[i];
+    for (int i = 0; i < 3; i++)
+        r.a[i] = a.a[i];
+}
+inline void sy_call(int function, Regs &r)
+{
+    if (wdata().SyVect == reinterpret_cast<uint32_t>(::w_sy_in))
+        if (WFunction f = sy_direct[function])
+            return w_direct_call(f, r);
+    amos_call(&r, reinterpret_cast<const uint8_t *>(wdata().SyVect) + 4 * function);
+}
+inline void ec_call(int function, Regs &r)
+{
+    if (wdata().EcVect == reinterpret_cast<uint32_t>(::w_ec_in))
+        if (WFunction f = ec_direct[function])
+            return w_direct_call(f, r);
+    amos_call(&r, reinterpret_cast<const uint8_t *>(wdata().EcVect) + 4 * function);
+}
 inline void wi_call(int function, Regs &r) { amos_call(&r, reinterpret_cast<const uint8_t *>(wdata().WiVect) + 4 * function); }
 
 // The memory of AMOS.library (w/memory.cpp): SyCall MemReserve (size, the
