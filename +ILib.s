@@ -502,7 +502,9 @@ RunErrExt
 	jsr	APrg_Program(a6)	Appelle le programme
 	move.l	AdTokens(a5),a4		Recharge a4
 	tst.l	d0
-	bmi	RunII			-1 >>> deuxieme partie de RUN
+	bpl.s	.NoRun			-1 >>> deuxieme partie de RUN
+	Rjmp	L_RunII
+.NoRun
 	bne.s	.Err			Si erreur >>> BREAK!
 	lea	APrg_EndProc(a6),a6	Pointe le delta a la fin
 	add.l	(a6),a6
@@ -522,71 +524,13 @@ RunErrExt
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ;	INSTRUCTION RUN
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InRun0
-; - - - - - - - - - - - - -
-	tst.w	Direct(a5)
-	beq	Synt
-	Rjmpt	L_Ed_RunDirect
+	Lib_Int	InRun0		src/interp/run.cpp
 ; - - - - - - - - - - - - -
 	Lib_Def	InRun0CLI
 ; - - - - - - - - - - - - -
 
 ; - - - - - - - - - - - - -
-	Lib_Par InRun1
-; - - - - - - - - - - - - -
-	tst.w	Direct(a5)
-	bne	RIllDir
-	tst.l	Mon_Base(a5)
-	bne	PRun_Acc
-	tst.b	Prg_Accessory(a5)
-	bne	PRun_Acc
-; Verifie la presence du programme
-	move.l	d3,a2
-	move.w	(a2)+,d2
-	move.l	Name1(a5),a0
-	Rjsr	L_ChVerBuf2
-	Rjsr	L_Dsk.PathIt
-	move.l	#1005,d2		Verifie la presence du fichier!
-	Rjsr	L_D_Open
-	beq	JDisk
-	Rjsr	L_D_Close		Le ferme!
-; Effacement des includes
-	lea	-2(a4),a0
-	Rjsr	L_Includes_Adr
-	move.l	a0,VerPos(a5)
-	Rjsr	L_Includes_Clear
-; - - - - - - - - - - - - -
-RunII
-; - - - - - - - - - - - - -
-; Fait un new, sans effacer les ecrans
-	move.l	Prg_Runned(a5),a6
-	moveq	#0,d0			Pas d'effacement
-	Rjsr	L_Prg_New
-; Depile le programme
-	Rjsr	L_Prg_Pull
-; Charge le nouveau programme dans la structure
-	move.b	#1,Prg_Reloaded(a6)
-	moveq	#-1,d0			Toujours adapter!
-	Rjsr	L_Prg_Load
-	cmp.w	#-1,d0
-	beq.s	.DErr
-	cmp.w	#-2,d0
-	ble.s	.OMem
-; Run le nouveau programme
-	moveq	#-1,d0			Semi init graphique
-	move.l	Prg_JError(a5),a1	Ou se brancher en erreur
-	sub.l	a2,a2			Pas de message
-	Rjsr	L_Prg_RunIt
-; Erreurs
-; ~~~~~~~
-.OMem	moveq	#36,d0
-	bra.s	.Err
-.DErr	moveq	#101,d0
-.Err	sub.l	a0,a0
-	move.l	Prg_JError(a5),a1
-	jmp	(a1)
-Rn_NoF	moveq	#81,d0			Erreur normale!
-	Rjmp	L_Error
+	Lib_Int	InRun1		src/interp/run.cpp
 ; - - - - - - - - - - - - -
 	Lib_Def	InRun1CLI
 ; - - - - - - - - - - - - -
@@ -594,98 +538,7 @@ Rn_NoF	moveq	#81,d0			Erreur normale!
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 		INSTRUCTION PRUN
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InPRun
-; - - - - - - - - - - - - -
-	tst.w	Direct(a5)
-	bne	RIllDir
-	tst.l	Mon_Base(a5)
-	bne	PRun_Acc
-;	tst.b	Prg_Accessory(a5)
-;	bne	PRun_Acc
-	move.l	d3,a2
-	move.w	(a2)+,d2
-	move.l	Name1(a5),a0
-	Rjsr	L_ChVerBuf2
-; Sauve le programme courant
-	movem.l	a3-a6/d6/d7,-(sp)
-; Le programme est-il deja charge?
-	Rjsr	L_Prg_AccAdr
-	beq.s	.Loadit
-	move.l	a0,a6
-	Rjsr	L_Prg_DejaRunned
-	beq.s	.Runit
-; Il faut charger: verifie la presence du programme
-.Loadit	Rjsr	L_Dsk.PathIt
-	move.l	#1005,d2		Verifie la presence du fichier!
-	Rjsr	L_D_Open
-	beq	JDisk
-	Rjsr	L_D_Close		Le ferme!
-; Ouvre une nouvelle structure
-	moveq	#0,d0			Pas de buffer
-	Rjsr	L_Prg_NewStructure	Ouvre la structure
-	beq	OOfMem
-	move.l	d0,a6
-; Charge le programme
-	moveq	#-1,d0			Toujours adapter
-	Rjsr	L_Prg_Load
-	tst.w	d0
-	bne	.LErr
-	move.l	a6,-(sp)		Remet les banques
-	move.l	Prg_Runned(a5),a6	du premier programme
-	Rjsr	L_Prg_SetBanks
-	move.l	(sp)+,a6
-; Programme charge: on le demarre!
-.Runit	moveq	#-1,d0			Semi init graphique
-	lea	PRun_Errors(pc),a1	Retour en cas d'erreur
-	sub.l	a2,a2			Pas de message
-	move.l	sp,BasSp(a5)		Bas de la pile
-	Rjsr	L_Prg_RunIt
-	bra.s	.OMm
-; Erreur lors du chargement
-.LErr	move.w	d0,d1
-	moveq	#101,d0
-	cmp.w	#-1,d1
-	beq.s	.Goerr
-.OMm	moveq	#36,d0
-; Revient au programme, avec un message d'erreur
-.Goerr	move.l	d0,-(sp)
-	tst.b	Prg_Edited(a6)		Efface la structure s'il faut
-	bne.s	.Edited
-	Rjsr	L_Prg_DelStructure
-.Edited	move.l	Prg_Runned(a5),a6
-	Rjsr	L_Prg_SetBanks
-	Rjsr	L_Bnk.Change
-	move.l	(sp)+,d0
-	move.l	Ed_RunMessages(a5),a0
-	Rjsr	L_GetMessage
-	movem.l	(sp)+,a3-a6/d6/d7
-	move.l	sp,BasSp(a5)
-	Rbra	L_ZapReturn
-PRun_Acc
- 	moveq	#102,d0
-	Rjmp	L_Error
-;	Retour d'erreur lors de PRUN
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-PRun_Errors
-	move.l	BasSp(a5),sp
-	movem.l	(sp)+,a3-a6/d6/d7	Restore le programme
-	move.l	sp,BasSp(a5)
-	movem.l	d6/d7,ErrorSave(a5)	Au cas zou
-	IFNE	Debug
-	movem.l	d6/d7,Chr_Debug+4(a5)	Pour empecher le plantage
-	ENDC
-	movem.l	a0-a1/d0-d1,-(sp)
-	Rjsr	L_Open_MathLibraries	Rouvre les libraries
-	movem.l	(sp)+,a0-a1/d0-d1
-
-	cmp.w	#10,d0
-	beq.s	.Nul
-	cmp.w	#1000,d0
-	blt.s	.Null
-.Nul	moveq	#0,d0
-.Null	move.l	ChVide(a5),a0
-	Rbra	L_ZapReturn
-JDisk	Rjmp	L_DiskError
+	Lib_Int	InPRun		src/interp/run.cpp
 ; - - - - - - - - - - - - -
 	Lib_Def	InPRunCLI
 ; - - - - - - - - - - - - -
@@ -694,40 +547,19 @@ JDisk	Rjmp	L_DiskError
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ;		ASK EDITOR
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InAskEditor1
-; - - - - - - - - - - - - -
-	move.l	d3,-(a3)
-	move.l	#EntNul,d3
-	move.l	d3,-(a3)
-	Rbra	L_InAskEditor3
+	Lib_Int	InAskEditor1		src/interp/run.cpp
 ; - - - - - - - - - - - - -
 	Lib_Def	InAskEditor1CLI
 ; - - - - - - - - - - - - -
 
 ; - - - - - - - - - - - - -
-	Lib_Par	InAskEditor2
-; - - - - - - - - - - - - -
-	move.l	d3,-(a3)
-	move.l	#EntNul,d3
-	Rbra	L_InAskEditor3
+	Lib_Int	InAskEditor2		src/interp/run.cpp
 ; - - - - - - - - - - - - -
 	Lib_Def	InAskEditor2CLI
 ; - - - - - - - - - - - - -
 
 ; - - - - - - - - - - - - -
-	Lib_Par InAskEditor3
-; - - - - - - - - - - - - -
-	bsr	Ed_Par
-	tst.l	Edit_Segment(a5)
-	beq	FonCall
-	Rjsrt	L_Ed_ZapFonction
-	move.l	d0,ParamE(a5)
-	move.l	ChVide(a5),ParamC(a5)
-	tst.w	d2
-	beq.s	.Skip
-	Rjsr	L_A0ToChaine
-	move.l	a0,ParamC(a5)
-.Skip	rts
+	Lib_Int	InAskEditor3		src/interp/run.cpp
 ; - - - - - - - - - - - - -
 	Lib_Def	InAskEditor3CLI
 ; - - - - - - - - - - - - -
@@ -735,40 +567,19 @@ JDisk	Rjmp	L_DiskError
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ;		ZAPPEUSE D'EDITEUR!
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InCallEditor1
-; - - - - - - - - - - - - -
-	move.l	d3,-(a3)
-	move.l	#EntNul,d3
-	move.l	d3,-(a3)
-	Rbra	L_InCallEditor3
+	Lib_Int	InCallEditor1		src/interp/run.cpp
 ; - - - - - - - - - - - - -
 	Lib_Def	InCallEditor1CLI
 ; - - - - - - - - - - - - -
 
 ; - - - - - - - - - - - - -
-	Lib_Par InCallEditor2
-; - - - - - - - - - - - - -
-	move.l	d3,-(a3)
-	move.l	#EntNul,d3
-	Rbra	L_InCallEditor3
+	Lib_Int	InCallEditor2		src/interp/run.cpp
 ; - - - - - - - - - - - - -
 	Lib_Def	InCallEditor2CLI
 ; - - - - - - - - - - - - -
 
 ; - - - - - - - - - - - - -
-	Lib_Par InCallEditor3
-; - - - - - - - - - - - - -
-	bsr	Ed_Par			Recupere les parametres
-	tst.l	Edit_Segment(a5)
-	beq	FonCall
-	move.l	BasSp(a5),-(sp)		Pousse la pile
-	movem.l	a3-a6/d6/d7,-(sp)	Pousse le programme
-	move.l	sp,BasSp(a5)
-	subq.l	#4,BasSp(a5)
-	Rjsrt	L_Ed_ZapIn		Appel de l'editeur
-	movem.l	(sp)+,a3-a6/d6/d7
-	move.l	(sp)+,BasSp(a5)
-	Rbra	L_ZapReturn
+	Lib_Int	InCallEditor3		src/interp/run.cpp
 ; - - - - - - - - - - - - -
 	Lib_Def	InCallEditor3CLI
 ; - - - - - - - - - - - - -
@@ -785,26 +596,7 @@ JDisk	Rjmp	L_DiskError
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 	=Prg Under
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par FnPrgUnder
-; - - - - - - - - - - - - -
-	moveq	#-1,d3
-	tst.l	Mon_Base(a5)		Si moniteur: RIEN!
-	bne.s	.Exit
-	move.l	Prg_Runned(a5),a0	Un programme en dessous?
-	move.l	Prg_Previous(a0),d0	Non!
-	bne.s	.Out
-	move.l	Edt_Current(a5),d0	Le programme courant?
-	beq.s	.Exit
-	move.l	d0,a1
-	move.l	Edt_Prg(a1),d0
-	cmp.l	d0,a0			Non!
-	beq.s	.Exit
-	tst.l	Edit_Segment(a5)	Editeur KILL?
-	beq.s	.Out
-	moveq	#1,d3			OUIIIIIII
-	bra.s	.Out
-.Exit	moveq	#0,d3
-.Out	Ret_Int
+	Lib_Int	FnPrgUnder		src/interp/run.cpp
 ; - - - - - - - - - - - - -
 	Lib_Def	FnPrgUnderCLI
 ; - - - - - - - - - - - - -
@@ -825,48 +617,23 @@ JDisk	Rjmp	L_DiskError
 ; - - - - - - - - - - - - -
 
 ; - - - - - - - - - - - - -
-	Lib_Def	RunName
+	Lib_Int	RunII		src/interp/run.cpp
 ; - - - - - - - - - - - - -
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 	Recupere les parametres
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	Ed_Par
-; - - - - - - - - - - - - -
-Ed_Par	move.l	Name1(a5),a0
-	move.l	Name2(a5),a1
-	clr.w	(a1)
-	cmp.l	#EntNul,d3
-	beq.s	.Skip
-	move.l	d3,a2
-	move.w	(a2)+,d2
-	move.w	d2,(a1)
-	Rjsr	L_ChVerBuf2
-.Skip	move.l	(a3)+,d1
-	move.l	(a3)+,d0
-	rts
+	Lib_Empty			Ed_Par, now in src/interp/run.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 	Retour de zappeuse
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	ZapReturn
-; - - - - - - - - - - - - -
-	move.l	ChVide(a5),ParamC(a5)
-	ext.l	d0
-	move.l	d0,ParamE(a5)
-	beq.s	.Bof
-	Rjsr	L_A0ToChaine
-	move.l	a0,ParamC(a5)
-.Bof	rts
+	Lib_Empty			ZapReturn, now in src/interp/run.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 	=Prg State
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par FnPrgState
-; - - - - - - - - - - - - -
-	move.w	T_AMOState(a5),d3
-	ext.l	d3
-	Ret_Int
+	Lib_Int	FnPrgState		src/interp/run.cpp
 
 ; - - - - - - - - - - - - -
 	Lib_Def	GetInstruction
