@@ -917,269 +917,47 @@ _POk	subq.w	#1,(sp)
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					TEST INTER SANS SAUT
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	Test_PaSaut
-Test_PaSaut
-; - - - - - - - - - - - - -
-	movem.l	d0-d7/a0-a6,-(sp)
-	bset	#Bit_PaSaut,Test_Flags(a5)
-	bsr.s	Test_Normal
-	bclr	#Bit_PaSaut,Test_Flags(a5)
-	movem.l	(sp)+,d0-d7/a0-a6
-	rts
+	Lib_Int	Test_PaSaut		src/interp/control.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					TEST NORMAL
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	Test_Normal
-Test_Normal
-; - - - - - - - - - - - - -
-	tst.b	T_Actualise(a5)
-	bmi.s	Test_Force
-	rts
+	Lib_Int	Test_Normal		src/interp/control.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					TEST FORCE
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	Test_Force
-Test_Force
-; - - - - - - - - - - - - -
-	move.w	ActuMask(a5),d4
-
-; Inhibition par un autre AMOS?
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	SyCall	Test_Cyclique
-
-; Les dialogues???
-; ~~~~~~~~~~~~~~~~
-	move.l	Cur_Dialogs(a5),a0	Un dialogue?
-	tst.l	(a0)
-	beq.s	.NoDia
-	Rjsr	L_Dia_AutoTest
-	beq.s	.NoDia
-	add.w	#IDia_Errors,d0
-	Rbra	L_Error
-.NoDia
-; Les menus???
-; ~~~~~~~~~~~~
-	btst	#BitMenu,d4		Menus en route?
-	beq.s	Tst0
-	tst.l	MnBase(a5)		Un menu defini?
-	beq.s	Tst0
-	tst.w	MnProc(a5)		Pas dans une procedure menu
-	bne.s	Tst0
-	tst.l	T_ClLast(a5)		Une touche?
-	beq.s	Tst0a
-	tst.w	Direct(a5)		Pas en mode direct
-	bne.s	Tst0a
-	Rjsr	L_MenuKeyExplore
-Tst0a	btst	#10,$dff016		Afficher le menu?
-	bne.s	Tst0
-	Rjsr	L_MnGere
-	bne	RunErr
-
-; Autres choses???
-; ~~~~~~~~~~~~~~~~
-Tst0	move.w	T_Actualise(a5),d3
-	bclr	#BitControl,d3
-	bne.s	Tst00
-	and.w	d4,d3
-	beq	TstX1
-	bra.s	Tst1
-; CONTROLE-C?
-; ~~~~~~~~~~~
-Tst00	tst.l	Mon_Base(a5)			Retour au moniteur?
-	bne.s	IStop
-	btst	#BitControl,d4			Break autorise?
-	beq.s	Tst01
-IStop	move.w	d3,T_Actualise(a5)
-	moveq	#9,d0
-	bra	RunErr
-Tst01	move.w	d3,T_Actualise(a5)
-	Rjsr	L_OnBreakGo
-	bra.s	Tst1a
-
-; Branchement automatique aux menus?
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Tst1	bclr	#BitJump,d3
-	beq.s	Tst1a
-	Rjsr	L_GoMenu
-
-; Actualisation des ecrans/animations
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Tst1a	move.w	T_VblCount+2(a5),d0
-	sub.w	VBLOCount(a5),d0
-	cmp.w	VBLDelai(a5),d0
-	bcs	TstX1
-	move.w	T_VblCount+2(a5),VBLOCount(a5)
-; Bobs?
-	bclr	#BitBobs,d3
-	beq.s	Tst2
-	SyCall	EffBob
-	SyCall	ActBob
-	SyCall	AffBob
-	EcCall	SwapScS
-; Hard Sprites?
-Tst2:	bclr	#BitSprites,d3
-	beq.s	Tst3
-	SyCall	ActHs
-	SyCall	AffHs
-; Extensions?
-Tst3:	lsr.b	#1,d3
-	beq.s	Tst4
-	lea	ExtTests(a5),a1
-	bra.s	Tst3b
-Tst3a	move.l	(a1),d0
-	beq.s	Tst3b
-	move.l	d0,a0
-	jsr	(a0)
-Tst3b	addq.l	#4,a1
-	lsr.b	#1,d3
-	bcs.s	Tst3a
-	bne.s	Tst3b
-; Ecrans?
-Tst4:	bclr	#BitEcrans,d3
-	beq.s	Tst5
-	EcCall	CopMake
-Tst5:
-
-; Correction du bug CONTROL-C / Beaucoup de sprites
-	move.w	T_Actualise(a5),d0
-	and.w	#%0000000100000000,d0		BITCONTROL=8
-	or.w	d0,d3
-; Every
-; ~~~~~
-TstX1	move.w	d3,T_Actualise(a5)
-	btst	#BitEvery,d4
-	beq.s	TstX2
-	tst.w	T_EveCpt(a5)
-	bgt.s	TstX2
-	move.w	EveCharge(a5),T_EveCpt(a5)
-	bclr	#BitEvery,d4
-	Rjsr	L_EveJump
-
-TstX2	bclr 	#BitVBL,T_Actualise(a5)
-	rts
+	Lib_Int	Test_Force		src/interp/control.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					Fait le branchement ON MENU
 ;					Appele par TESTS
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	GoMenu
-GoMenu
-; - - - - - - - - - - - - -
-	btst	#Bit_PaSaut,Test_Flags(a5)	* Sauts autorises?
-	bne.s	GoMX
-	tst.w	Direct(a5)			* Mode direct???
-	bne	GoMX
-	lea	MnChoix(a5),a0
-	move.w	(a0),d0
-	beq.s	GoMX
-	cmp.w	OMnNb(a5),d0
-	bls.s	GoMGo
-* Rien trouve: FINI!
-GoMX:	rts
-;	Fait le branchement
-; ~~~~~~~~~~~~~~~~~~~~~~~~~
-GoMGo	bclr	#BitJump,d4		* Plus de jump!
-	move.w	d4,ActuMask(a5)
-	move.w	d3,T_Actualise(a5)	* Derniere bug avant master!
-	move.l	BasSp(a5),sp
-	move.l	Prg_InsRet(a5),-(sp)
-	move.l	OMnBase(a5),a0
-	lsl.w	#2,d0
-	move.l	-4(a0,d0.w),d0
-	move.w	OMnType(a5),d1
-	cmp.w	#_TkGto,d1
-	beq.s	GoMG2
-	cmp.w	#_TkGsb,d1
-	beq.s	GoMG1
-; Procedure!
-; ~~~~~~~~~~
-	move.l	d7,a6
-	subq.l	#2,a6
-	move.l	d0,a2
-	clr.w	-(sp)
-	bra	InProE
-; Gosub
-; ~~~~~
-GoMG1	move.l	d7,a6
-	subq.l	#2,a6
-	bra	Gos2
-; Goto
-; ~~~~
-GoMG2	move.l	d0,a6
-	bra	LGoto
+	Lib_Empty			GoMenu, now in src/interp/control.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 	ON BREAK : Fait le branchement en cas de BREAK
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	OnBreakGo
-; - - - - - - - - - - - - -
-	btst	#Bit_PaSaut,Test_Flags(a5)
-	beq.s	.Jmp
-.Skip	rts
-.Jmp	move.l	OnBreak(a5),d0
-	beq.s	.Skip
-	move.l	d0,a2
-	move.l	BasSp(a5),sp
-	move.l	Prg_InsRet(a5),-(sp)
-	move.l	d7,a6
-	subq.l	#2,a6
-	clr.w	-(sp)
-	bra	InProE
+	Lib_Empty			OnBreakGo, now in src/interp/control.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 	Fait le branchement a EVERY
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	EveJump
-EveJump
-; - - - - - - - - - - - - -
-	tst.l	EveLabel(a5)
-	bne.s	.Jmp
-.Skip	rts
-.Jmp	btst	#Bit_PaSaut,Test_Flags(a5)
-	bne.s	.Skip
-	move.w	d4,ActuMask(a5)
-	move.l	BasSp(a5),sp
-	move.l	Prg_InsRet(a5),-(sp)
-	move.w	EveType(a5),d0
-	cmp.w	#_TkGsb,d0
-	beq.s	.Gsb
-; Procedure!
-; ~~~~~~~~~~
-	move.l	d7,a6
-	subq.l	#2,a6
-	move.l	EveLabel(a5),a2
-	clr.w	-(sp)
-	bra	InProE
-; Gosub
-; ~~~~~
-.Gsb	move.l	EveLabel(a5),d0
-	move.l	d7,a6
-	subq.l	#2,a6
-	bra	Gos2
+	Lib_Empty			EveJump, now in src/interp/control.cpp
 
-; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-; 					Source: b.s
-; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-; 					ERREURS
-; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
 ; - - - - - - - - - - - - -
 ErrMLibs
 ; - - - - - - - - - - - - -		Cannot open math libraries
 	move.l	Prg_Run(a5),a6		Au debut du programme!
 	moveq	#12,d0
-	bra.s	RunErr
+	bra	RunErr
 ; - - - - - - - - - - - - -
 MnINDef
 ; - - - - - - - - - - - - -
 	moveq	#39,d0
-	bra.s	RunErr
-
-
-
+	bra	RunErr
 ; - - - - - - - - - - - - -
 	Lib_Def	RIllDir
 RIllDir
@@ -1284,147 +1062,15 @@ PopGsb
 TypeMis
 ; - - - - - - - - - - - - -
 	moveq	#34,d0
-
-; __________________________________________________________________________
-;
-;	Traitement des erreurs RUN TIME
-; __________________________________________________________________________
-;
-; - - - - - - - - - - - - -
-	Lib_Def	Error
-; - - - - - - - - - - - - -
+; The errors: interp/control.cpp (the local labels are for the stubs
+; above)
 RunErr:	moveq	#19,d1
 	moveq	#-1,d2
-; - - - - - - - - - - - - -
-	Lib_Def	ErrorExt
-; - - - - - - - - - - - - -
 RunErrExt
-; Recupere les registres?
-; ~~~~~~~~~~~~~~~~~~~~~~~
-	tst.b	ErrorRegs(a5)
-	beq.s	.Skip
-	clr.b	ErrorRegs(a5)
-	movem.l	ErrorSave(a5),d6-d7
-.Skip
-; Appel des routines de fermeture
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	movem.l	d0-d2/a0,-(sp)
-	lea	Sys_ErrorRoutines(a5),a1
-	SyCall	CallRoutines
-	movem.l	(sp)+,d0-d2/a0
-; Erreurs patchees?
-; ~~~~~~~~~~~~~~~~~
-	tst.l	Patch_Errors(a5)
-	bne	J_EPatch
-; Peut-on detourner l'erreur?
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	clr.l	PrintPos(a5)
-	clr.w	InputFlg(a5)
-	clr.w	ContFlg(a5)
-	cmp.w	#11,d0			* Variable space?
-	beq.s	.skip
-	cmp.w	d1,d0
-	bcs	rErr1
-.skip	cmp.w	#1000,d0		* Edit / Direct?
-	bcc	rErr1
-	tst.w	Direct(a5)		* Mode direct
-	bne	rErr1
-	tst.w	ErrorOn(a5)		* Erreur en route
-	bne	rErr1
-	cmp.l	TrapAdr(a5),d7		* TRAP?
-	beq.s	.ETrap
-	tst.l	OnErrLine(a5)		* On error goto
-	beq	rErr1
-; ON ERROR GOTO
-; ~~~~~~~~~~~~~
-	clr.l	TrapAdr(a5)		Plus de trap
-	clr.w	TrapErr(a5)
-	addq.w	#1,d0
-	addq.w	#1,d2
-	lsl.w	#8,d2
-	or.w	d2,d0
-	move.w	d0,ErrorOn(a5)		Numero de l'erreur
-	move.l	PLoop(a5),a3		Position pile expression
-	move.l	BasSp(a5),sp
-	move.l	Prg_InsRet(a5),-(sp)
-	move.l	d7,d5
-	subq.l	#2,d5
-	tst.w	ErrorChr(a5)
-	bmi.s	.rErr0
-	move.l	d5,ErrorChr(a5)		On error GOTO
-	move.l	OnErrLine(a5),a6
-	rts
-; ON ERROR PROC
-; ~~~~~~~~~~~~~
-.rErr0	move.l	d5,a6			Retour procedure= RESUME
-	move.l	OnErrLine(a5),a2
-	move.w	ErrorOn(a5),-(sp)
-	bra	InProE
-; Nouvelle intruction TRAP
-; ~~~~~~~~~~~~~~~~~~~~~~~~
-.ETrap	clr.l	TrapAdr(a5)
-	addq.w	#1,d2
-	lsl.w	#8,d2
-	or.w	d2,d0
-	move.w	d0,TrapErr(a5)
-	move.l	PLoop(a5),a3
-	move.l	BasSp(a5),sp
-	move.l	Prg_InsRet(a5),-(sp)
-	move.l	d7,d5
-	subq.l	#2,d5
-	move.l	d5,a0
-.ResN1	move.w	(a0)+,d0
-	bsr	TInst
-	bne.s	.ResN2
-	tst.w	(a0)
-	beq.s	.ResN2
-	addq.l	#2,a0
-.ResN2	tst.w	d0
-	bsr	FinieB
-	bne.s	.ResN1
-	move.l	a0,a6
-	rts
+	Rjmp	L_ErrorExt
+	Lib_Int	Error
+	Lib_Int	ErrorExt
 
-; Erreurs non d�tourn�es : les menus sont ouverts.
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-E_Retour:
-rErr1:
-; Un peu de menage...
-; ~~~~~~~~~~~~~~~~~~~
-	movem.l	a0/d0-d2,-(sp)
-; Effacement des includes
-	move.l	d7,a0
-	subq.l	#2,a0
-	Rjsr	L_Includes_Adr
-	move.l	a0,VerPos(a5)
-	Rjsr	L_Includes_Clear
-; Depile le programme
-	move.l	Prg_JError(a5),a2
-	Rjsr	L_Prg_Pull
-; Une erreur extension?
-; ~~~~~~~~~~~~~~~~~~~~~
-	movem.l	(sp)+,a0/d0-d2
-	move.w	d0,d1
-	tst.w	d2
-	bpl.s	.Ext
-; Erreur normale, branche a l'editeur
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	sub.l	a0,a0
-	bra.s	.Jmp
-; Erreur extension: trouve le message
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.ELoop	tst.b	(a0)+
-	bne.s	.ELoop
-.Ext	dbra	d1,.ELoop
-	moveq	#1,d0			Change le numero message!
-; Branche � la routine courante
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.Jmp	jmp	(a2)
-; Branchement � un detournement des erreurs
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-J_EPatch
-	move.l	Patch_Errors(a5),a0
-	jmp	(a0)
 
 
 
@@ -1453,7 +1099,7 @@ J_EPatch
 	rts
 .Err	move.l	#512,d1			Force l'arret!
 	moveq	#-1,d2
-	Rbra	L_ErrorExt
+	Rjmp	L_ErrorExt
 
 ; - - - - - - - - - - - - -
 	Lib_Def	InAPCmpCLI
@@ -1836,105 +1482,37 @@ Ed_Par	move.l	Name1(a5),a0
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ;						SAUTE UN LABEL
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InLab
-; - - - - - - - - - - - - - - - -
-	moveq	#0,d0
-	move.b	2(a6),d0
-	lea	4(a6,d0.w),a6
-	rts
+	Lib_Int	InLab		src/interp/control.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					SYSTEM
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InSystem
-InSystem
-; - - - - - - - - - - - - -
-	move.w	#1002,d0
-	bra	RunErr
+	Lib_Int	InSystem		src/interp/control.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					EDIT
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InEdit
-InEdit
-; - - - - - - - - - - - - -
-	move.w	#1000,d0
-	bra	RunErr
+	Lib_Int	InEdit		src/interp/control.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					DIRECT
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InDirect
-InDirect
-; - - - - - - - - - - - - -
-	move.w	#1001,d0
-	bra	RunErr
+	Lib_Int	InDirect		src/interp/control.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					BREAK ON / OFF
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InBreakOn
-InBreakOn
+	Lib_Int	InBreakOn		src/interp/control.cpp
 ; - - - - - - - - - - - - -
-	bset	#BitControl,ActuMask(a5)
-	clr.l	OnBreak(a5)
-	rts
-; - - - - - - - - - - - - -
-	Lib_Par InBreakOff
-InBreakOff
-; - - - - - - - - - - - - -
-	bclr	#BitControl,ActuMask(a5)
-	rts
+	Lib_Int	InBreakOff		src/interp/control.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					ON BREAK PROC label
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InOnBreak
-InOnBreak
-; - - - - - - - - - - - - -
-	bsr	GetLabel
-	beq	LbNDef
-	move.l	d0,OnBreak(a5)
-	bclr	#BitControl,ActuMask(a5)
-;	Rlea	L_OnBreakGo,0		Pas de routine de branchement
-;	move.l	a0,GoTest_OnBreak(a5)
-	rts
+	Lib_Int	InOnBreak		src/interp/control.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					ON ERROR ...
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InOnError
-InOnError
-; - - - - - - - - - - - - -
-	tst.w	ErrorOn(a5)		Error not resumed!
-	bne	NoResum
-	clr.l	OnErrLine(a5)
-	clr.l	ErrorChr(a5)
-	cmp.w	#_TkPrc,(a6)
-	beq.s	OnEPrc
-	cmp.w	#_TkGto,(a6)
-	bne.s	.Skip
-	addq.l	#2,a6
-	cmp.w	#_TkEnt,(a6)
-	bne.s	OnEg1
-	move.l	2(a6),d0
-	bne.s	OnEg1
-	addq.l	#6,a6
-.Skip	rts
-
-OnEg1	bsr	GetLabel
-	beq	LbNDef
-	move.l	d0,OnErrLine(a5)
-	rts
-
-* ON ERROR PROC
-OnEPrc:	addq.l	#4,a6
-	move.w	(a6)+,d0
-	move.b	(a6),d1
-	ext.w	d1
-	lea	2(a6,d1.w),a6
-	move.l	LabHaut(a5),a2
-	move.l	0(a2,d0.w),OnErrLine(a5)
-	bset	#7,ErrorChr(a5)
-	rts
+	Lib_Int	InOnError		src/interp/control.cpp
 ; - - - - - - - - - - - - -
 	Lib_Def	InOnErrorGoto
 	Lib_Def	InOnErrorProc
@@ -1942,264 +1520,58 @@ OnEPrc:	addq.l	#4,a6
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					RESUME LABEL
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InResumeLabel
-InResumeLabel
-; - - - - - - - - - - - - -
-	bsr	Finie
-	beq.s	ResL1
-	tst.l	OnErrLine(a5)
-	beq	NoOnErr
-	tst.w	ErrorChr(a5)
-	bpl	NoOnErr
-	bsr	GetLabel
-	beq	LbNDef
-	bset	#31,d0
-	move.l	d0,ErrorChr(a5)
-	rts
+	Lib_Int	InResumeLabel		src/interp/control.cpp
 ; - - - - - - - - - - - - -
 	Lib_Def	InResumeLabel1
 ; - - - - - - - - - - - - -
-* Resume label proprement dit
-ResL1:	bsr	Test_Normal
-	tst.w	ErrorOn(a5)
-	beq	NoErr
-	bsr	PopP
-	clr.w	ErrorOn(a5)
-	move.l	ErrorChr(a5),d0
-	bclr	#31,d0
-	beq	NoOnErr
-	tst.l	d0
-	beq	ResLNo
-	move.l	d0,a6
-	bra	LGoto
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					RESUME [label]
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InResume
-InResume
-; - - - - - - - - - - - - -
-	bsr	Test_Normal
-	tst.w	ErrorOn(a5)
-	beq	NoErr
-	tst.w	ErrorChr(a5)
-	bmi.s	ResP
-	bsr	Finie
-	bne.s	ResL
-	clr.w	ErrorOn(a5)
-	move.l	ErrorChr(a5),a6
-	bra	LGoto
-ResL:	bsr	GetLabel
-	beq	LbNDef
-	clr.w	ErrorOn(a5)
-	move.l	d0,a6
-	bra	LGoto
-* PROCEDURE ERREUR!
-ResP:	bsr	Finie			* Pas de label!
-	bne	ResPLab
-	bsr	PopP			* POPpe la procedure
-	clr.w	ErrorOn(a5)
-	bra	LGoto
+	Lib_Int	InResume		src/interp/control.cpp
 ; - - - - - - - - - - - - -
 	Lib_Def	InResume1
 ; - - - - - - - - - - - - -
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					RESUME NEXT
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InResumeNext
-InResumeNext
-; - - - - - - - - - - - - -
-	bsr	Test_Normal
-	tst.w	ErrorOn(a5)
-	beq	NoErr
-	tst.w	ErrorChr(a5)
-	bmi.s	ResNP
-	clr.w	ErrorOn(a5)
-	move.l	ErrorChr(a5),a0
-ResN1:	move.w	(a0)+,d0
-	bsr	TInst
-	bne.s	ResN2
-	tst.w	(a0)
-	beq.s	ResN2
-	addq.l	#2,a0
-ResN2:	tst.w	d0
-	bsr	FinieB
-	bne.s	ResN1
-	move.l	a0,a6
-	bra	LGoto
-* Procedure erreur!
-ResNP:	bsr	PopP
-	move.l	a6,a0
-	clr.w	ErrorOn(a5)
-	bra.s	ResN1
+	Lib_Int	InResumeNext		src/interp/control.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					TRAP
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InTrap
-InTrap
-; - - - - - - - - - - - - -
-	lea	2(a6),a0
-	move.l	a0,TrapAdr(a5)
-	clr.w	TrapErr(a5)
-	rts
+	Lib_Int	InTrap		src/interp/control.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					=TRAPERR
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par FnErrTrap
-FnErrTrap
-; - - - - - - - - - - - - -
-	moveq	#0,d3
-	move.w	TrapErr(a5),d3
-	Ret_Int
+	Lib_Int	FnErrTrap		src/interp/control.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					EVERY n PROC GOSUB label
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 	Lib_Def	InEveryGosub
 	Lib_Def	InEveryProc
-	Lib_Par InEvery
-InEvery
-; - - - - - - - - - - - - -
-;	Rlea	L_EveJump,0		Pas de routine de branchement!
-;	move.l	a0,GoTest_Every(a5)
-	bclr	#BitEvery,ActuMask(a5)
-	bsr	New_Expentier
-	tst.l	d3
-	beq	FonCall
-	cmp.l	#32767,d3
-	bcc	FonCall
-	move.w	d3,EveCharge(a5)
-	move.w	d3,T_EveCpt(a5)
-	move.w	(a6)+,EveType(a5)
-	bsr	GetLabel
-	beq	LbNDef
-	move.l	d0,EveLabel(a5)
-	bset	#BitEvery,ActuMask(a5)
-	rts
+	Lib_Int	InEvery		src/interp/control.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					EVERY OFF
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InEveryOff
-InEveryOff
-; - - - - - - - - - - - - -
-	bclr	#BitEvery,ActuMask(a5)
-	rts
+	Lib_Int	InEveryOff		src/interp/control.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					EVERY ON
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InEveryOn
-InEveryOn
-; - - - - - - - - - - - - -
-	bset	#BitEvery,ActuMask(a5)
-	rts
+	Lib_Int	InEveryOn		src/interp/control.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					FOR
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InFor
-InFor
-; - - - - - - - - - - - - -
-	move.w	(a6)+,d0		Pousse l'adresse du NEXT
-	pea	0(a6,d0.w)
-	bsr	FindVar
-	move.w	d2,-(sp)
-	move.l	a0,-(sp)
-	bsr	Fn_New_Evalue		Egalise la variable
-	move.w	4(sp),d1
-	bsr	MMType
-	move.l	(sp)+,a0
-	move.l	d3,(a0)
-	move.l	a0,-(a3)
-	bsr	Fn_New_Evalue		Cherche la limite
-	move.w	(sp),d1
-	bsr	MMType
-	move.l	d3,-(a3)
-	moveq	#0,d2
-	moveq	#1,d3
-	cmp.w	#_TkStp,(a6)
-	bne.s	For3
-	bsr	Fn_New_Evalue		Cherche la STEP
-For3:	move.w	(sp)+,d1
-	bsr	MMType
-	move.l	d3,-(a3)
-	move.w	d2,-(a3)		Poke le type
-	move.l	(sp)+,a0
-	moveq	#TForNxt,d0
-	bra	Rpt0
-* Egalise le type D3 au type demande (D1)
-MMType:	cmp.b	d1,d2
-	bne.s	MMt1
-	rts
-MMt1:	tst.b	d2
-	beq.s	.Int
-	Rjmpt	L_FlToInt1
-.Int	Rjmpt	L_IntToFl1
+	Lib_Int	InFor		src/interp/control.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					NEXT
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InNext
-InNext
-; - - - - - - - - - - - - -
-	tst.b	T_Actualise(a5)
-	bmi.s	TNext
-RNext	move.l	20(a3),a2
-	tst.b	11(a3)
-	bne.s	NextF
-	move.l	12(a3),d3
-	move.l	16(a3),d4
-; TRAVAILLE SUR ENTIERS
-	add.l 	d3,(a2)         ;ENTIER
-        tst.l 	d3
-        bpl.s 	next1
-; step negative: inferieur
-	cmp.l 	(a2),d4
-        ble.s 	nextR
-        bra.s 	nextS
-; step positive: superieur
-next1:  cmp.l 	(a2),d4
-        blt.s 	nextS
-; ON RESTE DANS LA BOUCLE!
-nextR:  move.l	6(a3),a6
-	rts
-; ON SORT DE LA BOUCLE!
-nextS: 	add.w	#TForNxt,a3
-	move.l	a3,PLoop(a5)
-	IFNE	Debug
-	move.l	a3,Chr_Debug(a5)
-	ENDC
-	cmp.w	#_TkVar,(a6)	Saute la variable
-	bne.s	.Skip
-	bsr	FindVar
-.Skip	rts
-; Appel du test
-TNext:	bsr	Test_Force
-	bra.s	RNext
-; TRAVAILLE SUR FLOAT simple precision
-NextF:	move.l	12(a3),d3
-	move.l	16(a3),d4
-	move.l	a6,-(sp)
-	move.l	FloatBase(a5),a6
-	move.l	d3,d1
-	jsr	SPTst(a6)
-	move.l	d0,d2
-	move.l	d3,d0
-	move.l 	(a2),d1
-	jsr	SPAdd(a6)
-	move.l	d0,(a2)
-	move.l	d4,d1
-	jsr	SPCmp(a6)
-	move.l	(sp)+,a6
-	blt	NextF1
-	tst.l	d2
-	bpl.s	nextS
-	bmi.s	nextR
-NextF1	tst.l	d2
-	bpl.s	nextR
-	bmi.s	nextS
+	Lib_Int	InNext		src/interp/control.cpp
 ; - - - - - - - - - - - - -
 	Lib_Def	InNextF
 	Lib_Def	InNextD
@@ -2209,202 +1581,56 @@ NextF1	tst.l	d2
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					REPEAT
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InRepeat
-InRepeat
-; - - - - - - - - - - - - -
-	move.w	(a6)+,d0
-	lea	0(a6,d0.w),a0
-	moveq	#TRptUnt,d0
-Rpt0:	tst.w	(a6)+
-	bne.s	Rpt1
-	addq.l	#2,a6
-Rpt1:	move.l	a6,-(a3)
-	move.l	a0,-(a3)
-	move.w	d0,-(a3)
-	cmp.l	MinLoop(a5),a3
-	bcs	OofStack
-	move.l	a3,PLoop(a5)
-	IFNE	Debug
-	move.l	a3,Chr_Debug(a5)
-	ENDC
-	rts
+	Lib_Int	InRepeat		src/interp/control.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					UNTIL
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InUntil
-InUntil
-; - - - - - - - - - - - - -
-	tst.b	T_Actualise(a5)
-	bmi.s	TUnt
-RUnt	bsr	New_Expentier
-	tst.l	d3
-	bne.s	Unt1
-* On reste dans la boucle
-	move.l	6(a3),a6
-	rts
-* On sort de la boucle
-Unt1:	lea	TRptUnt(a3),a3
-	move.l	a3,PLoop(a5)
-	IFNE	Debug
-	move.l	a3,Chr_Debug(a5)
-	ENDC
-	rts
-TUnt	bsr	Test_Force
-	bra.s	RUnt
+	Lib_Int	InUntil		src/interp/control.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					WHILE
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InWhile
-InWhile
-; - - - - - - - - - - - - -
-	move.w	(a6)+,d0
-	move.l	a6,-(a3)
-	add.w	d0,a6
-	move.l	a6,-(a3)
-	move.w	#TWhlWnd,-(a3)
-	cmp.l	MinLoop(a5),a3
-	bcs	OofStack
-	move.l	a3,PLoop(a5)
-	IFNE	Debug
-	move.l	a3,Chr_Debug(a5)
-	ENDC
-	bra	RWend
+	Lib_Int	InWhile		src/interp/control.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					WEND
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InWend
-InWend
-; - - - - - - - - - - - - -
-	tst.b	T_Actualise(a5)
-	bmi.s	TWend
-RWend	move.l	a6,-(sp)
-	move.l	6(a3),a6
-	bsr	New_Expentier
-	tst.l	d3
-	beq.s	Wnd1
-* On reste dans la boucle
-	addq.l	#4,sp
-	rts
-* On sort de la boucle
-Wnd1:	move.l	(sp)+,a6
-	lea	TWhlWnd(a3),a3
-	move.l	a3,PLoop(a5)
-	IFNE	Debug
-	move.l	a3,Chr_Debug(a5)
-	ENDC
-	rts
-TWend	bsr	Test_Force
-	bra.s	RWend
+	Lib_Int	InWend		src/interp/control.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					DO
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InDo
-InDo
-; - - - - - - - - - - - - -
-	bra	InRepeat
+	Lib_Int	InDo		src/interp/control.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					LOOP
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InLoop
-InLoop
-; - - - - - - - - - - - - -
-	tst.b	T_Actualise(a5)
-	bmi.s	TLoop
-RLoop	move.l	6(a3),a6
-	rts
-TLoop	bsr	Test_Force
-	bra.s	RLoop
+	Lib_Int	InLoop		src/interp/control.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					EXIT
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InExit
-InExit
-; - - - - - - - - - - - - -
-	tst.b	T_Actualise(a5)
-	bmi.s	TExit
-RExit	move.w	(a6)+,d0
-	add.w	(a6)+,a3
-	move.l	a3,PLoop(a5)
-	IFNE	Debug
-	move.l	a3,Chr_Debug(a5)
-	ENDC
-	add.w	d0,a6
-	rts
-TExit:	bsr	Test_Force
-	bra.s	RExit
+	Lib_Int	InExit		src/interp/control.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					EXIT IF
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InExitIf
-InExitIf
-; - - - - - - - - - - - - -
-	move.l	a6,-(sp)
-	addq.l	#4,a6
-	bsr	New_Expentier
-	tst.l	d3
-	beq.s	Exi1
-	move.l	(sp)+,a6
-	bra	InExit
-Exi1:	addq.l	#4,sp
-	cmp.w	#_TkVir,(a6)
-	bne.s	.Skip
-	addq.l	#8,a6
-.Skip	rts
+	Lib_Int	InExitIf		src/interp/control.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					IF
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InIf
-InIf
-; - - - - - - - - - - - - -
-.Loop	move.l	a6,-(sp)
-	addq.l	#2,a6
-	bsr	New_Expentier
-	tst.l	d3
-	bne.s	.IfV
-; Faux: ELSE/ENDIF ou ELSE IF
-	move.l	(sp)+,a6
-	move.w	(a6)+,d0
-	bclr	#0,d0			Bit 0=0 => ELSE / ENDIF
-	add.w	d0,a6
-	beq	LGoto			ENDIF ou ELSE => fini
-	subq.l	#2,a6
-	bra.s	.Loop
-; Vrai
-.IfV	addq.l	#4,sp
-	cmp.w	#_TkThen,(a6)
-	bne.s	.Skip
-	addq.l	#2,a6
-.Skip	rts
+	Lib_Int	InIf		src/interp/control.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					ELSE IF
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InElseIf
-InElseIf
-; - - - - - - - - - - - - -
-	subq.l	#2,a6
-	bra	InElse
+	Lib_Int	InElseIf		src/interp/control.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					ELSE
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InElse
-InElse
-; - - - - - - - - - - - - -
-	move.w	(a6)+,d0
-	bclr	#0,d0
-	add.w	d0,a6
-	bne.s	InElseIf
-	cmp.w	#_TkElse,-4(a6)
-	beq.s	InElseIf
-	bra	LGoto
+	Lib_Int	InElse		src/interp/control.cpp
 ; - - - - - - - - - - - - -
 	Lib_Def	FnElse
 ; - - - - - - - - - - - - -
@@ -2414,71 +1640,17 @@ InElse
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					GOSUB
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InGosub
-InGosub
-; - - - - - - - - - - - - -
-	tst.b	T_Actualise(a5)
-	bmi.s	TGosub
-RGosub	bsr	GetLabel
-	beq	LbNDef
-Gos2:	move.l	BasA3(a5),-(a3)
-	move.l	a6,-(a3)
-	move.l	#"Gosb",-(a3)
-	cmp.l	MinLoop(a5),a3
-	bcs	OofStack
-	move.l	a3,PLoop(a5)
-	IFNE	Debug
-	move.l	a3,Chr_Debug(a5)
-	ENDC
-	move.l	a3,BasA3(a5)
-	move.l	d0,a6
-	rts
-TGosub:	bsr	Test_Force
-	bra.s	RGosub
+	Lib_Int	InGosub		src/interp/control.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					RETURN
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InReturn
-InReturn
-; - - - - - - - - - - - - -
-	tst.b	T_Actualise(a5)
-	bmi.s	TRetN
-RRetN	move.l	BasA3(a5),a3
-	move.l	#"Gosb",d0
-	cmp.l	(a3)+,d0
-	bne	RetGsb
-	move.l	(a3)+,a6
-	move.l	(a3)+,BasA3(a5)
-	move.l	a3,PLoop(a5)
-	IFNE	Debug
-	move.l	a3,Chr_Debug(a5)
-	ENDC
-	rts
-TRetN	bsr	Test_Force
-	bra.s	RRetN
+	Lib_Int	InReturn		src/interp/control.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					POP
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InPop
-InPop
-; - - - - - - - - - - - - -
-	tst.b	T_Actualise(a5)
-	bmi.s	TPop
-RPop	move.l	BasA3(a5),a3		BUG si POP au milieu d'une boucle
-	move.l	#"Gosb",d0
-	cmp.l	(a3)+,d0
-	bne	PopGsb
-	addq.l	#4,a3
-	move.l	(a3)+,BasA3(a5)
-	move.l	a3,PLoop(a5)
-	IFNE	Debug
-	move.l	a3,Chr_Debug(a5)
-	ENDC
-	bra	LGoto
-TPop:	bsr	Test_Force
-	bra	RPop
+	Lib_Int	InPop		src/interp/control.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					PASSAGE SUR PROCEDURE
@@ -2490,484 +1662,52 @@ TPop:	bsr	Test_Force
 	Lib_Def	PrgInF
 	Lib_Def	PrgInD
 ; - - - - - - - - - - - - -
-	Lib_Par InProcedure
-InProcedure
-; - - - - - - - - - - - - -
-	move.l	(a6)+,d0
-	lea	4(a6,d0.l),a6
-	rts
+	Lib_Int	InProcedure		src/interp/control.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					PROC
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InProc
-InProc
-; - - - - - - - - - - - - -
-	addq.w	#2,a6
-	bra	CallProc
+	Lib_Int	InProc		src/interp/control.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					APPEL PROCEDURE
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	CallProc
-CallProc
-; - - - - - - - - - - - - -
-	tst.b	T_Actualise(a5)
-	bmi	TInPro
-RInPro	move.w	(a6)+,d0
-	move.b	(a6),d1
-	ext.w	d1
-	lea	2(a6,d1.w),a6
-	move.l	LabHaut(a5),a2
-	move.l	0(a2,d0.w),a2
-	clr.w	-(sp)
-* Entree pour la routine d'erreur
-InProE	clr.l	-(sp)
-* Bas de la zone de variables
-InPrOn2	addq.l	#6,a2
-* Assez de m�moire?
-	move.l	TabBas(a5),a1
-	lea	-6-4(a1),a0
-	sub.w	(a2),a0
-	cmp.l	HiChaine(a5),a0
-	bcc.s	InP0b
-	move.l	a1,-(sp)
-	moveq	#0,d3
-	Rbsr	L_Menage
-	move.l	(sp)+,a1
-
-;	IFNE	Debug>1
-;	movem.l	d0-d7/a0-a6,-(sp)
-;	moveq	#20,d3
-;	JJsrIns	L_InBell1,1
-;	movem.l	(sp)+,d0-d7/a0-a6
-;	ENDC
-;	IFNE	Debug>3
-;	Rjsr	L_PreBug
-;	ENDC
-
-* Recule les piles de variables
-InP0b	move.l	VarLoc(a5),-(a1)
-	move.w	#$FFFF,-(a1)
-	move.l	a1,a0
-	sub.w	(a2)+,a0
-	addq.l	#2,a2
-	move.l	a0,-(sp)
-* Nettoie les variables
-	move.l	a1,d0
-	sub.l	a0,d0
-	beq.s	.Clr3
-	lsr.l	#2,d0
-	bcc.s	.Clr1
-	clr.w	(a0)+
-.Clr1	subq.w	#1,d0
-.Clr2	clr.l	(a0)+
-	dbra	d0,.Clr2
-.Clr3	move.b	4(a2),d0
-	ext.w	d0
-	lea	6(a2,d0.w),a2
-	cmp.w	#_TkBra1,(a6)
-	bne.s	InPx
-* Recupere les variables
-InPa:	addq.l	#2,a6
-	pea	4(a2)
-	bsr	New_Evalue
-	move.l	(sp)+,a2
-	move.w	(a2)+,d0
-	bmi	InPaGlo
-	move.l	(sp),a1
-	lea	2(a1,d0.w),a1
-InPa0	move.b	(a2)+,d0
-	ext.w	d0
-	move.b	(a2)+,d1
-	add.w	d0,a2
-	and.w	#$0F,d1
-	lea	Long_Var(a5),a0
-	move.b	0(a0,d1.w),-2(a1)	Longueur de la variable
-	move.b	d1,-1(a1)		Flag
-	cmp.b	d1,d2			Des conversions?
-	beq.s	InPe
-	move.l	a1,-(sp)
-	tst.b	d2
-	bne.s	InPc
-	Rjsrt	L_IntToFl1
-	bra.s	InPd
-InPc	Rjsrt	L_FlToInt1
-InPd	move.l	(sp)+,a1
-InPe	move.l	d3,(a1)
-	cmp.b	#8,-2(a1)		Si Float double
-	bne.s	.Skip
-	move.l	d4,4(a1)		Met la suite
-.Skip	cmp.w	#_TkVir,(a6)
-	beq.s	InPa
-	addq.l	#2,a6
-	addq.l	#2,a2
-* Descend les limites
-InPx	move.l	(sp)+,a0
-	lea	-8(a0),a1
-	cmp.l	HiChaine(a5),a1
-	bcs.s	ReFaire
-	move.l	(sp)+,d0
-	beq.s	InPx1
-	move.l	d0,a6
-InPx1	move.l	BasA3(a5),-(a3)
-	move.l	VarLoc(a5),-(a3)
-	move.l	TabBas(a5),-(a3)
-	move.l	OnErrLine(a5),-(a3)
-	move.l	ErrorChr(a5),-(a3)
-	move.w	ErrorOn(a5),-(a3)
-	move.l	PData(a5),-(a3)
-	move.l	AData(a5),-(a3)
-	move.l	DProc(a5),-(a3)
-	move.l	a6,-(a3)
-	move.l	#"Proc",-(a3)		* Code anti crash!!!
-	cmp.l	MinLoop(a5),a3
-	bcs	OofStack
-	move.l	a3,PLoop(a5)
-	IFNE	Debug
-	move.l	a3,Chr_Debug(a5)
-	ENDC
-	move.l	a3,BasA3(a5)
-	move.l	a0,VarLoc(a5)
-	move.l	a0,TabBas(a5)
-	clr.l	OnErrLine(a5)
-	move.l	a2,a6
-	addq.l	#2,a2
-	move.l	a2,DProc(a5)
-	move.l	a2,PData(a5)
-	clr.l	AData(a5)
-* Erreurs
-	move.w	(sp)+,ErrorOn(a5)
-* Branche a la procedure
-	rts
-* Les variables ont ete effacees par les chaines!
-ReFaire	move.l	TabBas(a5),d3
-	lea	-16(a0),a0
-	sub.l	a0,d3
-	bra	Demande
-* Test entree de procedure
-TInPro	bsr	Test_Force
-	bra	RInPro
-* Si variable globale
-InPaGlo	move.l	VarGlo(a5),a1
-	neg.w	d0
-	lea	1(a1,d0.w),a1
-	bra	InPa0
+	Lib_Int	CallProc		src/interp/control.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					END PROC
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InEndProc
-InEndProc
-; - - - - - - - - - - - - -
-	tst.b	T_Actualise(a5)
-	bmi.s	TEProc
-REProc	cmp.w	#_TkBra1,(a6)
-	bne.s	EPro1
-	bsr	FnEProc
-EPro1:	tst.w	ErrorOn(a5)
-	bne	EProErr
-* Protection anti crash!!!
-EPro2	move.l	(a3),d0
-	addq.l	#2,a3
-	cmp.l	#"Proc",d0
-	bne.s	EPro2
-	addq.l	#2,a3
-* Ok!
-	move.l	(a3)+,d0
-	move.l	(a3)+,DProc(a5)
-	move.l	(a3)+,AData(a5)
-	move.l	(a3)+,PData(a5)
-	move.w	(a3)+,ErrorOn(a5)
-	move.l	(a3)+,ErrorChr(a5)
-	move.l	(a3)+,OnErrLine(a5)
-	move.l	(a3)+,TabBas(a5)
-	move.l	(a3)+,VarLoc(a5)
-	move.l	(a3)+,BasA3(a5)
-	move.l	a3,PLoop(a5)
-	IFNE	Debug
-	move.l	a3,Chr_Debug(a5)
-	ENDC
-	move.l	d0,a6
-	tst.l	d0
-	beq.s	.Menu
-	rts
-* Retour au MENU!!!
-.Menu	move.l	MnPile(a5),a0
-	lea	-4(a0),sp
-	rts
-TEProc:	bsr	Test_Force
-	bra.s	REProc
-
-; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-; 					Routine: retourne ENDPROC[x]
-; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-FnEProc
-; - - - - - - - - - - - - -
-	bsr	Fn_New_Evalue
-	subq.b	#1,d2
-	bmi.s	FnE1
-	beq.s	FnE2
-	move.l	d3,ParamC(a5)
-	rts
-FnE1:	move.l	d3,ParamE(a5)
-	rts
-FnE2:	move.l	d3,ParamF(a5)
-	tst.b	MathFlags(a5)
-	bmi.s	.Dble
-	rts
-.Dble	move.l	d4,ParamF2(a5)
-	rts
+	Lib_Int	InEndProc		src/interp/control.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					POP PROC
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InPopProc
-InPopProc
-; - - - - - - - - - - - - -
-	tst.b	T_Actualise(a5)
-	bmi.s	TPopPro
-RPopPro	tst.w	ErrorOn(a5)
-	bne	EProErr
-	cmp.w	#_TkBra1,(a6)
-	bne.s	.Skip
-	bsr.s	FnEProc
-.Skip	bsr	PopP
-	rts
-TPopPro	bsr	Test_Force
-	bra.s	RPopPro
+	Lib_Int	InPopProc		src/interp/control.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					Routine Pop Proc
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	PopP
-PopP
-; - - - - - - - - - - - - -
-	move.l	BasA3(a5),a3
-* Protection anti crash!!!
-.Loop	move.l	(a3),d0
-	addq.l	#2,a3
-	cmp.l	#"Proc",d0
-	bne.s	.Loop
-	addq.l	#2,a3
-* Ok!
-	move.l	(a3)+,d0
-	move.l	(a3)+,DProc(a5)
-	move.l	(a3)+,AData(a5)
-	move.l	(a3)+,PData(a5)
-	move.w	(a3)+,ErrorOn(a5)
-	move.l	(a3)+,ErrorChr(a5)
-	move.l	(a3)+,OnErrLine(a5)
-	move.l	(a3)+,TabBas(a5)
-	move.l	(a3)+,VarLoc(a5)
-	tst.l	d0
-	beq	FonCall
-	move.l	d0,a6
-	move.l	(a3)+,BasA3(a5)
-	move.l	a3,PLoop(a5)
-	IFNE	Debug
-	move.l	a3,Chr_Debug(a5)
-	ENDC
-	rts
+	Lib_Empty			PopP, now in src/interp/control.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					GOTO interne: appel direct
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	Goto2
-Goto2
-; - - - - - - - - - - - - -
-	move.w	(a6),d0
-	move.l	LabHaut(a5),a0
-	move.l	0(a0,d0.w),a6
-	bra.s	LGoto
+	Lib_Int	Goto2		src/interp/control.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					GOTO
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InGoto
-InGoto
-; - - - - - - - - - - - - -
-	tst.b	T_Actualise(a5)
-	bmi.s	TGoto
-RGoto	bsr	GetLabel
-	beq	LbNDef
-	move.l	d0,a6
-;	Routine GOTO
-; ~~~~~~~~~~~~~~~~~~
-LGoto	move.l	BasA3(a5),d0
-.Loop	cmp.l	d0,a3
-	bcc.s	.Ret
-	cmp.l	6(a3),a6
-	bcs.s	.Skip
-	cmp.l	2(a3),a6
-	bls.s	.Ret
-.Skip	add.w	(a3),a3
-	bra.s	.Loop
-.Ret	move.l	a3,PLoop(a5)
-	IFNE	Debug
-	move.l	a3,Chr_Debug(a5)
-	ENDC
-	rts
-; Test pour GOTO
-; ~~~~~~~~~~~~~~
-TGoto:	bsr	Test_Force
-	bra.s	RGoto
+	Lib_Int	InGoto		src/interp/control.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					ON
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InOn
-InOn
-; - - - - - - - - - - - - -
-	tst.b	T_Actualise(a5)
-	bmi	TOn
-ROn	move.w	(a6)+,d0
-	pea	2(a6,d0.w)
-	move.w	(a6)+,-(sp)
-	bsr	New_Expentier
-	moveq	#0,d2
-	move.w	(sp),d2
-	move.w	(a6)+,(sp)
-	subq.l	#1,d3
-	bmi.s	OnR
-	beq.s	OnG
-	cmp.l	d2,d3
-	bcc.s	OnR
-* Pointe le bon label et fait le saut
-	move.w	d3,-(sp)
-On1	bsr	GetLabel
-* Pour version 2!
-*	cmp.w	#_TkBra1,(a6)+
-*	bne.s	On1b
-*On1a	cmp.w	#_TkBra2,(a6)+
-*	bne.s	On1a
-*	cmp.w	#_TkVir,(a6)
-*	bne.s	On1a
-	addq.l	#2,a6
-On1b	subq.w	#1,(sp)
-	bne.s	On1
-	addq.l	#2,sp
-OnG:	move.w	(sp)+,d1
-	move.l	(sp)+,a0
-	cmp.w	#_TkGto,d1
-	beq	InGoto
-	cmp.w	#_TkPrc,d1
-	beq.s	ROnP
-	move.l	BasA3(a5),-(a3)		On Gosub
-	move.l	a0,-(a3)
-	move.l	#"Gosb",-(a3)
-	cmp.l	MinLoop(a5),a3
-	bcs	OofStack
-	bsr	GetLabel
-	beq	LbNDef
-	move.l	d0,a6
-	move.l	a3,PLoop(a5)
-	IFNE	Debug
-	move.l	a3,Chr_Debug(a5)
-	ENDC
-	move.l	a3,BasA3(a5)
-	rts
-* Appel d'une procedure
-ROnP	clr.w	-(sp)			* Flag
-	move.l	a0,-(sp)		* Adresse de retour
-	bsr	GetLabel
-	move.l	d0,a2			* Adresse procedure
-	bra	InPrOn2
-* Passe a l'instruction suivante
-OnR:	addq.l	#2,sp
-	move.l	(sp)+,a6
-	rts
-; Test pour ON
-; ~~~~~~~~~~~~
-TOn	bsr	Test_Force
-	bra	ROn
+	Lib_Int	InOn		src/interp/control.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					GETLABEL
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	GetLabelE
-	Lib_Def	GetLabelA
-	Lib_Def	GetLabel
-GetLabel
-; - - - - - - - - - - - - -
-	move.w	(a6)+,d0
-	cmp.w	#_TkPro,d0
-	beq.s	GLb0
-	cmp.w	#_TkLGo,d0
-	bne.s	GLb1
-* Un label NORMAL!!!
-GLb0	move.w	(a6)+,d0
-	move.l	LabHaut(a5),a0
-	move.b	(a6),d1
-	ext.w	d1
-	lea	2(a6,d1.w),a6
-	move.l	0(a0,d0.w),d0
-	rts
-* Une expression
-GLb1	subq.l	#2,a6
-	bsr	New_Evalue
-	subq.b	#1,d2
-	bmi.s	GLb2
-	bne.s	GLb3
-	Rjsrt	L_FlToInt1
-* Ecrit le chiffre dans le buffer!
-GLb2	move.l	BufLabel(a5),a1
-	move.l	a1,a0
-	move.l	d3,d0
-	Rjsr	L_LongToDec
-	move.l	a0,d2
-	sub.l	a1,d2
-	beq.s	GLabE
-	move.l	a1,d3
-	bra.s	GLab
-* Chaine alphanumerique
-GLb3	move.l	d3,a2
-	move.w	(a2)+,d2
-	beq.s	GLabE
-	cmp.w	#32,d2
-	bcc.s	GLabE
-	move.w	d2,d1
-	subq.w	#1,d1
-	move.l	BufLabel(a5),a0
-	move.l	a0,d3
-GLab0	move.b	(a2)+,d0
-	cmp.b	#"A",d0
-	bcs.s	GLab1
-	cmp.b	#"Z",d0
-	bhi.s	GLab1
-	add.b	#32,d0
-GLab1	move.b	d0,(a0)+
-	dbra	d1,GLab0
-* Rend pair
-GLab	btst	#0,d2
-	beq.s	GLab2
-	clr.b	(a0)+
-	addq.w	#1,d2
-* Trouve le label
-GLab2	move.l	LabBas(a5),a1
-GLab3	move.l	a1,a0
-	move.b	(a0),d1
-	beq.s	GLabE
-	ext.w	d1
-	cmp.w	d2,d1
-	bne.s	GLabN
-	move.l	d3,a2
-	addq.l	#8,a0
-	move.w	d1,d0
-	subq.w	#1,d0
-GLab4	cmp.b	(a0)+,(a2)+
-	bne.s	GLabN
-	dbra	d0,GLab4
-* Label trouve!
-GLabT	move.l	4(a1),d0
-	rts
-* Label suivant
-GLabN	lea	8(a1,d1.w),a1
-	bra.s	GLab3
-* Label pas trouve!
-GLabE	moveq	#0,d0
-	rts
-* Erreur!
-LbNDef:	moveq	#40,d0
-	bra	RunErr
+	Lib_Empty			GetLabelE, now in src/interp/control.cpp
+	Lib_Empty			GetLabelA, now in src/interp/control.cpp
+	Lib_Empty			GetLabel, now in src/interp/control.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					Instruction finie?
@@ -3321,27 +2061,7 @@ GetTablo	Rjmp	L_GetTablo
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ;						Instruction RESTORE
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InRestore
-; - - - - - - - - - - - - - - - -
-	bsr	Finie
-	bne.s	InRs1
-* Sans label
-	move.l	DProc(a5),PData(a5)
-	clr.l	AData(a5)
-	rts
-* Avec label
-InRs1:	bsr	GetLabel
-	beq	LbNDef
-	move.l	d0,a0
-	cmp.w	#_TkData,(a0)+
-	bne.s	InRs2
-	move.w	(a0),d0
-	sub.w	d0,a0
-	move.l	a0,PData(a5)
-	clr.l	AData(a5)
-	rts
-InRs2	moveq	#41,d0
-	bra	RunErr
+	Lib_Int	InRestore		src/interp/control.cpp
 ; - - - - - - - - - - - - -
 	Lib_Def	InRestore1
 ; - - - - - - - - - - - - -
@@ -3583,41 +2303,7 @@ FilNO	moveq	#DEBase+18,d0
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					CALL PROCEDURE LANGAGE MACHINE
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par In_apml_
-; - - - - - - - - - - - - -
-; Des parametres � empiler?
-; ~~~~~~~~~~~~~~~~~~~~~~~~~
-	move.w	(a6)+,d0
-	beq.s	.PaPar
-	moveq	#0,d1
-	lea	-2+2(a6,d0.w),a2
-.PaL	move.w	(a2)+,d0
-	bmi.s	.Glo
-	move.l	VarLoc(a5),a0
-	lea	2(a0,d0.w),a0
-.Glo2	move.l	(a0),-(a3)
-	move.b	(a2)+,d1
-	lea	1(a2,d1.w),a2
-	cmp.w	#_TkVir,(a2)+
-	addq.l	#2,a2
-	beq.s	.PaL
-; Appelle la routine
-; ~~~~~~~~~~~~~~~~~~
-.PaPar	movem.l	a3-a6/d6-d7,-(sp)
-	lea	CallReg(a5),a4
-	move.l	a4,-(sp)
-	movem.l	(a4),d0-d7/a0-a2
-	jsr	(a6)
-.Return	move.l	(sp)+,a4
-	movem.l	d0-d7/a0-a2,(a4)
-	movem.l	(sp)+,a3-a6/d6-d7
-	move.l	d0,ParamE(a5)
-	bra	PopP
-; Si variable globale
-.Glo	move.l	VarGlo(a5),a0
-	neg.w	d0
-	lea	1(a0,d0.w),a0
-	bra.s	.Glo2
+	Lib_Int	In_apml_		src/interp/control.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					CALL
@@ -4134,49 +2820,7 @@ FinMenS movem.l (sp)+,d1-d7/a2-a6
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					ON MENU
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InOnMenu
-; - - - - - - - - - - - - -
-	Rjsr	L_OMnEff
-;	Rlea	L_GoMenu,0		Pas de routine de branchement
-;	move.l	a0,GoTest_GoMenu(a5)
-	move.w	(a6)+,-(sp)
-*	Cherche les labels
-	clr.w	-(sp)
-OnMn1	bsr	GetLabel
-	beq	LbNDef
-	move.l	d0,-(a3)
-	addq.w	#1,(sp)
-	cmp.w	#_TkVir,(a6)+
-	beq.s	OnMn1
-	subq.l	#2,a6
-* 	Taille
-	move.w	(sp)+,d2
-	move.w	d2,OMnNb(a5)
-	moveq	#0,d1
-	move.w	d2,d1			* Nb de labesl*4
-	lsl.w	#2,d1
-	move.l	d1,d0
-	SyCall	MemFast
-	beq	OOfMem
-	move.l	a0,OMnBase(a5)
-	add.l	d1,a0
-* Poke les jumps
-	subq.w	#1,d2
-OnMn2	move.l	(a3)+,-(a0)
-	dbra	d2,OnMn2
-* Goto/Gosub/Proc
-	move.w	(sp)+,OMnType(a5)
-* Plus de branchements
-	bclr	#BitJump,ActuMask(a5)
-* Branche la routine Clearvar
-	lea	.Struc(pc),a1
-	lea	Sys_ClearRoutines(a5),a2
-	SyCall	AddRoutine
-	rts
-; Structure clearvar
-; ~~~~~~~~~~~~~~~~~~
-.Struc	dc.l	0
-	Rjmp	L_OMnEff
+	Lib_Int	InOnMenu		src/interp/control.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					MENU$(,,,)=
@@ -4209,18 +2853,7 @@ OnMn2	move.l	(a3)+,-(a0)
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					Entree appel de procedure menu
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	MenuProcedure
-; - - - - - - - - - - - - -
-	move.l	a0,d3			Le nom du label
-	bsr	GLb3			Va chercher le label
-	beq.s	.Err
-	move.l	d0,a2			Adresse de la procedure
-	sub.l	a6,a6			Pas de retour!
-	move.l	Prg_InsRet(a5),-(sp)
-	clr.w	-(sp)			Pas d'erreur
-	bra	InProE			Va a la procedure
-.Err	moveq	#-1,d0			Une Erreur!
-	rts
+	Lib_Int	MenuProcedure		src/interp/control.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 	SOUS PROGRAMME UTILISE PAR VAL ET INPUT
@@ -4485,188 +3118,63 @@ bh1:    bsr 	minichr
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ;       Conversion entier >>> float dans le dernier operateur
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	IntToFl1
+	Lib_Int	IntToFl1		src/interp/float.cpp
 ; - - - - - - - - - - - - -
-	move.l	d3,d0
-	move.l	a6,d3
-	move.l	FloatBase(a5),a6
-	jsr	_LVOSPFlt(a6)
-	move.l	d3,a6
-	move.l	d0,d3
-	Ret_Float
-; - - - - - - - - - - - - -
-	Lib_Def	DIntToFl1
-; - - - - - - - - - - - - -
-	move.l	d3,d0
-	move.l	a6,d3
-	move.l	DFloatBase(a5),a6
-	jsr	_LVOIEEEDPFlt(a6)
-	move.l	d3,a6
-	move.l	d0,d3
-	move.l	d1,d4
-	Ret_Float
+	Lib_Int	DIntToFl1		src/interp/float.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					ENTIER >>> FLOAT
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ;       Conversion entier >>> float dans la pile
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	IntToFl2
+	Lib_Int	IntToFl2		src/interp/float.cpp
 ; - - - - - - - - - - - - -
-	move.l	4(a3),d0
-	move.l	a6,d4
-	move.l	FloatBase(a5),a6
-	jsr	_LVOSPFlt(a6)
-	move.l	d4,a6
-	move.l	d0,4(a3)
-	move.b	#1,3(a3)
-	rts
-; - - - - - - - - - - - - -
-	Lib_Def	DIntToFl2
-; - - - - - - - - - - - - -
-	movem.l	4(a3),d0-d1
-	move.l	a6,-(sp)
-	move.l	DFloatBase(a5),a6
-	jsr	_LVOIEEEDPFlt(a6)
-	move.l	(sp)+,a6
-	movem.l	d0-d1,4(a3)
-	move.b	#1,3(a3)
-	rts
+	Lib_Int	DIntToFl2		src/interp/float.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					FLOAT >>> ENTIER
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ;       Conversion float >>> entier dans le dernier operateur
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	FlToInt1
+	Lib_Int	FlToInt1		src/interp/float.cpp
 ; - - - - - - - - - - - - -
-	move.l	d3,d0
-	move.l	a6,d3
-	move.l	FloatBase(a5),a6
-	jsr	_LVOSPFix(a6)
-	move.l	d3,a6
-	move.l	d0,d3
-	Ret_Int
-; - - - - - - - - - - - - -
-	Lib_Def	DFlToInt1
-; - - - - - - - - - - - - -
-	move.l	d3,d0
-	move.l	d4,d1
-	move.l	a6,d3
-	move.l	DFloatBase(a5),a6
-	jsr	_LVOIEEEDPFix(a6)
-	move.l	d3,a6
-	move.l	d0,d3
-	Ret_Int
+	Lib_Int	DFlToInt1		src/interp/float.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					FLOAT >>> ENTIER
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ;       Conversion float >>> entier dans la pile
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	FlToInt2
+	Lib_Int	FlToInt2		src/interp/float.cpp
 ; - - - - - - - - - - - - -
-	move.l	4(a3),d0
-	move.l	a6,d4
-	move.l	FloatBase(a5),a6
-	jsr	_LVOSPFix(a6)
-	move.l	d4,a6
-	move.l	d0,4(a3)
-	clr.b	3(a3)
-	rts
-; - - - - - - - - - - - - -
-	Lib_Def	DFlToInt2
-; - - - - - - - - - - - - -
-	movem.l	4(a3),d0-d1
-	move.l	a6,-(sp)
-	move.l	DFloatBase(a5),a6
-	jsr	_LVOIEEEDPFix(a6)
-	move.l	(sp)+,a6
-	movem.l	d0-d1,4(a3)
-	clr.b	3(a3)
-	rts
+	Lib_Int	DFlToInt2		src/interp/float.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					FONCTION MATHEMATIQUE
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ;       Fait une fonction mathematique
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	Math_Fonction
+	Lib_Int	Math_Fonction		src/interp/float.cpp
 ; - - - - - - - - - - - - -
-	move.l	d3,d0
-	move.l	a6,d3
-	move.l	MathBase(a5),a6
-	jsr	0(a6,d2.w)
-	move.l	d3,a6
-	move.l	d0,d3
-	Ret_Float
-; - - - - - - - - - - - - -
-	Lib_Def	DMath_Fonction
-; - - - - - - - - - - - - -
-	move.l	d3,d0
-	move.l	d4,d1
-	move.l	a6,d3
-	move.l	DMathBase(a5),a6
-	jsr	0(a6,d2.w)
-	move.l	d3,a6
-	move.l	d0,d3
-	move.l	d1,d4
-	Ret_Float
+	Lib_Int	DMath_Fonction		src/interp/float.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					COMPARAISONS FLOAT
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ;       Fait une comparaison float
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	Float_Compare
+	Lib_Int	Float_Compare		src/interp/float.cpp
 ; - - - - - - - - - - - - -
-	move.l	d3,d1
-	move.l	4(a3),d0
-	move.l	a6,d3
-	move.l	FloatBase(a5),a6
-	jsr	_LVOSPCmp(a6)
-	move.l	d3,a6
-	rts
-; - - - - - - - - - - - - -
-	Lib_Def	DFloat_Compare
-; - - - - - - - - - - - - -
-	movem.l	4(a3),d0-d1
-	move.l	d3,d2
-	move.l	d4,d3
-	move.l	a6,d4
-	move.l	DFloatBase(a5),a6
-	jsr	_LVOIEEEDPCmp(a6)
-	move.l	d4,a6
-	rts
+	Lib_Int	DFloat_Compare		src/interp/float.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					Operation FLOAT
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ;       Fait une operation float
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	Float_Operation
+	Lib_Int	Float_Operation		src/interp/float.cpp
 ; - - - - - - - - - - - - -
-	move.l	4(a3),d0
-	move.l	d3,d1
-	move.l	a6,d4
-	move.l	FloatBase(a5),a6
-	jsr	0(a6,d2.w)
-	move.l	d4,a6
-	move.l	d0,d3
-	Ret_Float
-; - - - - - - - - - - - - -
-	Lib_Def	DFloat_Operation
-; - - - - - - - - - - - - -
-	movem.l	4(a3),d0-d1
-	exg	d3,d2
-	exg	d4,d3
-	move.l	a6,-(sp)
-	move.l	DFloatBase(a5),a6
-	jsr	0(a6,d4.w)
-	move.l	(sp)+,a6
-	move.l	d0,d3
-	move.l	d1,d4
-	Ret_Float
+	Lib_Int	DFloat_Operation		src/interp/float.cpp
 
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -4674,192 +3182,56 @@ bh1:    bsr 	minichr
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ;       Fait un TST sur le float D3
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	Float_Test
+	Lib_Int	Float_Test		src/interp/float.cpp
 ; - - - - - - - - - - - - -
-	move.l	d3,d1
-	move.l	a6,d4
-	move.l	FloatBase(a5),a6
-	jsr	_LVOSPTst(a6)
-	move.l	d4,a6
-	rts
-; - - - - - - - - - - - - -
-	Lib_Def	Float_TestF
-; - - - - - - - - - - - - -
-	move.l	d3,d0
-	move.l	d4,d1
-	move.l	a6,d5
-	move.l	DFloatBase(a5),a6
-	jsr	_LVOIEEEDPTst(a6)
-	move.l	d5,a6
-	rts
+	Lib_Int	Float_TestF		src/interp/float.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					Operation MATH
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ;       Fait une operation Math
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	Math_Operation
+	Lib_Int	Math_Operation		src/interp/float.cpp
 ; - - - - - - - - - - - - -
-	move.l	4(a3),d0
-	move.l	d3,d1
-	move.l	a6,d4
-	move.l	MathBase(a5),a6
-	jsr	0(a6,d2.w)
-	move.l	d4,a6
-	move.l	d0,d3
-	Ret_Float
-; - - - - - - - - - - - - -
-	Lib_Def	DMath_Operation
-; - - - - - - - - - - - - -
-	movem.l	4(a3),d0-d1
-	exg	d3,d2
-	exg	d4,d3
-	move.l	a6,-(sp)
-	move.l	DMathBase(a5),a6
-	jsr	0(a6,d4.w)
-	move.l	(sp)+,a6
-	move.l	d0,d3
-	move.l	d1,d4
-	Ret_Float
+	Lib_Int	DMath_Operation		src/interp/float.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					FONCTION FLOAT
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ;       Fait une fonction float
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	Float_Fonction
+	Lib_Int	Float_Fonction		src/interp/float.cpp
 ; - - - - - - - - - - - - -
-	move.l	d3,d0
-	move.l	a6,d3
-	move.l	FloatBase(a5),a6
-	jsr	0(a6,d2.w)
-	move.l	d3,a6
-	move.l	d0,d3
-	Ret_Float
-; - - - - - - - - - - - - -
-	Lib_Def	DFloat_Fonction
-; - - - - - - - - - - - - -
-	move.l	d3,d0
-	move.l	d4,d1
-	move.l	a6,d3
-	move.l	DFloatBase(a5),a6
-	jsr	0(a6,d2.w)
-	move.l	d3,a6
-	move.l	d0,d3
-	move.l	d1,d4
-	Ret_Float
+	Lib_Int	DFloat_Fonction		src/interp/float.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					Verifie que le float est positif
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	FlPos			Simple precision
+	Lib_Int	FlPos		src/interp/float.cpp
 ; - - - - - - - - - - - - -
-	btst	#7,d3
-	Rbne	L_FonCall
-	rts
-; - - - - - - - - - - - - -
-	Lib_Def	FlPosD			Double precision
-; - - - - - - - - - - - - -
-	btst	#31,d3
-	Rbne	L_FonCall
-	rts
+	Lib_Int	FlPosD		src/interp/float.cpp
 
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					RETOURNE UN ANGLE
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	AAngle			SFloat
+	Lib_Int	AAngle		src/interp/float.cpp
 ; - - - - - - - - - - - - -
-	move.l	d3,d0			Appel de la fonction
-	move.l	a6,d3
-	move.l	MathBase(a5),a6
-	jsr	0(a6,d2.w)
-	tst.w	Angle(a5)
-	beq.s	.AAnX
-	move.l	FloatBase(a5),a6
-	move.l	ValPi(a5),d1
-	jsr	_LVOSPDiv(a6)
-	move.l	Val180(a5),d1
-	jsr	_LVOSPMul(a6)
-.AAnX	move.l	d3,a6
-	move.l	d0,d3
-	Ret_Float
-; - - - - - - - - - - - - -
-	Lib_Def	AAngleD			DFloat
-; - - - - - - - - - - - - -
-	move.l	d3,d0			Appel de la fonction
-	move.l	d4,d1
-	move.l	a6,-(sp)
-	move.l	DMathBase(a5),a6
-	jsr	0(a6,d2.w)
-	tst.w	Angle(a5)
-	beq.s	.AAnY
-	move.l	DFloatBase(a5),a6
-	move.l	ValPi(a5),d2
-	move.l	ValPi+4(a5),d3
-	jsr	_LVOSPDiv(a6)
-	move.l	Val180(a5),d2
-	move.l	Val180+4(a5),d3
-	jsr	_LVOSPMul(a6)
-.AAnY	move.l	(sp)+,a6
-	move.l	d0,d3
-	move.l	d1,d4
-	Ret_Float
+	Lib_Int	AAngleD		src/interp/float.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					TRANSFORME EN ANGLE
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	FFAngle			SFloat
+	Lib_Int	FFAngle		src/interp/float.cpp
 ; - - - - - - - - - - - - -
-	tst.w	Angle(a5)
-	bne.s	.Conv
-	rts
-; Conversion--> radian
-.Conv	move.l	d3,d0
-	move.l	a6,d3
-	move.l	FloatBase(a5),a6
-	move.l	Val180(a5),d1
-	jsr	_LVOSPDiv(a6)
-	move.l	ValPi(a5),d1
-	jsr	_LVOSPMul(a6)
-	move.l	d3,a6
-	move.l	d0,d3
-	Ret_Float
-; - - - - - - - - - - - - -
-	Lib_Def	FAngleD			DFloat
-; - - - - - - - - - - - - -
-	tst.w	Angle(a5)
-	bne.s	.Conv
-	rts
-; Conversion--> radian
-.Conv	move.l	d3,d0
-	move.l	d4,d1
-	move.l	a6,-(sp)
-	move.l	DFloatBase(a5),a6
-	move.l	Val180(a5),d2
-	move.l	Val180+4(a5),d3
-	jsr	_LVOSPDiv(a6)
-	move.l	ValPi(a5),d2
-	move.l	ValPi+4(a5),d3
-	jsr	_LVOSPMul(a6)
-	move.l	(sp)+,a6
-	move.l	d0,d3
-	move.l	d1,d4
-	Ret_Float
+	Lib_Int	FAngleD		src/interp/float.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					PARAM FLOAT
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def FnParamF		SFloat
+	Lib_Int	FnParamF		src/interp/float.cpp
 ; - - - - - - - - - - - - -
-	move.l	ParamF(a5),d3
-	Ret_Float
-; - - - - - - - - - - - - -
-	Lib_Def FnParamD		DFloat
-; - - - - - - - - - - - - -
-	move.l	ParamF(a5),d3
-	move.l	ParamF2(a5),d4
-	Ret_Float
+	Lib_Int	FnParamD		src/interp/float.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 	ASCII Vers Float

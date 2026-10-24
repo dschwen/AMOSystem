@@ -24,7 +24,7 @@ MACRO_RE = re.compile(r'^\s+(Lib_(?:Ini|Def|Par|Int|Empty|Ext|End|Pos))\b[ \t]*(
 # PC-relative branches between library routines, patched by the loader
 RBRANCH_RE = re.compile(r'^\S*\s+(Rb(?:ra|sr|eq|ne|cs|cc|lt|ge|ls|hi|le|pl|mi))\s+L_([\w.]+)')
 # Last instruction of code that cannot fall through into the next routine
-NO_FALL_RE = re.compile(r'^\S*\s+(rts|rte|bra(\.[sbwl])?|jmp|illegal|Rbra|Rjmp|Rjmpt|RjmptR|Ljmp|'
+NO_FALL_RE = re.compile(r'^\S*\s+(rts|rte|rtr|bra(\.[sbwl])?|jmp|illegal|Rbra|Rjmp|Rjmpt|RjmptR|Ljmp|'
                         r'JJmp|JJmpR|Ijmp|IjmpR|Ret_Int|Ret_Float|Ret_String|Lib_\w+)\b', re.I)
 RULE = '; ' + '~' * 67 + '\n'
 

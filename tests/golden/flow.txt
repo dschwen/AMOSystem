@@ -1,0 +1,19 @@
+ 0.5 1 1.5
+ 1 0.75 0.5 0.25 0
+never
+empty 2
+string label
+line 20
+back
+pc
+trap 23
+no error
+ 0
+popped
+after pop
+handler 25
+after proc handler
+retried 3
+resumed at label
+ticks 2
+proc ticks 2
