@@ -396,6 +396,15 @@ Programs in memory (+Verif.s)
   between the strings and the variables, took a size of -6 and cleared
   64K of memory. They are now left out, as with no room at all.
 
+Single precision floats as text
+- Printing (or `Str$`) a zero in the exponential form (`Fix` negative)
+  crashed AMOS: that path of FloatToAsc left four registers on the stack.
+  It now gives the intended `0E+00` (`0.0E+00` with decimals).
+- `Val` (and the tokenizer) of a number with 21 digits or more overwrote
+  the saved registers in the stack frame of the conversion, and an
+  exponent of 4 characters or more (`1e0005`) overwrote the start of the
+  mantissa, giving 0. Both now read correctly.
+
 ARexx
 - A message arriving at the ARexx port that is not an ARexx command was
   taken off the port and never replied to, so its sender waited for ever;
