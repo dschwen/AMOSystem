@@ -18,8 +18,10 @@ using namespace amos::boot;
 // for the extensions in AMOSPro (a word, the slot, a long, its list: the
 // number of routines of the extension, then its routines as AMOSJmps).
 extern "C" const uint8_t main_amos_jmps[], main_ext_jmps[];
-// main/library.s: AMOSPro.Lib, linked in (the file without its hunk header)
-extern "C" const uint8_t main_library[];
+// main/library.s: AMOSPro.Lib, linked in (the file without its hunk
+// header); src/ext/*_image.s: the extensions' the same way
+extern "C" const uint8_t main_library[], ext_music_image[], ext_compact_image[], ext_request_image[],
+    ext_ioports_image[];
 
 namespace {
 
@@ -50,6 +52,31 @@ constexpr uint16_t L_FFloat = 0x1000, L_FAngle = 0x2000, L_FMath = 0x3000, L_VRe
 }
 
 uint8_t *library(uint32_t n) { return ptr<uint8_t>(idata().AdTokens[n]); }
+
+// The image linked in of the extension a configuration names (by the name
+// of its file, without its path), or none
+const uint8_t *extension_image(const char *name)
+{
+    static const struct {
+        const char *file;
+        const uint8_t *image;
+    } images[] = {{"AMOSPro_Music.Lib", ext_music_image},
+                  {"AMOSPro_Compact.Lib", ext_compact_image},
+                  {"AMOSPro_Request.Lib", ext_request_image},
+                  {"AMOSPro_IOPorts.Lib", ext_ioports_image}};
+    const char *file = name;
+    for (const char *p = name; *p && *p != ' '; p++)
+        if (*p == '/' || *p == ':')
+            file = p + 1;
+    for (const auto &i : images) {
+        const char *a = file, *b = i.file;
+        while (*b && (*a | 0x20) == (*b | 0x20))
+            a++, b++;
+        if (!*b && (!*a || *a == ' '))
+            return i.image;
+    }
+    return nullptr;
+}
 
 // The end of a token: its name and its parameters, each ended by a negative
 // byte, then even (Ll_TkNext without the 4 bytes of the token)
@@ -503,7 +530,7 @@ int libraries_load()
         if (!*name)
             continue;
         command = sys_add_path_com(name);
-        if (int e = library_load(n, command, nullptr))
+        if (int e = library_load(n, command, extension_image(name)))
             return e;
     }
     return 0;

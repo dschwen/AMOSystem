@@ -193,6 +193,20 @@ $(BUILD)/AMOSPro_IOPorts.Lib: extensions/+IO_Ports.s $(GEN)/+IO_Ports_Size.s $(P
 $(BUILD)/AMOSPro_%.Lib: extensions/+%.s $(GEN)/+%_Size.s $(PREREQ)
 	$(VASM) $(EXEFLAGS) -o $@ $<
 
+# The extensions, linked into AMOSPro too (main/libraries.cpp)
+$(OBJ)/src/ext/music_image.o: src/ext/music_image.s extensions/+Music.s $(GEN)/+Music_Size.s $(PREREQ) $(EXT_GEN)
+	@mkdir -p $(dir $@)
+	$(VASM) $(OBJFLAGS) -o $@ $<
+$(OBJ)/src/ext/compact_image.o: src/ext/compact_image.s extensions/+Compact.s $(GEN)/+Compact_Size.s $(PREREQ) $(EXT_GEN)
+	@mkdir -p $(dir $@)
+	$(VASM) $(OBJFLAGS) -o $@ $<
+$(OBJ)/src/ext/request_image.o: src/ext/request_image.s extensions/+Request.s $(GEN)/+Request_Size.s $(PREREQ) $(EXT_GEN)
+	@mkdir -p $(dir $@)
+	$(VASM) $(OBJFLAGS) -o $@ $<
+$(OBJ)/src/ext/ioports_image.o: src/ext/ioports_image.s extensions/+IO_Ports.s $(GEN)/+IO_Ports_Size.s $(PREREQ) $(EXT_GEN)
+	@mkdir -p $(dir $@)
+	$(VASM) $(OBJFLAGS) -o $@ $<
+
 # Configs are raw data: the contents of the single hunk, padded to a longword
 # (what c/genim2 followed by c/Get_Chunk produced)
 $(BUILD)/AMOSPro_%_Config: +%_Config.s $(PREREQ) $(wildcard bin/*)
