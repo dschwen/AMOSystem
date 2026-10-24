@@ -45,6 +45,12 @@ Value string_constant();
 // double precision)
 Value to_float(const Value &v);
 Value to_integer(const Value &v);
+// FFP2Ieee, Ieee2FFP, Sp2Dp, Dp2Sp (interp/float.cpp)
+uint32_t ffp_to_ieee(uint32_t ffp);
+uint32_t ieee_to_ffp(uint32_t single);
+void single_to_double(uint32_t single, uint32_t *high, uint32_t *low);
+uint32_t double_to_single(uint32_t high, uint32_t low);
+
 // L_Float_Compare of a and b: -1 less, 0 equal, 1 greater
 int float_compare(const Value &a, const Value &b);
 

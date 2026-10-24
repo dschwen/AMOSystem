@@ -425,11 +425,9 @@ Value float_constant()
     pc() += 4;
     if (int8_t(idata().MathFlags) >= 0)
         return {TFloat, f, 0};
-    Regs r;
-    r.d[0] = f;
-    lib_call(L_FFP2Ieee, r);
-    lib_call(L_Sp2Dp, r);
-    return {TFloat, r.d[0], r.d[1]};
+    Value v = {TFloat, 0, 0};
+    single_to_double(ffp_to_ieee(f), &v.v1, &v.v2);
+    return v;
 }
 
 // FnCstDFl: a double, made a single precision float if needed
@@ -439,12 +437,7 @@ Value double_constant()
     pc() += 8;
     if (int8_t(idata().MathFlags) < 0)
         return {TFloat, hi, lo};
-    Regs r;
-    r.d[0] = hi;
-    r.d[1] = lo;
-    lib_call(L_Dp2Sp, r);
-    lib_call(L_Ieee2FFP, r);
-    return {TFloat, r.d[0], 0};
+    return {TFloat, ieee_to_ffp(double_to_single(hi, lo)), 0};
 }
 
 // FnCstCh: the string in the program; in direct mode a copy (the line

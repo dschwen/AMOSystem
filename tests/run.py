@@ -11,7 +11,8 @@ save screens, e.g. Save Iff "AMOSTEST:out/<name>_1.iff". Every file a test
 writes whose name starts with <name> is compared with tests/golden/.
 Procedures named ZLOCK... are locked (encoded), as the verifier decodes them.
 Programs a test uses (Include "AMOSTEST:x.AMOS", Run...) are listings in
-tests/amos/<name>.d/x.asc, tokenised to AMOSTEST:x.AMOS.
+tests/amos/<name>.d/x.asc, tokenised to AMOSTEST:x.AMOS (a first line Set
+Double Precision makes its constants doubles, and is left out).
 
 Every test boots its own emulator from a small boot drive (AMOSTEST:) with
 the AMOS tree on a shared read-only drive (AMOSPRO:) and the Workbench drive
@@ -461,7 +462,12 @@ def run_test(name, tables, amos, kickstart, workbench, timeout, visible):
         for f in sorted(os.listdir(extra)):
             if f.endswith('.asc'):
                 with open(os.path.join(extra, f), encoding='latin-1') as src:
-                    amostok.tokenize_program(src.read(), tables).save(os.path.join(hd, f[:-4] + '.AMOS'))
+                    side = amostok.tokenize_program(src.read(), tables)
+                # a first line Set Double Precision: double constants, the
+                # line itself left out (an Include could not have it)
+                if side.lines and side.header[15] & 0x80:
+                    side.lines = side.lines[1:]
+                side.save(os.path.join(hd, f[:-4] + '.AMOS'))
     with open(os.path.join(hd, name + '.AMOS'), 'rb') as f:
         listing_bytes = f.read()
     with open(os.path.join(hd, 'S', 'startup-sequence'), 'w', encoding='latin-1') as f:

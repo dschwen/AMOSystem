@@ -6641,127 +6641,22 @@ IAmRb:	SyCall	AMALReg
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 	FFP single precision to IEEE single precision
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	FFP2Ieee
-; - - - - - - - - - - - - -
-	ADD.L	D0,D0
-	BEQ.S	L21418A
-	EORI.B	#$80,D0
-	ASR.B	#1,D0
-	SUBI.B	#$82,D0
-	SWAP	D0
-	ROL.L	#7,D0
-L21418A	RTS
+	Lib_Empty			FFP2Ieee, now in src/interp/float.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 	IEEE single precision to FFP single precision
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	Ieee2FFP
-; - - - - - - - - - - - - -
-	SWAP	D0
-	ROR.L	#7,D0
-	EORI.B	#$80,D0
-	ADD.B	D0,D0
-	BVS.S	L2141A4
-	ADDQ.B	#5,D0
-	BVS.S	L2141DA
-	EORI.B	#$80,D0
-	ROR.L	#1,D0
-L2141A2	RTS
-L2141A4	BCC.S	L2141CC
-	CMPI.B	#$7C,D0
-	BEQ.S	L2141B2
-	CMPI.B	#$7E,D0
-	BNE.S	L2141BE
-L2141B2	ADDI.B	#$85,D0
-	ROR.L	#1,D0
-	TST.B	D0
-	BNE.S	L2141A2
-	BRA.S	L2141C8
-L2141BE	ANDI.W	#$FEFF,D0
-	TST.L	D0
-	BEQ.S	L2141A2
-	TST.B	D0
-L2141C8	MOVEQ	#0,D0
-	BRA.S	L2141A2
-L2141CC	CMPI.B	#$FE,D0
-	BNE.S	L2141DA
-	LSR.L	#8,D0
-	LSR.L	#1,D0
-	BNE.S	L2141E6
-	BRA.S	L2141DC
-L2141DA	LSL.W	#8,D0
-L2141DC	MOVEQ	#-1,D0
-	ROXR.B	#1,D0
-	ORI.B	#2,CCR
-	BRA.S	L2141A2
-L2141E6	MOVEQ	#0,D0
-	BRA.S	L2141A2
+	Lib_Empty			Ieee2FFP, now in src/interp/float.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 	IEEE single precision to ieee double precision
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	Sp2Dp
-; - - - - - - - - - - - - -
-	MOVEA.L	D0,A0
-	SWAP	D0
-	BEQ.S	.SKIP
-	MOVE.W	D0,D1
-	ANDI.W	#$7F80,D0
-	ASR.W	#3,D0
-	ADDI.W	#$3800,D0
-	ANDI.W	#$8000,D1
-	OR.W	D1,D0
-	SWAP	D0
-	MOVE.L	A0,D1
-	ROR.L	#3,D1
-	MOVEA.L	D1,A0
-	ANDI.L	#$FFFFF,D1
-	OR.L	D1,D0
-	MOVE.L	A0,D1
-	ANDI.L	#$E0000000,D1
-	RTS
-.SKIP	MOVEQ	#0,D1
-	RTS
+	Lib_Empty			Sp2Dp, now in src/interp/float.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 	IEEE Double precision to IEEE single precision
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	Dp2Sp
-; - - - - - - - - - - - - -
-	SWAP	D0
-	BEQ.S	L2ECFA4
-	MOVE.W	D0,D1
-	SWAP	D1
-	SWAP	D0
-	ASL.W	#1,D1
-	ROXL.L	#1,D0
-	ASL.W	#1,D1
-	ROXL.L	#1,D0
-	ASL.W	#1,D1
-	ROXL.L	#1,D0
-	SWAP	D0
-	ANDI.W	#$7F,D0
-	SWAP	D1
-	MOVEA.W	D1,A0
-	ANDI.W	#$8000,D1
-	OR.W	D1,D0
-	MOVE.W	A0,D1
-	ANDI.W	#$7FF0,D1
-	SUBI.W	#$3800,D1
-	BGE.S	L2ECFA6
-	CLR.L	D0
-L2ECFA4	RTS
-L2ECFA6	CMPI.W	#$FF0,D1
-	BLE.S	L2ECFBC
-	ORI.B	#2,CCR
-;	TRAPV
-	ORI.L	#$FFFF7FFF,D0
-	SWAP	D0
-	RTS
-L2ECFBC	ASL.W	#3,D1
-	OR.W	D1,D0
-	SWAP	D0
-	RTS
+	Lib_Empty			Dp2Sp, now in src/interp/float.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 	Ascii vers float, simple precision

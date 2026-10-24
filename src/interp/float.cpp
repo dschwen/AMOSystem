@@ -280,3 +280,114 @@ uint32_t interp_fn_param_d(RegFrame &r)
     return real(r);
 }
 }
+
+// ---- conversions between the formats (+Lib.s FFP2Ieee, Ieee2FFP, Sp2Dp,
+// Dp2Sp: compiler output, followed instruction by instruction) ----------
+
+namespace {
+
+uint32_t swap(uint32_t v) { return v << 16 | v >> 16; }
+uint32_t rol(uint32_t v, int n) { return v << n | v >> (32 - n); }
+uint32_t ror(uint32_t v, int n) { return v >> n | v << (32 - n); }
+uint32_t low_byte(uint32_t v, uint8_t b) { return (v & 0xFFFFFF00) | b; }
+
+} // namespace
+
+namespace amos::interp {
+
+// FFP2Ieee: a Motorola fast float as an IEEE single
+uint32_t ffp_to_ieee(uint32_t d0)
+{
+    d0 <<= 1;
+    if (!d0)
+        return 0;
+    uint8_t b = uint8_t(d0) ^ 0x80;
+    b = uint8_t(int8_t(b) >> 1);
+    b = uint8_t(b - 0x82);
+    return rol(swap(low_byte(d0, b)), 7);
+}
+
+// Ieee2FFP: an IEEE single as a fast float (too large: the largest, with
+// its sign; too small: 0)
+uint32_t ieee_to_ffp(uint32_t d0)
+{
+    d0 = ror(swap(d0), 7);
+    uint8_t b = uint8_t(d0) ^ 0x80;
+    bool carry = b & 0x80;
+    bool overflow = int8_t(b) != int8_t(b << 1) >> 1;
+    b = uint8_t(b << 1);
+    d0 = low_byte(d0, b);
+    bool x = carry;
+    if (!overflow) {
+        bool v = int8_t(b) + 5 != int8_t(uint8_t(b + 5));
+        x = uint16_t(b) + 5 > 0xFF;
+        b = uint8_t(b + 5);
+        d0 = low_byte(d0, b);
+        if (!v)
+            return ror(low_byte(d0, b ^ 0x80), 1);
+    } else if (carry) {
+        if (b == 0x7C || b == 0x7E) {
+            d0 = ror(low_byte(d0, uint8_t(b + 0x85)), 1);
+            return uint8_t(d0) ? d0 : 0;
+        }
+        return 0;
+    } else if (b == 0xFE) {
+        // lsr.l #8 then #1: X the last bit out
+        d0 >>= 8;
+        x = d0 & 1;
+        d0 >>= 1;
+        if (d0)
+            return 0;
+        return low_byte(0xFFFFFFFF, uint8_t(0x7F | (x ? 0x80 : 0)));
+    }
+    // L2141DA: lsl.w #8 (X its last bit out), then -1 with X rolled in
+    x = d0 & 0x100;
+    return low_byte(0xFFFFFFFF, uint8_t(0x7F | (x ? 0x80 : 0)));
+}
+
+// Sp2Dp: an IEEE single as a double (high, low)
+void single_to_double(uint32_t s, uint32_t *high, uint32_t *low)
+{
+    uint32_t d0 = swap(s);
+    if (!s) {
+        *high = 0;
+        *low = 0;
+        return;
+    }
+    uint16_t w = uint16_t(d0), sign = w & 0x8000;
+    uint16_t e = uint16_t((int16_t(w & 0x7F80) >> 3) + 0x3800);
+    d0 = swap((d0 & 0xFFFF0000) | uint16_t(e | sign));
+    uint32_t r = ror(s, 3);
+    *high = d0 | (r & 0xFFFFF);
+    *low = r & 0xE0000000;
+}
+
+// Dp2Sp: a double as an IEEE single (too large: the largest)
+uint32_t double_to_single(uint32_t d0, uint32_t d1)
+{
+    if (!d0)
+        return 0;
+    d0 = swap(d0);
+    d1 = (d1 & 0xFFFF0000) | uint16_t(d0);
+    d1 = swap(d1);
+    d0 = swap(d0);
+    for (int i = 0; i < 3; i++) {
+        bool x = d1 & 0x8000;
+        d1 = (d1 & 0xFFFF0000) | uint16_t(d1 << 1);
+        d0 = d0 << 1 | (x ? 1 : 0);
+    }
+    d0 = swap(d0);
+    d0 = (d0 & 0xFFFF0000) | (d0 & 0x7F);
+    d1 = swap(d1);
+    uint16_t a0 = uint16_t(d1);
+    d0 |= d1 & 0x8000;
+    int16_t e = int16_t((a0 & 0x7FF0) - 0x3800);
+    if (e < 0)
+        return 0;
+    if (e > 0xFF0)
+        return swap(d0 | 0xFFFF7FFF);
+    d0 |= uint16_t(e << 3);
+    return swap(d0);
+}
+
+} // namespace amos::interp
