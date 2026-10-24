@@ -585,8 +585,7 @@ uint16_t error_line(uint32_t code, const uint8_t *message)
     }
     use(ptr<EditWindow>(d.Edt_Current));
     set_banks_program();
-    Regs b;
-    lib_call(L_Bnk_Change, b);
+    bank_changed();
     set_banks();
     if (!test) {
         if (e.code == 10 || e.code == 1000)

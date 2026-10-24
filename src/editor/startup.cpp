@@ -307,10 +307,8 @@ bool open_editor()
         if (attempt) {
             if (!m.d[0])
                 run(ed_system);         // not allowed: the end
-            Regs e;
-            lib_call(L_Bnk_EffAll, e);
-            Regs c;
-            lib_call(L_Bnk_Change, c);
+            bank_erase_all();
+            bank_changed();
         }
     }
     return false;

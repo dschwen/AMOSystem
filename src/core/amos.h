@@ -133,6 +133,10 @@ uint32_t add_routine(uint32_t routine, uint32_t list);
 void call_routines(uint32_t *list);
 } // namespace w
 
+// The banks (lib/banks.cpp): Bnk.EffAll, Bnk.Change
+void bank_erase_all();
+void bank_changed();
+
 // Files (lib/dos.cpp): Dsk.PathIt, the name in Name1 with the current
 // directory; DiskError, the error of the last DOS call
 void path_it();
@@ -148,6 +152,9 @@ const uint8_t *get_message(const uint8_t *list, uint32_t &d0);
 const uint8_t *def_message(uint32_t n);
 void sys_add_path(const char *name);        // Sys_AddPath: into Name1, with the system's path
 uint32_t temp_buffer(uint32_t size);        // ResTempBuffer: its address, 0 (none, freed)
+void recop();                               // ReCop: the copper lists computed again
+void ask_dir();                             // AskDir: the current directory at Buffer+384
+void ask_dir2(uint32_t lock);               // AskDir2: the directory of the lock (unlocked)
 } // namespace boot
 
 // Big-endian memory access. The Amiga is big-endian and AMOS data is

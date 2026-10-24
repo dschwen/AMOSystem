@@ -232,7 +232,7 @@ failed:
     if (!ptr<Program>(program)->Prg_Edited)
         program_call(L_Prg_DelStructure, program, 0);
     program_call(L_Prg_SetBanks, d.Prg_Runned, 0);
-    lib(L_Bnk_Change);
+    bank_changed();
     Regs m;
     m.d[0] = failure;
     m.a[0] = d.Ed_RunMessages;

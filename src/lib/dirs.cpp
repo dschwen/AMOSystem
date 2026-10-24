@@ -238,7 +238,7 @@ void fill_first()
     lock_get();
     Regs a = {};
     a.d[0] = d.LockSave;
-    lib_call(L_AskDir2, a);
+    boot::ask_dir2(a.d[0]);
     d.LockSave = 0;
     uint8_t *e = mem_fast_clear(6 + 4 + 128);
     if (!e)

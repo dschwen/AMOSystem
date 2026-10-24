@@ -241,8 +241,7 @@ BPTR lock_get()
 // a lock, which they unlock) in Buffer+384
 char *ask_dir()
 {
-    Regs r = {};
-    lib_call(L_AskDir, r);
+    boot::ask_dir();
     return ptr<char>(idata().Buffer) + 384;
 }
 
@@ -439,7 +438,7 @@ extern "C" void lib_in_dir(const uint8_t *name)
     // AskDir2 unlocks the lock (the assembler then freed it again)
     Regs r = {};
     r.d[0] = static_cast<uint32_t>(lock);
-    lib_call(L_AskDir2, r);
+    boot::ask_dir2(r.d[0]);
     idata().LockSave = 0;
     copy_path();
 }

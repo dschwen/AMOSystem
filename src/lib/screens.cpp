@@ -359,9 +359,9 @@ extern "C" void lib_in_default()
 {
     Regs r = {};
     lib_call(L_DefRun1, r);
-    lib_call(L_ReCop, r);
+    boot::recop();
     lib_call(L_DefRun2, r);
-    lib_call(L_ReCop, r);
+    boot::recop();
     idata().DefFlag = 1;
 }
 
@@ -1913,8 +1913,7 @@ extern "C" uint32_t lib_app_centre(RegFrame &r)
         changed(s->EcAV);
         s->EcAWY = static_cast<uint16_t>(middle - h);
         changed(s->EcAW);
-        Regs c = {};
-        lib_call(L_ReCop, c);
+        boot::recop();
         h = static_cast<int16_t>(h + speed);
         if (h < 0)
             h = 1;

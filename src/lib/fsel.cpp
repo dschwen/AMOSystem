@@ -1028,8 +1028,7 @@ void selector(const uint32_t *params)
     create_task();
     call(lib_no_req);
     if (!*ptr<char>(d.PathAct)) {
-        Regs a = {};
-        lib_call(L_AskDir, a);
+        boot::ask_dir();
         call(lib_copy_path);
     }
     call(lib_fill_ffree);

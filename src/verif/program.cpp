@@ -159,7 +159,7 @@ void delete_structure(Program &p)
     if (p.Prg_StTTexte) {
         set_banks(p);
         clear_variables();
-        lib(L_Bnk_EffAll);
+        bank_erase_all();
         change_text(p, 0, 0);
     }
     uint32_t *link = &d.Prg_List;
@@ -248,7 +248,7 @@ void data_load(uint32_t *slot)
     Regs c;
     c.d[0] = d.Cur_ChrJump >> 16;   // a word in the long's first half
     lib_call(L_SetChrPatch, c);
-    lib(L_Bnk_Change);
+    bank_changed();
     a5_free(slot);
 }
 
@@ -486,7 +486,7 @@ void new_program(Program &p, uint16_t show)
     }
     wdata().Actualise &= 0x00FF;
     set_banks(p);
-    lib(L_Bnk_EffAll);
+    bank_erase_all();
     clear_variables();
     if (show) {
         idata().DefFlag = show;
@@ -549,18 +549,18 @@ void ver_prg_run_it(AllRegs *r)
     }
     d.Prg_JError = r->a[1];
     set_banks(p);
-    lib(L_Bnk_Change);
+    bank_changed();
     test(p, hooks);
     if (mode && (mode < 0 || d.Prg_Accessory)) {
         // an accessory or Prun
         lib(L_DefRunAcc);
-        lib(L_ReCop);
+        boot::recop();
     } else {
         d.DefFlag = 0xFFFF;
         lib(L_DefRun1);
         hook(hooks, 8);
         lib(L_DefRun2);
-        lib(L_ReCop);
+        boot::recop();
         Regs a;
         a.d[1] = 0;
         ec_call(ec::Active, a);

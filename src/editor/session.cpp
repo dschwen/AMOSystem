@@ -270,8 +270,7 @@ void warm_error()
         t.d[0] = 0;
         lib_call(L_Prg_ChgTTexte, t);
         d.Cur_Banks = p->Prg_Banks;
-        Regs b;
-        lib_call(L_Bnk_EffAll, b);
+        bank_erase_all();
         free_memory(address(p), sizeof(Program));
     }
     d.Prg_List = 0;

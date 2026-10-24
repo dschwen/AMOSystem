@@ -198,7 +198,7 @@ void clear_variables()
     c.a[1] = address(&d.Sys_ClearRoutines);
     w::call_routines(ptr<uint32_t>(c.a[1]));
     lib(L_Bnk_EffTemp);
-    lib(L_Bnk_Change);
+    bank_changed();
     lib(L_MenuReset);
     lib(L_Dia_WarmInit);
     clear_buffers();
