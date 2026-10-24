@@ -438,6 +438,15 @@ Compact extension
   its start): the temporary buffer was not cleared. It now is, so a bank
   packs the same every time; pictures unpack the same as before.
 
+AMAL
+- `Amal n,...` on a channel that existed, whose object (a bob, a screen)
+  did not, freed the channel and then linked the freed block into the
+  list of the channels, which could crash later; the channel is now
+  removed and the error given.
+- `BC(...)` and `SC(...)` with Synchro On (in the VBL interrupt) gave 0
+  without reading their arguments, so the animator read them as
+  instructions; they are now skipped.
+
 Music extension
 - After any change of the banks, a MED module playing was always stopped:
   the check compared the second half of the bank's name with the first.

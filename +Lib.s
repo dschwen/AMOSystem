@@ -4031,426 +4031,126 @@ C_Lib
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					=AMAL ERR
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par FnAmalerr
-; - - - - - - - - - - - - -
-	moveq	#0,d3
-	move.w	PAmalE(a5),d3
-	Ret_Int
+	Lib_Int	FnAmalerr		src/lib/amal.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					FREEZE / UNFREEZE
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InFreeze
+	Lib_Int	InFreeze		src/lib/amal.cpp
 ; - - - - - - - - - - - - -
-	SyCall	AMALFrz
-	rts
-; - - - - - - - - - - - - -
-	Lib_Par InUnFreeze
-; - - - - - - - - - - - - -
-	SyCall	AMALUFrz
-	rts
+	Lib_Int	InUnFreeze		src/lib/amal.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					SYNCHRO ON / OFF
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InSynchroOn
+	Lib_Int	InSynchroOn		src/lib/amal.cpp
 ; - - - - - - - - - - - - -
-	moveq	#0,d1
-	clr.w	InterOff(a5)
-	SyCall	SetSync
-	rts
+	Lib_Int	InSynchroOff		src/lib/amal.cpp
 ; - - - - - - - - - - - - -
-	Lib_Par InSynchroOff
-; - - - - - - - - - - - - -
-	moveq	#-1,d1
-	move.w	d1,InterOff(a5)
-	SyCall	SetSync
-	rts
-; - - - - - - - - - - - - -
-	Lib_Par InSynchro
-; - - - - - - - - - - - - -
-	SyCall	Synchro
-	rts
+	Lib_Int	InSynchro		src/lib/amal.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					AMAL/MOVE/ANIM on/off/freeze
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InAmalOn0
+	Lib_Int	InAmalOn0		src/lib/amal.cpp
 ; - - - - - - - - - - - - -
-	moveq	#%0001,d2
-	moveq	#1,d3
-	Rbra	L_MvOnOf0
+	Lib_Int	InAmalOff0		src/lib/amal.cpp
 ; - - - - - - - - - - - - -
-	Lib_Par InAmalOff0
+	Lib_Int	InAmalFreeze0		src/lib/amal.cpp
 ; - - - - - - - - - - - - -
-	moveq	#%0001,d2
-	moveq	#-1,d3
-	Rbra	L_MvOnOf0
+	Lib_Int	InMoveOn0		src/lib/amal.cpp
 ; - - - - - - - - - - - - -
-	Lib_Par InAmalFreeze0
+	Lib_Int	InAnimOn0		src/lib/amal.cpp
 ; - - - - - - - - - - - - -
-	moveq	#%0001,d2
-	moveq	#0,d3
-	Rbra	L_MvOnOf0
+	Lib_Int	InMoveOff0		src/lib/amal.cpp
 ; - - - - - - - - - - - - -
-	Lib_Par InMoveOn0
+	Lib_Int	InAnimOff0		src/lib/amal.cpp
 ; - - - - - - - - - - - - -
-	moveq	#%1100,d2
-	moveq	#1,d3
-	Rbra	L_MvOnOf0
+	Lib_Int	InMoveFreeze0		src/lib/amal.cpp
 ; - - - - - - - - - - - - -
-	Lib_Par InAnimOn0
+	Lib_Int	InAnimFreeze0		src/lib/amal.cpp
 ; - - - - - - - - - - - - -
-	moveq	#%0010,d2
-	moveq	#1,d3
-	Rbra	L_MvOnOf0
-; - - - - - - - - - - - - -
-	Lib_Par InMoveOff0
-; - - - - - - - - - - - - -
-	moveq	#%1100,d2
-	moveq	#-1,d3
-	Rbra	L_MvOnOf0
-; - - - - - - - - - - - - -
-	Lib_Par InAnimOff0
-; - - - - - - - - - - - - -
-	moveq	#%0010,d2
-	moveq	#-1,d3
-	Rbra	L_MvOnOf0
-; - - - - - - - - - - - - -
-	Lib_Par InMoveFreeze0
-; - - - - - - - - - - - - -
-	moveq	#%1100,d2
-	moveq	#0,d3
-	Rbra	L_MvOnOf0
-; - - - - - - - - - - - - -
-	Lib_Par InAnimFreeze0
-; - - - - - - - - - - - - -
-	moveq	#%0010,d2
-	moveq	#0,d3
-	Rbra	L_MvOnOf0
-; - - - - - - - - - - - - -
-	Lib_Def	MvOnOf0
-; - - - - - - - - - - - - -
-	moveq	#-1,d1
-	SyCall	AMALMvO
-	rts
+	Lib_Empty			MvOnOf0, now in src/lib/amal.cpp
 
 ; - - - - - - - - - - - - -
-	Lib_Par InAmalOn1
+	Lib_Int	InAmalOn1		src/lib/amal.cpp
 ; - - - - - - - - - - - - -
-	moveq	#%0001,d2
-	moveq	#1,d0
-	Rbra	L_MvOnOf1
+	Lib_Int	InAmalOff1		src/lib/amal.cpp
 ; - - - - - - - - - - - - -
-	Lib_Par InAmalOff1
+	Lib_Int	InAmalFreeze1		src/lib/amal.cpp
 ; - - - - - - - - - - - - -
-	moveq	#%0001,d2
-	moveq	#-1,d0
-	Rbra	L_MvOnOf1
+	Lib_Int	InMoveOn1		src/lib/amal.cpp
 ; - - - - - - - - - - - - -
-	Lib_Par InAmalFreeze1
+	Lib_Int	InAnimOn1		src/lib/amal.cpp
 ; - - - - - - - - - - - - -
-	moveq	#%0001,d2
-	moveq	#0,d0
-	Rbra	L_MvOnOf1
+	Lib_Int	InMoveOff1		src/lib/amal.cpp
 ; - - - - - - - - - - - - -
-	Lib_Par InMoveOn1
+	Lib_Int	InAnimOff1		src/lib/amal.cpp
 ; - - - - - - - - - - - - -
-	moveq	#%1100,d2
-	moveq	#1,d0
-	Rbra	L_MvOnOf1
+	Lib_Int	InMoveFreeze1		src/lib/amal.cpp
 ; - - - - - - - - - - - - -
-	Lib_Par InAnimOn1
+	Lib_Int	InAnimFreeze1		src/lib/amal.cpp
 ; - - - - - - - - - - - - -
-	moveq	#%0010,d2
-	moveq	#1,d0
-	Rbra	L_MvOnOf1
-; - - - - - - - - - - - - -
-	Lib_Par InMoveOff1
-; - - - - - - - - - - - - -
-	moveq	#%1100,d2
-	moveq	#-1,d0
-	Rbra	L_MvOnOf1
-; - - - - - - - - - - - - -
-	Lib_Par InAnimOff1
-; - - - - - - - - - - - - -
-	moveq	#%0010,d2
-	moveq	#-1,d0
-	Rbra	L_MvOnOf1
-; - - - - - - - - - - - - -
-	Lib_Par InMoveFreeze1
-; - - - - - - - - - - - - -
-	moveq	#%1100,d2
-	moveq	#0,d0
-	Rbra	L_MvOnOf1
-; - - - - - - - - - - - - -
-	Lib_Par InAnimFreeze1
-; - - - - - - - - - - - - -
-	moveq	#%0010,d2
-	moveq	#0,d0
-	Rbra	L_MvOnOf1
-; - - - - - - - - - - - - -
-	Lib_Def	MvOnOf1
-; - - - - - - - - - - - - -
-	move.l	d3,d1
-	move.l	d0,d3
-	SyCall	AMALMvO
-	rts
+	Lib_Empty			MvOnOf1, now in src/lib/amal.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					MOVE X/Y etc...
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InMoveX3
+	Lib_Int	InMoveX3		src/lib/amal.cpp
 ; - - - - - - - - - - - - -
-	moveq	#2,d0
-	Rbra	L_AMm3
+	Lib_Int	InMoveY3		src/lib/amal.cpp
 ; - - - - - - - - - - - - -
-	Lib_Par InMoveY3
+	Lib_Int	InAnim3		src/lib/amal.cpp
 ; - - - - - - - - - - - - -
-	moveq	#3,d0
-	Rbra	L_AMm3
+	Lib_Int	InAmal3		src/lib/amal.cpp
 ; - - - - - - - - - - - - -
-	Lib_Par InAnim3
+	Lib_Empty			AMm3, now in src/lib/amal.cpp
 ; - - - - - - - - - - - - -
-	moveq	#1,d0
-	Rbra	L_AMm3
+	Lib_Int	InMoveX2		src/lib/amal.cpp
 ; - - - - - - - - - - - - -
-	Lib_Par InAmal3
+	Lib_Int	InMoveY2		src/lib/amal.cpp
 ; - - - - - - - - - - - - -
-	moveq	#0,d0
-	Rbra	L_AMm3
+	Lib_Int	InAmal2		src/lib/amal.cpp
 ; - - - - - - - - - - - - -
-	Lib_Def	AMm3
+	Lib_Int	InAnim2		src/lib/amal.cpp
 ; - - - - - - - - - - - - -
-	move.l	d3,d5
-	and.l	#$FFFFFFFE,d5
-	move.l	(a3)+,d3
-	Rbra	L_MvA3
+	Lib_Empty			MvA, now in src/lib/amal.cpp
 ; - - - - - - - - - - - - -
-	Lib_Par InMoveX2
-; - - - - - - - - - - - - -
-	moveq	#2,d0
-	Rbra	L_MvA
-; - - - - - - - - - - - - -
-	Lib_Par InMoveY2
-; - - - - - - - - - - - - -
-	moveq	#3,d0
-	Rbra	L_MvA
-; - - - - - - - - - - - - -
-	Lib_Par InAmal2
-; - - - - - - - - - - - - -
-	moveq	#0,d0
-	Rbra	L_MvA
-; - - - - - - - - - - - - -
-	Lib_Par InAnim2
-; - - - - - - - - - - - - -
-	moveq	#1,d0
-	Rbra	L_MvA
-; - - - - - - - - - - - - -
-	Lib_Def	MvA
-; - - - - - - - - - - - - -
-	moveq	#0,d5
-	Rbra	L_MvA3
-; - - - - - - - - - - - - -
-	Lib_Def	MvA3
-; - - - - - - - - - - - - -
-	move.l	d3,a1
-	move.l	d0,d3
-	Rbsr	L_SaveRegs
-	move.l	(a3)+,d6
-	clr.w	PAmalE(a5)
-* 16 si inter / 64 sinon!
-	moveq	#16,d0
-	tst.w	InterOff(a5)
-	beq.s	InMva1
-	moveq	#64,d0
-InMva1:	cmp.l	d0,d6			* Nombre autorise
-	Rbcc	L_FonCall
-* Trouve la banque AMAL (numero 2)
-	moveq	#0,d7
-	moveq	#4,d0
-	move.l	a1,a2
-	Rjsr	L_Bnk.GetAdr
-	move.l	a2,a1
-	beq.s	InMb1
-	move.l	-8(a0),d0
-	cmp.l	#"Amal",d0
-	bne.s	InMb1
-	move.l	a0,d7
-* Est-ce une chaine ou un numero?
-InMb1:	cmp.l	#1024,a1
-	bcc.s	InMb2
-* Dans la banque!
-	tst.l	d7
-	Rbeq	L_BkNoRes
-	tst.l	(a0)
-	Rbeq	L_FonCall
-	add.l	(a0),a0
-	move.w	a1,d0
-	move.l	ChVide(a5),a1
-	cmp.w	(a0)+,d0
-	Rbhi	L_FonCall
-	lsl.w	#1,d0
-	move.w	0(a0,d0.w),d0
-	beq.s	InMb2
-	lsl.w	#1,d0
-	lea	0(a0,d0.w),a1
-* Une chaine!
-InMb2:	move.w	(a1)+,d0		* Met un zero a la fin de la chaine
-	lea	0(a1,d0.w),a0
-	move.b	(a0),d0
-	clr.b	(a0)
-	move.w	d0,-(sp)
-	move.l	a0,-(sp)
-	move.l	Buffer(a5),a2		* Buffer de tokenisation
-	move.l	#TBuffer-256-64,d2
-	move.l	a2,d1			* Buffer variables
-	add.l	#TBuffer-256,d1
-	tst.l	d5			* Numeros des canaux
-	beq.s	InAMv0
-	moveq	#5,d4
-	bra.s	InAMv2
-InAMv0:	lea	AnCanaux(a5),a0
-	add.w	d6,a0
-	add.w	d6,a0
-	moveq	#0,d4
-	moveq	#0,d5
-	move.b	(a0)+,d4
-	move.b	(a0)+,d5
-InAMv2:	SyCall	AMALCre
-	move.l	(sp)+,a1		* Remet la chaine!
-	move.w	(sp)+,d7
-	move.b	d7,(a1)
-	tst.w	d0
-	beq.s	.Exit
-	bpl.s	IAmE
-	cmp.w	#-1,d0
-	Rbeq	L_OOfMem
-	neg.w	d0
-	Rbra	L_EcWiErr
-.Exit	Rbsr	L_LoadRegs
-	rts
-IAmE:	move.w	a0,PAmalE(a5)		* Offset de l'erreur
-	add.w	#SpEBase+2,d0
-	Rbra	L_GoError
+	Lib_Empty			MvA3, now in src/lib/amal.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					=MOVON =CHANAM etc...
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par FnMovon
+	Lib_Int	FnMovon		src/lib/amal.cpp
 ; - - - - - - - - - - - - -
-	Rbsr	L_FnAm1
-	movem.l	d6/d7,-(sp)
-	SyCall	MovOn
-	movem.l	(sp)+,d6/d7
-	move.l	d1,d3
-	Ret_Int
+	Lib_Int	FnChanAn		src/lib/amal.cpp
 ; - - - - - - - - - - - - -
-	Lib_Par FnChanAn
+	Lib_Int	FnChanMv		src/lib/amal.cpp
 ; - - - - - - - - - - - - -
-	Rbsr	L_FnAm1
-	movem.l	d6/d7,-(sp)
-	SyCall	ChanA
-	movem.l	(sp)+,d6/d7
-	move.l	d1,d3
-	Ret_Int
-; - - - - - - - - - - - - -
-	Lib_Par FnChanMv
-; - - - - - - - - - - - - -
-	Rbsr	L_FnAm1
-	movem.l	d6/d7,-(sp)
-	SyCall	ChanM
-	movem.l	(sp)+,d6/d7
-	move.l	d1,d3
-	Ret_Int
-; - - - - - - - - - - - - -
-	Lib_Par FnAm1
-; - - - - - - - - - - - - -
-	move.l	d3,d1
-	Rbmi	L_FonCall
-	cmp.l	#64,d1
-	Rbcc	L_FonCall
-	rts
+	Lib_Empty			FnAm1, now in src/lib/amal.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					=AMREG(n,[n])=
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InAmreg1
+	Lib_Int	InAmreg1		src/lib/amal.cpp
 ; - - - - - - - - - - - - -
-	move.l	d3,d5
-	move.l	(a3)+,d3
-	move.l	#EntNul,d1
-	Rbra	L_IAmR
+	Lib_Int	FnAmreg1		src/lib/amal.cpp
 ; - - - - - - - - - - - - -
-	Lib_Par FnAmreg1
+	Lib_Int	InAmreg2		src/lib/amal.cpp
 ; - - - - - - - - - - - - -
-	move.l	#EntNul,d1
-	Rbra	L_FAmR
+	Lib_Int	FnAmreg2		src/lib/amal.cpp
 ; - - - - - - - - - - - - -
-	Lib_Par InAmreg2
+	Lib_Empty			IAmR, now in src/lib/amal.cpp
 ; - - - - - - - - - - - - -
-	move.l	d3,d5
-	move.l	(a3)+,d3
-	move.l	(a3)+,d1
-	Rbra	L_IAmR
+	Lib_Empty			FAmR, now in src/lib/amal.cpp
 ; - - - - - - - - - - - - -
-	Lib_Par FnAmreg2
-; - - - - - - - - - - - - -
-	move.l	(a3)+,d1
-	Rbra	L_FAmR
-; - - - - - - - - - - - - -
-	Lib_Def	IAmR
-; - - - - - - - - - - - - -
-	Rbsr	L_AmRR
-	move.w	d5,(a0)
-	rts
-; - - - - - - - - - - - - -
-	Lib_Def	FAmR
-; - - - - - - - - - - - - -
-	Rbsr	L_AmRR
-	move.w	(a0),d3
-	ext.l	d3
-	Ret_Int
-; - - - - - - - - - - - - -
-	Lib_Def	AmRR
-; - - - - - - - - - - - - -
-	moveq	#0,d2
-	cmp.l	#EntNul,d1
-	bne.s	IAmRa
-	cmp.l	#26,d3
-	Rbcc	L_FonCall
-	moveq	#-1,d1
-	bra.s	IAmRb
-IAmRa:	cmp.l	#64,d1
-	Rbcc	L_FonCall
-	cmp.l	#10,d3
-	Rbcc	L_FonCall
-IAmRb:	SyCall	AMALReg
-	Rbmi	L_FonCall
-	rts
+	Lib_Empty			AmRR, now in src/lib/amal.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					AMPLAY
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InAmPlay2
+	Lib_Int	InAmPlay2		src/lib/amal.cpp
 ; - - - - - - - - - - - - -
-	move.l	d3,-(a3)
-	clr.l	-(a3)
-	moveq	#63,d3
-	Rbra	L_InAmPlay4
-; - - - - - - - - - - - - -
-	Lib_Par InAmPlay4
-; - - - - - - - - - - - - -
-	move.l	d3,d2
-	cmp.l	#64,d2
-	Rbcc	L_FonCall
-	move.l	(a3)+,d1
-	Rbmi	L_FonCall
-	cmp.l	d1,d2
-	Rbcs	L_FonCall
-	move.l	(a3)+,d4
-	move.l	(a3)+,d3
-	SyCall	PlaySet
-	rts
+	Lib_Int	InAmPlay4		src/lib/amal.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					=X BOB
