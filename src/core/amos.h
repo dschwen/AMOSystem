@@ -26,7 +26,7 @@
 #include "lib_routines.h"
 
 // AMOS.library's vector tables of SyCall and EcCall (+W.s)
-extern "C" uint8_t w_sy_in[], w_ec_in[];
+extern "C" uint8_t w_sy_in[], w_ec_in[], w_wi_in[];
 
 namespace amos {
 
@@ -98,6 +98,9 @@ extern const RegFunction lib_direct[];
 // Its glue (build/gen/lib_direct_entries.s), or 0
 extern const uint32_t lib_direct_entry[];
 
+// Calls the assembler at entry with registers r (below)
+inline void entry_call(const void *entry, Regs &r);
+
 // JJsr: call a routine of AMOSPro.Lib. A routine in C++ is called
 // directly, as through the glue: d6/d7 from r in the context during the
 // call, the context as it was afterwards.
@@ -113,7 +116,7 @@ inline void lib_call(int routine, Regs &r)
         ctx() = saved;
         return;
     }
-    amos_call(&r, lib_address(routine));
+    entry_call(lib_address(routine), r);
 }
 
 // JJsr to a routine that answers in the condition codes: -1 "less than",
@@ -148,7 +151,7 @@ extern "C" [[noreturn]] void interp_error(uint32_t n, uint32_t first, uint32_t e
 // the context as it was afterwards (build/gen/w_direct.cpp).
 using WFunction = void (*)(AllRegs *);
 extern const WFunction sy_direct[], ec_direct[];
-inline void w_direct_call(WFunction f, Regs &r)
+template <typename F> inline void w_direct_call(F f, Regs &r)
 {
     Ctx &c = ctx();
     AllRegs a;
@@ -170,6 +173,23 @@ inline void w_direct_call(WFunction f, Regs &r)
     for (int i = 0; i < 3; i++)
         r.a[i] = a.a[i];
 }
+// A WEntry glue (w/wglue.i) and its C++ function; the function of an
+// entry, or null (main/direct.cpp)
+struct WEntryPair {
+    const void *entry;
+    WFunction function;
+};
+WFunction wentry_function(const void *entry);
+
+// Calls the assembler at entry with registers r; directly the C++ of a
+// WEntry glue
+inline void entry_call(const void *entry, Regs &r)
+{
+    if (WFunction f = wentry_function(entry))
+        return w_direct_call(f, r);
+    amos_call(&r, entry);
+}
+
 inline void sy_call(int function, Regs &r)
 {
     if (wdata().SyVect == reinterpret_cast<uint32_t>(::w_sy_in))
@@ -184,7 +204,17 @@ inline void ec_call(int function, Regs &r)
             return w_direct_call(f, r);
     amos_call(&r, reinterpret_cast<const uint8_t *>(wdata().EcVect) + 4 * function);
 }
-inline void wi_call(int function, Regs &r) { amos_call(&r, reinterpret_cast<const uint8_t *>(wdata().WiVect) + 4 * function); }
+} // namespace amos
+// AMOS.library's text window functions (w/windows.cpp)
+extern "C" void w_window(uint32_t function, amos::AllRegs *r);
+namespace amos {
+
+inline void wi_call(int function, Regs &r)
+{
+    if (wdata().WiVect == reinterpret_cast<uint32_t>(::w_wi_in))
+        return w_direct_call([function](AllRegs *a) { ::w_window(uint32_t(function), a); }, r);
+    amos_call(&r, reinterpret_cast<const uint8_t *>(wdata().WiVect) + 4 * function);
+}
 
 // The memory of AMOS.library (w/memory.cpp): SyCall MemReserve (size, the
 // AllocMem flags; 0 if none), MemFree

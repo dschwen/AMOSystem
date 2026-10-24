@@ -13,7 +13,7 @@ inline Program &program() { return *ptr<Program>(mon().Tt_Program); }
 // Calls a routine of +Monitor.s with registers r; returns its d0
 inline uint32_t call(const void *routine, Regs &r)
 {
-    amos_call(&r, routine);
+    entry_call(routine, r);
     return r.d[0];
 }
 

@@ -14,7 +14,7 @@ inline Program &program() { return *reinterpret_cast<Program *>(ctx().a6); }
 // Calls an editor routine of +Edit.s with registers r; returns its d0
 inline uint32_t call(uint8_t *routine, Regs &r)
 {
-    amos_call(&r, routine);
+    entry_call(routine, r);
     return r.d[0];
 }
 
