@@ -48,6 +48,46 @@ _amos_call
 		movem.l	(sp)+,d2-d7/a2-a6
 		rts
 
+; int32_t amos_call_cc(Regs *r, const void *fn)
+;
+; amos_call for a routine that answers in the condition codes (a float
+; comparison): returns -1 if they say "less than" (N xor V), 0 "equal"
+; (Z), else 1.
+		xdef	_amos_call_cc
+_amos_call_cc
+		movem.l	d2-d7/a2-a6,-(sp)
+		GetCtx	a0
+		movem.l	(a0),d2-d7		keep the context
+		movem.l	d2-d7,-(sp)
+		move.l	4+44+24(sp),a0		r
+		move.l	8+44+24(sp),a1		fn
+		move.l	a0,-(sp)
+		pea	.Back(pc)
+		move.l	a1,-(sp)
+		GetCtx	a1
+		movem.l	8(a1),a3-a6
+		movem.l	(a0),d0-d7/a0-a2
+		rts				to fn, which returns to .Back
+.Back		beq.s	.Eq
+		blt.s	.Lt
+		pea	1.w
+		bra.s	.Store
+.Lt		pea	-1.w
+		bra.s	.Store
+.Eq		clr.l	-(sp)
+.Store		move.l	a0,-(sp)
+		move.l	8(sp),a0
+		movem.l	d0-d7,(a0)
+		move.l	(sp)+,8*4(a0)
+		movem.l	a1-a2,9*4(a0)
+		move.l	(sp)+,d0
+		addq.l	#4,sp
+		movem.l	(sp)+,d2-d7
+		GetCtx	a0
+		movem.l	d2-d7,(a0)
+		movem.l	(sp)+,d2-d7/a2-a6
+		rts
+
 ; void amos_eval(Regs *r, const void *fn)
 ;
 ; amos_call for a routine that reads parameters from the program: a3 and

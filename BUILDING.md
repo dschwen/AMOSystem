@@ -66,6 +66,12 @@ linked into the AMOSPro program instead:
    length word), and its return value becomes the AMOS result.
 3. Implement the routine in `src/lib/*.cpp` as an `extern "C"` function.
 
+A helper that +ILib.s reaches with local branches (`bsr FindVar`) keeps a
+one-line `Label Rjmp L_Label` in the library. If it had no number of its
+own, it takes the slot of a routine of the dropped compiler: the empty
+`Lib_Def`s `PlusF`... and `Cmp...` at the start of +ILib.s are only
+referenced by APCmp (`FindVar` took `PlusF`'s).
+
 `make_labels.py` refuses two things the loader cannot handle: a
 PC-relative `Rbsr`/`Rbra`/`Rbcc` to a `Lib_Int` routine (it cannot reach the
 program, so use `Rjsr`/`Rjmp`), and code in the library that could fall
@@ -157,6 +163,10 @@ Strings and numbers
   Depending on what ran before, it failed with "out of string space"
   (error 11). It now always works; `tests/golden/strings.txt` has the
   corrected line.
+- `Max` and `Min` of two strings compared the address of the second string
+  with a leftover register instead of the strings, so `Max("b","a")` gave
+  "a". They now compare the strings (`tests/golden/expr.txt`,
+  `expr2.txt`).
 
 Banks, files and directories
 - `Bank Swap` of two banks that do not exist crashed; it is now an error.

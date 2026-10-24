@@ -70,6 +70,7 @@ extern "C" {
 void amos_call(Regs *r, const void *fn);
 void amos_call_all(AllRegs *r, const void *fn);
 void amos_eval(Regs *r, const void *fn);
+int32_t amos_call_cc(Regs *r, const void *fn);
 [[noreturn]] void amos_goto(const void *fn, uint32_t d0);
 }
 
@@ -89,6 +90,10 @@ inline const void *lib_address(int routine)
 
 // JJsr: call a routine of AMOSPro.Lib
 inline void lib_call(int routine, Regs &r) { amos_call(&r, lib_address(routine)); }
+
+// JJsr to a routine that answers in the condition codes: -1 "less than",
+// 0 "equal", 1 "greater than"
+inline int32_t lib_call_cc(int routine, Regs &r) { return amos_call_cc(&r, lib_address(routine)); }
 
 // JJsr to a routine that evaluates parameters from the program: the
 // interpreter continues at the a6 (and with the a3) it leaves

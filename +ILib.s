@@ -184,7 +184,7 @@ Init
 	Lib_Def	CmpLibClose
 	Lib_Def	CmpClearVar
 
-	Lib_Def	PlusF			Routines d'operateurs
+	Lib_Int	FindVar			interp/vars.cpp (the compiler's PlusF before)
 	Lib_Def	PlusC
 	Lib_Def	MoinsF
 	Lib_Def	MoinsC
@@ -3073,43 +3073,45 @@ TVar:	moveq	#0,d1
 	move.l	#EntNul,d3
 	Ret_Int
 ;						Table des operateurs
+; (the operators: interp/eval.cpp. A token is its entry's offset from
+; OP_Jumps, so the entries keep their size.)
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Tk_Operateurs
-	bra	Op_Xor
+	dc.w	0,0
 	dc.b 	" xor"," "+$80,"O00",-1
-	bra	Op_Or
+	dc.w	0,0
 	dc.b 	" or"," "+$80,"O00",-1
-	bra	Op_And
+	dc.w	0,0
 	dc.b 	" and"," "+$80,"O00",-1
-	bra	Op_Diff
+	dc.w	0,0
 	dc.b 	"<",">"+$80,"O20",-1
-	bra	Op_Diff
+	dc.w	0,0
 	dc.b 	">","<"+$80,"O20",-1
-	bra	Op_InfEg
+	dc.w	0,0
 	dc.b 	"<","="+$80,"O20",-1
-	bra	Op_InfEg
+	dc.w	0,0
 	dc.b 	"=","<"+$80,"O20",-1
-	bra	Op_SupEg
+	dc.w	0,0
 	dc.b 	">","="+$80,"O20",-1
-	bra	Op_SupEg
+	dc.w	0,0
 	dc.b 	"=",">"+$80,"O20",-1
-TOpEg	bra	Op_Egal
+TOpEg	dc.w	0,0
 	dc.b 	"="+$80,"O20",-1
-	bra	Op_Inf
+	dc.w	0,0
 	dc.b 	"<"+$80,"O20",-1
-	bra	Op_Sup
+	dc.w	0,0
 	dc.b 	">"+$80,"O20",-1
-	bra	Op_Plus
+	dc.w	0,0
 	dc.b 	"+"+$80,"O22",-1
-TOpM	bra	Op_Moins
+TOpM	dc.w	0,0
 	dc.b 	"-"+$80,"O22",-1
-	bra	Op_Modulo
+	dc.w	0,0
 	dc.b 	" mod"," "+$80,"O00",-1
-	bra	Op_Mult
+	dc.w	0,0
 	dc.b 	"*"+$80,"O00",-1
-	bra	Op_Div
+	dc.w	0,0
 	dc.b 	"/"+$80,"O00",-1
-TOpPuis	bra	Op_Puis
+TOpPuis	dc.w	0,0
 	dc.b 	"^"+$80,"O00",-1
 	even
 OP_Jumps
@@ -3127,582 +3129,9 @@ Fn_New_Evalue
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 	Entree de l'evaluation
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	New_Evalue
 New_Evalue
-; - - - - - - - - - - - - -
-
-	IFNE	Debug>1
-	move.l	VarBufL(a5),d0		Debuggage
-	cmp.l	#1024*1,d0
-	bne.s	.NoBug
-	Rjsr	L_PreBug
-.NoBug
-	ENDC
-
-	move.w	#$7FFF,d0
-	bra.s	Eva1
-Eva0	movem.l	d2/d3/d4,-(a3)
-Eva1	move.w	d0,-(a3)
-; Recolte d'un operande
-; ~~~~~~~~~~~~~~~~~~~~~
-	clr.w	-(sp)
-OpeRe	move.w	(a6)+,d0
-	bmi.s	OpeM
-	move.w	0(a4,d0.w),d1
-	move.l	-LB_Size-4(a4,d1.w),a0
-	jsr	(a0)
-	tst.w	(sp)+
-	bne.s	Chs0
-; Nouvel operateur
-; ~~~~~~~~~~~~~~~~
-OP_Ret	move.w	(a6)+,d0
-	cmp.w	(a3),d0
-	bhi.s	Eva0
-	subq.l	#2,a6
-	move.w	(a3)+,d1
-	bpl.s	Eva3
-	jmp	OP_Jumps(pc,d1.w)
-Eva3	cmp.w	#_TkPar2,d0
-	beq.s	Eva4
-	rts
-Eva4	move.w	(a6)+,d0
-	rts
-; Changement de signe avant l'operande
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Chs0	tst.b	d2
-	bne.s	Chs1
-	neg.l	d3
-	bra.s	OP_Ret
-Chs1	tst.b	MathFlags(a5)
-	bmi.s	Dble
-	bchg	#7,d3
-	bra.s	OP_Ret
-Dble	bchg	#31,d3
-	bra.s	OP_Ret
-; Signe moins devant
-; ~~~~~~~~~~~~~~~~~~
-OpeM	addq.w	#1,(sp)
-	bra	OpeRe
-
-; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-;					OPERATEUR PLUS
-; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Op_Plus
-; - - - - - - - - - - - - -
-	bsr 	Compat
-        bmi.s 	plus1
-        bne.s 	plus2
-; Plus float!
-	moveq	#_LVOSPAdd,d2
-	Rjsrt	L_Float_Operation
-	lea	12(a3),a3
-	bra	OP_Ret
-; Addition entiere
-plus1:  add.l 	4(a3),d3
-        bvs 	OverFlow
-	lea	12(a3),a3
-	bra	OP_Ret
-; Addition de chaines
-plus2:  move.l 	d3,a2
-        move.l	d3,-(sp)
-        clr.l 	d3
-        move 	(a2),d3        ;taille de la deuxieme chaine
-        beq.s 	plus11        ;deuxieme chaine nulle
-        move.l 	4(a3),a2
-        clr.l 	d0
-        move 	(a2),d0
-        beq.s 	plus10          ;premiere chaine nulle
-        add.l 	d0,d3
-        cmp.l 	#String_Max,d3
-        bcc 	StooLong        ;string too long!
-        bsr 	Demande
-        move 	d3,(a0)+       ;poke la taille resultante
-        move 	(a2)+,d0
-        beq.s 	plus4
-        subq 	#1,d0
-plus3:  move.b 	(a2)+,(a0)+  ;recopie de la premiere chaine
-        dbra 	d0,plus3
-plus4:  move.l 	(sp)+,a2
-        move 	(a2)+,d0
-        beq.s 	plus6
-        subq 	#1,d0
-plus5:  move.b 	(a2)+,(a0)+
-        dbra 	d0,plus5
-plus6:  move 	a0,d0          ;rend pair
-        btst 	#0,d0
-        beq.s 	plus7
-        addq.l 	#1,a0
-plus7:  move.l 	a0,HiChaine(a5)
-        move.l 	a1,d3
-	lea	12(a3),a3
-	bra	OP_Ret
-plus10: move.l 	(sp)+,d3     ;premiere chaine nulle: ramene la deuxieme
-	lea	12(a3),a3
-        bra	OP_Ret
-plus11: addq.l 	#4,sp        ;deuxieme chaine nulle: ramene la premiere
-        move.l 	4(a3),d3
-	lea	12(a3),a3
- 	bra	OP_Ret
-
-; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-;					OPERATEUR MOINS
-; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Op_Moins
-; - - - - - - - - - - - - -
-	bsr 	Compat
-        bmi.s 	ms1
-        bne.s 	ms2
-; Moins float
-	moveq	#_LVOSPSub,d2
-	Rjsrt	L_Float_Operation
-	lea	12(a3),a3
-	bra	OP_Ret
-; Moins entier
-ms1:    move.l	4(a3),d0
-	sub.l	d3,d0          ;soustraction entiere
-        bvs 	OverFlow
-        move.l 	d0,d3
-	lea	12(a3),a3
-	bra	OP_Ret
-; Soustraction de chaines EXCLUSIF!!!
-ms2:    move.l	d5,-(sp)
-	move.l	d3,d4        	;sauve pour plus tard
-        move.l 	4(a3),a2
-        clr.l 	d3
-        move.w 	(a2)+,d3
-        move.l 	d3,d1
-        bsr 	Demande         ;prend la place une fois pour toute!
-        move.w 	d3,(a0)+
-        beq.s 	ms4
-        addq 	#1,d3
-        lsr 	#1,d3
-        subq 	#1,d3
-ms3:    move.w 	(a2)+,(a0)+  	;recopie la chaine
-        dbra 	d3,ms3
-ms4:    move.l 	a0,HiChaine(a5)
-        addq.l 	#2,a1        	;chaine dont auquelle on soustrait en a1/d1
-        move.l 	d4,a2
-        clr.l 	d2
-        move 	(a2)+,d2       	;chaine a soustraire en a2/d2
-
-ms5:    clr.l 	d4
-        movem.l d1-d2/a1-a3,-(sp)
-	Rjsr	L_InstrFind
-        movem.l (sp)+,d1-d2/a1-a3
-        tst.l 	d3
-        beq.s 	ms9
-        move.l 	a1,a0
-        move.l 	a1,d4        	;pour plus tard!
-        subq.l 	#1,d3
-        move.l 	d3,d5        	;taille du debut a garder
-        add.l 	d3,a1         	;pointe ou transferer la fin
-        add.l 	d2,d3
-        add.l 	d3,a0         	;pointe la fin a recopier
-        sub.l 	d3,d1
-        add.l 	d1,d5         	;taille finale en memoire
-        subq.l 	#1,d1
-        bmi.s 	ms7
-ms6:    move.b 	(a0)+,(a1)+
-        dbra 	d1,ms6
-ms7:    move 	a0,d0          	;rend pair
-        btst 	#0,d0
-        beq.s 	ms8
-        addq.l 	#1,a0
-ms8:    move.l 	a0,HiChaine(a5)
-        move.l 	d4,a1
-        move.w 	d5,-2(a1)
-        move.l 	d5,d1
-        bra.s 	ms5
-ms9:    moveq 	#2,d2
-        move.l 	a1,d3
-        subq.l 	#2,d3
-	move.l	(sp)+,d5
-	lea	12(a3),a3
-	bra	OP_Ret
-
-; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-;					OPERATEUR ETOILE
-; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Op_Mult
-; - - - - - - - - - - - - -
-	bsr 	Compat
-        bmi.s 	milt1
-; Multiplie float
-	moveq	#_LVOSPMul,d2
-	Rjsrt	L_Float_Operation
-	lea	12(a3),a3
-	bra	OP_Ret
-; Entier!
-milt1:  move.l	4(a3),d2
-	clr 	d4              ;multiplication signee 32*32 bits
-        tst.l 	d3            ;aabb*ccdd
-        bpl.s 	mlt1
-        neg.l 	d3
-        not 	d4
-mlt1:   tst.l 	d2            ;tests des signes
-        bpl.s 	mlt2
-        neg.l 	d2
-        not 	d4
-* Peut on faire une mult rapide?
-mlt2:  	cmp.l 	#$00010000,d3
-        bcc.s 	mlt0
-        cmp.l 	#$00010000,d2
-        bcc.s 	mlt0
-        mulu 	d2,d3          ;quand on le peut: multiplication directe!
-	tst.w 	d4
-	beq.s	mltF
-	neg.l 	d3
-	bra.s 	mltF
-* Multipcation lente
-mlt0:   move 	d2,d1
-        mulu 	d3,d1
-        bmi 	OverFlow
-        swap 	d2
-        move 	d2,d0
-        mulu 	d3,d0
-        swap 	d0
-        bmi 	OverFlow
-        tst 	d0
-        bne 	OverFlow
-        add.l 	d0,d1
-        bvs 	OverFlow
-        swap 	d3
-        move 	d2,d0
-        mulu 	d3,d0
-        bne 	OverFlow
-        swap 	d2
-        move 	d2,d0
-        mulu 	d3,d0
-        swap 	d0
-        bmi 	OverFlow
-        tst 	d0
-        bne 	OverFlow
-        add.l 	d0,d1
-        bvs 	OverFlow
-        tst 	d4              ;signe du resultat
-        beq.s 	mlt3
-        neg.l 	d1
-mlt3:   move.l 	d1,d3
-mltF:	moveq	#0,d2
-	lea	12(a3),a3
-	bra	OP_Ret
-
-; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-;					OPERATEUR DIVISE
-; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Op_Div
-; - - - - - - - - - - - - -
-	bsr 	Compat
-        bmi.s 	div1
-; Divise float
-	Rjsrt	L_Float_Test
-	beq	DByZero
-	move.w	#_LVOSPDiv,d2
-	Rjsrt	L_Float_Operation
-	lea	12(a3),a3
-	bra	OP_Ret
-; Divise entier
-div1: 	move.l	4(a3),d2
-        moveq	#0,d4
-        tst.l 	d2
-        bpl.s 	dva
-        bset	#31,d4
-        neg.l 	d2
-dva:    tst.l 	d3
-        beq 	DByZero         ;division par zero!
-        bpl.s 	dvb
-    	bchg	#31,d4
-        neg.l 	d3
-dvb:	cmp.l 	#$10000,d3    	;Division rapide ou non?
-        bcc.s 	dv0
-        move.l 	d2,d0
-        divu 	d3,d0          	;division rapide: 16/16 bits
-        bvs.s 	dv0
-        moveq 	#0,d3
-        move.w	d0,d3
-        bra.s 	dvc
-dv0:	move.w 	#31,d4         ;division lente: 32/32 bits
-        moveq 	#-1,d5
-        clr.l 	d1
-dv2:    lsl.l 	#1,d2
-        roxl.l	#1,d1
-        cmp.l 	d3,d1
-        bcs.s 	dv1
-        sub.l 	d3,d1
-        lsr.l	#1,d5           ;met X a un!
-dv1:    roxl.l 	#1,d0
-        dbra 	d4,dv2
-        move.l 	d0,d3
-dvc:    tst.l	d4
-        bpl.s 	dvd
-        neg.l 	d3
-dvd:    moveq	#0,d2
-	lea	12(a3),a3
-	bra	OP_Ret
-
-; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-;					OPERATEUR PUISSANCE
-; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Op_Puis
-; - - - - - - - - - - - - -
-	bsr 	QueFloat        	;que des float
-	move.w	#_LVOSPPow,d2
-	Rjsrt	L_Math_Operation	Fait une operation math
-	lea	12(a3),a3
-	bra	OP_Ret
-
-; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-;						OPERATEUR MODULO
-; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Op_Modulo
-	bsr 	QuEntier      ;Que des entiers!
-	move.l	d6,-(sp)
-	move.l	4(a3),d6
-	tst.l 	d3
-        bpl.s 	mdv3
-        neg.l 	d3
-mdv3:   moveq 	#31,d2         ;division lente: 32/32 bits
-        moveq 	#-1,d4
-        clr.l 	d1
-mdv2:   lsl.l 	#1,d6
-        roxl.l 	#1,d1
-        cmp.l 	d3,d1
-        bcs.s 	mdv1
-        sub.l 	d3,d1
-        lsr 	#1,d4           ;met X a un!
-mdv1:   roxl.l 	#1,d0
-        dbra 	d2,mdv2
-	move.l 	d1,d3        ;prend le reste!
-	moveq	#0,d2
-	move.l	(sp)+,d6
-	lea	12(a3),a3
-	bra	OP_Ret
-
-; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-;						OPERATEUR EGAL
-; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Op_Egal
-; - - - - - - - - - - - - - - - -
-	bsr 	Compat
-egbis	bmi.s 	eg1             ;entree pour find
-        bne.s 	eg2
-	Rjsrt	L_Float_Compare
-	bne.s	Faux
-	bra.s	Vrai
-eg1:    cmp.l 	4(a3),d3
-        beq.s 	Vrai
-Faux:   moveq 	#0,d3
-	moveq 	#0,d2
-	lea	12(a3),a3
-	bra	OP_Ret
-Vrai:   moveq 	#-1,d3
-        moveq 	#0,d2
-	lea	12(a3),a3
-	bra	OP_Ret
-eg2:    bsr 	compch
-	cmp.l	d4,d3
-	beq.s	Vrai
-	bra.s	Faux
-
-; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-;					OPERATEUR INFERIEUR
-; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Op_Inf
-; - - - - - - - - - - - - - - - -
-	bsr 	Compat
-        bmi.s 	inf1
-        bne.s 	inf2
-	Rjsrt	L_Float_Compare
-	blt	Vrai
-	bra	Faux
-inf1:   cmp.l 	4(a3),d3
-        bgt.s 	Vrai
-        bra.s 	Faux
-inf2:   bsr 	compch
-	cmp.l	d4,d3
-        bgt.s 	Vrai
-        bra.s 	Faux
-
-; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-;					OPERATEUR INFERIEUR OU EGAL
-; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Op_InfEg
-; - - - - - - - - - - - - - - - -
-	bsr 	Compat
-        bmi.s 	infeg1
-        bne.s 	infeg2
-	Rjsrt	L_Float_Compare
-	ble	Vrai
-	bra	Faux
-infeg1: cmp.l 	4(a3),d3
-        bge 	Vrai
-        bra 	Faux
-infeg2: bsr 	compch
-	cmp.l	d4,d3
-        bge 	Vrai
-        bra 	Faux
-
-; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-;					OPERATEUR DIFFERENT
-; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Op_Diff
-; - - - - - - - - - - - - - - - -
-	bsr 	Compat
-        bmi.s 	dif1
-        bne.s 	dif2
-	Rjsrt	L_Float_Compare
-	bne	Vrai
-	bra	Faux
-dif1:   cmp.l 	4(a3),d3
-        bne 	Vrai
-        bra 	Faux
-dif2:   bsr 	compch
-	cmp.l	d4,d3
-        bne 	Vrai
-        bra 	Faux
-
-; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-;					OPERATEUR SUPERIEUR
-; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Op_Sup
-; - - - - - - - - - - - - - - - -
-	bsr 	Compat
-	bmi.s 	sup1
-        bne.s 	sup2
-	Rjsrt	L_Float_Compare
-	bgt	Vrai
-	bra	Faux
-sup1:   cmp.l 	4(a3),d3
-        blt 	Vrai
-        bra 	Faux
-sup2:   bsr 	compch
-	cmp.l	d4,d3
-        blt 	Vrai
-        bra 	Faux
-
-; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-;					OPERATEUR SUPERIEUR OU EGAL
-; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Op_SupEg
-; - - - - - - - - - - - - - - - -
-	bsr 	Compat
-        bmi.s 	supeg1
-        bne.s 	supeg2
-	Rjsrt	L_Float_Compare
-	bge	Vrai
-	bra	Faux
-supeg1: cmp.l 	4(a3),d3
-        ble 	Vrai
-        bra 	Faux
-supeg2: bsr 	compch
-	cmp.l	d4,d3
-        ble 	Vrai
-        bra 	Faux
-
-; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-;						OPERATEUR AND
-; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Op_And
-; - - - - - - - - - - - - - - - -
-	bsr 	QuEntier
-        and.l 	4(a3),d3
-	lea	12(a3),a3
-	bra	OP_Ret
-
-; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-;						OPERATEUR OR
-; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Op_Or
-; - - - - - - - - - - - - - - - -
-	bsr 	QuEntier
-        or.l 	4(a3),d3
-	lea	12(a3),a3
-	bra	OP_Ret
-
-; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-;						OPERATEUR XOR
-; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Op_Xor
-; - - - - - - - - - - - - - - - -
-	bsr 	QuEntier
-	move.l	4(a3),d0
-        eor.l 	d0,d3
-	lea	12(a3),a3
-	bra	OP_Ret
-
-
-; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-;						ROUTINES INTERNES
-; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-; 	Que des floats
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-QueFloat
-	tst.b 	d2
-	bne.s 	Compat
-	Rjsrt 	L_IntToFl1
-; 	Rend compatible les deux operandes
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Compat:	move.b	3(a3),d1
-	cmp.b	d1,d2
-	bne.s 	Cpt1
-	subq.b 	#1,d1
-	rts
-Cpt1	tst.b	d2
-	bne.s 	Cpt2
-	Rjsrt	L_IntToFl1		Change D2/D3/D4 en float
-	moveq 	#0,d1
-	rts
-Cpt2	Rjsrt	L_IntToFl2		Change (a3) en float
-	moveq 	#0,d1
-	rts
-; 	Que des entiers
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-QuEntier
-	tst.b 	d2
-	beq.s 	.Quent1
-	Rjsrt 	L_FlToInt1		Change d2-d4 en entier
-.Quent1	tst.b	3(a3)
-	bne.s 	.Cpt3
-	rts
-.Cpt3	Rjmpt	L_FlToInt2		Change (a3) en entier
-
-; 	COMPARAISON DE DEUX CHAINES
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-compch: move.l	4(a3),a0
-        move.l 	d3,a1
- 	moveq	#0,d3
- 	moveq	#0,d4
-        clr.b 	d2
-        move.w 	(a0)+,d0
-        move.w 	(a1)+,d1
-        beq.s 	cpch8
-        tst 	d0
-        beq.s	cpch7
-cpch1:  cmpm.b 	(a0)+,(a1)+
-        bne.s 	cpch6
-        subq 	#1,d0
-        beq.s 	cpch3
-        subq	#1,d1
-        bne.s 	cpch1
-; on estrrive au bout d'une des chaines
-cpch2:  moveq 	#1,d4         ;A$>B$
-        rts
-cpch3:  subq 	#1,d1         ;egalite!
-        beq.s 	cpch5
-cpch4:  moveq 	#1,d3         ;B$>A$
-cpch5:  rts
-; on estas arrive au bout des chaines
-cpch6:  bcc.s 	cpch4
-        bcs.s 	cpch2
-; a$ estulle
-cpch7:  tst 	d1
-        beq.s 	cpch5           ;deux chaines nulles
-        bne.s 	cpch4           ;B$>A$
-; b$ estulle
-cpch8:  tst 	d0
-        beq.s 	cpch5           ;deux chaines nulles
-        bne.s 	cpch2           ;A$>B$
+	Rjmp	L_New_Evalue
+; The evaluator and the operators: interp/eval.cpp
 
 ;	Saute D0 params
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -3739,6 +3168,7 @@ New_Expentier
 	beq.s	.Skip
 	rts
 .Skip	Rjmpt	L_FlToInt1
+	Lib_Int	New_Evalue
 
 
 
@@ -3757,564 +3187,71 @@ New_Expentier
 	subq.l	#2,a6
 	Ret_Int
 
-; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-;					VARIABLE EN INSTRUCTION
-; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InVar
-; - - - - - - - - - - - - -
-	move.w	(a6)+,d0
-	bmi.s	.Glo
-	move.l	VarLoc(a5),a0
-	lea	2(a0,d0.w),a0
-.Glo2	moveq	#0,d1
-	move.b	(a6)+,d1
-	move.b	(a6)+,d2
-	add.w	d1,a6
-	btst	#6,d2		* Si tableau, pointe l'interieur
-	bne.s	InVarT
-	move.l	a0,-(sp)
-	move.w	d2,-(sp)
-	bsr	Fn_New_Evalue	* Va evaluer
-	move.w	(sp)+,d5
-	cmp.b	d5,d2		??? Possible probleme si autres flags?
-	beq.s	.Skip2
-	tst.b	d2
-	bne.s	.Skip1
-	Rjsrt	L_IntToFl1
-	bra.s	.Skip2
-.Skip1	Rjsrt	L_FlToInt1
-.Skip2	move.l	(sp)+,a0
-	cmp.b	#1,d2
-	beq.s	.Flt
-.Ent	move.b	#4,-2(a0)	La longueur
-	move.b	d5,-1(a0)	Le flag
-	move.l	d3,(a0)		La valeur
-	rts
-; Si variable globale
-.Glo	move.l	VarGlo(a5),a0
-	neg.w	d0
-	lea	1(a0,d0.w),a0
-	bra.s	.Glo2
-; Si float
-; ~~~~~~~~
-.Flt	tst.b	MathFlags(a5)
-	bpl.s	.Ent
-	move.b	#8,-2(a0)
-	move.b	d5,-1(a0)
-	move.l	d3,(a0)
-	move.l	d4,4(a0)
-	rts
-;	Un tableau: ne poke pas les flags
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-InVarT	bsr	GetTablo
-	and.w	#$000F,d2
-	move.l	a0,-(sp)
-	move.w	d2,-(sp)
-	bsr	Fn_New_Evalue	* Va evaluer
-	move.w	(sp)+,d1
-	cmp.b	d1,d2
-	beq.s	.Skip2
-	tst.b	d2
-	bne.s	.Skip1
-	Rjsrt	L_IntToFl1
-	bra.s	.Skip2
-.Skip1	Rjsrt	L_FlToInt1
-.Skip2	move.l	(sp)+,a0
-	cmp.b	#1,d2
-	beq.s	.Flt
-.Ent	move.l	d3,(a0)
-	rts
-.Flt	tst.b	MathFlags(a5)
-	bpl.s	.Ent
-	move.l	d3,(a0)
-	move.l	d4,4(a0)
-	rts
-
-; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-;					VARIABLE EN FONCTION
-; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par FnVar
-; - - - - - - - - - - - - -
-	move.w	(a6)+,d0
-	bmi.s	.Glo
-	move.l	VarLoc(a5),a0
-	lea	2(a0,d0.w),a0
-.Glo2	moveq	#0,d1
-	move.b	(a6)+,d1
-	move.b	(a6)+,d2
-	add.w	d1,a6
-	btst	#6,d2
-	beq.s	.FnV1			* Tableau
-	bsr	GetTablo
-.FnV1	and.w	#$F,d2
-	beq.s	.Ent
-	cmp.b	#2,d2
-	beq.s	.Str
-; Float : simple ou double?
-; ~~~~~~~~~~~~~~~~~~~~~~~~~
-	tst.b	MathFlags(a5)
-	bpl.s	.Ent
-	move.l	(a0)+,d3
-	move.l	(a0),d4
-	rts
-; Si variable globale
-; ~~~~~~~~~~~~~~~~~~~
-.Glo	move.l	VarGlo(a5),a0
-	neg.w	d0
-	lea	1(a0,d0.w),a0
-	bra.s	.Glo2
-; Ramene la valeur ENTIERE / FLOAT simple
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.Ent	move.l	(a0),d3
-	rts
-; Ramene la valeur CHAINE
-; ~~~~~~~~~~~~~~~~~~~~~~~
-.Str	move.l	(a0),d3
-	beq.s	.Vide
-	rts
-.Vide	move.l	ChVide(a5),d3		Initialise la variable
-	move.w	#$0402,-2(a0)		Le flag
-	move.l	d3,(a0)			La variable
-	rts
-
-; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-;	Trouve l'adresse d'une variable > A0
-; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-FindVar
-; - - - - - - - - - - - - -
-	addq.l	#2,a6
-	move.w	(a6)+,d0
-	bmi.s	.Glo
-	move.l	VarLoc(a5),a0
-	lea	2(a0,d0.w),a0
-.Glo2	moveq	#0,d1
-	move.b	(a6)+,d1
-	move.b	(a6)+,d2
-	add.w	d1,a6
-	btst	#6,d2
-	beq.s	.FdV0
-	bsr	GetTablo			Tableau: pas de flag
-	and.w	#$0F,d2				Isole le flag
-	cmp.b	#2,d2
-	beq.s	.Str
-	rts
-; Si variable globale
-.Glo	move.l	VarGlo(a5),a0
-	neg.w	d0
-	lea	1(a0,d0.w),a0
-	bra.s	.Glo2
-; Si pas tableau
-.FdV0	move.b	#4,-2(a0)			Met la longueur
-	move.b	d2,-1(a0)			Variable simple: met le flag
-;	and.w	#$F,d2				???
-	beq.s	.Fin
-	cmp.b	#1,d2
-	beq.s	.Flt
-.Str	tst.l	(a0)				Une chaine, initialisee?
-	bne.s	.Fin
-	move.l	ChVide(a5),(a0)
-	rts
-.Flt	tst.b	MathFlags(a5)			Un float simple ou double?
-	bpl.s	.Fin
-	move.b	#8,-2(a0)
-.Fin	rts
+; Variables: interp/vars.cpp
+FindVar	Rjmp	L_FindVar
+GetTablo	Rjmp	L_GetTablo
+	Lib_Int	InVar
+	Lib_Int	FnVar
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ;						DIM
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InDim
-InDim
-; - - - - - - - - - - - - - - - -
-	addq.l	#2,a6
-	move.w	(a6)+,d0
-	bmi	DimGlo
-	move.l	VarLoc(a5),a0
-	lea	2(a0,d0.w),a0
-Dim0	moveq	#0,d1
-	move.b	(a6)+,d1
-	move.b	(a6)+,d2
-	add.w	d1,a6
-	tst.l	(a0)		Already dimensionned
-	bne	AlrDim
-	moveq	#2,d1		Taille variable (nombre de LSL)
-	and.w	#$F,d2
-	cmp.b	#1,d2
-	bne.s	.Skip
-	tst.b	MathFlags(a5)
-	bpl.s	.Skip
-	moveq	#3,d1		Variable double
-.Skip	move.w	d2,-(sp)	Nombre de dims
-	move.l	a0,-(sp)	Adresse du tableau
-	move.w	d1,-(sp)	Taille variable
-* Recupere et compte les params
-	clr.w	-(sp)
-	move.w	#1,-(sp)
-Dim1:	bsr	Fn_New_Evalue
-	tst.b	d2
-	beq.s	Dim2
-	move.w	d0,-(sp)
-	Rjsrt	L_FlToInt1
-	move.w	(sp)+,d0
-Dim2:	cmp.l	#$FFFF,d3
-	bcc	FonCall
-	move.w	d3,-(a3)
-	addq.w	#1,d3
-	addq.w	#1,2(sp)
-	mulu	(sp),d3
-	cmp.w	#_TkPar2,d0
-	beq.s	Dim3
-	cmp.l	#$10000,d3
-	bcc	FonCall
-	move.w	d3,(sp)
-	cmp.w	#_TkVir,(a6)
-	beq.s	Dim1
-	bra	Synt
-Dim3:	addq.l	#2,sp
-	move.w	(sp)+,d2		Nb de dimensions
-	move.l	d3,d0
-	move.w	(sp)+,d4		Taille variable
-	lsl.l	d4,d3
-	move.l	d3,d5
-	lsr.l	#2,d5			Nombre de mots long a nettoyer
-	move.l	TabBas(a5),a0		Descend le bas tableaux
-	move.l	a0,a2			Pour le nettoyage
-	sub.l	d3,a0
-	move.w	d2,d0			Taille du header
-	lsl.w	#2,d0
-	addq.l	#2,d0
-	sub.w	d0,a0
-	cmp.l	HiChaine(a5),a0
-	bcc	DimM1
-	movem.l	a0-a1/d0-d1,-(sp)
-	Rbsr	L_Menage
-	movem.l	(sp)+,a0-a1/d0-d1
-	cmp.l	HiChaine(a5),a0
-	bcs	OOfBuf
-DimM1	move.l	(sp),a1			Stocke l'adresse du tableau
-	move.l	a0,(a1)
-	move.l	a0,TabBas(a5)
-	move.b	d2,(a0)			Stocke le nb de dim
-	move.b	d4,1(a0)		Nombre de LSL
-	lea	0(a0,d0.w),a0
-	move.l	a0,a1			Pointe le premier element
-	moveq	#1,d1
-	subq.w	#1,d2
-Dim4:	move.w	d1,-(a0)		Stocke taille et multiplicateur
-	move.w	(a3)+,d0
-	move.w	d0,-(a0)
-	addq.w	#1,d0
-	mulu	d0,d1
-	dbra	d2,Dim4
-; Poke le flag du tableau
-	move.l	(sp)+,a0		Adresse du pointeur
-	move.w	(sp)+,d2		Flag
-	move.w	d2,d0
-	or.w	#$0440,d0		4 octets / Tableau
-	move.w	d0,-2(a0)
-; Nettoyage
-	moveq	#0,d0
-	cmp.w	#2,d2
-	bne.s	.Clean
-	move.l	ChVide(a5),d0
-.Clean	move.l	d0,(a1)+
-	subq.l	#1,d5
-	bne.s	.Clean
-; Une autre variable
-	cmp.w	#_TkVir,(a6)+
-	beq	InDim
-; Fin du dim!
-	subq.l	#2,a6
-	rts
-; Si variable globale
-DimGlo	move.l	VarGlo(a5),a0
-	neg.w	d0
-	lea	1(a0,d0.w),a0
-	bra	Dim0
+	Lib_Int	InDim		src/interp
 
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ;						TROUVE ELEMENT DE TABLEAU
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	GetTablo
-GetTablo
-; - - - - - - - - - - - - - - - -
-	movem.l	d2/d3/d4,-(sp)
-	move.l	(a0),d0
-	beq	NonDim
-	move.l	d0,a0
-	moveq	#0,d0
-	move.b	(a0)+,d0	Nombre de dims
-	move.w	d0,-(sp)
-	move.b	(a0)+,d0	Taille variables
-	move.w	d0,-(sp)
-	move.l	a0,-(sp)
-	clr.l	-(sp)
-GetT1:	bsr	Fn_New_Evalue
-	subq.w	#1,10(sp)
-	beq.s	GetT3
-	tst.b	d2
-	beq.s	GetT2
-	Rjsrt	L_FlToInt1
-GetT2:	move.l	4(sp),a0
-	moveq	#0,d0
-	move.w	(a0)+,d0
-	cmp.l	d0,d3
-	bhi	FonCall
-	mulu	(a0)+,d3
-	add.l	d3,(sp)
-	move.l	a0,4(sp)
-	bra.s	GetT1
-GetT3:	tst.b	d2
-	beq.s	GetT4
-	Rjsrt	L_FlToInt1
-GetT4:	move.l	(sp)+,d2
-	move.l	(sp)+,a0
-	moveq	#0,d0
-	move.w	(a0)+,d0
-	cmp.l	d0,d3
-	bhi	FonCall
-	add.l	d3,d2
-	move.w	(sp)+,d0		Taille variable
-	lsl.l	d0,d2
-	addq.l	#2,sp
-	lea	2(a0,d2.l),a0
-	movem.l	(sp)+,d2/d3/d4
-	rts
+	Lib_Int	GetTablo
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ;						VARPTR
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par FnVarPtr
-; - - - - - - - - - - - - -
-	addq.l	#2,a6
-	bsr	FindVar
-	addq.l	#2,a6
-	cmp.b	#2,d2
-	beq.s	.Str
-.Ent	move.l	a0,d3
-	Ret_Int
-.Str	move.l	(a0),d3
-	addq.l	#2,d3
-	Ret_Int
+	Lib_Int	FnVarPtr		src/interp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ;					=ARRAY$(a$(0))
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par FnArray
-; - - - - - - - - - - - - -
-	addq.l	#4,a6
-	move.w	(a6)+,d0
-	bmi.s	.Glo
-	move.l	VarLoc(a5),a0
-	lea	2(a0,d0.w),a0
-.Glo2	moveq	#0,d1
-	move.b	(a6)+,d1
-	move.b	(a6)+,d2
-	add.w	d1,a6
-	move.l	(a0),d0
-	beq	NonDim
-; Saute les params
-	move.l	d0,-(sp)
-	move.l	d0,a0
-	moveq	#0,d0
-	move.b	(a0),d0
-	bsr	Saut_D0Param
-	move.l	(sp)+,d3
-; Retour valeur
-	Ret_Int
-; Si variable globale
-.Glo	move.l	VarGlo(a5),a0
-	neg.w	d0
-	lea	1(a0,d0.w),a0
-	bra.s	.Glo2
+	Lib_Int	FnArray		src/interp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ;					PREND UNE CONSTANTE ENTIERE
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par FnCEntier
-; - - - - - - - - - - - - -
-	move.l	(a6)+,d3
-	Ret_Int
+	Lib_Int	FnCEntier		src/interp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ;					PREND UN FLOAT SIMPLE PRECISION
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par FnCstFl
-; - - - - - - - - - - - - -
-	tst.b	MathFlags(a5)
-	bmi.s	.DFlt
-	move.l	(a6)+,d3
-	Ret_Float
-.DFlt	move.l	(a6)+,d0
-	Rjsr	L_FFP2Ieee
-	Rjsr	L_Sp2Dp
-	move.l	d0,d3
-	move.l	d1,d4
-	Ret_Float
+	Lib_Int	FnCstFl		src/interp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ;					PREND UN FLOAT DOUBLE PRECISION
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par FnCstDFl
-; - - - - - - - - - - - - -
-	tst.b	MathFlags(a5)
-	bpl.s	.SFlt
-	move.l	(a6)+,d3
-	move.l	(a6)+,d4
-	Ret_Float
-.SFlt	move.l	(a6)+,d0
-	move.l	(a6)+,d1
-	Rjsr	L_Dp2Sp
-	Rjsr	L_Ieee2FFP
-	move.l	d0,d3
-	Ret_Float
+	Lib_Int	FnCstDFl		src/interp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ;					PREND UNE CHAINE
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par FnCstCh
-; - - - - - - - - - - - - -
-	move.l	a6,d3
-	move.w	(a6)+,d0
-	add.w	d0,a6
-	btst	#0,d0
-	beq.s	.CstC0
-	addq.l	#1,a6
-.CstC0:	tst.w	Direct(a5)
-	bne.s	.CstC1
-	Ret_String
-; Mode direct: recopier la chaine
-.CstC1:	move.l	d3,a2
-	moveq	#0,d3
-	move.w	(a2)+,d3
-	bsr	Demande
-	move.w	d3,(a0)+
-	addq.w	#1,d3
-	lsr.w	#1,d3
-	subq.w	#1,d3
-	bmi.s	.CstC3
-.CstC2:	move.w	(a2)+,(a0)+
-	dbra	d3,.CstC2
-.CstC3:	move.l	a1,d3
-	move.l	a0,HiChaine(a5)
-	Ret_String
+	Lib_Int	FnCstCh		src/interp
 
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ;						SHARED / GLOBAL
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InShared
-; - - - - - - - - - - - - - - - -
-Sha0	move.b	4(a6),d0
-	ext.w	d0
-	lea	6(a6,d0.w),a6
-	cmp.w	#_TkPar1,(a6)
-	bne.s	Sha1
-	addq.l	#4,a6
-Sha1:	cmp.w	#_TkVir,(a6)+
-	beq.s	Sha0
-	subq.l	#2,a6
-	rts
+	Lib_Int	InShared		src/interp
 
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ;						DEF FN / =FN
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InDFn
+	Lib_Int	InDFn		src/interp
 ; - - - - - - - - - - - - - - - -
-	bsr	FindVar
-	move.l	a6,(a0)
-	move.l	d7,a6
-	subq.l	#4,a6
-	moveq	#0,d0
-	move.b	(a6),d0
-	lsl.w	#1,d0
-	lea	-2(a6,d0.w),a6			Branche a la fin de la ligne
-	rts
-; - - - - - - - - - - - - - - - -
-	Lib_Par FnFn
-; - - - - - - - - - - - - - - - -
-	bsr	FindVar
-	move.l	(a0),d0
-	beq	FnNDef
-	move.l	d0,a2
-; Egalise les params
-	move.w	(a6),d0
-	cmp.w	#_TkPar1,d0
-	bne.s	FFn5
-	addq.l	#2,a6
-FFn1	cmp.w	(a2)+,d0
-	bne	FnIlNb
-	move.l	a2,-(sp)
-	bsr	New_Evalue
-	movem.l	d2/d3/d4/a6,-(sp)
-	move.l	4*4(sp),a6
-	bsr	FindVar
-	move.w	d2,d1
-	move.l	a6,a2
-	movem.l	(sp)+,d2/d3/d4/a6
-	addq.l	#4,sp
-	cmp.b	d1,d2
-	beq.s	FFn3
-	cmp.b	#1,d1
-	bhi	TypeMis
-	bne.s	FFn2
-	move.l	a0,-(sp)
-	Rjsrt	L_IntToFl1
-	move.l	(sp)+,a0
-	bra.s	FFn3
-FFn2	cmp.b	#1,d2
-	bhi	TypeMis
-	move.l	a0,-(sp)
-	Rjsrt	L_FlToInt1
-	move.l	(sp)+,a0
-FFn3	cmp.b	#1,d1
-	bne.s	.Ent
-	tst.b	MathFlags(a5)
-	bpl.s	.Ent
-	move.l	d4,4(a0)
-.Ent	move.l	d3,(a0)
-	move.w	(a6)+,d0
-	cmp.w	#_TkVir,d0
-	beq.s	FFn1
-	subq.l	#2,a6
-	cmp.w	#_TkPar2,(a2)+
-	bne.s	FnIlNb
-FFn5	cmp.w	#_TkEg,(a2)+
-	bne.s	FnIlNb
-; Appelle la fonction
-; ~~~~~~~~~~~~~~~~~~~
-	movem.l	a3-a6,-(sp)
-	move.l	a2,a6
-	bsr	New_Evalue
-	movem.l	(sp)+,a3-a6
-	rts
-FnIlNb	moveq	#16,d0
-	bra	RunErr
-FnNDef	moveq	#15,d0
-	bra	RunErr
+	Lib_Int	FnFn		src/interp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ;						SWAP
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InSwap
-; - - - - - - - - - - - - - - - -
-	bsr	FindVar
-	move.l	a0,-(sp)
-	addq.l	#2,a6
-	bsr	FindVar
-	move.l	(sp)+,a1
-	move.l	(a0),d0
-	move.l	(a1),(a0)
-	move.l	d0,(a1)
-	cmp.b	#1,d2
-	bne.s	.Fin
-	tst.b	MathFlags(a5)
-	bpl.s	.Fin
-	move.l	4(a0),d0
-	move.l	4(a1),4(a0)
-	move.l	d0,4(a1)
-.Fin	rts
+	Lib_Int	InSwap		src/interp
 ; - - - - - - - - - - - - -
 	Lib_Def	InSwapD
 ; - - - - - - - - - - - - -
@@ -4322,408 +3259,59 @@ FnNDef	moveq	#15,d0
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ;						NOT
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par FnNot
-; - - - - - - - - - - - - - - - -
-	bsr	New_Evalue
-	tst.b	d2
-	beq.s	.Skip
-	Rjsrt	L_FlToInt1
-.Skip	not.l	d3
-	rts
+	Lib_Int	FnNot		src/interp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ;						MAX / MIN
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par FnMax
-; - - - - - - - - - - - - - - - -
-	bsr	MinMax
-	ble.s	FMx2
-FMx1	movem.l	4(a3),d3/d4
-FMx2	lea	12(a3),a3
-	rts
-; - - - - - - - - - - - - -
+; Max / Min: interp/eval.cpp
+	Lib_Int	FnMax
 	Lib_Def	FnMaxS
 ; - - - - - - - - - - - - -
-; - - - - - - - - - - - - - - - -
-	Lib_Par FnMin
-; - - - - - - - - - - - - - - - -
-	bsr	MinMax
-	ble.s	FMx1
-	bra.s	FMx2
-; Routine min max
-; ~~~~~~~~~~~~~~~
-MinMax	bsr	Fn_New_Evalue
-	movem.l	d2/d3/d4,-(a3)
-	bsr	Fn_New_Evalue
-	bsr	Compat
-	bmi.s	MMx1
-	bne.s	MMx2
-	movem.l	d2-d4,-(sp)		* Float
-	Rjsrt	L_Float_Compare
-	movem.l	(sp)+,d2-d4
-	rts
-MMx1	move.l	4(a3),d4
-	cmp.l	d3,d4			* Int
-	rts
-MMx2	movem.l	d2-d4,-(sp)		* Chaine
-	bsr	compch
-	move.l	d3,d0
-	move.l	d4,d1
-	movem.l	(sp)+,d2-d4
-	cmp.l	d3,d4
-	rts
-; - - - - - - - - - - - - -
+	Lib_Int	FnMin
 	Lib_Def	FnMinS
 ; - - - - - - - - - - - - -
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ;						INC + DEC
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InInc
+	Lib_Int	InInc		src/interp
 ; - - - - - - - - - - - - - - - -
-	bsr	FindVar
-	addq.l	#1,(a0)
-	rts
+	Lib_Int	InDec		src/interp
 ; - - - - - - - - - - - - - - - -
-	Lib_Par InDec
+	Lib_Int	InAdd2		src/interp
 ; - - - - - - - - - - - - - - - -
-	bsr	FindVar
-	subq.l	#1,(a0)
-	rts
-; - - - - - - - - - - - - - - - -
-	Lib_Par InAdd2
-; - - - - - - - - - - - - - - - -
-	bsr	FindVar
-	move.l	a0,-(sp)
-	bsr	Fn_New_Evalue
-	move.l	(sp)+,a0
-	add.l	d3,(a0)
-	rts
-; - - - - - - - - - - - - - - - -
-	Lib_Par InAdd4
-; - - - - - - - - - - - - - - - -
-	bsr	FindVar
-	move.l	a0,-(sp)
-	moveq	#3,d0
-	bsr	FnParD0
-	move.l	(sp)+,a0
-	move.l	(a0),d0
-	move.l	(a3)+,d2
-	move.l	(a3)+,d1
-	add.l	(a3)+,d0
-	cmp.l	d1,d0
-	blt.s	IAdd4m
-	cmp.l	d2,d0
-	bgt.s	IAdd4p
-	move.l	d0,(a0)
-	rts
-IAdd4m:	move.l	d2,(a0)
-	rts
-IAdd4p:	move.l	d1,(a0)
-	rts
+	Lib_Int	InAdd4		src/interp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ;						SORT
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InSort
-; - - - - - - - - - - - - - - - -
-	bsr 	GTablo       	;va chercher les caracteristiques du tableau
-        move.l 	d6,d3
-or4:    lsr.l 	#1,d3         	;E=d3
-        beq 	XSort
-	moveq 	#1,d5         	;NA=d5
-or5:    move.l 	d5,d4        	;NR=d4 -> NR=NA
-or6:    movem.l	d3-d6/a1,-(sp)
-        move.l 	a1,a0
-        subq.l 	#1,d4
-	move.l	d4,d0
-	move.l	d3,d1
-	bsr	AdSort
-	movem.l	a0/a1/d2,-(sp)
-	move.l	4(a0),-(a3)
-	move.l	(a0),-(a3)
-	subq.l	#4,a3
-	movem.l	(a1),d3-d4
-	bsr	CpBis
-	lea	12(a3),a3
-	movem.l	(sp)+,a0/a1/d2
-  	ble.s	or8
-; fait le swap
-        move.l 	(a0),d0
-        move.l 	(a1),(a0)
-        move.l 	d0,(a1)
-	cmp.b	#3,d7
-	bne.s	.Skip
-	move.l	4(a0),d0
-	move.l	4(a1),4(a0)
-	move.l	d0,4(a1)
-.Skip	movem.l (sp)+,d3-d6/a1
-        sub.l 	d3,d4         	;NR=NR-E
-        beq.s 	or9
-        bcc.s 	or6
-        bra.s 	or9
-or8:    movem.l (sp)+,d3-d6/a1
-or9:    addq.l 	#1,d5        	;NA=NA+1
-        move.l 	d6,d0
-        sub.l 	d3,d0
-        cmp.l 	d0,d5
-        bls.s 	or5
-        bra.s 	or4
-XSort	Rjsr	L_LoadRegs
-	rts
+	Lib_Int	InSort		src/interp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ;						=MATCH
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par FnMatch
-; - - - - - - - - - - - - - - - -
-	addq.l	#2,a6
-	bsr	GTablo
-        movem.l a1/d2/d6/d7,-(sp)
-	bsr	Fn_New_Evalue
-        movem.l (sp)+,a1/d5/d6/d7
-* Etabli la compatibilite entre variables
-        cmp.b 	d2,d5
-        beq.s 	di3
-        subq.w	#1,d5
-	beq.s	di2
-	bpl	TypeMis
-        Rjsrt 	L_FlToInt1
-        bra.s 	di3
-di2:    Rjsrt 	L_IntToFl1
-; recherche!
-di3:    moveq	#0,d5
-        move.l 	d6,d1
-        lsr.l	#1,d6
-di4:    movem.l a1/d1-d7,-(sp)
-        add.l 	d6,d5
-	move.l	d5,d1
-	move.l	a1,a0
-	moveq	#0,d0
-	bsr	AdSort
-	move.l	4(a1),-(a3)
-	move.l	(a1),-(a3)
-	subq.l	#4,a3
-	bsr	CpBis
-	lea	12(a3),a3
-	movem.l	(sp)+,a1/d1-d7
-        beq.s 	di11
-        bgt.s	di5
-	add.l 	d6,d5
-di5:    tst.l 	d6
-        beq.s 	di7
-        lsr.l 	#1,d6
-        bra.s 	di4
-; pas trouve: cherche le premier element superieur
-di7:    cmp.l 	d1,d5
-        bcc.s 	di8
-        movem.l a1/d1-d7,-(sp)
-	move.l	d5,d1
-	move.l	a1,a0
-	moveq	#0,d0
-	bsr	AdSort
-	move.l	4(a1),-(a3)
-	move.l	(a1),-(a3)
-	subq.l	#4,a3
-	bsr	CpBis
-	lea	12(a3),a3
-        movem.l (sp)+,a1/d1-d7
-        beq.s 	di11
-        bgt.s 	di8
-        addq.l 	#1,d5
-        bra.s 	di7
-di8:    move.l 	d5,d3
-        addq.l 	#1,d3
-        neg.l 	d3
-	bra.s	di12
-; trouve!
-di11:   move.l 	d5,d3
-        add.l 	d6,d3
-; Sortie
-di12	Rjsr	L_LoadRegs
-	Ret_Int
+	Lib_Int	FnMatch		src/interp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 	Trouve les parametres tableau pour SORT et FIND
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	GTablo
+	Lib_Empty			GTablo, now in src/interp
 ; - - - - - - - - - - - - -
-GTablo	Rjsr	L_SaveRegs
-	addq.l	#2,a6
-	move.w	(a6)+,d0
-	bmi.s	GTbG
-	move.l	VarLoc(a5),a0
-	lea	2(a0,d0.w),a0
-GTb0	move.b	(a6)+,d1
-	move.b	(a6)+,d2
-	ext.w	d1
-	add.w	d1,a6
-	move.l	(a0),d0
-	beq	NonDim
-	move.l	d0,a1
-	moveq	#0,d0
-	move.b	(a1)+,d0		Nombre de dims
-	move.b	(a1)+,d7		Taille des variables
-	move.w	d0,d1
-	moveq	#1,d6
-GTb1:	move.w	(a1)+,d3
-	addq.l	#2,a1
-	addq.w	#1,d3
-	mulu	d3,d6
-	subq.w	#1,d1
-	bne.s	GTb1
-	and.w	#$F,d2
-* Saute les params
-	movem.l	a1/a3/d2/d6/d7,-(sp)
-	bsr	FnParD0
-	movem.l	(sp)+,a1/a3/d2/d6/d7
-	rts
-; Si variable globale
-GTbG	move.l	VarGlo(a5),a0
-	neg.w	d0
-	lea	1(a0,d0.w),a0
-	bra.s	GTb0
-
-* Trouve l'adresse D0/D1 >>> A0/A1
+	Lib_Empty			AdSort, now in src/interp
 ; - - - - - - - - - - - - -
-	Lib_Def	AdSort
-AdSort
-; - - - - - - - - - - - - -
-	lsl.l	d7,d0
-	add.l	d0,a0
-	move.l	a0,a1
-	lsl.l	d7,d1
-	add.l	d1,a1
-	rts
-* Comparaison pour SORT/FIND
-; - - - - - - - - - - - - -
-	Lib_Def	CpBis
-CpBis
-; - - - - - - - - - - - - -
-	cmp.b	#1,d2
-	beq.s	.Flt
-	bcs.s	.Ent
-	bsr 	compch
-	cmp.l	d3,d4
-	rts
-.Ent	move.l	4(a3),d4
-	cmp.l 	d3,d4
-	rts
-.Flt	Rjmpt	L_Float_Compare
+	Lib_Empty			CpBis, now in src/interp
 
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ;						Instruction DATA
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InData
-; - - - - - - - - - - - - - - - -
-	move.w	(a6),d0			Passe a la fin de la ligne
-	sub.w	d0,a6
-	moveq	#0,d0
-	move.b	(a6),d0
-	lsl.w	#1,d0
-	lea	-2(a6,d0.w),a6
-	rts
+	Lib_Int	InData		src/interp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ;						Instruction READ
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InRead
-; - - - - - - - - - - - - - - - -
-* Va chercher la variable
-LRead	bsr	FindVar
-* Va chercher le data
-	move.l	a0,-(sp)
-	move.w	d2,-(sp)
-	move.l	a6,-(sp)
-	move.l	AData(a5),d0
-	beq.s	NxD0
-	move.l	d0,a6
-	bra.s	NxD3
-NxD0:	move.l	PData(a5),d0
-	beq	OOf
-	move.l	d0,a6
-NxD1:	tst.w	(a6)
-	beq	OOf
-	lea	2(a6),a0
-	move.w	(a0),d0
-	cmp.w	#_TkEndP,d0
-	beq	OOf
-	cmp.w	#_TkProc,d0
-	beq.s	NxD6
-	cmp.w	#_TkData,d0		* DATA direct
-	beq.s	NxD2
-	cmp.w	#_TkLab,d0		* LABEL: DATA
-	bne.s	NxD5
-	move.b	6(a6),d0
-	ext.w	d0
-	lea	8(a6,d0.w),a0
-	cmp.w	#_TkData,(a0)
-	beq.s	NxD2
-NxD5:	moveq	#0,d0
-	move.b	(a6),d0
-	lsl.w	#1,d0
-	lea	0(a6,d0.w),a6
-	bra.s	NxD1
-NxD6:	move.l	2(a0),d0
-	lea	10(a0,d0.l),a6
-	bra.s	NxD1
-NxD2:	moveq	#0,d0
-	move.b	(a6),d0
-	lsl.w	#1,d0
-	lea	0(a6,d0.w),a6
-	move.l	a6,PData(a5)
-	lea	4(a0),a6
-* Virgule---> SPECIAL!
-NxD3:	move.w	(a6),d0
-	beq.s	InRdV
-	cmp.w	#_TkVir,d0
-	bne.s	InRd0
-InRdV:	moveq	#0,d3
-	moveq	#0,d2
-	move.w	4(sp),d5
-	subq.w	#2,d5
-	bmi.s	InRd1
-	move.l	ChVide(a5),d3
-	moveq	#2,d2
-	bra.s	InRd1
-* Evaluation normale
-InRd0:	bsr	New_Evalue
-* Pointe la fin du data
-InRd1:	tst.w	(a6)+
-	bne.s	InRd2
-	sub.l	a6,a6
-InRd2:	move.l	a6,AData(a5)
-* Egalise
-	move.l	(sp)+,a6
-	move.w	(sp)+,d1
-	move.l	(sp)+,a2
-	cmp.b	d2,d1
-	beq.s	InRd5
-	cmp.b	#2,d1
-	beq	RTypeM
-	cmp.b	#2,d2
-	beq	RTypeM
-	tst.b	d1
-	beq.s	InRd4
-	Rjsrt	L_IntToFl1
-	bra.s	InRd5
-InRd4	Rjsrt	L_FlToInt1
-InRd5	cmp.b	#1,d2			Float?
-	bne.s	InRd6
-	tst.b	MathFlags(a5)		Double precision?
-	bpl.s	InRd6
-	move.l	d4,4(a2)
-InRd6	move.l	d3,(a2)
-* Encore une variable?
-	cmp.w	#_TkVir,(a6)+
-	beq	LRead
-	subq.l	#2,a6
-	rts
-OOf	clr.l	PData(a5)
-	bra	OOfData
-RTypeM:	moveq	#34,d0
-	bra	RunErr
+	Lib_Int	InRead		src/interp
 
 ; - - - - - - - - - - - - -
 	Lib_Def	InReadF
@@ -5639,63 +4227,22 @@ ChaX:	movem.l	d3-d5,-(sp)
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					BSET / BTST / BCHG / BCLR
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InBset
-; - - - - - - - - - - - - -
-IBset:	bsr	BsRout
-	bmi.s	IBs1
-	move.l	(a0),d1
-	bset	d0,d1
-	move.l	d1,(a0)
-	rts
-IBs1:	bset	d0,(a0)
-	rts
+	Lib_Int	InBset		src/interp/bits.cpp
 ; - - - - - - - - - - - - -
 	Lib_Def	InBset1
 ; - - - - - - - - - - - - -
 ; - - - - - - - - - - - - -
-	Lib_Par InBclr
-; - - - - - - - - - - - - -
-	bsr	BsRout
-	bmi.s	IBc1
-	move.l	(a0),d1
-	bclr	d0,d1
-	move.l	d1,(a0)
-	rts
-IBc1:	bclr	d0,(a0)
-	rts
+	Lib_Int	InBclr		src/interp/bits.cpp
 ; - - - - - - - - - - - - -
 	Lib_Def	InBclr1
 ; - - - - - - - - - - - - -
 ; - - - - - - - - - - - - -
-	Lib_Par InBchg
-; - - - - - - - - - - - - -
-	bsr	BsRout
-	bmi.s	IBh1
-	move.l	(a0),d1
-	bchg	d0,d1
-	move.l	d1,(a0)
-	rts
-IBh1:	bchg	d0,(a0)
-	rts
+	Lib_Int	InBchg		src/interp/bits.cpp
 ; - - - - - - - - - - - - -
 	Lib_Def	InBchg1
 ; - - - - - - - - - - - - -
 ; - - - - - - - - - - - - -
-	Lib_Par FnBtst
-; - - - - - - - - - - - - -
-	addq.w	#2,a6
-	bsr	BsRout
-	bmi.s	IBt1
-	move.l	(a0),d1
-	btst	d0,d1
-	bne.s	IbtT
-	bra.s	IbtF
-IBt1:	btst	d0,(a0)
-	bne.s	IbtT
-IbtF:	moveq	#0,d3
-	Ret_Int
-IbtT:	moveq	#-1,d3
-	Ret_Int
+	Lib_Int	FnBtst		src/interp/bits.cpp
 ; - - - - - - - - - - - - -
 	Lib_Def	FnBtst1
 ; - - - - - - - - - - - - -
@@ -5703,138 +4250,40 @@ IbtT:	moveq	#-1,d3
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					ROR ROL
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InRorB
-; - - - - - - - - - - - - -
-	bsr	BsRout
-	bmi.s	Brr1
-	move.b	3(a0),d1
-	ror.b	d0,d1
-	move.b	d1,3(a0)
-	rts
-Brr1:	move.b	(a0),d1
-	ror.b	d0,d1
-	move.b	d1,(a0)
-	rts
+	Lib_Int	InRorB		src/interp/bits.cpp
 ; - - - - - - - - - - - - -
 	Lib_Def	InRorB1
 ; - - - - - - - - - - - - -
 ; - - - - - - - - - - - - -
-	Lib_Par InRorW
-; - - - - - - - - - - - - -
-	bsr	BsRout
-	bmi.s	Wrr1
-	move.w	2(a0),d1
-	ror.w	d0,d1
-	move.w	d1,2(a0)
-	rts
-Wrr1:	move.w	(a0),d1
-	ror.w	d0,d1
-	move.w	d1,(a0)
-	rts
+	Lib_Int	InRorW		src/interp/bits.cpp
 ; - - - - - - - - - - - - -
 	Lib_Def	InRorW1
 ; - - - - - - - - - - - - -
 ; - - - - - - - - - - - - -
-	Lib_Par InRorL
-; - - - - - - - - - - - - -
-	bsr	BsRout
-	bmi.s	Lrr1
-	move.l	(a0),d1
-	ror.l	d0,d1
-	move.l	d1,(a0)
-	rts
-Lrr1:	move.l	(a0),d1
-	ror.l	d0,d1
-	move.l	d1,(a0)
-	rts
+	Lib_Int	InRorL		src/interp/bits.cpp
 ; - - - - - - - - - - - - -
 	Lib_Def	InRorL1
 ; - - - - - - - - - - - - -
 
 ; - - - - - - - - - - - - -
-	Lib_Par InRolB
-; - - - - - - - - - - - - -
-	bsr	BsRout
-	bmi.s	Brl1
-	move.b	3(a0),d1
-	rol.b	d0,d1
-	move.b	d1,3(a0)
-	rts
-Brl1:	move.b	(a0),d1
-	rol.b	d0,d1
-	move.b	d1,(a0)
-	rts
+	Lib_Int	InRolB		src/interp/bits.cpp
 ; - - - - - - - - - - - - -
 	Lib_Def	InRolB1
 ; - - - - - - - - - - - - -
 
 ; - - - - - - - - - - - - -
-	Lib_Par InRolW
-; - - - - - - - - - - - - -
-	bsr	BsRout
-	bmi.s	Wrl1
-	move.w	2(a0),d1
-	rol.w	d0,d1
-	move.w	d1,2(a0)
-	rts
-Wrl1:	move.w	(a0),d1
-	rol.w	d0,d1
-	move.w	d1,(a0)
-	rts
+	Lib_Int	InRolW		src/interp/bits.cpp
 ; - - - - - - - - - - - - -
 	Lib_Def	InRolW1
 ; - - - - - - - - - - - - -
 
 ; - - - - - - - - - - - - -
-	Lib_Par InRolL
-; - - - - - - - - - - - - -
-	bsr	BsRout
-	bmi.s	Lrl1
-	move.l	(a0),d1
-	rol.l	d0,d1
-	move.l	d1,(a0)
-	rts
-Lrl1:	move.l	(a0),d1
-	rol.l	d0,d1
-	move.l	d1,(a0)
-	rts
+	Lib_Int	InRolL		src/interp/bits.cpp
 ; - - - - - - - - - - - - -
 	Lib_Def	InRolL1
 ; - - - - - - - - - - - - -
 
-******* Routine: ramene l'adresse a affecter!
-BsRout	bsr	New_Expentier
-	tst.l	d3
-	bmi	FonCall
-	addq.w	#2,a6
-	cmp.w	#_TkVar,(a6)
-	beq.s	BsR1
-* Une adresse
-	bset	#31,d3
-	move.l	d3,-(a3)
-	bsr	New_Expentier
-	move.l	d3,a0
-	move.l	(a3)+,d0
-	rts
-* Une variable
-BsR1	move.l	a6,-(sp)
-	move.l	d3,-(a3)
-	bsr	FindVar
-	cmp.w	#_TkPar2,(a6)+
-	beq.s	BsR2
-	subq.l	#2,a6
-	bsr	Finie
-	bne.s	BsR3
-BsR2	addq.l	#4,sp
-	move.l	(a3)+,d0
-	rts
-* He non! Une adresse!
-BsR3	move.l	(sp)+,a6
-	bsr	New_Expentier
-	move.l	d3,a0
-	move.l	(a3)+,d0
-	moveq	#-1,d1
-	rts
+; BsRout: interp/bits.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					CALL PROCEDURE LANGAGE MACHINE
