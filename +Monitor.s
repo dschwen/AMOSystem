@@ -131,6 +131,8 @@
 		XREF	_mon_wait_release_entry
 		XREF	_mon_banks_monitor_entry
 		XREF	_mon_banks_program_entry
+		xdef	_mon_debut
+_mon_debut
 MDebut		dc.l	In_Editor-MDebut	0- Depuis l'editeur
 		dc.l	In_Program-MDebut	1- Depuis le programme
 		dc.l	MonitorChr-MDebut	2- Entree du moniteur
@@ -235,28 +237,28 @@ Tt_ReLoop	jmp	_mon_reloop_entry
 ; text screen and of its dialogue (for the loop)
 		xdef	_mon_keys,_mon_text_zones
 _mon_keys	dc.l	Tt_Rien			1:  STOP, teste separement
-		dc.l	Tt_Step0		2:  mode pas a pas
-		dc.l	Tt_Step1		3:  mode semi-rapide
-		dc.l	Tt_Step2		4:  mode rapide
-		dc.l	Tt_Step3		5:  mode ultra-rapide
-		dc.l	Tt_Up			6:
-		dc.l	Tt_Down			7:
-		dc.l	Tt_Left			8:
-		dc.l	Tt_Right		9:
-		dc.l	Tt_CEc			10: Change ecran
-		dc.l	Tt_Initialise		11: Init
-		dc.l	Tt_Quit			12: Quit
-		dc.l	Tt_See			13: Voir l'affichage
-		dc.l	Tt_SHelp		14: Set Help
-		dc.l	Tt_SBreak		15: Set break
-		dc.l	Tt_SEval		16: Set evalue
-_mon_text_zones	dc.l	Ttt_ListClic		1 : Zone de listing
-		dc.l	Ttt_Separ		2 : Zone de separation
-		dc.l	Inf_Clic		3 : Zone d'information
-		dc.l	Ttt_Slhclic		1 : Slider horizontal
-		dc.l	Ttt_Slvclic		2 : Slider vertical
-		dc.l	Inf_Sliclic		3 : Slider infos
-		dc.l	Ttt_CText		4 : Bouton de centrage
+		dc.l	_mon_step0_entry		2:  mode pas a pas
+		dc.l	_mon_step1_entry		3:  mode semi-rapide
+		dc.l	_mon_step2_entry		4:  mode rapide
+		dc.l	_mon_step3_entry		5:  mode ultra-rapide
+		dc.l	_mon_move_up_entry			6:
+		dc.l	_mon_move_down_entry			7:
+		dc.l	_mon_move_left_entry			8:
+		dc.l	_mon_move_right_entry		9:
+		dc.l	_mon_change_screen_entry			10: Change ecran
+		dc.l	_mon_initialise_entry		11: Init
+		dc.l	_mon_quit_entry			12: Quit
+		dc.l	_mon_see_entry			13: Voir l'affichage
+		dc.l	_mon_set_help_entry		14: Set Help
+		dc.l	_mon_set_break_entry		15: Set break
+		dc.l	_mon_set_evaluate_entry		16: Set evalue
+_mon_text_zones	dc.l	_mon_listing_click_entry		1 : Zone de listing
+		dc.l	_mon_separation_drag_entry		2 : Zone de separation
+		dc.l	_mon_info_click_entry		3 : Zone d'information
+		dc.l	_mon_slider_horizontal_click_entry		1 : Slider horizontal
+		dc.l	_mon_slider_vertical_click_entry		2 : Slider vertical
+		dc.l	_mon_info_slider_click_entry		3 : Slider infos
+		dc.l	_mon_centre_click_entry		4 : Bouton de centrage
 Tt_Rien	moveq	#1,d0
 	rts
 
@@ -295,7 +297,6 @@ Tt_Free	jmp	_mon_free_entry
 ;	TOUCHE: quit/ Retour ÃÂÃÂÃÂÃÂ¯ÃÂÃÂÃÂÃÂ¿ÃÂÃÂÃÂÃÂ½ l'editeur
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ; QUIT: monitor/shell.cpp, then mon_quit_back(data) here
-Tt_Quit	jmp	_mon_quit_entry
 		xdef	_mon_quit_back
 _mon_quit_back
 	MGetCtx
@@ -886,9 +887,6 @@ BoutStop	jmp	_mon_stop_button_entry
 
 
 ; The listing window: monitor/listing.cpp
-Ttt_CText	jmp	_mon_centre_click_entry
-Ttt_Slhclic	jmp	_mon_slider_horizontal_click_entry
-Ttt_Slvclic	jmp	_mon_slider_vertical_click_entry
 Ttt_Centre	jmp	_mon_listing_centre_entry
 Ttt_AffBuf	jmp	_mon_listing_show_entry
 Ttt_NewBuf	jmp	_mon_listing_new_entry
@@ -901,7 +899,6 @@ Ttt_Untok	jmp	_mon_listing_untokenise_entry
 ; ___________________________________________________________________
 
 
-Ttt_Separ	jmp	_mon_separation_drag_entry
 
 Inf_Centre	jmp	_mon_info_centre_entry
 
@@ -922,20 +919,12 @@ Ttt_TttAct	jmp	_mon_activate_text_entry
 
 ;	TOUCHES: help / break / eval
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Tt_SHelp	jmp	_mon_set_help_entry
-Tt_SBreak	jmp	_mon_set_break_entry
-Tt_SEval	jmp	_mon_set_evaluate_entry
 Ttt_AMod	jmp	_mon_mode_buttons_entry
 
 ;	TOUCHE: une instruction
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ; The step keys and INIT: monitor/shell.cpp
-Tt_Step0	jmp	_mon_step0_entry
-Tt_Step1	jmp	_mon_step1_entry
-Tt_Step2	jmp	_mon_step2_entry
-Tt_Step3	jmp	_mon_step3_entry
 NoInit	jmp	_mon_no_init_entry
-Tt_Initialise	jmp	_mon_initialise_entry
 Tt_ReInit	jmp	_mon_reinit_entry
 
 ; Branchement aux messages de testing
@@ -1131,7 +1120,6 @@ Tt_GetTheMessage
 .Clair	move.l	(sp)+,a1
 	rts
 
-Ttt_ListClic	jmp	_mon_listing_click_entry
 Tt_Souligne	jmp	_mon_choose_entry
 Tt_MouMou	jmp	_mon_mouse_position_entry
 
@@ -1201,7 +1189,6 @@ Tt_Menage
 ; ___________________________________________________________________
 
 ; The information window: monitor/info.cpp
-Inf_Clic	jmp	_mon_info_click_entry
 Inf_AffLine	jmp	_mon_info_show_line_entry
 Inf_CptLines	jmp	_mon_info_count_lines_entry
 Inf_AffAll	jmp	_mon_info_show_all_entry
@@ -1210,7 +1197,6 @@ Inf_Print	jmp	_mon_info_print_entry
 Inf_PrFin	jmp	_mon_info_end_entry
 Inf_Del	jmp	_mon_info_delete_entry
 Inf_Ins	jmp	_mon_info_insert_entry
-Inf_Sliclic	jmp	_mon_info_slider_click_entry
 Inf_Slider	jmp	_mon_info_slider_entry
 Ttt_Alert	jmp	_mon_alert_entry
 Ttt_AlertDel	jmp	_mon_alert_delete_entry
@@ -1225,12 +1211,6 @@ Ttt_DelAff	jmp	_mon_delete_show_entry
 
 ;	TOUCHE: changement d'ecran view
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Tt_CEc	jmp	_mon_change_screen_entry
-Tt_Down	jmp	_mon_move_down_entry
-Tt_Up	jmp	_mon_move_up_entry
-Tt_Left	jmp	_mon_move_left_entry
-Tt_Right	jmp	_mon_move_right_entry
-Tt_See	jmp	_mon_see_entry
 View_Aff	jmp	_mon_view_show_entry
 View_Ec	jmp	_mon_view_next_entry
 

@@ -44,6 +44,8 @@ using namespace amos::boot;
 
 
 extern "C" {
+// +W.s: the start of AMOS.library, its entry table
+extern uint8_t w_debut[];
 // +B.s: the way out: the stack back, the Workbench message (if any)
 // replied
 [[noreturn]] void main_get_out(uint32_t message);
@@ -64,7 +66,6 @@ const char panic_badext[] = "Cannot load extension: use default interpreter conf
 
 namespace {
 
-const char panic_lib[] = "Cannot find AMOS.library.";
 const char panic_config[] = "Cannot find AMOSPro_Interpreter_Config.";
 const char panic_command[] = "Bad command line.";
 const char panic_version[] = "I need AMOS.library V2.0 or over!";
@@ -84,7 +85,6 @@ struct Start {
     BPTR auto_lock = 0;
     char auto_name[128] = {};
     char config[128] = {};
-    BPTR w_segment = 0;
     bool workbench = true;
     const char *command_line = nullptr;
 };
@@ -129,8 +129,6 @@ void panic_message(bool from_workbench)
 [[noreturn]] void fatal(const Start &s, const char *message)
 {
     panic = message;
-    if (s.w_segment)
-        UnLoadSeg(s.w_segment);
     panic_message(s.message);
     CloseLibrary(dos_base);
     CloseLibrary(intuition_base);
@@ -365,20 +363,13 @@ void main_cold_start(char *command, uint32_t length, uint32_t sp)
     else
         command_line(s, command, length);
 
-    // AMOS.library: in APSystem, else in libs
-    static const char *const libraries[] = {"APSystem/amos.library", "libs/amos.library", "libs:amos.library"};
-    for (const char *name : libraries)
-        if ((s.w_segment = LoadSeg(name)))
-            break;
-    if (!s.w_segment)
-        fatal(s, panic_lib);
-    uint32_t w = (uint32_t(s.w_segment) << 2) + 4;
+    // AMOS.library, linked in (it was loaded from APSystem or libs)
+    uint32_t w = address(w_debut);
     ctx().a4 = ptr<uint8_t>(w);
 
     if (!data_zone(peek_l(ptr<void>(w + 8))))
         fatal(s, panic_oomem);
     IData &d = idata();
-    d.Sys_WSegment = uint32_t(s.w_segment);
     d.Sys_Message = address(s.message);
     d.DosBase = address(dos_base);
     wdata().IntBase = address(intuition_base);
@@ -604,7 +595,6 @@ namespace amos::boot {
     Regs r;
     amos_call(&r, ptr<void>(d.Sys_WAd + 16));
     dos_base = ptr<Library>(d.DosBase);
-    UnLoadSeg(BPTR(d.Sys_WSegment));
     intuition_base = ptr<Library>(wdata().IntBase);
     panic_message(d.Sys_Message);
     if (uint32_t gfx = wdata().GfxBase)

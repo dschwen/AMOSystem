@@ -16,6 +16,8 @@ using namespace amos::boot;
 extern "C" {
 // main_glue.s: where a program's error goes without the editor
 extern uint8_t main_run_error_run_only[], main_run_error_no_editor[];
+// The entry tables of the editor and the monitor (+Edit.s, +Monitor.s)
+extern const uint8_t ed_debut[], mon_debut[];
 [[noreturn]] void interp_jump(const Regs *r, const void *fn);
 }
 
@@ -27,20 +29,15 @@ void lib(int routine)
     lib_call(routine, r);
 }
 
-// Program_Load: the program of message name (LoadSeg) into *segment, its
-// entry table (offsets from its start, then 0, then the address of its
-// amos_bridge) into the jump table from routine first+1 on. 1 if it cannot
-// be loaded.
-uint32_t program_load(uint32_t &segment, uint32_t name, uint32_t first)
+// Program_Load: the editor or the monitor, linked into AMOSPro (they were
+// programs of their own, loaded with LoadSeg): *segment marks it loaded,
+// its entry table (offsets from its start, then 0, then the address of its
+// amos_bridge) goes into the jump table from routine first+1 on
+uint32_t program_load(uint32_t &segment, const uint8_t *module, uint32_t first)
 {
     IData &d = idata();
-    if (!segment) {
-        sys_add_path(sys_message(name));
-        segment = uint32_t(LoadSeg(ptr<char>(d.Name1)));
-        if (!segment)
-            return 1;
-    }
-    uint32_t base = (segment << 2) + 4;
+    segment = address(module);
+    uint32_t base = address(module);
     const uint32_t *table = ptr<uint32_t>(base);
     uint32_t *jump = ptr<uint32_t>(d.AdTokens[0] - int16_t(uint16_t((first << 2) + LB_Size + 4)));
     while (uint32_t offset = *table++)
@@ -50,13 +47,7 @@ uint32_t program_load(uint32_t &segment, uint32_t name, uint32_t first)
     return 0;
 }
 
-void program_free(uint32_t &segment)
-{
-    if (uint32_t s = segment) {
-        segment = 0;
-        UnLoadSeg(BPTR(s));
-    }
-}
+void program_free(uint32_t &segment) { segment = 0; }
 
 // Bnk.Load from the system file: d0 the number of the bank (-1 all), the
 // error as a word
@@ -192,7 +183,7 @@ uint32_t editor_cold(uint32_t title)
 
 namespace amos::boot {
 
-uint32_t edit_load() { return program_load(idata().Edit_Segment, 6, L_Ed_Start); }
+uint32_t edit_load() { return program_load(idata().Edit_Segment, ed_debut, L_Ed_Start); }
 void edit_free() { program_free(idata().Edit_Segment); }
 
 // Mon_Load: the monitor and its resource bank
@@ -201,11 +192,9 @@ int32_t mon_load()
     IData &d = idata();
     uint32_t banks = d.Cur_Banks;
     int32_t e = 0;
-    // (the original went on without the monitor if it could not be loaded,
-    // and kept the file of the bank open on an error)
-    if (program_load(d.Mon_Segment, 10, L_Mon_Start)) {
-        e = -2;
-    } else if (!d.Mon_Banks) {
+    // (the original kept the file of the bank open on an error)
+    program_load(d.Mon_Segment, mon_debut, L_Mon_Start);
+    if (!d.Mon_Banks) {
         d.Cur_Banks = address(&d.Mon_Banks);
         sys_add_path(sys_message(11));
         if (!sys_open(ptr<char>(d.Name1), 1005))

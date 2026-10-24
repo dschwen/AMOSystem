@@ -27,7 +27,7 @@ using namespace amos::w;
 // +W.s and the glue of w/: the vector tables, the entries handed to the
 // system, the LoadView patch, the default font's special characters
 extern "C" uint8_t w_sy_in[], w_ec_in[], w_wi_in[], w_io_handler_entry[], w_amos_loadview[], w_old_loadview[],
-    w_auto_req_entry[], w_easy_req_entry[], w_req_pal[], w_def_font[], w_gfx_base_var[], w_debut[], w_amal_init[],
+    w_auto_req_entry[], w_easy_req_entry[], w_req_pal[], w_def_font[], w_gfx_base_var[], w_default_mouse[], w_amal_init[],
     w_amal_end[], w_free_fonts[];
 
 namespace {
@@ -199,7 +199,7 @@ bool start(AllRegs *r)
     if (version() >= 2) {
         uint8_t *bank = ptr<uint8_t>(r->a[1]);
         if (!bank)
-            bank = ptr<uint8_t>(peek_l(ptr<uint8_t>(address(w_debut) - 4)) << 2) + 4;     // the next hunk
+            bank = w_default_mouse;                                 // the default one
         if (peek_l(bank) != 0x416D5370)                             // "AmSp"
             return false;
         uint16_t images = peek_w(bank + 4);

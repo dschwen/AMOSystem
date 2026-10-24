@@ -51,7 +51,7 @@ LDLIBS   := -L$(AMIGA_PREFIX)/m68k-amigaos/libnix/lib -lgcc -lnix13 -lgcc
 #   src/main     the main program                    -> AMOSPro
 #   src/verif    the verifier (+Verif.s)             -> AMOSPro
 #   src/interp   the interpreter core (+ILib.s)      -> AMOSPro
-#   src/w        AMOS.library
+#   src/w        AMOS.library (linked into AMOSPro)
 #   src/editor   AMOSPro_Editor
 #   src/monitor  AMOSPro_Monitor
 #   src/core     the C++/asm bridge and data layout (an archive)
@@ -82,8 +82,7 @@ EXT_GEN := $(foreach e,$(EXTENSIONS),$(GEN)/+$(e)_Size.s $(GEN)/+$(e)_Labels.s $
 
 COMMON_SRC := +AMOS_Includes.s +Equ.s +CEqu.s +WEqu.s +Debug.s +Version.s
 
-BINARIES := $(BUILD)/AMOSPro $(BUILD)/AMOS.library $(BUILD)/AMOSPro.Lib \
-            $(BUILD)/AMOSPro_Editor $(BUILD)/AMOSPro_Monitor \
+BINARIES := $(BUILD)/AMOSPro $(BUILD)/AMOSPro.Lib \
             $(BUILD)/AMOSPro_Music.Lib $(BUILD)/AMOSPro_Compact.Lib \
             $(BUILD)/AMOSPro_Request.Lib $(BUILD)/AMOSPro_IOPorts.Lib \
             $(BUILD)/AMOSPro_Editor_Config $(BUILD)/AMOSPro_Interpreter_Config
@@ -155,16 +154,19 @@ $(OBJ)/B.o: +B.s +Verif.s $(PREREQ) $(EXT_GEN)
 	@mkdir -p $(dir $@)
 	$(VASM) $(OBJFLAGS) -o $@ $<
 
-$(BUILD)/AMOSPro: $(OBJ)/B.o $(OBJ_AMOSPRO) $(COMMON_LIB) link/amospro.ld tools/chiphunks.py
-	$(call link_program,$@,link/amospro.ld,$(OBJ)/B.o $(OBJ_AMOSPRO))
+# AMOS.library, the editor and the monitor are linked in too (main/boot.cpp
+# starts AMOS.library from _w_debut, main/modules.cpp finds the entry
+# tables of the others)
+AMOSPRO_LINK := $(OBJ)/B.o $(OBJ_AMOSPRO) $(OBJ)/W.o $(OBJ_W) $(OBJ)/Edit.o $(OBJ_EDITOR) \
+                $(OBJ)/Monitor.o $(OBJ_MONITOR)
+$(BUILD)/AMOSPro: $(AMOSPRO_LINK) $(COMMON_LIB) link/amospro.ld tools/chiphunks.py
+	$(call link_program,$@,link/amospro.ld,$(AMOSPRO_LINK))
 
 # AMOS.library was built with GenIm2, which matches symbols without case
 $(OBJ)/W.o: +W.s $(PREREQ) $(wildcard bin/*)
 	@mkdir -p $(dir $@)
 	$(VASM) $(OBJFLAGS) -nocase -o $@ $<
 
-$(BUILD)/AMOS.library: $(OBJ)/W.o $(OBJ_W) $(COMMON_LIB) link/module.ld tools/chiphunks.py
-	$(call link_program,$@,link/module.ld,$(OBJ)/W.o $(OBJ_W))
 
 $(BUILD)/AMOSPro.Lib: +Lib.s +ILib.s $(PREREQ) $(TOKTAB) bin/+Dialog_Funcs.bin
 	$(VASM) $(EXEFLAGS) -o $@ $<
@@ -179,15 +181,11 @@ $(OBJ)/Edit.o: +Edit.s $(PREREQ)
 	@mkdir -p $(dir $@)
 	$(VASM) $(OBJFLAGS) -o $@ $<
 
-$(BUILD)/AMOSPro_Editor: $(OBJ)/Edit.o $(OBJ_EDITOR) $(COMMON_LIB) link/module.ld tools/chiphunks.py
-	$(call link_program,$@,link/module.ld,$(OBJ)/Edit.o $(OBJ_EDITOR))
 
 $(OBJ)/Monitor.o: +Monitor.s $(PREREQ)
 	@mkdir -p $(dir $@)
 	$(VASM) $(OBJFLAGS) -o $@ $<
 
-$(BUILD)/AMOSPro_Monitor: $(OBJ)/Monitor.o $(OBJ_MONITOR) $(COMMON_LIB) link/module.ld tools/chiphunks.py
-	$(call link_program,$@,link/module.ld,$(OBJ)/Monitor.o $(OBJ_MONITOR))
 
 $(BUILD)/AMOSPro_IOPorts.Lib: extensions/+IO_Ports.s $(GEN)/+IO_Ports_Size.s $(PREREQ)
 	$(VASM) $(EXEFLAGS) -o $@ $<
@@ -209,9 +207,8 @@ dist: all
 	$(foreach b,$(BINARIES),cp $(b) $(DIST)/$(subst AMOS/,,$(call reference,$(notdir $(b))));)
 
 # Programs with C++ in them no longer match the prebuilt binaries
-CONVERTED := $(BUILD)/AMOSPro $(BUILD)/AMOSPro.Lib \
-             $(if $(OBJ_W),$(BUILD)/AMOS.library) $(if $(OBJ_EDITOR),$(BUILD)/AMOSPro_Editor) \
-             $(if $(OBJ_MONITOR),$(BUILD)/AMOSPro_Monitor)
+CONVERTED := $(BUILD)/AMOSPro $(BUILD)/AMOSPro.Lib
+
 VERIFY := $(filter-out $(CONVERTED) %_Config,$(BINARIES))
 
 verify: all

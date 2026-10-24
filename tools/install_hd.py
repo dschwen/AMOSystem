@@ -21,15 +21,11 @@ import uaem
 FILES = [
     ('AMOSPro', '{amos}/AMOSPro'),
     ('AMOSPro.Lib', '{amos}/APSystem/AMOSPro.Lib'),
-    ('AMOSPro_Editor', '{amos}/APSystem/AMOSPro_Editor'),
-    ('AMOSPro_Monitor', '{amos}/APSystem/AMOSPro_Monitor'),
     ('AMOSPro_Music.Lib', '{amos}/APSystem/AMOSPro_Music.Lib'),
     ('AMOSPro_Compact.Lib', '{amos}/APSystem/AMOSPro_Compact.Lib'),
     ('AMOSPro_Request.Lib', '{amos}/APSystem/AMOSPro_Request.Lib'),
     ('AMOSPro_IOPorts.Lib', '{amos}/APSystem/AMOSPro_IOPorts.Lib'),
-    # AMOSPro loads APSystem/AMOS.library first, then LIBS:amos.library
-    ('AMOS.library', '{amos}/APSystem/AMOS.library'),
-    ('AMOS.library', 'Libs/amos.library'),
+    # AMOS.library, the editor and the monitor are linked into AMOSPro
 ]
 
 

@@ -12,7 +12,7 @@ SECTIONS
   I : { *(I) }
   .text :
   {
-    *(.text) *(.text.*) *(_*) *(.rodata*) *(.data.rel.ro*)
+    *(CODE) *(.text) *(.text.*) *(_*) *(.rodata*) *(.data.rel.ro*)
     *(.gnu.linkonce.t.*) *(.gnu.linkonce.r.*)
   }
   .data :
@@ -23,7 +23,7 @@ SECTIONS
   {
     *(.bss) *(.bss.*) *(COMMON)
   }
-  .datachip : { *(.datachip) }
+  .datachip : { *(m) *(.datachip) }
   .bsschip : { *(.bsschip) }
   /DISCARD/ : { *(.comment) *(.note*) *(.eh_frame*) *(.gcc_except_table*) }
 }

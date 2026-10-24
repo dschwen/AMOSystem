@@ -343,6 +343,8 @@
 		XREF	_ed_undo_entry,_ed_redo_entry
 		XREF	_ed_search_entry,_ed_search_front_entry,_ed_search_back_entry,_ed_replace_text_entry
 		XREF	_ed_tokenise_entry,_ed_detok_entry,_ed_mon_detok_entry,_ed_tinst_entry
+		xdef	_ed_debut
+_ed_debut
 EDebut		dc.l	Ed_Cold-EDebut
 		dc.l	Ed_Title-EDebut
 		dc.l	Ed_End-EDebut
@@ -507,10 +509,6 @@ Ed_Mouse	jmp	_ed_mouse_entry
 ; ____________________________
 ;
 ; The separations of the windows: src/editor/windows.cpp
-Ed_EtatUp	jmp	_ed_top_up_entry
-Ed_EtatDown	jmp	_ed_top_down_entry
-Ed_BasUp	jmp	_ed_bottom_up_entry
-Ed_BasDown	jmp	_ed_bottom_down_entry
 		xdef	_ed_separation_top
 _ed_separation_top
 Ed_MSepHaut	jmp	_ed_drag_top_entry
@@ -554,8 +552,6 @@ R_DelChar	jmp	_ed_delete_text_entry
 
 
 ; Undo, Redo and the undo buffers: src/editor/undo.cpp
-Ed_Undo		jmp	_ed_undo_entry
-Ed_Redo		jmp	_ed_redo_entry
 Prg_CreateUndos	jmp	_ed_undo_create_all_entry
 Prg_FreeUndos	jmp	_ed_undo_free_all_entry
 Prg_RazUndos	jmp	_ed_undo_reset_all_entry
@@ -581,10 +577,8 @@ Un_Next		jmp	_ed_undo_next_entry
 ; __________________________________________________________________________
 ;
 ;	Linked and split windows: src/editor/windows.cpp
-Ed_LinkCursor	jmp	_ed_link_cursor_entry
 Edt_DelLinkScroll	jmp	_ed_unlink_scroll_entry
 Ed_LinkeScroll	jmp	_ed_follow_scroll_entry
-Ed_SplitWindow	jmp	_ed_split_entry
 Ed_Splitted	jmp	_ed_update_split_entry
 
 
@@ -634,9 +628,6 @@ Ed_ZapX	jsr	_ed_zap_result_entry
 	move.l	BasSp(a5),sp
 	rts
 Ed_ZapFonction	jmp	_ed_zap_function_entry
-EdZ_NewConfig	jmp	_ed_zap_new_config_entry
-EdZ_NewLineTok	jmp	_ed_zap_new_line_tok_entry
-EdZ_NewLine	jmp	_ed_zap_new_line_entry
 
 
 ; ______________________________________________________________________
@@ -693,199 +684,199 @@ Ed_DoDialog	jmp	_ed_do_dialogue_entry
 ;
 		xdef	_ed_function_table
 _ed_function_table
-JFonc:	bra	Ed_CHaut		* 1  Cur Haut
-	bra	Ed_CBas			* 2  Cur Bas
-	bra	Ed_CGauche		* 3  Cur Gauche
-	bra	Ed_CDroite		* 4  Cur Droite
-	bra	Ed_HPage		* 5  Haut Page
-	bra	Ed_BPage		* 6  Bas Page
-	bra	Ed_MGauche		* 7  Mot gauche
-	bra	Ed_MDroite		* 8  Mot Droite
-	bra	Ed_PHaut		* 9  Page Haut
-	bra	Ed_PBas			* 10 Page Bas
-	bra	Ed_DLigne		* 11 Debut Ligne
-	bra	Ed_FLigne		* 12 Fin Ligne
-	bra	Ed_EtatUp		* 13 Bar Haut Haut
-	bra	Ed_EtatDown		* 14 Bar haut Bas
-	bra	Ed_BasUp		* 15 Bar Bas Haut
-	bra	Ed_BasDown		* 16 Bar Bas Bas
-	bra	Ed_HTexte		* 17 Haut Texte
-	bra	Ed_BTexte		* 18 Bas Texte
-	bra	Ed_Return		* 19 Return
-	bra	Ed_Back			* 20 Backspace
-	bra	Ed_Delete		* 21 Delete
-	bra	Ed_EffLigne		* 22 Effacement Ligne
-	bra	Ed_DelLiCu		* 23 Delete Ligne
-	bra	Ed_Tab			* 24 Plus Tab
-	bra	Ed_ShTab		* 25 Moins Tab
-	bra	Ed_STab			* 26 Set Tab
-	bra	Ed_UserMenu		* 27 Help
-	bra	Ed_Escape		* 28 Escape
-	bra	Ed_InsLine		* 29 Insert Ligne
-	bra	Ed_DelFin		* 30 Delete Fin Ligne
-	bra	Ed_PLabel		* 31 Previous Label
-	bra	Ed_NLabel		* 32 Next Label
-	bra	Ed_Load			* 33 Load
-	bra	Ed_SaveAs		* 34 SaveAs
-	bra	Ed_Save			* 35 Save
-	bra	Ed_DelMot		* 36 Del Mot
-	bra	Ed_BackMot		* 37 Back Mot
-	bra	Ed_WindowHide		* 38 Hide Project
-	bra	Ed_SMark0		* 39 Set Marks
-	bra	Ed_SMark1
-	bra	Ed_SMark2
-	bra	Ed_SMark3
-	bra	Ed_SMark4
-	bra	Ed_SMark5
-	bra	Ed_SMark6
-	bra	Ed_SMark7
-	bra	Ed_SMark8
-	bra	Ed_SMark9
-	bra	Ed_GMark0		* 49 Goto Mark
-	bra	Ed_GMark1
-	bra	Ed_GMark2
-	bra	Ed_GMark3
-	bra	Ed_GMark4
-	bra	Ed_GMark5
-	bra	Ed_GMark6
-	bra	Ed_GMark7
-	bra	Ed_GMark8
-	bra	Ed_GMark9
-	bra	Ed_BlocOn		* 59 Marche / Arret Bloc
-	bra	Ed_BlocForget		* 60 Forget Bloc
-	bra	Ed_OpenLoad		* 61 Open + Load
-	bra	Ed_BlocCut		* 62 Cut Bloc
-	bra	Ed_BlocPaste		* 63 Paste Bloc
-	bra	Ed_DelDebut		* 64 Delete to S.O.L
-	bra	Ed_Undo			* 65 Undo
-	bra	Ed_Search		* 66 Search
-	bra	Ed_SearchNext		* 67 Search Next
-	bra	Ed_SearchPrev		* 68 Search Previous
-	bra	EdZ_NewLine		* 69 ZAPPEUSE: replace line
-	bra	Ed_RAlert		* 70 Recall last alert
-	bra	EdZ_NewLineTok		* 71 ZAPPEUSE: replace+tokenise
-	bra	Ed_BlocStore		* 72 Store bloc
+JFonc:	dc.l	_ed_cursor_up_entry		* 1  Cur Haut
+	dc.l	_ed_cursor_down_entry			* 2  Cur Bas
+	dc.l	_ed_cursor_left_entry		* 3  Cur Gauche
+	dc.l	_ed_cursor_right_entry		* 4  Cur Droite
+	dc.l	_ed_page_top_entry		* 5  Haut Page
+	dc.l	_ed_page_bottom_entry		* 6  Bas Page
+	dc.l	_ed_word_left_key_entry		* 7  Mot gauche
+	dc.l	_ed_word_right_key_entry		* 8  Mot Droite
+	dc.l	_ed_page_up_entry		* 9  Page Haut
+	dc.l	_ed_page_down_entry			* 10 Page Bas
+	dc.l	Ed_DLigne		* 11 Debut Ligne
+	dc.l	_ed_line_end_entry		* 12 Fin Ligne
+	dc.l	_ed_top_up_entry		* 13 Bar Haut Haut
+	dc.l	_ed_top_down_entry		* 14 Bar haut Bas
+	dc.l	_ed_bottom_up_entry		* 15 Bar Bas Haut
+	dc.l	_ed_bottom_down_entry		* 16 Bar Bas Bas
+	dc.l	_ed_text_top_entry		* 17 Haut Texte
+	dc.l	_ed_text_bottom_entry		* 18 Bas Texte
+	dc.l	_ed_return_entry		* 19 Return
+	dc.l	_ed_backspace_entry			* 20 Backspace
+	dc.l	_ed_delete_key_entry		* 21 Delete
+	dc.l	_ed_clear_line_entry		* 22 Effacement Ligne
+	dc.l	_ed_del_li_cu_entry		* 23 Delete Ligne
+	dc.l	_ed_tab_entry			* 24 Plus Tab
+	dc.l	_ed_untab_entry		* 25 Moins Tab
+	dc.l	_ed_set_tab_entry			* 26 Set Tab
+	dc.l	_ed_user_menu_entry		* 27 Help
+	dc.l	_ed_escape_entry		* 28 Escape
+	dc.l	_ed_ins_line_entry		* 29 Insert Ligne
+	dc.l	_ed_delete_to_end_entry		* 30 Delete Fin Ligne
+	dc.l	_ed_label_previous_entry		* 31 Previous Label
+	dc.l	_ed_label_next_entry		* 32 Next Label
+	dc.l	_ed_load_entry			* 33 Load
+	dc.l	_ed_save_as_entry		* 34 SaveAs
+	dc.l	_ed_save_entry			* 35 Save
+	dc.l	_ed_delete_word_entry		* 36 Del Mot
+	dc.l	_ed_delete_word_left_entry		* 37 Back Mot
+	dc.l	_ed_hide_window_entry		* 38 Hide Project
+	dc.l	_ed_set_mark_entry		* 39 Set Marks
+	dc.l	Ed_SMark1
+	dc.l	Ed_SMark2
+	dc.l	Ed_SMark3
+	dc.l	Ed_SMark4
+	dc.l	Ed_SMark5
+	dc.l	Ed_SMark6
+	dc.l	Ed_SMark7
+	dc.l	Ed_SMark8
+	dc.l	Ed_SMark9
+	dc.l	_ed_goto_mark_entry		* 49 Goto Mark
+	dc.l	Ed_GMark1
+	dc.l	Ed_GMark2
+	dc.l	Ed_GMark3
+	dc.l	Ed_GMark4
+	dc.l	Ed_GMark5
+	dc.l	Ed_GMark6
+	dc.l	Ed_GMark7
+	dc.l	Ed_GMark8
+	dc.l	Ed_GMark9
+	dc.l	_ed_block_on_entry		* 59 Marche / Arret Bloc
+	dc.l	_ed_block_forget_entry		* 60 Forget Bloc
+	dc.l	_ed_open_load_entry		* 61 Open + Load
+	dc.l	_ed_block_cut_entry		* 62 Cut Bloc
+	dc.l	_ed_block_paste_entry		* 63 Paste Bloc
+	dc.l	_ed_delete_to_start_entry		* 64 Delete to S.O.L
+	dc.l	_ed_undo_entry			* 65 Undo
+	dc.l	_ed_search_new_entry		* 66 Search
+	dc.l	_ed_search_next_entry		* 67 Search Next
+	dc.l	_ed_search_previous_entry		* 68 Search Previous
+	dc.l	_ed_zap_new_line_entry		* 69 ZAPPEUSE: replace line
+	dc.l	_ed_recall_alert_entry		* 70 Recall last alert
+	dc.l	_ed_zap_new_line_tok_entry		* 71 ZAPPEUSE: replace+tokenise
+	dc.l	_ed_block_store_entry		* 72 Store bloc
 
-	bra	Ed_Key2Menu		* 73 Set Key Shortcut
-	bra	Ed_Prg2Menu		* 74 Affect Program to menu
-	bra	Ed_Ins			* 75 Flip Insert Mode
-	bra	Ed_GotoL		* 76 Goto Line Number
-	bra	Ed_Run			* 77 Run
-	bra	Ed_Test			* 78 Test
-	bra	Ed_Indent		* 79 Indent
-	bra	Ed_New			* 80 Clear
-	bra	Ed_CloseWindowQuit	* 81 Close
-	bra	Ed_Quit			* 82 Quit
-	bra	Ed_Infos		* 83 Editor Informations
-	bra	Ed_Merge		* 84 Merge
-	bra	Ed_LoadA		* 85 Merge Ascii
-	bra	Ed_BlocPrint		* 86 Print Bloc
-	bra	Ed_ProcOpen		* 87 Open / Close
-	bra	Ed_LoadHidden		* 88 Load Hidden program
-	bra	Ed_ProcsOpen		* 89 Open All
-	bra	Ed_ProcsClose		* 90 Close All
-	bra	Ed_PrevWindow		* 91 Previous Window
-	bra	Ed_NextWindow		* 92 Next Window
-	bra	Ed_FlipSizeWindow	* 93 Enlarge Window
-	bra	Ed_Redo			* 94 Redo
-	bra	Ed_SplitWindow		* 95 Split View
-	bra	Ed_LinkCursor		* 96 Link Cursor
-	bra	Ed_BlocSaveAscii	* 97 Save Block as Ascii
-	bra	Ed_BlocSave		* 98 Save Block
-	bra	Ed_Replace		* 99 Replace New
-	bra	Ed_ReplaceNext		* 100 Replace Next
-	bra	Ed_ReplacePrev		* 101 Replace Previous
-	bra	Ed_NewAllHidden		* 102 New All Hidden Programs
-	bra	Ed_OpenWindow		* 103 Open New
-	bra	Ed_ShowKey		* 104 Show Key shortcuts
-	bra	Ed_Wb			* 105 Workbench
-	bra	EdMa_New		* 106 Set new Macro
-	bra	EdMa_Del		* 107 Clear One Macro
-	bra	EdMa_DelAll		* 108 Clear All Macros
-	bra	EdMa_LoadAs		* 109 Load Macros
-	bra	EdMa_SaveAs		* 110 Save Macros
+	dc.l	_ed_key_to_menu_entry		* 73 Set Key Shortcut
+	dc.l	_ed_program_to_menu_entry		* 74 Affect Program to menu
+	dc.l	_ed_flip_insert_entry			* 75 Flip Insert Mode
+	dc.l	_ed_goto_line_entry		* 76 Goto Line Number
+	dc.l	_ed_run_entry			* 77 Run
+	dc.l	_ed_test_entry			* 78 Test
+	dc.l	_ed_indent_program_entry		* 79 Indent
+	dc.l	_ed_new_entry			* 80 Clear
+	dc.l	_ed_close_window_quit_entry	* 81 Close
+	dc.l	_ed_quit_entry			* 82 Quit
+	dc.l	_ed_information_entry		* 83 Editor Informations
+	dc.l	_ed_merge_entry		* 84 Merge
+	dc.l	_ed_merge_ascii_entry		* 85 Merge Ascii
+	dc.l	_ed_print_block_entry		* 86 Print Bloc
+	dc.l	_ed_proc_open_entry		* 87 Open / Close
+	dc.l	_ed_load_hidden_entry		* 88 Load Hidden program
+	dc.l	_ed_procs_open_entry		* 89 Open All
+	dc.l	_ed_procs_close_entry		* 90 Close All
+	dc.l	_ed_previous_window_entry		* 91 Previous Window
+	dc.l	_ed_next_window_entry		* 92 Next Window
+	dc.l	_ed_flip_size_entry	* 93 Enlarge Window
+	dc.l	_ed_redo_entry			* 94 Redo
+	dc.l	_ed_split_entry		* 95 Split View
+	dc.l	_ed_link_cursor_entry		* 96 Link Cursor
+	dc.l	_ed_block_save_ascii_entry	* 97 Save Block as Ascii
+	dc.l	_ed_block_save_entry		* 98 Save Block
+	dc.l	_ed_replace_new_entry		* 99 Replace New
+	dc.l	_ed_replace_next_entry		* 100 Replace Next
+	dc.l	_ed_replace_previous_entry		* 101 Replace Previous
+	dc.l	_ed_new_all_hidden_entry		* 102 New All Hidden Programs
+	dc.l	_ed_open_shown_window_entry		* 103 Open New
+	dc.l	_ed_flip_keys_entry		* 104 Show Key shortcuts
+	dc.l	_ed_workbench_entry			* 105 Workbench
+	dc.l	_ed_macro_record_entry		* 106 Set new Macro
+	dc.l	_ed_macro_erase_entry		* 107 Clear One Macro
+	dc.l	_ed_macro_erase_all_entry		* 108 Clear All Macros
+	dc.l	_ed_macro_load_as_entry		* 109 Load Macros
+	dc.l	_ed_macro_save_as_entry		* 110 Save Macros
 HiddenCommands	equ	184
 HiddenCall	equ	111
-	bra	Ed_RunHidden		* 111 Run
-	bra	Ed_EditHidden		* 112 Edit
-	bra	Ed_NewHidden		* 113 New
-	bra	Ed_SetBuffer		* 114 Set Buffer
+	dc.l	_ed_run_hidden_entry		* 111 Run
+	dc.l	_ed_edit_hidden_entry		* 112 Edit
+	dc.l	_ed_new_hidden_entry		* 113 New
+	dc.l	_ed_set_buffer_entry		* 114 Set Buffer
 EdM_UserCommands	equ	115
 EdM_UserLong		equ	16
 EdM_UserMax		equ	20
-	bra	Ed_UserMenu		* 0
-	bra	Ed_UserMenu
-	bra	Ed_UserMenu
-	bra	Ed_UserMenu
-	bra	Ed_UserMenu
-	bra	Ed_UserMenu		* 5
-	bra	Ed_UserMenu
-	bra	Ed_UserMenu
-	bra	Ed_UserMenu
-	bra	Ed_UserMenu
-	bra	Ed_UserMenu		* 10
-	bra	Ed_UserMenu
-	bra	Ed_UserMenu
-	bra	Ed_UserMenu
-	bra	Ed_UserMenu
-	bra	Ed_UserMenu		* 15
-	bra	Ed_UserMenu
-	bra	Ed_UserMenu
-	bra	Ed_UserMenu
-	bra	Ed_UserMenu
+	dc.l	_ed_user_menu_entry		* 0
+	dc.l	_ed_user_menu_entry
+	dc.l	_ed_user_menu_entry
+	dc.l	_ed_user_menu_entry
+	dc.l	_ed_user_menu_entry
+	dc.l	_ed_user_menu_entry		* 5
+	dc.l	_ed_user_menu_entry
+	dc.l	_ed_user_menu_entry
+	dc.l	_ed_user_menu_entry
+	dc.l	_ed_user_menu_entry
+	dc.l	_ed_user_menu_entry		* 10
+	dc.l	_ed_user_menu_entry
+	dc.l	_ed_user_menu_entry
+	dc.l	_ed_user_menu_entry
+	dc.l	_ed_user_menu_entry
+	dc.l	_ed_user_menu_entry		* 15
+	dc.l	_ed_user_menu_entry
+	dc.l	_ed_user_menu_entry
+	dc.l	_ed_user_menu_entry
+	dc.l	_ed_user_menu_entry
 
-	bra	Ed_AddUser		* 135 Add user option
-	bra	Ed_DelUser		* 136 Del user option
-	bra	EdC_SaveDefault		* 137 Save default config
-	bra	EdC_SaveAs		* 138 Save As
-	bra	EdC_LoadDefault		* 139 Load default config
-	bra	EdC_LoadAs		* 140 Load As
-	bra	Ed_QuitOptions		* 141 Quit Options
-	bra	Ed_SetAutoSave		* 142 Autosave
-	bra	EdMa_LoadDefault	* 143 Load Default Macros
-	bra	EdMa_SaveDefault	* 144 Save Default Macros
-	bra	Ed_GoMonitor		* 145 Monitor
-	bra	Ed_PrgPrint		* 146 Program Print
-	bra	Ed_Check1.3		* 147 Check 1.3
-	bra	Ed_SamOn		* 148 Sound On / Off
- 	bra	Ed_AboutExt		* 149 About extensions
-	bra	Ed_About		* 150 About AMOS
-	bra	Ed_ProcML		* 151 Insert machine langage
+	dc.l	_ed_add_user_entry		* 135 Add user option
+	dc.l	_ed_delete_user_entry		* 136 Del user option
+	dc.l	_ed_config_save_default_entry		* 137 Save default config
+	dc.l	_ed_config_save_as_entry		* 138 Save As
+	dc.l	_ed_config_load_default_entry		* 139 Load default config
+	dc.l	_ed_config_load_as_entry		* 140 Load As
+	dc.l	_ed_quit_options_entry		* 141 Quit Options
+	dc.l	_ed_set_autosave_entry		* 142 Autosave
+	dc.l	_ed_macro_load_default_entry	* 143 Load Default Macros
+	dc.l	EdMa_SaveDefault	* 144 Save Default Macros
+	dc.l	_ed_go_monitor_entry		* 145 Monitor
+	dc.l	_ed_print_program_entry		* 146 Program Print
+	dc.l	_ed_check_13_entry		* 147 Check 1.3
+	dc.l	_ed_flip_sounds_entry		* 148 Sound On / Off
+ 	dc.l	_ed_about_extensions_entry		* 149 About extensions
+	dc.l	_ed_about_entry		* 150 About AMOS
+	dc.l	_ed_procedure_machine_code_entry		* 151 Insert machine langage
 
 ; HELP: Insersion des commandes ZAP additionnelles
-	bra	Ed_SaveAsName		* 152 Sauve sans changer nom
-	bra	Ed_CloseName		* 153 Ferme une fenetre nom
-	bra	Ed_Rename		* 154 Rename le programme courant
-	bra	Ed_UserMenu
-	bra	Ed_UserMenu
-	bra	Ed_UserMenu		* 157
-	bra	Ed_UserMenu
-	bra	Ed_UserMenu
-	bra	Ed_UserMenu
-	bra	Ed_UserMenu
-	bra	Ed_UserMenu		* 162
-	bra	Ed_UserMenu
-	bra	Ed_UserMenu
-	bra	Ed_UserMenu
-	bra	Ed_UserMenu
-	bra	Ed_UserMenu		* 167
-	bra	Ed_UserMenu
-	bra	Ed_UserMenu
-	bra	Ed_UserMenu
-	bra	Ed_UserMenu
-	bra	Ed_UserMenu		* 172 Interpretor Setup
-	bra	Ed_UserMenu		* 173 Editor Setup
-	bra	Ed_UserMenu		* 174 Editor Menus
-	bra	Ed_UserMenu		* 175 Editor Dialogs
-	bra	Ed_UserMenu		* 176 Test-Time
-	bra	Ed_UserMenu		* 177 Run-Time
-	bra	Ed_UserMenu		* 178 Colour Palette
-	bra	EdM_PrevHidden		* 179 Previous programs
-	bra	EdM_NextHidden		* 180 Next programs
-	bra	Ed_BlocAll		* 181 All text as block
-	bra	EdZ_NewConfig		* 182 ZAP: remplace chaine dans config
-	bra	Ed_GoHelp		* 183 Branche au HELP
-	bra	Ed_UserMenu		* 184
+	dc.l	_ed_save_as_name_entry		* 152 Sauve sans changer nom
+	dc.l	_ed_close_name_entry		* 153 Ferme une fenetre nom
+	dc.l	_ed_rename_entry		* 154 Rename le programme courant
+	dc.l	_ed_user_menu_entry
+	dc.l	_ed_user_menu_entry
+	dc.l	_ed_user_menu_entry		* 157
+	dc.l	_ed_user_menu_entry
+	dc.l	_ed_user_menu_entry
+	dc.l	_ed_user_menu_entry
+	dc.l	_ed_user_menu_entry
+	dc.l	_ed_user_menu_entry		* 162
+	dc.l	_ed_user_menu_entry
+	dc.l	_ed_user_menu_entry
+	dc.l	_ed_user_menu_entry
+	dc.l	_ed_user_menu_entry
+	dc.l	_ed_user_menu_entry		* 167
+	dc.l	_ed_user_menu_entry
+	dc.l	_ed_user_menu_entry
+	dc.l	_ed_user_menu_entry
+	dc.l	_ed_user_menu_entry
+	dc.l	_ed_user_menu_entry		* 172 Interpretor Setup
+	dc.l	_ed_user_menu_entry		* 173 Editor Setup
+	dc.l	_ed_user_menu_entry		* 174 Editor Menus
+	dc.l	_ed_user_menu_entry		* 175 Editor Dialogs
+	dc.l	_ed_user_menu_entry		* 176 Test-Time
+	dc.l	_ed_user_menu_entry		* 177 Run-Time
+	dc.l	_ed_user_menu_entry		* 178 Colour Palette
+	dc.l	_ed_previous_hidden_entry		* 179 Previous programs
+	dc.l	_ed_next_hidden_entry		* 180 Next programs
+	dc.l	_ed_block_all_entry		* 181 All text as block
+	dc.l	_ed_zap_new_config_entry		* 182 ZAP: remplace chaine dans config
+	dc.l	Ed_GoHelp		* 183 Branche au HELP
+	dc.l	_ed_user_menu_entry		* 184
 
 ; Flags pour chaque fonction
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1091,56 +1082,32 @@ FlagFonc
 ; Backspace, Delete, deleting parts of the line, words, Tab, Shift-Tab:
 ; src/editor/lines.cpp
 Ed_Back		jmp	_ed_backspace_entry
-Ed_Delete	jmp	_ed_delete_key_entry
-Ed_EffLigne	jmp	_ed_clear_line_entry
-Ed_DelFin	jmp	_ed_delete_to_end_entry
-Ed_DelDebut	jmp	_ed_delete_to_start_entry
-Ed_DelMot	jmp	_ed_delete_word_entry
-Ed_BackMot	jmp	_ed_delete_word_left_entry
-Ed_Tab		jmp	_ed_tab_entry
-Ed_ShTab	jmp	_ed_untab_entry
 
 ;
 ; SET TAB VALUE
 ; ~~~~~~~~~~~~~
 ; The tab value: editor/misc.cpp
-Ed_STab	jmp	_ed_set_tab_entry
 
 ;
 ; Cursor movement: src/editor/cursor.cpp
-Ed_CHaut	jmp	_ed_cursor_up_entry
 Ed_ChtT		jmp	_ed_cursor_up_t_entry
 CFin:		rts
-Ed_CBas		jmp	_ed_cursor_down_entry
 Ed_CBasT	jmp	_ed_cursor_down_t_entry
-Ed_CGauche	jmp	_ed_cursor_left_entry
 Ed_CGo		jmp	_ed_cgo_entry
-Ed_CDroite	jmp	_ed_cursor_right_entry
 Ed_CDr		jmp	_ed_cdr_entry
-Ed_HPage	jmp	_ed_page_top_entry
-Ed_BPage	jmp	_ed_page_bottom_entry
-Ed_MGauche	jmp	_ed_word_left_key_entry
-Ed_MDroite	jmp	_ed_word_right_key_entry
 ; R_MotGoch, R_MotDroi (d1 the start of the word): src/editor/lines.cpp
 R_MotGoch	jmp	_ed_word_left_entry
 R_MotDroi	jmp	_ed_word_right_entry
 Ed_DLigne
 Ed_DLigneT	jmp	_ed_line_start_entry
-Ed_FLigne	jmp	_ed_line_end_entry
-Ed_PHaut	jmp	_ed_page_up_entry
-Ed_PBas		jmp	_ed_page_down_entry
 Ed_SHaut	jmp	_ed_scroll_up_key_entry
 Ed_SHaut2	jmp	_ed_shaut2_entry
 Ed_SBas		jmp	_ed_scroll_down_key_entry
 Ed_SBas2	jmp	_ed_sbas2_entry
 Ed_SGauche	jmp	_ed_scroll_left_key_entry
 Ed_SDroite	jmp	_ed_scroll_right_key_entry
-Ed_HTexte	jmp	_ed_text_top_entry
 Ed_HTex		jmp	_ed_text_top_t_entry
-Ed_BTexte	jmp	_ed_text_bottom_entry
 Ed_BTex		jmp	_ed_text_bottom_t_entry
-Ed_PLabel	jmp	_ed_label_previous_entry
-Ed_NLabel	jmp	_ed_label_next_entry
 
 ;
 ; Copie chaine
@@ -1221,14 +1188,12 @@ Ed_MarksChange	jmp	_ed_marks_change_entry
 
 
 ; Quit: editor/session.cpp
-Ed_Quit	jmp	_ed_quit_entry
 		xdef	_ed_do_quit
 _ed_do_quit
 Ed_DoQuit	jmp	_ed_do_quit_entry
 
 ;
 ; Quit options: editor/info.cpp
-Ed_QuitOptions	jmp	_ed_quit_options_entry
 
 ; ______________________________________________________________________________
 ;
@@ -1237,9 +1202,6 @@ Ed_QuitOptions	jmp	_ed_quit_options_entry
 ;
 
 ; About, about the extensions, information: editor/info.cpp
-Ed_About	jmp	_ed_about_entry
-Ed_AboutExt	jmp	_ed_about_extensions_entry
-Ed_Infos	jmp	_ed_information_entry
 
 ; __________________________________________________________________________
 ;
@@ -1271,12 +1233,8 @@ _ed_set_banks
 Ed_SetBanks	jmp	_ed_set_banks_entry
 
 ; The configuration: editor/config.cpp
-EdC_SaveDefault	jmp	_ed_config_save_default_entry
 EdC_SaveDef	jmp	_ed_config_save_default_quiet_entry
-EdC_SaveAs	jmp	_ed_config_save_as_entry
-EdC_LoadDefault	jmp	_ed_config_load_default_entry
 EdC_LoadDef	jmp	_ed_config_load_default_quiet_entry
-EdC_LoadAs	jmp	_ed_config_load_as_entry
 EdC_Redraw	jmp	_ed_config_redraw_entry
 EdC_Saved	jmp	_ed_config_save_changed_entry
 EdC_Load	jmp	_ed_config_load_entry
@@ -1304,15 +1262,7 @@ Ed_GetNMessage	jmp	_ed_get_next_message_entry
 
 ; Autosave, the user menu, programs and keys to the menu, the marks:
 ; editor/menu.cpp
-Ed_SetAutoSave	jmp	_ed_set_autosave_entry
 Ed_SaveAuto	jmp	_ed_save_all_entry
-Ed_UserMenu	jmp	_ed_user_menu_entry
-Ed_AddUser	jmp	_ed_add_user_entry
-Ed_DelUser	jmp	_ed_delete_user_entry
-Ed_Prg2Menu	jmp	_ed_program_to_menu_entry
-Ed_Key2Menu	jmp	_ed_key_to_menu_entry
-Ed_Ins	jmp	_ed_flip_insert_entry
-Ed_SamOn	jmp	_ed_flip_sounds_entry
 
 ;_____________________________________________________________________________
 ;
@@ -1323,15 +1273,9 @@ Ed_SamOn	jmp	_ed_flip_sounds_entry
 ;
 ; The marked block: src/editor/block.cpp
 Ed_BlocAff	jmp	_ed_block_show_entry
-Ed_BlocOn	jmp	_ed_block_on_entry
 Ed_BlocCu	jmp	_ed_block_cursor_entry
 Ed_BlocHide	jmp	_ed_block_hide_entry
 Ed_CuNor	jmp	_ed_cursor_normal_entry
-Ed_BlocAll	jmp	_ed_block_all_entry
-Ed_BlocStore	jmp	_ed_block_store_entry
-Ed_BlocForget	jmp	_ed_block_forget_entry
-Ed_BlocCut	jmp	_ed_block_cut_entry
-Ed_BlocPaste	jmp	_ed_block_paste_entry
 Ed_BlocFree	jmp	_ed_block_free_entry
 Ed_BlockFreeA0	jmp	_ed_block_free_a0_entry
 Ed_BlockLimits	jmp	_ed_block_limits_entry
@@ -1345,10 +1289,6 @@ Ed_BlockCopyA0	jmp	_ed_block_copy_entry
 ; ________________________________________
 ;
 ; The block saved, printed: src/editor/blocksave.cpp
-Ed_BlocSave	jmp	_ed_block_save_entry
-Ed_BlocSaveAscii	jmp	_ed_block_save_ascii_entry
-Ed_PrgPrint	jmp	_ed_print_program_entry
-Ed_BlocPrint	jmp	_ed_print_block_entry
 Ed_BlocLimits	jmp	_ed_block_limits_2_entry
 
 ;____________________________________________________________________
@@ -1357,15 +1297,9 @@ Ed_BlocLimits	jmp	_ed_block_limits_2_entry
 ;____________________________________________________________________
 ;
 ; Macros: editor/macros.cpp
-EdMa_LoadDefault	jmp	_ed_macro_load_default_entry
-EdMa_LoadAs	jmp	_ed_macro_load_as_entry
 EdMa_SaveDefault
 EdMa_SaveDef	jmp	_ed_macro_save_default_entry
-EdMa_SaveAs	jmp	_ed_macro_save_as_entry
 EdMa_Load	jmp	_ed_macro_load_entry
-EdMa_Del	jmp	_ed_macro_erase_entry
-EdMa_DelAll	jmp	_ed_macro_erase_all_entry
-EdMa_New	jmp	_ed_macro_record_entry
 		xdef	_ed_macro_stop
 _ed_macro_stop
 EdMa_Stop	jmp	_ed_macro_stop_entry
@@ -1378,14 +1312,7 @@ EdMa_End	jmp	_ed_macros_free_entry
 ;
 
 ; Goto, search and replace: src/editor/search.cpp
-Ed_GotoL	jmp	_ed_goto_line_entry
 Ed_DiaS	jmp	_ed_search_dialogue_entry
-Ed_Search	jmp	_ed_search_new_entry
-Ed_SearchPrev	jmp	_ed_search_previous_entry
-Ed_SearchNext	jmp	_ed_search_next_entry
-Ed_Replace	jmp	_ed_replace_new_entry
-Ed_ReplaceNext	jmp	_ed_replace_next_entry
-Ed_ReplacePrev	jmp	_ed_replace_previous_entry
 
 ; Ed_SchBoth, Ed_SchFront, Ed_SchBack: src/editor/search.cpp
 Ed_SchBoth	jmp	_ed_search_entry
@@ -1467,14 +1394,11 @@ Et_Print	jmp	_ed_status_text_entry
 ; 	APPEL DU MONITEUR PAR LE MENU
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ; Run, test, the programs of the menu, the returns: editor/run.cpp
-Ed_GoMonitor	jmp	_ed_go_monitor_entry
 Ed_PrgCommand	jmp	_ed_program_command_entry
 Ed_PrgReLoad	jmp	_ed_program_reload_entry
 Edt_AccAdr	jmp	_ed_window_of_name_entry
-Ed_RunHidden	jmp	_ed_run_hidden_entry
 Ed_RunHide	jmp	_ed_run_hide_entry
 Ed_RunDirect	jmp	_ed_run_direct_entry
-Ed_Run	jmp	_ed_run_entry
 		xdef	_ed_err_direct_run
 _ed_err_direct_run
 Ed_DErrRun	jmp	_ed_error_direct_run_entry
@@ -1500,9 +1424,6 @@ Ed_GetError	jmp	_ed_get_error_entry
 
 Ed_Ligne	jmp	_ed_error_line_entry
 
-Ed_Test	jmp	_ed_test_entry
-Ed_Check1.3	jmp	_ed_check_13_entry
-Ed_Indent	jmp	_ed_indent_program_entry
 ; Indentation du programme (a0 the program, d0 the tab): src/editor/indent.cpp
 Indent	jmp	_ed_indent_entry
 
@@ -1534,18 +1455,14 @@ Ed_Test3	jmp	_ed_test_run_entry
 
 ;
 ; Open / close all procedures: src/editor/procs.cpp
-Ed_ProcsOpen	jmp	_ed_procs_open_entry
-Ed_ProcsClose	jmp	_ed_procs_close_entry
 Ed_Procs	jmp	_ed_procs_entry
 
 ;
 ; INSERT MACHINE LANGAGE
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_ProcML	jmp	_ed_procedure_machine_code_entry
 
 ;
 ; Open / close the procedure, no more centring on an error: src/editor/procs.cpp
-Ed_ProcOpen	jmp	_ed_proc_open_entry
 Ed_ClEProc	jmp	_ed_clear_error_proc_entry
 
 ;_____________________________________________________________________________
@@ -1555,7 +1472,6 @@ Ed_ClEProc	jmp	_ed_clear_error_proc_entry
 ;
 
 ; Direct mode: editor/direct.cpp
-Ed_Escape	jmp	_ed_escape_entry
 		xdef	_ed_esc_loop
 _ed_esc_loop
 Esc_Loop
@@ -1809,7 +1725,6 @@ Ed_AlertDialog
 		xdef	_ed_get_place
 _ed_get_place
 Ed_GetPlace	jmp	_ed_get_place_entry
-Ed_SetBuffer	jmp	_ed_set_buffer_entry
 Ed_SB	jmp	_ed_set_buffer_from_entry
 
 
@@ -1851,11 +1766,8 @@ Ed_ALigne	jmp	_ed_show_line_only_entry
 ;
 ; Deleting, joining, splitting (Return), inserting lines, the edited line
 ; tokenised and stored: src/editor/edit.cpp
-Ed_DelLiCu	jmp	_ed_del_li_cu_entry
 Ed_Join		jmp	_ed_join_entry
-Ed_Return	jmp	_ed_return_entry
 Ed_ReturnQuiet	jmp	_ed_return_quiet_entry
-Ed_InsLine	jmp	_ed_ins_line_entry
 Ed_TokCur	jmp	_ed_tok_cur_entry
 Ed_TokStok	jmp	_ed_tok_stok_entry
 Ed_TokStok2	jmp	_ed_tok_stok2_entry
@@ -1918,26 +1830,18 @@ Ed_Wb	jmp	_ed_workbench_entry
 
 ; ZAP: Ferme un fenetre contenant un programme donne
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_CloseName	jmp	_ed_close_name_entry
 
 ; Ouvre une nouvelle fenetre+Charge prg
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ;
-Ed_OpenLoad	jmp	_ed_open_load_entry
 
 ;
 ; The windows: src/editor/windows.cpp
-Ed_OpenWindow	jmp	_ed_open_shown_window_entry
 Edt_OpWindow	jmp	_ed_open_window_entry
-Ed_WindowHide	jmp	_ed_hide_window_entry
 Ed_BtWindowClose	jmp	_ed_button_close_entry
 Ed_BtWindowHide	jmp	_ed_button_hide_entry
 Ed_BtWindowSize	jmp	_ed_button_size_entry
-Ed_CloseWindowQuit	jmp	_ed_close_window_quit_entry
 Ed_CloseWindow	jmp	_ed_close_window_entry
-Ed_NewHidden	jmp	_ed_new_hidden_entry
-Ed_NewAllHidden	jmp	_ed_new_all_hidden_entry
-Ed_EditHidden	jmp	_ed_edit_hidden_entry
 Ed_GetHidden	jmp	_ed_get_hidden_entry
 Edt_DelWindow	jmp	_ed_delete_window_entry
 Edt_DelWindows	jmp	_ed_delete_windows_entry
@@ -1945,9 +1849,6 @@ Ed_DrawWindows	jmp	_ed_draw_windows_entry
 Edt_EffWindows	jmp	_ed_erase_windows_entry
 Edt_DelAllZones	jmp	_ed_delete_all_zones_entry
 Edt_WVideNext	jmp	_ed_empty_next_entry
-Ed_NextWindow	jmp	_ed_next_window_entry
-Ed_PrevWindow	jmp	_ed_previous_window_entry
-Ed_FlipSizeWindow	jmp	_ed_flip_size_entry
 Edt_GetAd	jmp	_ed_window_number_entry
 Edt_WSchrinkAll	jmp	_ed_shrink_all_entry
 Edt_WMaxSize	jmp	_ed_max_size_entry
@@ -1967,13 +1868,10 @@ EdM_End	jmp	_ed_menus_end_entry
 _ed_menu_error
 EdM_Error	jmp	_ed_menu_error_entry
 EdM_Init	jmp	_ed_menu_init_entry
-EdM_PrevHidden	jmp	_ed_previous_hidden_entry
-EdM_NextHidden	jmp	_ed_next_hidden_entry
 		xdef	_ed_branch_amos
 _ed_branch_amos
 EdM_BranchAMOS	jmp	_ed_branch_amos_entry
 EdM_MarkAll	jmp	_ed_menu_marks_entry
-Ed_ShowKey	jmp	_ed_flip_keys_entry
 EdM_Editor	jmp	_ed_menus_editor_entry
 		xdef	_ed_menu_program
 _ed_menu_program
@@ -2006,16 +1904,8 @@ Ed_Saved	jmp	_ed_saved_entry
 ;
 ; Loading and saving: src/editor/disk.cpp
 Ed_RLoadHidden	jmp	_ed_rload_hidden_entry
-Ed_LoadHidden	jmp	_ed_load_hidden_entry
-Ed_Load	jmp	_ed_load_entry
 Ed_ReLoad	jmp	_ed_reload_entry
 Ed_DNom	jmp	_ed_name_part_entry
-Ed_Merge	jmp	_ed_merge_entry
-Ed_LoadA	jmp	_ed_merge_ascii_entry
-Ed_Rename	jmp	_ed_rename_entry
-Ed_SaveAsName	jmp	_ed_save_as_name_entry
-Ed_SaveAs	jmp	_ed_save_as_entry
-Ed_Save	jmp	_ed_save_entry
 Ed_SaveIt	jmp	_ed_save_it_entry
 Ed_SavePrg	jmp	_ed_save_program_entry
 Ed_SavePrg2	jmp	_ed_save_program2_entry

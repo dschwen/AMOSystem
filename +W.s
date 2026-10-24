@@ -1119,6 +1119,8 @@ ShInit
 ;		Banque MOUSE.ABK par defaut
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 		SECTION	"m",DATA_C
+		xdef	_w_default_mouse
+_w_default_mouse
 		IncBin	"bin/+AMOSPro_Mouse.abk"
 
 		even

@@ -637,8 +637,7 @@ def main():
         if subprocess.run(['make', '-q', 'all'], cwd=ROOT, stdout=subprocess.DEVNULL,
                           stderr=subprocess.DEVNULL).returncode != 0:
             sys.exit('build/dist is not up to date: run "make dist" first')
-        for built, copy in (('AMOSPro', 'AMOSPro'), ('AMOSPro.Lib', 'APSystem/AMOSPro.Lib'),
-                            ('AMOS.library', 'APSystem/AMOS.library')):
+        for built, copy in (('AMOSPro', 'AMOSPro'), ('AMOSPro.Lib', 'APSystem/AMOSPro.Lib')):
             a, b = os.path.join(ROOT, 'build', built), os.path.join(amos_tree, copy)
             if os.path.exists(a) and (not os.path.exists(b) or open(a, 'rb').read() != open(b, 'rb').read()):
                 sys.exit(f'{b} is older than build/{built}: run "make dist" first')

@@ -25,27 +25,34 @@ Generated files go to `build/gen`; nothing is written into the source tree.
 
 ## How the programs are linked
 
-Each program is assembled to an object with vasm and linked with
-`m68k-amigaos-ld` (through gcc) together with the C++ of its `src/`
-directory:
+AMOSPro is one program: its assembler parts are assembled to objects
+with vasm and linked with `m68k-amigaos-ld` (through gcc) together with
+the C++ of the `src/` directories:
 
-| program | assembler | C++ / glue | linker script |
-|---|---|---|---|
-| AMOSPro | `+B.s` (+ `+Verif.s`) | `src/lib`, `src/main`, `src/verif`, `src/interp`, `src/ext` | `link/amospro.ld` |
-| AMOS.library | `+W.s` | `src/w` | `link/module.ld` |
-| AMOSPro_Editor | `+Edit.s` | `src/editor` | `link/module.ld` |
-| AMOSPro_Monitor | `+Monitor.s` | `src/monitor` | `link/module.ld` |
+| part | assembler | C++ / glue |
+|---|---|---|
+| the main program | `+B.s` (+ `+Verif.s`) | `src/main`, `src/lib`, `src/verif`, `src/interp`, `src/ext` |
+| AMOS.library | `+W.s` | `src/w` |
+| the editor | `+Edit.s` | `src/editor` |
+| the monitor | `+Monitor.s` | `src/monitor` |
 
-`src/core` (the C++/assembler bridge) is an archive linked into all of them. The linker scripts keep
-the assembler code in the first hunk: it holds the entry point or entry
-table. AMOSPro's init hunk `I` must come second, because `Init_Fin` frees it.
-This `ld` writes no memory flags, so `tools/chiphunks.py` marks the
-`.datachip`/`.bsschip` hunks as chip memory after linking, using the map
-file. The extensions are still assembled directly: AMOSPro loads them raw
-and patches them, and they cannot contain linked code. AMOSPro.Lib is
-assembled the same way, but also linked into AMOSPro as data
-(`src/main/library.s`): the loader takes library 0 from that image, and
-the file is only built for the tools (the tokenizer reads its token table).
+AMOS.library, the editor and the monitor were programs of their own that
+AMOSPro loaded with LoadSeg. They are linked in now: the start calls
+AMOS.library at `_w_debut`, and "loading" the editor or the monitor puts
+their entry tables (`_ed_debut`, `_mon_debut`) into the library's jump
+table (`src/main/modules.cpp`); KILL EDITOR no longer gives their memory
+back. `src/core` (the C++/assembler bridge) is an archive linked in.
+`link/amospro.ld` keeps the assembler code of `+B.s` in the first hunk: it
+holds the entry point. The init hunk `I` must come second, because
+`Init_Fin` frees it. This `ld` writes no memory flags, so
+`tools/chiphunks.py` marks the `.datachip`/`.bsschip` hunks (and
+AMOS.library's chip data, section `m`) as chip memory after linking, using
+the map file. The extensions are still assembled directly: AMOSPro loads
+them raw and patches them, and they cannot contain linked code.
+AMOSPro.Lib is assembled the same way, but also linked into AMOSPro as
+data (`src/main/library.s`): the loader takes library 0 from that image,
+and the file is only built for the tools (the tokenizer reads its token
+table).
 
 C++ is compiled for the 68000 with `-Os`, without exceptions, RTTI or a C
 library startup. libgcc and libnix13 supply arithmetic helpers such as

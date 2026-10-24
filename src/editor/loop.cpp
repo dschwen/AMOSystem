@@ -4,7 +4,7 @@
 //
 // Ed_Loop resets the stack (+Edit.s) and comes here: editor_loop() does
 // not return. Neither do the alerts, which go back to Ed_Loop.
-// The functions are the JFonc table of +Edit.s (a bra each, from 0), with
+// The functions are the JFonc table of +Edit.s (their addresses, from 0), with
 // the flags of FlagFonc: bit 0 the buffer to be shown again, 1 the line,
 // 2 not in a closed procedure, 5 allowed in a macro, 6 with a command line
 // (a program driving the editor gives it), 7 allowed to a program.
@@ -109,7 +109,7 @@ void function_call(uint16_t n)
     r.d[0] = 0;
     r.d[1] = d1;
     r.d[2] = uint32_t(n) << 2;
-    call(ed_function_table + 4 * n, r);
+    call(ptr<uint8_t>(peek_l(ed_function_table + 4 * n)), r);
 }
 
 } // namespace amos::ed
