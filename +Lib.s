@@ -1772,9 +1772,7 @@ C_Lib
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					INT (FMath)
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par FnInt			Integer
-; - - - - - - - - - - - - -
-	rts
+	Lib_Int	FnInt		src/lib/stubs_glue.s
 ; - - - - - - - - - - - - -
 	Lib_Int	FnIntF		src/lib/maths.cpp
 
@@ -2304,45 +2302,25 @@ C_Lib
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					Entete des banques
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	BkSpr
+	Lib_Int	BkSpr		src/lib/stubs_glue.s
 ; - - - - - - - - - - - - -
-	dc.b "Sprites "
+	Lib_Int	BkIco		src/lib/stubs_glue.s
 ; - - - - - - - - - - - - -
-	Lib_Def	BkIco
+	Lib_Int	BkMus		src/lib/stubs_glue.s
 ; - - - - - - - - - - - - -
-	dc.b "Icons   "
+	Lib_Int	BkAmal		src/lib/stubs_glue.s
 ; - - - - - - - - - - - - -
-	Lib_Def	BkMus
+	Lib_Int	BkMenu		src/lib/stubs_glue.s
 ; - - - - - - - - - - - - -
-	dc.b "Music   "
+	Lib_Int	BkDat		src/lib/stubs_glue.s
 ; - - - - - - - - - - - - -
-	Lib_Def	BkAmal
+	Lib_Int	BkWrk		src/lib/stubs_glue.s
 ; - - - - - - - - - - - - -
-	dc.b "Amal    "
+	Lib_Int	BkAsm		src/lib/stubs_glue.s
 ; - - - - - - - - - - - - -
-	Lib_Def	BkMenu
+	Lib_Int	BkIff		src/lib/stubs_glue.s
 ; - - - - - - - - - - - - -
-	dc.b "Menu    "
-; - - - - - - - - - - - - -
-	Lib_Def	BkDat
-; - - - - - - - - - - - - -
-	dc.b "Data    "
-; - - - - - - - - - - - - -
-	Lib_Def	BkWrk
-; - - - - - - - - - - - - -
-	dc.b "Work    "
-; - - - - - - - - - - - - -
-	Lib_Def	BkAsm
-; - - - - - - - - - - - - -
-	dc.b "Asm     "
-; - - - - - - - - - - - - -
-	Lib_Def	BkIff
-; - - - - - - - - - - - - -
-	dc.b "Iff     "
-; - - - - - - - - - - - - -
-	Lib_Def	Bnk_NoLoad
-; - - - - - - - - - - - - -
-	dc.b "Loading!"
+	Lib_Int	Bnk_NoLoad		src/lib/stubs_glue.s
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					CHVERBUF
@@ -2389,13 +2367,7 @@ C_Lib
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 	Lib_Empty			SHunk, now in src/lib/bankfiles.cpp
 ; - - - - - - - - - - - - -
-	Lib_Def	NHunk
-; - - - - - - - - - - - - -
-	dc.b 	"AmBk"
-	dc.b 	"AmSp"
-	dc.b 	"AmBs"
-	dc.b 	"AmIc"
-	dc.l 	0
+	Lib_Int	NHunk		src/lib/stubs_glue.s
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					SAVE "Banque", n
@@ -2901,9 +2873,7 @@ C_Lib
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					PSEL
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par	FnPSel
-; - - - - - - - - - - - - -
-	rts
+	Lib_Int	FnPSel		src/lib/stubs_glue.s
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					FSEL(a$,b$,c$,d$)
@@ -3012,19 +2982,11 @@ C_Lib
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					Sauvegarde les registres D5-D7
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	SaveRegs
-; - - - - - - - - - - - - -
-	movem.l	d6-d7,ErrorSave(a5)
-	move.b	#1,ErrorRegs(a5)
-	rts
+	Lib_Int	SaveRegs		src/lib/stubs_glue.s
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					Recupere les registres D5-D7
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	LoadRegs
-; - - - - - - - - - - - - -
-	movem.l	ErrorSave(a5),d6-d7
-	clr.b	ErrorRegs(a5)
-	rts
+	Lib_Int	LoadRegs		src/lib/stubs_glue.s
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 	COMMAND LINE$=
@@ -3194,20 +3156,11 @@ C_Lib
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					TRUE / FALSE / ONE
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par FnTrue
+	Lib_Int	FnTrue		src/lib/stubs_glue.s
 ; - - - - - - - - - - - - -
-	moveq	#-1,d3
-	Ret_Int
+	Lib_Int	FnOne		src/lib/stubs_glue.s
 ; - - - - - - - - - - - - -
-	Lib_Par FnOne
-; - - - - - - - - - - - - -
-	moveq	#1,d3
-	Ret_Int
-; - - - - - - - - - - - - -
-	Lib_Par FnFalse
-; - - - - - - - - - - - - -
-	moveq	#0,d3
-	Ret_Int
+	Lib_Int	FnFalse		src/lib/stubs_glue.s
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					Source: Ecran.s
@@ -3949,25 +3902,12 @@ C_Lib
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					ERROR
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InError
-; - - - - - - - - - - - - -
-	cmp.l	#256,d3
-	bcs.s	.skip
-	move.l	#255,d3
-.skip	move.l	d3,d0
-	Rbra	L_GoError
+	Lib_Int	InError		src/lib/stubs_glue.s
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					D0>>>> majuscule
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	MajD0
-; - - - - - - - - - - - - -
-	cmp.b	#"a",d0
-	bcs.s	.Ski
-	cmp.b	#"z",d0
-	bhi.s	.Ski
-	sub.b	#$20,d0
-.Ski	rts
+	Lib_Int	MajD0		src/lib/stubs_glue.s
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					Source: SPRITE.S
@@ -4391,36 +4331,11 @@ C_Lib
 ;	OUT	A2=	Adresse
 ;		D5=	Max de bobs
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	AdBob
+	Lib_Int	AdBob		src/lib/stubs_glue.s
 ; - - - - - - - - - - - - -
-	and.l	#$3FFF,d1
-	Rbeq	L_FonCall
-	move.l	d1,d0
-	Rjsr	L_Bnk.AdBob
-	Rbeq	L_AdBErr
-	move.l	a0,a2
-	move.w	d1,d5
-	moveq	#0,d0
-	rts
+	Lib_Int	AdIcon		src/lib/stubs_glue.s
 ; - - - - - - - - - - - - -
-	Lib_Def	AdIcon
-; - - - - - - - - - - - - -
-	and.l	#$3FFF,d1
-	Rbeq	L_FonCall
-	move.l	d1,d0
-	Rjsr	L_Bnk.AdIcon
-	Rbeq	L_AdBErr
-	move.l	a0,a2
-	move.w	d1,d5
-	moveq	#0,d0
-	rts
-; - - - - - - - - - - - - -
-	Lib_Def	AdBErr
-; - - - - - - - - - - - - -
-	tst.w	d1
-	Rbeq	L_BkNoRes
-	moveq	#EcEBase+30-1,d0
-	Rbra	L_GoError
+	Lib_Int	AdBErr		src/lib/stubs_glue.s
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 	Routine, copie le path dans PATHACT
@@ -4438,155 +4353,65 @@ C_Lib
 	Lib_Int	DiskErr		src/lib/dos.cpp
 
 ; - - - - - - - - - - - - -
-	Lib_Def	TypeMis
+	Lib_Int	TypeMis		src/lib/stubs_glue.s
 ; - - - - - - - - - - - - -
-	moveq	#34,d0
-	Rbra	L_GoError
+	Lib_Int	FilOO		src/lib/stubs_glue.s
 ; - - - - - - - - - - - - -
-	Lib_Def	FilOO
+	Lib_Int	FilNO		src/lib/stubs_glue.s
 ; - - - - - - - - - - - - -
-	moveq	#DEBase+17,d0
-	Rbra	L_GoError
+	Lib_Int	FilTM		src/lib/stubs_glue.s
 ; - - - - - - - - - - - - -
-	Lib_Def	FilNO
+	Lib_Int	EOFil		src/lib/stubs_glue.s
 ; - - - - - - - - - - - - -
-	moveq	#DEBase+18,d0
-	Rbra	L_GoError
+	Lib_Int	IffFor2		src/lib/stubs_glue.s
 ; - - - - - - - - - - - - -
-	Lib_Def	FilTM
+	Lib_Int	DiForm		src/lib/stubs_glue.s
 ; - - - - - - - - - - - - -
-	moveq	#DEBase+19,d0
-	Rbra	L_GoError
+	Lib_Int	ScNOp		src/lib/stubs_glue.s
 ; - - - - - - - - - - - - -
-	Lib_Def	EOFil
+	Lib_Int	RainErr		src/lib/stubs_glue.s
 ; - - - - - - - - - - - - -
-	moveq	#DEBase+21,d0
-	Rbra	L_GoError
+	Lib_Int	EcWiErr		src/lib/stubs_glue.s
 ; - - - - - - - - - - - - -
-	Lib_Def	IffFor2
+	Lib_Int	CopErr		src/lib/stubs_glue.s
 ; - - - - - - - - - - - - -
-	moveq	#30,d0
-	Rbra	L_GoError
+	Lib_Int	BkAlRes		src/lib/stubs_glue.s
 ; - - - - - - - - - - - - -
-	Lib_Def	DiForm
+	Lib_Int	BkNoRes		src/lib/stubs_glue.s
 ; - - - - - - - - - - - - -
-	moveq	#DEBase+16,d0
-	Rbra	L_GoError
+	Lib_Int	OOfMem		src/lib/stubs_glue.s
 ; - - - - - - - - - - - - -
-	Lib_Def	ScNOp
+	Lib_Int	Syntax		src/lib/stubs_glue.s
 ; - - - - - - - - - - - - -
-	moveq	#3,d0
-	Rbra	L_EcWiErr
+	Lib_Int	Syntax2		src/lib/stubs_glue.s
 ; - - - - - - - - - - - - -
-	Lib_Def	RainErr
+	Lib_Int	StooLong		src/lib/stubs_glue.s
 ; - - - - - - - - - - - - -
-	moveq	#31,d0
-	Rbra	L_EcWiErr
+	Lib_Int	FonCall		src/lib/stubs_glue.s
 ; - - - - - - - - - - - - -
-	Lib_Def	EcWiErr
+	Lib_Int	AdrErr		src/lib/stubs_glue.s
 ; - - - - - - - - - - - - -
-	cmp.w	#1,d0
-	Rbeq	L_OOfMem
-	add.w	#EcEBase-1,d0
-	Rbra	L_GoError
+	Lib_Int	CantFit		src/lib/stubs_glue.s
 ; - - - - - - - - - - - - -
-	Lib_Def	CopErr
+	Lib_Int	IffFor		src/lib/stubs_glue.s
 ; - - - - - - - - - - - - -
-	add.w	#EcEBase+32-2,d0
-	Rbra	L_GoError
+	Lib_Int	IffCmp		src/lib/stubs_glue.s
 ; - - - - - - - - - - - - -
-	Lib_Def	BkAlRes
+	Lib_Int	IllScN		src/lib/stubs_glue.s
 ; - - - - - - - - - - - - -
-	moveq	#35,d0
-	Rbra	L_GoError
+	Lib_Int	FftE		src/lib/stubs_glue.s
 ; - - - - - - - - - - - - -
-	Lib_Def	BkNoRes
+	Lib_Int	FnfE		src/lib/stubs_glue.s
 ; - - - - - - - - - - - - -
-	moveq	#36,d0
-	Rbra	L_GoError
+	Lib_Int	BFonCall		src/lib/stubs_glue.s
 ; - - - - - - - - - - - - -
-	Lib_Def	OOfMem
+	Lib_Int	WFonCall		src/lib/stubs_glue.s
 ; - - - - - - - - - - - - -
-	moveq 	#24,d0
-	Rbra 	L_GoError
+	Lib_Int	SpErr		src/lib/stubs_glue.s
 ; - - - - - - - - - - - - -
-	Lib_Par	Syntax
+	Lib_Int	InStop		src/lib/stubs_glue.s
 ; - - - - - - - - - - - - -
-	moveq 	#22,d0
-	Rbra 	L_GoError
-; - - - - - - - - - - - - -
-	Lib_Par	Syntax2
-; - - - - - - - - - - - - -
-	Rbra	L_Syntax
-; - - - - - - - - - - - - -
-	Lib_Def	StooLong
-; - - - - - - - - - - - - -
-	moveq 	#21,d0
-	Rbra 	L_GoError
-; - - - - - - - - - - - - -
-	Lib_Def	FonCall
-; - - - - - - - - - - - - -
-	moveq 	#23,d0
-	Rbra	L_GoError
-; - - - - - - - - - - - - -
-	Lib_Def	AdrErr
-; - - - - - - - - - - - - -
-	moveq	#25,d0
-	Rbra	L_GoError
-; - - - - - - - - - - - - -
-	Lib_Def	CantFit
-; - - - - - - - - - - - - -
-	moveq	#32,d0
-	Rbra	L_GoError
-; - - - - - - - - - - - - -
-	Lib_Def	IffFor
-; - - - - - - - - - - - - -
-	moveq	#30,d0
-	Rbra	L_GoError
-; - - - - - - - - - - - - -
-	Lib_Def	IffCmp
-; - - - - - - - - - - - - -
-	moveq	#31,d0
-	Rbra	L_GoError
-; - - - - - - - - - - - - -
-	Lib_Def	IllScN
-; - - - - - - - - - - - - -
-	moveq	#6,d0			* Illegal screen number
-	Rbra	L_EcWiErr
-; - - - - - - - - - - - - -
-	Lib_Def	FftE			* Error font
-; - - - - - - - - - - - - -
-	moveq	#37,d0
-	Rbra	L_GoError
-; - - - - - - - - - - - - -
-	Lib_Par FnfE			* Font not found
-; - - - - - - - - - - - - -
-	moveq	#44,d0
-	Rbra	L_GoError
-; - - - - - - - - - - - - -
-	Lib_Def	BFonCall		* Erreur blocks
-; - - - - - - - - - - - - -
-	moveq	#22,d0
-	Rbra	L_EcWiErr
-; - - - - - - - - - - - - -
-	Lib_Def	WFonCall
-; - - - - - - - - - - - - -
-	moveq	#16,d0
-	Rbra	L_EcWiErr
-; - - - - - - - - - - - - -
-	Lib_Def	SpErr
-; - - - - - - - - - - - - -
-	moveq	#SpEBase,d0
-	Rbra	L_GoError
-; - - - - - - - - - - - - -
-	Lib_Par InStop
-; - - - - - - - - - - - - -
-	moveq	#9,d0
-	Rbra	L_GoError
-; - - - - - - - - - - - - -
-	Lib_Def	GoError
-; - - - - - - - - - - - - -
-	Rjmp	L_Error
+	Lib_Int	GoError		src/lib/stubs_glue.s
 
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

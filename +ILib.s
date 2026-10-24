@@ -1680,15 +1680,15 @@ GetTablo	Rjmp	L_GetTablo
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 	Relai de saut aux erreurs principales
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-FonCall		Rbra	L_FonCall
-Synt		Rbra	L_Syntax
-OOfMem		Rbra	L_OOfMem
-StooLong	Rbra	L_StooLong
-ScNOp		Rbra	L_ScNOp
-FilTM		Rbra	L_FilTM
-AdrErr		Rbra	L_AdrErr
-EcWiErr		Rbra	L_EcWiErr
-BkNoRes		Rbra	L_BkNoRes
+FonCall		Rjmp	L_FonCall
+Synt		Rjmp	L_Syntax
+OOfMem		Rjmp	L_OOfMem
+StooLong	Rjmp	L_StooLong
+ScNOp		Rjmp	L_ScNOp
+FilTM		Rjmp	L_FilTM
+AdrErr		Rjmp	L_AdrErr
+EcWiErr		Rjmp	L_EcWiErr
+BkNoRes		Rjmp	L_BkNoRes
 
 
 
