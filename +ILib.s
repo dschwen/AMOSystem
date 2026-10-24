@@ -3421,211 +3421,15 @@ FilNO	moveq	#DEBase+18,d0
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					INPUT #
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InLineInputH
+	Lib_Int	InLineInputH		src/interp
 ; - - - - - - - - - - - - -
-	clr.w	-(sp)
-	bra.s	DInp0
-; - - - - - - - - - - - - -
-	Lib_Par InInputH
-; - - - - - - - - - - - - -
-	move.w	#",",-(sp)
-DInp0	bsr	New_Expentier
-	addq.l	#2,a6
-	move.l	d3,d0
-	Rjsr	L_GetFile
-	beq	FilNO
-	move.l	a2,PrintFile(a5)
-	clr.l	DeFloat(a5)
-	Rjsr	L_SaveRegs
-	bra	ReInp
+	Lib_Int	InInputH		src/interp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					INPUT
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InInput
+	Lib_Int	InInput		src/interp
 ; - - - - - - - - - - - - -
-	move.w	#",",-(sp)
-	bra.s	IInp0
-; - - - - - - - - - - - - -
-	Lib_Par InLineInput
-; - - - - - - - - - - - - -
-	clr.w	-(sp)
-IInp0:	Rjsr	L_SaveRegs
-	clr.l	DeFloat(a5)
-	clr.l	PrintFile(a5)
-	tst.w	ScOn(a5)
-	beq	ScNOp
-	move.l	Buffer(a5),a0
-	clr.b	(a0)
-	moveq	#1,d7
-* Chaine a imprimer?
-	cmp.w	#_TkVar,(a6)
-	beq.s	IInp1
-	bsr	New_Evalue
-	move.l	d3,a2
-	move.w	(a2)+,d2
-	addq.l	#2,a6
-	moveq	#0,d7
-	tst.w	d2
-	beq.s	IInp1
-	move.b	0(a2,d2.w),d6
-	clr.b	0(a2,d2.w)
-	move.l	a2,a1
-	WiCall	Print
-	move.b	d6,0(a2,d2.w)
-* Imprime le ?
-IInp1:	tst.w	d7
-	beq.s	ReInp
-	WiCalA	Print,InnInt(pc)
-	clr.l	DeFloat(a5)
-
-;	 Rempli le buffer!
-; ~~~~~~~~~~~~~~~~~~~~~~~~
-ReInp:	tst.l	PrintFile(a5)
-	bne.s	ReDInp
-* Clavier
-	lea	Es_LEd(a5),a0
-	move.l	Buffer(a5),a1
-	clr.b	(a1)
-	move.l	a1,a2
-	move.w	#(1<<LEd_FCursor)|(1<<LEd_FTests)|(1<<LEd_FMulti),d0
-	moveq	#0,d1			Curseur � zero
-	move.w	#256,d2			256 caracteres maxi
-	moveq	#-1,d3			Largeur maxi
-	move.l	a3,-(sp)
-	Rjsr	L_LEd_Init
-	bne	FonCall			Trop � droite...
-	Rjsr	L_LEd_Loop
-	move.l	(sp)+,a3
-	move.l	d0,d3
-	tst.w	d2
-	bmi	IStop
-	bra	InnPut
-* Fichier!
-ReDInp	move.l	PrintFile(a5),a2
-	move.l	Buffer(a5),a1
-	clr.b	(a1)
-	moveq	#0,d1
-	move.w	(sp),d2
-	move.b	ChrInp+1(a5),d3
-	move.b	ChrInp(a5),d4
-	bra.s	InpD1
-InpD0	move.b	d0,(a1)+
-	addq.w	#1,d1
-	cmp.w	#1000,d1
-	bcc	InpTL
-InpD1	Rjsr	L_GetByte
-	cmp.b	d0,d2			* Stop aux virgules
-	beq.s	InpD2
-	cmp.b	d0,d3			* Premier caractere?
-	bne.s	InpD0
- 	tst.b	d4			* Sauter le deuxieme?
-	bmi.s	InpD2
-	Rjsr	L_GetByte
-InpD2	clr.b	(a1)
-	move.l	a1,d3
-	sub.l	Buffer(a5),d3		* Nombre de caracteres -> D3
-
-******* INPUT/LINE INPUT: interprete le buffer!
-InnPut	move.l	Buffer(a5),a2
-Inn1:	move.l	a2,-(sp)
-	bsr	FindVar
-	move.l	(sp)+,a2
-	movem.l	a0/d2,-(sp)
-	cmp.b	#2,d2
-	bne.s	Inn5
-* Variable alphanumerique
-	move.l	ChVide(a5),(a0)		* Libere la memoire!
-	bsr	DDemande
-	addq.l	#2,a0
-	move.b	8+1(sp),d1
-Inn2:	move.b	(a2)+,d0
-	move.b	d0,(a0)+
-	beq.s	Inn3
-	cmp.b	d0,d1
-	bne.s	Inn2
-Inn3:	subq.l	#1,a0
-	subq.l	#1,a2
-	move.l	a0,d0
-	sub.l	a1,d0
-	subq.l	#2,d0
-	move.w	d0,(a1)
-	btst	#0,d0
-	beq.s	Inn4
-	addq.l	#1,a0
-Inn4:	move.l	a0,HiChaine(a5)
-	movem.l	(sp)+,a0/d2
-	move.l	a1,(a0)
-	bra.s	Inn10
-* Variable numerique
-Inn5:	move.l	a2,a0
-	moveq	#1,d0			Tenir compte du signe
-	Rjsr	L_ValRout
-	move.l	a0,a2
-	movem.l	(sp)+,a1/d1
-	move.b	(a2),d0
-	beq.s	Inn6
-	cmp.b	1(sp),d0
-	bne	InnRedo
-Inn6:	cmp.b	d1,d2
-	beq.s	Inn8
-	tst.b	d1
-	beq.s	Inn7
-	move.l	a1,-(sp)
-	Rjsrt	L_IntToFl1
-	move.l	(sp)+,a1
-	bra.s	Inn8
-Inn7:	move.l	a1,-(sp)
-	Rjsrt	L_FlToInt1
-	move.l	(sp)+,a1
-Inn8:	move.l	d3,(a1)			Poke la variable
-	cmp.b	#1,d2			Float?
-	bne.s	Inn10
-	tst.b	MathFlags(a5)		Double?
-	bpl.s	Inn10
-	move.l	d4,4(a1)		Poke la 2eme partie
-* Encore une variable a prendre???
-Inn10:	cmp.w	#_TkVir,(a6)+
-	bne.s	Inn11
-	cmp.b	#",",(a2)+
-	beq	Inn1
-* ??
-	tst.l	PrintFile(a5)
-	bne	ReInp
-	WiCalA	Print,InnEnc(pc)
-	move.l	Buffer(a5),a0
-	clr.b	(a0)
-	bra	ReInp
-* Fini!
-Inn11:	subq.l	#2,a6
-	addq.l	#2,sp
-	Rjsr	L_EndByte
-	tst.l	PrintFile(a5)
-	bne.s	InnFin
-	cmp.w	#_TkPVir,(a6)+
-	beq.s	InnFin
-	subq.l	#2,a6
-	WiCalA	Print,InnRet(pc)
-	bra.s	InnFin
-* Redo from start
-InnRedo	Rjsr	L_EndByte
-	tst.l	PrintFile(a5)
-	bne	TypeMis
-	WiCalA	Print,InnRet(pc)
-	moveq	#15,d0
-	Rjsr	L_Def_GetMessage
-	move.l	a0,a1
-	WiCall	Print
-	WiCalA	Print,InnRet(pc)
-	Rjsr	L_LoadRegs
-	move.l	d7,a6
-	bra	IInp0
-* Fini!
-InnFin	Rjsr	L_LoadRegs
-	rts
-InnRet:	dc.b 	13,10,0
-InnInt:	dc.b	"? ",0
-InnEnc:	dc.b	13,10,"?? ",0
-	even
+	Lib_Int	InLineInput		src/interp
 ; - - - - - - - - - - - - -
 	Lib_Def	Input
 	Lib_Def	CRet
@@ -3634,321 +3438,15 @@ InnEnc:	dc.b	13,10,"?? ",0
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					PRINT #n,"kjfdjkf";
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InPrintH
-; - - - - - - - - - - - - -
-	bsr	New_Expentier
-	addq.l	#2,a6
-	move.l	d3,d0
-	Rjsr	L_GetFile
-	tst.l	FhA(a2)
-	beq	FilNO
-	btst	#0,FhT(a2)
-	beq	FilTM
-	cmp.w	#1,d0
-	beq	FilTM
-	move.l	a2,PrintFile(a5)
-	clr.w	ImpFlg(a5)
-	bra.s	Print0
+	Lib_Int	InPrintH		src/interp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					LPRINT
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InLPrint
-; - - - - - - - - - - - - -
- 	clr.l	PrintFile(a5)
-	move 	#1,ImpFlg(a5)
-        bra.s 	Print0
+	Lib_Int	InLPrint		src/interp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					PRINT
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InPrint
-; - - - - - - - - - - - - -
-  	clr 	ImpFlg(a5)
-	clr.l	PrintFile(a5)
-* Entree commune
-Print0	Rjsr	L_SaveRegs
-	move.l 	PrintPos(a5),d0
-        beq.s 	Print1
-	move.l	d0,a6
-        bclr 	#7,PrintFlg(a5)
-* Boucle
-Print1	clr 	PrintFlg(a5)
-Prunt2	bsr 	ssprint
-        beq 	FinPrint
-        tst.w 	d7
-        beq.s 	Prunt2
-	move.l	PrintFile(a5),d0
-	bne.s	Print4
-* A l'ecran / Imprimante
-	move.l	Buffer(a5),a0
-	Rjsr	L_ImpChaine
-	bra.s	Prunt2
-* Impression dans un fichier
-Print4	move.l	d0,a0
-	move.l	FhA(a0),d1
-Print5	move.l	Buffer(a5),d2
-	move.l	d3,-(sp)
-	moveq	#0,d3
-	move.w	d7,d3
-	DosCall	_LVOWrite
-	move.l	d3,d1
-	move.l	(sp)+,d3
-	cmp.l	d0,d1
-	beq.s	Prunt2
-	Rjmp	L_DiskError
-* Fin du print
-FinPrint:
-	Rjsr	L_LoadRegs
-	clr.l 	PrintPos(a5)
-        clr.l 	PrintFile(a5)
-	rts
-
-; ROUTINE DE PRINT: REMPLI LE BUFFER, REVIENT D7=LONGUEUR A IMPRIMER!
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-ssprint	btst 	#7,PrintFlg(a5)    impression de chaine en route!
-        bne 	sp2a
-        btst 	#6,PrintFlg(a5)    fini?
-        bne 	sp17
- 	move.l 	Buffer(a5),a0
-        cmp.w 	#_TkUsing,(a6)	Using?
-	beq.s 	sp20
-	bsr 	Finie		Print termine?
-	beq 	sp11
-	bra.s 	spa
-; USING "+ - #### . ^^^^ ~~~~": debut, STOCKE LA CHAINE
-sp20:   bsr	Fn_New_Evalue
-	move.l	d3,a2
-	move.w	(a2)+,d2
-        cmp 	#120,d2         	pas plus de 200 caracteres
-        bcc 	FonCall
-        move.l 	Buffer(a5),a0
-	lea 	256(a0),a0
-        Rjsr 	L_ChVerBuf2       	copie la chaine dans le buffer
-        move 	#1,UsingFlg(a5)
-	addq.l 	#2,a6		Saute le ;
-	bra.s 	spb
-* Prend le param
-spa:    clr 	UsingFlg(a5)
-spb:    bsr	New_Evalue
-	move.l 	d7,d0
-	bne.s 	spb0
-	move.l 	MenA4(a5),d7
-spb0:   move.l 	Buffer(a5),a0
-        subq.b 	#1,d2
-        bmi.s 	sp1
-        bne.s 	sp2
-; IMPRESSION D'UN CHIFFRE FLOAT
-        RjsrtR 	L_Float2Ascii,1        	;va ecrire dans le buffer
-        bra 	using1
-; IMPRESSION D'UN CHIFFRE ENTIER
-sp1:	move.l 	d3,d0
-	moveq	#-1,d3         		;proportionnel
-        moveq 	#1,d4         		;avec signe
-        Rjsr 	L_LongToAsc
-        bra 	using1
-; IMPRESSION D'UNE CHAINE -debut-
-sp2:    move.l 	d3,a2
-        move.w 	(a2)+,d3
-        bne.s 	sp3
-        bra 	using50
-; IMPRESSION D'UNE CHAINE -milieu-
-sp2a:   move.l 	Buffer(a5),a0
-sp3:    moveq 	#120,d0
-sp4:    move.b 	(a2)+,(a0)+  	;imprime par salves de 120 caracteres,
-        subq 	#1,d3
-        beq.s 	sp5
-        dbra 	d0,sp4
-        bset 	#7,PrintFlg(a5)    ;on a pas fini d'imprimer la chaine!
-        bra.s 	sp11
-sp5:    bclr 	#7,PrintFlg(a5)    ;on a fini!
-        bra 	using50
-; fin du sspgm/retour du USING
-sp11:   clr 	UsingFlg(a5)        ;une seule expression par USING
-        btst 	#7,PrintFlg(a5)    ;pas fini: ne fait rien!
-        bne.s 	sp15
-        move.w 	(a6),d0
-        cmp.w 	#_TkVir,d0
-        beq.s 	sp12
-        cmp.b 	#_TkPVir,d0     ;point virgule: ne fait rien!
-        beq.s 	sp13
-        bra.s 	sp14
-sp12:   move.b 	#9,(a0)+         	;TAB
-sp13:   addq.l	#2,a6
-        bsr 	Finie
-	beq.s 	sp14a
-        bne.s 	sp15
-sp14:   move.b 	#13,(a0)+        	;met le RETURN
-        move.b 	#10,(a0)+
-sp14a:  bset 	#6,PrintFlg(a5)    	;flag: c'est fini apres!
-sp15:   clr.b 	(a0)
-        sub.l 	Buffer(a5),a0
-        move.l 	a0,d7            	;taille du buffer
-        btst 	#7,PrintFlg(a5)
-        bne.s 	sp16
-        move.l 	a6,PrintPos(a5)  	;position du CHRGET PRINT
-sp16:   moveq 	#1,d0             	;retour: quelque chose a imprimer!
-        rts
-sp17: 	moveq 	#0,d0
-        rts
-
-; USING pour les CHIFFRES
-using1: tst 	UsingFlg(a5)        Si pas using: revient imprimer
-        beq 	sp11
-        clr.b 	(a0)          	Stoppe la chaine
-        move.l 	Buffer(a5),a1
-        lea 	128(a1),a2
-        moveq 	#127,d0
-us2:    move.b 	(a1),(a2)+   	recopie la chaine, et fait le menage!!!
-        move.b 	#32,(a1)+
-        dbra 	d0,us2
-        move.l 	Buffer(a5),a0
-        lea 	128(a0),a1      	a1 pointe la chaine
-        move.l 	a1,d6        	debut chaine a formatter
-	move.l 	Buffer(a5),a2
-	lea 	256(a2),a2		a2 pointe la chaine de definition
-        move.l 	a2,d7        	debut chaine de format
-us3:    move.b 	(a2),d0
-        beq.s 	us5
-        cmp.b 	#".",d0       	cherche la fin du format de chiffre
-        beq.s 	us5
-        cmp.b 	#";",d0
-        beq.s 	us5
-        cmp.b 	#"^",d0
-        beq.s 	us5
-        addq.l 	#1,a0
-        addq.l 	#1,a2
-        bra.s 	us3
-us5:    move.b 	(a1),d0
-        beq.s 	us6
-        cmp.b 	#".",d0       	trouve le point de la chaine a formatter
-        beq.s 	us6             	ou la fin
-        cmp.b 	#"E",d0
-        beq.s 	us6
-        addq.l 	#1,a1
-        bra.s 	us5
-us6:    movem.l	a0-a3,-(sp)
-; ecris la gauche du chiffre
-us7:    cmp.l 	d7,a2         	fini a gauche???
-        beq 	us15
-        move.b 	-(a2),d0
-        cmp.b 	#"#",d0
-        beq.s 	us8
-        cmp.b 	#"-",d0
-        beq.s 	us11
-        cmp.b 	#"+",d0
-        beq.s 	us12
-        move.b 	d0,-(a0)     	aucun signe reserve: le met simplement!
-        bra.s 	us7
-us8:    cmp.l 	d6,a1         	-----> "#"
-        bne.s 	us10
-us9:    move.b 	#" ",-(a0)   	arrive au debut du chiffre!
-        bra.s 	us7
-us10:   move.b 	-(a1),d0
-        cmp.b 	#"0",d0       	pas un chiffre (signe)
-        bcs.s 	us9
-        cmp.b 	#"9",d0
-        bhi.s 	us9
-        move.b 	d0,-(a0)     	OK, chiffre: poke!
-        bra.s 	us7
-us11:   move.l 	d6,a3        	-----> "-"
-        move.b 	(a3),-(a0)   	met le "signe": 32 ou "-"
-        bra.s 	us7
-us12:   move.l 	d6,a3
-        move.b 	(a3),d0
-        cmp.b 	#"-",d0
-        beq.s 	us13
-        move.b 	#"+",d0
-us13:   move.b 	d0,-(a0)     	-----> "+"
-        bra 	us7
-; ecrit la droite du chiffre
-us15:   movem.l (sp)+,a0-a3 	recupere les adresses pivot
-        clr.l 	d2            	flag puissance
-        cmp.b 	#".",(a1)     	saute le point dans le chiffre a afficher
-        bne.s 	us16
-        addq.l 	#1,a1
-us16:   move.b 	(a2)+,d0
-        beq 	sp11        	fini OUF!
-        cmp.b 	#";",d0       	";" marque la virgule sans l'ecrire!
-        beq.s 	us18z
-        cmp.b 	#"#",d0
-        beq.s 	us17
-        cmp.b 	#"^",d0
-        beq.s 	us20
-        move.b 	d0,(a0)+     	ne correspond a rien: POKE!
-        bra.s 	us16
-us17:   move.b 	(a1),d0      	-----> "#"
-        bne.s 	us19
-us18:   tst 	d2
-        beq.s 	us18a
-us18z:  move.b 	#" ",(a0)+   	si puissance passee: met des espaces
-        bra.s 	us16
-us18a:  move.b 	#"0",(a0)+   	Fin du chiffre: met un zero apres la virgule
-        bra.s 	us16
-us19:   cmp.b 	#"0",d0
-        bcs.s 	us18
-        cmp.b 	#"9",d0
-        bhi.s 	us18
-        addq.l 	#1,a1
-        move.b 	d0,(a0)+
-        bra 	us16
-us20:   tst 	d2              	-----> "^"
-        bmi.s 	us24
-        bne.s 	us25
-us21:   move.b 	(a1),d0
-        beq.s 	us22
-        cmp.b 	#"E",d0
-        beq.s 	us23
-        addq.l 	#1,a1
-        bra.s 	us21
-us22:   move 	#1,d2          	pas de puissance: en fabrique une!
-        bra.s 	us25
-us23:   move 	#-1,d2
-us24:   move.b 	(a1),d0      	si fin du chiffre: met des espaces
-        beq 	us18
-        addq.l 	#1,a1
-        cmp.b 	#32,d0        	saute l'espace entre E et +/-
-        beq.s 	us24
-        move.b 	d0,(a0)+
-        bra 	us16
-us25:   move.l	a3,-(sp)
-	lea 	UsPuiss(pc),a3
-        move.b 	-1(a3,d2.w),(a0)+ 	met une fausse puissance!
-	move.l	(sp)+,a3
-        cmp.b 	#6,d2
-        beq 	us16
-        addq 	#1,d2
-        bra 	us16
-
-; PRINT USING POUR DES CHAINES +++facile
-using50:tst 	UsingFlg(a5)	si pas using, va imprimer
-        beq 	sp11
-	move.l 	a2,-(sp)
-        clr.b 	(a0)        	stoppe la chaine
-        move.l 	Buffer(a5),a0
-        lea 	128(a0),a1
-        moveq 	#127,d0
-us51:   move.b 	(a0)+,(a1)+  	recopie la chaine, et fait le menage!!!
-        dbra 	d0,us51
-        move.l 	Buffer(a5),a0
-        lea 	128(a0),a1      	a1 pointe la chaine
-        lea 	128(a1),a2		a2 pointe la chaine de definition
-; ecris la chaine dans le buffer
-us52:   move.b 	(a2)+,d0
-        beq.s 	us55        	fini!
-        cmp.b 	#"~",d0
-        beq.s 	us53
-        move.b 	d0,(a0)+
-        bra.s 	us52
-us53:   move.b 	(a1),d0      	----> "~"
-        bne.s 	us54
-        move.b 	#32,(a0)+
-        bra.s 	us52
-us54:   addq.l 	#1,a1
-        move.b 	d0,(a0)+
-        bra.s 	us52
-us55:	move.l	(sp)+,a2
-	bra 	sp11
-UsPuiss dc.b "E+000  "
-	even
+	Lib_Int	InPrint		src/interp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 	Pour le compilateur
@@ -3974,49 +3472,13 @@ UsPuiss dc.b "E+000  "
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					DEFAULT PALETTE
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InDefaultPalette
-; - - - - - - - - - - - - -
-	lea	DefPal(a5),a0
-	bsr	Plt
-	rts
+	Lib_Int	InDefaultPalette		src/interp/graphics.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					PALETTE
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InPalette
+	Lib_Int	InPalette		src/interp/graphics.cpp
 ; - - - - - - - - - - - - -
-	tst.w	ScOn(a5)
-	beq	ScNOp
-	moveq	#15,d0
-	move.l	Buffer(a5),a0
-	move.l	a0,a1
-Pal1:	move.l	#-1,(a1)+
-	dbra	d0,Pal1
-	bsr	Plt
-	EcCall	SPal
-	bne	EcWiErr
-	rts
-
-* Routine palette
-; - - - - - - - - - - - - -
-	Lib_Def	Plt
-; - - - - - - - - - - - - -
-Plt:	move.l	a0,-(sp)
-	bsr	New_Evalue
-	subq.b	#1,d2
-	bmi.s	Plt1
-	Rjsrt	L_IntToFl1
-Plt1:	move.l	(sp)+,a0
-	tst.l	d3
-	bmi.s	Plt2
-	and.w	#$FFF,d3
-	move.w	d3,(a0)
-Plt2:	addq.l	#2,a0
-	move.w	(a6)+,d0
-	cmp.w	#_TkVir,d0
-	beq.s	Plt
-	subq.l	#2,a6
-	move.l	Buffer(a5),a1
-	rts
+	Lib_Empty			Plt, now in src/interp/graphics.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					FADE
@@ -4025,147 +3487,17 @@ Plt2:	addq.l	#2,a0
 	Lib_Def	InFade2
 	Lib_Def	InFade3
 	Lib_Def	InFadePal
-	Lib_Par InFade
-; - - - - - - - - - - - - -
-	bsr	New_Expentier
-	move.l	d3,-(a3)
-	move.w	(a6),d0
-	cmp.w	#_TkTo,d0
-	beq.s	IFaTo
-	cmp.w	#_TkVir,d0
-	beq.s	IFaPal
-* FADE n
-	move.l	Buffer(a5),a0
-	move.l	a0,a1
-	moveq	#31,d0
-IFad0	clr.w	(a0)+
-	dbra	d0,IFad0
-	bra.s	IFadT
-* FADE TO
-IFaTo	bsr	Fn_New_Expentier
-	tst.l	d3
-	bpl.s	IFat1
-	Rjsr	L_Bnk.GetBobs		<0 -->> sprite palette
-	beq	BkNoRes
-	move.w	(a0)+,d0
-	lsl.w	#3,d0
-	lea	0(a0,d0.w),a0
-	bra.s	IFat2
-IFat1	move.l	d3,d1			* Dans un ecran
-	Rjsr	L_GetEc
-	lea	EcPal(a0),a0
-IFat2	moveq	#-1,d3
-	cmp.w	#_TkVir,(a6)
-	bne.s	IFat3
-	move.l	a0,-(sp)
-	bsr	Fn_New_Expentier
-	move.l	(sp)+,a0
-IFat3	Rjsr	L_PalRout
-	bra.s	IFadT
-* FADE palette
-IFaPal	moveq	#15,d0
-	move.l	Buffer(a5),a0
-	move.l	a0,a1
-IFap	move.l	#-1,(a1)+
-	dbra	d0,IFap
-	addq.l	#2,a6
-	bsr	Plt
-* Appelle!
-IFadT	tst.w	ScOn(a5)
-	beq	ScNOp
-	move.l	(a3)+,d1
-	bls	FonCall
-	EcCall	FadeOn
-	bne	FonCall
-	rts
+	Lib_Int	InFade		src/interp/graphics.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					POLYLINE
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InPolyline
-; - - - - - - - - - - - - -
-	tst.w	ScOn(a5)
-	beq	ScNOp
-	clr.w	-(sp)
-	move.l	T_RastPort(a5),a1
-	move.l	Buffer(a5),a2
-	cmp.w	#_TkTo,(a6)
-	bne.s	PLi1
-	move.w	36(a1),d0
-	move.w	38(a1),d1
-	bra.s	PLi2
-PLi1:	movem.l	a1/a2,-(sp)
-	bsr	New_Expentier
-	move.l	d3,-(a3)
-	bsr	Fn_New_Expentier
-	movem.l	(sp)+,a1/a2
-	move.l	d3,d1
-	move.l	(a3)+,d0
-PLi2:	move.w	d0,(a2)+
-	move.w	d1,(a2)+
-	addq.w	#1,(sp)
-	cmp.w	#_TkTo,(a6)+
-	beq.s	PLi1
-	subq.l	#2,a6
-	move.w	(sp)+,d0
-	cmp.w	#1,d0
-	bls	FonCall
-	move.l	Buffer(a5),a0
-	move.w	(a0),36(a1)
-	move.w	2(a0),38(a1)
-	move.w	#PolyDraw,d5
-	Rjsr	L_GfxFunc
-	rts
+	Lib_Int	InPolyline		src/interp/graphics.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					POLYGON
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InPolygon
-; - - - - - - - - - - - - -
-	tst.w	ScOn(a5)
-	beq	ScNOp
-
-; Initialise le buffer AREADRAW
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	lea	AAreaInfo(a5),a0
-	lea	AAreaBuf(a5),a1
-	moveq	#AAreaSize,d0
-	move.l	T_RastPort(a5),a2
-	move.l	a0,16(a2)
-	GfxCa5	InitArea
-
-	move.l	T_RastPort(a5),a1
-	move.l	Buffer(a5),a2
-	cmp.w	#_TkTo,(a6)
-	bne.s	PGi0
-	addq.l	#2,a6
-	move.w	36(a1),d0
-	move.w	38(a1),d1
-	bra.s	PGi1
-PGi0:	move.l	a1,-(sp)
-	bsr	New_Expentier
-	move.l	d3,-(a3)
-	bsr	Fn_New_Expentier
-	move.l	(sp)+,a1
-	addq.l	#2,a6
-	move.l	d3,d1
-	move.l	(a3)+,d0
-PGi1:	GfxCa5	AreaMove
-PGi2:	move.l	a1,-(sp)
-	bsr	New_Expentier
-	move.l	d3,-(a3)
-	bsr	Fn_New_Expentier
-	move.l	(sp)+,a1
-	move.l	d3,d1
-	move.l	(a3)+,d0
-	GfxCa5	AreaDraw
-	cmp.w	#_TkTo,(a6)+
-	beq.s	PGi2
-	subq.l	#2,a6
-FinRas	Rjsr	L_GetRas
-	GfxCa5	AreaEnd
-	Rjsr	L_FreeRas
-	rts
+	Lib_Int	InPolygon		src/interp/graphics.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					Source:	Sprite.s
@@ -4181,44 +3513,7 @@ FinRas	Rjsr	L_GetRas
 	Lib_Def	ChannelToSOffset
 	Lib_Def	ChannelToRainbow
 ; - - - - - - - - - - - - -
-	Lib_Par InChannel
-; - - - - - - - - - - - - -
-	bsr	New_Expentier
-	cmp.l	#64,d3
-	bcc	FonCall
-	addq.l	#2,a6
-	move.w	(a6)+,d0
-	moveq	#0,d4			* 0-> Sprites
-	moveq	#64,d5
-	cmp.w	#_TkSpr,d0
-	beq.s	ChaX
-	addq.w	#1,d4			* 1-> Bobs
-	moveq	#64,d5
-	cmp.w	#_TkBob,d0
-	beq.s	ChaX
-	addq.w	#1,d4			* 2-> Screen display
-	moveq	#8,d5
-	cmp.w	#_TkScD,d0
-	beq.s	ChaX
-	addq.w	#1,d4			* 3-> Screen size
-	cmp.w	#_TkScS,d0
-	beq.s	ChaX
-	addq.w	#1,d4			* 4-> Screen offset
-	cmp.w	#_TkScO,d0
-	beq.s	ChaX
-	addq.w	#2,d4			* 6-> Rainbow
-	moveq	#4,d5
-ChaX:	movem.l	d3-d5,-(sp)
-	bsr	New_Expentier
-	move.l	d3,d2
-	movem.l	(sp)+,d3-d5
-	cmp.l	d5,d2
-	bcc	FonCall
-	lsl.w	#1,d3
-	lea	AnCanaux(a5),a0
-	move.b	d4,0(a0,d3.w)		* 1 => TYPE
-	move.b	d2,1(a0,d3.w)		* 2 => NUMERO
-	rts
+	Lib_Int	InChannel		src/interp/graphics.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					Source: memory.s
@@ -4327,176 +3622,26 @@ ChaX:	movem.l	d3-d5,-(sp)
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					CALL
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InCall
-; - - - - - - - - - - - - -
-	bsr	New_Expentier
-	move.l	d3,d0
-	Rjsr	L_Bnk.OrAdr
-	move.l	a0,-(sp)
-; Evalue les params!
-.Loop	cmp.w	#_TkVir,(a6)
-	bne.s	.Call
-	addq.l	#2,a6
-	bsr	New_Expentier
-	move.l	d3,-(a3)
-	bra.s	.Loop
-; Appel
-.Call	move.l	(sp)+,a0
-	movem.l	d6-d7/a3-a6,-(sp)
-	move.l	a0,a4
-	lea	CallReg(a5),a6
-	move.l	a6,-(sp)
-	movem.l	(a6),d0-d7/a0-a2
-	jsr	(a4)
-.Return	move.l	(sp)+,a6
-	movem.l	d0-d7/a0-a2,(a6)
-	movem.l	(sp)+,d6-d7/a3-a6
-	rts
+	Lib_Int	InCall		src/interp/system.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					=LVO =EQU
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par FnEqu
-; - - - - - - - - - - - - -
-	move.l	(a6),d3
-	moveq	#0,d2
-	move.w	6+2+2(a6),d0
-	move.w	d0,d1
-	and.w	#1,d1
-	add.w	d1,d0
-	lea	6+2+4+2(a6,d0.w),a6
-	Ret_Int
+	Lib_Int	FnEqu		src/interp/system.cpp
 
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					=STRUC=
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InStruc
+	Lib_Int	InStruc		src/interp/system.cpp
 ; - - - - - - - - - - - - -
-	bsr	GStruc
-	movem.l	a0/d0/d1,-(sp)
-	addq.l	#2,a6
-	bsr	New_Expentier
-	movem.l	(sp)+,a0/d0/d1
-	lsl.w	#1,d0
-	jmp	.Jmp(pc,d0.w)
-.Jmp	bra.s	.Byte
-	bra.s	.Word
-	bra.s	.Long
-	bra.s	.Byte
-	bra.s	.Word
-	bra.s	.Long
-	bra.s	.Long
-.Byte	move.b	d0,(a0)
-	rts
-.Word	btst	#0,d1
-	bne	AdrErr
-	move.w	d3,(a0)
-	rts
-.Long	btst	#0,d1
-	bne	AdrErr
-	move.l	d3,(a0)
-	rts
-; - - - - - - - - - - - - -
-	Lib_Par FnStruc
-; - - - - - - - - - - - - -
-	bsr	GStruc
-	moveq	#0,d3
-	lsl.w	#1,d0
-	jmp	.Jmp(pc,d0.w)
-.Jmp	bra.s	.Byte
-	bra.s	.Word
-	bra.s	.Long
-	bra.s	.UByte
-	bra.s	.UWord
-	bra.s	.ULong
-	bra.s	.ULong
-.Byte	move.b	(a0),d3
-	ext.w	d3
-	ext.l	d3
-	Ret_Int
-.Word	btst	#0,d1
-	bne	AdrErr
-	move.w	(a0),d3
-	ext.l	d3
-	Ret_Int
-.Long	btst	#0,d1
-	bne	AdrErr
-	move.l	(a0),d3
-	Ret_Int
-.UByte	move.b	(a0),d3
-	Ret_Int
-.UWord	btst	#0,d1
-	bne	AdrErr
-	move.w	(a0),d3
-	Ret_Int
-.ULong	btst	#0,d1
-	bne	AdrErr
-	move.l	(a0),d3
-	Ret_Int
+	Lib_Int	FnStruc		src/interp/system.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					=STRUC$=
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InStrucD
+	Lib_Int	InStrucD		src/interp/system.cpp
 ; - - - - - - - - - - - - -
-	bsr	GStruc
-	btst	#0,d1
-	bne	AdrErr
-	clr.l	(a0)
-	move.l	a0,-(sp)
-	bsr	Fn_New_Evalue
-	move.l	d3,a2
-	move.w	(a2)+,d2
-	cmp.l	#"|00|",(a2)
-	beq.s	.Skp
-	moveq	#2,d3
-	add.w	d2,d3
-	bsr	Demande
-	lea	2(a0,d3.w),a0
-	move.w	a0,d0
-	and.w	#1,d0
-	add.w	d0,a0
-	move.l	a0,HiChaine(a5)
-	move.l	(sp)+,a0
-	move.l	a1,(a0)
-	move.w	d2,(a1)
-	addq.w	#1,(a1)+
-	subq.w	#1,d2
-	bmi.s	.Skp
-.Lop	move.b	(a2)+,(a1)+
-	dbra	d2,.Lop
-	clr.b	(a1)
-.Skp	rts
-; - - - - - - - - - - - - -
-	Lib_Par FnStrucD
-; - - - - - - - - - - - - -
-	bsr	GStruc
-	btst	#0,d1
-	bne	AdrErr
-	move.l	(a0),d0
-	beq.s	.Vide
-	move.l	d0,a0
-	Rjsr	L_A0ToChaine
-	move.l	a0,d3
-	Ret_String
-.Vide	Rjmp	L_Ret_ChVide
-; Routine de saisie des parametres
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-GStruc	move.l	(a6)+,-(sp)	Equate
-	move.w	(a6)+,-(sp)	Type
-	addq.l	#2,a6		Saute (
-	bsr	New_Expentier	Adresse de base
-	move.w	2+2(a6),d0	Saute la chaine et la )
-	move.w	d0,d1
-	and.w	#1,d1
-	add.w	d1,d0
-	lea	2+4+2(a6,d0.w),a6
-	move.w	(sp)+,d0
-	lsr.w	#8,d0
-	move.l	d3,d1
-	add.l	(sp)+,d1
-	move.l	d1,a0		Adresse resultante
-	rts
+	Lib_Int	FnStrucD		src/interp/system.cpp
 
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -4917,287 +4062,59 @@ FinMenS movem.l (sp)+,d1-d7/a2-a6
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					LEFT$=
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InLeft
-; - - - - - - - - - - - - -
-	bsr 	RInMid
-	movem.l a2/d2,-(sp)
-	bsr 	Fn_New_Expentier
-        move.l 	d3,d4
-        moveq 	#0,d5
-	bra 	RInMid2
+	Lib_Int	InLeft		src/interp/text.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					Fonction LEFT$
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par FnLeft
-; - - - - - - - - - - - - -
-	bsr	FEnt_2
-        move.l 	d3,d4
-        move.l 	(a3)+,a2
-        moveq 	#0,d2
-        move.w 	(a2)+,d2
-        moveq 	#0,d5
-	bra 	RFnMid
+	Lib_Int	FnLeft		src/interp/text.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					=RIGHT$=
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InRight
+	Lib_Int	InRight		src/interp/text.cpp
 ; - - - - - - - - - - - - -
-	bsr 	RInMid
-	movem.l a2/d2,-(sp)
-	bsr 	Fn_New_Expentier
-	move.l 	d3,d4
-        bmi 	FonCall
-	move.l 	(sp),d2
-        moveq 	#0,d5
-        cmp.l 	d2,d4
-        bcc 	RInMid2
-        move.l 	d2,d5
-	sub.l 	d4,d5
-        addq.l 	#1,d5
-	bra 	RInMid2
-; - - - - - - - - - - - - -
-	Lib_Par FnRight
-; - - - - - - - - - - - - -
-	bsr	FEnt_2
-        move.l 	d3,d5
-        bmi 	FonCall
-        move.l 	(a3)+,a2
-        moveq 	#0,d2
-        move.w 	(a2)+,d2
-        move.l 	#$ffff,d4
-        cmp.l 	d2,d5
-        bcs 	L73c
-        move.l 	d2,d5
-L73c:   neg.l 	d5
-        add.l 	d2,d5
-        addq.l 	#1,d5
-	bra 	RFnMid
+	Lib_Int	FnRight		src/interp/text.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					MID$=
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InMid2
-; - - - - - - - - - - - - -
-	bsr 	RInMid
-	movem.l a2/d2,-(sp)
-	bsr 	Fn_New_Expentier
-	move.l 	d3,d5
-*	addq.l 	#1,d5
-        move.l 	#$FFFF,d4
-	bra 	RInMid2
+	Lib_Int	InMid2		src/interp/text.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par FnMid2
-; - - - - - - - - - - - - -
-	bsr	FEnt_2
-        move.l 	d3,d5
-        move.l 	(a3)+,a2
-        moveq 	#0,d2
-        move.w 	(a2)+,d2
-        move.l 	#$FFFF,d4
-	bra 	RFnMid
+	Lib_Int	FnMid2		src/interp/text.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					=MID$() 3 params
 ; - - - - - - - - - - - - -
-	Lib_Par InMid3
+	Lib_Int	InMid3		src/interp/text.cpp
 ; - - - - - - - - - - - - -
-	bsr 	RInMid
-	movem.l a2/d2,-(sp)
-	bsr	Fn_New_Expentier
-	move.l	d3,-(sp)
-	bsr	Fn_New_Expentier
-	move.l	d3,d4
-	move.l	(sp)+,d5
-*	addq.l #1,d5
-	bra	RInMid2
-; - - - - - - - - - - - - -
-	Lib_Par FnMid3
-; - - - - - - - - - - - - -
-	bsr	FEnt_3
-        move.l 	d3,d4
-        move.l 	(a3)+,d5
-        move.l 	(a3)+,a2
-        moveq 	#0,d2
-        move.w 	(a2)+,d2
-	bra	RFnMid
+	Lib_Int	FnMid3		src/interp/text.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					Commun LEFT MID RIGHT
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	RFnMid
-RFnMid
-; - - - - - - - - - - - - -
-        tst.l 	d5                        ;pointe au milieu de la chaine
-        bmi 	FonCall
-        beq.s 	mi2
-        subq.l 	#1,d5
-mi2:    add.l 	d5,a2
-        cmp.l 	d2,d5                     ;pas pointe trop loin??
-        bcc.s 	RVide                     ;si! chaine vide
-mi3:    tst.l 	d4
-        beq.s 	RVide
-        bmi 	FonCall
-mi4:    add.l 	d5,d4
-        cmp.l 	d2,d4
-        bls.s 	mi5
-        move.l 	d2,d4
-mi5:    sub.l 	d5,d4
-mi6:    move.l 	d4,d3
-	bsr 	Demande
-        move 	d4,(a0)+                   ;poke la longueur
-        subq.l 	#1,d4
-        bmi.s 	mi8
-mi7:    move.b 	(a2)+,(a0)+
-        dbra 	d4,mi7
-        move 	a0,d0                      ;rend pair
-        btst 	#0,d0
-        beq.s 	mi8
-        addq.l 	#1,a0
-mi8:    move.l 	a0,HiChaine(a5)
-        move.l 	a1,d3
-	Ret_String
-RVide:  move.l 	ChVide(a5),d3          	;ramene la chaine vide
-	Ret_String
+	Lib_Empty			RFnMid, now in src/interp/text.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					Commun MID LEFT RIGHT =
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	RInMid
-RInMid
-; - - - - - - - - - - - - -
-	addq.w 	#2,a6		Saute la parenthese
-	bsr 	FindVar
-        move.l 	(a0),a2		Recopie la variable!
-        moveq 	#0,d2
-        move.w 	(a2)+,d2
-	beq.s 	L77c
-L77a:   move.l 	a0,-(sp)	Sauve l'adresse de la variable
-	move.l 	d2,d3
-	bsr 	Demande		Recopie la chaine dans le source
-        move.w 	d2,(a1)+	Longueur
-	move.w 	d2,d0
-        subq.w 	#1,d0
-        lsr.w 	#2,d0
-L77b:   move.l 	(a2)+,(a1)+
-        dbra 	d0,L77b
-        move.l 	a1,HiChaine(a5)
-	move.l 	(sp)+,a1
-	move.l 	a0,(a1)		Change la variable
-	lea 	2(a0),a2
-L77c:   rts
+	Lib_Empty			RInMid, now in src/interp/text.cpp
 
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					Commun LEFT MID RIGHT II
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	RInMid2
-RInMid2
-; - - - - - - - - - - - - -
-	movem.l d4/d5,-(sp)
-	bsr 	Fn_New_Expentier
-	move.l	d3,a2
-	moveq	#0,d2
-	move.w	(a2)+,d2
-	movem.l (sp)+,d4/d5
-	movem.l (sp)+,a1/d1
-        tst.l 	d5
-        bmi 	FonCall
-        beq.s 	mdst2
-        subq.l 	#1,d5
-mdst2:  add.l 	d5,a1             ;situe dans la chaine a changer
-        cmp.l 	d1,d5
-        bcc.s 	mdst10            ;trop loin: ne change rien
-        tst.l 	d4
-        bmi 	FonCall
-        beq.s 	mdst10
-        add.l 	d5,d4
-        cmp.l 	d1,d4
-        bls.s 	mdst3
-        move.l 	d1,d4
-mdst3:  sub.l 	d5,d4
-        cmp.l 	d2,d4             ;limite par la taille de la chaine source
-        bls.s 	mdst4
-        move.l 	d2,d4
-mdst4:  subq.l 	#1,d4            ;la chaine source est nulle!
-        bmi.s 	mdst10
-mdst5:  move.b 	(a2)+,(a1)+
-        dbra 	d4,mdst5
-mdst10:	rts
+	Lib_Empty			RInMid2, now in src/interp/text.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					=VAL
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par FnVal
-; - - - - - - - - - - - - -
-	move.l	d3,a2
-	move.w	(a2)+,d2
-	beq.s	val11
-        Rjsr 	L_ChVerBuf        	recopie la chaine dans le buffer
-        move.l	Buffer(a5),a0
-	moveq	#1,d0			Tenir compte du signe
-        Rjsr 	L_ValRout
-	rts
-val11 	moveq	#0,d3
-	Ret_Int
+	Lib_Int	FnVal		src/interp/text.cpp
 
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 		=RESOURCE$(n)
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par FnResource
-; - - - - - - - - - - - - -
-; Un message normal?
-	move.l	d3,d0
-	ble.s	.Skip1
-	Rjsr	L_Dia_GetPuzzle
-	move.l	a2,a0
-	move.l	d3,d0
-	Rjsr	L_GetMessage
-	bra	.Fin
-; Le path du systeme? (0)
-.Skip1	neg.l	d0
-	bne.s	.Skip2
-	lea	Sys_Pathname(a5),a0
-	bra.s	.Fin
-; Un message systeme? (-1)
-.Skip2	cmp.l	#1001,d0
-	bcc.s	.Skip3
-	move.l	Sys_Messages(a5),a0
-	bra.s	.Fin0
-; Un message systeme editeur? (-1000)
-.Skip3	sub.l	#1000,d0
-	cmp.l	#1001,d0
-	bcc.s	.Skip4
-	move.l	Ed_Systeme(a5),a0
-	bra.s	.Fin0
-; Un message de menu editeur? (-2000)
-.Skip4	sub.l	#1000,d0
-	cmp.l	#1001,d0
-	bcc.s	.Skip5
-	move.l	EdM_Messages(a5),a0
-	bra.s	.Fin0
-; Un message editeur? (-3000)
-.Skip5	sub.l	#1000,d0
-	cmp.l	#1001,d0
-	bcc.s	.Skip6
-	move.l	Ed_Messages(a5),a0
-	bra.s	.Fin0
-; Un message de test? (-4000)
-.Skip6	sub.l	#1000,d0
-	cmp.l	#1001,d0
-	bcc.s	.Skip7
-	move.l	Ed_TstMessages(a5),a0
-	bra.s	.Fin0
-; Un message run-time? (-5000)
-.Skip7	sub.l	#1000,d0
-	cmp.l	#1001,d0
-	bcc	FonCall
-	move.l	Ed_RunMessages(a5),a0
-; Retourne la chaine
-.Fin0	Rjsr	L_GetMessage
-.Fin	move.l	a0,a2
-	Rjmp	L_Str2Chaine
+	Lib_Int	FnResource		src/interp/text.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					Source: Menus.s
@@ -5206,45 +4123,7 @@ val11 	moveq	#0,d3
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					MENU KEY
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InMenuKey
-; - - - - - - - - - - - - -
-	bsr	MnDim
-	tst.l	MnLat(a2)
-	bne	FonCall
-	cmp.w	#_TkTo,(a6)
-	bne.s	IMnk2
-	move.l	a2,-(sp)
-	addq.l	#2,a6
-	bsr	New_Evalue
-	cmp.b	#2,d2
-	beq.s	IMnk1
-* Scancode, shifts
-	move.l	d3,-(sp)
-	moveq	#0,d3
-	cmp.w	#_TkVir,(a6)
-	bne.s	IMnk0
-	bsr	Fn_New_Expentier
-IMnk0	move.l	(sp)+,d2
-	move.l	(sp)+,a2
-	cmp.l	#256,d3
-	bcc	FonCall
-	move.b	d3,MnKSh(a2)
-	cmp.l	#128,d2
-	bcc	FonCall
-	move.b	d2,MnKSc(a2)
-	move.b	#-1,MnKFlag(a2)
-	rts
-* "n"
-IMnk1	move.l	(sp)+,a2
-	move.l	d3,a0
-	tst.w	(a0)+
-	beq	FonCall
-	move.b	(a0),MnKAsc(a2)
-	move.b	#1,MnKFlag(a2)
-	rts
-* Arret!
-IMnk2	clr.b	MnKFlag(a2)
-	rts
+	Lib_Int	InMenuKey		src/interp/menus.cpp
 ; - - - - - - - - - - - - -
 	Lib_Def	InMenuKey1
 	Lib_Def	InMenuKey2
@@ -5302,95 +4181,7 @@ OnMn2	move.l	(a3)+,-(a0)
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					MENU$(,,,)=
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InMenu
-; - - - - - - - - - - - - -
-	move.l	a3,-(sp)
-	clr.w	-(sp)
-* Branche la routine pour CLEARVAR
-	Rjsr	L_MnClearVar
-* Empile les parametres
-IMen1:	addq.w	#1,(sp)
-	bsr	Fn_New_Expentier
-	move.l	d3,-(a3)
-	cmp.w	#_TkVir,(a6)
-	beq.s	IMen1
-* Trouve le menu
-	move.w	(sp)+,d5
-	Rjsr	L_MnFind
-	bne.s	IMenA
-	Rjsr	L_MnIns
-IMenA:	move.l	(sp)+,a3
-* Prend les parametres
-*	cmp.w	#_TkEg,(a6)
-*	bne.s	IMenI
-******* Fonction MENU$="jfkjdkfjkdj"
-	move.l	ScOnAd(a5),a0
-	cmp.l	MnAdEc(a5),a0
-	beq.s	IMen6
-	tst.l	MnAdEc(a5)
-	bne	ScNOp
-	move.l	a0,MnAdEc(a5)
-IMen6:	move.l	EcWindow(a0),a0
-	move.b	WiPaper+1(a0),d0
-	move.b	WiPen+1(a0),d1
-	move.b	d0,MnInkA1(a2)
-	move.b	d1,MnInkB1(a2)
-	move.b	d0,MnInkC1(a2)
-	move.b	d1,MnInkA2(a2)
-	move.b	d0,MnInkB2(a2)
-	move.b	d0,MnInkC2(a2)
-* Prend la chaine OB1
-	lea	MnOb1(a2),a0
-	bsr	MnOob
-* Prend la chaine OB2
-IMen7	cmp.w	#_TkVir,(a6)
-	bne.s	IMenX
-	lea	MnOb2(a2),a0
-	bsr	MnOob
-* Prend la chaine OBOFF
-IMen8	cmp.w	#_TkVir,(a6)
-	bne.s	IMenX
-	lea	MnOb3(a2),a0
-	bsr	MnOob
-* Prend la chaine OBF
-IMen9	cmp.w	#_TkVir,(a6)
-	bne.s	IMenX
-	lea	MnObF(a2),a0
-	bsr	MnOob
-* Ca y est!!!
-IMenX:	addq.w	#1,MnChange(a5)
-	rts
-
-*	bclr	#BitMenu,ActuMask(a5)
-
-;	Petite routine de creation
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-MnOob	movem.l	a0-a2,-(sp)
-	bsr	Fn_New_Evalue			*** ?
-	movem.l	(sp)+,a0-a2
-	cmp.l	#EntNul,d3
-	beq	MnOob0
-	move.l	d3,a1
-	tst.w	(a1)
-	bne	MnOob1
-* Efface la chaine
-MnOobE	move.l	(a0),d0
-	beq.s	MnOob0
-	clr.l	(a0)
-	move.l	d0,a1
-	moveq	#0,d0
-	move.w	(a1),d0
-	SyCall	MemFree
-MnOob0	rts
-* Une chaine!
-MnOob1	movem.l	a0/a1,-(sp)		* Efface l'ancienne
-	bsr.s	MnOobE
-	movem.l	(sp)+,a0/a1
-	Rjsr	L_MnObjet		* Cree la nouvelle
-	beq	OOfMem
-	bmi	FonCall
-	move.l	d0,(a0)
-	rts
+	Lib_Int	InMenu		src/interp/menus.cpp
 ; - - - - - - - - - - - - -
 	Lib_Def	InMenu2
 	Lib_Def	InMenu3
@@ -5400,18 +4191,7 @@ MnOob1	movem.l	a0/a1,-(sp)		* Efface l'ancienne
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 	MENU DEL [(coordonnees,,)]
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InMenuDel
-; - - - - - - - - - - - - -
-	cmp.w	#_TkPar1,(a6)
-	beq.s	IMnD1
-	Rjsr	L_MnRaz
-	rts
-IMnD1	bsr	MnDim
-	move.l	a2,d0
-	moveq	#0,d5
-	addq.w	#1,MnChange(a5)
-	Rjsr	L_MnEff
-	rts
+	Lib_Int	InMenuDel		src/interp/menus.cpp
 ; - - - - - - - - - - - - -
 	Lib_Def	InMenuDel1
 ; - - - - - - - - - - - - -
@@ -5419,59 +4199,12 @@ IMnD1	bsr	MnDim
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 	SET MENU
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InSetMenu
-; - - - - - - - - - - - - -
-	bsr	MnDim
-	move.l	a2,-(sp)
-	bsr	Fn_New_Expentier
-	move.l	d3,-(a3)
-	bsr	Fn_New_Expentier
-	move.l	(sp)+,a2
-	move.l	#EntNul,d0
-	cmp.l	d0,d3
-	beq.s	ISMn1
-	move.w	d3,MnY(a2)
-	bset	#MnFixed,MnFlag(a2)
-ISMn1	move.l	(a3)+,d1
-	cmp.l	d0,d1
-	beq.s	ISMn2
-	move.w	d1,MnX(a2)
-	bset	#MnFixed,MnFlag(a2)
-ISMn2	rts
+	Lib_Int	InSetMenu		src/interp/menus.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 	Routine-> adresse du flag
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	MnDim
-MnDim
-; - - - - - - - - - - - - -
-	cmp.w	#_TkPar1,(a6)
-	beq.s	MnDim1
-	bsr	New_Expentier
-	tst.l	d3
-	beq	FonCall
-	cmp.l	#MnNDim,d3
-	bhi	FonCall
-	lea	MnDFlags(a5),a0
-	lea	-1(a0,d3.w),a0
-	rts
-;	Cherche l'adresse D'UN objet
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-MnDim1	move.l	a3,-(sp)
-	clr.w	-(sp)
-MnDim2	addq.w	#1,(sp)
-	bsr	Fn_New_Expentier
-	move.l	d3,-(a3)
-	cmp.w	#_TkVir,(a6)
-	beq.s	MnDim2
-* Trouve le menu
-	move.w	(sp)+,d5
-	Rjsr	L_MnFind
-	move.l	(sp)+,a3
-	tst.l	d0
-	beq	MnINDef
-	lea	MnFlag(a2),a0
-	rts
+	Lib_Empty			MnDim, now in src/interp/menus.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					Entree appel de procedure menu

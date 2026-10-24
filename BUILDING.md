@@ -167,6 +167,14 @@ Strings and numbers
   with a leftover register instead of the strings, so `Max("b","a")` gave
   "a". They now compare the strings (`tests/golden/expr.txt`,
   `expr2.txt`).
+- `Struc(address,"field")=value` on a byte field (types 0 and 3) wrote the
+  type's index (0 or 6) instead of the value. `tests/golden/equates.txt`
+  has the corrected line.
+- `Struc$(address,"field")=a$` made the field point to the copy's length
+  word instead of its characters, so the structure got no C string and
+  `=Struc$` read "" back; `=Struc$` of a field holding 0 crashed. The
+  original stops on that crash, so `tests/golden/equates2.txt` was recorded
+  with the corrected version.
 
 Banks, files and directories
 - `Bank Swap` of two banks that do not exist crashed; it is now an error.

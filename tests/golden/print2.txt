@@ -1,0 +1,12 @@
+ 1	 2 3ab	-4
+  3.14
++ 42   42 - 42
+34.50E+00
+abcd|x1y2z
+345|3 50
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxEND
+no newline after
+a|b|c
+ 12 3.5
+x 7
+a,b,c

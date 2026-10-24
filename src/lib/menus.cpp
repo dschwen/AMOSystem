@@ -15,6 +15,7 @@
 #include "lib/banks.h"
 #include "lib/dos.h"
 #include "lib/menus.h"
+#include "interp/interp.h"
 #include "lib/sprites.h"
 
 #include <graphics/gfx.h>
@@ -1736,19 +1737,10 @@ extern "C" uint32_t lib_fn_choice1(uint32_t n)
 namespace {
 
 // MnDim: read menu coordinates, "(1,2,...)", or a level alone from the
-// program. Gives the flags of the item, or the default flags of the level
-// (and then no item).
-struct Dim {
-    uint8_t *flags;
-    MenuItem *item;
-};
-
-Dim dim()
-{
-    Regs r = {};
-    lib_eval(L_MnDim, r);
-    return {ptr<uint8_t>(r.a[0]), ptr<MenuItem>(r.a[2])};
-}
+// program (interp/menus.cpp). Gives the flags of the item, or the default
+// flags of the level (and then no item).
+using Dim = interp::MenuDim;
+Dim dim() { return interp::menu_dim(); }
 
 } // namespace
 

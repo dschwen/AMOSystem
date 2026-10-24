@@ -64,6 +64,7 @@ Workbench directory drive (see --kickstart, --rom-key and --workbench).
 
 import argparse
 import concurrent.futures
+import fcntl
 import os
 import shutil
 import struct
@@ -611,6 +612,13 @@ def main():
     ap.add_argument('--visible', action='store_true',
                     help='show the emulator windows on $DISPLAY')
     args = ap.parse_args()
+    # one run at a time: they share build/test-run and the virtual display
+    os.makedirs(os.path.dirname(RUN), exist_ok=True)
+    lock = open(os.path.join(os.path.dirname(RUN), 'test-run.lock'), 'w')
+    try:
+        fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except BlockingIOError:
+        sys.exit('another tests/run.py is running')
 
     tests = args.tests or sorted(f[:-4] for f in os.listdir(TESTS) if f.endswith('.asc'))
     amos_tree = args.amos_tree or (os.path.join(ROOT, 'AMOS') if args.reference

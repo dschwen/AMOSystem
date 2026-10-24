@@ -107,3 +107,58 @@ FnCall		MACRO
 		FnCall	FnMatch,_interp_fn_match
 		InCall	InData,_interp_in_data
 		InCall	InRead,_interp_in_read
+
+; Functions with their parameter in d3 (collected): FnCallD3 Name,cfunction
+FnCallD3	MACRO
+		LibEntry \1
+		lea	-24(sp),sp
+		move.l	d3,12(sp)
+		pea	(sp)
+		CCall	\2
+		addq.l	#4,sp
+		movem.l	(sp)+,d0-d4/a0
+		rts
+		ENDM
+
+; Strings: interp/text.cpp
+		InCall	InLeft,_interp_in_left
+		FnCall	FnLeft,_interp_fn_left
+		InCall	InRight,_interp_in_right
+		FnCall	FnRight,_interp_fn_right
+		InCall	InMid2,_interp_in_mid2
+		FnCall	FnMid2,_interp_fn_mid2
+		InCall	InMid3,_interp_in_mid3
+		FnCall	FnMid3,_interp_fn_mid3
+		FnCallD3 FnVal,_interp_fn_val
+		FnCallD3 FnResource,_interp_fn_resource
+
+; Print: interp/print.cpp; Input: interp/input.cpp
+		InCall	InPrint,_interp_in_print
+		InCall	InLPrint,_interp_in_lprint
+		InCall	InPrintH,_interp_in_print_h
+		InCall	InInput,_interp_in_input
+		InCall	InLineInput,_interp_in_line_input
+		InCall	InInputH,_interp_in_input_h
+		InCall	InLineInputH,_interp_in_line_input_h
+
+; Graphics: interp/graphics.cpp
+		InCall	InDefaultPalette,_interp_in_default_palette
+		InCall	InPalette,_interp_in_palette
+		InCall	InFade,_interp_in_fade
+		InCall	InPolyline,_interp_in_polyline
+		InCall	InPolygon,_interp_in_polygon
+		InCall	InChannel,_interp_in_channel
+
+; Call, Equ, Struc: interp/system.cpp
+		InCall	InCall,_interp_in_call
+		FnCall	FnEqu,_interp_fn_equ
+		InCall	InStruc,_interp_in_struc
+		FnCall	FnStruc,_interp_fn_struc
+		InCall	InStrucD,_interp_in_struc_d
+		FnCall	FnStrucD,_interp_fn_struc_d
+
+; Menus: interp/menus.cpp
+		InCall	InMenu,_interp_in_menu
+		InCall	InMenuKey,_interp_in_menu_key
+		InCall	InMenuDel,_interp_in_menu_del
+		InCall	InSetMenu,_interp_in_set_menu

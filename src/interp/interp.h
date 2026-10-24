@@ -61,6 +61,13 @@ void assign();                          // InVar
 Value value();                          // FnVar
 FoundVar find_variable();               // FindVar
 
+// interp/menus.cpp: MnDim
+struct MenuDim {
+    uint8_t *flags;
+    MenuItem *item;     // none for a level alone
+};
+MenuDim menu_dim();
+
 // What C++ hands back to the assembler that called it (eval_glue.s):
 // d0-d4, a0
 struct EvalOut {

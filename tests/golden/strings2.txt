@@ -1,0 +1,14 @@
+ab||abcdef|ef||abcdef
+cdef|abcdef||bcd|ef||
+XYcdef abcdef
+ab12ef
+abcdpq
+!!cdef
+abcdef
+abcdRS
+<>
+ 12-3.5 31 3 0 0 7 1000
+ERROR  23
+ERROR  23
+-1APSystem/|||
+ERROR  23
