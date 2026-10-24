@@ -404,6 +404,9 @@ Single precision floats as text
   the saved registers in the stack frame of the conversion, and an
   exponent of 4 characters or more (`1e0005`) overwrote the start of the
   mantissa, giving 0. Both now read correctly.
+- `Val` of a double with a huge exponent (`1e999999999`) multiplied by 10
+  that many times, which took hours. The power of 10 now stops once it
+  has overflowed, with the same result.
 
 ARexx
 - A message arriving at the ARexx port that is not an ARexx command was
