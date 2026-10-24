@@ -135,6 +135,19 @@ through into a `Lib_Int`.
   other hunks, which LoadSeg relocates. Calls back into the assembler run with them:
   `lib_call(L_x, regs)` (`JJsr`), `sy_call`/`ec_call`/`wi_call`
   (`SyCall`/`EcCall`/`WiCall`) with d0-d5/a0-a2 in an `amos::Regs`.
+- Most of these calls no longer go through the assembler. `lib_call`
+  calls the C++ function of a routine whose glue is a `RegRoutine`
+  directly (`tools/lib_direct.py` makes the table from the glue files),
+  when the jump table still points to that glue: the float routines are
+  swapped in the table. `sy_call` and `ec_call` call AMOS.library's C++
+  (`tools/w_direct.py`, from the vector tables of `+W.s` and the `WEntry`
+  glue) while the vectors are AMOS.library's own; the monitor patches
+  them while it runs. Both set up the registers and the context as the
+  glue would, and put the context back afterwards. `error(n)` calls the
+  error routine (`interp_error`) directly, and the routines of
+  `main/system.cpp` (`boot::sys_message`, `boot::temp_buffer`...) and of
+  AMOS.library's memory (`w::reserve`, `w::add_routine`...) are plain C++
+  calls.
 - `error(n)`, `fon_call()` and `lib_jump(L_x, d0)` raise errors. They do not
   return: the interpreter resets its stack.
 - Strings (`src/lib/strings.h`): `str_alloc` (`L_Demande`), `str_finish`
