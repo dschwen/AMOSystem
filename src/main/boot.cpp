@@ -19,26 +19,10 @@
 namespace {
 Library *dos_base, *intuition_base, *icon_base;
 }
-#define DOS_BASE_NAME (reinterpret_cast<struct DosLibrary *>(dos_base))
-#include <proto/dos.h>
-#define INTUITION_BASE_NAME (reinterpret_cast<struct IntuitionBase *>(intuition_base))
-#include <proto/intuition.h>
-#define ICON_BASE_NAME icon_base
-#include <proto/icon.h>
+#include "hal/files.h"
+#include "hal/workbench.h"
 #include "hal/system.h"
 
-namespace {
-
-// The requester of a panic under the Workbench (FrontPen, BackPen and
-// DrawMode as the original's bytes)
-void panic_requester(const char *text)
-{
-    IntuiText body = {2, 0, 0, 8, 7, nullptr, const_cast<char *>(text), nullptr};
-    IntuiText click = {0, 1, 0, 5, 4, nullptr, const_cast<char *>(" Cancel "), nullptr};
-    AutoRequest(nullptr, &body, nullptr, &click, 0, 0, 560, 50);
-}
-
-} // namespace
 
 using namespace amos;
 using namespace amos::boot;
@@ -111,7 +95,7 @@ void panic_message(bool from_workbench)
     if (!panic)
         return;
     if (!from_workbench) {
-        BPTR out = Output();
+        BPTR out = hal::output();
         if (!out)
             return;
         char line[128];
@@ -120,10 +104,10 @@ void panic_message(bool from_workbench)
             ;
         *to++ = 10;
         *to = 0;
-        Write(out, line, to - line);
+        hal::write(out, line, to - line);
         return;
     }
-    panic_requester(panic);
+    hal::panic_requester(panic);
 }
 
 // Boot_Fatal: an error before the data zone
@@ -131,8 +115,8 @@ void panic_message(bool from_workbench)
 {
     panic = message;
     panic_message(s.message);
-    CloseLibrary(dos_base);
-    CloseLibrary(intuition_base);
+    hal::close_library(dos_base);
+    hal::close_library(intuition_base);
     main_get_out(address(s.message));
 }
 
@@ -189,14 +173,14 @@ void command_line(Start &s, char *p, uint32_t length)
 // load if an icon was given with it
 void workbench_message(Start &s, Process *process)
 {
-    WaitPort(&process->pr_MsgPort);
-    s.message = reinterpret_cast<WBStartup *>(GetMsg(&process->pr_MsgPort));
+    hal::wait_port(&process->pr_MsgPort);
+    s.message = reinterpret_cast<WBStartup *>(hal::get_message(&process->pr_MsgPort));
     int32_t lock = -1;
     WBArg *args = s.message->sm_ArgList;
     if (args) {
         lock = int32_t(args[0].wa_Lock);
         if (lock)
-            CurrentDir(BPTR(lock));
+            hal::current_dir(BPTR(lock));
     }
     if (s.message->sm_NumArgs != 2 || !args)
         return;
@@ -206,7 +190,7 @@ void workbench_message(Start &s, Process *process)
         while ((*to++ = *name++))
             ;
         if (!lock && s.auto_lock)
-            CurrentDir(s.auto_lock);
+            hal::current_dir(s.auto_lock);
     }
 }
 
@@ -280,7 +264,7 @@ int assign(const char *name, BPTR nil)
     to = copy(to, name1);
     *to++ = '"';
     *to = 0;
-    Execute(buffer, nil, nil);
+    hal::execute(buffer, nil, nil);
     return 1;
 }
 
@@ -293,7 +277,7 @@ void auto_assigns()
         return;
     Regs a;
     lib_call(L_AskDir, a);
-    BPTR nil = Open("NIL:", MODE_READWRITE);
+    BPTR nil = hal::open("NIL:", hal::ModeReadWrite);
     if (!nil)
         return;
     d.ParamE = uint32_t(nil);
@@ -306,7 +290,7 @@ void auto_assigns()
         done += assign(f, nil);
     if (done)
         assign("AMOSPro_System:\0", nil);
-    Close(nil);
+    hal::close(nil);
 }
 
 // The data zone: the work buffers, the AMOS.library's data, the
@@ -314,7 +298,7 @@ void auto_assigns()
 uint8_t *data_zone(uint32_t w_data)
 {
     uint32_t size = LDataWork + w_data + IData::DataLong;
-    uint8_t *zone = static_cast<uint8_t *>(AllocMem(size, MemPublic | MemClear));
+    uint8_t *zone = static_cast<uint8_t *>(hal::allocate(size, MemPublic | MemClear));
     if (!zone)
         return nullptr;
     uint8_t *a5 = zone + LDataWork + w_data;
@@ -355,10 +339,12 @@ extern "C" {
 void main_cold_start(char *command, uint32_t length, uint32_t sp)
 {
     Start s;
-    dos_base = OpenLibrary("dos.library", 0);
-    intuition_base = OpenLibrary("intuition.library", 0);
+    dos_base = hal::open_library("dos.library", 0);
+    intuition_base = hal::open_library("intuition.library", 0);
+    hal::files_start(dos_base);
+    hal::workbench_start(intuition_base, nullptr);
 
-    auto process = reinterpret_cast<Process *>(FindTask(nullptr));
+    auto process = reinterpret_cast<Process *>(hal::find_task(nullptr));
     if (!process->pr_CLI)
         workbench_message(s, process);
     else
@@ -385,7 +371,7 @@ void main_cold_start(char *command, uint32_t length, uint32_t sp)
     if (v.d[0] != 0x57322E30)   // "W2.0"
         the_end(panic_version);
 
-    uint16_t version = reinterpret_cast<Library *>(EXEC_BASE_NAME)->lib_Version;
+    uint16_t version = hal::os_version();
     if (version >= 36)
         d.WB2_0 = version;
 
@@ -394,19 +380,20 @@ void main_cold_start(char *command, uint32_t length, uint32_t sp)
         the_end(panic_oomem);
 
     // the full path of the system folder
-    BPTR lock = Lock(sys_message(1), ACCESS_READ);
+    BPTR lock = hal::lock(sys_message(1), hal::LockShared);
     if (!lock)
         the_end(panic_apsystem);
     ask_dir2(uint32_t(lock));
     copy(reinterpret_cast<char *>(d.Sys_Pathname), ptr<char>(d.Buffer + 384));
 
-    d.FloatBase = address(OpenLibrary("mathffp.library", 0));
-    if (!(wdata().GfxBase = address(OpenLibrary("graphics.library", 0))))
+    d.FloatBase = address(hal::open_library("mathffp.library", 0));
+    if (!(wdata().GfxBase = address(hal::open_library("graphics.library", 0))))
         the_end(panic_cantread);
-    if (d.PI_Icons && (icon_base = OpenLibrary("icon.library", 0))) {
+    if (d.PI_Icons && (icon_base = hal::open_library("icon.library", 0))) {
+        hal::workbench_start(intuition_base, icon_base);
         d.IconBase = address(icon_base);
         sys_add_path(sys_message(4));
-        if (DiskObject *icon = GetDiskObject(ptr<char>(d.Name1))) {
+        if (DiskObject *icon = hal::get_icon(ptr<char>(d.Name1))) {
             d.AdrIcon = address(icon);
             icon->do_CurrentX = NO_ICON_POSITION;
             icon->do_CurrentY = NO_ICON_POSITION;
@@ -448,7 +435,7 @@ void main_cold_start(char *command, uint32_t length, uint32_t sp)
     char *name1 = ptr<char>(d.Name1);
     poke_w(name1, 0);
     if (s.auto_lock)
-        CurrentDir(s.auto_lock);
+        hal::current_dir(s.auto_lock);
     copy(name1, *s.auto_name ? s.auto_name : sys_message(5));
     d.WBench = s.workbench;
 
@@ -585,11 +572,11 @@ namespace amos::boot {
     a5_free(d.PathAct);
     icon_base = ptr<Library>(d.IconBase);
     if (d.AdrIcon)
-        FreeDiskObject(ptr<DiskObject>(d.AdrIcon));
+        hal::free_icon(ptr<DiskObject>(d.AdrIcon));
     if (icon_base)
-        CloseLibrary(icon_base);
+        hal::close_library(icon_base);
     if (d.FloatBase)
-        CloseLibrary(ptr<Library>(d.FloatBase));
+        hal::close_library(ptr<Library>(d.FloatBase));
     math_close();
     libraries_free();
     // the AMOS.library out
@@ -599,11 +586,11 @@ namespace amos::boot {
     intuition_base = ptr<Library>(wdata().IntBase);
     panic_message(d.Sys_Message);
     if (uint32_t gfx = wdata().GfxBase)
-        CloseLibrary(ptr<Library>(gfx));
-    CloseLibrary(dos_base);
-    CloseLibrary(intuition_base);
+        hal::close_library(ptr<Library>(gfx));
+    hal::close_library(dos_base);
+    hal::close_library(intuition_base);
     uint32_t wb = d.Sys_Message;
-    FreeMem(ptr<void>(d.Sys_AData), d.Sys_LData);
+    hal::release(ptr<void>(d.Sys_AData), d.Sys_LData);
     main_get_out(wb);
 }
 

@@ -44,6 +44,7 @@ void add_port(MsgPort *port) { AddPort(port); }
 void remove_port(MsgPort *port) { RemPort(port); }
 MsgPort *find_port(const char *name) { return FindPort(name); }
 Message *get_message(MsgPort *port) { return GetMsg(port); }
+Message *wait_port(MsgPort *port) { return WaitPort(port); }
 void reply_message(Message *message) { ReplyMsg(message); }
 int32_t allocate_signal(int32_t n) { return AllocSignal(n); }
 void free_signal(int32_t n) { FreeSignal(n); }

@@ -197,26 +197,38 @@ the number to text conversions.
 ### The portability layer (`src/hal`)
 
 Phase 7 of the plan separates what AMOS needs from the host. The C++
-reaches the system through `src/hal`, each part with an Amiga backend:
+reaches the system only through `src/hal`, each part with an Amiga
+backend (`*_amiga.cpp`):
 
-- `hal/files.h` (`files_amiga.cpp`: dos.library): files, locks,
-  directories, delete/rename, execute. Only the start-up (`main/boot.cpp`,
-  which runs before the data zone exists) calls dos.library itself.
-- `hal/system.h` (`system_amiga.cpp`: exec.library): the free memory,
-  Forbid/Permit.
-- `hal/gfx.h` (`gfx_amiga.cpp`: graphics.library, diskfont.library): the
-  RastPort drawing AMOS uses, fonts, bitmaps, clipping regions, the
-  blitter's ownership, the display's frames.
+- `hal/files.h` (dos.library): files, locks, directories, delete/rename,
+  execute.
+- `hal/system.h` (exec.library): memory, tasks and signals, libraries, the
+  system's version and caches, message ports, devices and their IO
+  requests, interrupt servers.
+- `hal/gfx.h` (graphics.library, layers.library, diskfont.library): the
+  RastPort drawing AMOS uses, fonts, bitmaps, clipping regions and
+  layers, the blitter's ownership, the display's frames.
+- `hal/workbench.h` (intuition.library, icon.library, console.device,
+  rexxsyslib.library): the Workbench and Intuition's screens, the panic
+  requester, icons, the keyboard's characters, ARexx's messages.
 - `hal/chips.h`: the custom chips and CIA A, which AMOS.library programs
   directly (copper lists, bitplanes, sprites, the blitter, the audio, the
   joysticks). On the Amiga they are the hardware; another host gives an
   emulation of the registers that its renderer reads to compose each frame
   from the copper lists and bitplanes AMOS builds, as the chips do.
 
-The values stay AmigaDOS's and the structures graphics.library's, which
-another host then provides. Still Amiga-specific: the instructions that
-call Amiga libraries and devices (`lib/devices.cpp`), ARexx, the file
-selector's task, the input handler and the audio interrupts.
+The values stay AmigaDOS's and the structures the Amiga's, which another
+host then provides. The start-up gives the file and Workbench backends
+their libraries before AMOS's data zone exists (`files_start`,
+`workbench_start`).
+
+`make host-check` (`tools/host_check.sh`) compiles every C++ file but the
+Amiga backends for a 32-bit host, syntax only, with the NDK's headers for
+the Amiga's structures (`-fpack-struct=2`: the 68000 aligns 32-bit fields
+on 2 bytes; the generated layouts are packed so themselves). All of them
+compile. What a host still lacks to link: the assembler (the register
+glue, the jump and vector tables, the stack-resetting entries) and the
+backends.
 
 ### Deliberate differences from the original
 

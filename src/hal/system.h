@@ -51,6 +51,7 @@ void add_port(MsgPort *port);
 void remove_port(MsgPort *port);
 MsgPort *find_port(const char *name);
 Message *get_message(MsgPort *port);
+Message *wait_port(MsgPort *port);
 void reply_message(Message *message);
 int32_t allocate_signal(int32_t n);             // -1 for any
 void free_signal(int32_t n);

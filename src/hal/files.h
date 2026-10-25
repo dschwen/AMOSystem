@@ -9,6 +9,9 @@
 
 namespace amos::hal {
 
+// The system's files before AMOS's data exist (the start): its library
+void files_start(void *dos);
+
 using File = uint32_t;
 using DirLock = uint32_t;
 

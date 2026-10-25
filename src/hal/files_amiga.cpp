@@ -5,10 +5,16 @@
 #include "core/amos.h"
 #include "core/amiga.h"
 
-#define DOS_BASE_NAME (amos::ptr<struct DosLibrary>(amos::idata().DosBase))
+namespace {
+void *dos_library;      // dos.library before the data zone exists
+}
+#define DOS_BASE_NAME \
+    (dos_library ? static_cast<struct DosLibrary *>(dos_library) : amos::ptr<struct DosLibrary>(amos::idata().DosBase))
 #include <proto/dos.h>
 
 namespace amos::hal {
+
+void files_start(void *dos) { dos_library = dos; }
 
 File open(const char *name, int32_t mode) { return File(Open(name, mode)); }
 void close(File f) { Close(BPTR(f)); }
