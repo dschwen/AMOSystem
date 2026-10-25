@@ -9,8 +9,9 @@
 
 #include <dos/dos.h>
 
-#define DOS_BASE_NAME (amos::ptr<struct DosLibrary>(amos::idata().DosBase))
-#include <proto/dos.h>
+#include <dos/dos.h>
+
+#include "hal/files.h"
 
 using namespace amos;
 using namespace amos::ed;
@@ -53,7 +54,7 @@ bool select_file(uint16_t message)
 // Ed_Open / Ed_Write / Ed_Close on Handle(a5); an error does not return
 void open(const uint8_t *name, int32_t mode)
 {
-    BPTR f = Open(reinterpret_cast<CONST_STRPTR>(name), mode);
+    BPTR f = hal::open(reinterpret_cast<CONST_STRPTR>(name), mode);
     idata().Handle = uint32_t(f);
     if (!f)
         run(ed_d_error);
@@ -61,7 +62,7 @@ void open(const uint8_t *name, int32_t mode)
 
 void write(const void *data, int32_t length, uint8_t *error = ed_d_error)
 {
-    if (Write(BPTR(idata().Handle), const_cast<void *>(data), length) != length)
+    if (hal::write(BPTR(idata().Handle), const_cast<void *>(data), length) != length)
         run(error);
 }
 
@@ -70,7 +71,7 @@ void close()
     IData &d = idata();
     if (BPTR f = BPTR(d.Handle)) {
         d.Handle = 0;
-        Close(f);
+        hal::close(f);
     }
 }
 
@@ -217,7 +218,7 @@ void save_program()
         line(a2 + 2);
     Regs b;
     lib_call(L_Bnk_SaveVide, b);
-    Seek(BPTR(d.Handle), 16, OFFSET_BEGINNING);
+    hal::seek(BPTR(d.Handle), 16, OFFSET_BEGINNING);
     poke_l(buffer, size);
     write(buffer, 4);
     close();
@@ -230,7 +231,7 @@ void printer_open()
     Regs m;
     m.d[0] = 43;
     m.a[0] = address(boot::sys_message(m.d[0]));
-    BPTR f = Open(ptr<char>(m.a[0]), MODE_OLDFILE);
+    BPTR f = hal::open(ptr<char>(m.a[0]), MODE_OLDFILE);
     idata().Handle = uint32_t(f);
     if (!f)
         run(ed_print_error);

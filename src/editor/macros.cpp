@@ -16,8 +16,9 @@
 #include <dos/dos.h>
 #include <exec/memory.h>
 
-#define DOS_BASE_NAME (amos::ptr<struct DosLibrary>(amos::idata().DosBase))
-#include <proto/dos.h>
+#include <dos/dos.h>
+
+#include "hal/files.h"
 
 using namespace amos;
 using namespace amos::ed;
@@ -60,16 +61,16 @@ uint32_t last_key() { return ptr<Dialog>(idata().Ed_ADialogues)->Dia_LastKey; }
 // Ed_Open / Ed_Read / Ed_Write / Ed_Close on Handle(a5)
 bool open(int32_t mode)
 {
-    BPTR f = Open(ptr<char>(idata().Name1), mode);
+    BPTR f = hal::open(ptr<char>(idata().Name1), mode);
     idata().Handle = uint32_t(f);
     return f;
 }
 
-bool read(void *to, int32_t length) { return Read(BPTR(idata().Handle), to, length) == length; }
+bool read(void *to, int32_t length) { return hal::read(BPTR(idata().Handle), to, length) == length; }
 
 bool write(const void *from, int32_t length)
 {
-    return Write(BPTR(idata().Handle), const_cast<void *>(from), length) == length;
+    return hal::write(BPTR(idata().Handle), const_cast<void *>(from), length) == length;
 }
 
 void close()
@@ -77,7 +78,7 @@ void close()
     IData &d = idata();
     if (BPTR f = BPTR(d.Handle)) {
         d.Handle = 0;
-        Close(f);
+        hal::close(f);
     }
 }
 

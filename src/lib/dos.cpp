@@ -6,8 +6,9 @@
 #include "core/amiga.h"
 #include "lib/strings.h"
 
-#define DOS_BASE_NAME (reinterpret_cast<struct DosLibrary *>(amos::idata().DosBase))
-#include <proto/dos.h>
+#include <dos/dos.h>
+
+#include "hal/files.h"
 
 // The records that close the current file when the program stops on an
 // error or is cleared (Sys_ErrorRoutines / Sys_ClearRoutines), in dos_glue.s
@@ -85,7 +86,7 @@ char *name_disc(const uint8_t *s)
 uint32_t file_open(const char *name, uint32_t mode)
 {
     IData &d = idata();
-    d.Handle = static_cast<uint32_t>(Open(name, mode));
+    d.Handle = static_cast<uint32_t>(hal::open(name, mode));
     add_routine(lib_close_on_error, address(&d.Sys_ErrorRoutines));
     add_routine(lib_close_on_clear, address(&d.Sys_ClearRoutines));
     return d.Handle;
@@ -98,26 +99,26 @@ void file_close()
     IData &d = idata();
     if (BPTR handle = static_cast<BPTR>(d.Handle)) {
         d.Handle = 0;
-        Close(handle);
+        hal::close(handle);
     }
 }
 
 bool file_read(void *buffer, uint32_t length)
 {
-    return static_cast<uint32_t>(Read(static_cast<BPTR>(idata().Handle), buffer, length)) == length;
+    return static_cast<uint32_t>(hal::read(static_cast<BPTR>(idata().Handle), buffer, length)) == length;
 }
 
 bool file_write(const void *buffer, uint32_t length)
 {
-    return static_cast<uint32_t>(Write(static_cast<BPTR>(idata().Handle), const_cast<void *>(buffer), length)) == length;
+    return static_cast<uint32_t>(hal::write(static_cast<BPTR>(idata().Handle), const_cast<void *>(buffer), length)) == length;
 }
 
 int32_t file_seek(int32_t offset, int32_t mode)
 {
-    return Seek(static_cast<BPTR>(idata().Handle), offset, mode);
+    return hal::seek(static_cast<BPTR>(idata().Handle), offset, mode);
 }
 
-void disk_error() { disk_err(IoErr()); }
+void disk_error() { disk_err(hal::io_error()); }
 
 void disk_err(int32_t code)
 {
@@ -193,13 +194,13 @@ extern "C" uint32_t lib_d_close(RegFrame &)
 // if not all of them.
 extern "C" uint32_t lib_d_read(RegFrame &r)
 {
-    r.d[0] = Read(static_cast<BPTR>(idata().Handle), ptr<void>(r.d[2]), r.d[3]);
+    r.d[0] = hal::read(static_cast<BPTR>(idata().Handle), ptr<void>(r.d[2]), r.d[3]);
     return r.d[0] != r.d[3];
 }
 
 extern "C" uint32_t lib_d_write(RegFrame &r)
 {
-    r.d[0] = Write(static_cast<BPTR>(idata().Handle), ptr<void>(r.d[2]), r.d[3]);
+    r.d[0] = hal::write(static_cast<BPTR>(idata().Handle), ptr<void>(r.d[2]), r.d[3]);
     return r.d[0] != r.d[3];
 }
 

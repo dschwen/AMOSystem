@@ -7,8 +7,9 @@
 
 #include <dos/dos.h>
 
-#define DOS_BASE_NAME (amos::ptr<struct DosLibrary>(amos::idata().DosBase))
-#include <proto/dos.h>
+#include <dos/dos.h>
+
+#include "hal/files.h"
 #define ICON_BASE_NAME (amos::ptr<struct Library>(amos::idata().IconBase))
 #include <proto/icon.h>
 
@@ -167,21 +168,21 @@ void merge_ascii()
     undo_reset();
     select_or_not_done(86);
     warn_name(158, name1());
-    BPTR file = Open(reinterpret_cast<CONST_STRPTR>(name1()), MODE_OLDFILE);
+    BPTR file = hal::open(reinterpret_cast<CONST_STRPTR>(name1()), MODE_OLDFILE);
     d.Handle = uint32_t(file);
     if (!file)
         run(ed_d_error);
-    Seek(file, 0, OFFSET_END);
-    int32_t length = Seek(file, 0, OFFSET_BEGINNING);
+    hal::seek(file, 0, OFFSET_END);
+    int32_t length = hal::seek(file, 0, OFFSET_BEGINNING);
     Regs t;
     t.d[0] = uint32_t(length + 4);
     t.a[0] = boot::temp_buffer(t.d[0]);
     if (!t.a[0])
         run(ed_out_of_memory);
-    if (Read(file, ptr<void>(t.a[0]), length) != length)
+    if (hal::read(file, ptr<void>(t.a[0]), length) != length)
         run(ed_d_error);
     d.Handle = 0;
-    Close(file);
+    hal::close(file);
     EditWindow &w = window();
     uint16_t at = w.Edt_YPos + w.Edt_YCu;
     uint8_t *a3 = ptr<uint8_t>(d.TempBuffer);
@@ -266,14 +267,14 @@ bool make_bak()
     call(ed_get_systeme, r);
     copy_name(dot, ptr<uint8_t>(r.a[0]));
     for (;;) {
-        if (Rename(reinterpret_cast<CONST_STRPTR>(name1()), reinterpret_cast<CONST_STRPTR>(name2)))
+        if (hal::rename(reinterpret_cast<CONST_STRPTR>(name1()), reinterpret_cast<CONST_STRPTR>(name2)))
             return true;
-        int32_t error = IoErr();
+        int32_t error = hal::io_error();
         if (error == ERROR_RENAME_ACROSS_DEVICES || error == ERROR_OBJECT_NOT_FOUND)
             return true;
         if (error != ERROR_OBJECT_EXISTS)
             return false;
-        if (!DeleteFile(reinterpret_cast<CONST_STRPTR>(name2)))
+        if (!hal::delete_file(reinterpret_cast<CONST_STRPTR>(name2)))
             return false;
     }
 }

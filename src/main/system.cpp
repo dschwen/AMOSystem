@@ -7,8 +7,9 @@
 
 #include "core/amiga.h"
 
-#define DOS_BASE_NAME (amos::ptr<struct DosLibrary>(amos::idata().DosBase))
-#include <proto/dos.h>
+#include <dos/dos.h>
+
+#include "hal/files.h"
 #define GRAPHICS_BASE_NAME (amos::ptr<struct GfxBase>(amos::wdata().GfxBase))
 #include <proto/graphics.h>
 
@@ -170,22 +171,22 @@ void a5_free(uint32_t &slot)
 
 bool sys_open(const char *name, uint32_t mode)
 {
-    return (idata().Handle = uint32_t(Open(name, int32_t(mode)))) != 0;
+    return (idata().Handle = uint32_t(hal::open(name, int32_t(mode)))) != 0;
 }
 
 bool sys_read(void *buffer, uint32_t length)
 {
-    return uint32_t(Read(BPTR(idata().Handle), buffer, int32_t(length))) == length;
+    return uint32_t(hal::read(BPTR(idata().Handle), buffer, int32_t(length))) == length;
 }
 
-int32_t sys_seek(int32_t offset, int32_t mode) { return Seek(BPTR(idata().Handle), offset, mode); }
+int32_t sys_seek(int32_t offset, int32_t mode) { return hal::seek(BPTR(idata().Handle), offset, mode); }
 
 void sys_close()
 {
     IData &d = idata();
     if (BPTR handle = BPTR(d.Handle)) {
         d.Handle = 0;
-        Close(handle);
+        hal::close(handle);
     }
 }
 
@@ -222,7 +223,7 @@ void ask_dir()
     uint8_t *buffer = ptr<uint8_t>(d.Buffer);
     poke_w(buffer, 0);
     poke_w(buffer + 384, 0);
-    if (BPTR lock = Lock(reinterpret_cast<const char *>(buffer), ACCESS_READ))
+    if (BPTR lock = hal::lock(reinterpret_cast<const char *>(buffer), ACCESS_READ))
         ask_dir2(uint32_t(lock));
 }
 
@@ -236,16 +237,16 @@ void ask_dir2(uint32_t lock)
         char separator;
         void down(BPTR l)
         {
-            if (BPTR parent = ParentDir(l))
+            if (BPTR parent = hal::parent_dir(l))
                 down(parent);
-            if (Examine(l, reinterpret_cast<FileInfoBlock *>(buffer))) {
+            if (hal::examine(l, reinterpret_cast<FileInfoBlock *>(buffer))) {
                 for (const char *p = reinterpret_cast<const char *>(buffer + 8); (*to = *p++); to++)
                     ;
                 *to++ = separator;
                 *to = 0;
                 separator = '/';
             }
-            UnLock(l);
+            hal::unlock(l);
         }
     };
     uint8_t *buffer = ptr<uint8_t>(idata().Buffer);

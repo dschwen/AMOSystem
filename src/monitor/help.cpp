@@ -9,8 +9,9 @@
 
 #include <dos/dos.h>
 
-#define DOS_BASE_NAME (amos::ptr<struct DosLibrary>(amos::idata().DosBase))
-#include <proto/dos.h>
+#include <dos/dos.h>
+
+#include "hal/files.h"
 
 using namespace amos;
 using namespace amos::monitor;
@@ -85,22 +86,22 @@ uint16_t get_map()
     MonData &m = mon();
     if (m.Hlp_Map)
         return 0;
-    BPTR f = Open(file_name(".Map"), MODE_OLDFILE);
+    BPTR f = hal::open(file_name(".Map"), MODE_OLDFILE);
     // (the assembler said "out of memory" when the file did not load, and
     // the reverse; and left it open after a failed read)
     if (!f)
         return MNoMap;
-    Seek(f, 0, OFFSET_END);
-    int32_t length = Seek(f, 0, OFFSET_BEGINNING);
+    hal::seek(f, 0, OFFSET_END);
+    int32_t length = hal::seek(f, 0, OFFSET_BEGINNING);
     uint32_t a = memory(uint32_t(length), false);
     if (!a) {
-        Close(f);
+        hal::close(f);
         return MOutOfMemory;
     }
     m.Hlp_Map = a;
     m.Hlp_LMap = uint32_t(length);
-    int32_t read = Read(f, ptr<void>(a), length);
-    Close(f);
+    int32_t read = hal::read(f, ptr<void>(a), length);
+    hal::close(f);
     if (read != length) {
         free_map();
         return MNoMap;
@@ -174,7 +175,7 @@ uint16_t load_text(const uint8_t *word, uint16_t length)
     }
     m.Hlp_Texte = text;
     m.Hlp_LTexte = size + 512;
-    BPTR f = Open(file_name(".Txt"), MODE_OLDFILE);
+    BPTR f = hal::open(file_name(".Txt"), MODE_OLDFILE);
     if (!f) {
         free_text();
         return MNoText;
@@ -190,8 +191,8 @@ uint16_t load_text(const uint8_t *word, uint16_t length)
     }
     *to++ = 10;
     uint8_t *buffer = ptr<uint8_t>(idata().Buffer);
-    Seek(f, int32_t(offset), OFFSET_BEGINNING);
-    Read(f, buffer, 64);
+    hal::seek(f, int32_t(offset), OFFSET_BEGINNING);
+    hal::read(f, buffer, 64);
     const uint8_t *t = buffer;
     while (*t++ >= 32) {
     }
@@ -201,9 +202,9 @@ uint16_t load_text(const uint8_t *word, uint16_t length)
     uint8_t *centre = ptr<uint8_t>(text) + 132 - uint16_t(title >> 1);
     for (uint32_t i = 0; i + 1 < title; i++)
         centre[i] = buffer[i];
-    Seek(f, int32_t(offset), OFFSET_BEGINNING);
-    int32_t read = Read(f, to, int32_t(size));
-    Close(f);
+    hal::seek(f, int32_t(offset), OFFSET_BEGINNING);
+    int32_t read = hal::read(f, to, int32_t(size));
+    hal::close(f);
     if (read != int32_t(size)) {
         free_text();
         return MNoText;

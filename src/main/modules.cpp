@@ -7,8 +7,9 @@
 
 #include "core/amiga.h"
 
-#define DOS_BASE_NAME (amos::ptr<struct DosLibrary>(amos::idata().DosBase))
-#include <proto/dos.h>
+#include <dos/dos.h>
+
+#include "hal/files.h"
 
 using namespace amos;
 using namespace amos::boot;

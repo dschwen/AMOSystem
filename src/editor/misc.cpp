@@ -9,8 +9,9 @@
 
 #include <dos/dos.h>
 
-#define DOS_BASE_NAME (amos::ptr<struct DosLibrary>(amos::idata().DosBase))
-#include <proto/dos.h>
+#include <dos/dos.h>
+
+#include "hal/files.h"
 
 using namespace amos;
 using namespace amos::ed;
@@ -134,7 +135,7 @@ void button_draw(const Button *b, bool title)
 [[noreturn]] void editor_disk_error()
 {
     static const uint8_t known[] = {203, 204, 205, 210, 213, 214, 216, 218, 220, 221, 222, 223, 224, 225, 226};
-    int32_t error = IoErr();
+    int32_t error = hal::io_error();
     uint16_t n = DEBase + 22 + 1;
     for (uint16_t i = 0; i < sizeof(known); i++)
         if (uint8_t(error) == known[i]) {
@@ -174,7 +175,7 @@ void ed_close_fn(AllRegs *)
     IData &d = idata();
     if (BPTR f = BPTR(d.Handle)) {
         d.Handle = 0;
-        Close(f);
+        hal::close(f);
     }
 }
 

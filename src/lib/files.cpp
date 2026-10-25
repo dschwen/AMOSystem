@@ -7,8 +7,9 @@
 #include "lib/dos.h"
 #include "lib/strings.h"
 
-#define DOS_BASE_NAME (reinterpret_cast<struct DosLibrary *>(amos::idata().DosBase))
-#include <proto/dos.h>
+#include <dos/dos.h>
+
+#include "hal/files.h"
 
 // The record that closes every channel when the program is cleared
 // (dos_glue.s)
@@ -71,7 +72,7 @@ void close_channel(Channel &c)
 {
     if (BPTR h = c.handle()) {
         c.set_handle(0);
-        Close(h);
+        hal::close(h);
         if (uint32_t fields = c.fields()) {
             c.set_fields(0);
             Regs r = {};
@@ -108,7 +109,7 @@ Channel &open_file(uint32_t n, const uint8_t *name)
 void open_typed(uint32_t n, const uint8_t *name, uint32_t mode, uint8_t type)
 {
     Channel &c = open_file(n, name);
-    BPTR h = Open(ptr<char>(idata().Name1), mode);
+    BPTR h = hal::open(ptr<char>(idata().Name1), mode);
     if (!h)
         disk_error();
     c.set_handle(h);
@@ -118,9 +119,9 @@ void open_typed(uint32_t n, const uint8_t *name, uint32_t mode, uint8_t type)
 BPTR open_random(uint32_t n, const uint8_t *name, uint8_t type)
 {
     Channel &c = open_file(n, name);
-    BPTR h = Open(ptr<char>(idata().Name1), ModeOldFile);
+    BPTR h = hal::open(ptr<char>(idata().Name1), ModeOldFile);
     if (!h)
-        h = Open(ptr<char>(idata().Name1), ModeNewFile);
+        h = hal::open(ptr<char>(idata().Name1), ModeNewFile);
     if (!h)
         disk_error();
     c.set_handle(h);
@@ -145,11 +146,11 @@ uint8_t get_byte(Channel &c)
         type_mismatch();
     uint8_t *b = idata().DeFloat;
     if (c.type() & ChanPort) {
-        while (!WaitForChar(c.handle(), 50)) {
+        while (!hal::wait_for_char(c.handle(), 50)) {
             Regs r = {};
             lib_call(L_Test_PaSaut, r);
         }
-        int32_t n = Read(c.handle(), b + 8, 1);
+        int32_t n = hal::read(c.handle(), b + 8, 1);
         if (!n)
             end_of_file();
         if (n < 0)
@@ -162,7 +163,7 @@ uint8_t get_byte(Channel &c)
             poke_l(b, static_cast<uint32_t>(c.handle()));
             poke_w(b + 4, 0);
             poke_w(b + 6, 0);
-            int32_t n = Read(c.handle(), b + 8, ByteBufferSize);
+            int32_t n = hal::read(c.handle(), b + 8, ByteBufferSize);
             if (!n)
                 end_of_file();
             if (n < 0)
@@ -183,7 +184,7 @@ void end_byte()
         poke_l(b, 0);
         int16_t back = static_cast<int16_t>(peek_w(b + 4) - peek_w(b + 6));
         if (back)
-            Seek(h, back, OffsetCurrent);
+            hal::seek(h, back, OffsetCurrent);
     }
 }
 
@@ -210,11 +211,11 @@ void yes_requesters()
 bool exists()
 {
     no_requesters();
-    BPTR lock = Lock(ptr<char>(idata().Name1), ACCESS_READ);
+    BPTR lock = hal::lock(ptr<char>(idata().Name1), ACCESS_READ);
     yes_requesters();
     if (!lock)
         return false;
-    UnLock(lock);
+    hal::unlock(lock);
     return true;
 }
 
@@ -222,7 +223,7 @@ bool exists()
 void lock_free()
 {
     if (BPTR lock = static_cast<BPTR>(idata().LockSave)) {
-        UnLock(lock);
+        hal::unlock(lock);
         idata().LockSave = 0;
     }
 }
@@ -230,7 +231,7 @@ void lock_free()
 BPTR lock_get()
 {
     lock_free();
-    BPTR lock = Lock(ptr<char>(idata().Name1), ACCESS_READ);
+    BPTR lock = hal::lock(ptr<char>(idata().Name1), ACCESS_READ);
     if (!lock)
         disk_error();
     idata().LockSave = static_cast<uint32_t>(lock);
@@ -289,7 +290,7 @@ Channel &seek_record(uint32_t n, uint32_t record)
     uint8_t *fields = ptr<uint8_t>(c.fields());
     uint32_t offset = static_cast<uint16_t>(index) * static_cast<uint32_t>(peek_w(fields + 2));
     uint32_t size = peek_l(fields + 4);
-    Seek(c.handle(), offset < size ? offset : size, OffsetBeginning);
+    hal::seek(c.handle(), offset < size ? offset : size, OffsetBeginning);
     return c;
 }
 
@@ -418,7 +419,7 @@ extern "C" uint32_t lib_fn_input2(uint32_t n, int32_t count)
             *to++ = get_byte(c);
         return address(s);
     }
-    int32_t got = Read(c.handle(), s + 2, count);
+    int32_t got = hal::read(c.handle(), s + 2, count);
     if (!got)
         end_of_file();
     if (got < 0)
@@ -432,7 +433,7 @@ extern "C" void lib_in_dir(const uint8_t *name)
     name_disc(name);
     BPTR lock = lock_get();
     auto fib = ptr<struct FileInfoBlock>(idata().Buffer);
-    Examine(lock, fib);
+    hal::examine(lock, fib);
     if (static_cast<int16_t>(peek_w(ptr<uint8_t>(idata().Buffer) + 4)) < 0)
         disk_error();
     // AskDir2 unlocks the lock (the assembler then freed it again)
@@ -479,7 +480,7 @@ extern "C" void lib_in_parent()
 // KILL a$, RENAME a$ TO b$, MKDIR a$
 extern "C" void lib_in_kill(const uint8_t *name)
 {
-    if (!DeleteFile(name_disc(name)))
+    if (!hal::delete_file(name_disc(name)))
         disk_error();
 }
 
@@ -489,14 +490,14 @@ extern "C" void lib_in_rename(const uint8_t *from, const uint8_t *to)
     char *name2 = ptr<char>(idata().Name2);
     for (const char *p = ptr<char>(idata().Name1); (*name2++ = *p++);)
         ;
-    if (!Rename(name_disc(from), ptr<char>(idata().Name2)))
+    if (!hal::rename(name_disc(from), ptr<char>(idata().Name2)))
         disk_error();
 }
 
 extern "C" void lib_in_mkdir(const uint8_t *name)
 {
     lock_free();
-    BPTR lock = CreateDir(name_disc(name));
+    BPTR lock = hal::create_dir(name_disc(name));
     if (!lock)
         disk_error();
     idata().LockSave = static_cast<uint32_t>(lock);
@@ -511,9 +512,9 @@ extern "C" uint32_t lib_fn_drive(const uint8_t *name)
         return 0;
     char *text = str_to_buffer(name);
     no_requesters();
-    void *process = DeviceProc(text);
+    bool there = hal::device_exists(text);
     yes_requesters();
-    return process ? -1u : 0;
+    return there ? -1u : 0;
 }
 
 // =DFREE: the free space of the current disk
@@ -525,7 +526,7 @@ extern "C" uint32_t lib_fn_dfree()
         ;
     BPTR lock = lock_get();
     auto info = ptr<struct InfoData>((idata().Buffer + 4) & ~3u);
-    if (!Info(lock, info))
+    if (!hal::info(lock, info))
         disk_error();
     uint32_t free = disk_free(info);
     lock_free();
@@ -539,7 +540,7 @@ extern "C" uint32_t lib_fn_disc_info(const uint8_t *name)
     uint8_t *s = str_alloc(126);
     BPTR lock = lock_get();
     auto info = ptr<struct InfoData>(idata().Buffer);
-    if (!Info(lock, info))
+    if (!hal::info(lock, info))
         disk_error();
     lock_free();
     char *to = reinterpret_cast<char *>(s + 2);
@@ -568,10 +569,10 @@ extern "C" uint32_t lib_fn_port(uint32_t n)
     Channel &c = open_channel(n);
     if (!(c.type() & ChanPort))
         type_mismatch();
-    if (!WaitForChar(c.handle(), 50))
+    if (!hal::wait_for_char(c.handle(), 50))
         return -1u;
     uint8_t *b = idata().DeFloat;
-    if (Read(c.handle(), b, 1) < 0)
+    if (hal::read(c.handle(), b, 1) < 0)
         disk_error();
     return b[0];
 }
@@ -591,15 +592,15 @@ extern "C" void lib_in_open_random(uint32_t n, const uint8_t *name) { open_rando
 extern "C" void lib_in_append(uint32_t n, const uint8_t *name)
 {
     BPTR h = open_random(n, name, ChanOut);
-    Seek(h, 0, OffsetEnd);
+    hal::seek(h, 0, OffsetEnd);
 }
 
 // =LOF(channel), =POF(channel), POF(channel)=n, =EOF(channel)
 extern "C" uint32_t lib_fn_lof(uint32_t n)
 {
     BPTR h = file_channel(n).handle();
-    int32_t pos = Seek(h, 0, OffsetEnd);
-    return Seek(h, pos, OffsetBeginning);
+    int32_t pos = hal::seek(h, 0, OffsetEnd);
+    return hal::seek(h, pos, OffsetBeginning);
 }
 
 extern "C" void lib_in_pof(uint32_t n, int32_t pos)
@@ -607,17 +608,17 @@ extern "C" void lib_in_pof(uint32_t n, int32_t pos)
     BPTR h = file_channel(n).handle();
     if (pos < 0)
         fon_call();
-    if (Seek(h, pos, OffsetBeginning) < 0)
+    if (hal::seek(h, pos, OffsetBeginning) < 0)
         disk_error();
 }
 
-extern "C" uint32_t lib_fn_pof(uint32_t n) { return Seek(file_channel(n).handle(), 0, OffsetCurrent); }
+extern "C" uint32_t lib_fn_pof(uint32_t n) { return hal::seek(file_channel(n).handle(), 0, OffsetCurrent); }
 
 extern "C" uint32_t lib_fn_eof(uint32_t n)
 {
     BPTR h = file_channel(n).handle();
-    uint32_t pos = Seek(h, 0, OffsetEnd);
-    uint32_t end = Seek(h, pos, OffsetBeginning);
+    uint32_t pos = hal::seek(h, 0, OffsetEnd);
+    uint32_t end = hal::seek(h, pos, OffsetBeginning);
     return pos < end ? 0 : -1u;
 }
 
@@ -640,7 +641,7 @@ extern "C" void lib_in_get(uint32_t n, uint32_t record)
         poke_l(ptr<void>(peek_l(field + 2)), address(s));
         poke_w(s, len);
         idata().HiChaine = (address(s) + 2 + len + 1) & ~1u;
-        if (static_cast<uint32_t>(Read(c->handle(), s + 2, len)) != len)
+        if (static_cast<uint32_t>(hal::read(c->handle(), s + 2, len)) != len)
             disk_error();
     }
 }
@@ -655,7 +656,7 @@ extern "C" void lib_in_put(uint32_t n, uint32_t record)
         uint16_t len = peek_w(field);
         const uint8_t *s = ptr<uint8_t>(peek_l(ptr<void>(peek_l(field + 2))));
         uint16_t slen = str_len(s) < len ? str_len(s) : len;
-        if (static_cast<uint32_t>(Write(c->handle(), const_cast<uint8_t *>(s + 2), slen)) != slen)
+        if (static_cast<uint32_t>(hal::write(c->handle(), const_cast<uint8_t *>(s + 2), slen)) != slen)
             disk_error();
         if (slen < len) {
             uint16_t pad = len - slen;
@@ -665,11 +666,11 @@ extern "C" void lib_in_put(uint32_t n, uint32_t record)
             uint8_t *spaces = ptr<uint8_t>(r.a[0]);
             for (uint16_t k = 0; k < pad; k++)
                 spaces[k] = ' ';
-            if (static_cast<uint32_t>(Write(c->handle(), spaces, pad)) != pad)
+            if (static_cast<uint32_t>(hal::write(c->handle(), spaces, pad)) != pad)
                 disk_error();
         }
     }
-    uint32_t pos = Seek(c->handle(), 0, OffsetCurrent);
+    uint32_t pos = hal::seek(c->handle(), 0, OffsetCurrent);
     if (pos > peek_l(fields + 4))
         poke_l(fields + 4, pos);
 }

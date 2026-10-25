@@ -10,8 +10,9 @@
 #include <exec/memory.h>
 #include <exec/ports.h>
 
-#define DOS_BASE_NAME (reinterpret_cast<struct DosLibrary *>(amos::idata().DosBase))
-#include <proto/dos.h>
+#include <dos/dos.h>
+
+#include "hal/files.h"
 
 // The records that close the libraries and devices when the program is
 // cleared (dos_glue.s)
@@ -400,9 +401,9 @@ extern "C" void lib_in_exec(const uint8_t *command)
     if (!str_len(command))
         fon_call();
     const char *text = str_to_buffer(command);
-    BPTR nil = Open("NIL:", ModeOldFile);
-    LONG ok = Execute(text, nil, nil);
-    Close(nil);
+    BPTR nil = hal::open("NIL:", ModeOldFile);
+    LONG ok = hal::execute(text, nil, nil);
+    hal::close(nil);
     if (!ok)
         disk_error();
 }

@@ -57,7 +57,7 @@ LDLIBS   := -L$(AMIGA_PREFIX)/m68k-amigaos/libnix/lib -lgcc -lnix13 -lgcc
 #   src/core     the C++/asm bridge and data layout (an archive)
 src_objs = $(strip $(patsubst %.s,$(OBJ)/%.o,$(sort $(wildcard $(addsuffix /*.s,$(1))))) \
            $(patsubst %.cpp,$(OBJ)/%.o,$(sort $(wildcard $(addsuffix /*.cpp,$(1))))))
-OBJ_AMOSPRO := $(call src_objs,src/lib src/main src/verif src/interp src/ext)
+OBJ_AMOSPRO := $(call src_objs,src/lib src/main src/verif src/interp src/ext src/hal)
 OBJ_W       := $(call src_objs,src/w)
 OBJ_EDITOR  := $(call src_objs,src/editor)
 OBJ_MONITOR := $(call src_objs,src/monitor)

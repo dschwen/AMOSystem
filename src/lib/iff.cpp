@@ -6,8 +6,9 @@
 #include "lib/dos.h"
 #include "lib/strings.h"
 
-#define DOS_BASE_NAME (reinterpret_cast<struct DosLibrary *>(amos::idata().DosBase))
-#include <proto/dos.h>
+#include <dos/dos.h>
+
+#include "hal/files.h"
 
 using namespace amos;
 
@@ -39,7 +40,7 @@ uint32_t even(uint32_t n) { return (n + 1) & ~1u; }
 // IffRead / IffSeek on the file handle (d5 in the assembler)
 int32_t iff_read(BPTR file, void *to, int32_t length)
 {
-    int32_t n = Read(file, to, length);
+    int32_t n = hal::read(file, to, length);
     if (n < 0)
         disk_error();
     return n;
@@ -71,7 +72,7 @@ uint32_t form_load(BPTR file, uint8_t *to, uint32_t count)
                 disk_error();
             to += rest;
         } else {
-            Seek(file, rest, OffsetCurrent);
+            hal::seek(file, rest, OffsetCurrent);
         }
         loaded++;
     } while (--count);
@@ -102,9 +103,9 @@ uint32_t form_size(BPTR file, uint32_t count, uint32_t *forms = nullptr)
         if (!--count)
             break;
         back -= rest;
-        Seek(file, rest, OffsetCurrent);
+        hal::seek(file, rest, OffsetCurrent);
     }
-    Seek(file, back, OffsetCurrent);
+    hal::seek(file, back, OffsetCurrent);
     if (forms)
         *forms = found;
     return size + 4;

@@ -20,8 +20,9 @@
 #include <exec/tasks.h>
 #include <proto/exec.h>
 
-#define DOS_BASE_NAME (amos::ptr<struct DosLibrary>(amos::idata().DosBase))
-#include <proto/dos.h>
+#include <dos/dos.h>
+
+#include "hal/files.h"
 
 using namespace amos;
 
@@ -952,7 +953,7 @@ void show_disk_error()
 {
     task_stop();
     static const int16_t known[] = {204, 205, 210, 213, 218, 225, 226};
-    int32_t io = IoErr();
+    int32_t io = hal::io_error();
     uint32_t message = 32;
     for (unsigned i = 0; i < sizeof known / sizeof known[0]; i++)
         if (known[i] == io)

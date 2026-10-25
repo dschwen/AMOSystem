@@ -7,8 +7,9 @@
 
 #include "core/amiga.h"
 
-#define DOS_BASE_NAME (reinterpret_cast<struct DosLibrary *>(amos::idata().DosBase))
-#include <proto/dos.h>
+#include <dos/dos.h>
+
+#include "hal/files.h"
 
 using namespace amos;
 using namespace amos::interp;
@@ -76,6 +77,6 @@ extern "C" void interp_in_field()
     poke_w(record + 2, uint16_t(total));
     c.a3 = top;
     BPTR file = BPTR(peek_l(channel));
-    Seek(file, 0, OFFSET_END);
-    poke_l(record + 4, uint32_t(Seek(file, 0, OFFSET_BEGINNING)));
+    hal::seek(file, 0, OFFSET_END);
+    poke_l(record + 4, uint32_t(hal::seek(file, 0, OFFSET_BEGINNING)));
 }

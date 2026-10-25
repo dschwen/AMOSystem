@@ -8,8 +8,9 @@
 #include "lib/dos.h"
 #include "lib/strings.h"
 
-#define DOS_BASE_NAME (reinterpret_cast<struct DosLibrary *>(amos::idata().DosBase))
-#include <proto/dos.h>
+#include <dos/dos.h>
+
+#include "hal/files.h"
 
 using namespace amos;
 
@@ -61,7 +62,7 @@ void prt_close()
     IData &d = idata();
     if (BPTR h = BPTR(d.PrtHandle)) {
         d.PrtHandle = 0;
-        Close(h);
+        hal::close(h);
     }
 }
 
@@ -73,7 +74,7 @@ uint32_t prt_open()
     Regs m;
     m.d[0] = 43;
     m.a[0] = address(boot::sys_message(m.d[0]));
-    d.PrtHandle = uint32_t(Open(ptr<char>(m.a[0]), 1005));
+    d.PrtHandle = uint32_t(hal::open(ptr<char>(m.a[0]), 1005));
     if (!d.PrtHandle)
         disk_error();
     Regs r;
@@ -98,7 +99,7 @@ void prt_print(char *text)
             to[-1] = *from++;
     }
     int32_t n = from - text - 1;
-    if (n && Write(h, text, n) < 0)
+    if (n && hal::write(h, text, n) < 0)
         disk_error();
 }
 

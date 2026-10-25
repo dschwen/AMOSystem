@@ -6,8 +6,9 @@
 #include "lib/dos.h"
 #include "lib/strings.h"
 
-#define DOS_BASE_NAME (reinterpret_cast<struct DosLibrary *>(amos::idata().DosBase))
-#include <proto/dos.h>
+#include <dos/dos.h>
+
+#include "hal/files.h"
 
 // The record that frees the list when the program is cleared (dos_glue.s)
 extern "C" uint8_t lib_fill_free_on_clear[];
@@ -221,7 +222,7 @@ void fill_first()
     IData &d = idata();
     lock_get();
     auto fib = ptr<struct FileInfoBlock>(d.Buffer);
-    Examine(static_cast<BPTR>(d.LockSave), fib);
+    hal::examine(static_cast<BPTR>(d.LockSave), fib);
     if (static_cast<int16_t>(peek_w(ptr<uint8_t>(d.Buffer) + 4)) < 0) {
         // a file: its name becomes the filter. (The assembler found the
         // name with a register NomDir had left, which pointed at the wrong
@@ -250,7 +251,7 @@ void fill_first()
     while ((*to++ = *from++))
         ;
     lock_get();
-    Examine(static_cast<BPTR>(d.LockSave), fib);
+    hal::examine(static_cast<BPTR>(d.LockSave), fib);
 }
 
 // FillNxt: the next entry. Returns 2 (with *element) if it was added, 1
@@ -259,7 +260,7 @@ int32_t fill_next(uint8_t **element)
 {
     IData &d = idata();
     uint8_t *fib = ptr<uint8_t>(d.Buffer);
-    if (ExNext(static_cast<BPTR>(d.LockSave), ptr<struct FileInfoBlock>(d.Buffer))) {
+    if (hal::examine_next(static_cast<BPTR>(d.LockSave), ptr<struct FileInfoBlock>(d.Buffer))) {
         char first = '*';
         if (static_cast<int16_t>(peek_w(fib + 4)) < 0) {
             const char *name = reinterpret_cast<const char *>(fib + 8);
@@ -276,7 +277,7 @@ int32_t fill_next(uint8_t **element)
             return 2;
         }
     }
-    return IoErr() == 232 ? 0 : -1;
+    return hal::io_error() == 232 ? 0 : -1;
 }
 
 // FillSort: bubble sort of the list after its first element
@@ -892,7 +893,7 @@ void assign_lock(const uint8_t *name, const uint8_t *path)
     if (end[-1] != ':')
         fon_call();
     end[-1] = 0;
-    if (!AssignLock(b, BPTR(d.LockSave))) {
+    if (!hal::assign_lock(b, BPTR(d.LockSave))) {
         lib(L_LockFree);
         disk_error();
     }
@@ -949,7 +950,7 @@ void assign_command(const uint8_t *name, const uint8_t *path)
     if (!d.Handle)
         disk_error();
     BPTR nil = BPTR(d.Handle);
-    int32_t ok = Execute(b, nil, nil);
+    int32_t ok = hal::execute(b, nil, nil);
     lib(L_D_Close);
     if (!ok)
         disk_error();

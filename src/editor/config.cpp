@@ -13,8 +13,9 @@
 #include <stddef.h>
 #include <dos/dos.h>
 
-#define DOS_BASE_NAME (amos::ptr<struct DosLibrary>(amos::idata().DosBase))
-#include <proto/dos.h>
+#include <dos/dos.h>
+
+#include "hal/files.h"
 
 using namespace amos;
 using namespace amos::ed;
@@ -50,16 +51,16 @@ void run_d0(uint8_t *routine, uint32_t d0)
 
 bool open(int32_t mode)
 {
-    BPTR f = Open(ptr<char>(idata().Name1), mode);
+    BPTR f = hal::open(ptr<char>(idata().Name1), mode);
     idata().Handle = uint32_t(f);
     return f;
 }
 
-bool read(void *to, int32_t length) { return Read(BPTR(idata().Handle), to, length) == length; }
+bool read(void *to, int32_t length) { return hal::read(BPTR(idata().Handle), to, length) == length; }
 
 bool write(const void *from, int32_t length)
 {
-    return Write(BPTR(idata().Handle), const_cast<void *>(from), length) == length;
+    return hal::write(BPTR(idata().Handle), const_cast<void *>(from), length) == length;
 }
 
 void close()
@@ -67,7 +68,7 @@ void close()
     IData &d = idata();
     if (BPTR f = BPTR(d.Handle)) {
         d.Handle = 0;
-        Close(f);
+        hal::close(f);
     }
 }
 

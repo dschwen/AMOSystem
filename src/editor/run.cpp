@@ -15,8 +15,9 @@
 
 #include <dos/dos.h>
 
-#define DOS_BASE_NAME (amos::ptr<struct DosLibrary>(amos::idata().DosBase))
-#include <proto/dos.h>
+#include <dos/dos.h>
+
+#include "hal/files.h"
 
 using namespace amos;
 using namespace amos::ed;
@@ -659,13 +660,13 @@ void procedure_machine_code()
         run(ed_proc_open_entry);
     }
     // the code hunk of the file
-    BPTR file = Open(ptr<char>(d.Name1), MODE_OLDFILE);
+    BPTR file = hal::open(ptr<char>(d.Name1), MODE_OLDFILE);
     d.Handle = uint32_t(file);
     if (!file)
         jump(ed_d_error);
     uint8_t *buffer = ptr<uint8_t>(d.Buffer);
     auto get = [&]() -> uint32_t {
-        if (Read(file, buffer, 4) != 4)
+        if (hal::read(file, buffer, 4) != 4)
             jump(ed_d_error);
         return peek_l(buffer);
     };
@@ -693,10 +694,10 @@ void procedure_machine_code()
         offset = 0;
     poke_w(a1, uint16_t(offset));
     a1 += 2;
-    if (Read(file, a1, int32_t(size)) != int32_t(size))
+    if (hal::read(file, a1, int32_t(size)) != int32_t(size))
         jump(ed_d_error);
     d.Handle = 0;
-    Close(file);
+    hal::close(file);
     a1 += size;
     poke_w(a1, 0x0301);
     poke_w(a1 + 2, tk::EndP);

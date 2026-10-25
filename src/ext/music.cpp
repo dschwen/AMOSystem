@@ -10,8 +10,9 @@
 #include <exec/interrupts.h>
 #include <exec/io.h>
 
-#define DOS_BASE_NAME (reinterpret_cast<struct DosLibrary *>(amos::idata().DosBase))
-#include <proto/dos.h>
+#include <dos/dos.h>
+
+#include "hal/files.h"
 
 using namespace amos;
 using namespace amos::music;
@@ -593,7 +594,7 @@ void narrator_open()
     m.TranBase = address(OpenLibrary(const_cast<char *>("translator.library"), 0));
     if (!m.TranBase)
         error(NoNar);
-    Delay(50);
+    hal::delay(50);
     m.Sami_flag = 0;
     samples_install();
 }
@@ -727,17 +728,17 @@ void file_name(const uint8_t *name)
 uint8_t *load_bank(const uint8_t *name, uint32_t number, uint16_t flags, uint32_t extra, const char *bank_name)
 {
     file_name(name);
-    BPTR file = Open(ptr<char>(idata().Name1), MODE_OLDFILE);
+    BPTR file = hal::open(ptr<char>(idata().Name1), MODE_OLDFILE);
     if (!file)
         music_disk_error();
-    int32_t size = Seek(file, Seek(file, 0, OFFSET_END), OFFSET_BEGINNING);
+    int32_t size = hal::seek(file, hal::seek(file, 0, OFFSET_END), OFFSET_BEGINNING);
     uint8_t *bank = bank_reserve(number, flags, uint32_t(size) + extra, bank_name);
     if (!bank) {
-        Close(file);
+        hal::close(file);
         out_of_memory();
     }
-    int32_t read = Read(file, bank, size);
-    Close(file);
+    int32_t read = hal::read(file, bank, size);
+    hal::close(file);
     if (read != size)
         ifonc();
     return bank;
@@ -1213,7 +1214,7 @@ void ext_sload(uint32_t file, uint32_t at, int32_t length)
         ifonc();
     uint32_t to = bank_or_address(int32_t(at));
     BPTR handle = program_file(file);
-    if (Read(handle, ptr<void>(to), length) < 0)
+    if (hal::read(handle, ptr<void>(to), length) < 0)
         music_disk_error();
 }
 
@@ -1224,7 +1225,7 @@ void ext_ssave(uint32_t file, uint32_t start, uint32_t end)
     if (length <= 0)
         ifonc();
     BPTR handle = program_file(file);
-    if (Write(handle, ptr<void>(start), length) < 0)
+    if (hal::write(handle, ptr<void>(start), length) < 0)
         music_disk_error();
 }
 

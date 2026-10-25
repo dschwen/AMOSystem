@@ -16,8 +16,9 @@
 #include "core/amiga.h"
 #include "lib/convert.h"
 
-#define DOS_BASE_NAME (reinterpret_cast<struct DosLibrary *>(amos::idata().DosBase))
-#include <proto/dos.h>
+#include <dos/dos.h>
+
+#include "hal/files.h"
 
 using namespace amos;
 using namespace amos::interp;
@@ -235,7 +236,7 @@ void print()
             continue;
         if (d.PrintFile) {
             BPTR file = BPTR(peek_l(ptr<void>(d.PrintFile)));
-            if (Write(file, buffer(), n) != n)
+            if (hal::write(file, buffer(), n) != n)
                 disk_error();
         } else {
             Regs r;

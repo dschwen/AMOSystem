@@ -13,8 +13,9 @@
 
 #include <dos/dos.h>
 
-#define DOS_BASE_NAME (amos::ptr<struct DosLibrary>(amos::idata().DosBase))
-#include <proto/dos.h>
+#include <dos/dos.h>
+
+#include "hal/files.h"
 
 using namespace amos;
 using namespace amos::ed;
@@ -73,16 +74,16 @@ uint8_t *copy(uint8_t *to, const uint8_t *from)
 
 bool open(int32_t mode)
 {
-    BPTR f = Open(ptr<char>(idata().Name1), mode);
+    BPTR f = hal::open(ptr<char>(idata().Name1), mode);
     idata().Handle = uint32_t(f);
     return f;
 }
 
-bool read(void *to, int32_t length) { return Read(BPTR(idata().Handle), to, length) == length; }
+bool read(void *to, int32_t length) { return hal::read(BPTR(idata().Handle), to, length) == length; }
 
 bool write(const void *from, int32_t length)
 {
-    return Write(BPTR(idata().Handle), const_cast<void *>(from), length) == length;
+    return hal::write(BPTR(idata().Handle), const_cast<void *>(from), length) == length;
 }
 
 void close()
@@ -90,7 +91,7 @@ void close()
     IData &d = idata();
     if (BPTR f = BPTR(d.Handle)) {
         d.Handle = 0;
-        Close(f);
+        hal::close(f);
     }
 }
 
@@ -166,7 +167,7 @@ bool save_session()
     }
     if (!save_structure(header, nullptr, 0))
         return false;
-    int32_t length = Seek(BPTR(d.Handle), 0, OFFSET_BEGINNING);
+    int32_t length = hal::seek(BPTR(d.Handle), 0, OFFSET_BEGINNING);
     poke_l(header, QuitHead);
     poke_l(header + 4, uint32_t(length - 8));
     if (!write(header, 8))
@@ -234,7 +235,7 @@ void delete_file()
 {
     close();
     system_file(47);
-    while (!DeleteFile(ptr<char>(idata().Name1))) {
+    while (!hal::delete_file(ptr<char>(idata().Name1))) {
         if (int16_t(dialogue(EdDWarmDel)) != 1) {
             warm_error();
             jump(ed_system);
@@ -384,7 +385,7 @@ void warm_start()
             p->Prg_NamePrg[0] = 0;
             p->Prg_NoNamed = 0;
             p->Prg_Change = 1;
-            DeleteFile(ptr<char>(d.Name1));
+            hal::delete_file(ptr<char>(d.Name1));
         }
     }
     delete_file();

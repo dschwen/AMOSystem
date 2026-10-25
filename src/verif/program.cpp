@@ -12,8 +12,9 @@
 #include "core/amiga.h"
 #include "core/source.h"
 
-#define DOS_BASE_NAME (reinterpret_cast<struct DosLibrary *>(amos::idata().DosBase))
-#include <proto/dos.h>
+#include <dos/dos.h>
+
+#include "hal/files.h"
 
 using namespace amos;
 
@@ -53,23 +54,23 @@ void a5_free(uint32_t *slot)
 bool file_open(uint32_t mode)
 {
     IData &d = idata();
-    d.Handle = static_cast<uint32_t>(Open(ptr<char>(d.Name1), mode));
+    d.Handle = static_cast<uint32_t>(hal::open(ptr<char>(d.Name1), mode));
     return d.Handle;
 }
 
-bool file_read(void *to, uint32_t length) { return uint32_t(Read(BPTR(idata().Handle), to, length)) == length; }
-bool file_write(const void *from, uint32_t length) { return uint32_t(Write(BPTR(idata().Handle), const_cast<void *>(from), length)) == length; }
+bool file_read(void *to, uint32_t length) { return uint32_t(hal::read(BPTR(idata().Handle), to, length)) == length; }
+bool file_write(const void *from, uint32_t length) { return uint32_t(hal::write(BPTR(idata().Handle), const_cast<void *>(from), length)) == length; }
 
 void file_close()
 {
     IData &d = idata();
     if (BPTR handle = BPTR(d.Handle)) {
         d.Handle = 0;
-        Close(handle);
+        hal::close(handle);
     }
 }
 
-int32_t file_seek(int32_t offset, int32_t mode) { return Seek(BPTR(idata().Handle), offset, mode); }
+int32_t file_seek(int32_t offset, int32_t mode) { return hal::seek(BPTR(idata().Handle), offset, mode); }
 
 namespace {
 
