@@ -122,24 +122,6 @@ void put_char(uint8_t c, Formatter *f)
     *f->to = 0;
 }
 
-// The RawDoFmt output routine: d0 the character, a3 the data
-extern "C" void w_req_put_char();
-asm(R"(
-        .text
-        .globl  _w_req_put_char
-_w_req_put_char:
-        movem.l d0-d1/a0-a1,-(sp)
-        move.l  a3,-(sp)
-        and.l   #0xFF,d0
-        move.l  d0,-(sp)
-        jsr     _w_req_put_char_c
-        addq.l  #8,sp
-        movem.l (sp)+,d0-d1/a0-a1
-        rts
-)");
-
-extern "C" void w_req_put_char_c(uint32_t c, Formatter *f) { put_char(uint8_t(c), f); }
-
 // Returns the next argument
 const void *format(const char *text, uint8_t *to, const void *args)
 {
@@ -147,15 +129,8 @@ const void *format(const char *text, uint8_t *to, const void *args)
     d.TxtCx = 0;
     d.TxtCy = 1;
     Formatter f = {to};
-    // (The NDK's inline RawDoFmt does not compile as C++)
-    register const char *a0 asm("a0") = text;
-    register const void *a1 asm("a1") = args;
-    register void (*a2)() asm("a2") = w_req_put_char;
-    register Formatter *a3 asm("a3") = &f;
-    register struct Library *a6 asm("a6") = *ptr<struct Library *>(4);
-    register const void *next asm("d0");
-    asm volatile("jsr %%a6@(-522:W)" : "=r"(next), "+r"(a0), "+r"(a1) : "r"(a2), "r"(a3), "r"(a6)
-                 : "d1", "cc", "memory");
+    const void *next = hal::raw_format(
+        text, args, [](char c, void *data) { put_char(uint8_t(c), static_cast<Formatter *>(data)); }, &f);
     if (d.TxtCx > d.TxtMaxCx)
         d.TxtMaxCx = d.TxtCx;
     return next;

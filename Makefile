@@ -93,7 +93,7 @@ REFERENCE_AMOSPro_Interpreter_Config := AMOSPro_Interpreter_Config
 REFERENCE_DEFAULT                     = APSystem/$(1)
 reference = AMOS/$(or $(REFERENCE_$(1)),$(call REFERENCE_DEFAULT,$(1)))
 
-.PHONY: all dist verify test test-reference install-hd host-check clean
+.PHONY: all dist verify test test-reference install-hd host-check host clean
 .SECONDARY:
 .DELETE_ON_ERROR:
 
@@ -272,6 +272,31 @@ HD_BACKUP ?= ../AMOS_Pro-original-binaries
 
 install-hd: all
 	$(PYTHON) tools/install_hd.py --build $(BUILD) --hd "$(HD)" --backup "$(HD_BACKUP)"
+
+# Phase 7: AMOS for another host (64 bits, AMOS's memory below 4GB):
+# the portable C++, src/host (the runtime and the HAL's backends) and the
+# generated tables. Not complete yet: links what there is and lists what
+# is missing.
+HOST        := $(BUILD)/host
+HOST_SRC    := $(filter-out %_amiga.cpp,$(wildcard src/*/*.cpp)) $(GEN)/lib_direct.cpp $(GEN)/w_direct.cpp \
+               $(GEN)/wentry_table.cpp $(HOST)/host_symbols.cpp
+HOST_OBJ    := $(patsubst %.cpp,$(HOST)/obj/%.o,$(HOST_SRC))
+HOST_FLAGS  := -m64 -Os -std=c++20 -fno-exceptions -fno-rtti -fno-threadsafe-statics -fpack-struct=2 \
+               -Isrc -I$(GEN) -idirafter $(AMIGA_PREFIX)/m68k-amigaos/ndk-include
+ASM_SOURCES := +B.s +W.s +Edit.s +Monitor.s +Verif.s $(wildcard src/*/*.s) $(wildcard extensions/*.s)
+
+$(HOST)/host_symbols.cpp: tools/host_tables.py $(ASM_SOURCES)
+	@mkdir -p $(dir $@)
+	$(PYTHON) tools/host_tables.py --out $@ --implemented amos_call amos_call_all amos_eval amos_call_cc \
+		amos_goto amos_bridge amos_task -- $(ASM_SOURCES)
+
+$(HOST)/obj/%.o: %.cpp $(CXX_GEN)
+	@mkdir -p $(dir $@)
+	g++ $(HOST_FLAGS) -c -o $@ $<
+
+host: $(HOST_OBJ)
+	g++ -m64 -no-pie -o $(HOST)/amos $(HOST_OBJ) 2>&1 | grep -o "undefined reference to .*" | sort -u \
+		| tee $(HOST)/missing.txt | wc -l | sed 's/$$/ symbols missing (build\/host\/missing.txt)/'
 
 # Phase 7: which C++ files compile for another host (tools/host_check.sh)
 host-check: $(CXX_GEN)

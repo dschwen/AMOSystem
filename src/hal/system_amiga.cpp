@@ -63,3 +63,42 @@ void remove_vbl_server(Interrupt *server) { RemIntServer(INTB_VERTB, server); }
 Interrupt *set_interrupt(int32_t n, Interrupt *handler) { return SetIntVector(n, handler); }
 
 } // namespace amos::hal
+
+// RawDoFmt's output routine: d0 the character, a3 the data (the C++
+// function and its data)
+namespace {
+struct FormatOutput {
+    void (*put)(char, void *);
+    void *data;
+};
+}
+extern "C" void hal_format_put_char();
+extern "C" void hal_format_put_char_c(uint32_t c, FormatOutput *o) { o->put(char(c), o->data); }
+asm(R"(
+        .text
+        .globl  _hal_format_put_char
+_hal_format_put_char:
+        movem.l d0-d1/a0-a1,-(sp)
+        move.l  a3,-(sp)
+        and.l   #0xFF,d0
+        move.l  d0,-(sp)
+        jsr     _hal_format_put_char_c
+        addq.l  #8,sp
+        movem.l (sp)+,d0-d1/a0-a1
+        rts
+)");
+
+const void *amos::hal::raw_format(const char *format, const void *args, void (*put)(char, void *), void *data)
+{
+    FormatOutput o = {put, data};
+    // (The NDK's inline RawDoFmt does not compile as C++)
+    register const char *a0 asm("a0") = format;
+    register const void *a1 asm("a1") = args;
+    register void (*a2)() asm("a2") = hal_format_put_char;
+    register FormatOutput *a3 asm("a3") = &o;
+    register struct Library *a6 asm("a6") = EXEC_BASE_NAME;
+    register const void *next asm("d0");
+    asm volatile("jsr %%a6@(-522:W)" : "=r"(next), "+r"(a0), "+r"(a1) : "r"(a2), "r"(a3), "r"(a6)
+                 : "d1", "cc", "memory");
+    return next;
+}

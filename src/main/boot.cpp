@@ -326,7 +326,7 @@ uint8_t *data_zone(uint32_t w_data)
     buffer(&d.Name1, 256);
     buffer(&d.Buffer, TBuffer);
     if (d.Buffer & 3)
-        asm volatile("illegal");
+        halt();
     return a5;
 }
 

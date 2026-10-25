@@ -67,6 +67,10 @@ IORequest *check_io(IORequest *io);          // the request if done, or null
 void abort_io(IORequest *io);
 int32_t wait_io(IORequest *io);
 
+// RawDoFmt: format (exec's %-codes, 16-bit arguments unless l) with args,
+// each character to put(c, data); returns the args past those used
+const void *raw_format(const char *format, const void *args, void (*put)(char c, void *data), void *data);
+
 // Interrupts: a server of the vertical blank; the handler of interrupt n
 // (the old one)
 void add_vbl_server(Interrupt *server);

@@ -30,6 +30,10 @@ extern "C" uint8_t w_sy_in[], w_ec_in[], w_wi_in[];
 
 namespace amos {
 
+// AMOS keeps addresses in 32 bits (another host keeps its memory below 4GB)
+template <typename T> inline T *ptr(uint32_t address) { return reinterpret_cast<T *>(uintptr_t(address)); }
+template <typename T> inline uint32_t address(T *p) { return uint32_t(reinterpret_cast<uintptr_t>(p)); }
+
 // The interpreter registers, as saved by the glue
 struct Ctx {
     uint32_t d6, d7;
@@ -40,7 +44,9 @@ struct Ctx {
 // context of any other task. AMOSPro's, shared with the programs it loads.
 extern "C" uint8_t *amos_bridge;
 
-// The context of the running task (ExecBase->ThisTask)
+// The context of the running task (ExecBase->ThisTask); on another host
+// (src/host) that of its thread
+#if defined(__mc68000__)
 inline Ctx &ctx()
 {
     constexpr int ThisTask = 276;
@@ -49,6 +55,9 @@ inline Ctx &ctx()
     bool main = *reinterpret_cast<const void *const *>(exec + ThisTask) == *reinterpret_cast<void **>(block);
     return *reinterpret_cast<Ctx *>(block + (main ? 4 : 4 + sizeof(Ctx)));
 }
+#else
+Ctx &ctx();
+#endif
 
 // The registers of a call into the assembler: d0-d7/a0-a2. d6/d7 start as
 // the interpreter's (Demande, for one, depends on d7); a3-a6 always are.
@@ -107,7 +116,7 @@ inline void entry_call(const void *entry, Regs &r);
 inline void lib_call(int routine, Regs &r)
 {
     RegFunction f = lib_direct[routine];
-    if (f && lib_direct_entry[routine] == reinterpret_cast<uint32_t>(lib_address(routine))) {
+    if (f && lib_direct_entry[routine] == address(lib_address(routine))) {
         Ctx &c = ctx();
         Ctx saved = c;
         c.d6 = r.d[6];
@@ -131,6 +140,15 @@ inline void lib_eval(int routine, Regs &r) { amos_eval(&r, lib_address(routine))
 [[noreturn]] inline void lib_jump(int routine, uint32_t d0) { amos_goto(lib_address(routine), d0); }
 
 extern "C" [[noreturn]] void interp_error(uint32_t n, uint32_t first, uint32_t extension, uint32_t messages);
+
+// Stops the machine (the 68000's illegal instruction): a state that cannot be
+[[noreturn]] inline void halt()
+{
+#if defined(__mc68000__)
+    asm volatile("illegal");
+#endif
+    __builtin_trap();
+}
 
 // Raise run-time error n (L_GoError, L_Error: interp/control.cpp)
 [[noreturn]] inline void error(uint32_t n) { interp_error(n, 19, uint32_t(-1), 0); }
@@ -159,10 +177,10 @@ template <typename F> inline void w_direct_call(F f, Regs &r)
         a.d[i] = r.d[i];
     for (int i = 0; i < 3; i++)
         a.a[i] = r.a[i];
-    a.a[3] = reinterpret_cast<uint32_t>(c.a3);
-    a.a[4] = reinterpret_cast<uint32_t>(c.a4);
-    a.a[5] = reinterpret_cast<uint32_t>(c.a5);
-    a.a[6] = reinterpret_cast<uint32_t>(c.a6);
+    a.a[3] = address(c.a3);
+    a.a[4] = address(c.a4);
+    a.a[5] = address(c.a5);
+    a.a[6] = address(c.a6);
     Ctx saved = c;
     c.d6 = r.d[6];
     c.d7 = r.d[7];
@@ -192,14 +210,14 @@ inline void entry_call(const void *entry, Regs &r)
 
 inline void sy_call(int function, Regs &r)
 {
-    if (wdata().SyVect == reinterpret_cast<uint32_t>(::w_sy_in))
+    if (wdata().SyVect == address(::w_sy_in))
         if (WFunction f = sy_direct[function])
             return w_direct_call(f, r);
     amos_call(&r, reinterpret_cast<const uint8_t *>(wdata().SyVect) + 4 * function);
 }
 inline void ec_call(int function, Regs &r)
 {
-    if (wdata().EcVect == reinterpret_cast<uint32_t>(::w_ec_in))
+    if (wdata().EcVect == address(::w_ec_in))
         if (WFunction f = ec_direct[function])
             return w_direct_call(f, r);
     amos_call(&r, reinterpret_cast<const uint8_t *>(wdata().EcVect) + 4 * function);
@@ -211,7 +229,7 @@ namespace amos {
 
 inline void wi_call(int function, Regs &r)
 {
-    if (wdata().WiVect == reinterpret_cast<uint32_t>(::w_wi_in))
+    if (wdata().WiVect == address(::w_wi_in))
         return w_direct_call([function](AllRegs *a) { ::w_window(uint32_t(function), a); }, r);
     amos_call(&r, reinterpret_cast<const uint8_t *>(wdata().WiVect) + 4 * function);
 }
@@ -261,7 +279,6 @@ inline uint32_t peek_l(const void *p) { return *static_cast<const uint32_t *>(p)
 inline void poke_w(void *p, uint16_t v) { *static_cast<uint16_t *>(p) = v; }
 inline void poke_l(void *p, uint32_t v) { *static_cast<uint32_t *>(p) = v; }
 
-template <typename T> inline T *ptr(uint32_t address) { return reinterpret_cast<T *>(address); }
-template <typename T> inline uint32_t address(T *p) { return reinterpret_cast<uint32_t>(p); }
+
 
 } // namespace amos

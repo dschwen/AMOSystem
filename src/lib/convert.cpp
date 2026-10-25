@@ -83,7 +83,7 @@ char *long_to_bin(char *out, uint32_t value, int32_t digits)
 // output. Out: a0 after the text.
 extern "C" uint32_t lib_long_to_asc(amos::RegFrame &r)
 {
-    r.a[0] = reinterpret_cast<uint32_t>(amos::long_to_dec(reinterpret_cast<char *>(r.a[0]),
+    r.a[0] = amos::address(amos::long_to_dec(amos::ptr<char>(r.a[0]),
                                                            static_cast<int32_t>(r.d[0]),
                                                            static_cast<int32_t>(r.d[3]),
                                                            static_cast<uint16_t>(r.d[4]) != 0));
@@ -93,7 +93,7 @@ extern "C" uint32_t lib_long_to_asc(amos::RegFrame &r)
 // L_LongToDec: d0 = value, a0 = output, no leading zeros or space
 extern "C" uint32_t lib_long_to_dec(amos::RegFrame &r)
 {
-    r.a[0] = reinterpret_cast<uint32_t>(amos::long_to_dec(reinterpret_cast<char *>(r.a[0]),
+    r.a[0] = amos::address(amos::long_to_dec(amos::ptr<char>(r.a[0]),
                                                            static_cast<int32_t>(r.d[0]), -1, false));
     return 0;
 }

@@ -13,13 +13,13 @@ wait 0.5
 glide 0 79
 wait 0.5
 button 3 up
-wait 6
+wait 10
 glide -3000 -3000
 wait 0.2
 glide 628 173
 wait 0.4
 click 1
-wait 1
+wait 3
 glide -3000 -3000
 wait 0.2
 glide 134 303

@@ -45,11 +45,7 @@ constexpr uint16_t C_CodeD = 0x6543;
 // The flags of the token table (+Equ.s)
 constexpr uint16_t L_FFloat = 0x1000, L_FAngle = 0x2000, L_FMath = 0x3000, L_VRes = 0x4000;
 
-[[noreturn]] void illegal()
-{
-    asm volatile("illegal");
-    __builtin_unreachable();
-}
+[[noreturn]] void illegal() { halt(); }
 
 uint8_t *library(uint32_t n) { return ptr<uint8_t>(idata().AdTokens[n]); }
 

@@ -226,9 +226,22 @@ their libraries before AMOS's data zone exists (`files_start`,
 Amiga backends for a 32-bit host, syntax only, with the NDK's headers for
 the Amiga's structures (`-fpack-struct=2`: the 68000 aligns 32-bit fields
 on 2 bytes; the generated layouts are packed so themselves). All of them
-compile. What a host still lacks to link: the assembler (the register
-glue, the jump and vector tables, the stack-resetting entries) and the
-backends.
+compile.
+
+`make host` links the C++ into a Linux x86-64 program, `build/host/amos`,
+with `src/host`: the bridge (`amos_call` and the others call the C++
+behind a glue entry through the WEntry table), the HAL's backends (files:
+POSIX; memory: below 4GB with `MAP_32BIT`, as AMOS keeps its addresses in
+32 bits; the display, Workbench and chips: stubs so far) and
+`build/host/host_symbols.cpp` (`tools/host_tables.py`: each assembler
+label the C++ refers to becomes an object of its own, an address the C++
+keeps as on the Amiga). It links completely, with no assembler. It does
+not run AMOS yet: still to come are the start (`main`), the stack exits
+of the interpreter (setjmp-style), the library lists of the assembler
+(AMOSJmps...), the display, input and audio backends, and the byte order:
+AMOS's data (programs, banks, token tables) are big-endian, which
+`peek`/`poke` can swap on a little-endian host, but direct accesses to such
+data have to be found.
 
 ### Deliberate differences from the original
 
