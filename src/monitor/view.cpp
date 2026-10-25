@@ -13,8 +13,11 @@
 #include <graphics/gfx.h>
 #include <graphics/rastport.h>
 
-#define GRAPHICS_BASE_NAME (reinterpret_cast<struct GfxBase *>(amos::wdata().GfxBase))
-#include <proto/graphics.h>
+#include <graphics/gfxbase.h>
+#include <graphics/rastport.h>
+#include <graphics/text.h>
+
+#include "hal/gfx.h"
 
 #undef NTSC
 
@@ -75,17 +78,17 @@ void draw_text(const Text &t)
     if (t.y >= 0)
         rp->cp_y = t.y;
     if (t.back >= 0)
-        SetBPen(rp, uint32_t(t.back));
+        hal::set_b_pen(rp, uint32_t(t.back));
     if (t.front >= 0)
-        SetAPen(rp, uint32_t(t.front));
+        hal::set_a_pen(rp, uint32_t(t.front));
     if (t.mode >= 0)
-        SetDrMd(rp, uint32_t(t.mode));
+        hal::set_draw_mode(rp, uint32_t(t.mode));
     const char *s = *t.text ? t.text : reinterpret_cast<const char *>(number_text());
     uint16_t n = 0;
     while (s[n])
         n++;
-    Text(rp, s, n);
-    TextLength(rp, s, n);
+    hal::text(rp, s, n);
+    hal::text_length(rp, s, n);
     // (the assembler added the number of characters, the library's call
     // having kept its d0)
     rp->cp_x = int16_t(rp->cp_x + n - 8);

@@ -9,8 +9,11 @@
 
 #include "w/w.h"
 
-#define GRAPHICS_BASE_NAME (reinterpret_cast<struct GfxBase *>(amos::wdata().GfxBase))
-#include <proto/graphics.h>
+#include <graphics/gfxbase.h>
+#include <graphics/rastport.h>
+#include <graphics/text.h>
+
+#include "hal/gfx.h"
 
 using namespace amos;
 using namespace amos::w;
@@ -90,7 +93,7 @@ bool collide(const uint8_t *bank, const Placed &source, int16_t x, int16_t y, ui
     c.bltalwm = 0xFFFF;
     c.bltafwm = 0xFFFF >> shift;
     c.bltsize = uint16_t(height << 6 | words);
-    WaitBlit();
+    hal::wait_blit();
     return !(c.dmaconr & BlitZero);
 }
 
@@ -207,12 +210,12 @@ int32_t sprite_collisions(WData &d, uint16_t number, uint32_t first, uint16_t la
 int32_t collisions(AllRegs *r, int32_t (*test)(WData &, uint16_t, uint32_t, uint16_t))
 {
     WData &d = wdata();
-    OwnBlitter();
-    WaitBlit();
+    hal::own_blitter();
+    hal::wait_blit();
     for (uint32_t &t : d.TColl)
         t = 0;
     int32_t hit = test(d, uint16_t(r->d[1]), r->d[2], uint16_t(r->d[3]));
-    DisownBlitter();
+    hal::disown_blitter();
     return hit;
 }
 

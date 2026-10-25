@@ -194,6 +194,30 @@ which are in `+ILib.s`), the keyboard and joystick functions, `Locate`,
 the banks (`Bnk.*`, the bank instructions) and lists (`Lst.*` of `+B.s`),
 the number to text conversions.
 
+### The portability layer (`src/hal`)
+
+Phase 7 of the plan separates what AMOS needs from the host. The C++
+reaches the system through `src/hal`, each part with an Amiga backend:
+
+- `hal/files.h` (`files_amiga.cpp`: dos.library): files, locks,
+  directories, delete/rename, execute. Only the start-up (`main/boot.cpp`,
+  which runs before the data zone exists) calls dos.library itself.
+- `hal/system.h` (`system_amiga.cpp`: exec.library): the free memory,
+  Forbid/Permit.
+- `hal/gfx.h` (`gfx_amiga.cpp`: graphics.library, diskfont.library): the
+  RastPort drawing AMOS uses, fonts, bitmaps, clipping regions, the
+  blitter's ownership, the display's frames.
+- `hal/chips.h`: the custom chips and CIA A, which AMOS.library programs
+  directly (copper lists, bitplanes, sprites, the blitter, the audio, the
+  joysticks). On the Amiga they are the hardware; another host gives an
+  emulation of the registers that its renderer reads to compose each frame
+  from the copper lists and bitplanes AMOS builds, as the chips do.
+
+The values stay AmigaDOS's and the structures graphics.library's, which
+another host then provides. Still Amiga-specific: the instructions that
+call Amiga libraries and devices (`lib/devices.cpp`), ARexx, the file
+selector's task, the input handler and the audio interrupts.
+
 ### Deliberate differences from the original
 
 Bugs of the assembler that the C++ fixes. Everything else keeps the

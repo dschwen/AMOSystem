@@ -10,6 +10,7 @@
 // data zone it is given, never the task's context.
 
 #include "w/w.h"
+#include "hal/chips.h"
 
 using namespace amos;
 using namespace amos::w;
@@ -1150,15 +1151,15 @@ int16_t Animator::operand(uint16_t op)
         static const uint8_t directions[16] = {0, 2, 10, 8, 1, 0, 0, 9, 5, 0, 0, 0, 4, 6, 0, 0};
         uint16_t counters = (&chips().joy0dat)[port];
         uint16_t bits = 0;
-        if (!(*ptr<volatile uint8_t>(0xBFE001) & (1 << ((6 + port) & 7))))
+        if (!(hal::cia_a_pra() & (1 << ((6 + port) & 7))))
             bits |= 1 << 4;
         bits |= directions[(counters >> 6 & 0x0C) | (counters & 3)];
         return int16_t(bits);
     }
     case AmM1:
-        return *ptr<volatile uint8_t>(0xBFE001) & 0x40 ? 0 : -1;
+        return hal::cia_a_pra() & 0x40 ? 0 : -1;
     case AmM2:
-        return *ptr<volatile uint8_t>(0xDFF016) & 0x04 ? -1 : 0;
+        return *reinterpret_cast<volatile uint8_t *>(&hal::custom_word(0x016)) & 0x04 ? -1 : 0;
     case AmXS:
     case AmYS:
     case AmXH:
@@ -1171,7 +1172,7 @@ int16_t Animator::operand(uint16_t op)
     case AmHaz: {
         int16_t mask = evaluate().result;
         uint32_t v = uint32_t(d.AmSeed) * 0x3171;
-        v = (v & 0xFFFF0000u) | uint16_t(v + *ptr<volatile uint16_t>(0xDFF006) + 1);
+        v = (v & 0xFFFF0000u) | uint16_t(v + hal::custom_word(0x006) + 1);
         d.AmSeed = uint16_t(v);
         return int16_t(uint16_t(v >> 8) & mask);
     }

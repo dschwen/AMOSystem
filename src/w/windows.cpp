@@ -16,8 +16,11 @@
 #include "core/amiga.h"
 #include "w/w.h"
 
-#define GRAPHICS_BASE_NAME (reinterpret_cast<struct GfxBase *>(amos::wdata().GfxBase))
-#include <proto/graphics.h>
+#include <graphics/gfxbase.h>
+#include <graphics/rastport.h>
+#include <graphics/text.h>
+
+#include "hal/gfx.h"
 
 using namespace amos;
 using namespace amos::w;
@@ -279,8 +282,8 @@ struct Win {
 
     static void own()
     {
-        OwnBlitter();
-        WaitBlit();
+        hal::own_blitter();
+        hal::wait_blit();
     }
 
     // ClFin: clear rows lines of width bytes from offset, in the paper
@@ -298,15 +301,15 @@ struct Win {
             for (int p = 0, bit = w->WiNPlan; bit >= 0; p++, bit--) {
                 if (masked(bit))
                     continue;
-                WaitBlit();
+                hal::wait_blit();
                 c.bltdpt = plane(p) + offset;
                 c.bltcdat = paper_word(p);
                 c.bltsize = size;
             }
             offset += line();
         } while (n-- != 0);
-        WaitBlit();
-        DisownBlitter();
+        hal::wait_blit();
+        hal::disown_blitter();
         return 0;
     }
 
@@ -328,7 +331,7 @@ struct Win {
             for (int p = 0, bit = w->WiNPlan; bit >= 0; p++, bit--) {
                 if (masked(bit))
                     continue;
-                WaitBlit();
+                hal::wait_blit();
                 c.bltcpt = plane(p) + from;
                 c.bltdpt = plane(p) + to;
                 c.bltsize = size;
@@ -336,8 +339,8 @@ struct Win {
             from += delta;
             to += delta;
         } while (n-- != 0);
-        WaitBlit();
-        DisownBlitter();
+        hal::wait_blit();
+        hal::disown_blitter();
     }
 
     // ScGFin: rows lines from offset one character to the left. The
@@ -364,13 +367,13 @@ struct Win {
                 uint8_t first = a[1];
                 c.bltbpt = a + 2;
                 c.bltsize = size;
-                WaitBlit();
+                hal::wait_blit();
                 a[0] = first;
                 a[last] = paper_byte(p);
             }
             offset += line();
         } while (n-- != 0);
-        DisownBlitter();
+        hal::disown_blitter();
         return 0;
     }
 
@@ -394,12 +397,12 @@ struct Win {
                 c.bltbpt = a;
                 c.bltdpt = a;
                 c.bltsize = size;
-                WaitBlit();
+                hal::wait_blit();
                 a[0] = paper_byte(p);
             }
             offset += line();
         } while (n-- != 0);
-        DisownBlitter();
+        hal::disown_blitter();
         return 0;
     }
 

@@ -337,7 +337,7 @@ void every(volatile MusicData &m, volatile MusTable &t)
     uint16_t start = t.MuStart;
     t.MuStop = start;
     t.MuStart = 0;
-    w16(Custom + DmaCon) = uint16_t((((stop | start) & m.MuDMAsk)) | 0x8000);
+    w16(CustomAddress + DmaCon) = uint16_t((((stop | start) & m.MuDMAsk)) | 0x8000);
     uint16_t back = m.MuReStart;
     if (!back)
         return;
@@ -366,8 +366,8 @@ void lines(int n)
 {
     // n raster lines
     for (int i = 0; i < n; i++) {
-        uint8_t line = w8(Custom + VHPosR);
-        while (w8(Custom + VHPosR) == line)
+        uint8_t line = w8(CustomAddress + VHPosR);
+        while (w8(CustomAddress + VHPosR) == line)
             ;
     }
 }
@@ -499,7 +499,7 @@ void track_row_effects(volatile MusicData &m, volatile uint8_t *vc, uint32_t chi
         m.mt_break = 1;
         return;
     case 0x0B:      // position jump
-        w16(Custom + 0x180) = 0xFFF;
+        w16(CustomAddress + 0x180) = 0xFFF;
         m.mt_break = 1;
         m.mt_songpos = uint8_t(vc[3] - 1);
         return;
@@ -552,7 +552,7 @@ void track_play_voice(volatile MusicData &m, uint32_t row, uint32_t at, volatile
     uint16_t period = tw(vc, 0) & 0x0FFF;
     if (period) {
         if (!tw(vc, 8)) {
-            w16(Custom + DmaCon) = tw(vc, 0x1A);
+            w16(CustomAddress + DmaCon) = tw(vc, 0x1A);
         } else {
             uint8_t effect = vc[2] & 0x0F;
             if (effect == 5 || effect == 3) {
@@ -569,7 +569,7 @@ void track_play_voice(volatile MusicData &m, uint32_t row, uint32_t at, volatile
                     vc[0x14] = 1;
             } else {
                 tw(vc, 0x10) = period;
-                w16(Custom + DmaCon) = tw(vc, 0x1A);
+                w16(CustomAddress + DmaCon) = tw(vc, 0x1A);
                 vc[0x19] = 0;
                 w32(chip) = tl(vc, 4);
                 w16(chip + 4) = tw(vc, 8);
@@ -619,7 +619,7 @@ exit:
     // the DMA: once the hardware took the new sounds
     if (uint16_t dma = m.mt_dmacon) {
         lines(5);
-        w16(Custom + DmaCon) = dma;
+        w16(CustomAddress + DmaCon) = dma;
     }
 }
 
@@ -642,7 +642,7 @@ void tracker(volatile MusicData &m)
         m.Track_Stop = 0;
         for (uint32_t v = 0; v < 4; v++)
             w16(audio(v) + 8) = 0;
-        w16(Custom + DmaCon) = 0xF;
+        w16(CustomAddress + DmaCon) = 0xF;
     }
 }
 
@@ -778,7 +778,7 @@ void ext_music_vbl()
         if (!decrement(c))
             step(m, t, vo, v, m.MuChip[v], started);
     }
-    w16(Custom + DmaCon) = uint16_t(started & m.MuDMAsk);
+    w16(CustomAddress + DmaCon) = uint16_t(started & m.MuDMAsk);
     if (counting)
         return;
     // the music has ended: the one before it again
@@ -798,7 +798,7 @@ void ext_music_vbl()
 void ext_music_sami(SampleInt *si)
 {
     volatile SampleInt &s = *si;
-    uint32_t chip = Custom + s.Sami_reg;
+    uint32_t chip = CustomAddress + s.Sami_reg;
     uint32_t pos = s.Sami_pos;
     if (pos >= s.Sami_long) {
         uint32_t old = pos;

@@ -22,8 +22,11 @@
 #include <graphics/gfx.h>
 #include <graphics/rastport.h>
 
-#define GRAPHICS_BASE_NAME (reinterpret_cast<struct GfxBase *>(amos::wdata().GfxBase))
-#include <proto/graphics.h>
+#include <graphics/gfxbase.h>
+#include <graphics/rastport.h>
+#include <graphics/text.h>
+
+#include "hal/gfx.h"
 
 // graphics/gfxbase.h defines NTSC, the name of an AMOS.library function
 #undef NTSC
@@ -163,7 +166,7 @@ void print_colours(uint8_t paper, uint8_t pen)
 void set_writing(Dialog *d, uint16_t mode)
 {
     d->Dia_Writing = mode;
-    SetDrMd(rastport(), mode);
+    hal::set_draw_mode(rastport(), mode);
 }
 
 // ---- reading the program ---------------------------------------------------------
@@ -604,7 +607,7 @@ void call_function(Run &r, int f, int16_t &n)
         uint32_t w = 0;
         if (uint8_t l = string_length(s))
             w = static_cast<uint32_t>(static_cast<int16_t>(
-                TextLength(rastport(), reinterpret_cast<STRPTR>(const_cast<uint8_t *>(string_chars(s))), l)));
+                hal::text_length(rastport(), reinterpret_cast<STRPTR>(const_cast<uint8_t *>(string_chars(s))), l)));
         if (f == FCx) {
             int32_t c = static_cast<int32_t>(d->Dia_Sx - w);
             w = static_cast<uint32_t>(c < 0 ? 0 : c) >> 1;
@@ -873,15 +876,15 @@ void text_at(Run &r, int32_t x, int32_t y, uint32_t s, int32_t ink)
     Dialog *d = r.d;
     struct RastPort *rp = rastport();
     if (ink >= 0)
-        SetAPen(rp, static_cast<ULONG>(ink));
+        hal::set_a_pen(rp, static_cast<ULONG>(ink));
     set_box(d, x, y, x, y);
     rp->cp_x = static_cast<WORD>(x + d->Dia_BaseX);
     rp->cp_y = static_cast<WORD>(y + d->Dia_BaseY + rp->TxBaseline);
     if (uint8_t l = string_length(s)) {
         auto chars = reinterpret_cast<STRPTR>(const_cast<uint8_t *>(string_chars(s)));
-        Text(rp, chars, l);
+        hal::text(rp, chars, l);
         d->Dia_YB = static_cast<uint16_t>(d->Dia_YB + rp->TxHeight);
-        d->Dia_XB = static_cast<uint16_t>(d->Dia_XB + TextLength(rp, chars, l));
+        d->Dia_XB = static_cast<uint16_t>(d->Dia_XB + hal::text_length(rp, chars, l));
     }
 }
 
@@ -891,7 +894,7 @@ void vtext(Run &r, int32_t x, int32_t y, uint32_t s, int32_t ink)
     Dialog *d = r.d;
     struct RastPort *rp = rastport();
     if (ink >= 0)
-        SetAPen(rp, static_cast<ULONG>(ink));
+        hal::set_a_pen(rp, static_cast<ULONG>(ink));
     set_box(d, x, y, x, y);
     int16_t px = static_cast<int16_t>(x + d->Dia_BaseX);
     int16_t py = static_cast<int16_t>(y + d->Dia_BaseY + rp->TxBaseline);
@@ -899,7 +902,7 @@ void vtext(Run &r, int32_t x, int32_t y, uint32_t s, int32_t ink)
     for (uint8_t l = string_length(s); l; l--, c++) {
         rp->cp_x = px;
         rp->cp_y = py;
-        Text(rp, reinterpret_cast<STRPTR>(const_cast<uint8_t *>(c)), 1);
+        hal::text(rp, reinterpret_cast<STRPTR>(const_cast<uint8_t *>(c)), 1);
         py = static_cast<int16_t>(py + rp->TxHeight);
         d->Dia_XB = static_cast<uint16_t>(d->Dia_XB + rp->TxHeight);
     }
@@ -1215,7 +1218,7 @@ void slider_zone(Run &r, bool vertical)
     keep_buffer(d);
     z->Dia_ZoRChange = routine(r);
     slider_draw(s, false);
-    SetDrMd(rastport(), d->Dia_Writing);
+    hal::set_draw_mode(rastport(), d->Dia_Writing);
 }
 
 // BUtton number,x,y,width,height,position,min,max;[draw][change]
@@ -1349,9 +1352,9 @@ void instruction(Run &r, int i, int32_t *p)
         if (p[2] >= 0)
             rp->AOlPen = static_cast<UBYTE>(p[2]);
         if (p[1] >= 0)
-            SetBPen(rp, static_cast<ULONG>(p[1]));
+            hal::set_b_pen(rp, static_cast<ULONG>(p[1]));
         if (p[0] >= 0)
-            SetAPen(rp, static_cast<ULONG>(p[0]));
+            hal::set_a_pen(rp, static_cast<ULONG>(p[0]));
         break;
     case ISetFont:
         if (p[0] >= 0)
@@ -1381,7 +1384,7 @@ void instruction(Run &r, int i, int32_t *p)
         int32_t x2 = p[2] + static_cast<int32_t>(d->Dia_BaseX), y2 = p[3] + static_cast<int32_t>(d->Dia_BaseY);
         if (x2 <= x1 || y2 <= y1)
             bad_call(r);
-        RectFill(rp, x1, y1, x2, y2);
+        hal::rect_fill(rp, x1, y1, x2, y2);
         break;
     }
     case IGSquare: {
@@ -1396,14 +1399,14 @@ void instruction(Run &r, int i, int32_t *p)
         const WORD square[8] = {x1, y2, x2, y2, x2, y1, x1, y1};
         for (int k = 0; k < 8; k++)
             points[k] = square[k];
-        PolyDraw(rp, 4, points);
+        hal::poly_draw(rp, 4, points);
         break;
     }
     case IGLine:
         set_box(d, p[0], p[1], p[2], p[3]);
         rp->cp_x = static_cast<WORD>(p[0] + d->Dia_BaseX);
         rp->cp_y = static_cast<WORD>(p[1] + d->Dia_BaseY);
-        Draw(rp, p[2] + static_cast<int32_t>(d->Dia_BaseX), p[3] + static_cast<int32_t>(d->Dia_BaseY));
+        hal::draw(rp, p[2] + static_cast<int32_t>(d->Dia_BaseX), p[3] + static_cast<int32_t>(d->Dia_BaseY));
         break;
     case IGEllipse:
         // (XA/YA get x, XB/YB y)
@@ -1411,17 +1414,17 @@ void instruction(Run &r, int i, int32_t *p)
             bad_call(r);
         d->Dia_XA = d->Dia_YA = static_cast<uint16_t>(p[0]);
         d->Dia_XB = d->Dia_YB = static_cast<uint16_t>(p[1]);
-        DrawEllipse(rp, p[0] + static_cast<int32_t>(d->Dia_BaseX), p[1] + static_cast<int32_t>(d->Dia_BaseY), p[2],
+        hal::draw_ellipse(rp, p[0] + static_cast<int32_t>(d->Dia_BaseX), p[1] + static_cast<int32_t>(d->Dia_BaseY), p[2],
                     p[3]);
         break;
     case IGPlot:
         // (XA/YA get x, XB/YB y+1, and the base is not added: as in the
         // assembler)
         if (p[2] >= 0)
-            SetAPen(rp, static_cast<ULONG>(p[2]));
+            hal::set_a_pen(rp, static_cast<ULONG>(p[2]));
         d->Dia_XA = d->Dia_YA = static_cast<uint16_t>(p[0]);
         d->Dia_XB = d->Dia_YB = static_cast<uint16_t>(p[1] + 1);
-        WritePixel(rp, p[0], p[1]);
+        hal::write_pixel(rp, p[0], p[1]);
         break;
     case IJump:
     case ILabel:
@@ -2050,7 +2053,7 @@ void slider_draw(Slider *s, bool active)
     for (int i = 0; i < 8; i++)
         c.d[i] = static_cast<uint32_t>(static_cast<int16_t>(colours[i]));
     ec_call(ec::SetSli, c);
-    SetDrMd(rastport(), 1);
+    hal::set_draw_mode(rastport(), 1);
     auto words = [s](Regs &w) {
         const uint16_t *v = &s->Sl_Sx;
         for (int i = 0; i < 7; i++)
@@ -2072,7 +2075,7 @@ void slider_draw(Slider *s, bool active)
 void zone_slider_draw(Run &r, uint8_t *e)
 {
     slider_draw(slider(e), false);
-    SetDrMd(rastport(), r.d->Dia_Writing);
+    hal::set_draw_mode(rastport(), r.d->Dia_Writing);
 }
 
 // Sl_Call: routine offset of a slider (0 update, 4 back, 8 on, 12 moved).
@@ -2625,7 +2628,7 @@ zones:
                 break;
             d->Dia_Return = z->Dia_ZoNumber;
             slider_click(slider(e), &r);
-            SetDrMd(rastport(), d->Dia_Writing);
+            hal::set_draw_mode(rastport(), d->Dia_Writing);
             z->Dia_ZoFlags &= ~ZoQuit;
             break;
         case LiMark: {
@@ -2994,7 +2997,7 @@ void check_program(Check &c, Dialog *d, uint8_t *&labels)
 
 // ---- the interface of dialog.h ------------------------------------------------------
 
-void amos::dia_wait_mul() { WaitTOF(); }
+void amos::dia_wait_mul() { hal::wait_frame(); }
 
 void amos::dia_patch()
 {

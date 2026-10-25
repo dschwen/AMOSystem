@@ -10,8 +10,11 @@
 #include <dos/dos.h>
 
 #include "hal/files.h"
-#define GRAPHICS_BASE_NAME (amos::ptr<struct GfxBase>(amos::wdata().GfxBase))
-#include <proto/graphics.h>
+#include <graphics/gfxbase.h>
+#include <graphics/rastport.h>
+#include <graphics/text.h>
+
+#include "hal/gfx.h"
 
 using namespace amos;
 using namespace amos::boot;
@@ -205,7 +208,7 @@ void wait_vbl_multi()
 {
     Regs r;
     sy_call(sy::Test_Cyclique, r);
-    WaitTOF();
+    hal::wait_frame();
 }
 
 // ReCop: the copper lists computed again

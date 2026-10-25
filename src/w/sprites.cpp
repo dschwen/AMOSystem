@@ -14,8 +14,11 @@
 #include "core/amiga.h"
 #include "w/w.h"
 
-#define GRAPHICS_BASE_NAME (reinterpret_cast<struct GfxBase *>(amos::wdata().GfxBase))
-#include <proto/graphics.h>
+#include <graphics/gfxbase.h>
+#include <graphics/rastport.h>
+#include <graphics/text.h>
+
+#include "hal/gfx.h"
 
 using namespace amos;
 using namespace amos::w;
@@ -171,7 +174,7 @@ void unset(uint16_t n)
 uint8_t *copy_column(uint8_t *to, const uint8_t *&from, uint16_t width, uint16_t height)
 {
     auto &c = chips();
-    WaitBlit();
+    hal::wait_blit();
     c.bltcon0 = 0x03AA;
     c.bltcon1 = 0;
     c.bltcmod = uint16_t((width - 1) << 1);
@@ -183,7 +186,7 @@ uint8_t *copy_column(uint8_t *to, const uint8_t *&from, uint16_t width, uint16_t
     c.bltdpt = to;
     c.bltsize = size;
     from += plane;
-    WaitBlit();
+    hal::wait_blit();
     c.bltcpt = const_cast<uint8_t *>(from);
     c.bltdpt = to + 2;
     c.bltsize = size;
@@ -198,7 +201,7 @@ void show()
 {
     WData &d = wdata();
     d.HsChange = 0;
-    OwnBlitter();
+    hal::own_blitter();
     uint8_t *entry = table();
     Sprite *s;
     uint32_t column_size = int16_t(d.HsTCol);
@@ -470,8 +473,8 @@ HsAFini:
         barrier();
         d.MouShow = mouse;
     }
-    WaitBlit();
-    DisownBlitter();
+    hal::wait_blit();
+    hal::disown_blitter();
 }
 
 // HsAct: the sprites whose T_HsTAct changed are set or taken off

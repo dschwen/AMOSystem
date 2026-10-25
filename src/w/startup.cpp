@@ -18,8 +18,11 @@
 #include <graphics/gfxbase.h>
 #include <graphics/text.h>
 
-#define GRAPHICS_BASE_NAME (reinterpret_cast<struct GfxBase *>(amos::wdata().GfxBase))
-#include <proto/graphics.h>
+#include <graphics/gfxbase.h>
+#include <graphics/rastport.h>
+#include <graphics/text.h>
+
+#include "hal/gfx.h"
 
 using namespace amos;
 using namespace amos::w;
@@ -66,7 +69,7 @@ void signal_switcher(int signal)
 void wait_tof(int n)
 {
     while (n--)
-        WaitTOF();
+        hal::wait_frame();
 }
 
 // SetJump: the system's AutoRequest (and EasyRequest from V36) to these,
@@ -111,7 +114,7 @@ void grab_characters(uint8_t *font, uint16_t from, uint16_t to)
         rp->cp_x = 0;
         rp->cp_y = 6;
         char text = char(c);
-        Text(rp, reinterpret_cast<CONST_STRPTR>(&text), 1);
+        hal::text(rp, reinterpret_cast<CONST_STRPTR>(&text), 1);
         const uint8_t *line = ptr<uint8_t>(s->EcLogic[0]);
         for (int y = 0; y < 8; y++, line += int16_t(s->EcTLigne))
             *font++ = *line;
@@ -165,7 +168,7 @@ void free_font()
 struct TextFont *open_font(const char *name)
 {
     struct TextAttr a = {reinterpret_cast<STRPTR>(const_cast<char *>(name)), 8, 0, 0x41};
-    return OpenFont(&a);
+    return hal::open_font(&a, false);
 }
 
 // The parameters of StartAll: d0 AMOS in front, d1 the Amiga-A key (0:
@@ -180,7 +183,7 @@ bool start(AllRegs *r)
     if (version() >= Version20 && d.Stopped) {
         auto stopped = ptr<volatile char>(d.Stopped);
         for (int n = 50 * 5;; n--) {
-            WaitTOF();
+            hal::wait_frame();
             if (*stopped != 'S')
                 break;
             if (!n)
@@ -316,7 +319,7 @@ void end()
     if (d.LayBase)
         CloseLibrary(ptr<struct Library>(d.LayBase));
     if (d.GfxBase && d.DefaultFont)
-        CloseFont(ptr<struct TextFont>(d.DefaultFont));
+        hal::close_font(ptr<struct TextFont>(d.DefaultFont));
 }
 
 } // namespace

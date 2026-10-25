@@ -17,8 +17,11 @@
 #include "core/amiga.h"
 #include "w/w.h"
 
-#define GRAPHICS_BASE_NAME (reinterpret_cast<struct GfxBase *>(amos::wdata().GfxBase))
-#include <proto/graphics.h>
+#include <graphics/gfxbase.h>
+#include <graphics/rastport.h>
+#include <graphics/text.h>
+
+#include "hal/gfx.h"
 
 using namespace amos;
 using namespace amos::w;
@@ -65,8 +68,8 @@ uint16_t mask_left2(int n) { return uint16_t((1 << n) - 1); }
 
 void own()
 {
-    OwnBlitter();
-    WaitBlit();
+    hal::own_blitter();
+    hal::wait_blit();
 }
 
 void call_a0(uint8_t *routine, uint32_t a0)
@@ -252,7 +255,7 @@ uint32_t get_image(Screen *s, uint32_t *entry, uint16_t x, uint16_t y, uint16_t 
         for (uint16_t p = 0; p < planes; p++) {
             c.bltapt = ptr<uint8_t>(s->EcCurrent[p]) + offset;
             c.bltsize = uint16_t(ty << 6) | words;
-            WaitBlit();
+            hal::wait_blit();
         }
     } else {
         // A line at a time, shifted, one word early: the word before is
@@ -274,13 +277,13 @@ uint32_t get_image(Screen *s, uint32_t *entry, uint16_t x, uint16_t y, uint16_t 
                 uint8_t *at = to;
                 from += int16_t(s->EcTLigne);
                 to += line;
-                WaitBlit();
+                hal::wait_blit();
                 poke_w(at, before);
                 poke_w(to, peek_w(to) & last);
             }
         }
     }
-    DisownBlitter();
+    hal::disown_blitter();
     return 0;
 }
 
@@ -466,7 +469,7 @@ void draw(amos::Bob *b, const uint32_t *planes, uint32_t data, uint32_t step, ui
             if (!(which & 1))
                 continue;
             uint8_t *to = ptr<uint8_t>(planes[p]) + offset;
-            WaitBlit();
+            hal::wait_blit();
             blit(to);
         }
     };
@@ -553,7 +556,7 @@ void draw(amos::Bob *b, const uint32_t *planes, uint32_t data, uint32_t step, ui
                 c.bltdpt = to;
                 uint16_t n = lines;
                 do {
-                    WaitBlit();
+                    hal::wait_blit();
                     c.bltadat = 0;
                     c.bltsize = line;
                 } while (--n);
@@ -571,8 +574,8 @@ void draw_now(amos::Bob *b)
     c.bltcmod = b->BbAModD;
     c.bltdmod = b->BbAModD;
     draw(b, s->EcCurrent, b->BbAData, uint32_t(int32_t(int16_t(b->BbTPlan))), b->BbAMask);
-    WaitBlit();
-    DisownBlitter();
+    hal::wait_blit();
+    hal::disown_blitter();
 }
 
 // The limits of b from the clip rectangle of the current screen
@@ -879,13 +882,13 @@ void erase()
         uint16_t which = dc->APlan;
         if (uint16_t colour = b->BbEff) {
             colour--;
-            WaitBlit();
+            hal::wait_blit();
             c.bltdmod = dc->Mod;
             c.bltcon0 = 0x01F0;
             for (uint16_t p = 0; p <= dc->NPlan; p++, colour >>= 1, which >>= 1) {
                 if (!(which & 1))
                     continue;
-                WaitBlit();
+                hal::wait_blit();
                 c.bltadat = colour & 1 ? 0xFFFF : 0;
                 c.bltdpt = ptr<uint8_t>(planes[p]) + offset;
                 c.bltsize = size;
@@ -894,20 +897,20 @@ void erase()
         }
         if (!dc->ABuf)
             continue;
-        WaitBlit();
+        hal::wait_blit();
         c.bltdmod = dc->Mod;
         c.bltapt = ptr<uint8_t>(dc->ABuf);
         c.bltcon0 = 0x09F0;
         for (uint16_t p = 0; p <= dc->NPlan; p++, which >>= 1) {
             if (!(which & 1))
                 continue;
-            WaitBlit();
+            hal::wait_blit();
             c.bltdpt = ptr<uint8_t>(planes[p]) + offset;
             c.bltsize = size;
         }
     }
-    WaitBlit();
-    DisownBlitter();
+    hal::wait_blit();
+    hal::disown_blitter();
 }
 
 // BobAff: save the backgrounds, then draw the bobs of T_BbPrio
@@ -931,13 +934,13 @@ void show()
             b->BbDCpt--;
             uint32_t offset = bytes(dc->AEc);
             uint16_t which = dc->APlan;
-            WaitBlit();
+            hal::wait_blit();
             c.bltdpt = ptr<uint8_t>(dc->ABuf);
             c.bltamod = dc->Mod;
             for (uint16_t p = 0; p <= dc->NPlan; p++, which >>= 1) {
                 if (!(which & 1))
                     continue;
-                WaitBlit();
+                hal::wait_blit();
                 c.bltapt = ptr<uint8_t>(planes[p]) + offset;
                 c.bltsize = dc->ASize;
             }
@@ -948,13 +951,13 @@ void show()
         if (!b->BbASize)
             continue;
         flip(ptr<uint32_t>(b->BbARetour), b->BbRetour);
-        WaitBlit();
+        hal::wait_blit();
         c.bltcmod = b->BbAModD;
         c.bltdmod = b->BbAModD;
         draw(b, ptr<Screen>(b->BbEc)->EcLogic, b->BbAData, b->BbTPlan, b->BbAMask);
     }
-    WaitBlit();
-    DisownBlitter();
+    hal::wait_blit();
+    hal::disown_blitter();
 }
 
 // TPatch: Paste Bob/Icon: entry (a2) at d2,d3 flipped as d1, with

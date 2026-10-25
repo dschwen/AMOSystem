@@ -5,6 +5,7 @@
 #include "core/amos.h"
 
 #include <hardware/custom.h>
+#include "hal/chips.h"
 
 // +W.s, exported under _w_ names
 extern "C" uint8_t w_tabk1[], w_tabk2[], w_tabk3[], w_tabk4[], w_fast_mm[], w_fast_mm2[], w_chip_mm[], w_chip_mm2[], w_free_mm[],
@@ -16,7 +17,7 @@ namespace amos::w {
 constexpr uint16_t DoubleBuffer = 1 << (8 + 5);
 constexpr uint32_t EntNul = 0x80000000;
 
-inline volatile struct Custom &chips() { return *reinterpret_cast<volatile struct Custom *>(0xDFF000); }
+inline volatile struct Custom &chips() { return hal::custom(); }
 
 inline Screen *current_screen() { return ptr<Screen>(wdata().EcCourant); }
 

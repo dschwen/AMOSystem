@@ -8,8 +8,11 @@
 #include <graphics/rastport.h>
 #include <graphics/text.h>
 
-#define GRAPHICS_BASE_NAME (reinterpret_cast<struct GfxBase *>(amos::wdata().GfxBase))
-#include <proto/graphics.h>
+#include <graphics/gfxbase.h>
+#include <graphics/rastport.h>
+#include <graphics/text.h>
+
+#include "hal/gfx.h"
 #define DISKFONT_BASE_NAME (amos::ptr<struct Library>(amos::wdata().FntBase))
 #include <proto/diskfont.h>
 
@@ -85,8 +88,8 @@ void close_font()
     if (!s || !s->EcFontFlag)
         return;
     s->EcFontFlag = 0;
-    CloseFont(ptr<struct TextFont>(peek_l(s->EcText)));
-    SetFont(rastport(), ptr<struct TextFont>(d.DefaultFont));
+    hal::close_font(ptr<struct TextFont>(peek_l(s->EcText)));
+    hal::set_font(rastport(), ptr<struct TextFont>(d.DefaultFont));
 }
 
 // TSFont: font d1 of the list for the current screen (0: the system
@@ -123,10 +126,10 @@ uint32_t set_font(uint16_t n)
             }
         }
     }
-    font = in_memory ? OpenFont(attr) : OpenDiskFont(attr);
+    font = in_memory ? hal::open_font(attr, false) : hal::open_font(attr, true);
     if (!font)
         return 1;
-    SetFont(rastport(), font);
+    hal::set_font(rastport(), font);
     current_screen()->EcFontFlag++;
     return 0;
 }
@@ -145,7 +148,7 @@ void menu_start()
     s->EcNZones = 0;
     set_clip_rect(0, 0, s->EcTx, s->EcTy);
     struct RastPort *rp = rastport();
-    SetDrMd(rp, JAM2);
+    hal::set_draw_mode(rp, JAM2);
     rp->Flags |= AREAOUTLINE;
     rp->LinePtrn = 0xFFFF;
 }

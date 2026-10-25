@@ -21,8 +21,11 @@ extern "C" uint8_t w_con_io[];
 
 #define CONSOLE_BASE_NAME (amos::ptr<struct Device>(amos::peek_l(w_con_io + 20)))
 #include <proto/console.h>
-#define GRAPHICS_BASE_NAME (reinterpret_cast<struct GfxBase *>(amos::wdata().GfxBase))
-#include <proto/graphics.h>
+#include <graphics/gfxbase.h>
+#include <graphics/rastport.h>
+#include <graphics/text.h>
+
+#include "hal/gfx.h"
 
 using namespace amos;
 using namespace amos::w;
@@ -272,7 +275,7 @@ void w_sy_test_cyclic(AllRegs *)
     chips().dmacon = 0x000F;
     *reinterpret_cast<volatile char *>(name) = 'W';
     while (*reinterpret_cast<volatile char *>(name) == 'W')
-        WaitTOF();
+        hal::wait_frame();
     add_vbl();
     if (was_here)
         amos_wb(1);

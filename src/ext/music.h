@@ -7,6 +7,7 @@
 #pragma once
 
 #include "core/amos.h"
+#include "hal/chips.h"
 
 extern "C" amos::MusicData music_data;
 
@@ -40,18 +41,18 @@ inline volatile MusWave &wave_at(uint32_t at) { return *ptr<volatile MusWave>(at
 
 // ---- the hardware ----------------------------------------------------------
 
-constexpr uint32_t Custom = 0xDFF000;
+constexpr uint32_t CustomAddress = hal::CustomBase;
 constexpr uint32_t DmaCon = 0x96, IntEna = 0x9A, IntReq = 0x9C, IntEnaR = 0x1C, VHPosR = 0x06;
 constexpr uint32_t Audio = 0xA0;    // the registers of voice 0, 16 bytes a voice
 inline volatile uint16_t &w16(uint32_t at) { return *ptr<volatile uint16_t>(at); }
 inline volatile uint32_t &w32(uint32_t at) { return *ptr<volatile uint32_t>(at); }
 inline uint8_t peek_b(const void *p) { return *static_cast<const uint8_t *>(p); }
 inline volatile uint8_t &w8(uint32_t at) { return *ptr<volatile uint8_t>(at); }
-inline volatile uint16_t &custom(uint32_t r) { return w16(Custom + r); }
-inline volatile uint8_t &cia_pra() { return w8(0xBFE001); }
+inline volatile uint16_t &custom(uint32_t r) { return hal::custom_word(r); }
+inline volatile uint8_t &cia_pra() { return hal::cia_a_pra(); }
 // An audio channel's (or the dummy registers of a voice taken from the
 // music): +0 address, +4 length, +6 period, +8 volume, +10 data
-inline uint32_t audio(uint32_t v) { return Custom + Audio + 16 * v; }
+inline uint32_t audio(uint32_t v) { return CustomAddress + Audio + 16 * v; }
 
 // ---- music_play.cpp: the interrupt side -----------------------------------
 

@@ -16,6 +16,7 @@
 
 #include "core/source.h"
 #include "interp/interp.h"
+#include "hal/chips.h"
 
 using namespace amos;
 using namespace amos::interp;
@@ -390,7 +391,7 @@ void test_force()
             lib_call(L_MenuKeyExplore, k);
         }
         // the right mouse button
-        if (!(*reinterpret_cast<volatile uint16_t *>(0xDFF016) & (1 << 10))) {
+        if (!(hal::custom_word(0x016) & (1 << 10))) {
             Regs g;
             lib_call(L_MnGere, g);
             if (g.d[0])

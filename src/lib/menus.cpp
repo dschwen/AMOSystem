@@ -21,8 +21,11 @@
 #include <graphics/gfx.h>
 #include <graphics/rastport.h>
 
-#define GRAPHICS_BASE_NAME (reinterpret_cast<struct GfxBase *>(amos::wdata().GfxBase))
-#include <proto/graphics.h>
+#include <graphics/gfxbase.h>
+#include <graphics/rastport.h>
+#include <graphics/text.h>
+
+#include "hal/gfx.h"
 
 // graphics/gfxbase.h defines NTSC, the name of an AMOS.library function
 #undef NTSC
@@ -133,10 +136,10 @@ void monitor_patch(int offset)
 
 // ---- drawing attributes (ObInkA... in the assembler) --------------------
 
-void ink_a(uint32_t pen) { SetAPen(rastport(), pen); }
-void ink_b(uint32_t pen) { SetBPen(rastport(), pen); }
+void ink_a(uint32_t pen) { hal::set_a_pen(rastport(), pen); }
+void ink_b(uint32_t pen) { hal::set_b_pen(rastport(), pen); }
 void ink_c(uint32_t pen) { rastport()->AOlPen = static_cast<UBYTE>(pen); }
-void write_mode(uint32_t mode) { SetDrMd(rastport(), mode); }
+void write_mode(uint32_t mode) { hal::set_draw_mode(rastport(), mode); }
 void pattern(uint32_t n) { ec_fn(ec::Pattern, n); }
 void outline(bool on)
 {
@@ -309,9 +312,9 @@ Size draw_object(uint32_t object, uint16_t a, uint16_t b, uint16_t c, int16_t bx
             if (draw) {
                 rp->cp_x = static_cast<WORD>(x + bx);
                 rp->cp_y = static_cast<WORD>(y + rp->TxBaseline + by);
-                Text(rp, text, length);
+                hal::text(rp, text, length);
             }
-            x = static_cast<int16_t>(x + TextLength(rp, text, length));
+            x = static_cast<int16_t>(x + hal::text_length(rp, text, length));
             y = static_cast<int16_t>(y + rp->TxHeight);
             break;
         }
@@ -334,7 +337,7 @@ Size draw_object(uint32_t object, uint16_t a, uint16_t b, uint16_t c, int16_t bx
             x = static_cast<int16_t>(x2 + 1);
             y = static_cast<int16_t>(y2 + 1);
             if (draw)
-                RectFill(rp, static_cast<int16_t>(x1 + bx), static_cast<int16_t>(y1 + by),
+                hal::rect_fill(rp, static_cast<int16_t>(x1 + bx), static_cast<int16_t>(y1 + by),
                          static_cast<int16_t>(x2 + bx), static_cast<int16_t>(y2 + by));
             break;
         }
@@ -348,7 +351,7 @@ Size draw_object(uint32_t object, uint16_t a, uint16_t b, uint16_t c, int16_t bx
             x = static_cast<int16_t>(x2 + 1);
             y = static_cast<int16_t>(y2 + 1);
             if (draw)
-                Draw(rp, static_cast<int16_t>(x2 + bx), static_cast<int16_t>(y2 + by));
+                hal::draw(rp, static_cast<int16_t>(x2 + bx), static_cast<int16_t>(y2 + by));
             break;
         }
         case ObEllipse: {
@@ -360,7 +363,7 @@ Size draw_object(uint32_t object, uint16_t a, uint16_t b, uint16_t c, int16_t bx
             x = static_cast<int16_t>(x + rx + 1);
             y = static_cast<int16_t>(y + ry + 1);
             if (draw)
-                DrawEllipse(rp, static_cast<int16_t>(cx + bx), static_cast<int16_t>(cy + by), rx, ry);
+                hal::draw_ellipse(rp, static_cast<int16_t>(cx + bx), static_cast<int16_t>(cy + by), rx, ry);
             break;
         }
         case ObBob:
@@ -609,7 +612,7 @@ void draw_branch(MenuItem *m, int16_t x, int16_t y)
             ink_a(m->MnInkB1);
             ink_c(m->MnInkC1);
             write_mode(1);
-            RectFill(rp, b.x1, b.y1, static_cast<int16_t>(b.x2 - 1), static_cast<int16_t>(b.y2 - 1));
+            hal::rect_fill(rp, b.x1, b.y1, static_cast<int16_t>(b.x2 - 1), static_cast<int16_t>(b.y2 - 1));
         }
         MenuItem *previous;
         do {
@@ -780,9 +783,9 @@ struct Drag {
         for (int i = 0; i < 10; i++)
             points[i] = outline[i];
         sy_fn(sy::WaitVbl);
-        PolyDraw(rp, 5, points);
+        hal::poly_draw(rp, 5, points);
         sy_fn(sy::WaitVbl);
-        PolyDraw(rp, 5, points);
+        hal::poly_draw(rp, 5, points);
         rp->LinePtrn = static_cast<UWORD>(rp->LinePtrn << 1 | rp->LinePtrn >> 15);
     }
 };

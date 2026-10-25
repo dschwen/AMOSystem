@@ -10,8 +10,11 @@
 #include <graphics/gfx.h>
 #include <graphics/rastport.h>
 
-#define GRAPHICS_BASE_NAME (reinterpret_cast<struct GfxBase *>(amos::wdata().GfxBase))
-#include <proto/graphics.h>
+#include <graphics/gfxbase.h>
+#include <graphics/rastport.h>
+#include <graphics/text.h>
+
+#include "hal/gfx.h"
 #define INTUITION_BASE_NAME (reinterpret_cast<struct IntuitionBase *>(amos::wdata().IntBase))
 #include <proto/intuition.h>
 
@@ -146,7 +149,7 @@ void tmp_ras_get()
     }
     struct TmpRas *t = reinterpret_cast<struct TmpRas *>(d.ATmpRas);
     rastport()->TmpRas = t;
-    InitTmpRas(t, ptr<BYTE>(buffer), static_cast<LONG>(length));
+    hal::init_tmp_ras(t, ptr<BYTE>(buffer), static_cast<LONG>(length));
 }
 
 // GfxF0: call fn with registers r (a6 = graphics.library), in both buffers
@@ -346,7 +349,7 @@ extern "C" uint32_t lib_sco0(RegFrame &r)
     // the library's own blitter copy, for aligned plain copies
     ec_call(ec::ScCpyW, b);
     if (b.d[7])
-        BltBitMap(reinterpret_cast<struct BitMap *>(chip), static_cast<int16_t>(x1), static_cast<int16_t>(y1),
+        hal::blit_bitmap(reinterpret_cast<struct BitMap *>(chip), static_cast<int16_t>(x1), static_cast<int16_t>(y1),
                   reinterpret_cast<struct BitMap *>(chip + 40), static_cast<int16_t>(x2), static_cast<int16_t>(y2),
                   sw, sh, static_cast<uint8_t>(r.d[6]), 0xFF, ptr<PLANEPTR>(address(chip + 80)));
     return 0;
@@ -899,7 +902,7 @@ extern "C" void lib_in_plot3(uint32_t x, uint32_t y, int32_t colour)
     if (colour < 0)
         fon_call();
     if (static_cast<uint32_t>(colour) != EntNul)
-        SetAPen(rastport(), colour);
+        hal::set_a_pen(rastport(), colour);
     lib_in_plot2(x, y);
 }
 
@@ -907,7 +910,7 @@ extern "C" void lib_in_plot3(uint32_t x, uint32_t y, int32_t colour)
 static uint32_t point(uint32_t x, uint32_t y)
 {
     struct RastPort *rp = move_cursor(x, y);
-    return ReadPixel(rp, rp->cp_x, rp->cp_y);
+    return hal::read_pixel(rp, rp->cp_x, rp->cp_y);
 }
 
 extern "C" uint32_t lib_fn_point(uint32_t x, uint32_t y) { return point(x, y); }
@@ -1103,7 +1106,7 @@ extern "C" uint32_t lib_fn_text_base()
 extern "C" uint32_t lib_fn_text_length(const uint8_t *s)
 {
     need_screen();
-    return static_cast<uint16_t>(TextLength(rastport(), reinterpret_cast<CONST_STRPTR>(str_chars(s)), str_len(s)));
+    return static_cast<uint16_t>(hal::text_length(rastport(), reinterpret_cast<CONST_STRPTR>(str_chars(s)), str_len(s)));
 }
 
 extern "C" uint32_t lib_fn_text_style()
@@ -1205,9 +1208,9 @@ extern "C" void lib_in_ink3(uint32_t a, uint32_t b, uint32_t c)
     if (c != EntNul)
         rp->AOlPen = static_cast<BYTE>(c);
     if (b != EntNul)
-        SetBPen(rp, b);
+        hal::set_b_pen(rp, b);
     if (a != EntNul)
-        SetAPen(rp, a);
+        hal::set_a_pen(rp, a);
 }
 
 extern "C" void lib_in_ink2(uint32_t a, uint32_t b) { lib_in_ink3(a, b, EntNul); }
@@ -1219,7 +1222,7 @@ extern "C" void lib_in_gr_writing(int32_t n)
     need_screen();
     if (n < 0)
         fon_call();
-    SetDrMd(rastport(), n);
+    hal::set_draw_mode(rastport(), n);
 }
 
 extern "C" void lib_in_set_line(uint32_t pattern)

@@ -8,8 +8,11 @@
 
 #include <intuition/intuition.h>
 
-#define GRAPHICS_BASE_NAME (reinterpret_cast<struct GfxBase *>(amos::wdata().GfxBase))
-#include <proto/graphics.h>
+#include <graphics/gfxbase.h>
+#include <graphics/rastport.h>
+#include <graphics/text.h>
+
+#include "hal/gfx.h"
 
 using namespace amos;
 using namespace amos::w;
@@ -340,7 +343,7 @@ uint32_t amos_requester(Texts t)
         uint16_t over = 8;
         for (;;) {
             unmix_off();
-            WaitTOF();
+            hal::wait_frame();
             unmix_on();
             if (d.Req_IDCMP & IDCMP_DISKINSERTED) {
                 uint16_t disc = sy(sy::GetDisc);

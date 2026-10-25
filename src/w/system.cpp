@@ -9,8 +9,12 @@
 
 #define INTUITION_BASE_NAME (amos::ptr<struct IntuitionBase>(amos::wdata().IntBase))
 #include <proto/intuition.h>
-#define GRAPHICS_BASE_NAME (reinterpret_cast<struct GfxBase *>(amos::wdata().GfxBase))
-#include <proto/graphics.h>
+#include <graphics/gfxbase.h>
+#include <graphics/rastport.h>
+#include <graphics/text.h>
+
+#include "hal/gfx.h"
+#include "hal/chips.h"
 
 using namespace amos;
 using namespace amos::w;
@@ -49,11 +53,11 @@ int32_t amos_wb(int32_t to)
             if (d.WFlags & WFlagWBClosed)
                 CloseWorkBench();
             d.IntScreen = address(OpenScreen(&new_screen));
-            WaitTOF();
-            WaitTOF();
-            LoadView(nullptr);
-            WaitTOF();
-            WaitTOF();
+            hal::wait_frame();
+            hal::wait_frame();
+            hal::load_view(nullptr);
+            hal::wait_frame();
+            hal::wait_frame();
             if ((chips().deniseid & 0xFF) == 0xF8) {
                 // AA: the sprites back to lowres, the sprite palette
                 chips().fmode = 0;
@@ -75,8 +79,8 @@ int32_t amos_wb(int32_t to)
             if (d.WFlags & WFlagWBClosed)
                 OpenWorkBench();
             CloseScreen(ptr<struct Screen>(d.IntScreen));
-            WaitTOF();
-            WaitTOF();
+            hal::wait_frame();
+            hal::wait_frame();
         }
         here[1] = 0;
     }
@@ -103,7 +107,7 @@ void w_sy_joy(AllRegs *r)
     if (d.AMOSHere >> 8) {
         // JOY0DAT, JOY1DAT; the buttons in CIA-A's port A
         uint16_t counters = (&chips().joy0dat)[port];
-        if (!(*reinterpret_cast<volatile uint8_t *>(0xBFE001) & 1 << ((6 + port) & 7)))
+        if (!(hal::cia_a_pra() & 1 << ((6 + port) & 7)))
             bits |= 1 << 4;
         uint16_t index = (counters >> 6 & 0x0C) | (counters & 3);
         bits |= directions[index];

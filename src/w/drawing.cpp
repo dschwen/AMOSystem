@@ -8,8 +8,11 @@
 
 #include <graphics/rastport.h>
 
-#define GRAPHICS_BASE_NAME (reinterpret_cast<struct GfxBase *>(amos::wdata().GfxBase))
-#include <proto/graphics.h>
+#include <graphics/gfxbase.h>
+#include <graphics/rastport.h>
+#include <graphics/text.h>
+
+#include "hal/gfx.h"
 #define LAYERS_BASE_NAME (amos::ptr<struct Library>(amos::wdata().LayBase))
 #include <proto/layers.h>
 
@@ -29,8 +32,8 @@ uint16_t left_mask(int n) { return 0xFFFF >> n; }
 void cls_blit(Screen *s, uint16_t colour, uint16_t x1, uint16_t y1, uint16_t x2, uint16_t height)
 {
     auto &c = chips();
-    OwnBlitter();
-    WaitBlit();
+    hal::own_blitter();
+    hal::wait_blit();
     c.bltafwm = left_mask(x1 & 15);
     uint16_t last = 0;
     uint16_t last_mask = 0xFFFF;
@@ -54,9 +57,9 @@ void cls_blit(Screen *s, uint16_t colour, uint16_t x1, uint16_t y1, uint16_t x2,
         c.bltcpt = a;
         c.bltdpt = a;
         c.bltsize = size;
-        WaitBlit();
+        hal::wait_blit();
     }
-    DisownBlitter();
+    hal::disown_blitter();
 }
 
 uint16_t clamp(uint16_t v, uint16_t max)
@@ -228,8 +231,8 @@ struct Fill {
     void mask(uint8_t first, uint8_t first_set, uint8_t other, uint8_t other_set)
     {
         auto &c = chips();
-        OwnBlitter();
-        WaitBlit();
+        hal::own_blitter();
+        hal::wait_blit();
         uint16_t bits = colour;
         for (int p = 0; p < s->EcNPlan; p++, bits >>= 1) {
             c.bltafwm = 0xFFFF;
@@ -245,9 +248,9 @@ struct Fill {
             c.bltsize = size;
             first = other;
             first_set = other_set;
-            WaitBlit();
+            hal::wait_blit();
         }
-        DisownBlitter();
+        hal::disown_blitter();
     }
 
     // PntNBuf: the next buffer of the stack. False if there is none.
@@ -384,8 +387,8 @@ struct Fill {
     void draw()
     {
         auto &c = chips();
-        OwnBlitter();
-        WaitBlit();
+        hal::own_blitter();
+        hal::wait_blit();
         c.bltafwm = 0xFFFF;
         c.bltalwm = 0xFFFF;
         c.bltcmod = modulo;
@@ -414,7 +417,7 @@ struct Fill {
                 plane_step = bytes;
         }
         for (int p = 0; p < s->EcNPlan; p++) {
-            WaitBlit();
+            hal::wait_blit();
             const uint16_t *w = pattern;
             uint8_t *a = ptr<uint8_t>(s->EcCurrent[p]) + start;
             c.bltcpt = a;
@@ -424,7 +427,7 @@ struct Fill {
             do {
                 uint16_t bits = *w++;
                 uint16_t v = (fg & 1 ? bits : 0) | (bg & 1 ? uint16_t(~bits) : 0);
-                WaitBlit();
+                hal::wait_blit();
                 c.bltbdat = v;
                 c.bltsize = line;
                 if (w >= end)
@@ -435,7 +438,7 @@ struct Fill {
             fg >>= 1;
             bg >>= 1;
         }
-        DisownBlitter();
+        hal::disown_blitter();
     }
 };
 
@@ -564,8 +567,8 @@ void slider_inks(uint8_t ink_b, uint8_t ink_c, uint16_t pattern)
 {
     struct RastPort *rp = rastport();
     rp->AOlPen = ink_c;
-    SetBPen(rp, ink_b);
-    SetAPen(rp, ink_c);
+    hal::set_b_pen(rp, ink_b);
+    hal::set_a_pen(rp, ink_c);
     rp->LinePtrn = 0xFFFF;
     rp->Flags |= AREAOUTLINE;
     set_pattern(pattern);
@@ -575,7 +578,7 @@ void slider_inks(uint8_t ink_b, uint8_t ink_c, uint16_t pattern)
 void slider_bar(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2)
 {
     if (x2 > x1 && y2 > y1)
-        RectFill(rastport(), x1, y1, x2, y2);
+        hal::rect_fill(rastport(), x1, y1, x2, y2);
 }
 
 // SliHor / SliVer: d1/d2 the size, d3 total, d4 position, d5 size of
@@ -660,8 +663,8 @@ uint32_t screen_copy(const AllRegs *r)
     uint32_t start2 = uint32_t(uint16_t(x2 >> 4) << 1) + uint32_t(to->BytesPerRow) * y2;
     uint16_t size = uint16_t(height << 6) + (bytes >> 1);
     auto &c = chips();
-    OwnBlitter();
-    WaitBlit();
+    hal::own_blitter();
+    hal::wait_blit();
     c.bltcon0 = 0x09F0;
     c.bltcon1 = con1;
     c.bltbdat = 0xFFFF;
@@ -673,14 +676,14 @@ uint32_t screen_copy(const AllRegs *r)
     int planes = from->Depth < to->Depth ? from->Depth : to->Depth;
     for (int p = 0; p < planes; p++) {
         uint8_t *a = from->Planes[p] + start1, *d = to->Planes[p] + start2;
-        WaitBlit();
+        hal::wait_blit();
         c.bltapt = a;
         c.bltcpt = d;
         c.bltdpt = d;
         c.bltsize = size;
     }
-    WaitBlit();
-    DisownBlitter();
+    hal::wait_blit();
+    hal::disown_blitter();
     return 0;
 }
 
@@ -696,12 +699,12 @@ void set_clip_rect(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1)
     if (!s->Ec_Region) {
         if (x0 == s->EcClipX0 && y0 == s->EcClipY0 && x1 == s->EcClipX1 && y1 == s->EcClipY1)
             return;
-        struct Region *region = NewRegion();
+        struct Region *region = hal::new_region();
         s->Ec_Region = address(region);
         if (!region)
             return;
         struct Rectangle rect = {int16_t(x0), int16_t(y0), int16_t(x1 - 1), int16_t(y1 - 1)};
-        if (!OrRectRegion(region, &rect))
+        if (!hal::or_rect_region(region, &rect))
             return;
         InstallClipRegion(ptr<struct Layer>(s->Ec_Layer), region);
     }
@@ -764,10 +767,10 @@ void pull_state()
     if (d.PaPeek || !rp)
         return;
     const auto &v = *reinterpret_cast<const Saved *>(d.EcSave);
-    SetAPen(rp, v.fg);
-    SetBPen(rp, v.bg);
+    hal::set_a_pen(rp, v.fg);
+    hal::set_b_pen(rp, v.bg);
     rp->AOlPen = v.outline;
-    SetDrMd(rp, v.mode);
+    hal::set_draw_mode(rp, v.mode);
     rp->Flags = v.flags;
     rp->LinePtrn = v.line;
     rp->cp_x = v.x;

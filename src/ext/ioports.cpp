@@ -13,8 +13,11 @@
 #include <dos/dosextens.h>
 #include <graphics/view.h>
 
-#define GRAPHICS_BASE_NAME (reinterpret_cast<struct GfxBase *>(amos::wdata().GfxBase))
-#include <proto/graphics.h>
+#include <graphics/gfxbase.h>
+#include <graphics/rastport.h>
+#include <graphics/text.h>
+
+#include "hal/gfx.h"
 
 using namespace amos;
 using namespace amos::dev;
@@ -129,14 +132,14 @@ void dump()
 {
     DeviceChannel &c = channel(PrinterIO);
     auto io = reinterpret_cast<uint8_t *>(device_io(c));
-    struct ColorMap *map = GetColorMap(32);
+    struct ColorMap *map = hal::get_color_map(32);
     // (the original took a word off the stack it had not put there)
     if (!map)
         return;
     const Screen *s = ptr<Screen>(longword(ScreenBase));
     for (int i = 0; i < 32; i++) {
         uint16_t rgb = s->EcPal[i];
-        SetRGB4CM(map, i, rgb >> 8, (rgb >> 4) & 15, rgb & 15);
+        hal::set_rgb4_cm(map, i, rgb >> 8, (rgb >> 4) & 15, rgb & 15);
     }
     poke_l(io + 32, wdata().RastPort);
     poke_l(io + 36, address(map));
@@ -149,7 +152,7 @@ void dump()
     poke_l(io + 56, longword(DestRows));
     poke_w(io + 60, word(Special));
     do_command(c, PRD_DUMPRPORT);
-    FreeColorMap(map);
+    hal::free_color_map(map);
 }
 
 // The scale of a dump of size of a whole screen of full: 1/(full/size)

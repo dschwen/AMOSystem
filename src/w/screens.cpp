@@ -17,8 +17,11 @@
 #include <graphics/layers.h>
 #include <graphics/rastport.h>
 
-#define GRAPHICS_BASE_NAME (reinterpret_cast<struct GfxBase *>(amos::wdata().GfxBase))
-#include <proto/graphics.h>
+#include <graphics/gfxbase.h>
+#include <graphics/rastport.h>
+#include <graphics/text.h>
+
+#include "hal/gfx.h"
 #define LAYERS_BASE_NAME (amos::ptr<struct Library>(amos::wdata().LayBase))
 #include <proto/layers.h>
 
@@ -258,19 +261,19 @@ void free_screen(Screen *s)
     if (!(s->EcFlags & Clone)) {
         if (s->Ec_Region) {
             InstallClipRegion(ptr<struct Layer>(s->Ec_Layer), nullptr);
-            DisposeRegion(ptr<struct Region>(s->Ec_Region));
+            hal::dispose_region(ptr<struct Region>(s->Ec_Region));
         }
         if (s->Ec_Layer)
             DeleteLayer(0, ptr<struct Layer>(s->Ec_Layer));
-        WaitBlit();
+        hal::wait_blit();
         wait_vbl();
-        WaitBlit();
+        hal::wait_blit();
         if (s->Ec_LayerInfo)
             DisposeLayerInfo(ptr<struct Layer_Info>(s->Ec_LayerInfo));
         // (The layers library needs the blitter done and a VBL)
-        WaitBlit();
+        hal::wait_blit();
         wait_vbl();
-        WaitBlit();
+        hal::wait_blit();
         for (int p = 0; p < EcMaxPlans; p++) {
             uint32_t plane = s->EcLogic[p];
             if (plane)
@@ -377,7 +380,7 @@ uint32_t open(const AllRegs *r, uint32_t *result)
         return fail();
     s->Ec_BitMap = bitmap;
     struct BitMap *bm = ptr<struct BitMap>(bitmap);
-    InitBitMap(bm, int16_t(planes), int16_t(tx), int16_t(ty));
+    hal::init_bitmap(bm, int16_t(planes), int16_t(tx), int16_t(ty));
     for (uint16_t p = 0; p < planes; p++) {
         uint32_t plane = chip_mm(s->EcTPlan);
         if (!plane)
@@ -398,9 +401,9 @@ uint32_t open(const AllRegs *r, uint32_t *result)
     if (!layer)
         return fail();
     s->Ec_RastPort = address(layer->rp);
-    WaitBlit();
+    hal::wait_blit();
     wait_vbl();
-    WaitBlit();
+    hal::wait_blit();
     s->EcAZones = 0;
     s->EcNZones = 0;
 
@@ -454,13 +457,13 @@ uint32_t open(const AllRegs *r, uint32_t *result)
     s->EcMode = 1;
     s->EcLine = 0xFFFF;
     struct RastPort *rp = ptr<struct RastPort>(s->Ec_RastPort);
-    SetAPen(rp, s->EcInkA);
-    SetBPen(rp, s->EcInkB);
-    SetDrMd(rp, s->EcMode);
+    hal::set_a_pen(rp, s->EcInkA);
+    hal::set_b_pen(rp, s->EcInkB);
+    hal::set_draw_mode(rp, s->EcMode);
     rp->LinePtrn = s->EcLine;
     rp->cp_x = 0;
     rp->cp_y = 0;
-    SetFont(rp, ptr<struct TextFont>(d.DefaultFont));
+    hal::set_font(rp, ptr<struct TextFont>(d.DefaultFont));
     s->EcClipX0 = 0;
     s->EcClipY0 = 0;
     s->EcClipX1 = s->EcTx;

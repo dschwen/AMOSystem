@@ -6,8 +6,11 @@
 #include "core/amiga.h"
 #include "lib/banks.h"
 
-#define GRAPHICS_BASE_NAME (reinterpret_cast<struct GfxBase *>(amos::wdata().GfxBase))
-#include <proto/graphics.h>
+#include <graphics/gfxbase.h>
+#include <graphics/rastport.h>
+#include <graphics/text.h>
+
+#include "hal/gfx.h"
 
 using namespace amos;
 using namespace amos::interp;
@@ -167,7 +170,7 @@ void polygon()
     if (!d.ScOn)
         screen_not_open();
     RastPort *rp = ptr<RastPort>(wdata().RastPort);
-    InitArea(reinterpret_cast<AreaInfo *>(d.AAreaInfo), d.AAreaBuf, AAreaSize);
+    hal::init_area(reinterpret_cast<AreaInfo *>(d.AAreaInfo), d.AAreaBuf, AAreaSize);
     rp->AreaInfo = reinterpret_cast<AreaInfo *>(d.AAreaInfo);
     int32_t x, y;
     if (peek_token() == tk::To) {
@@ -178,15 +181,15 @@ void polygon()
         point(&x, &y);
         pc() += 2;
     }
-    AreaMove(rp, x, y);
+    hal::area_move(rp, x, y);
     do {
         point(&x, &y);
-        AreaDraw(rp, x, y);
+        hal::area_draw(rp, x, y);
     } while (next_token() == tk::To);
     pc() -= 2;
     Regs g;
     lib_call(L_GetRas, g);
-    AreaEnd(rp);
+    hal::area_end(rp);
     Regs f;
     lib_call(L_FreeRas, f);
 }
