@@ -13,6 +13,7 @@
 #include <graphics/text.h>
 
 #include "hal/gfx.h"
+#include "hal/system.h"
 
 using namespace amos;
 using namespace amos::w;
@@ -231,7 +232,7 @@ void appear(amos::Screen *s, uint16_t middle, int16_t height, int16_t step)
 // UnMix1 / UnMix2: the requester's screen in front, multitasking off
 void unmix_on()
 {
-    Forbid();
+    hal::forbid();
     Regs c;
     ec_call(ec::Current, c);
     wdata().ReqOldScreen = ptr<amos::Screen>(c.a[0])->EcNumber;
@@ -245,7 +246,7 @@ void unmix_on()
 void unmix_off()
 {
     ec_d1(ec::Active, wdata().ReqOldScreen);
-    Permit();
+    hal::permit();
 }
 
 // Req_AMOS: -1 for the left gadget (Return, Amiga-V), 0 for the right one

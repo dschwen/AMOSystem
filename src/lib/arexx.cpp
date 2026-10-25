@@ -5,7 +5,6 @@
 #include "lib/dos.h"
 #include "lib/strings.h"
 
-#include <proto/exec.h>
 #include <rexx/errors.h>
 #include <rexx/storage.h>
 
@@ -29,7 +28,7 @@ struct RexxMsg *answer() { return ptr<struct RexxMsg>(idata().Arx_Answer); }
 bool port_exists(const char *name, bool create, struct MsgPort **port)
 {
     hal::forbid();
-    bool exists = FindPort(const_cast<STRPTR>(name));
+    bool exists = hal::find_port(const_cast<STRPTR>(name));
     if (!exists && create)
         *port = lib_create_port(name, 0);
     hal::permit();
@@ -44,7 +43,7 @@ bool message()
         return false;
     if (d.Arx_Answer)
         return true;
-    struct Message *m = GetMsg(ptr<struct MsgPort>(d.Arx_Port));
+    struct Message *m = hal::get_message(ptr<struct MsgPort>(d.Arx_Port));
     if (!m)
         return false;
     d.Arx_Answer = address(m);
@@ -54,7 +53,7 @@ bool message()
     // (The assembler dropped other messages without replying: their sender
     // waited for ever)
     d.Arx_Answer = 0;
-    ReplyMsg(m);
+    hal::reply_message(m);
     return false;
 }
 
@@ -62,7 +61,7 @@ void fatal_reply(struct Message *m)
 {
     reinterpret_cast<struct RexxMsg *>(m)->rm_Result1 = RC_FATAL;
     reinterpret_cast<struct RexxMsg *>(m)->rm_Result2 = 0;
-    ReplyMsg(m);
+    hal::reply_message(m);
 }
 
 } // namespace
@@ -79,7 +78,7 @@ extern "C" void lib_arx_close()
             fatal_reply(m);
         }
         hal::forbid();
-        while (struct Message *m = GetMsg(ptr<struct MsgPort>(d.Arx_Port)))
+        while (struct Message *m = hal::get_message(ptr<struct MsgPort>(d.Arx_Port)))
             fatal_reply(m);
         struct MsgPort *port = ptr<struct MsgPort>(d.Arx_Port);
         d.Arx_Port = 0;
@@ -180,7 +179,7 @@ extern "C" void lib_in_arexx_answer2(uint32_t code, const uint8_t *text)
         m->rm_Result2 = reinterpret_cast<LONG>(s);
     }
     m->rm_Result1 = static_cast<LONG>(code);
-    ReplyMsg(&m->rm_Node);
+    hal::reply_message(&m->rm_Node);
     idata().Arx_Answer = 0;
 }
 

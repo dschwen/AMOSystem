@@ -476,8 +476,8 @@ extern "C" uint32_t lib_bnk_schrink(RegFrame &r)
     // again, without letting another task in between
     uint32_t next = peek_l(e);
     hal::forbid();
-    FreeMem(e, old_size);
-    AllocAbs(new_size, e);
+    hal::release(e, old_size);
+    hal::allocate_at(new_size, e);
     hal::permit();
     poke_l(e, next);
     poke_l(e + 4, new_size - 8);

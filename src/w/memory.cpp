@@ -6,6 +6,7 @@
 
 #include "core/amiga.h"
 #include "w/w.h"
+#include "hal/system.h"
 
 using namespace amos;
 using namespace amos::w;
@@ -39,15 +40,15 @@ void call_routines(uint32_t *list)
 // WMemReserve: size bytes with the AllocMem flags; 0 if none
 uint32_t reserve(uint32_t size, uint32_t flags)
 {
-    void *m = AllocMem(size, flags);
+    void *m = hal::allocate(size, flags);
     if (!m) {
         call_routines(&wdata().MemFlush);
-        m = AllocMem(size, flags);
+        m = hal::allocate(size, flags);
     }
     return address(m);
 }
 
-void release(uint32_t address, uint32_t size) { FreeMem(ptr<void>(address), size); }
+void release(uint32_t address, uint32_t size) { hal::release(ptr<void>(address), size); }
 
 // WAddRoutine: the routine into the list, if it is in none; returns its
 // link

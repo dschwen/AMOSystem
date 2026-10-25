@@ -11,6 +11,7 @@
 #include <devices/input.h>
 #include <exec/io.h>
 #include <exec/ports.h>
+#include "hal/system.h"
 
 using namespace amos;
 using namespace amos::w;
@@ -88,17 +89,17 @@ void open_input(uint8_t *io)
     for (uint32_t i = 0; i < Lio + Lmsg; i++)
         io[i] = 0;
     auto port = reinterpret_cast<struct MsgPort *>(io + Lio);
-    port->mp_SigTask = FindTask(nullptr);
-    AddPort(port);
-    OpenDevice(reinterpret_cast<CONST_STRPTR>("input.device"), 0, reinterpret_cast<struct IORequest *>(io), 0);
+    port->mp_SigTask = hal::find_task(nullptr);
+    hal::add_port(port);
+    hal::open_device(reinterpret_cast<CONST_STRPTR>("input.device"), 0, reinterpret_cast<struct IORequest *>(io), 0);
     reinterpret_cast<struct IORequest *>(io)->io_Message.mn_ReplyPort = port;
 }
 
 // ClInput
 void close_input(uint8_t *io)
 {
-    CloseDevice(reinterpret_cast<struct IORequest *>(io));
-    RemPort(reinterpret_cast<struct MsgPort *>(io + Lio));
+    hal::close_device(reinterpret_cast<struct IORequest *>(io));
+    hal::remove_port(reinterpret_cast<struct MsgPort *>(io + Lio));
 }
 
 // OpConsole: console.device, for RawKeyConvert (w/input.cpp)
@@ -106,10 +107,10 @@ void open_console()
 {
     for (uint32_t i = 0; i < Lio + Lmsg; i++)
         w_con_io[i] = 0;
-    OpenDevice(reinterpret_cast<CONST_STRPTR>("console.device"), uint32_t(-1), reinterpret_cast<struct IORequest *>(w_con_io), 0);
+    hal::open_device(reinterpret_cast<CONST_STRPTR>("console.device"), uint32_t(-1), reinterpret_cast<struct IORequest *>(w_con_io), 0);
 }
 
-void close_console() { CloseDevice(reinterpret_cast<struct IORequest *>(w_con_io)); }
+void close_console() { hal::close_device(reinterpret_cast<struct IORequest *>(w_con_io)); }
 
 // ClVide: the key buffer emptied
 void clear_keys()
@@ -226,10 +227,10 @@ void w_sy_key_speed(AllRegs *r)
     open_input(io);
     set_time(io, r->d[1]);
     reinterpret_cast<struct IOStdReq *>(io)->io_Command = IND_SETTHRESH;
-    DoIO(reinterpret_cast<struct IORequest *>(io));
+    hal::do_io(reinterpret_cast<struct IORequest *>(io));
     set_time(io, r->d[2]);
     reinterpret_cast<struct IOStdReq *>(io)->io_Command = IND_SETPERIOD;
-    DoIO(reinterpret_cast<struct IORequest *>(io));
+    hal::do_io(reinterpret_cast<struct IORequest *>(io));
     close_input(io);
     r->d[0] = 0;
 }

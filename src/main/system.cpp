@@ -15,6 +15,7 @@
 #include <graphics/text.h>
 
 #include "hal/gfx.h"
+#include "hal/system.h"
 
 using namespace amos;
 using namespace amos::boot;
@@ -198,9 +199,9 @@ void sys_close()
 void clear_cache()
 {
     if (idata().WB2_0 >= 37)
-        CacheClearU();
+        hal::clear_cache();
     else
-        FindTask(nullptr);
+        hal::find_task(nullptr);
 }
 
 // Sys_WaitMul: the tests of the AMOS.library, then the next frame
@@ -277,7 +278,7 @@ void math_close()
     uint32_t *bases[] = {&d.MathBase, &d.DFloatBase, &d.DMathBase};
     for (uint32_t *base : bases) {
         if (*base) {
-            CloseLibrary(ptr<Library>(*base));
+            hal::close_library(ptr<Library>(*base));
             *base = 0;
         }
     }

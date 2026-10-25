@@ -23,6 +23,7 @@
 #include <graphics/text.h>
 
 #include "hal/gfx.h"
+#include "hal/system.h"
 
 using namespace amos;
 using namespace amos::w;
@@ -43,27 +44,14 @@ constexpr int16_t LVOLoadView = -222, LVOAutoRequest = -0x15C, LVOEasyRequest = 
 // The name of the task: a later AMOS finds it and writes "S" into it
 char task_name[] = " AMOS";
 
-// exec SetFunction (the NDK's inline does not compile as C++): the
-// previous function
-uint32_t set_function(uint32_t library, int16_t offset, uint32_t function)
-{
-    register uint32_t d0 __asm("d0") = function;
-    register uint32_t a1 __asm("a1") = library;
-    register int32_t a0 __asm("a0") = offset;
-    register void *a6 __asm("a6") = EXEC_BASE_NAME;
-    __asm volatile("jsr %%a6@(-420:W)" : "+d"(d0), "+a"(a1), "+a"(a0) : "a"(a6) : "d1", "cc", "memory");
-    return d0;
-}
-
-struct ExecBase *exec() { return reinterpret_cast<struct ExecBase *>(EXEC_BASE_NAME); }
 uint16_t version() { return peek_w(&wdata().WVersion); }
 uint32_t data_zone() { return address(&wdata()) + sizeof(WData); }
 
 // Send_Switcher: the signal to the AMOS Switcher, if it runs
 void signal_switcher(int signal)
 {
-    if (struct Task *t = FindTask(reinterpret_cast<CONST_STRPTR>("_Switcher AMOS_")))
-        Signal(t, 1UL << signal);
+    if (struct Task *t = hal::find_task(reinterpret_cast<CONST_STRPTR>("_Switcher AMOS_")))
+        hal::signal(t, 1UL << signal);
 }
 
 void wait_tof(int n)
@@ -76,9 +64,9 @@ void wait_tof(int n)
 // the previous ones back in auto/easy
 void set_requesters(uint32_t &autoreq, uint32_t &easy)
 {
-    autoreq = set_function(wdata().IntBase, LVOAutoRequest, autoreq);
-    if (exec()->LibNode.lib_Version >= 36)
-        easy = set_function(wdata().IntBase, LVOEasyRequest, easy);
+    autoreq = hal::set_function(wdata().IntBase, LVOAutoRequest, autoreq);
+    if (hal::os_version() >= 36)
+        easy = hal::set_function(wdata().IntBase, LVOEasyRequest, easy);
 }
 
 // WRequest_Start: AMOS's requesters with the colours 8-31 of the palette
@@ -231,10 +219,10 @@ bool start(AllRegs *r)
     d.WFlags = 0;
     if (gfx->ChipRevBits0 & GFXF_AA_ALICE)
         d.WFlags |= WFlagAA | WFlagLoadView;
-    if (exec()->LibNode.lib_Version >= 39)
+    if (hal::os_version() >= 39)
         d.WFlags |= WFlagLoadView;
-    d.MyTask = address(FindTask(nullptr));
-    d.LayBase = address(OpenLibrary(reinterpret_cast<CONST_STRPTR>("layers.library"), 0));
+    d.MyTask = address(hal::find_task(nullptr));
+    d.LayBase = address(hal::open_library(reinterpret_cast<CONST_STRPTR>("layers.library"), 0));
     if (!d.LayBase)
         return false;
     // The input handler
@@ -248,7 +236,7 @@ bool start(AllRegs *r)
     auto io = reinterpret_cast<struct IOStdReq *>(d.IoDevice);
     io->io_Data = handler;
     io->io_Command = IND_ADDHANDLER;
-    DoIO(reinterpret_cast<struct IORequest *>(io));
+    hal::do_io(reinterpret_cast<struct IORequest *>(io));
     d.DevHere = 0xFFFF;
     // The default screen position
     d.DefWX = 129;
@@ -265,9 +253,9 @@ bool start(AllRegs *r)
     // while AMOS is in front (it tests T_AMOSHere)
     if (d.WFlags & WFlagLoadView) {
         poke_l(w_amos_loadview + 2, address(&d.AMOSHere));
-        poke_l(w_old_loadview, set_function(d.GfxBase, LVOLoadView, address(w_amos_loadview)));
-        if (exec()->LibNode.lib_Version >= 37)
-            CacheClearU();
+        poke_l(w_old_loadview, hal::set_function(d.GfxBase, LVOLoadView, address(w_amos_loadview)));
+        if (hal::os_version() >= 37)
+            hal::clear_cache();
     }
     if (version() >= Version20) {
         requester_start(palette);
@@ -297,12 +285,12 @@ void end()
         free_font();
     }
     if (d.WFlags & WFlagLoadView && peek_l(w_old_loadview))
-        set_function(d.GfxBase, LVOLoadView, peek_l(w_old_loadview));
+        hal::set_function(d.GfxBase, LVOLoadView, peek_l(w_old_loadview));
     if (d.DevHere) {
         auto io = reinterpret_cast<struct IOStdReq *>(d.IoDevice);
         io->io_Data = d.Interrupt;
         io->io_Command = IND_REMHANDLER;
-        DoIO(reinterpret_cast<struct IORequest *>(io));
+        hal::do_io(reinterpret_cast<struct IORequest *>(io));
         close_input(d.IoDevice);
         // (the original left console.device open)
         close_console();
@@ -315,9 +303,9 @@ void end()
     rem_vbl();
     copper_end();
     if (d.FntBase)
-        CloseLibrary(ptr<struct Library>(d.FntBase));
+        hal::close_library(ptr<struct Library>(d.FntBase));
     if (d.LayBase)
-        CloseLibrary(ptr<struct Library>(d.LayBase));
+        hal::close_library(ptr<struct Library>(d.LayBase));
     if (d.GfxBase && d.DefaultFont)
         hal::close_font(ptr<struct TextFont>(d.DefaultFont));
 }
@@ -334,13 +322,13 @@ void w_sy_ice_start(AllRegs *r)
     poke_w(&d.WVersion, r->d[0] == 0x56322E30 ? uint16_t(r->d[1]) : 0);
     d.SyVect = address(w_sy_in);
     if (version() >= Version20) {
-        Forbid();
-        if (struct Task *t = FindTask(reinterpret_cast<CONST_STRPTR>(task_name))) {
+        hal::forbid();
+        if (struct Task *t = hal::find_task(reinterpret_cast<CONST_STRPTR>(task_name))) {
             t->tc_Node.ln_Name[0] = 'S';
             d.Stopped = address(t->tc_Node.ln_Name);
         }
-        Permit();
-        struct Task *me = FindTask(nullptr);
+        hal::permit();
+        struct Task *me = hal::find_task(nullptr);
         d.MyTask = address(me);
         d.OldName = address(me->tc_Node.ln_Name);
         me->tc_Node.ln_Name = task_name;

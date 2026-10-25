@@ -13,6 +13,7 @@
 #include <dos/dos.h>
 
 #include "hal/files.h"
+#include "hal/system.h"
 
 // The records that close the libraries and devices when the program is
 // cleared (dos_glue.s)
@@ -33,12 +34,12 @@ static void new_list(struct List *list)
 
 extern "C" struct MsgPort *lib_create_port(const char *name, int32_t priority)
 {
-    int8_t signal = AllocSignal(-1);
+    int8_t signal = hal::allocate_signal(-1);
     if (signal == -1)
         return nullptr;
     auto port = static_cast<struct MsgPort *>(AllocMem(sizeof(struct MsgPort), MEMF_CLEAR | MEMF_PUBLIC));
     if (!port) {
-        FreeSignal(signal);
+        hal::free_signal(signal);
         return nullptr;
     }
     port->mp_Node.ln_Name = const_cast<char *>(name);
@@ -48,7 +49,7 @@ extern "C" struct MsgPort *lib_create_port(const char *name, int32_t priority)
     port->mp_SigBit = signal;
     port->mp_SigTask = FindTask(nullptr);
     if (name)
-        AddPort(port);
+        hal::add_port(port);
     else
         new_list(&port->mp_MsgList);
     return port;
@@ -57,10 +58,10 @@ extern "C" struct MsgPort *lib_create_port(const char *name, int32_t priority)
 extern "C" void lib_delete_port(struct MsgPort *port)
 {
     if (port->mp_Node.ln_Name)
-        RemPort(port);
+        hal::remove_port(port);
     port->mp_Node.ln_Type = 0xFF;
     port->mp_MsgList.lh_Head = reinterpret_cast<struct Node *>(-1);
-    FreeSignal(port->mp_SigBit);
+    hal::free_signal(port->mp_SigBit);
     FreeMem(port, sizeof(struct MsgPort));
 }
 
@@ -132,8 +133,8 @@ DeviceChannel &device(uint32_t n)
 void abort_device(DeviceChannel &d)
 {
     if (d.opened() && d.state()) {
-        AbortIO(d.io());
-        WaitIO(d.io());
+        hal::abort_io(d.io());
+        hal::wait_io(d.io());
     }
 }
 
@@ -142,7 +143,7 @@ void close_device(DeviceChannel &d)
     abort_device(d);
     if (d.opened()) {
         d.opened() = 0;
-        CloseDevice(d.io());
+        hal::close_device(d.io());
     }
     if (struct IORequest *io = d.io()) {
         d.set_io(nullptr);
@@ -192,7 +193,7 @@ void open_device(DeviceChannel &d, const char *name, uint32_t length, uint32_t u
     if (d.port() && d.io()) {
         if (set)
             reinterpret_cast<uint8_t *>(d.io())[static_cast<int16_t>(set >> 16)] = static_cast<uint8_t>(set);
-        err = static_cast<int8_t>(OpenDevice(const_cast<char *>(name), unit, d.io(), flags));
+        err = static_cast<int8_t>(hal::open_device(const_cast<char *>(name), unit, d.io(), flags));
         if (!err) {
             d.opened() = 1;
             return;
@@ -215,20 +216,20 @@ struct IORequest *start_command(DeviceChannel &d, uint16_t command)
 {
     struct IORequest *io = device_io(d);
     if (d.state() == 2)
-        WaitIO(io);
+        hal::wait_io(io);
     io->io_Command = command;
     return io;
 }
 
 void send_command(DeviceChannel &d, uint16_t command)
 {
-    SendIO(start_command(d, command));
+    hal::send_io(start_command(d, command));
     d.state() = 2;
 }
 
 void do_command(DeviceChannel &d, uint16_t command)
 {
-    int8_t err = DoIO(start_command(d, command));
+    int8_t err = hal::do_io(start_command(d, command));
     d.state() = 1;
     if (err)
         device_error(d, err);
@@ -240,7 +241,7 @@ uint32_t check_device(DeviceChannel &d)
     struct IORequest *io = device_io(d);
     if (!d.state())
         return -1u;
-    return address(CheckIO(io));
+    return address(hal::check_io(io));
 }
 
 } // namespace amos::dev

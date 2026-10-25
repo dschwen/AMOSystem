@@ -18,7 +18,6 @@
 #include <exec/execbase.h>
 #include <exec/memory.h>
 #include <exec/tasks.h>
-#include <proto/exec.h>
 
 #include <dos/dos.h>
 
@@ -268,7 +267,7 @@ void create_task()
         AddHead(&t->tc_MemEntry, &ml->ml_Node);
     }
     lib_fs_task_a5 = address(ctx().a5);
-    AddTask(t, reinterpret_cast<APTR>(lib_fs_task_entry), nullptr);
+    hal::add_task(t, reinterpret_cast<APTR>(lib_fs_task_entry), nullptr);
 }
 
 // ---- directories ----------------------------------------------------------------------

@@ -13,6 +13,7 @@
 #include <dos/dos.h>
 
 #include "hal/files.h"
+#include "hal/system.h"
 
 using namespace amos;
 using namespace amos::music;
@@ -521,7 +522,7 @@ void samples_install()
         is->is_Code = ptr<void (void)>(m.Sami_handad);
         is->is_Node.ln_Type = 2;
         is->is_Node.ln_Pri = 0;
-        s.Sami_old = address(SetIntVector(int32_t(7 + v), is));
+        s.Sami_old = address(hal::set_interrupt(int32_t(7 + v), is));
     }
     m.Sami_flag = uint16_t(m.Sami_flag - 1);
 }
@@ -533,7 +534,7 @@ void samples_remove()
         return;
     sami_stop();
     for (uint32_t v = 0; v < 4; v++)
-        SetIntVector(int32_t(7 + v), ptr<struct Interrupt>(sample_int(v).Sami_old));
+        hal::set_interrupt(int32_t(7 + v), ptr<struct Interrupt>(sample_int(v).Sami_old));
     custom(DmaCon) = 0x000F;
     // (without the "set" bit, as the original: it clears them)
     custom(IntEna) = m.Sami_oldena;
@@ -566,9 +567,9 @@ void talk_stop()
     if (!b[66])
         return;
     b[66] = 0;
-    if (!CheckIO(reinterpret_cast<struct IORequest *>(io)))
-        AbortIO(reinterpret_cast<struct IORequest *>(io));
-    WaitIO(reinterpret_cast<struct IORequest *>(io));
+    if (!hal::check_io(reinterpret_cast<struct IORequest *>(io)))
+        hal::abort_io(reinterpret_cast<struct IORequest *>(io));
+    hal::wait_io(reinterpret_cast<struct IORequest *>(io));
     samples_install();
 }
 
@@ -582,7 +583,7 @@ void narrator_open()
     }
     m.WritePort = address(lib_create_port(nullptr, 0));
     m.WriteIo = address(lib_create_ext_io(ptr<struct MsgPort>(m.WritePort), 88));
-    if (OpenDevice(const_cast<char *>("narrator.device"), 0, ptr<struct IORequest>(m.WriteIo), 0))
+    if (hal::open_device(const_cast<char *>("narrator.device"), 0, ptr<struct IORequest>(m.WriteIo), 0))
         error(NoNar);
     m.ReadPort = address(lib_create_port(nullptr, 0));
     uint8_t *r = read_io();
@@ -591,7 +592,7 @@ void narrator_open()
         r[i] = w[i];
     poke_l(r + 14, m.ReadPort);
     narrator_defaults();
-    m.TranBase = address(OpenLibrary(const_cast<char *>("translator.library"), 0));
+    m.TranBase = address(hal::open_library(const_cast<char *>("translator.library"), 0));
     if (!m.TranBase)
         error(NoNar);
     hal::delay(50);
@@ -642,12 +643,12 @@ void say(const uint8_t *text, uint32_t multi)
     uint8_t *b = reinterpret_cast<uint8_t *>(io);
     if (!uint16_t(multi)) {
         b[66] = 0;
-        DoIO(reinterpret_cast<struct IORequest *>(io));
+        hal::do_io(reinterpret_cast<struct IORequest *>(io));
         samples_install();
         voices(0x0F);
     } else {
         b[66] = 1;      // and the mouths
-        SendIO(reinterpret_cast<struct IORequest *>(io));
+        hal::send_io(reinterpret_cast<struct IORequest *>(io));
     }
 }
 
@@ -692,7 +693,7 @@ void med_close()
     if (uint32_t base = m.Med_Base) {
         lvo(base, -36);
         m.Med_Base = 0;
-        CloseLibrary(ptr<struct Library>(base));
+        hal::close_library(ptr<struct Library>(base));
     }
 }
 
@@ -701,7 +702,7 @@ void med_open()
     volatile MusicData &m = md();
     if (m.Med_Base)
         return;
-    m.Med_Base = address(OpenLibrary(const_cast<char *>("medplayer.library"), 2));
+    m.Med_Base = address(hal::open_library(const_cast<char *>("medplayer.library"), 2));
     if (!m.Med_Base)
         error(NoMedLib);
     if (lvo(m.Med_Base, -30, m.Med_Midi)) {
@@ -846,13 +847,13 @@ void ext_music_end()
     volatile MusicData &m = md();
     talk_stop();
     if (struct IOStdReq *io = write_io()) {
-        CloseDevice(reinterpret_cast<struct IORequest *>(io));
+        hal::close_device(reinterpret_cast<struct IORequest *>(io));
         lib_delete_ext_io(reinterpret_cast<struct IORequest *>(io));
         lib_delete_port(ptr<struct MsgPort>(m.WritePort));
         lib_delete_port(ptr<struct MsgPort>(m.ReadPort));
     }
     if (m.TranBase)
-        CloseLibrary(ptr<struct Library>(m.TranBase));
+        hal::close_library(ptr<struct Library>(m.TranBase));
     track_stop();
     med_close();
     idata().VblRout[0] = 0;
@@ -1290,7 +1291,7 @@ void ext_mouth_read()
     struct IOStdReq *w = write_io();
     if (m.TranBase && w && reinterpret_cast<uint8_t *>(w)[66]) {
         poke_w(r + 28, CMD_READ);
-        DoIO(reinterpret_cast<struct IORequest *>(r));
+        hal::do_io(reinterpret_cast<struct IORequest *>(r));
         if (int8_t(r[0x1F]) != -8)      // ND_NoWrite
             return;
     }

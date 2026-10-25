@@ -10,6 +10,7 @@
 #include <dos/dos.h>
 
 #include "hal/files.h"
+#include "hal/system.h"
 
 // The record that closes every channel when the program is cleared
 // (dos_glue.s)
@@ -191,7 +192,7 @@ void end_byte()
 // NoReq / YesReq: no "insert disk" requesters while looking
 void no_requesters()
 {
-    auto task = reinterpret_cast<uint8_t *>(FindTask(nullptr));
+    auto task = reinterpret_cast<uint8_t *>(hal::find_task(nullptr));
     uint32_t &window = *reinterpret_cast<uint32_t *>(task + 0xb8);
     if (window != 0xFFFFFFFFu) {
         idata().ReqSave = window;
@@ -201,7 +202,7 @@ void no_requesters()
 
 void yes_requesters()
 {
-    auto task = reinterpret_cast<uint8_t *>(FindTask(nullptr));
+    auto task = reinterpret_cast<uint8_t *>(hal::find_task(nullptr));
     uint32_t &window = *reinterpret_cast<uint32_t *>(task + 0xb8);
     if (window == 0xFFFFFFFFu)
         window = idata().ReqSave;

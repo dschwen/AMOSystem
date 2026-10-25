@@ -18,6 +18,7 @@
 #include <graphics/text.h>
 
 #include "hal/gfx.h"
+#include "hal/system.h"
 
 using namespace amos;
 using namespace amos::dev;
@@ -100,7 +101,7 @@ void write_memory(DeviceChannel &c, uint32_t at, uint32_t length, uint16_t comma
 int32_t truth(uint32_t v) { return v ? -1 : 0; }
 
 // The printer's and the parallel port's task: its requesters
-struct Process *printer_task() { return reinterpret_cast<struct Process *>(FindTask(const_cast<char *>("printer.device"))); }
+struct Process *printer_task() { return reinterpret_cast<struct Process *>(hal::find_task(const_cast<char *>("printer.device"))); }
 
 // GetScr: the current screen, for a dump
 void dump_screen()

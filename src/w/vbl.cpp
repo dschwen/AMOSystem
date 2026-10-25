@@ -12,6 +12,7 @@
 
 #include <exec/interrupts.h>
 #include <hardware/intbits.h>
+#include "hal/system.h"
 
 using namespace amos;
 using namespace amos::w;
@@ -282,7 +283,7 @@ void add_vbl()
     is->is_Node.ln_Name = nullptr;
     is->is_Data = reinterpret_cast<uint8_t *>(&d) + sizeof(WData);
     is->is_Code = reinterpret_cast<void (*)()>(w_vbl_in);
-    AddIntServer(INTB_VERTB, is);
+    hal::add_vbl_server(is);
 }
 
 // Rem_VBL
@@ -290,7 +291,7 @@ void rem_vbl()
 {
     auto is = reinterpret_cast<struct Interrupt *>(wdata().VBL_Is);
     if (is->is_Code)
-        RemIntServer(INTB_VERTB, is);
+        hal::remove_vbl_server(is);
 }
 
 // VblInit: no flash, no shift, the mouse from its bank (hidden), the VBL

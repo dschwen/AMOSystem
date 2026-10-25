@@ -12,6 +12,7 @@
 
 #include "core/amiga.h"
 #include "interp/interp.h"
+#include "hal/system.h"
 
 using namespace amos;
 
@@ -404,7 +405,7 @@ constexpr int LB_Flags = -12, LB_DFloatSwap = -30, LB_FFloatSwap = -32, LBF_DFlo
 
 uint32_t open_library(const char *name)
 {
-    uint32_t base = address(OpenLibrary(name, 0));
+    uint32_t base = address(hal::open_library(name, 0));
     if (!base) {
         // Cannot open math libraries, at the start of the program
         ctx().a6 = ptr<uint8_t>(data().Prg_Run);
