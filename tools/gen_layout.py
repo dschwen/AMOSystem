@@ -340,9 +340,14 @@ def main():
         '',
         'namespace amos {',
         '',
+        '// The 68000 aligns 32-bit fields on 2 bytes: the same everywhere',
+        '#pragma pack(push, 2)',
+        '',
     ]
     for b in blocks:
         emit_struct(out, b, values)
+    out.append('#pragma pack(pop)')
+    out.append('')
     for ns, names in vector_functions(args.src).items():
         out.append(f'namespace {ns} {{')
         out.extend(f'constexpr int {name} = {num};' for name, num in names)

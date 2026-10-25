@@ -4,8 +4,17 @@
 
 #include <stdint.h>
 
+#if defined(__mc68000__)
 #define EXEC_BASE_NAME (*reinterpret_cast<struct Library **>(4))
 #include <proto/exec.h>
+#else
+// Another host: the system's structures only (its services are src/hal's)
+#include <exec/types.h>
+#include <exec/memory.h>
+#include <exec/tasks.h>
+#include <exec/ports.h>
+#include <exec/libraries.h>
+#endif
 
 namespace amos {
 

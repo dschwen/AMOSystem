@@ -93,7 +93,7 @@ REFERENCE_AMOSPro_Interpreter_Config := AMOSPro_Interpreter_Config
 REFERENCE_DEFAULT                     = APSystem/$(1)
 reference = AMOS/$(or $(REFERENCE_$(1)),$(call REFERENCE_DEFAULT,$(1)))
 
-.PHONY: all dist verify test test-reference install-hd clean
+.PHONY: all dist verify test test-reference install-hd host-check clean
 .SECONDARY:
 .DELETE_ON_ERROR:
 
@@ -272,6 +272,10 @@ HD_BACKUP ?= ../AMOS_Pro-original-binaries
 
 install-hd: all
 	$(PYTHON) tools/install_hd.py --build $(BUILD) --hd "$(HD)" --backup "$(HD_BACKUP)"
+
+# Phase 7: which C++ files compile for another host (tools/host_check.sh)
+host-check: $(CXX_GEN)
+	sh tools/host_check.sh
 
 clean:
 	rm -rf $(BUILD)

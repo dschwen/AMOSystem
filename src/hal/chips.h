@@ -12,8 +12,9 @@
 
 namespace amos::hal {
 
-#if defined(__amigaos__) || defined(AMIGA) || defined(__mc68000__)
 constexpr uint32_t CustomBase = 0xDFF000, CiaABase = 0xBFE001;
+
+#if defined(__mc68000__)
 
 inline volatile struct Custom &custom() { return *reinterpret_cast<volatile struct Custom *>(CustomBase); }
 // CIA A's port A (the fire buttons, the filter LED...)
