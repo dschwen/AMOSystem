@@ -5,6 +5,7 @@
 
 #include "core/amiga.h"
 #include "lib/convert.h"
+#include "hal/system.h"
 
 namespace amos {
 
@@ -474,10 +475,10 @@ extern "C" uint32_t lib_bnk_schrink(RegFrame &r)
     // give back the end of the memory: free it all and take the start
     // again, without letting another task in between
     uint32_t next = peek_l(e);
-    Forbid();
+    hal::forbid();
     FreeMem(e, old_size);
     AllocAbs(new_size, e);
-    Permit();
+    hal::permit();
     poke_l(e, next);
     poke_l(e + 4, new_size - 8);
     return r.d[0] = 0;
@@ -884,5 +885,5 @@ extern "C" uint32_t lib_fn_length(uint32_t n)
 }
 
 // =CHIP FREE, =FAST FREE
-extern "C" uint32_t lib_fn_chip_free() { return AvailMem(MEMF_CHIP); }
-extern "C" uint32_t lib_fn_fast_free() { return AvailMem(MEMF_FAST); }
+extern "C" uint32_t lib_fn_chip_free() { return hal::available_memory(hal::MemoryChip); }
+extern "C" uint32_t lib_fn_fast_free() { return hal::available_memory(hal::MemoryFast); }

@@ -3,6 +3,7 @@
 
 #include "editor/editor.h"
 #include "core/amiga.h"
+#include "hal/system.h"
 
 using namespace amos;
 using namespace amos::ed;
@@ -96,8 +97,8 @@ void information()
     call(ed_test_program, t);
     Program &p = program();
     uint32_t *v = dialogue_variables();
-    v[0] = AvailMem(MEMF_CHIP);
-    v[1] = AvailMem(MEMF_FAST);
+    v[0] = hal::available_memory(hal::MemoryChip);
+    v[1] = hal::available_memory(hal::MemoryFast);
     v[2] = p.Prg_StHaut - p.Prg_StBas;
     Regs b;
     lib_call(L_Bnk_GetLength, b);

@@ -17,6 +17,7 @@
 #include "editor/editor.h"
 #include "core/amiga.h"
 #include "lib/menus.h"
+#include "hal/system.h"
 
 using namespace amos;
 using namespace amos::ed;
@@ -151,7 +152,7 @@ uint32_t mn_object(const uint8_t *s)
 }
 
 // Ed_Available: the free memory, chip and fast
-uint32_t available() { return AvailMem(MEMF_PUBLIC | MEMF_FAST) + AvailMem(MEMF_PUBLIC | MEMF_CHIP); }
+uint32_t available() { return hal::available_memory(hal::MemoryPublic | hal::MemoryFast) + hal::available_memory(hal::MemoryPublic | hal::MemoryChip); }
 
 // EdM_Editor / EdM_Program: the menu data of the editor or of the
 // program in the data zone (the other one kept in EdM_Copie)
@@ -589,7 +590,7 @@ Choice menu_choice()
 {
     IData &d = idata();
     editor_menus();
-    if (!d.MnBase || AvailMem(MEMF_PUBLIC) < 40 * 1024)
+    if (!d.MnBase || hal::available_memory(hal::MemoryPublic) < 40 * 1024)
         return {-1, nullptr, 0};
     sound('H');
     Regs g;

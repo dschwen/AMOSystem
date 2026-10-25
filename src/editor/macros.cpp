@@ -19,6 +19,7 @@
 #include <dos/dos.h>
 
 #include "hal/files.h"
+#include "hal/system.h"
 
 using namespace amos;
 using namespace amos::ed;
@@ -210,7 +211,7 @@ int32_t dialogue(uint16_t n)
     if (d.Ed_Zappeuse)
         return int32_t(d.Ed_ZapParam);
     d.Dia_Magic = 0;
-    if (AvailMem(MEMF_PUBLIC | MEMF_CHIP) >= 48 * 1024)
+    if (hal::available_memory(hal::MemoryPublic | hal::MemoryChip) >= 48 * 1024)
         return run_dialogue(n);
     // under 48k of chip memory, the dialogue does not keep what was under it
     d.Dia_Magic = 0x4E6F624C;                   // "NobL"

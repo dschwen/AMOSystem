@@ -9,6 +9,7 @@
 #include "core/amiga.h"
 
 #include <stddef.h>
+#include "hal/system.h"
 
 using namespace amos;
 using namespace amos::ed;
@@ -119,9 +120,9 @@ void memory_show()
         r.a[0] = address(s);
         lib_call(L_Sl_Init, r);
     };
-    uint32_t chip = AvailMem(MEMF_CHIP | MEMF_PUBLIC);
+    uint32_t chip = hal::available_memory(hal::MemoryChip | hal::MemoryPublic);
     gauge(d.MemChipTotal, chip, MemoryY1);
-    uint32_t fast = AvailMem(MEMF_PUBLIC | MEMF_FAST);
+    uint32_t fast = hal::available_memory(hal::MemoryPublic | hal::MemoryFast);
     gauge(d.MemFastTotal, fast, MemoryY2);
     d.Ed_MemCurrent = chip + fast;
 }

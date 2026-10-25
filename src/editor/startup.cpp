@@ -11,6 +11,7 @@
 
 #include "editor/editor.h"
 #include "core/amiga.h"
+#include "hal/system.h"
 
 using namespace amos;
 using namespace amos::ed;
@@ -378,7 +379,7 @@ uint32_t cold()
     IData &d = idata();
     d.Ed_Ok = 0;
     uint32_t error = 1;
-    uint32_t chip = AvailMem(MEMF_PUBLIC | MEMF_CHIP), fast = AvailMem(MEMF_PUBLIC | MEMF_FAST);
+    uint32_t chip = hal::available_memory(hal::MemoryPublic | hal::MemoryChip), fast = hal::available_memory(hal::MemoryPublic | hal::MemoryFast);
     if (chip >= 50 * 1024 && chip + fast >= 110 * 1024) {
         if (d.Ed_Warm) {
             error = load_all_config();

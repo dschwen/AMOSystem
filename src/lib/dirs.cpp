@@ -9,6 +9,7 @@
 #include <dos/dos.h>
 
 #include "hal/files.h"
+#include "hal/system.h"
 
 // The record that frees the list when the program is cleared (dos_glue.s)
 extern "C" uint8_t lib_fill_free_on_clear[];
@@ -347,7 +348,7 @@ void fill_devices()
     poke_l(buffer + 124, 0);
     fill_poke(buffer, 0);
     d.FillFNb = 0;
-    Forbid();
+    hal::forbid();
     auto dos = ptr<uint8_t>(d.DosBase);
     auto root = static_cast<uint8_t *>(BADDR(peek_l(ptr<uint8_t>(peek_l(dos + 34)) + 24)));
     for (uint8_t *node = static_cast<uint8_t *>(BADDR(peek_l(root + 4))); node;
@@ -378,7 +379,7 @@ void fill_devices()
         poke_l(buffer + 124, 0xFFFFFFFFu);
         fill_poke(buffer, ' ');
     }
-    Permit();
+    hal::permit();
     fill_sort();
 }
 

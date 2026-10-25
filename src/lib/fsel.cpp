@@ -23,6 +23,7 @@
 #include <dos/dos.h>
 
 #include "hal/files.h"
+#include "hal/system.h"
 
 using namespace amos;
 
@@ -80,9 +81,9 @@ volatile uint16_t &command() { return fs()->Fs_Command; }
 // (The assembler set the bits with one bset)
 void send(uint16_t bits)
 {
-    Forbid();
+    hal::forbid();
     command() |= bits;
-    Permit();
+    hal::permit();
 }
 volatile uint16_t &waiting() { return fs()->Fs_Waiting; }
 volatile uint16_t &input() { return fs()->Fs_Input; }
@@ -167,11 +168,11 @@ bool show_stores() { return !dia_update(Channel, SliderS, 0, 1, stores() + 1u).e
 extern "C" void lib_fs_task()
 {
     for (;;) {
-        Forbid();
+        hal::forbid();
         uint16_t c = command();
         if (c && !(c & CmdQuit))
             command() = 0;
-        Permit();
+        hal::permit();
         bool wait = false;
         if (c) {
             if (c & CmdQuit)
@@ -903,7 +904,7 @@ void inputs(const uint32_t *params)
     v[VPath] = static_cast<int32_t>(address(zone_string(reinterpret_cast<uint8_t *>(p - 1))));
 }
 
-uint32_t avail_public() { return AvailMem(MEMF_PUBLIC); }
+uint32_t avail_public() { return hal::available_memory(hal::MemoryPublic); }
 
 // Fs_LowMemory: a small selector without its task
 [[noreturn]] void low_memory(const uint32_t *params)

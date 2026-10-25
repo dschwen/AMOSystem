@@ -7,6 +7,7 @@
 #include "core/amiga.h"
 
 #include <exec/memory.h>
+#include "hal/system.h"
 
 using namespace amos;
 using namespace amos::monitor;
@@ -234,7 +235,7 @@ bool cold_start(uint32_t program)
     view_update();
     mouse_free();
     // 4K of chip memory at least
-    if (AvailMem(MEMF_PUBLIC | MEMF_CHIP) < 4 * 1024)
+    if (hal::available_memory(hal::MemoryPublic | hal::MemoryChip) < 4 * 1024)
         return false;
     screens_refresh();
     return true;

@@ -11,6 +11,7 @@
 
 #define REXXSYSLIB_BASE_NAME (amos::ptr<struct Library>(amos::idata().Arx_Base))
 #include <proto/rexxsyslib.h>
+#include "hal/system.h"
 
 using namespace amos;
 
@@ -27,11 +28,11 @@ struct RexxMsg *answer() { return ptr<struct RexxMsg>(idata().Arx_Answer); }
 // it (*port).
 bool port_exists(const char *name, bool create, struct MsgPort **port)
 {
-    Forbid();
+    hal::forbid();
     bool exists = FindPort(const_cast<STRPTR>(name));
     if (!exists && create)
         *port = lib_create_port(name, 0);
-    Permit();
+    hal::permit();
     return exists;
 }
 
@@ -77,13 +78,13 @@ extern "C" void lib_arx_close()
             d.Arx_Answer = 0;
             fatal_reply(m);
         }
-        Forbid();
+        hal::forbid();
         while (struct Message *m = GetMsg(ptr<struct MsgPort>(d.Arx_Port)))
             fatal_reply(m);
         struct MsgPort *port = ptr<struct MsgPort>(d.Arx_Port);
         d.Arx_Port = 0;
         lib_delete_port(port);
-        Permit();
+        hal::permit();
     }
     struct Library *base = ptr<struct Library>(d.Arx_Base);
     d.Arx_Base = 0;

@@ -25,6 +25,7 @@ Library *dos_base, *intuition_base, *icon_base;
 #include <proto/intuition.h>
 #define ICON_BASE_NAME icon_base
 #include <proto/icon.h>
+#include "hal/system.h"
 
 namespace {
 
@@ -464,8 +465,8 @@ void main_cold_start(char *command, uint32_t length, uint32_t sp)
     // the memory there is
     if (!d.WB2_0) {
         // under 1.3, about it
-        uint32_t chip = AvailMem(MemPublic | MemChip) + 38 * 1024;
-        uint32_t fast = AvailMem(MemPublic | MemFast);
+        uint32_t chip = hal::available_memory(MemPublic | MemChip) + 38 * 1024;
+        uint32_t fast = hal::available_memory(MemPublic | MemFast);
         if (fast)
             fast += 256 * 1024;
         else
@@ -473,8 +474,8 @@ void main_cold_start(char *command, uint32_t length, uint32_t sp)
         d.MemFastTotal = fast;
         d.MemChipTotal = chip;
     } else {
-        d.MemChipTotal = AvailMem(MemPublic | MemChip | MEMF_TOTAL);
-        d.MemFastTotal = AvailMem(MemPublic | MemFast | MEMF_TOTAL);
+        d.MemChipTotal = hal::available_memory(MemPublic | MemChip | hal::MemoryTotal);
+        d.MemFastTotal = hal::available_memory(MemPublic | MemFast | hal::MemoryTotal);
     }
 
     Regs a;
