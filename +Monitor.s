@@ -174,7 +174,7 @@ MGetCtx		MACRO
 .Main\@	movem.l	(a0),d6-d7/a3-a6
 		ENDM
 
-		XREF	_mon_tests_entry,_mon_reloop_entry,_mon_quit_entry
+		XREF	_mon_tests_entry,_mon_reloop_entry,_mon_quit_entry,_interp_step_instruction
 		XREF	_mon_step0_entry,_mon_step1_entry,_mon_step2_entry,_mon_step3_entry
 		XREF	_mon_initialise_entry,_mon_reinit_entry
 
@@ -944,7 +944,7 @@ Tt_Tst3	rts
 ;	Entree du pas a pas...
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 MonitorChr
-	move.l	-LB_Size(a4,d1.w),-(sp)	Adresse de l'instruction
+	pea	_interp_step_instruction	The instruction, its parameters collected (interp/chrget.cpp)
 	cmp.w	#_TkDP,-2(a6)		Pas sur un :
 	beq	.Back			RTS direct
 	lea	-2(a6),a1

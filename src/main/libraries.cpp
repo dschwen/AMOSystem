@@ -33,7 +33,7 @@ constexpr uint16_t OpJmpAbs = 0x4EF9, OpJsrAbs = 0x4EB9;    // jmp/jsr address
 constexpr uint16_t OpJmpAn = 0x4ED0, OpJsrAn = 0x4E90;      // jmp/jsr (an)
 constexpr uint16_t OpMoveA4 = 0x206C;                       // move.l d16(a4),an
 constexpr uint16_t OpLeaAbs = 0x41F9;                       // lea address,an
-constexpr uint16_t OpJsrA4 = 0x4EAC;                        // jsr d16(a4)
+constexpr uint16_t ParamsMark = 0x5041;                     // "PA": a collector's number follows
 constexpr uint16_t OpNop = 0x4E71;
 // Rbra, Rbsr, Rbeq... (codes 2 to 14): bra.w, bsr.w, beq.w...
 constexpr uint16_t OpBranch[13] = {0x6000, 0x6100, 0x6700, 0x6600, 0x6500, 0x6400, 0x6D00,
@@ -414,21 +414,19 @@ int library_reloc(uint32_t n)
 }
 
 // Library_GetParams: the "GetP" in front of the instructions and functions
-// of library n becomes the call to their parameter collector (L_Parameters
-// in the main library, a table of offsets of the collectors: 0-5 integers,
-// 6-11 floats, 12-17 a reserved variable's, 18 an angle, 19 a maths
-// function; the extensions' 20 further on)
+// of library n with parameters becomes "PA" and the number of the
+// parameter collector they need (0-5 integers, 6-11 floats, 12-17 a
+// reserved variable's, 18 an angle, 19 a maths function; the extensions'
+// 20 further on), which interp/params.cpp does. (The loader of the
+// original put a jsr d16(a4) to +ILib.s Parameters' collectors there.)
 void library_get_params(uint32_t n)
 {
     uint8_t *tokens = library(n);
     if (!tokens || !(tokens[LB_Flags] & (1 << LBF_20)))
         return;
     uint32_t extension = n ? 20 : 0;
-    uint32_t main = idata().AdTokens[0];
-    uint32_t collectors = lb_jump(library(0), L_Parameters);
 
-    auto patch = [&](uint32_t &entry, uint16_t kind, uint16_t params, bool function) {
-        uint16_t back = function ? 2 : 0;
+    auto patch = [&](uint32_t entry, uint16_t kind, uint16_t params, bool function) {
         uint16_t collector;
         switch (kind) {
         case 0:
@@ -447,11 +445,9 @@ void library_get_params(uint32_t n)
             collector = uint16_t(params + 6) < 12 ? uint16_t(params + 6) : 11;
             break;
         case 2:
-            back = 0;
             collector = 18;
             break;
         case 3:
-            back = 0;
             collector = 19;
             break;
         case 4:
@@ -463,18 +459,14 @@ void library_get_params(uint32_t n)
             collector = uint16_t(params + 6) < 12 ? uint16_t(params + 6) : 11;
             break;
         }
-        collector = uint16_t(collector + extension);
-        int16_t delta = int16_t(peek_w(ptr<void>(collectors + 2 * collector)) - back);
-        uint16_t displacement = uint16_t(collectors + int32_t(delta) - main);
         uint8_t *code = ptr<uint8_t>(entry - 4);
         if (peek_l(code) != 0x47657450) {       // "GetP"
-            if (peek_w(code + 4) == OpJsrA4)    // done already
+            if (peek_w(code) == ParamsMark)     // done already
                 return;
             illegal();
         }
-        poke_w(code, OpJsrA4);
-        poke_w(code + 2, displacement);
-        entry -= 4;
+        poke_w(code, ParamsMark);
+        poke_w(code + 2, uint16_t(collector + extension));
     };
 
     uint8_t *p = tokens;

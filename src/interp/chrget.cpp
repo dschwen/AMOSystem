@@ -13,6 +13,7 @@ using namespace amos;
 extern "C" {
 // chrget_glue.s
 void interp_exec(const void *routine, uint32_t d0, uint32_t d1);
+void interp_exec_value(const void *routine, uint32_t d0, uint32_t d1, const amos::interp::Value *v);
 extern uint8_t interp_iret[];
 // float.cpp
 void interp_open_math_libraries();
@@ -33,12 +34,10 @@ const void *routine(const uint8_t *a4, uint16_t t, uint16_t patch)
 }
 
 // The instructions and functions called here directly: a LibCall entry
-// (src/glue.i, tagged before it) with integer parameters, or none. The
-// routine of one with parameters starts with the jsr d16(a4) to the
-// collector the loader put there, then the entry.
+// (src/glue.i, tagged before it) with integer parameters, or none; the
+// loader marked the number of their collector in place of its "GetP".
 constexpr uint32_t Tag = 0x4C43616C;        // "LCal"
 constexpr uint32_t GetP = 0x47657450;       // "GetP"
-constexpr uint16_t JsrA4 = 0x4EAC;          // jsr d16(a4)
 constexpr int Tokens = 0x4000;              // the token offsets cached
 constexpr uint8_t LCNone = 3, LCDouble = 4;
 
@@ -49,29 +48,17 @@ struct Native {
 };
 Native instructions[Tokens / 2], functions[Tokens / 2];
 
-// The integer collectors: Parameters' entries 1 to 5 (Ent_1 to Ent_4,
-// Ent_N; a function's 2 bytes before, past its opening parenthesis)
-bool integer_collector(const uint8_t *a4, const uint8_t *collector, uint16_t t, bool function, uint8_t &params)
-{
-    const uint8_t *par = static_cast<const uint8_t *>(lib_address(L_Parameters));
-    for (int k = 1; k <= 5; k++) {
-        if (par + int16_t(peek_w(par + 2 * k)) - (function ? 2 : 0) == collector) {
-            params = k < 5 ? uint8_t(k) : uint8_t(peek_w(a4 + int16_t(t) + 2));
-            return true;
-        }
-    }
-    return false;
-}
-
 Native find_native(const uint8_t *a4, uint16_t t, const void *routine, bool function)
 {
     Native n = {routine, nullptr, 0, 0};
     const uint8_t *body = static_cast<const uint8_t *>(routine);
     uint8_t params = 0;
-    if (peek_w(body) == JsrA4) {
-        if (!integer_collector(a4, a4 + int16_t(peek_w(body + 2)), t, function, params))
+    // integer parameters: collectors 1 to 5 (Ent_1 to Ent_4, Ent_N)
+    int k = interp::collector_of(routine);
+    if (k >= 0) {
+        if (k < 1 || k > 5)
             return n;
-        body += 4;
+        params = k < 5 ? uint8_t(k) : uint8_t(peek_w(a4 + int16_t(t) + 2));
     } else if (peek_l(body - 4) != GetP) {
         return n;
     }
@@ -138,16 +125,25 @@ const Native *native(IData &d, const uint8_t *a4, uint16_t t, const void *r, boo
     return n.fn ? &n : nullptr;
 }
 
-// Instruction t
-void instruction(IData &d, Ctx &c, uint16_t t)
+// Instruction t (the monitor's patch in its place if patched)
+void instruction(IData &d, Ctx &c, uint16_t t, bool patched = true)
 {
-    uint16_t patch = uint16_t(d.Cur_ChrJump >> 16);
+    uint16_t patch = patched ? uint16_t(d.Cur_ChrJump >> 16) : 0;
     const void *r = routine(c.a4, t, patch);
-    if (const Native *n = patch ? nullptr : native(d, c.a4, t, r, false)) {
+    if (patch) {
+        interp_exec(r, t, peek_w(c.a4 + int16_t(t)));
+        return;
+    }
+    if (const Native *n = native(d, c.a4, t, r, false)) {
         call_native(*n);
         return;
     }
-    interp_exec(r, t, peek_w(c.a4 + int16_t(t)));
+    // its parameters collected here, then its body
+    interp::Collected p = interp::collect(c.a4, t, r, false);
+    if (p.has_value)
+        interp_exec_value(p.body, t, peek_w(c.a4 + int16_t(t)), &p.last);
+    else
+        interp_exec(p.body, t, peek_w(c.a4 + int16_t(t)));
 }
 
 // The program's end
@@ -220,6 +216,13 @@ extern "C" {
 
 // _IRet: after an instruction
 [[noreturn]] void interp_chrget_continue() { run(false); }
+
+// The instruction of token t without the monitor's patch (its stepping
+// runs the instruction it stopped on)
+void interp_run_instruction(uint32_t t)
+{
+    instruction(idata(), ctx(), uint16_t(t), false);
+}
 
 // SetChrPatch: d0 the routine every instruction goes to (the monitor's),
 // 0 for the instructions' own

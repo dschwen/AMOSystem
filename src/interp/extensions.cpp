@@ -36,7 +36,13 @@ Value call(bool function)
         r.d[1] = uint16_t(jump);
         r.d[2] = peek_w(table + token + 2);
         r.a[0] = peek_l(table + jump - LB_Size - (function ? 4 : 0));
-        return run(ptr<void>(r.a[0]), r);
+        Collected p = collect(table, token, ptr<void>(r.a[0]), function);
+        if (p.has_value) {
+            r.d[2] = p.last.type;
+            r.d[3] = p.last.v1;
+            r.d[4] = p.last.v2;
+        }
+        return run(p.body, r);
     }
     uint16_t token = next_token();
     const void *routine = table + int16_t(peek_w(table + token + (function ? 2 : 0)));

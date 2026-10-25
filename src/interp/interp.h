@@ -32,6 +32,18 @@ inline uint16_t next_token()
     return t;
 }
 
+// The work of the parameter collector a routine starts with (params.cpp):
+// the parameters evaluated, all but the last one on the a3 stack. The body
+// to call (past the collector's call; a maths function's float routine)
+// gets the last one in d2/d3/d4 (if has_value).
+struct Collected {
+    const void *body;
+    Value last;
+    bool has_value;
+};
+Collected collect(const uint8_t *table, uint16_t t, const void *routine, bool function);
+int collector_of(const void *routine);      // its number (0-39), or -1
+
 // New_Evalue: the expression at pc; pc at the token after it (past a
 // closing parenthesis). *end gets that token.
 Value evaluate(uint16_t *end = nullptr);

@@ -347,11 +347,17 @@ Value function(uint16_t t)
     Value v;
     if (native_function(t, routine, v))
         return v;
+    Collected p = collect(tokens, t, routine, true);
     Regs r;
     r.d[0] = t;
     r.d[1] = uint16_t(offset);
     r.a[0] = address(routine);
-    amos_eval(&r, routine);
+    if (p.has_value) {
+        r.d[2] = p.last.type;
+        r.d[3] = p.last.v1;
+        r.d[4] = p.last.v2;
+    }
+    amos_eval(&r, p.body);
     return result(r);
 }
 
