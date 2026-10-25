@@ -13,8 +13,7 @@
 #include <graphics/text.h>
 
 #include "hal/gfx.h"
-#define DISKFONT_BASE_NAME (amos::ptr<struct Library>(amos::wdata().FntBase))
-#include <proto/diskfont.h>
+#include "hal/system.h"
 
 using namespace amos;
 using namespace amos::w;
@@ -45,11 +44,11 @@ void get_fonts(AllRegs *r)
     r->d[0] = 0xFFFFFFFF;
     // (The assembler opened the library again at each call)
     if (!d.FntBase)
-        d.FntBase = address(OpenLibrary(const_cast<STRPTR>("diskfont.library"), 0));
+        d.FntBase = address(hal::open_library(const_cast<STRPTR>("diskfont.library"), 0));
     if (!d.FntBase)
         return;
     free_fonts();
-    int32_t more = AvailFonts(ptr<char>(r->a[1]), 8, type);
+    int32_t more = hal::avail_fonts(ptr<char>(r->a[1]), 8, type);
     r->d[0] = more;
     if (!more)
         return;
@@ -63,7 +62,7 @@ void get_fonts(AllRegs *r)
     d.FontILong = size;
     // Not enough after all: no list, and no error (TFFonts cleared d0)
     r->d[0] = 0;
-    if (AvailFonts(ptr<char>(buffer), size, type))
+    if (hal::avail_fonts(ptr<char>(buffer), size, type))
         free_fonts();
 }
 
@@ -109,7 +108,7 @@ uint32_t set_font(uint16_t n)
     bool in_memory = peek_w(entry) == AFF_MEMORY;
     if (!in_memory) {
         uint8_t fonts[502];
-        AvailFonts(reinterpret_cast<char *>(fonts), sizeof fonts, AFF_MEMORY);
+        hal::avail_fonts(reinterpret_cast<char *>(fonts), sizeof fonts, AFF_MEMORY);
         int16_t count = peek_w(fonts);
         for (const uint8_t *f = fonts + 2; --count >= 0 && !in_memory; f += 10) {
             if (peek_w(f + 6) != peek_w(entry + 6))

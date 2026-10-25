@@ -235,18 +235,18 @@ void create_task()
 {
     static const char name[] = "AMOSPro File Selector";
     constexpr uint32_t stack = 16 * 1024;
-    struct Task *t = static_cast<struct Task *>(AllocMem(sizeof(struct Task), MEMF_PUBLIC | MEMF_CLEAR));
-    uint8_t *s = static_cast<uint8_t *>(AllocMem(stack, MEMF_PUBLIC | MEMF_CLEAR));
+    struct Task *t = static_cast<struct Task *>(hal::allocate(sizeof(struct Task), MEMF_PUBLIC | MEMF_CLEAR));
+    uint8_t *s = static_cast<uint8_t *>(hal::allocate(stack, MEMF_PUBLIC | MEMF_CLEAR));
     if (!t || !s) {
         if (t)
-            FreeMem(t, sizeof(struct Task));
+            hal::release(t, sizeof(struct Task));
         if (s)
-            FreeMem(s, stack);
+            hal::release(s, stack);
         return;
     }
     // Freed with the task
     struct MemList *ml = static_cast<struct MemList *>(
-        AllocMem(sizeof(struct MemList) + sizeof(struct MemEntry), MEMF_PUBLIC | MEMF_CLEAR));
+        hal::allocate(sizeof(struct MemList) + sizeof(struct MemEntry), MEMF_PUBLIC | MEMF_CLEAR));
     t->tc_Node.ln_Type = NT_TASK;
     t->tc_Node.ln_Pri = -1;
     t->tc_Node.ln_Name = const_cast<char *>(name);
@@ -264,7 +264,7 @@ void create_task()
         ml->ml_ME[0].me_Length = sizeof(struct Task);
         ml->ml_ME[1].me_Addr = s;
         ml->ml_ME[1].me_Length = stack;
-        AddHead(&t->tc_MemEntry, &ml->ml_Node);
+        hal::add_head(&t->tc_MemEntry, &ml->ml_Node);
     }
     lib_fs_task_a5 = address(ctx().a5);
     hal::add_task(t, reinterpret_cast<APTR>(lib_fs_task_entry), nullptr);

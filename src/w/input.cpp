@@ -19,13 +19,13 @@
 // +W.s
 extern "C" uint8_t w_con_io[];
 
-#define CONSOLE_BASE_NAME (amos::ptr<struct Device>(amos::peek_l(w_con_io + 20)))
-#include <proto/console.h>
 #include <graphics/gfxbase.h>
 #include <graphics/rastport.h>
 #include <graphics/text.h>
 
 #include "hal/gfx.h"
+#include "hal/workbench.h"
+#include "hal/system.h"
 
 using namespace amos;
 using namespace amos::w;
@@ -105,7 +105,7 @@ bool key_event(WData &d, struct InputEvent *e, bool here)
         uint8_t shifts = *qualifier;
         *qualifier &= ~0x08;
         uint8_t buffer[64];
-        LONG n = RawKeyConvert(e, reinterpret_cast<STRPTR>(buffer), sizeof buffer, nullptr);
+        LONG n = hal::key_to_text(e, reinterpret_cast<char *>(buffer), sizeof buffer, ptr<void>(peek_l(w_con_io + 20)));
         *qualifier = shifts;
         code = e->ie_Code;
         ascii = n >= 1 ? buffer[0] : 0;
@@ -178,7 +178,7 @@ void send_fake_event()
     io->io_Data = &e;
     io->io_Command = IND_WRITEEVENT;
     io->io_Length = 22;
-    DoIO(reinterpret_cast<struct IORequest *>(io));
+    hal::do_io(reinterpret_cast<struct IORequest *>(io));
 }
 
 } // namespace amos::w
@@ -257,7 +257,7 @@ void w_sy_test_cyclic(AllRegs *)
         amos_wb(d.AMOSHere >> 8 ? 0 : 1);
     }
     // The fake events for the screen blankers, every 2 seconds (V36+)
-    if (EXEC_BASE_NAME->lib_Version >= 36 && int16_t(--d.FakeEventCpt) < 0) {
+    if (hal::os_version() >= 36 && int16_t(--d.FakeEventCpt) < 0) {
         d.FakeEventCpt = 50 * 2;
         if (d.AMOSHere >> 8)
             send_fake_event();

@@ -35,12 +35,16 @@ void signal(Task *task, uint32_t signals);
 Library *open_library(const char *name, uint32_t version);
 void close_library(Library *library);
 uint16_t os_version();                          // exec's
+uint8_t vblank_frequency();                     // 50 (PAL) or 60
 void clear_cache();
 // SetFunction: library's function at offset becomes function; the old one
 uint32_t set_function(uint32_t library, int16_t offset, uint32_t function);
 
 // Memory at a given address (AllocAbs)
 void *allocate_at(uint32_t size, void *address);
+
+// Exec's lists
+void add_head(void *list, void *node);
 
 // Message ports, signals
 void add_port(MsgPort *port);

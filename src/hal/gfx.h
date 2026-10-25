@@ -17,6 +17,8 @@ struct ColorMap;
 struct View;
 struct Region;
 struct Rectangle;
+struct Layer;
+struct Layer_Info;
 
 namespace amos::hal {
 
@@ -59,6 +61,17 @@ void set_rgb4_cm(ColorMap *map, int32_t n, uint32_t r, uint32_t g, uint32_t b);
 Region *new_region();
 bool or_rect_region(Region *region, Rectangle *rect);
 void dispose_region(Region *region);
+
+// Layers (layers.library): a screen's, which its clipping region needs
+Layer_Info *new_layer_info();
+void dispose_layer_info(Layer_Info *info);
+Layer *create_upfront_layer(Layer_Info *info, BitMap *bm, int32_t x0, int32_t y0, int32_t x1, int32_t y1,
+                            uint32_t flags, BitMap *super);
+void delete_layer(Layer *layer);
+Region *install_clip_region(Layer *layer, Region *region);
+
+// The fonts there are (AvailFonts: into buffer; the bytes missing)
+int32_t avail_fonts(char *buffer, int32_t size, uint32_t types);
 
 // The blitter, the display
 void own_blitter();

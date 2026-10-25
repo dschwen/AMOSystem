@@ -8,9 +8,8 @@
 #include <rexx/errors.h>
 #include <rexx/storage.h>
 
-#define REXXSYSLIB_BASE_NAME (amos::ptr<struct Library>(amos::idata().Arx_Base))
-#include <proto/rexxsyslib.h>
 #include "hal/system.h"
+#include "hal/workbench.h"
 
 using namespace amos;
 
@@ -47,7 +46,7 @@ bool message()
     if (!m)
         return false;
     d.Arx_Answer = address(m);
-    if (IsRexxMsg(reinterpret_cast<struct RexxMsg *>(m))
+    if (hal::is_rexx_message(m)
         && (reinterpret_cast<struct RexxMsg *>(m)->rm_Action & RXCODEMASK) == RXCOMM)
         return true;
     // (The assembler dropped other messages without replying: their sender
@@ -87,7 +86,7 @@ extern "C" void lib_arx_close()
     }
     struct Library *base = ptr<struct Library>(d.Arx_Base);
     d.Arx_Base = 0;
-    CloseLibrary(base);
+    hal::close_library(base);
 }
 
 // =AREXX EXIST(port$)
@@ -114,7 +113,7 @@ extern "C" void lib_in_arexx_open(const uint8_t *name)
     to[length] = 0;
     if (d.Arx_Base)
         error(193);         // already open
-    d.Arx_Base = address(OpenLibrary(const_cast<STRPTR>("rexxsyslib.library"), 0));
+    d.Arx_Base = address(hal::open_library(const_cast<STRPTR>("rexxsyslib.library"), 0));
     if (!d.Arx_Base)
         error(194);         // no rexxsyslib.library
     struct MsgPort *port = nullptr;
@@ -173,7 +172,7 @@ extern "C" void lib_in_arexx_answer2(uint32_t code, const uint8_t *text)
     if (!m)
         error(197);         // no command
     if (m->rm_Action & RXFF_RESULT) {
-        UBYTE *s = CreateArgstring(const_cast<STRPTR>(reinterpret_cast<const char *>(str_chars(text))), str_len(text));
+        UBYTE *s = hal::rexx_text(reinterpret_cast<const char *>(str_chars(text)), str_len(text));
         if (!s)
             error(24);
         m->rm_Result2 = reinterpret_cast<LONG>(s);

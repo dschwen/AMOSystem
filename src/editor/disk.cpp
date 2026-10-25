@@ -10,8 +10,7 @@
 #include <dos/dos.h>
 
 #include "hal/files.h"
-#define ICON_BASE_NAME (amos::ptr<struct Library>(amos::idata().IconBase))
-#include <proto/icon.h>
+#include "hal/workbench.h"
 
 using namespace amos;
 using namespace amos::ed;
@@ -284,7 +283,7 @@ void save_icon()
 {
     IData &d = idata();
     if (d.PI_Icons && d.IconBase && d.AdrIcon)
-        PutDiskObject(reinterpret_cast<CONST_STRPTR>(name1()), ptr<struct DiskObject>(d.AdrIcon));
+        hal::put_icon(reinterpret_cast<const char *>(name1()), ptr<struct DiskObject>(d.AdrIcon));
 }
 
 // Ed_SavePrg2: the program saved as Name1; false on an error

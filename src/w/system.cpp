@@ -7,14 +7,13 @@
 
 #include <intuition/screens.h>
 
-#define INTUITION_BASE_NAME (amos::ptr<struct IntuitionBase>(amos::wdata().IntBase))
-#include <proto/intuition.h>
 #include <graphics/gfxbase.h>
 #include <graphics/rastport.h>
 #include <graphics/text.h>
 
 #include "hal/gfx.h"
 #include "hal/chips.h"
+#include "hal/workbench.h"
 
 using namespace amos;
 using namespace amos::w;
@@ -51,8 +50,8 @@ int32_t amos_wb(int32_t to)
         if (d.WFlags & WFlagLoadView) {
             // A screen of our own in front of the Workbench, an empty view
             if (d.WFlags & WFlagWBClosed)
-                CloseWorkBench();
-            d.IntScreen = address(OpenScreen(&new_screen));
+                hal::close_workbench();
+            d.IntScreen = address(hal::open_screen(&new_screen));
             hal::wait_frame();
             hal::wait_frame();
             hal::load_view(nullptr);
@@ -77,8 +76,8 @@ int32_t amos_wb(int32_t to)
         chips().copjmp1 = 0;
         if (d.WFlags & WFlagLoadView) {
             if (d.WFlags & WFlagWBClosed)
-                OpenWorkBench();
-            CloseScreen(ptr<struct Screen>(d.IntScreen));
+                hal::open_workbench();
+            hal::close_screen(reinterpret_cast<::Screen *>(d.IntScreen));
             hal::wait_frame();
             hal::wait_frame();
         }

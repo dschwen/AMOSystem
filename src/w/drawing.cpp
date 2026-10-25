@@ -13,8 +13,6 @@
 #include <graphics/text.h>
 
 #include "hal/gfx.h"
-#define LAYERS_BASE_NAME (amos::ptr<struct Library>(amos::wdata().LayBase))
-#include <proto/layers.h>
 
 using namespace amos;
 using namespace amos::w;
@@ -706,7 +704,7 @@ void set_clip_rect(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1)
         struct Rectangle rect = {int16_t(x0), int16_t(y0), int16_t(x1 - 1), int16_t(y1 - 1)};
         if (!hal::or_rect_region(region, &rect))
             return;
-        InstallClipRegion(ptr<struct Layer>(s->Ec_Layer), region);
+        hal::install_clip_region(ptr<struct Layer>(s->Ec_Layer), region);
     }
     s->EcClipX0 = x0;
     s->EcClipY0 = y0;

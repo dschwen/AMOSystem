@@ -37,7 +37,7 @@ extern "C" struct MsgPort *lib_create_port(const char *name, int32_t priority)
     int8_t signal = hal::allocate_signal(-1);
     if (signal == -1)
         return nullptr;
-    auto port = static_cast<struct MsgPort *>(AllocMem(sizeof(struct MsgPort), MEMF_CLEAR | MEMF_PUBLIC));
+    auto port = static_cast<struct MsgPort *>(hal::allocate(sizeof(struct MsgPort), MEMF_CLEAR | MEMF_PUBLIC));
     if (!port) {
         hal::free_signal(signal);
         return nullptr;
@@ -47,7 +47,7 @@ extern "C" struct MsgPort *lib_create_port(const char *name, int32_t priority)
     port->mp_Node.ln_Type = NT_MSGPORT;
     port->mp_Flags = PA_SIGNAL;
     port->mp_SigBit = signal;
-    port->mp_SigTask = FindTask(nullptr);
+    port->mp_SigTask = hal::find_task(nullptr);
     if (name)
         hal::add_port(port);
     else
@@ -62,14 +62,14 @@ extern "C" void lib_delete_port(struct MsgPort *port)
     port->mp_Node.ln_Type = 0xFF;
     port->mp_MsgList.lh_Head = reinterpret_cast<struct Node *>(-1);
     hal::free_signal(port->mp_SigBit);
-    FreeMem(port, sizeof(struct MsgPort));
+    hal::release(port, sizeof(struct MsgPort));
 }
 
 extern "C" struct IORequest *lib_create_ext_io(struct MsgPort *port, int32_t size)
 {
     if (!port)
         return nullptr;
-    auto io = static_cast<struct IORequest *>(AllocMem(size, MEMF_CLEAR | MEMF_PUBLIC));
+    auto io = static_cast<struct IORequest *>(hal::allocate(size, MEMF_CLEAR | MEMF_PUBLIC));
     if (!io)
         return nullptr;
     io->io_Message.mn_Node.ln_Type = NT_REPLYMSG;
@@ -85,7 +85,7 @@ extern "C" void lib_delete_ext_io(struct IORequest *io)
     io->io_Message.mn_Node.ln_Type = 0xFF;
     io->io_Device = reinterpret_cast<struct Device *>(-1);
     io->io_Unit = reinterpret_cast<struct Unit *>(-1);
-    FreeMem(io, io->io_Message.mn_Length);
+    hal::release(io, io->io_Message.mn_Length);
 }
 
 namespace {
@@ -107,7 +107,7 @@ void close_library(uint32_t n)
     uint32_t &base = library(n);
     if (uint32_t b = base) {
         base = 0;
-        CloseLibrary(ptr<struct Library>(b));
+        hal::close_library(ptr<struct Library>(b));
     }
 }
 
@@ -356,7 +356,7 @@ extern "C" void lib_in_lib_open(uint32_t n, const uint8_t *name, uint32_t versio
     uint32_t &base = library(n);
     if (base)
         error(168);
-    struct Library *lib = OpenLibrary(text, version);
+    struct Library *lib = hal::open_library(text, version);
     if (!lib)
         error(170);
     base = address(lib);

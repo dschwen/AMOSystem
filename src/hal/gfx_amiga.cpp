@@ -9,6 +9,8 @@
 #include <proto/graphics.h>
 #define DISKFONT_BASE_NAME (amos::ptr<struct Library>(amos::wdata().FntBase))
 #include <proto/diskfont.h>
+#define LAYERS_BASE_NAME (amos::ptr<struct Library>(amos::wdata().LayBase))
+#include <proto/layers.h>
 
 namespace amos::hal {
 
@@ -49,6 +51,18 @@ void set_rgb4_cm(ColorMap *map, int32_t n, uint32_t r, uint32_t g, uint32_t b) {
 Region *new_region() { return NewRegion(); }
 bool or_rect_region(Region *region, Rectangle *rect) { return OrRectRegion(region, rect); }
 void dispose_region(Region *region) { DisposeRegion(region); }
+
+Layer_Info *new_layer_info() { return NewLayerInfo(); }
+void dispose_layer_info(Layer_Info *info) { DisposeLayerInfo(info); }
+Layer *create_upfront_layer(Layer_Info *info, BitMap *bm, int32_t x0, int32_t y0, int32_t x1, int32_t y1,
+                            uint32_t flags, BitMap *super)
+{
+    return CreateUpfrontLayer(info, bm, x0, y0, x1, y1, flags, super);
+}
+void delete_layer(Layer *layer) { DeleteLayer(0, layer); }
+Region *install_clip_region(Layer *layer, Region *region) { return InstallClipRegion(layer, region); }
+
+int32_t avail_fonts(char *buffer, int32_t size, uint32_t types) { return AvailFonts(buffer, size, types); }
 
 void own_blitter() { OwnBlitter(); }
 void disown_blitter() { DisownBlitter(); }

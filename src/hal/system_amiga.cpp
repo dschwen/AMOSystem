@@ -5,6 +5,7 @@
 #include "core/amiga.h"
 
 #include <hardware/intbits.h>
+#include <exec/execbase.h>
 
 namespace amos::hal {
 
@@ -21,6 +22,7 @@ void signal(Task *task, uint32_t signals) { Signal(task, signals); }
 Library *open_library(const char *name, uint32_t version) { return OpenLibrary(name, version); }
 void close_library(Library *library) { CloseLibrary(library); }
 uint16_t os_version() { return EXEC_BASE_NAME->lib_Version; }
+uint8_t vblank_frequency() { return reinterpret_cast<struct ExecBase *>(EXEC_BASE_NAME)->VBlankFrequency; }
 void clear_cache() { CacheClearU(); }
 
 // (the NDK's inline of SetFunction does not compile as C++)
@@ -35,6 +37,8 @@ uint32_t set_function(uint32_t library, int16_t offset, uint32_t function)
 }
 
 void *allocate_at(uint32_t size, void *address) { return AllocAbs(size, address); }
+
+void add_head(void *list, void *node) { AddHead(static_cast<struct List *>(list), static_cast<struct Node *>(node)); }
 
 void add_port(MsgPort *port) { AddPort(port); }
 void remove_port(MsgPort *port) { RemPort(port); }

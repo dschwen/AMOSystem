@@ -15,8 +15,7 @@
 #include <graphics/text.h>
 
 #include "hal/gfx.h"
-#define INTUITION_BASE_NAME (reinterpret_cast<struct IntuitionBase *>(amos::wdata().IntBase))
-#include <proto/intuition.h>
+#include "hal/workbench.h"
 
 // graphics/gfxbase.h defines NTSC, the name of an AMOS.library function
 #undef NTSC
@@ -1857,14 +1856,14 @@ extern "C" uint32_t lib_wb_close(RegFrame &)
     IData &d = idata();
     if (!d.WB_Closed) {
         wdata().WFlags &= ~(1 << 3);
-        d.WB_Closed = static_cast<uint8_t>(CloseWorkBench());
+        d.WB_Closed = static_cast<uint8_t>(hal::close_workbench());
         if (d.WB_Closed)
             wdata().WFlags |= 1 << 3;
     }
     return 0;
 }
 
-extern "C" uint32_t lib_wb_open(RegFrame &r) { return r.d[0] = OpenWorkBench(); }
+extern "C" uint32_t lib_wb_open(RegFrame &r) { return r.d[0] = hal::open_workbench(); }
 
 // CLOSE WORKBENCH (if the configuration allows it)
 extern "C" void lib_in_close_workbench()

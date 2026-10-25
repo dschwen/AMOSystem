@@ -22,8 +22,9 @@
 #include <graphics/text.h>
 
 #include "hal/gfx.h"
-#define LAYERS_BASE_NAME (amos::ptr<struct Library>(amos::wdata().LayBase))
-#include <proto/layers.h>
+#include "hal/system.h"
+#include <graphics/clip.h>
+#include <graphics/layers.h>
 
 using namespace amos;
 using namespace amos::w;
@@ -260,16 +261,16 @@ void free_screen(Screen *s)
 
     if (!(s->EcFlags & Clone)) {
         if (s->Ec_Region) {
-            InstallClipRegion(ptr<struct Layer>(s->Ec_Layer), nullptr);
+            hal::install_clip_region(ptr<struct Layer>(s->Ec_Layer), nullptr);
             hal::dispose_region(ptr<struct Region>(s->Ec_Region));
         }
         if (s->Ec_Layer)
-            DeleteLayer(0, ptr<struct Layer>(s->Ec_Layer));
+            hal::delete_layer(ptr<struct Layer>(s->Ec_Layer));
         hal::wait_blit();
         wait_vbl();
         hal::wait_blit();
         if (s->Ec_LayerInfo)
-            DisposeLayerInfo(ptr<struct Layer_Info>(s->Ec_LayerInfo));
+            hal::dispose_layer_info(ptr<struct Layer_Info>(s->Ec_LayerInfo));
         // (The layers library needs the blitter done and a VBL)
         hal::wait_blit();
         wait_vbl();
@@ -391,12 +392,12 @@ uint32_t open(const AllRegs *r, uint32_t *result)
         s->EcPhysic[p] = plane;
     }
     // A real layer, for the RastPort
-    struct Layer_Info *info = NewLayerInfo();
+    struct Layer_Info *info = hal::new_layer_info();
     s->Ec_LayerInfo = address(info);
     if (!info)
         return fail();
     struct Layer *layer
-        = CreateUpfrontLayer(info, bm, 0, 0, int16_t(s->EcTx - 1), int16_t(s->EcTy - 1), LAYERSIMPLE, nullptr);
+        = hal::create_upfront_layer(info, bm, 0, 0, int16_t(s->EcTx - 1), int16_t(s->EcTy - 1), LAYERSIMPLE, nullptr);
     s->Ec_Layer = address(layer);
     if (!layer)
         return fail();
@@ -682,7 +683,7 @@ bool screens_init()
     if (!d.ChipBuf)
         return false;
     d.EcYMax = 311 + EcYBase;
-    if (reinterpret_cast<struct ExecBase *>(EXEC_BASE_NAME)->VBlankFrequency != 50)
+    if (hal::vblank_frequency() != 50)
         d.EcYMax = 261 + EcYBase;               // NTSC
     screens_reset();
     call(w_copper_make);
