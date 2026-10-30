@@ -256,7 +256,7 @@ uint16_t show_text()
         o.a[2] = address(messages);
         lib_call(L_Dia_OpenChannel, o);
         if (!o.d[0]) {
-            uint32_t *v = ptr<uint32_t>(o.a[1]);
+            be_u32 *v = ptr<be_u32>(o.a[1]);
             v[1] = address(message(MTitle)) - 2;
             v[2] = 4;                                   // buttons on a line
             v[0] = mon().Hlp_Texte;

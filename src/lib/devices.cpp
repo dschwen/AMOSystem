@@ -95,7 +95,7 @@ constexpr uint32_t LibMax = 7, DevMax = 7;
 // ---- libraries ----------------------------------------------------------
 
 // Lib.GetA2: library channel n (0-7)
-uint32_t &library(uint32_t n)
+be_u32 &library(uint32_t n)
 {
     if (n > LibMax)
         fon_call();
@@ -104,7 +104,7 @@ uint32_t &library(uint32_t n)
 
 void close_library(uint32_t n)
 {
-    uint32_t &base = library(n);
+    be_u32 &base = library(n);
     if (uint32_t b = base) {
         base = 0;
         hal::close_library(ptr<struct Library>(b));
@@ -353,7 +353,7 @@ extern "C" void lib_in_lib_open(uint32_t n, const uint8_t *name, uint32_t versio
     if (!str_len(name))
         fon_call();
     const char *text = str_to_buffer(name);
-    uint32_t &base = library(n);
+    be_u32 &base = library(n);
     if (base)
         error(168);
     struct Library *lib = hal::open_library(text, version);

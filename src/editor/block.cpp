@@ -53,7 +53,7 @@ uint8_t *even(uint8_t *p) { return ptr<uint8_t>((address(p) + 1) & ~1u); }
 
 // Ed_MemReserve / Ed_MemFree: memory with its size before it, its address
 // in *cell
-uint8_t *reserve(uint32_t *cell, uint32_t size)
+uint8_t *reserve(be_u32 *cell, uint32_t size)
 {
     uint8_t *p = ptr<uint8_t>(memory(size + 4, true));
     if (!p)
@@ -63,7 +63,7 @@ uint8_t *reserve(uint32_t *cell, uint32_t size)
     return p + 4;
 }
 
-void release(uint32_t *cell)
+void release(be_u32 *cell)
 {
     if (uint32_t p = *cell) {
         *cell = 0;
@@ -128,7 +128,7 @@ const uint8_t *line_text(uint16_t n, bool &closed, bool &none)
 
 // Ed_BlockCopyA0: the block from y1 x1 to y2 x2 copied to *cell; 0 done, 1
 // no block, -1 out of memory
-int32_t copy(uint32_t *cell, Limits l)
+int32_t copy(be_u32 *cell, Limits l)
 {
     IData &d = idata();
     uint8_t *const texts = ptr<uint8_t>(d.Ed_BufT) + 256;
@@ -257,7 +257,7 @@ Reserve:
 }
 
 // Ed_BlockInsertA0: the block *cell inserted at the cursor
-bool insert(uint32_t *cell)
+bool insert(be_u32 *cell)
 {
     IData &d = idata();
     EditWindow &w = window();
@@ -310,7 +310,7 @@ bool insert(uint32_t *cell)
 
 // Ed_BlockDeleteA0: the text of the block *cell (where it was copied
 // from) deleted
-bool remove(uint32_t *cell)
+bool remove(be_u32 *cell)
 {
     IData &d = idata();
     d.Ed_FUndo++;
@@ -483,7 +483,7 @@ void ed_block_paste(AllRegs *)
 void ed_block_free(AllRegs *) { release(&idata().Ed_Block); }
 
 // Ed_BlockFreeA0: the block *a0 freed
-void ed_block_free_a0(AllRegs *r) { release(ptr<uint32_t>(r->a[0])); }
+void ed_block_free_a0(AllRegs *r) { release(ptr<be_u32>(r->a[0])); }
 
 // Ed_BlockLimits: d4/d6 the start, d5/d7 the end
 void ed_block_limits(AllRegs *r)
@@ -501,9 +501,9 @@ void ed_block_limits(AllRegs *r)
 void ed_block_copy(AllRegs *r)
 {
     Limits l = {uint16_t(r->d[4]), uint16_t(r->d[5]), uint16_t(r->d[6]), r->d[7]};
-    r->d[0] = uint32_t(copy(ptr<uint32_t>(r->a[0]), l));
+    r->d[0] = uint32_t(copy(ptr<be_u32>(r->a[0]), l));
 }
 
-void ed_block_insert(AllRegs *r) { r->d[0] = insert(ptr<uint32_t>(r->a[0])) ? 0xFFFFFFFF : 0; }
-void ed_block_delete(AllRegs *r) { r->d[0] = remove(ptr<uint32_t>(r->a[0])) ? 0xFFFFFFFF : 0; }
+void ed_block_insert(AllRegs *r) { r->d[0] = insert(ptr<be_u32>(r->a[0])) ? 0xFFFFFFFF : 0; }
+void ed_block_delete(AllRegs *r) { r->d[0] = remove(ptr<be_u32>(r->a[0])) ? 0xFFFFFFFF : 0; }
 }

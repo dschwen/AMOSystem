@@ -282,7 +282,7 @@ HOST_SRC    := $(filter-out %_amiga.cpp,$(wildcard src/*/*.cpp)) $(GEN)/lib_dire
                $(GEN)/wentry_table.cpp $(HOST)/host_symbols.cpp
 HOST_OBJ    := $(patsubst %.cpp,$(HOST)/obj/%.o,$(HOST_SRC))
 HOST_FLAGS  := -m64 -Os -std=c++20 -fno-exceptions -fno-rtti -fno-threadsafe-statics -fpack-struct=2 \
-               -Isrc -I$(GEN) -idirafter $(AMIGA_PREFIX)/m68k-amigaos/ndk-include
+               -Isrc -I$(GEN) -idirafter $(AMIGA_PREFIX)/m68k-amigaos/ndk-include -MMD -MP
 ASM_SOURCES := +B.s +W.s +Edit.s +Monitor.s +Verif.s $(wildcard src/*/*.s) $(wildcard extensions/*.s)
 
 $(HOST)/host_symbols.cpp: tools/host_tables.py $(ASM_SOURCES)
@@ -293,6 +293,8 @@ $(HOST)/host_symbols.cpp: tools/host_tables.py $(ASM_SOURCES)
 $(HOST)/obj/%.o: %.cpp $(CXX_GEN)
 	@mkdir -p $(dir $@)
 	g++ $(HOST_FLAGS) -c -o $@ $<
+
+-include $(HOST_OBJ:%.o=%.d)
 
 host: $(HOST_OBJ)
 	g++ -m64 -no-pie -o $(HOST)/amos $(HOST_OBJ) 2>&1 | grep -o "undefined reference to .*" | sort -u \

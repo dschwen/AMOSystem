@@ -20,8 +20,8 @@ enum : uint8_t {
 inline uint8_t &flags(MenuItem *m) { return reinterpret_cast<uint8_t *>(&m->MnFlag)[0]; }
 
 // MnFind / MnIns: the item at coords (the deepest first), depth of them
-MenuItem *find(const uint32_t *coords, uint16_t depth, uint32_t *last = nullptr);
-MenuItem *insert(const uint32_t *coords, uint16_t depth);
+MenuItem *find(const be_u32 *coords, uint16_t depth, uint32_t *last = nullptr);
+MenuItem *insert(const be_u32 *coords, uint16_t depth);
 // MnEff: item first and what it opens (with siblings, the items after it
 // too); MnRaz: the whole menu
 void erase(uint32_t first, uint16_t siblings);

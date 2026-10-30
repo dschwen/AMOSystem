@@ -34,26 +34,26 @@ enum : uint16_t {
 };
 
 struct Rainbow {
-    uint16_t RnDY, RnFY, RnTY, RnBase, RnColor, RnLong;
-    uint32_t RnBuf;
-    uint16_t RnAct, RnX, RnY, RnI;
+    be_u16 RnDY, RnFY, RnTY, RnBase, RnColor, RnLong;
+    be_u32 RnBuf;
+    be_u16 RnAct, RnX, RnY, RnI;
 };
 static_assert(sizeof(Rainbow) == 24);
 
-uint8_t &high(uint16_t &w) { return reinterpret_cast<uint8_t *>(&w)[0]; }
+uint8_t &high(be_u16 &w) { return reinterpret_cast<uint8_t *>(&w)[0]; }
 
 Rainbow *rainbows() { return reinterpret_cast<Rainbow *>(wdata().RainTable); }
 
 struct Builder {
     WData &d;
-    uint16_t *a1;               // the copper list being written
-    const uint16_t *a2;         // T_EcCop being read
+    be_u16 *a1;               // the copper list being written
+    const be_u16 *a2;         // T_EcCop being read
     uint8_t *a4;                // the palette mark of the last screen
     // The rainbows: the colour, its register, the current one's end, its
     // colours
     uint32_t d3;
     uint16_t d4, d5, d7;
-    const uint16_t *a3, *a6;
+    const be_u16 *a3, *a6;
     uint32_t d6;
 
     void emit(uint16_t v) { *a1++ = v; }
@@ -294,7 +294,7 @@ struct Builder {
     void rainbow_next()
     {
         if (++a3 >= a6)
-            a3 = ptr<uint16_t>(d6);
+            a3 = ptr<be_u16>(d6);
     }
 
     // Rain: rainbow lines from line y0 up to y1 (d0 to d1); returns y1
@@ -336,11 +336,11 @@ struct Builder {
                 // RainN5: the colours from the line
                 uint16_t at = uint16_t((y - in->RnDY + in->RnBase) << 1);
                 d6 = in->RnBuf;
-                a3 = ptr<uint16_t>(in->RnBuf);
-                a6 = reinterpret_cast<const uint16_t *>(reinterpret_cast<const uint8_t *>(a3) + int16_t(in->RnLong));
-                a3 = reinterpret_cast<const uint16_t *>(reinterpret_cast<const uint8_t *>(a3) + int16_t(at));
+                a3 = ptr<be_u16>(in->RnBuf);
+                a6 = reinterpret_cast<const be_u16 *>(reinterpret_cast<const uint8_t *>(a3) + int16_t(in->RnLong));
+                a3 = reinterpret_cast<const be_u16 *>(reinterpret_cast<const uint8_t *>(a3) + int16_t(at));
                 while (a3 >= a6)
-                    a3 = reinterpret_cast<const uint16_t *>(reinterpret_cast<const uint8_t *>(a3)
+                    a3 = reinterpret_cast<const be_u16 *>(reinterpret_cast<const uint8_t *>(a3)
                                                             - int16_t(in->RnLong));
                 d7 = in->RnFY;
                 uint16_t old = d4;
@@ -370,7 +370,7 @@ struct Builder {
     // The list with the rainbows
     void with_rainbows()
     {
-        a2 = ptr<uint16_t>(d.EcCop);
+        a2 = ptr<be_u16>(d.EcCop);
         uint16_t y = EcYBase;
         d3 = 0xFFFFFFFF;
         d4 = 0xFFFF;
@@ -432,7 +432,7 @@ struct Builder {
                 continue;
             d3 = (d3 & 0xFFFF0000) | d.EcFond;
             if (y < d7) {
-                uint16_t *c = a1;
+                be_u16 *c = a1;
                 while (*--c != Color00)
                     ;
                 c[1] = *a3;
@@ -442,7 +442,7 @@ struct Builder {
         }
         // Rain3
         a2--;
-        if (a2 == ptr<uint16_t>(d.EcCop)) {
+        if (a2 == ptr<be_u16>(d.EcCop)) {
             y = rain(y, d.EcYMax - 1);
             screen_end(y);
         }
@@ -493,7 +493,7 @@ uint16_t update_rainbows(WData &d)
 uint16_t take_changes(WData &d)
 {
     uint16_t again = d.EcYAct;
-    for (const uint32_t *p = d.EcPri;; p++) {
+    for (const be_u32 *p = d.EcPri;; p++) {
         uint32_t v = *p;
         if (!v)
             continue;
@@ -548,7 +548,7 @@ uint16_t take_changes(WData &d)
 // bit 15 for an end), the top of the display marked, -1 at the end
 void cut(WData &d)
 {
-    uint16_t *out = d.EcBuf;
+    be_u16 *out = d.EcBuf;
     auto emit = [&](uint16_t a, uint16_t b, uint16_t c) {
         *out++ = a;
         *out++ = b;
@@ -559,7 +559,7 @@ void cut(WData &d)
     for (;;) {
         uint16_t next = 10000, which = 0xFFFF;
         uint16_t index = 0;
-        for (const uint32_t *p = d.EcPri;; p++) {
+        for (const be_u32 *p = d.EcPri;; p++) {
             index += 4;
             uint32_t v = *p;
             if (int32_t(v) < 0)
@@ -590,7 +590,7 @@ void cut(WData &d)
         // Other screens starting on that line
         which &= 0x7FFF;
         index = 0;
-        for (const uint32_t *p = d.EcPri;; p++) {
+        for (const be_u32 *p = d.EcPri;; p++) {
             index += 4;
             uint32_t v = *p;
             if (int32_t(v) < 0)
@@ -614,12 +614,12 @@ void cut(WData &d)
 void slices(WData &d)
 {
     d.InterInter = 0;
-    uint16_t *out = ptr<uint16_t>(d.EcCop);
-    const uint16_t *const first = d.EcBuf;
-    const uint16_t *a3 = first;
+    be_u16 *out = ptr<be_u16>(d.EcCop);
+    const be_u16 *const first = d.EcBuf;
+    const be_u16 *a3 = first;
     uint16_t y, which;
     int16_t w;
-    const uint16_t *a0;
+    const be_u16 *a0;
     uint16_t limit;
 MkA1:
     y = a3[0];
@@ -727,13 +727,13 @@ extern "C" void w_ec_copper(AllRegs *r, bool force)
     r->d[0] = 0;
     if (!d.CopON)
         return;
-    Builder b = {d, ptr<uint16_t>(d.CopLogic + 64 + 4), nullptr, ptr<uint8_t>(r->a[4]), 0, 0, 0, 0, nullptr, nullptr,
+    Builder b = {d, ptr<be_u16>(d.CopLogic + 64 + 4), nullptr, ptr<uint8_t>(r->a[4]), 0, 0, 0, 0, nullptr, nullptr,
                  0};
     if (d.RainBow && update_rainbows(d)) {
         b.with_rainbows();
     } else {
         // MCop0
-        b.a2 = ptr<uint16_t>(d.EcCop);
+        b.a2 = ptr<be_u16>(d.EcCop);
         for (;;) {
             int16_t e = int16_t(*b.a2++);
             if (!e)
@@ -747,7 +747,7 @@ extern "C" void w_ec_copper(AllRegs *r, bool force)
             b.screen_start(e, s);
         }
         b.a2--;
-        if (b.a2 == ptr<uint16_t>(d.EcCop))
+        if (b.a2 == ptr<be_u16>(d.EcCop))
             b.screen_end(d.EcYMax - 1);
     }
     poke_l(b.a1, 0xFFFFFFFE);

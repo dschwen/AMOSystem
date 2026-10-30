@@ -14,12 +14,12 @@ constexpr int LB_MemAd = -4, LB_MemSize = -8, LB_NRout = -10, LB_Flags = -12, LB
 constexpr int LBF_20 = 2;           // a 2.0 library (a bit of the byte LB_Flags)
 constexpr int Libraries = 27;       // the main library, then the extensions 1-26
 
-inline uint32_t &lb_long(uint8_t *tokens, int field) { return *reinterpret_cast<uint32_t *>(tokens + field); }
-inline uint16_t &lb_word(uint8_t *tokens, int field) { return *reinterpret_cast<uint16_t *>(tokens + field); }
+inline be_u32 &lb_long(uint8_t *tokens, int field) { return *reinterpret_cast<be_u32 *>(tokens + field); }
+inline be_u16 &lb_word(uint8_t *tokens, int field) { return *reinterpret_cast<be_u16 *>(tokens + field); }
 // The jump table entry of routine n, below the data zone
-inline uint32_t &lb_jump(uint8_t *tokens, uint32_t n)
+inline be_u32 &lb_jump(uint8_t *tokens, uint32_t n)
 {
-    return *reinterpret_cast<uint32_t *>(tokens - LB_Size - 4 - int16_t(uint16_t(n << 2)));
+    return *reinterpret_cast<be_u32 *>(tokens - LB_Size - 4 - int16_t(uint16_t(n << 2)));
 }
 
 // ---- libraries.cpp ---------------------------------------------------------
@@ -50,8 +50,8 @@ uint32_t ram_fast(uint32_t size);
 uint32_t ram_chip(uint32_t size);
 void ram_free(uint32_t address, uint32_t size);
 // A5_Reserve / A5_Free: memory at a long of the data zone, its size before it
-uint32_t a5_reserve(uint32_t &slot, uint32_t size, uint32_t flags);
-void a5_free(uint32_t &slot);
+uint32_t a5_reserve(be_u32 &slot, uint32_t size, uint32_t flags);
+void a5_free(be_u32 &slot);
 
 // The system file of +B.s (D_Open...): Handle, without the records that
 // close the library's current file on errors

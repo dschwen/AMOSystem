@@ -104,10 +104,10 @@ bool bank_load(uint32_t n)
     return !uint16_t(r.d[0]);
 }
 
-uint32_t *texts(int i)
+be_u32 *texts(int i)
 {
     IData &d = idata();
-    uint32_t *const lists[] = {&d.Ed_Systeme, &d.EdM_Messages, &d.Ed_Messages, &d.Ed_TstMessages,
+    be_u32 *const lists[] = {&d.Ed_Systeme, &d.EdM_Messages, &d.Ed_Messages, &d.Ed_TstMessages,
                                &d.Ed_RunMessages, &d.Ed_MnPrograms, &d.EdM_User, &d.EdM_Definition};
     return lists[i];
 }
@@ -182,7 +182,7 @@ uint16_t text_free(const uint8_t *list)
 
 // EdC_ChangeTexte: text n of the list at *at replaced by text (added at
 // the end if n is past it); false if out of memory
-bool text_change(uint32_t *at, const uint8_t *text, uint16_t n)
+bool text_change(be_u32 *at, const uint8_t *text, uint16_t n)
 {
     const uint8_t *list = ptr<uint8_t>(*at);
     uint32_t length = 0;
@@ -308,7 +308,7 @@ void sounds_changed()
 }
 
 // EdC_LoadTextes / EdC_SaveTextes: one list of texts; false if it failed
-bool load_texts(uint32_t *at)
+bool load_texts(be_u32 *at)
 {
     memory_release(at);
     uint8_t *buffer = ptr<uint8_t>(idata().Buffer);
@@ -324,7 +324,7 @@ bool load_texts(uint32_t *at)
     return false;
 }
 
-bool save_texts(uint32_t *at)
+bool save_texts(be_u32 *at)
 {
     if (!*at)
         return write(at, 4);
@@ -549,7 +549,7 @@ void ed_wait_input(AllRegs *r) { wait_input(uint16_t(r->d[0])); }
 // a0 the list's long, a1 the text, d0 its number; d0 0 or -1
 void ed_text_change(AllRegs *r)
 {
-    r->d[0] = text_change(ptr<uint32_t>(r->a[0]), ptr<uint8_t>(r->a[1]), uint16_t(r->d[0])) ? 0 : 0xFFFFFFFF;
+    r->d[0] = text_change(ptr<be_u32>(r->a[0]), ptr<uint8_t>(r->a[1]), uint16_t(r->d[0])) ? 0 : 0xFFFFFFFF;
 }
 
 void ed_text_count(AllRegs *r) { r->d[0] = text_count(ptr<uint8_t>(r->a[0])); }

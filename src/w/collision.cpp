@@ -120,7 +120,7 @@ bool against_sprites(WData &d, const uint8_t *bank, const Placed &source, uint16
     if (last >= 64 || last < first)
         return false;
     for (uint16_t n = first; n <= last; n++) {
-        const uint16_t *s = d.HsTAct + n * 4;
+        const be_u16 *s = d.HsTAct + n * 4;
         if (n == except || int16_t(s[0]) < 0 || int16_t(s[3]) <= 0)
             continue;
         if (collide(bank, source, s[1], s[2], s[3])) {
@@ -180,7 +180,7 @@ int32_t sprite_collisions(WData &d, uint16_t number, uint32_t first, uint16_t la
     const uint8_t *bank = ptr<uint8_t>(d.SprBank);
     if (!bank || number >= 64)
         return 0;
-    const uint16_t *s = d.HsTAct + number * 4;
+    const be_u16 *s = d.HsTAct + number * 4;
     Placed source;
     if (!place(bank, s[3], s[1], s[2], source))
         return 0;
@@ -212,7 +212,7 @@ int32_t collisions(AllRegs *r, int32_t (*test)(WData &, uint16_t, uint32_t, uint
     WData &d = wdata();
     hal::own_blitter();
     hal::wait_blit();
-    for (uint32_t &t : d.TColl)
+    for (be_u32 &t : d.TColl)
         t = 0;
     int32_t hit = test(d, uint16_t(r->d[1]), r->d[2], uint16_t(r->d[3]));
     hal::disown_blitter();

@@ -22,7 +22,7 @@ constexpr int AAreaSize = 16;           // AreaDraw's points
 
 [[noreturn]] void screen_not_open() { screen_error(3); }
 
-uint16_t *buffer() { return ptr<uint16_t>(idata().Buffer); }
+be_u16 *buffer() { return ptr<be_u16>(idata().Buffer); }
 
 // Fn_New_Expentier: an integer after a token
 uint32_t parameter_int()
@@ -34,7 +34,7 @@ uint32_t parameter_int()
 // Plt: colours into palette until there is no comma; a negative one
 // leaves its entry. (A value that is not an integer gets L_IntToFl1, as
 // the original.)
-void colours(uint16_t *palette)
+void colours(be_u16 *palette)
 {
     for (;;) {
         Value v = evaluate();
@@ -50,9 +50,9 @@ void colours(uint16_t *palette)
 }
 
 // A palette of "no change" (-1) in Buffer
-uint16_t *unchanged()
+be_u16 *unchanged()
 {
-    uint16_t *b = buffer();
+    be_u16 *b = buffer();
     for (int i = 0; i < 32; i++)
         b[i] = 0xFFFF;
     return b;
@@ -62,7 +62,7 @@ void palette()
 {
     if (!idata().ScOn)
         screen_not_open();
-    uint16_t *p = unchanged();
+    be_u16 *p = unchanged();
     colours(p);
     Regs r;
     r.a[1] = address(p);
@@ -77,7 +77,7 @@ void fade()
     IData &d = idata();
     int32_t speed = int32_t(integer().v1);
     uint16_t t = peek_token();
-    uint16_t *p;
+    be_u16 *p;
     if (t == tk::To) {
         int32_t from = int32_t(parameter_int());
         const uint8_t *colours_from;
@@ -99,7 +99,7 @@ void fade()
         r.a[0] = address(colours_from);
         r.d[3] = mask;
         lib_call(L_PalRout, r);
-        p = ptr<uint16_t>(r.a[1]);
+        p = ptr<be_u16>(r.a[1]);
     } else if (t == tk::Vir) {
         p = unchanged();
         pc() += 2;
@@ -135,7 +135,7 @@ void polyline()
     if (!idata().ScOn)
         screen_not_open();
     RastPort *rp = ptr<RastPort>(wdata().RastPort);
-    int16_t *points = ptr<int16_t>(idata().Buffer);
+    be_i16 *points = ptr<be_i16>(idata().Buffer);
     int32_t x, y;
     if (peek_token() == tk::To)
         x = rp->cp_x, y = rp->cp_y;

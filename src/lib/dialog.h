@@ -48,7 +48,7 @@ constexpr uint32_t IDiaErrors = 120 - 1;
 // The variables of a channel follow its structure; the three before them
 // are the zone position (BP/ZP), the button return (BR) and the zone being
 // drawn or changed
-inline int32_t *dia_vars(Dialog *d) { return reinterpret_cast<int32_t *>(reinterpret_cast<uint8_t *>(d) + Dialog::Dia_Vars); }
+inline be_i32 *dia_vars(Dialog *d) { return reinterpret_cast<be_i32 *>(reinterpret_cast<uint8_t *>(d) + Dialog::Dia_Vars); }
 
 // Dia_GetChannel
 Dialog *dia_channel(uint32_t number);
@@ -87,7 +87,7 @@ struct DiaValue {
 };
 DiaValue dia_value(uint32_t number, uint32_t zone, uint32_t which);     // Dia_GetValue
 // Dia_GetVariable: the address of variable n, or null (*error set)
-int32_t *dia_variable(uint32_t number, uint32_t n, uint16_t *error);
+be_i32 *dia_variable(uint32_t number, uint32_t n, uint16_t *error);
 DiaResult dia_zone_at(uint32_t number, uint32_t x, uint32_t y);         // Dia_GetZone
 uint8_t *dia_zone_address(uint32_t number, uint32_t zone, uint32_t which); // Dia_GetZoneAd
 uint16_t dia_auto_test(uint32_t channels);      // Dia_AutoTest2

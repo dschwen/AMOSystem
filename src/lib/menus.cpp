@@ -38,7 +38,7 @@ using EcScreen = amos::Screen;
 
 // menus_glue.s
 extern "C" uint8_t lib_menu_on_clear[], lib_menu_on_default[], lib_menu_on_error[];
-extern "C" uint32_t mn_call_procedure(const void *fn, const Ctx *regs, uint32_t *pile, const uint8_t *name);
+extern "C" uint32_t mn_call_procedure(const void *fn, const Ctx *regs, be_u32 *pile, const uint8_t *name);
 
 namespace {
 
@@ -62,7 +62,7 @@ enum : uint32_t {
 
 MenuItem *item(uint32_t a) { return ptr<MenuItem>(a); }
 uint8_t &called(MenuItem *m) { return reinterpret_cast<uint8_t *>(&m->MnFlag)[1]; }
-uint32_t &object(MenuItem *m, int n) { return (&m->MnObF)[n]; }   // MnObF, MnOb1-3
+be_u32 &object(MenuItem *m, int n) { return (&m->MnObF)[n]; }   // MnObF, MnOb1-3
 uint16_t object_size(uint32_t object) { return peek_w(ptr<void>(object)); }
 
 struct RastPort *rastport() { return ptr<struct RastPort>(wdata().RastPort); }
@@ -155,10 +155,10 @@ void outline(bool on)
 // line, plane after plane. The assembler kept the offset in a word, which
 // restored at the wrong place on screens of more than 64K per plane.
 struct Saved {
-    uint32_t size;
+    be_u32 size;
     EcScreen *screen;
-    uint32_t offset;    // of the first word in each plane
-    uint16_t words, lines, planes;
+    be_u32 offset;    // of the first word in each plane
+    be_u16 words, lines, planes;
 };
 
 // MnSaDel
@@ -205,11 +205,11 @@ void save(MenuItem *m, int16_t x1, int16_t y1, int16_t x2, int16_t y2)
         return;
     }
     m->MnAdSave = address(saved);
-    *saved = {size, s, offset, words, lines, s->EcNPlan};
-    auto to = reinterpret_cast<uint16_t *>(saved + 1);
+    *saved = {be_u32(size), s, be_u32(offset), be_u16(words), be_u16(lines), s->EcNPlan};
+    auto to = reinterpret_cast<be_u16 *>(saved + 1);
     for (uint16_t y = 0; y < lines; y++, offset += line)
         for (uint16_t p = 0; p < s->EcNPlan; p++) {
-            auto from = ptr<uint16_t>(s->EcPhysic[p] + offset);
+            auto from = ptr<be_u16>(s->EcPhysic[p] + offset);
             for (uint16_t w = 0; w < words; w++)
                 *to++ = from[w];
         }
@@ -222,11 +222,11 @@ void restore(MenuItem *m)
         return;
     Saved *saved = ptr<Saved>(m->MnAdSave);
     EcScreen *s = saved->screen;
-    auto from = reinterpret_cast<const uint16_t *>(saved + 1);
+    auto from = reinterpret_cast<const be_u16 *>(saved + 1);
     uint32_t offset = saved->offset;
     for (uint16_t y = 0; y < saved->lines; y++, offset += s->EcTLigne)
         for (uint16_t p = 0; p < saved->planes; p++) {
-            auto to = ptr<uint16_t>(s->EcPhysic[p] + offset);
+            auto to = ptr<be_u16>(s->EcPhysic[p] + offset);
             for (uint16_t w = 0; w < saved->words; w++)
                 to[w] = *from++;
         }
@@ -299,7 +299,7 @@ Size draw_object(uint32_t object, uint16_t a, uint16_t b, uint16_t c, int16_t bx
         ink_c(c);
         write_mode(1);
     }
-    const uint16_t *p = ptr<uint16_t>(object) + 1;
+    const be_u16 *p = ptr<be_u16>(object) + 1;
     for (;;) {
         uint16_t command = *p++;
         switch (command) {
@@ -307,7 +307,7 @@ Size draw_object(uint32_t object, uint16_t a, uint16_t b, uint16_t c, int16_t bx
             return {x, y, w, h};
         case ObText: {
             uint16_t length = *p++;
-            auto text = reinterpret_cast<STRPTR>(const_cast<uint16_t *>(p));
+            auto text = reinterpret_cast<STRPTR>(const_cast<be_u16 *>(p));
             p += (length + 1) / 2;
             if (draw) {
                 rp->cp_x = static_cast<WORD>(x + bx);
@@ -917,7 +917,7 @@ extern "C" uint32_t lib_mn_gere(RegFrame &frame)
             return frame.d[0] = d.MnError;
         }
         // Redraw the items with Menu Called
-        const uint32_t *open = d.MnTable;
+        const be_u32 *open = d.MnTable;
         for (MenuItem *c = item(d.MnBase);;) {
             if (called(c))
                 draw_item(c, static_cast<int16_t>(c->MnXX), static_cast<int16_t>(c->MnYY),
@@ -1028,7 +1028,7 @@ extern "C" uint32_t lib_omn_eff(RegFrame &)
 
 // MnFind: the item at coords (the first one deepest), depth of them; 0 if
 // none. *last the last item looked at.
-MenuItem *amos::menu::find(const uint32_t *coords, uint16_t depth, uint32_t *last)
+MenuItem *amos::menu::find(const be_u32 *coords, uint16_t depth, uint32_t *last)
 {
     if (!coords[0] || coords[0] >= 1024)
         fon_call();
@@ -1060,14 +1060,14 @@ MenuItem *amos::menu::find(const uint32_t *coords, uint16_t depth, uint32_t *las
 extern "C" uint32_t lib_mn_find(RegFrame &r)
 {
     uint32_t last = r.a[2];
-    MenuItem *m = menu::find(reinterpret_cast<const uint32_t *>(ctx().a3), static_cast<uint16_t>(r.d[5]), &last);
+    MenuItem *m = menu::find(reinterpret_cast<const be_u32 *>(ctx().a3), static_cast<uint16_t>(r.d[5]), &last);
     r.a[2] = last;
     return r.d[0] = m ? -1u : 0;
 }
 
 // MnIns: insert a new item at coords (as MnFind), with the default flags
 // of its level
-MenuItem *amos::menu::insert(const uint32_t *coords, uint16_t depth)
+MenuItem *amos::menu::insert(const be_u32 *coords, uint16_t depth)
 {
     IData &d = idata();
     int16_t left = static_cast<int16_t>(depth - 1);
@@ -1142,7 +1142,7 @@ done:
 // = the item.
 extern "C" uint32_t lib_mn_ins(RegFrame &r)
 {
-    r.a[2] = address(menu::insert(reinterpret_cast<const uint32_t *>(ctx().a3), static_cast<uint16_t>(r.d[5])));
+    r.a[2] = address(menu::insert(reinterpret_cast<const be_u32 *>(ctx().a3), static_cast<uint16_t>(r.d[5])));
     return 0;
 }
 

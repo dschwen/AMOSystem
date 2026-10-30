@@ -16,9 +16,9 @@ constexpr uint16_t BitBobs = 1 << 13;
 constexpr int EcMaxPlans = 6;
 
 // The bitmap and current planes from planes (EcLogic or EcPhysic)
-void draw_into(Screen *s, const uint32_t *planes)
+void draw_into(Screen *s, const be_u32 *planes)
 {
-    uint32_t *bitmap = ptr<uint32_t>(s->Ec_BitMap + 8);
+    be_u32 *bitmap = ptr<be_u32>(s->Ec_BitMap + 8);
     for (int p = 0; p < EcMaxPlans; p++) {
         bitmap[p] = planes[p];
         s->EcCurrent[p] = planes[p];

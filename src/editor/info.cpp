@@ -17,7 +17,7 @@ constexpr uint16_t EdDTitle = 0, EdDInfos = 54, EdDAboutE = 55, EdDOQuit = 49;
 constexpr int Extensions = 26;
 constexpr int LB_Title = -16;
 
-uint32_t *dialogue_variables() { return ptr<uint32_t>(idata().Ed_VDialogues); }
+be_u32 *dialogue_variables() { return ptr<be_u32>(idata().Ed_VDialogues); }
 
 // Sys_UnCode: the string at from (a length word, the text) decoded with
 // key into to
@@ -35,7 +35,7 @@ void about()
 {
     IData &d = idata();
     uint8_t *version = dialogue_string(static_cast<const uint8_t *>(lib_address(L_VersionN)));
-    uint32_t *v = dialogue_variables();
+    be_u32 *v = dialogue_variables();
     v[0] = address(version);
     uint32_t extensions = 0;
     for (int i = 1; i <= Extensions; i++)
@@ -75,7 +75,7 @@ void about_extensions()
     if (!n)
         return;
     for (;;) {
-        uint32_t *v = dialogue_variables();
+        be_u32 *v = dialogue_variables();
         v[0] = uint32_t(n);
         uint32_t title = peek_l(ptr<uint8_t>(d.AdTokens[n] + LB_Title));
         v[1] = title ? title : address(&empty);
@@ -96,7 +96,7 @@ void information()
     Regs t;
     call(ed_test_program, t);
     Program &p = program();
-    uint32_t *v = dialogue_variables();
+    be_u32 *v = dialogue_variables();
     v[0] = hal::available_memory(hal::MemoryChip);
     v[1] = hal::available_memory(hal::MemoryFast);
     v[2] = p.Prg_StHaut - p.Prg_StBas;

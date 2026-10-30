@@ -31,7 +31,7 @@ const char ErrMes[] = "Not a packed bitmap\0Not a packed screen";
 // area in bytes across and lines down, the bank
 struct Area {
     Screen *screen;
-    uint32_t *planes;
+    be_u32 *planes;
     uint16_t dx, dy, tx, ty;
     uint32_t bank;
 };
@@ -46,7 +46,7 @@ Area area(uint32_t s, uint32_t b, uint32_t x1, uint32_t y1, uint32_t x2, uint32_
     r.d[1] = s;
     lib_call(L_GetEc, r);
     a.screen = ptr<Screen>(r.a[0]);
-    a.planes = ptr<uint32_t>(r.d[0]);
+    a.planes = ptr<be_u32>(r.d[0]);
     if (x > a.screen->EcTLigne)
         x = a.screen->EcTLigne;
     if (y > a.screen->EcTy)

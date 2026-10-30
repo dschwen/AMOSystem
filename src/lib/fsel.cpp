@@ -41,8 +41,8 @@ extern "C" uint32_t lib_lock_get(RegFrame &r);
 extern "C" uint32_t lib_copy_path(RegFrame &r);
 extern "C" uint32_t lib_dsk_path_it(RegFrame &r);
 namespace amos {
-uint8_t *lst_new(uint32_t *list, uint32_t length);
-void lst_del(uint32_t *list, uint8_t *element);
+uint8_t *lst_new(be_u32 *list, uint32_t length);
+void lst_del(be_u32 *list, uint8_t *element);
 }
 // fsel_glue (dialog_glue.s)
 extern "C" uint8_t lib_fs_flush_record[], lib_fs_end_record[];
@@ -69,14 +69,14 @@ enum : int {
 enum : uint16_t { CmdFiles = 1 << 0, CmdStores = 1 << 1, CmdWait = 1 << 2, CmdQuit = 1 << 15 };
 
 FileSelector *fs() { return ptr<FileSelector>(idata().Fs_Base); }
-int32_t *vars() { return ptr<int32_t>(fs()->Fs_Variables); }
+be_i32 *vars() { return ptr<be_i32>(fs()->Fs_Variables); }
 uint8_t &var_byte(int v) { return reinterpret_cast<uint8_t *>(&vars()[v])[3]; }
 char *name1() { return ptr<char>(idata().Name1); }
 char *name2() { return ptr<char>(idata().Name2); }
 uint8_t *buffer() { return ptr<uint8_t>(idata().Buffer); }
 
 // The words both tasks change
-volatile uint16_t &command() { return fs()->Fs_Command; }
+volatile be_u16 &command() { return fs()->Fs_Command; }
 // (The assembler set the bits with one bset)
 void send(uint16_t bits)
 {
@@ -84,8 +84,8 @@ void send(uint16_t bits)
     command() |= bits;
     hal::permit();
 }
-volatile uint16_t &waiting() { return fs()->Fs_Waiting; }
-volatile uint16_t &input() { return fs()->Fs_Input; }
+volatile be_u16 &waiting() { return fs()->Fs_Waiting; }
+volatile be_u16 &input() { return fs()->Fs_Input; }
 
 void wait_tof()
 {
@@ -302,7 +302,7 @@ uint32_t store_number(uint16_t n)
     uint32_t e = 0;
     if (!n)
         return 0;
-    for (uint32_t *p = &idata().Fs_Liste; *p; p = ptr<uint32_t>(*p)) {
+    for (be_u32 *p = &idata().Fs_Liste; *p; p = ptr<be_u32>(*p)) {
         e = *p;
         if (!--n)
             break;
@@ -882,9 +882,9 @@ void appear(bool show)
 }
 
 // Fs_GetInputs: the parameters (title 2 on top of the stack)
-void inputs(const uint32_t *params)
+void inputs(const be_u32 *params)
 {
-    int32_t *v = vars();
+    be_i32 *v = vars();
     const uint8_t *t1 = ptr<uint8_t>(params[0]), *t0 = ptr<uint8_t>(params[1]);
     if (t1[1])
         v[VTitle1] = static_cast<int32_t>(params[0]);
@@ -906,7 +906,7 @@ void inputs(const uint32_t *params)
 uint32_t avail_public() { return hal::available_memory(hal::MemoryPublic); }
 
 // Fs_LowMemory: a small selector without its task
-[[noreturn]] void low_memory(const uint32_t *params)
+[[noreturn]] void low_memory(const be_u32 *params)
 {
     static uint16_t palette[32 + 2];
     Puzzle p = puzzle();
@@ -972,7 +972,7 @@ void show_disk_error()
     input() = 0;
 }
 
-void selector(const uint32_t *params)
+void selector(const be_u32 *params)
 {
     IData &d = idata();
     FileSelector *f = fs();
@@ -981,7 +981,7 @@ void selector(const uint32_t *params)
     f->Fs_OldEc = current ? current->EcNumber : 0xFFFF;
     // The mouse stays on the selector
     WData &w = wdata();
-    uint16_t *limits = &w.MouXMin;
+    be_u16 *limits = &w.MouXMin;
     for (int i = 0; i < 4; i++)
         f->Fs_LimSave[i] = limits[i];
     Regs l = {};
@@ -1088,7 +1088,7 @@ void close_selector()
             ec_call(ec::Active, act);
         }
     }
-    uint16_t *limits = &wdata().MouXMin;
+    be_u16 *limits = &wdata().MouXMin;
     for (int i = 0; i < 4; i++)
         limits[i] = f->Fs_LimSave[i];
     dia_clear_key();
@@ -1101,7 +1101,7 @@ void close_selector()
 
 // Dsk.FileSelector: params = title 2, title 1, default name, path. Returns
 // the length of the name chosen (in Name1), 0 for none.
-uint32_t file_selector(const uint32_t *params)
+uint32_t file_selector(const be_u32 *params)
 {
     IData &d = idata();
     if (d.Patch_Errors)
@@ -1166,7 +1166,7 @@ extern "C" uint32_t lib_fs_get_name_c(RegFrame &r)
         return r.d[0] = 0;
     char *name = ptr<char>(g.a[0]) + 10;
     uint32_t size = peek_l(ptr<uint8_t>(g.a[0]) + 6);
-    int32_t *v = ptr<int32_t>(fs()->Fs_Variables);
+    be_i32 *v = ptr<be_i32>(fs()->Fs_Variables);
     r.a[1] = address(name);
     if (!v[VSize] || size & 0x80000000 || *name == '*') {
         uint32_t n = 0;
@@ -1201,7 +1201,7 @@ extern "C" uint32_t lib_fs_get_name_c(RegFrame &r)
 // Out: d0 = length, a0 = Name1.
 extern "C" uint32_t lib_dsk_file_selector(RegFrame &r)
 {
-    const uint32_t *params = reinterpret_cast<const uint32_t *>(ctx().a3);
+    const auto *params = reinterpret_cast<const be_u32 *>(ctx().a3);
     uint32_t n = file_selector(params);
     ctx().a3 += 16;
     r.a[0] = idata().Name1;
@@ -1211,7 +1211,7 @@ extern "C" uint32_t lib_dsk_file_selector(RegFrame &r)
 // =FSEL$(path$[,default$[,title1$[,title2$]]])
 extern "C" uint32_t lib_fn_file_selector4(uint32_t path, uint32_t name, uint32_t t1, uint32_t t2)
 {
-    const uint32_t params[4] = {t2, t1, name, path};
+    const be_u32 params[4] = {be_u32(t2), be_u32(t1), be_u32(name), be_u32(path)};
     uint32_t n = file_selector(params);
     return n ? str_from(ptr<char>(idata().Name1), static_cast<uint16_t>(n)) : str_empty();
 }

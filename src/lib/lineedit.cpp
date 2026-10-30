@@ -148,7 +148,7 @@ bool amos::led_init(LineEdit *e, const uint8_t *text, uint8_t *store, uint8_t fl
     e->LEd_Max = max;
     e->LEd_Cur = 0;
     e->LEd_Start = 0;
-    for (uint32_t &m : e->LEd_Mask)
+    for (be_u32 &m : e->LEd_Mask)
         m = ~0u;
     Regs r = {};
     wi_call(wi::XYCuWi, r);

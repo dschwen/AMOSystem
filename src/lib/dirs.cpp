@@ -290,7 +290,7 @@ void fill_sort()
     bool swapped;
     do {
         swapped = false;
-        uint32_t *link = ptr<uint32_t>(d.BufFillF);
+        be_u32 *link = ptr<be_u32>(d.BufFillF);
         uint8_t *a = ptr<uint8_t>(*link);
         if (!a)
             return;
@@ -313,9 +313,9 @@ void fill_sort()
                 poke_l(b, address(a));
                 *link = address(b);
                 swapped = true;
-                link = reinterpret_cast<uint32_t *>(b);
+                link = reinterpret_cast<be_u32 *>(b);
             } else {
-                link = reinterpret_cast<uint32_t *>(a);
+                link = reinterpret_cast<be_u32 *>(a);
                 a = b;
             }
         }

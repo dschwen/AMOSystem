@@ -47,6 +47,9 @@ void *allocate_at(uint32_t, void *) { return nullptr; }
 
 Task *find_task(const char *name) { return name ? nullptr : &the_task; }
 void signal(Task *, uint32_t) {}
+static uint32_t the_requester_window;
+uint32_t requester_window() { return the_requester_window; }
+void set_requester_window(uint32_t window) { the_requester_window = window; }
 
 Library *open_library(const char *, uint32_t) { return nullptr; }
 void close_library(Library *) {}

@@ -48,8 +48,8 @@ volatile MusVoice &voice(volatile MusTable &t, uint32_t v)
     return *reinterpret_cast<volatile MusVoice *>(t.MuVoices + v * MusVoice::VoiLong);
 }
 volatile uint8_t &count_low(volatile MusVoice &vo) { return reinterpret_cast<volatile uint8_t *>(&vo.VoiCpt)[1]; }
-volatile uint8_t &low_byte(volatile uint16_t &w) { return reinterpret_cast<volatile uint8_t *>(&w)[1]; }
-volatile uint8_t &high_byte(volatile uint16_t &w) { return reinterpret_cast<volatile uint8_t *>(&w)[0]; }
+volatile uint8_t &low_byte(volatile be_u16 &w) { return reinterpret_cast<volatile uint8_t *>(&w)[1]; }
+volatile uint8_t &high_byte(volatile be_u16 &w) { return reinterpret_cast<volatile uint8_t *>(&w)[0]; }
 
 // The voice's volume from its own and the music's (mulu, lsr.w)
 uint16_t scaled(uint16_t volume) { return uint16_t(uint16_t(volume * md().MuVolume) >> 6); }
@@ -359,8 +359,8 @@ void every(volatile MusicData &m, volatile MusTable &t)
 // ---- the tracker ---------------------------------------------------------
 
 volatile uint8_t *track_voice(volatile MusicData &m, uint32_t v) { return reinterpret_cast<volatile uint8_t *>(m.mt_voice) + 28 * v; }
-volatile uint16_t &tw(volatile uint8_t *vc, int at) { return *reinterpret_cast<volatile uint16_t *>(vc + at); }
-volatile uint32_t &tl(volatile uint8_t *vc, int at) { return *reinterpret_cast<volatile uint32_t *>(vc + at); }
+volatile be_u16 &tw(volatile uint8_t *vc, int at) { return *reinterpret_cast<volatile be_u16 *>(vc + at); }
+volatile be_u32 &tl(volatile uint8_t *vc, int at) { return *reinterpret_cast<volatile be_u32 *>(vc + at); }
 
 void lines(int n)
 {

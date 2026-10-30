@@ -34,13 +34,13 @@ void lib(int routine)
 // programs of their own, loaded with LoadSeg): *segment marks it loaded,
 // its entry table (offsets from its start, then 0, then the address of its
 // amos_bridge) goes into the jump table from routine first+1 on
-uint32_t program_load(uint32_t &segment, const uint8_t *module, uint32_t first)
+uint32_t program_load(be_u32 &segment, const uint8_t *module, uint32_t first)
 {
     IData &d = idata();
     segment = address(module);
     uint32_t base = address(module);
-    const uint32_t *table = ptr<uint32_t>(base);
-    uint32_t *jump = ptr<uint32_t>(d.AdTokens[0] - int16_t(uint16_t((first << 2) + LB_Size + 4)));
+    const be_u32 *table = ptr<be_u32>(base);
+    be_u32 *jump = ptr<be_u32>(d.AdTokens[0] - int16_t(uint16_t((first << 2) + LB_Size + 4)));
     while (uint32_t offset = *table++)
         *--jump = base + offset;
     // its C++ uses AMOSPro's contexts (src/core/call.s)
@@ -48,7 +48,7 @@ uint32_t program_load(uint32_t &segment, const uint8_t *module, uint32_t first)
     return 0;
 }
 
-void program_free(uint32_t &segment) { segment = 0; }
+void program_free(be_u32 &segment) { segment = 0; }
 
 // Bnk.Load from the system file: d0 the number of the bank (-1 all), the
 // error as a word
@@ -103,7 +103,7 @@ void memory_maximum()
     lib(L_ClearVar);
     d.DefFlag = 0xFFFE;
     lib(L_DefRun1);
-    uint32_t &lines = *(&d.PI_ParaTrap + 4);
+    be_u32 &lines = *(&d.PI_ParaTrap + 4);
     uint32_t kept = lines;
     lines = 20;
     lib(L_DefRun2);

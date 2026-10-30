@@ -37,8 +37,8 @@ enum : int {
 };
 
 uint8_t *dt() { return ptr<uint8_t>(idata().ExtAdr[ExtNb * 4]); }
-uint16_t &word(int at) { return *reinterpret_cast<uint16_t *>(dt() + at); }
-uint32_t &longword(int at) { return *reinterpret_cast<uint32_t *>(dt() + at); }
+be_u16 &word(int at) { return *reinterpret_cast<be_u16 *>(dt() + at); }
+be_u32 &longword(int at) { return *reinterpret_cast<be_u32 *>(dt() + at); }
 
 DeviceChannel &channel(int at) { return *reinterpret_cast<DeviceChannel *>(dt() + at); }
 

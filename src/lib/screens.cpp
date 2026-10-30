@@ -223,7 +223,7 @@ EcScreen *screen_address(uint32_t n)
 
 // GetEc: a screen number, or a Logic()/Physic() value: the screen and its
 // bitplanes (logic or physic)
-EcScreen *get_screen(int32_t n, uint32_t **planes)
+EcScreen *get_screen(int32_t n, be_u32 **planes)
 {
     EcScreen *s;
     bool physic = false;
@@ -263,7 +263,7 @@ void set_current(EcScreen *s)
 // GetEc: d1 = screen. Out: a0 = screen, d0 = its logic or physic planes.
 extern "C" uint32_t lib_get_ec(RegFrame &r)
 {
-    uint32_t *planes;
+    be_u32 *planes;
     r.a[0] = address(get_screen(r.d[1], &planes));
     return r.d[0] = address(planes);
 }
@@ -324,7 +324,7 @@ extern "C" uint32_t lib_sco0(RegFrame &r)
     }
     // bitmaps for graphics.library, in chip memory
     uint8_t *chip = ptr<uint8_t>(wdata().ChipBuf);
-    auto make_bitmap = [](uint8_t *bm, EcScreen *s, const uint32_t *planes) {
+    auto make_bitmap = [](uint8_t *bm, EcScreen *s, const be_u32 *planes) {
         poke_w(bm, s->EcTLigne);
         poke_w(bm + 2, s->EcTy);
         poke_w(bm + 4, s->EcNPlan);
@@ -332,8 +332,8 @@ extern "C" uint32_t lib_sco0(RegFrame &r)
         for (int i = 0; i < 6; i++)
             poke_l(bm + 8 + 4 * i, planes[i]);
     };
-    make_bitmap(chip, from, ptr<uint32_t>(idata().SccEcO));
-    make_bitmap(chip + 40, to, ptr<uint32_t>(idata().SccEcD));
+    make_bitmap(chip, from, ptr<be_u32>(idata().SccEcO));
+    make_bitmap(chip + 40, to, ptr<be_u32>(idata().SccEcD));
     Regs b = {};
     b.d[0] = static_cast<uint16_t>(x1);
     b.d[1] = static_cast<uint16_t>(y1);
@@ -667,10 +667,10 @@ extern "C" void lib_in_colour_back(uint32_t rgb)
 }
 
 // PalRout / GSPal: the colours of palette whose bit is set in mask
-static void set_palette(const uint16_t *palette, uint32_t mask)
+static void set_palette(const be_u16 *palette, uint32_t mask)
 {
     need_screen();
-    uint16_t *to = ptr<uint16_t>(idata().Buffer);
+    be_u16 *to = ptr<be_u16>(idata().Buffer);
     for (int i = 0; i < 32; i++)
         to[i] = mask & 1u << i ? palette[i] : 0xFFFF;
     Regs r = {};
@@ -678,11 +678,11 @@ static void set_palette(const uint16_t *palette, uint32_t mask)
     ec_check(ec::SPal, r);
 }
 
-static const uint16_t *bank_palette(uint8_t *bank)
+static const be_u16 *bank_palette(uint8_t *bank)
 {
     if (!bank)
         error(36);
-    return reinterpret_cast<const uint16_t *>(bank + 2 + peek_w(bank) * 8u);
+    return reinterpret_cast<const be_u16 *>(bank + 2 + peek_w(bank) * 8u);
 }
 
 // GET ICON PALETTE [mask], GET SPRITE PALETTE [mask], GET PALETTE n[,mask]
@@ -794,12 +794,12 @@ extern "C" void lib_in_rainbow_del1(uint32_t n) { ec_d1(ec::RainDel, n); }
 extern "C" void lib_in_rainbow_del0() { lib_in_rainbow_del1(-1u); }
 
 // RAIN(n,line)=rgb, =RAIN(n,line)
-static uint16_t *rain(uint32_t n, uint32_t line)
+static be_u16 *rain(uint32_t n, uint32_t line)
 {
     Regs r = {};
     r.d[1] = n;
     r.d[2] = line;
-    return ptr<uint16_t>(ec_check(ec::RainVar, r).a[0]);
+    return ptr<be_u16>(ec_check(ec::RainVar, r).a[0]);
 }
 
 extern "C" void lib_in_rain(uint32_t n, uint32_t line, uint32_t rgb) { *rain(n, line) = rgb & 0x0FFF; }
@@ -989,7 +989,7 @@ extern "C" void lib_in_box(uint32_t x1, uint32_t y1, uint32_t x2, uint32_t y2)
     struct RastPort *rp = rastport();
     rp->cp_x = static_cast<WORD>(x1);
     rp->cp_y = static_cast<WORD>(y1);
-    uint16_t *poly = ptr<uint16_t>(idata().Buffer);
+    be_u16 *poly = ptr<be_u16>(idata().Buffer);
     const uint32_t points[] = {x1, y2, x2, y2, x2, y1, x1, y1};
     for (int i = 0; i < 8; i++)
         poly[i] = static_cast<uint16_t>(points[i]);
@@ -1282,14 +1282,14 @@ extern "C" void lib_in_def_scroll(uint32_t n, uint32_t x1, uint32_t y1, uint32_t
 {
     if (!n || n > 10)
         fon_call();
-    uint16_t *entry = idata().DScrolls + (n - 1) * 6;
+    be_u16 *entry = idata().DScrolls + (n - 1) * 6;
     const uint32_t v[] = {dy, dx, y2, x2, y1, x1};
     for (int i = 0; i < 6; i++)
         entry[i] = static_cast<uint16_t>(v[i]);
 }
 
 // DoScroll: a Def Scroll zone moves within its screen
-static void do_scroll(const uint16_t *entry, EcScreen *s)
+static void do_scroll(const be_u16 *entry, EcScreen *s)
 {
     RegFrame r = {};
     int16_t dy = static_cast<int16_t>(entry[0]), dx = static_cast<int16_t>(entry[1]);
@@ -1311,7 +1311,7 @@ extern "C" void lib_in_scroll(uint32_t n)
 {
     if (n - 1 >= 10)
         fon_call();
-    const uint16_t *entry = idata().DScrolls + (n - 1) * 6;
+    const be_u16 *entry = idata().DScrolls + (n - 1) * 6;
     if (entry[0] == 0x8000)
         screen_error(28);
     EcScreen *s = screen0();
@@ -1336,7 +1336,7 @@ extern "C" void lib_in_scroll(uint32_t n)
 static void screen_copy(int32_t from, uint32_t x1, uint32_t y1, uint32_t x2, uint32_t y2, int32_t to, uint32_t x3,
                         uint32_t y3, uint32_t minterm)
 {
-    uint32_t *dplanes, *splanes;
+    be_u32 *dplanes, *splanes;
     EcScreen *d = get_screen(to, &dplanes);
     idata().SccEcD = address(dplanes);
     EcScreen *s = get_screen(from, &splanes);
@@ -1387,7 +1387,7 @@ extern "C" void lib_in_appear4(int32_t from, int32_t to, uint32_t step, int32_t 
 {
     if (pixels < 0 || !step)
         fon_call();
-    uint32_t *dplanes, *splanes;
+    be_u32 *dplanes, *splanes;
     EcScreen *d = get_screen(to, &dplanes);
     EcScreen *s = get_screen(from, &splanes);
     IData &data = idata();
@@ -1433,7 +1433,7 @@ namespace {
 
 // ZooTab: how many source pixels each destination pixel steps over (a
 // reduction) or whether it moves on (a zoom); -1 ends the table
-uint16_t *zoom_table(uint16_t *t, uint16_t a1, uint16_t a2, uint16_t b1, uint16_t b2)
+be_u16 *zoom_table(be_u16 *t, uint16_t a1, uint16_t a2, uint16_t b1, uint16_t b2)
 {
     uint16_t from = a2 - a1, to = b2 - b1;
     if (to < from) {
@@ -1477,14 +1477,14 @@ uint16_t *zoom_table(uint16_t *t, uint16_t a1, uint16_t a2, uint16_t b1, uint16_
 extern "C" void lib_in_zoom(int32_t from, int32_t x1, int32_t y1, int32_t x2, int32_t y2, int32_t to, int32_t x3,
                             int32_t y3, int32_t x4, int32_t y4)
 {
-    uint32_t *splanes, *dplanes;
+    be_u32 *splanes, *dplanes;
     EcScreen *s = get_screen(from, &splanes);
     EcScreen *d = get_screen(to, &dplanes);
     int16_t nplanes = static_cast<int16_t>((s->EcNPlan <= d->EcNPlan ? s->EcNPlan : d->EcNPlan) - 1);
     Regs m = {};
     m.d[0] = 4096;
     m.a[0] = w::reserve(m.d[0], w::Fast);
-    uint16_t *table_x = ptr<uint16_t>(m.a[0]);
+    be_u16 *table_x = ptr<be_u16>(m.a[0]);
     if (!table_x)
         error(24);
     auto fail = [&]() {
@@ -1501,7 +1501,7 @@ extern "C" void lib_in_zoom(int32_t from, int32_t x1, int32_t y1, int32_t x2, in
         fail();
     uint32_t src = static_cast<uint16_t>(x1) >> 3, dst = static_cast<uint16_t>(x3) >> 3;
     int16_t sbit = static_cast<int16_t>(7 - (x1 & 7)), dbit = static_cast<int16_t>(7 - (x3 & 7));
-    uint16_t *table_y = zoom_table(table_x, x1, x2, x3, x4);
+    be_u16 *table_y = zoom_table(table_x, x1, x2, x3, x4);
     if (y4 < 0 || static_cast<uint16_t>(y4) > d->EcTy || static_cast<uint32_t>(y3) >= static_cast<uint32_t>(y4) ||
         y2 < 0 || static_cast<uint16_t>(y2) > s->EcTy || static_cast<uint32_t>(y1) >= static_cast<uint32_t>(y2))
         fail();
@@ -1509,7 +1509,7 @@ extern "C" void lib_in_zoom(int32_t from, int32_t x1, int32_t y1, int32_t x2, in
     dst += static_cast<uint32_t>(static_cast<uint16_t>(y3)) * d->EcTLigne;
     zoom_table(table_y, y1, y2, y3, y4);
     uint32_t sline = s->EcTLigne, dline = d->EcTLigne;
-    const uint16_t *tx = table_x;
+    const be_u16 *tx = table_x;
     uint16_t step = *tx++;
     if (step & 0x8000)
         goto done;
@@ -1529,7 +1529,7 @@ extern "C" void lib_in_zoom(int32_t from, int32_t x1, int32_t y1, int32_t x2, in
             const uint8_t *sp = ptr<uint8_t>(splanes[p]);
             uint8_t *dp = ptr<uint8_t>(dplanes[p]);
             uint32_t s_off = src, d_off = dst;
-            const uint16_t *ty = table_y;
+            const be_u16 *ty = table_y;
             uint16_t ys = *ty++;
             while (!(ys & 0x8000)) {
                 s_off += ys * sline;
@@ -1905,7 +1905,7 @@ extern "C" uint32_t lib_app_centre(RegFrame &r)
     int16_t speed = static_cast<int16_t>(r.d[7]), h = static_cast<int16_t>(r.d[6]);
     int16_t middle = static_cast<int16_t>(r.d[5]);
     // (The view changes take bit 2 of the high byte of their words)
-    auto changed = [](uint16_t &w) { reinterpret_cast<uint8_t *>(&w)[0] |= 1 << 2; };
+    auto changed = [](be_u16 &w) { reinterpret_cast<uint8_t *>(&w)[0] |= 1 << 2; };
     int16_t last;
     do {
         last = h;
@@ -1934,8 +1934,8 @@ extern "C" uint32_t lib_pal_rout(RegFrame &r)
 {
     if (!idata().ScOn)
         screen_not_open();
-    uint16_t *to = ptr<uint16_t>(idata().Buffer);
-    const uint16_t *from = ptr<uint16_t>(r.a[0]);
+    be_u16 *to = ptr<be_u16>(idata().Buffer);
+    const be_u16 *from = ptr<be_u16>(r.a[0]);
     for (int i = 0; i < 32; i++)
         to[i] = r.d[3] >> i & 1 ? from[i] : 0xFFFF;
     r.a[0] += 64;

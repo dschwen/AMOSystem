@@ -251,11 +251,11 @@ void hide()
 void forget_oldest(uint16_t max)
 {
     IData &d = idata();
-    uint32_t *before = nullptr;
+    be_u32 *before = nullptr;
     uint8_t *last = nullptr;
     uint16_t n = 0;
     for (uint32_t e = d.Esc_KMem; e; e = peek_l(ptr<uint8_t>(e))) {
-        before = last ? reinterpret_cast<uint32_t *>(last) : nullptr;
+        before = last ? reinterpret_cast<be_u32 *>(last) : nullptr;
         last = ptr<uint8_t>(e);
         n++;
     }

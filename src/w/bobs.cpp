@@ -43,8 +43,8 @@ enum : uint32_t { DrawShifted = 1, DrawShiftedLong, Draw16 };
 // A background save (BbDABuf, and Decor bytes further for the second
 // buffer). APlan and NPlan are longs written as words.
 struct Decor {
-    uint32_t ABuf;
-    uint16_t LBuf, AEc, APlan, unused1, NPlan, unused2, Mod, ASize;
+    be_u32 ABuf;
+    be_u16 LBuf, AEc, APlan, unused1, NPlan, unused2, Mod, ASize;
 };
 static_assert(sizeof(Decor) == DecorSize);
 
@@ -83,7 +83,7 @@ void call_a0(uint8_t *routine, uint32_t a0)
 
 // Image header
 struct Image {
-    uint16_t width, height, planes, hot_x, hot_y;
+    be_u16 width, height, planes, hot_x, hot_y;
     uint8_t *data() { return reinterpret_cast<uint8_t *>(this) + 10; }
 };
 
@@ -121,7 +121,7 @@ void flip_lines_y(uint8_t *p, uint16_t width, uint16_t height, uint16_t planes)
     }
     for (uint16_t n = 0; n < planes; n++) {
         p += int16_t(half);
-        uint16_t *a = reinterpret_cast<uint16_t *>(p), *b = reinterpret_cast<uint16_t *>(p - int16_t(back));
+        auto *a = reinterpret_cast<be_u16 *>(p), *b = reinterpret_cast<be_u16 *>(p - int16_t(back));
         for (uint16_t y = 0; y < (height >> 1); y++) {
             for (uint16_t x = 0; x < width; x++) {
                 uint16_t v = *a;
@@ -135,7 +135,7 @@ void flip_lines_y(uint8_t *p, uint16_t width, uint16_t height, uint16_t planes)
 }
 
 // Retourne: the image of entry flipped to flags (bit 15 in x, 14 in y)
-void flip(uint32_t *entry, uint16_t flags)
+void flip(be_u32 *entry, uint16_t flags)
 {
     Image *image = ptr<Image>(entry[0]);
     if (!image)
@@ -160,7 +160,7 @@ void flip(uint32_t *entry, uint16_t flags)
 }
 
 // Masque: the mask of an image, the planes or'ed together
-uint32_t make_mask(uint32_t *entry)
+uint32_t make_mask(be_u32 *entry)
 {
     Image *image = ptr<Image>(entry[0]);
     uint32_t plane = uint32_t(uint16_t(image->width << 1)) * image->height;
@@ -173,7 +173,7 @@ uint32_t make_mask(uint32_t *entry)
     }
     uint8_t *mask = ptr<uint8_t>(entry[1]);
     poke_l(mask, size);
-    uint16_t *to = reinterpret_cast<uint16_t *>(mask + 4);
+    auto *to = reinterpret_cast<be_u16 *>(mask + 4);
     const uint8_t *data = image->data();
     uint16_t words = uint16_t(plane) >> 1;
     for (uint16_t i = 0; i < words; i++, data += 2) {
@@ -187,7 +187,7 @@ uint32_t make_mask(uint32_t *entry)
 
 // SpotH: the hot spot of an image: mode 0 at dx,dy, else the position
 // (mode - 1: bits 4-5 in x, 0-1 in y: 0 left, 1 middle, 2 right)
-uint32_t hot_spot(uint32_t *entry, uint16_t mode, uint16_t dx, uint16_t dy)
+uint32_t hot_spot(be_u32 *entry, uint16_t mode, uint16_t dx, uint16_t dy)
 {
     Image *image = ptr<Image>(entry[0]);
     if (!image)
@@ -211,7 +211,7 @@ uint32_t hot_spot(uint32_t *entry, uint16_t mode, uint16_t dx, uint16_t dy)
 
 // GetBob: entry gets the tx x ty pixels at x,y of screen s (all its
 // planes), with no mask
-uint32_t get_image(Screen *s, uint32_t *entry, uint16_t x, uint16_t y, uint16_t tx, uint16_t ty)
+uint32_t get_image(Screen *s, be_u32 *entry, uint16_t x, uint16_t y, uint16_t tx, uint16_t ty)
 {
     uint16_t right = tx & 15;
     uint16_t planes = s->EcNPlan;
@@ -292,7 +292,7 @@ uint32_t get_image(Screen *s, uint32_t *entry, uint16_t x, uint16_t y, uint16_t 
 // BobCalc: the blitter parameters of image entry at x,y on screen s,
 // clipped to the limits of b. flags: the flip flags; bit 31 set: no hot
 // spot. False if nothing shows.
-bool calc(Screen *s, uint32_t *entry, amos::Bob *b, int16_t x, int16_t y, uint32_t flags)
+bool calc(Screen *s, be_u32 *entry, amos::Bob *b, int16_t x, int16_t y, uint32_t flags)
 {
     Image *image = ptr<Image>(entry[0]);
     if (!entry[1] && make_mask(entry))
@@ -456,7 +456,7 @@ bool calc(Screen *s, uint32_t *entry, amos::Bob *b, int16_t x, int16_t y, uint32
 
 // The drawing routines (BbAp, BbAL, BbA16, BMA16, BMAp): data planes
 // step apart, into planes (EcLogic or EcCurrent), mask (negative: none)
-void draw(amos::Bob *b, const uint32_t *planes, uint32_t data, uint32_t step, uint32_t mask)
+void draw(amos::Bob *b, const be_u32 *planes, uint32_t data, uint32_t step, uint32_t mask)
 {
     auto &c = chips();
     uint32_t offset = bytes(screen_offset(b));
@@ -747,12 +747,12 @@ uint32_t limit_bobs(const AllRegs *r)
 void update()
 {
     WData &d = wdata();
-    uint32_t *list = ptr<uint32_t>(d.BbPrio);
+    be_u32 *list = ptr<be_u32>(d.BbPrio);
     const uint8_t *bank = ptr<uint8_t>(d.SprBank);
     amos::Bob *b = first_bob();
     if (bank && b) {
         uint16_t sorted = 0;
-        uint32_t *second = ptr<uint32_t>(d.BbPrio2);
+        be_u32 *second = ptr<be_u32>(d.BbPrio2);
         uint32_t priority = d.Priorite;
         while (b) {
             amos::Bob *next = ptr<amos::Bob>(b->BbNext);
@@ -775,7 +775,7 @@ void update()
                 image &= 0x3FFF;
                 visible = false;
                 if (image && image <= peek_w(bank)) {
-                    uint32_t *entry = ptr<uint32_t>(address(bank) + 2 + (image - 1) * 8);
+                    be_u32 *entry = ptr<be_u32>(address(bank) + 2 + (image - 1) * 8);
                     if (entry[0]) {
                         b->BbARetour = address(entry);
                         visible = calc(ptr<Screen>(b->BbEc), entry, b, b->BbX, b->BbY, flags);
@@ -823,8 +823,8 @@ void update()
             b = next;
         }
         if (sorted) {
-            uint32_t *start = list;
-            const uint32_t *from = ptr<uint32_t>(d.BbPrio2);
+            be_u32 *start = list;
+            const be_u32 *from = ptr<be_u32>(d.BbPrio2);
             for (uint16_t i = 0; i < sorted; i++)
                 *list++ = from[i];
             // Bubble sort, by y then x
@@ -847,7 +847,7 @@ void update()
     }
     *list = 0;
     if (d.PriRev) {
-        uint32_t *a = ptr<uint32_t>(d.BbPrio);
+        be_u32 *a = ptr<be_u32>(d.BbPrio);
         while (a < list) {
             uint32_t v = *a;
             *a++ = *--list;
@@ -873,7 +873,7 @@ void erase()
             b->BbECpt--;
             continue;
         }
-        const uint32_t *planes = ptr<Screen>(b->BbEc)->EcLogic;
+        const auto *planes = ptr<Screen>(b->BbEc)->EcLogic;
         Decor *dc = decor(b, b->BbDCur2);
         uint16_t size = dc->ASize;
         if (!size)
@@ -927,7 +927,7 @@ void show()
         for (; b; b = ptr<amos::Bob>(b->BbNext)) {
             if (!b->BbDCpt || b->BbEff)
                 continue;
-            const uint32_t *planes = ptr<Screen>(b->BbEc)->EcLogic;
+            const auto *planes = ptr<Screen>(b->BbEc)->EcLogic;
             Decor *dc = decor(b, b->BbDCur1);
             if (!dc->ABuf || !dc->ASize)
                 continue;
@@ -946,11 +946,11 @@ void show()
             }
         }
     }
-    for (const uint32_t *list = ptr<uint32_t>(wdata().BbPrio); *list; list++) {
+    for (const be_u32 *list = ptr<be_u32>(wdata().BbPrio); *list; list++) {
         amos::Bob *b = ptr<amos::Bob>(*list);
         if (!b->BbASize)
             continue;
-        flip(ptr<uint32_t>(b->BbARetour), b->BbRetour);
+        flip(ptr<be_u32>(b->BbARetour), b->BbRetour);
         hal::wait_blit();
         c.bltcmod = b->BbAModD;
         c.bltdmod = b->BbAModD;
@@ -965,7 +965,7 @@ void show()
 void paste(const AllRegs *r)
 {
     amos::Bob *b = ptr<amos::Bob>(r->a[1]);
-    uint32_t *entry = ptr<uint32_t>(r->a[2]);
+    be_u32 *entry = ptr<be_u32>(r->a[2]);
     flip(entry, r->d[1] & 0xC000);
     Screen *s = current_screen();
     clip_limits(b, s);
@@ -991,9 +991,9 @@ void paste(const AllRegs *r)
 // ---- blocks ------------------------------------------------------------------------
 
 struct Block {
-    uint32_t BlPrev, BlNext;
-    uint16_t BlNb, BlX, BlY, BlMask, BlCon, BlAPlan;
-    uint32_t BlDesc[2];
+    be_u32 BlPrev, BlNext;
+    be_u16 BlNb, BlX, BlY, BlMask, BlCon, BlAPlan;
+    be_u32 BlDesc[2];
 };
 static_assert(sizeof(Block) == 28);
 
@@ -1086,8 +1086,8 @@ uint32_t put_block(const AllRegs *r)
 // in bytes, height, planes; then for each line and plane, bytes or runs
 // (%11nnnnnn, then the byte, n+1 times)
 struct CBlock {
-    uint32_t prev, next, length;
-    uint16_t number, x, y, width, height, planes;
+    be_u32 prev, next, length;
+    be_u16 number, x, y, width, height, planes;
 };
 static_assert(sizeof(CBlock) == 24);
 
@@ -1287,11 +1287,11 @@ void w_sy_bob_limit(AllRegs *r) { r->d[0] = limit_bobs(r); }
 
 void w_sy_get_bob(AllRegs *r)
 {
-    r->d[0] = get_image(ptr<Screen>(r->a[1]), ptr<uint32_t>(r->a[2]), r->d[2], r->d[3], r->d[4], r->d[5]);
+    r->d[0] = get_image(ptr<Screen>(r->a[1]), ptr<be_u32>(r->a[2]), r->d[2], r->d[3], r->d[4], r->d[5]);
 }
 
-void w_sy_mask(AllRegs *r) { r->d[0] = make_mask(ptr<uint32_t>(r->a[2])); }
-void w_sy_hot_spot(AllRegs *r) { r->d[0] = hot_spot(ptr<uint32_t>(r->a[2]), r->d[1], r->d[2], r->d[3]); }
+void w_sy_mask(AllRegs *r) { r->d[0] = make_mask(ptr<be_u32>(r->a[2])); }
+void w_sy_hot_spot(AllRegs *r) { r->d[0] = hot_spot(ptr<be_u32>(r->a[2]), r->d[1], r->d[2], r->d[3]); }
 
 // BobXY: d1-d3 the x, y and image of bob d1 (low words)
 void w_sy_bob_xy(AllRegs *r)
@@ -1385,7 +1385,7 @@ void w_ec_block_flip(AllRegs *r)
 }
 
 // RevTrap: flip the image entry a1 to the flags d1
-void w_ec_flip(AllRegs *r) { flip(ptr<uint32_t>(r->a[1]), r->d[1]); }
+void w_ec_flip(AllRegs *r) { flip(ptr<be_u32>(r->a[1]), r->d[1]); }
 
 // MakeCBloc: Get CBlock d5, d1-d4
 void w_ec_cblock_get(AllRegs *r)

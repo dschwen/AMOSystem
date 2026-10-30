@@ -25,7 +25,7 @@ namespace amos::verif {
 
 // A5_Reserve: size bytes with the flags at *slot (after a long, the size);
 // false if out of memory
-bool a5_reserve(uint32_t *slot, uint32_t size, uint32_t flags)
+bool a5_reserve(be_u32 *slot, uint32_t size, uint32_t flags)
 {
     Regs r;
     r.d[0] = size + 4;
@@ -39,7 +39,7 @@ bool a5_reserve(uint32_t *slot, uint32_t size, uint32_t flags)
 }
 
 // A5_Free: the memory at *slot, if any
-void a5_free(uint32_t *slot)
+void a5_free(be_u32 *slot)
 {
     if (uint32_t m = *slot) {
         *slot = 0;
@@ -163,7 +163,7 @@ void delete_structure(Program &p)
         bank_erase_all();
         change_text(p, 0, 0);
     }
-    uint32_t *link = &d.Prg_List;
+    be_u32 *link = &d.Prg_List;
     while (*link != address(&p))
         link = &ptr<Program>(*link)->Prg_Next;
     *link = p.Prg_Next;
@@ -206,7 +206,7 @@ bool running(const Program &p)
 // Prg_DataSave: the running program's data into *slot, with the list of
 // routines to call at ClearVar (their addresses, then 0); false if out of
 // memory
-bool data_save(uint32_t *slot)
+bool data_save(be_u32 *slot)
 {
     IData &d = idata();
     constexpr uint32_t Size = IData::FinSave - IData::DebSave;
@@ -228,7 +228,7 @@ bool data_save(uint32_t *slot)
 }
 
 // Prg_DataLoad: the data saved at *slot back (and freed)
-void data_load(uint32_t *slot)
+void data_load(be_u32 *slot)
 {
     IData &d = idata();
     constexpr uint32_t Size = IData::FinSave - IData::DebSave;
@@ -596,10 +596,10 @@ void ver_prg_push(AllRegs *r) { r->d[0] = push(program_of(r)) ? 0 : uint32_t(-1)
 void ver_prg_pull(AllRegs *) { pull(); }
 
 // a0 = the place of the data: d0 = -1, or 0 if out of memory
-void ver_prg_data_save(AllRegs *r) { r->d[0] = data_save(ptr<uint32_t>(r->a[0])) ? uint32_t(-1) : 0; }
+void ver_prg_data_save(AllRegs *r) { r->d[0] = data_save(ptr<be_u32>(r->a[0])) ? uint32_t(-1) : 0; }
 void ver_prg_data_load(AllRegs *r)
 {
-    data_load(ptr<uint32_t>(r->a[0]));
+    data_load(ptr<be_u32>(r->a[0]));
     r->d[0] = 0;
 }
 void ver_prg_data_new(AllRegs *r)

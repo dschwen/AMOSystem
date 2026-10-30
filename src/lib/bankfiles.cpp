@@ -145,7 +145,7 @@ int16_t load_bank(uint32_t number)
     uint8_t *buffer = ptr<uint8_t>(idata().Buffer);
     if (!file_read(buffer, 4))
         return LoadDisk;
-    auto names = static_cast<const uint32_t *>(lib_address(L_NHunk));
+    auto names = static_cast<const be_u32 *>(lib_address(L_NHunk));
     uint32_t id = peek_l(buffer);
     int hunk = 0;
     for (int i = 0; names[i]; i++)

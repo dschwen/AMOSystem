@@ -192,20 +192,17 @@ void end_byte()
 // NoReq / YesReq: no "insert disk" requesters while looking
 void no_requesters()
 {
-    auto task = reinterpret_cast<uint8_t *>(hal::find_task(nullptr));
-    uint32_t &window = *reinterpret_cast<uint32_t *>(task + 0xb8);
+    uint32_t window = hal::requester_window();
     if (window != 0xFFFFFFFFu) {
         idata().ReqSave = window;
-        window = 0xFFFFFFFFu;
+        hal::set_requester_window(0xFFFFFFFFu);
     }
 }
 
 void yes_requesters()
 {
-    auto task = reinterpret_cast<uint8_t *>(hal::find_task(nullptr));
-    uint32_t &window = *reinterpret_cast<uint32_t *>(task + 0xb8);
-    if (window == 0xFFFFFFFFu)
-        window = idata().ReqSave;
+    if (hal::requester_window() == 0xFFFFFFFFu)
+        hal::set_requester_window(idata().ReqSave);
 }
 
 // RExist: does Name1 exist?
@@ -297,7 +294,7 @@ Channel &seek_record(uint32_t n, uint32_t record)
 
 uint32_t read_header_long()
 {
-    uint32_t *buffer = ptr<uint32_t>(idata().Buffer);
+    be_u32 *buffer = ptr<be_u32>(idata().Buffer);
     if (!file_read(buffer, 4))
         disk_error();
     return *buffer;

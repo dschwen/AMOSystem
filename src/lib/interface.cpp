@@ -197,10 +197,10 @@ extern "C" uint32_t lib_fn_dialog(int32_t c)
 }
 
 // VDIALOG(channel,n)=v, =VDIALOG(channel,n), and the same with $
-static int32_t *variable(uint32_t c, uint32_t n)
+static be_i32 *variable(uint32_t c, uint32_t n)
 {
     uint16_t e;
-    int32_t *v = dia_variable(c, n, &e);
+    be_i32 *v = dia_variable(c, n, &e);
     if (e)
         dia_error(e);
     return v;
@@ -345,7 +345,7 @@ static void read_text(uint32_t title, uint32_t text_address, uint32_t length)
     bool failed = true;
     DiaOpen o = dia_open(channel, program, r.graphics, r.messages, buffer, 8, false);
     if (!o.error) {
-        int32_t *v = dia_vars(o.d);
+        be_i32 *v = dia_vars(o.d);
         v[2] = static_cast<int32_t>(hyper);
         v[0] = static_cast<int32_t>(address(text));
         v[1] = static_cast<int32_t>(title);

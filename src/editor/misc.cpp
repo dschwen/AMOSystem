@@ -38,7 +38,7 @@ void set_tab()
 {
     IData &d = idata();
     tokenise_current_line();
-    ptr<uint32_t>(d.Ed_VDialogues)[2] = d.Ed_Tabs;
+    ptr<be_u32>(d.Ed_VDialogues)[2] = d.Ed_Tabs;
     dialogue(EdDSetTab);
     Regs v;
     v.d[0] = 1;
@@ -123,7 +123,7 @@ void button_draw(const Button *b, bool title)
         z.d[0] = length;
         call(ed_zap_alert_entry, z);
     }
-    ptr<uint32_t>(d.Ed_VDialogues)[0] = address(text);
+    ptr<be_u32>(d.Ed_VDialogues)[0] = address(text);
     Regs c;
     call(ed_alert_clean_entry, c);
     sound_play('G');

@@ -534,7 +534,7 @@ namespace amos::boot {
     if (d.Sys_LibStarted) {
         Regs e;
         e.a[1] = address(d.Sys_EndRoutines);
-        w::call_routines(ptr<uint32_t>(e.a[1]));
+        w::call_routines(ptr<be_u32>(e.a[1]));
         static const int routines[] = {L_CloAll, L_PRT_Close, L_Equ_Free, L_Includes_Clear};
         for (int routine : routines) {
             Regs r;

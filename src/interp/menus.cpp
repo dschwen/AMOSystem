@@ -37,7 +37,7 @@ uint16_t coordinates()
 
 // MnOob: an object string of the item at *slot ("" deletes it, an empty
 // parameter keeps it)
-void object(uint32_t *slot)
+void object(be_u32 *slot)
 {
     Value v = evaluate_after();
     if (v.v1 == EntNul)
@@ -78,7 +78,7 @@ MenuDim menu_dim()
     Ctx &c = ctx();
     uint8_t *a3 = c.a3;
     uint16_t n = coordinates();
-    MenuItem *m = menu::find(reinterpret_cast<const uint32_t *>(c.a3), n);
+    MenuItem *m = menu::find(reinterpret_cast<const be_u32 *>(c.a3), n);
     c.a3 = a3;
     if (!m)
         error(39);
@@ -98,9 +98,9 @@ void interp_in_menu()
     Regs v;
     lib_call(L_MnClearVar, v);
     uint16_t n = coordinates();
-    MenuItem *m = menu::find(reinterpret_cast<const uint32_t *>(c.a3), n);
+    MenuItem *m = menu::find(reinterpret_cast<const be_u32 *>(c.a3), n);
     if (!m)
-        m = menu::insert(reinterpret_cast<const uint32_t *>(c.a3), n);
+        m = menu::insert(reinterpret_cast<const be_u32 *>(c.a3), n);
     c.a3 = a3;
     if (d.ScOnAd != d.MnAdEc) {
         if (d.MnAdEc)
@@ -117,8 +117,8 @@ void interp_in_menu()
     m->MnInkB2 = paper;
     m->MnInkC2 = paper;
     object(&m->MnOb1);
-    uint32_t *more[] = {&m->MnOb2, &m->MnOb3, &m->MnObF};
-    for (uint32_t *slot : more) {
+    be_u32 *more[] = {&m->MnOb2, &m->MnOb3, &m->MnObF};
+    for (be_u32 *slot : more) {
         if (peek_token() != tk::Vir)
             break;
         object(slot);

@@ -72,12 +72,12 @@ uint8_t structure();                                    // VStru: Struc(,), the 
 // verif/tables.cpp: TablA, an entry per loop or structure (and its
 // variable part after it)
 struct Entry {
-    uint32_t Vta_Next, Vta_Prev;
-    uint16_t Vta_Token;
+    be_u32 Vta_Next, Vta_Prev;
+    be_u16 Vta_Token;
     uint8_t Vta_Flag, Vta_UFlag;
-    uint32_t Vta_Prog;
-    uint16_t Vta_NBoucles, Vta_PBoucles;
-    uint32_t Vta_Jump;
+    be_u32 Vta_Prog;
+    be_u16 Vta_NBoucles, Vta_PBoucles;
+    be_u32 Vta_Jump;
 };
 static_assert(sizeof(Entry) == 24);
 void tables_free();                              // Free_TablA
@@ -115,8 +115,8 @@ void reloc_byte(uint8_t b);                      // Out_Reloc
 // a long, the size; false if out of memory; A5_Free), the current file
 // (D_Open on Name1, D_Read... of +B.s), the kind of a program file's
 // header (0 AMOS 1.3, 1 AMOS Pro, -1 neither)
-bool a5_reserve(uint32_t *slot, uint32_t size, uint32_t flags);
-void a5_free(uint32_t *slot);
+bool a5_reserve(be_u32 *slot, uint32_t size, uint32_t flags);
+void a5_free(be_u32 *slot);
 bool file_open(uint32_t mode);
 bool file_read(void *to, uint32_t length);
 bool file_write(const void *from, uint32_t length);

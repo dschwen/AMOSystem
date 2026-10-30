@@ -17,9 +17,9 @@ constexpr uint32_t ExtNb = 1 - 1;
 constexpr uint16_t LNoise = 256 + 128 + 64 + 32 + 16 + 8 + 4 + 2;   // a wave, the noise
 
 // x - 1 stored, and returned
-template <class T> T decrement(volatile T &x)
+template <class T> native_t<T> decrement(volatile T &x)
 {
-    T v = T(x - 1);
+    native_t<T> v = native_t<T>(x - 1);
     x = v;
     return v;
 }
@@ -44,8 +44,8 @@ inline volatile MusWave &wave_at(uint32_t at) { return *ptr<volatile MusWave>(at
 constexpr uint32_t CustomAddress = hal::CustomBase;
 constexpr uint32_t DmaCon = 0x96, IntEna = 0x9A, IntReq = 0x9C, IntEnaR = 0x1C, VHPosR = 0x06;
 constexpr uint32_t Audio = 0xA0;    // the registers of voice 0, 16 bytes a voice
-inline volatile uint16_t &w16(uint32_t at) { return *ptr<volatile uint16_t>(at); }
-inline volatile uint32_t &w32(uint32_t at) { return *ptr<volatile uint32_t>(at); }
+inline volatile be_u16 &w16(uint32_t at) { return *ptr<volatile be_u16>(at); }
+inline volatile be_u32 &w32(uint32_t at) { return *ptr<volatile be_u32>(at); }
 inline uint8_t peek_b(const void *p) { return *static_cast<const uint8_t *>(p); }
 inline volatile uint8_t &w8(uint32_t at) { return *ptr<volatile uint8_t>(at); }
 inline volatile uint16_t &custom(uint32_t r) { return hal::custom_word(r); }

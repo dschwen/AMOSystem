@@ -34,7 +34,7 @@ char *name1() { return ptr<char>(idata().Name1); }
 // cleared (main_glue.s)
 extern "C" uint8_t main_temp_on_clear[], main_temp_on_error[];
 
-void add_routine(uint8_t *record, uint32_t *list)
+void add_routine(uint8_t *record, be_u32 *list)
 {
     Regs r;
     r.a[1] = address(record);
@@ -152,7 +152,7 @@ void ram_free(uint32_t address, uint32_t size)
     w::release(r.a[1], r.d[0]);
 }
 
-uint32_t a5_reserve(uint32_t &slot, uint32_t size, uint32_t flags)
+uint32_t a5_reserve(be_u32 &slot, uint32_t size, uint32_t flags)
 {
     Regs r;
     r.d[0] = size + 4;
@@ -165,7 +165,7 @@ uint32_t a5_reserve(uint32_t &slot, uint32_t size, uint32_t flags)
     return slot;
 }
 
-void a5_free(uint32_t &slot)
+void a5_free(be_u32 &slot)
 {
     if (uint32_t at = slot) {
         slot = 0;
@@ -275,8 +275,8 @@ void w_option()
 void math_close()
 {
     IData &d = idata();
-    uint32_t *bases[] = {&d.MathBase, &d.DFloatBase, &d.DMathBase};
-    for (uint32_t *base : bases) {
+    be_u32 *bases[] = {&d.MathBase, &d.DFloatBase, &d.DMathBase};
+    for (be_u32 *base : bases) {
         if (*base) {
             hal::close_library(ptr<Library>(*base));
             *base = 0;

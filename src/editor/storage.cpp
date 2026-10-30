@@ -20,9 +20,9 @@ void changed()
 }
 
 // Moves the words from..to (exclusive) down by n bytes
-void move_down(uint16_t *from, const uint16_t *to, uint32_t n)
+void move_down(be_u16 *from, const be_u16 *to, uint32_t n)
 {
-    uint16_t *a3 = from - n / 2;
+    be_u16 *a3 = from - n / 2;
     while (from < to)
         *a3++ = *from++;
 }
@@ -54,8 +54,8 @@ uint8_t *next_line()
 void delete_chunk(uint8_t *from, uint8_t *to)
 {
     Program &p = program();
-    auto a0 = reinterpret_cast<uint16_t *>(from), a1 = reinterpret_cast<uint16_t *>(to);
-    const uint16_t *bottom = ptr<uint16_t>(p.Prg_StBas);
+    auto a0 = reinterpret_cast<be_u16 *>(from), a1 = reinterpret_cast<be_u16 *>(to);
+    const be_u16 *bottom = ptr<be_u16>(p.Prg_StBas);
     while (a0 > bottom)
         *--a1 = *--a0;
     p.Prg_StBas = address(a1);
@@ -94,10 +94,10 @@ Stored put(const uint8_t *a1, uint32_t d2, uint16_t position, bool insert, bool 
         // shorter: the program before it moves up
         {
             uint32_t delta = d1 - d2;
-            auto a2 = reinterpret_cast<uint16_t *>(a0);
+            auto a2 = reinterpret_cast<be_u16 *>(a0);
             a0 += delta;
-            auto a3 = reinterpret_cast<uint16_t *>(a0);
-            const uint16_t *bottom = ptr<uint16_t>(p.Prg_StBas);
+            auto a3 = reinterpret_cast<be_u16 *>(a0);
+            const be_u16 *bottom = ptr<be_u16>(p.Prg_StBas);
             while (a2 > bottom)
                 *--a3 = *--a2;
             p.Prg_StBas = address(a3);
@@ -109,18 +109,18 @@ StoI:
     added = 1;
 StoI0:
     {
-        auto a2 = ptr<uint16_t>(p.Prg_StBas);
+        auto a2 = ptr<be_u16>(p.Prg_StBas);
         uint32_t a3 = p.Prg_StBas - d0;
         if (a3 <= p.Prg_StMini)
             return {1, 0, a0};
         p.Prg_StBas = a3;
-        move_down(a2, reinterpret_cast<uint16_t *>(a0), d0);
+        move_down(a2, reinterpret_cast<be_u16 *>(a0), d0);
         a0 -= d0;
     }
 StoCop:
     {
-        auto from = reinterpret_cast<const uint16_t *>(a1);
-        auto to = reinterpret_cast<uint16_t *>(a0);
+        auto from = reinterpret_cast<const be_u16 *>(a1);
+        auto to = reinterpret_cast<be_u16 *>(a0);
         for (uint32_t n = d2 >> 1; n; n--)
             *to++ = *from++;
     }

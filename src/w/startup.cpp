@@ -70,7 +70,7 @@ void set_requesters(uint32_t &autoreq, uint32_t &easy)
 }
 
 // WRequest_Start: AMOS's requesters with the colours 8-31 of the palette
-void requester_start(const uint16_t *palette)
+void requester_start(const be_u16 *palette)
 {
     WData &d = wdata();
     copy(w_req_pal + 8 * 2, palette + 8, 24 * 2);
@@ -166,7 +166,7 @@ bool start(AllRegs *r)
 {
     WData &d = wdata();
     const uint8_t *config = ptr<uint8_t>(r->a[0]);
-    uint16_t *palette = ptr<uint16_t>(r->a[2]);
+    be_u16 *palette = ptr<be_u16>(r->a[2]);
     // An AMOS stopped by IceStart has 5 seconds to stop
     if (version() >= Version20 && d.Stopped) {
         auto stopped = ptr<volatile char>(d.Stopped);
@@ -214,7 +214,7 @@ bool start(AllRegs *r)
     if (!f)
         return false;
     // AA: Amiga-A through LoadView, as from Kickstart 39
-    auto gfx = reinterpret_cast<struct GfxBase *>(d.GfxBase);
+    auto gfx = ptr<struct GfxBase>(d.GfxBase);
     poke_l(w_gfx_base_var, d.GfxBase);
     d.WFlags = 0;
     if (gfx->ChipRevBits0 & GFXF_AA_ALICE)

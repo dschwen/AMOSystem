@@ -30,7 +30,7 @@ void copy(void *to, const void *from, uint32_t n)
 // WVbl: until the next VBL (the interrupt counts them)
 void wait_vbl()
 {
-    const volatile uint32_t &count = wdata().VblCount;
+    const volatile be_u32 &count = wdata().VblCount;
     uint32_t now = count;
     while (count == now)
         ;

@@ -676,7 +676,7 @@ struct Win {
         return 0;
     }
 
-    uint32_t flag(uint16_t &field, uint16_t bit, uint16_t on)
+    uint32_t flag(be_u16 &field, uint16_t bit, uint16_t on)
     {
         if (on)
             field |= bit;

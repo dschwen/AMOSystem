@@ -110,7 +110,7 @@ uint32_t lib_all(int routine, AllRegs &r)
 }
 
 // MnFind / MnIns: the item at coords (the deepest first), depth of them
-MenuItem *mn_find(uint32_t *coords, uint16_t depth)
+MenuItem *mn_find(be_u32 *coords, uint16_t depth)
 {
     AllRegs r = {};
     r.a[3] = address(coords);
@@ -118,7 +118,7 @@ MenuItem *mn_find(uint32_t *coords, uint16_t depth)
     return lib_all(L_MnFind, r) ? ptr<MenuItem>(r.a[2]) : nullptr;
 }
 
-MenuItem *mn_insert(uint32_t *coords, uint16_t depth)
+MenuItem *mn_insert(be_u32 *coords, uint16_t depth)
 {
     AllRegs r = {};
     r.a[3] = address(coords);
@@ -198,7 +198,7 @@ void menus_end()
 
 // Ed_MnOb: one object of an item from a string (a length word, the text;
 // none if empty)
-void set_object(uint32_t &object, const uint8_t *s)
+void set_object(be_u32 &object, const uint8_t *s)
 {
     if (uint32_t o = object) {
         object = 0;
@@ -266,7 +266,7 @@ MenuItem *make_item(const uint8_t *def, const uint8_t *text, bool active)
     IData &d = idata();
     // the place in the tree, below Ed_BufT+256, the deepest first
     uint8_t *top = ptr<uint8_t>(d.Ed_BufT) + 256;
-    uint32_t *coords = reinterpret_cast<uint32_t *>(top);
+    auto *coords = reinterpret_cast<be_u32 *>(top);
     uint16_t depth = 0;
     for (int i = 0; i < 4; i++) {
         uint8_t n = uint8_t(def[4 + i] - '0');
@@ -356,7 +356,7 @@ void branch_amos()
     if (!d.MnBase)
         return;
     // the old one erased
-    uint32_t *coords = ptr<uint32_t>(d.Ed_BufT + 4);
+    be_u32 *coords = ptr<be_u32>(d.Ed_BufT + 4);
     *coords = 1;
     if (MenuItem *m = mn_find(coords, 1))
         mn_erase(m);
@@ -668,9 +668,9 @@ uint32_t dialogue_value(uint16_t zone)
     return r.d[1];
 }
 
-uint32_t *dialogue_variables() { return ptr<uint32_t>(idata().Ed_VDialogues); }
+be_u32 *dialogue_variables() { return ptr<be_u32>(idata().Ed_VDialogues); }
 
-void change_text(uint32_t *list, const uint8_t *text, uint16_t n)
+void change_text(be_u32 *list, const uint8_t *text, uint16_t n)
 {
     if (!text_change(list, text, n))
         out_of_memory();
@@ -704,7 +704,7 @@ void program_to_menu()
     int16_t answer = 0;
     if (a[0] && a[1]) {
         // the program it has: changed, or taken away
-        uint32_t *v = dialogue_variables();
+        be_u32 *v = dialogue_variables();
         v[0] = address(o.text);
         v[1] = address(message_of(ptr<uint8_t>(d.Ed_MnPrograms), a[1], nullptr));
         answer = int16_t(dialogue(EdDPrgMn2));
@@ -727,7 +727,7 @@ void program_to_menu()
     if (!uint16_t(call(ed_file_selector, f)))
         not_done();
     path_it();
-    uint32_t *v = dialogue_variables();
+    be_u32 *v = dialogue_variables();
     v[0] = address(o.text);
     v[1] = d.Name1;
     v[2] = 0;
@@ -827,7 +827,7 @@ void add_user()
         return;
     }
     d.EdC_Changed = 1;
-    uint32_t *v = dialogue_variables();
+    be_u32 *v = dialogue_variables();
     v[2] = 0;
     v[3] = UserLong;
     if (int16_t(dialogue(EdDMnUsA)) != 1)

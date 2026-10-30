@@ -38,8 +38,8 @@ extern "C" uint32_t lib_sco0(RegFrame &r);
 extern "C" uint32_t lib_unpack_bitmap(RegFrame &r);
 // banks.cpp
 namespace amos {
-uint8_t *lst_new(uint32_t *list, uint32_t length);
-void lst_del(uint32_t *list, uint8_t *element);
+uint8_t *lst_new(be_u32 *list, uint32_t length);
+void lst_del(be_u32 *list, uint8_t *element);
 }
 // dialog_glue.s: the routine records of Dia_ClearVar
 extern "C" uint8_t lib_dia_on_clear[], lib_dia_on_default[];
@@ -74,7 +74,7 @@ constexpr int TxDispZone = 8;
 struct Run {
     Dialog *d;
     const uint8_t *pc;      // a6
-    uint32_t *sp;           // a3: the value stack
+    be_u32 *sp;           // a3: the value stack
     void **quit;            // the innermost loop
 };
 
@@ -416,7 +416,7 @@ void to_decimal(Run &r, int16_t n)
 void call_function(Run &r, int f, int16_t &n)
 {
     Dialog *d = r.d;
-    int32_t *v = dia_vars(d);
+    be_i32 *v = dia_vars(d);
     auto two = [&] {
         if (n < 2)
             syntax(r);
@@ -562,7 +562,7 @@ void call_function(Run &r, int f, int16_t &n)
         uint16_t p = static_cast<uint16_t>(f - FP1 + 1);
         if (!d->Dia_PUsers || p > d->Dia_NPUsers)
             syntax(r);
-        push(r, ptr<uint32_t>(d->Dia_PUsers)[d->Dia_NPUsers - p]);
+        push(r, ptr<be_u32>(d->Dia_PUsers)[d->Dia_NPUsers - p]);
         n++;
         break;
     }
@@ -1261,11 +1261,11 @@ void button_change(Run &r, uint32_t number, uint32_t position)
 }
 
 // The instructions that take at most six parameters, in d2-d7
-void instruction(Run &r, int i, int32_t *p)
+void instruction(Run &r, int i, const int32_t *p)
 {
     Dialog *d = r.d;
     struct RastPort *rp = rastport();
-    int32_t *v = dia_vars(d);
+    be_i32 *v = dia_vars(d);
     switch (i) {
     case IUnpack:
         unpack(r, p[0], p[1], p[2]);
@@ -1298,7 +1298,7 @@ void instruction(Run &r, int i, int32_t *p)
         break;
     case ISetVar:
         // The number times 4 as a word, sign extended
-        *reinterpret_cast<int32_t *>(reinterpret_cast<uint8_t *>(v) + static_cast<int16_t>(p[0] << 2)) = p[1];
+        *reinterpret_cast<be_i32 *>(reinterpret_cast<uint8_t *>(v) + static_cast<int16_t>(p[0] << 2)) = p[1];
         keep_buffer(d);
         break;
     case ICall: {
@@ -1561,7 +1561,7 @@ void user_instruction(Run &r, uint16_t name)
     }
     if (d->Dia_Users >= 10)
         bad_call(r);
-    uint32_t *sp = r.sp;
+    be_u32 *sp = r.sp;
     const uint8_t *body = programs(d) + peek_w(l + 4);
     uint16_t params = peek_w(l + 2);
     if (params) {
@@ -1593,7 +1593,7 @@ uint16_t loop(Run &r)
     void *buf[5];
     void **outer = r.quit;
     const uint8_t *pc = r.pc;
-    uint32_t *sp = r.sp;
+    be_u32 *sp = r.sp;
     r.quit = buf;
     if (!__builtin_setjmp(buf)) {
         for (;;) {
@@ -1726,21 +1726,21 @@ void edit_first(Dialog *d)
 
 // What a zone routine may change, put back afterwards
 struct Saved {
-    uint32_t base_x, base_y, sx, sy;
-    uint16_t xa, ya, xb, yb;
-    int32_t v1, v2, v3;
+    be_u32 base_x, base_y, sx, sy;
+    be_u16 xa, ya, xb, yb;
+    be_i32 v1, v2, v3;
 };
 
 Saved save_state(Dialog *d)
 {
-    int32_t *v = dia_vars(d);
+    be_i32 *v = dia_vars(d);
     return {d->Dia_BaseX, d->Dia_BaseY, d->Dia_Sx, d->Dia_Sy, d->Dia_XA, d->Dia_YA, d->Dia_XB, d->Dia_YB,
             v[-1], v[-2], v[-3]};
 }
 
 void restore_state(Dialog *d, const Saved &s)
 {
-    int32_t *v = dia_vars(d);
+    be_i32 *v = dia_vars(d);
     d->Dia_BaseX = s.base_x;
     d->Dia_BaseY = s.base_y;
     d->Dia_Sx = s.sx;
@@ -1786,7 +1786,7 @@ uint32_t zone_change(Run &r, uint8_t *e)
     if (!z->Dia_ZoRChange)
         return position;
     Saved s = save_state(d);
-    int32_t *v = dia_vars(d);
+    be_i32 *v = dia_vars(d);
     v[-1] = v[-2] = static_cast<int32_t>(position);
     v[-3] = static_cast<int32_t>(address(e));
     z->Dia_ZoFlags &= ~(ZoQuit | ZoNoWait);
@@ -2048,14 +2048,14 @@ void text_word(uint8_t *e, uint8_t *word, uint16_t row)
 
 void slider_draw(Slider *s, bool active)
 {
-    const uint16_t *colours = active ? s->Sl_Active : s->Sl_Inactive;
+    const be_u16 *colours = active ? s->Sl_Active : s->Sl_Inactive;
     Regs c = {};
     for (int i = 0; i < 8; i++)
         c.d[i] = static_cast<uint32_t>(static_cast<int16_t>(colours[i]));
     ec_call(ec::SetSli, c);
     hal::set_draw_mode(rastport(), 1);
     auto words = [s](Regs &w) {
-        const uint16_t *v = &s->Sl_Sx;
+        const be_u16 *v = &s->Sl_Sx;
         for (int i = 0; i < 7; i++)
             w.d[1 + i] = static_cast<uint32_t>(static_cast<int16_t>(v[i]));
     };
@@ -2402,7 +2402,7 @@ bool key_matches(const DiaKey *k, uint8_t ascii, uint8_t scan, uint8_t shifts)
 }
 
 // The left button on an active word of a hypertext (x, y in the zone)
-void text_click(Run &r, uint8_t *e, bool click, bool here, int16_t x, int16_t y, uint16_t &exits)
+void text_click(Run &r, uint8_t *e, bool click, bool here, int16_t x, int16_t y, be_u16 &exits)
 {
     Dialog *d = r.d;
     DiaText *t = text(e);
@@ -2731,7 +2731,7 @@ uint16_t run_events(Run &r, int32_t timer, int32_t flags)
 
 // ---- channels --------------------------------------------------------------------------
 
-uint32_t *dialogs() { return ptr<uint32_t>(idata().Cur_Dialogs); }
+be_u32 *dialogs() { return ptr<be_u32>(idata().Cur_Dialogs); }
 
 // Dia_Active: the dialog's screen becomes current. 0, or EDiaScreen if it
 // is not there any more.
@@ -3154,7 +3154,7 @@ DiaResult amos::dia_run(uint32_t number, int32_t label, uint32_t x, uint32_t y)
         d->Dia_BaseX = x;
     if (y != EntNul)
         d->Dia_BaseY = y;
-    Run r = {d, programs(d), ptr<uint32_t>(d->Dia_Pile), nullptr};
+    Run r = {d, programs(d), ptr<be_u32>(d->Dia_Pile), nullptr};
     if (label >= 0) {
         uint16_t offset = label_offset(d, static_cast<uint32_t>(label));
         if (!offset)
@@ -3202,7 +3202,7 @@ DiaResult amos::dia_run_quick(const uint8_t *program, const uint8_t *puzzle, con
     DiaOpen o = dia_open(number, program, puzzle, messages, buffer, 16, copy);
     if (o.error)
         return {o.error, static_cast<int32_t>(o.position)};
-    int32_t *v = dia_vars(o.d);
+    be_i32 *v = dia_vars(o.d);
     v[0] = static_cast<int32_t>(v0);
     v[1] = static_cast<int32_t>(v1);
     v[2] = static_cast<int32_t>(v2);
@@ -3220,7 +3220,7 @@ DiaResult amos::dia_update(uint32_t number, uint32_t z, uint32_t a, uint32_t b, 
         return {0, 0};
     if (activate(d))
         return {EDiaChanND, 0};
-    Run r = {d, programs(d), ptr<uint32_t>(d->Dia_Pile), nullptr};
+    Run r = {d, programs(d), ptr<be_u32>(d->Dia_Pile), nullptr};
     guarded(r, [&] { zone_update(r, z, a, b, c); });
     deactivate(d);
     if (!d->Dia_Error)
@@ -3280,7 +3280,7 @@ DiaValue amos::dia_value(uint32_t channel, uint32_t z, uint32_t which)
     return {0, 0, 0};
 }
 
-int32_t *amos::dia_variable(uint32_t number, uint32_t n, uint16_t *error)
+be_i32 *amos::dia_variable(uint32_t number, uint32_t n, uint16_t *error)
 {
     Dialog *d = dia_channel(number);
     if (!d) {
@@ -3292,7 +3292,7 @@ int32_t *amos::dia_variable(uint32_t number, uint32_t n, uint16_t *error)
         return nullptr;
     }
     *error = 0;
-    return reinterpret_cast<int32_t *>(reinterpret_cast<uint8_t *>(dia_vars(d)) + static_cast<int16_t>(n << 2));
+    return reinterpret_cast<be_i32 *>(reinterpret_cast<uint8_t *>(dia_vars(d)) + static_cast<int16_t>(n << 2));
 }
 
 DiaResult amos::dia_zone_at(uint32_t number, uint32_t x, uint32_t y)
@@ -3315,7 +3315,7 @@ uint16_t amos::dia_auto_test(uint32_t channels)
             if (!error) {
                 if (static_cast<int32_t>(d->Dia_Edited) > 0)
                     edit_active(d, entry_at(d->Dia_Edited));
-                Run r = {d, programs(d), ptr<uint32_t>(d->Dia_Pile), nullptr};
+                Run r = {d, programs(d), ptr<be_u32>(d->Dia_Pile), nullptr};
                 uint16_t exits = 0;
                 guarded(r, [&] { exits = tests(r); });
                 if (exits)
@@ -3466,7 +3466,7 @@ extern "C" uint32_t lib_dia_run_program(RegFrame &r)
 extern "C" uint32_t lib_dia_get_variable(RegFrame &r)
 {
     uint16_t error;
-    int32_t *v = dia_variable(r.d[0], r.d[1], &error);
+    be_i32 *v = dia_variable(r.d[0], r.d[1], &error);
     if (v)
         r.a[0] = address(v);
     return r.d[0] = error;
@@ -3508,7 +3508,7 @@ extern "C" uint32_t lib_dia_get_zone_ad(RegFrame &r)
 // Dia_SetVFlags: a0 = variables, d0 = bits, d1 = count: one bit in each
 extern "C" uint32_t lib_dia_set_vflags(RegFrame &r)
 {
-    uint32_t *v = ptr<uint32_t>(r.a[0]);
+    be_u32 *v = ptr<be_u32>(r.a[0]);
     uint16_t bits = static_cast<uint16_t>(r.d[0]);
     for (uint16_t n = static_cast<uint16_t>(r.d[1]); n; n--, bits >>= 1)
         *v++ = bits & 1;
@@ -3521,7 +3521,7 @@ extern "C" uint32_t lib_dia_set_vflags(RegFrame &r)
 // Dia_GetVFlags: a0 = variables, d1 = count. Out: d0 = the bits.
 extern "C" uint32_t lib_dia_get_vflags(RegFrame &r)
 {
-    const uint32_t *v = ptr<uint32_t>(r.a[0]);
+    const be_u32 *v = ptr<be_u32>(r.a[0]);
     uint16_t n = static_cast<uint16_t>(r.d[1]);
     uint16_t bits = 0;
     for (uint16_t i = n; i; i--)

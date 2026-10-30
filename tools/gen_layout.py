@@ -68,7 +68,8 @@ NAMES = {
 CHAIN_UNITS = {'WiColor': 4, 'WiColFl': 4, 'WiCuDraw': 2}
 
 UNIT = {'b': 1, 'w': 2, 'l': 4}
-CTYPE = {1: 'uint8_t', 2: 'uint16_t', 4: 'uint32_t'}
+# Fields of 16 and 32 bits: big-endian on any host (core/endian.h)
+CTYPE = {1: 'uint8_t', 2: 'be_u16', 4: 'be_u32'}
 
 LABEL_RE = re.compile(r'^([A-Za-z_.][\w.]*):?$')
 
@@ -337,6 +338,8 @@ def main():
         '',
         '#include <stddef.h>',
         '#include <stdint.h>',
+        '',
+        '#include "core/endian.h"',
         '',
         'namespace amos {',
         '',

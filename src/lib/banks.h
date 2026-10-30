@@ -20,15 +20,15 @@ constexpr uint16_t BankBobs = 1 << 2;
 constexpr uint16_t BankIcons = 1 << 3;
 
 // Lists (Lst.*)
-uint8_t *lst_cree(uint32_t *list, uint32_t length, uint32_t memflags);
-uint8_t *lst_new(uint32_t *list, uint32_t length);
-void lst_del(uint32_t *list, uint8_t *element);
-void lst_del_all(uint32_t *list);
-void lst_insert(uint32_t *list, uint8_t *element);
-void lst_remove(uint32_t *list, uint8_t *element);
+uint8_t *lst_cree(be_u32 *list, uint32_t length, uint32_t memflags);
+uint8_t *lst_new(be_u32 *list, uint32_t length);
+void lst_del(be_u32 *list, uint8_t *element);
+void lst_del_all(be_u32 *list);
+void lst_insert(be_u32 *list, uint8_t *element);
+void lst_remove(be_u32 *list, uint8_t *element);
 
 // The banks of the current program (Cur_Banks)
-inline uint32_t *bank_list() { return ptr<uint32_t>(idata().Cur_Banks); }
+inline be_u32 *bank_list() { return ptr<be_u32>(idata().Cur_Banks); }
 
 inline uint32_t bank_number(const uint8_t *bank) { return peek_l(bank - 16); }
 inline uint16_t bank_flags(const uint8_t *bank) { return peek_w(bank - 12); }

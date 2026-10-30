@@ -38,7 +38,7 @@ void clear_animations()
     IData &d = data();
     Regs r;
     r.a[1] = address(&d.Sys_DefaultRoutines);
-    w::call_routines(ptr<uint32_t>(r.a[1]));
+    w::call_routines(ptr<be_u32>(r.a[1]));
 }
 
 void reset_channels()
@@ -154,7 +154,7 @@ void defrun2()
     uint16_t limits[4] = {uint16_t(x1 << 1), uint16_t(y1 << 1), uint16_t(x2 << 1), uint16_t(y2 << 1)};
     for (int i = 0; i < 4; i++)
         d.LimSave[i] = limits[i];
-    uint16_t *mouse = &w.MouXMin;
+    be_u16 *mouse = &w.MouXMin;
     if (!peek_l(mouse))
         for (int i = 0; i < 4; i++)
             mouse[i] = limits[i];

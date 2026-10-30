@@ -17,7 +17,7 @@ namespace {
 
 constexpr int Marks = 10, AutoMarks = 4;
 
-uint32_t *marks() { return reinterpret_cast<uint32_t *>(program().Prg_Marks); }
+be_u32 *marks() { return reinterpret_cast<be_u32 *>(program().Prg_Marks); }
 
 uint32_t here()
 {
@@ -32,7 +32,7 @@ namespace amos::ed {
 // Ed_MarksChange: lines inserted (delta > 0) or deleted at line n
 void marks_change(uint16_t n, int16_t delta)
 {
-    uint16_t *m = reinterpret_cast<uint16_t *>(marks());
+    auto *m = reinterpret_cast<be_u16 *>(marks());
     int16_t end = int16_t(n - delta);
     for (int i = 0; i < Marks; i++, m += 2) {
         if (!peek_l(m))
@@ -52,7 +52,7 @@ void marks_change(uint16_t n, int16_t delta)
 // Ed_AutoMarks: the cursor's place first of the automatic marks
 void auto_mark()
 {
-    uint32_t *m = marks();
+    be_u32 *m = marks();
     uint32_t place = here();
     if (m[0] == place)
         return;
@@ -102,7 +102,7 @@ void ed_goto_mark(AllRegs *r)
 void ed_marks_to_addresses(AllRegs *)
 {
     Program &p = program();
-    uint32_t *m = marks();
+    be_u32 *m = marks();
     for (int i = 0; i < Marks; i++) {
         if (!m[i])
             continue;
@@ -117,7 +117,7 @@ void ed_marks_to_addresses(AllRegs *)
 void ed_marks_to_numbers(AllRegs *)
 {
     Program &p = program();
-    uint32_t *m = marks();
+    be_u32 *m = marks();
     for (int i = 0; i < Marks; i++) {
         if (!m[i])
             continue;

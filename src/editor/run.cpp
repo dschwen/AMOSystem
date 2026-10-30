@@ -479,7 +479,7 @@ uint16_t error_line(uint32_t code, const uint8_t *message)
     IData &d = idata();
     Error e = get_error(int16_t(code), message);
     run(ed_open_editor);
-    uint32_t *v = ptr<uint32_t>(d.Ed_VDialogues);
+    be_u32 *v = ptr<be_u32>(d.Ed_VDialogues);
     v[0] = address(dialogue_string(e.message));
     source::Number n = source::find_address(ptr<uint8_t>(program().Prg_StBas), ptr<uint8_t>(d.VerPos));
     v[1] = n.number + 1;

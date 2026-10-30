@@ -21,7 +21,7 @@ constexpr int LeftButton = 14, RightButton = 13, MiddleButton = 12;     // IEQUA
 
 inline void barrier() { asm volatile("" ::: "memory"); }
 
-volatile uint16_t &mouse_shown() { return *static_cast<volatile uint16_t *>(&wdata().MouShow); }
+volatile be_u16 &mouse_shown() { return *static_cast<volatile be_u16 *>(&wdata().MouShow); }
 
 bool hires(const Screen *s) { return s->EcCon0 & 0x8000; }
 bool interlaced(const Screen *s) { return s->EcCon0 & 4; }
@@ -32,7 +32,7 @@ bool interlaced(const Screen *s) { return s->EcCon0 & 4; }
 void show_sprites_3()
 {
     for (int i = 0; i < 3; i++) {
-        while (*static_cast<volatile uint32_t *>(&wdata().HsChange))
+        while (*static_cast<volatile be_u32 *>(&wdata().HsChange))
             ;
         call(w_sprites_show);
     }
@@ -168,13 +168,13 @@ void to_hardware(Screen *s, AllRegs *r)
 void screen_at(AllRegs *r)
 {
     WData &d = wdata();
-    const uint32_t *list = d.EcPri;
+    const be_u32 *list = d.EcPri;
     uint16_t x = r->d[1], y = r->d[2] + EcYBase;
     if (int16_t(r->d[3]) > 0) {
         Screen *from;
         if (!screen_of(r, &from))
             return;
-        for (const uint32_t *p = d.EcPri; int32_t(*p) >= 0; p++)
+        for (const be_u32 *p = d.EcPri; int32_t(*p) >= 0; p++)
             if (*p == address(from)) {
                 list = p;
                 break;
@@ -204,7 +204,7 @@ uint32_t zone_at(const Screen *s, uint16_t x, uint16_t y, uint16_t max)
 {
     if (max <= s->EcNumber || !s->EcAZones)
         return 0;
-    const uint16_t *z = ptr<uint16_t>(s->EcAZones);
+    const be_u16 *z = ptr<be_u16>(s->EcAZones);
     for (uint16_t n = 0; n < s->EcNZones; n++, z += 4) {
         if (!z[2] && !z[3])
             continue;
@@ -520,7 +520,7 @@ void w_sy_zone_reset(AllRegs *r)
         r->d[0] = 29;
         return;
     }
-    uint32_t *z = ptr<uint32_t>(s->EcAZones);
+    be_u32 *z = ptr<be_u32>(s->EcAZones);
     uint16_t n = r->d[1];
     if (!n) {
         uint16_t count = s->EcNZones - 1;
@@ -553,7 +553,7 @@ void w_sy_zone_set(AllRegs *r)
         r->d[0] = 1;
         return;
     }
-    uint16_t *z = ptr<uint16_t>(s->EcAZones) + (n - 1) * 4;
+    be_u16 *z = ptr<be_u16>(s->EcAZones) + (n - 1) * 4;
     z[0] = x1;
     z[1] = y1;
     z[2] = x2;
@@ -594,7 +594,7 @@ void w_sy_zone_mouse(AllRegs *r)
     WData &d = wdata();
     r->d[1] = 0;
     r->d[0] = 0;
-    for (const uint32_t *p = d.EcPri; int32_t(*p) >= 0; p++) {
+    for (const be_u32 *p = d.EcPri; int32_t(*p) >= 0; p++) {
         const Screen *s = ptr<Screen>(*p);
         uint32_t z = zone_hardware(s, d.XMouse, d.YMouse, 16);
         if (z) {

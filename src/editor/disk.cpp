@@ -198,7 +198,7 @@ void merge_ascii()
         sy_call(sy::ClearKey, k);
     };
     for (;;) {
-        uint16_t &actualise = wdata().Actualise;
+        be_u16 &actualise = wdata().Actualise;
         if (actualise & BitControl) {
             actualise &= ~BitControl;
             break;

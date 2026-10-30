@@ -113,7 +113,7 @@ void memory_show()
         s->Sl_Sy = MemorySy;
         // the colours, inactive then active
         const uint8_t *colours = system_message(23);
-        uint16_t *to = reinterpret_cast<uint16_t *>(b + offsetof(Slider, Sl_Inactive));
+        auto *to = reinterpret_cast<be_u16 *>(b + offsetof(Slider, Sl_Inactive));
         for (int i = 0; i < 16; i++)
             to[i] = colours[i];
         Regs r;
@@ -171,7 +171,7 @@ void editor_hide()
         call(ed_erase_windows_entry, e);
         ec_fn(ec::SColB, d.ColBack);
         ec_fn(ec::RainHide, 0);
-        uint16_t *limits = &w.MouXMin;
+        be_u16 *limits = &w.MouXMin;
         for (int i = 0; i < 4; i++)
             limits[i] = d.LimSave[i];
         sy_fn(sy::RecallM);
@@ -225,7 +225,7 @@ void editor_appear()
         s->EcAWY = d.Ed_Wy;
         s->EcAW |= AWChange;
         app_centre(s, int16_t(d.Ed_Wy + (d.Ed_Sy >> 1)), 1, int16_t(d.Ed_VScrol));
-        uint16_t *limits = &w.MouXMin;
+        be_u16 *limits = &w.MouXMin;
         for (int i = 0; i < 4; i++)
             d.LimSave[i] = limits[i];
         limit_mouse();

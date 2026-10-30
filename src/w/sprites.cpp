@@ -36,8 +36,8 @@ inline void barrier() { asm volatile("" ::: "memory"); }
 
 // A table entry
 struct Sprite {
-    uint16_t prev, next, x, y, yr, link;
-    uint32_t image, control;
+    be_u16 prev, next, x, y, yr, link;
+    be_u32 image, control;
 };
 static_assert(sizeof(Sprite) == HsLong);
 
@@ -47,15 +47,15 @@ Sprite *at(int16_t offset) { return reinterpret_cast<Sprite *>(table() + offset)
 // A column of T_HsPosition: its buffer (0 used, -1 the end), the first
 // free line and the first free word in it
 struct Column {
-    uint32_t buffer;
-    uint16_t y, used;
+    be_u32 buffer;
+    be_u16 y, used;
 };
 
 Column *columns() { return reinterpret_cast<Column *>(wdata().HsPosition); }
 
 // Image header
 struct Image {
-    uint16_t width, height, planes, hot_x, hot_y;
+    be_u16 width, height, planes, hot_x, hot_y;
     uint8_t *data() { return reinterpret_cast<uint8_t *>(this) + 10; }
 };
 
@@ -68,7 +68,7 @@ void call_d1(uint8_t *routine, uint32_t d1)
 
 // The two control words of a sprite at x,y (the hot spot taken off,
 // negative positions at 0) of image's height. Returns the y used.
-uint16_t control_words(int16_t x, int16_t y, const Image *image, uint32_t *control)
+uint16_t control_words(int16_t x, int16_t y, const Image *image, be_u32 *control)
 {
     x -= int16_t(image->hot_x << 2) >> 2;
     if (x < 0)
@@ -724,7 +724,7 @@ void w_sy_sprite_buffer(AllRegs *r)
     poke_l(empty, 0);
     barrier();
     d.HsChange = address(empty);
-    while (*static_cast<volatile uint32_t *>(&d.HsChange))
+    while (*static_cast<volatile be_u32 *>(&d.HsChange))
         ;
     sprite_buffers_free();
     r->d[0] = 0;

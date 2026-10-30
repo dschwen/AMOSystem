@@ -51,10 +51,10 @@ enum : uint32_t {
 
 inline void barrier() { asm volatile("" ::: "memory"); }
 
-uint8_t &high(uint16_t &w) { return reinterpret_cast<uint8_t *>(&w)[0]; }
+uint8_t &high(be_u16 &w) { return reinterpret_cast<uint8_t *>(&w)[0]; }
 
 // EcGet: the screen number n (no check of n)
-uint32_t *slot(uint16_t n) { return &wdata().EcAdr[0] + int16_t(n << 2) / 4; }
+be_u32 *slot(uint16_t n) { return &wdata().EcAdr[0] + int16_t(n << 2) / 4; }
 Screen *screen(uint16_t n) { return ptr<Screen>(*slot(n)); }
 
 void call_a0(uint8_t *routine, uint32_t a0)
@@ -91,7 +91,7 @@ void interlace_add(Screen *s)
         return;
     WData &d = wdata();
     d.InterBit = 0;
-    uint32_t *e = d.InterList;
+    be_u32 *e = d.InterList;
     bool more;
     do {
         more = *e;
@@ -111,7 +111,7 @@ uint32_t to_front(uint16_t n)
     Screen *s = screen(n);
     if (!s)
         return ErrNotOpen;
-    uint32_t *to = wdata().EcPri, *from = to;
+    auto *to = wdata().EcPri, *from = to;
     uint32_t next = *from;
     *to = address(s);
     for (;;) {
@@ -137,7 +137,7 @@ uint32_t to_back(uint16_t n)
     Screen *s = screen(n);
     if (!s)
         return ErrNotOpen;
-    uint32_t *to = wdata().EcPri, *from = to;
+    auto *to = wdata().EcPri, *from = to;
     for (;;) {
         uint32_t v = *from++;
         *to = v;
@@ -246,7 +246,7 @@ void free_screen(Screen *s)
     if (current == s) {
         current = nullptr;
         for (int pass = 0; pass < 2 && !current; pass++) {
-            for (const uint32_t *p = d.EcPri; int32_t(*p) >= 0; p++) {
+            for (const be_u32 *p = d.EcPri; int32_t(*p) >= 0; p++) {
                 Screen *o = ptr<Screen>(*p);
                 if (o->EcFlags & Clone)
                     continue;
@@ -298,14 +298,14 @@ void free_screen(Screen *s)
 uint32_t close(uint16_t n, uint32_t *current)
 {
     WData &d = wdata();
-    uint32_t *at = slot(n);
+    be_u32 *at = slot(n);
     Screen *s = ptr<Screen>(*at);
     *current = address(at);
     if (!s)
         return ErrNotOpen;
     *at = 0;
     // Out of the order
-    uint32_t *to = d.EcPri, *from = to;
+    be_u32 *to = d.EcPri, *from = to;
     for (;;) {
         uint32_t v = *from++;
         *to = v;
@@ -317,7 +317,7 @@ uint32_t close(uint16_t n, uint32_t *current)
     // Out of the interlaced screens
     if (s->EcCon0 & Interlace) {
         d.InterBit = 0;
-        uint32_t *to = d.InterList, *from = to;
+        be_u32 *to = d.InterList, *from = to;
         while (*from) {
             if (*from == address(s)) {
                 from += 2;
@@ -659,7 +659,7 @@ uint32_t dual_priority(uint16_t a, uint16_t b)
 void screens_reset()
 {
     WData &d = wdata();
-    for (uint32_t &a : d.EcAdr)
+    for (be_u32 &a : d.EcAdr)
         a = 0;
     d.EcPri[0] = 0xFFFFFFFF;
     for (uint32_t i = 0; i < CopML; i += 4)

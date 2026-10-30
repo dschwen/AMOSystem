@@ -69,7 +69,7 @@ bool search_front(Search &s)
         }
         // the next line, unless Control-C
         s.x = 0;
-        uint16_t &actualise = wdata().Actualise;
+        be_u16 &actualise = wdata().Actualise;
         if (actualise & BitControl) {
             actualise &= ~BitControl;
             return false;
@@ -211,7 +211,7 @@ void run(uint8_t *routine)
     __builtin_unreachable();
 }
 
-uint32_t *dialogue_variables() { return ptr<uint32_t>(idata().Ed_VDialogues); }
+be_u32 *dialogue_variables() { return ptr<be_u32>(idata().Ed_VDialogues); }
 
 uint32_t dialogue_value(uint16_t zone, uint32_t which)
 {
@@ -250,7 +250,7 @@ int16_t search_dialogue(uint16_t n)
 {
     IData &d = idata();
     uint8_t *text = dialogue_string(d.Ed_SchBuf);
-    uint32_t *v = dialogue_variables();
+    be_u32 *v = dialogue_variables();
     v[0] = address(text);
     v[1] = 32;
     Regs f;

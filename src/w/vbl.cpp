@@ -31,7 +31,7 @@ constexpr uint32_t FlMax = 16, FlashSize = 2 + 2 + 4 + 2 + 16 * 4 + 2;
 
 // The copper moves of a list of marks (copper address, offset pairs, ending
 // with 0) get the bitplanes planes (count) plus the offset
-void poke_planes(const uint8_t *marks, const uint32_t *planes, uint16_t count, uint32_t extra)
+void poke_planes(const uint8_t *marks, const be_u32 *planes, uint16_t count, uint32_t extra)
 {
     for (;;) {
         uint32_t moves = peek_l(marks);
@@ -109,7 +109,7 @@ void shifter(WData &d)
     poke_w(t, peek_w(t + 2));
     Screen *s = ptr<Screen>(peek_l(t + 4));
     uint16_t first = peek_w(t + 8), last = peek_w(t + 10);
-    uint16_t *pal = s->EcPal;
+    auto *pal = s->EcPal;
     uint16_t a = first, b = last, kept;
     if (!t[12]) {
         // Up
@@ -179,7 +179,7 @@ void fade(WData &d)
     if (--d.FadeCpt)
         return;
     d.FadeCpt = d.FadeVit;
-    uint16_t *pal = ptr<uint16_t>(d.FadePal);
+    be_u16 *pal = ptr<be_u16>(d.FadePal);
     const uint8_t *marks0 = ptr<uint8_t>(d.FadeCop);
     int16_t n = d.FadeNb;
     uint8_t *e = d.FadeCol;
@@ -226,7 +226,7 @@ extern "C" void w_vbl(uint8_t *data)
     // The interlaced screens: the odd frames one line further
     if (d.InterBit) {
         uint16_t frame = chips().vposr;
-        for (const uint32_t *e = d.InterList; *e; e += 2) {
+        for (const be_u32 *e = d.InterList; *e; e += 2) {
             const Screen *s = ptr<Screen>(e[0]);
             uint32_t extra = int16_t(frame) < 0 ? 0 : uint16_t(s->EcTx >> 3);
             poke_planes(ptr<uint8_t>(e[1]), s->EcPhysic, s->EcNPlan - 1, extra);
@@ -238,7 +238,7 @@ extern "C" void w_vbl(uint8_t *data)
         poke_l(e, 0);
         for (;;) {
             uint16_t count = peek_w(e + 4);
-            poke_planes(ptr<uint8_t>(marks), reinterpret_cast<const uint32_t *>(e + 6), count, 0);
+            poke_planes(ptr<uint8_t>(marks), reinterpret_cast<const be_u32 *>(e + 6), count, 0);
             e += SwapL;
             marks = peek_l(e);
             if (!marks)
@@ -261,7 +261,7 @@ extern "C" void w_vbl(uint8_t *data)
     d.VblTimer++;
     d.EveCpt--;
     d.Actualise |= BitVBL;
-    for (const uint32_t *r = i.VblRout; *r; r++)
+    for (const be_u32 *r = i.VblRout; *r; r++)
         w_int_call(ptr<void>(*r), data);
     mouse(d);
     shifter(d);

@@ -77,7 +77,7 @@ uint32_t divu(uint32_t n, uint16_t d)
 
 // A sample's frequency for a note (index in TNotes)
 uint32_t note_frequency(uint16_t frequency, uint16_t note) { return divu(uint32_t(frequency) * TNotes[note], 440) & 0xFFFF; }
-volatile uint8_t &low_byte(volatile uint16_t &w) { return reinterpret_cast<volatile uint8_t *>(&w)[1]; }
+volatile uint8_t &low_byte(volatile be_u16 &w) { return reinterpret_cast<volatile uint8_t *>(&w)[1]; }
 
 uint32_t lvo(uint32_t base, int32_t offset, uint32_t d0 = 0, uint32_t d1 = 0, uint32_t a0 = 0, uint32_t a1 = 0)
 {

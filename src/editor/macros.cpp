@@ -55,7 +55,7 @@ void run_d0(uint8_t *routine, uint32_t d0)
     __builtin_unreachable();
 }
 
-uint32_t *macros() { return &idata().EdMa_List; }
+be_u32 *macros() { return &idata().EdMa_List; }
 
 uint32_t last_key() { return ptr<Dialog>(idata().Ed_ADialogues)->Dia_LastKey; }
 
@@ -100,7 +100,7 @@ namespace amos::ed {
 
 // Ed_MemReserve: size cleared bytes (their size in the long before them)
 // into *at; 0 if out of memory
-uint8_t *memory_reserve(uint32_t *at, uint32_t size)
+uint8_t *memory_reserve(be_u32 *at, uint32_t size)
 {
     uint32_t m = memory(size + 4, true);
     if (!m)
@@ -111,7 +111,7 @@ uint8_t *memory_reserve(uint32_t *at, uint32_t size)
 }
 
 // Ed_MemFree
-void memory_release(uint32_t *at)
+void memory_release(be_u32 *at)
 {
     if (uint32_t m = *at) {
         *at = 0;
@@ -121,7 +121,7 @@ void memory_release(uint32_t *at)
 
 // Ed_ListeNew: a new element of size bytes of data at the head of the
 // list; 0 if out of memory
-uint8_t *list_new(uint32_t *list, uint32_t size)
+uint8_t *list_new(be_u32 *list, uint32_t size)
 {
     uint32_t m = memory(size + 8, true);
     if (!m)
@@ -134,7 +134,7 @@ uint8_t *list_new(uint32_t *list, uint32_t size)
 }
 
 // Ed_ListeDel: element e out of the list (nothing if it is not in it)
-void list_delete(uint32_t *list, uint8_t *e)
+void list_delete(be_u32 *list, uint8_t *e)
 {
     uint8_t *before = reinterpret_cast<uint8_t *>(list);
     for (uint32_t n = peek_l(before); n; n = peek_l(before)) {
@@ -148,7 +148,7 @@ void list_delete(uint32_t *list, uint8_t *e)
 }
 
 // Ed_ListeDelAll
-void list_delete_all(uint32_t *list)
+void list_delete_all(be_u32 *list)
 {
     while (uint32_t e = *list)
         list_delete(list, ptr<uint8_t>(e));
@@ -503,28 +503,28 @@ extern "C" {
 uint32_t ed_mem_reserve(AllRegs *r)
 {
     uint32_t size = r->d[0];
-    uint8_t *m = memory_reserve(ptr<uint32_t>(r->a[0]), size);
+    uint8_t *m = memory_reserve(ptr<be_u32>(r->a[0]), size);
     r->a[0] = address(m);
     if (m)
         r->d[0] = size + 4;
     return address(m);
 }
 
-void ed_mem_free(AllRegs *r) { memory_release(ptr<uint32_t>(r->a[0])); }
+void ed_mem_free(AllRegs *r) { memory_release(ptr<be_u32>(r->a[0])); }
 
 // a0 the list, d0 the size; a1 the element, the condition codes on it
 uint32_t ed_list_new(AllRegs *r)
 {
-    uint8_t *e = list_new(ptr<uint32_t>(r->a[0]), r->d[0]);
+    uint8_t *e = list_new(ptr<be_u32>(r->a[0]), r->d[0]);
     r->a[1] = address(e);
     return address(e);
 }
 
-void ed_list_delete(AllRegs *r) { list_delete(ptr<uint32_t>(r->a[0]), ptr<uint8_t>(r->a[1])); }
+void ed_list_delete(AllRegs *r) { list_delete(ptr<be_u32>(r->a[0]), ptr<uint8_t>(r->a[1])); }
 
 void ed_list_delete_all(AllRegs *r)
 {
-    list_delete_all(ptr<uint32_t>(r->a[0]));
+    list_delete_all(ptr<be_u32>(r->a[0]));
     r->d[0] = 0;
 }
 

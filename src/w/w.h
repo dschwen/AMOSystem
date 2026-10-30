@@ -31,7 +31,7 @@ void free_mm(uint32_t address, uint32_t size);
 // WMemReserve / WMemFree (w/memory.cpp)
 uint32_t reserve(uint32_t size, uint32_t flags);
 void release(uint32_t address, uint32_t size);
-void call_routines(uint32_t *list);
+void call_routines(be_u32 *list);
 
 // Calls a +W.s routine with no parameters (TAbk1-4...). Returns its d0.
 uint32_t call(uint8_t *routine);

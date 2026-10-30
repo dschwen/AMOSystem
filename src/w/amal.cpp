@@ -31,15 +31,15 @@ constexpr int RainLong = 24, RnActAt = 16;
 
 // A channel (the original's AmXxx offsets), followed by its program
 struct Channel {
-    uint32_t AmPrev, AmNext;
-    uint16_t AmLong, AmNb;          // size of the block; channel * 4 + type
-    uint32_t AmPos, AmAuto, AmAct;  // program, autotest, the object's x/y/image
-    uint16_t AmBit, AmCpt;          // actualisation bit ($8000: frozen)
-    uint32_t AmDeltX, AmDeltY;
-    uint16_t AmVirgX, AmVirgY;
-    uint32_t AmFin, AmAJsr, AmAAd, AmAALoop;
-    uint16_t AmACLoop, AmACpt;
-    uint16_t AmIRegs[NbInterne];    // R9...R0
+    be_u32 AmPrev, AmNext;
+    be_u16 AmLong, AmNb;          // size of the block; channel * 4 + type
+    be_u32 AmPos, AmAuto, AmAct;  // program, autotest, the object's x/y/image
+    be_u16 AmBit, AmCpt;          // actualisation bit ($8000: frozen)
+    be_u32 AmDeltX, AmDeltY;
+    be_u16 AmVirgX, AmVirgY;
+    be_u32 AmFin, AmAJsr, AmAAd, AmAALoop;
+    be_u16 AmACLoop, AmACpt;
+    be_u16 AmIRegs[NbInterne];    // R9...R0
 };
 static_assert(sizeof(Channel) == 80);
 constexpr uint32_t AmStart = sizeof(Channel);
@@ -65,7 +65,7 @@ int16_t sw16(uint32_t at) { return int16_t(peek_w(ptr<void>(at))); }
 void sw(uint32_t at, uint16_t v) { poke_w(ptr<void>(at), v); }
 Channel &channel(uint32_t at) { return *ptr<Channel>(at); }
 // The high word of a long field (the original wrote words there)
-uint16_t &high(uint32_t &l) { return reinterpret_cast<uint16_t *>(&l)[0]; }
+be_u16 &high(be_u32 &l) { return reinterpret_cast<be_u16 *>(&l)[0]; }
 
 // ---- the tokeniser ----------------------------------------------------------
 
@@ -1261,7 +1261,7 @@ bool move(Animator &a)
 }
 
 // One coordinate of PLay: a byte, -128-127 a move, else a wait
-void play_axis(Animator &a, uint32_t &pointer, uint16_t &wait, uint16_t at, int flag, int16_t direction)
+void play_axis(Animator &a, be_u32 &pointer, be_u16 &wait, uint16_t at, int flag, int16_t direction)
 {
     Channel &ch = a.ch;
     int8_t b = *ptr<int8_t>(pointer);
@@ -1671,7 +1671,7 @@ void w_sy_amal_clr(AllRegs *r)
 {
     WData &d = wdata();
     move_on_off(d, -1, 0x0F, -1);
-    for (uint16_t &reg : d.AmRegs)
+    for (be_u16 &reg : d.AmRegs)
         reg = 0;
     r->d[0] = 0;
 }

@@ -78,7 +78,8 @@ bool key_event(WData &d, struct InputEvent *e, bool here)
         d.ClTable[code >> 3] &= ~(1 << (code & 7));
         return false;
     }
-    uint8_t *qualifier = reinterpret_cast<uint8_t *>(&e->ie_Qualifier) + 1;
+    // the low byte of the qualifier: the shifts, Control, the Amiga keys
+    uint8_t shifts = uint8_t(e->ie_Qualifier);
     uint8_t ascii = 0;
     bool convert = code >= 0x68 || code < 0x40;
     if (!convert) {
@@ -90,7 +91,7 @@ bool key_event(WData &d, struct InputEvent *e, bool here)
         } else if (ascii == 0xfe) {
             // A function key with Amiga: its string into the buffer
             ascii = 0;
-            const uint8_t *keys = *qualifier & 0x40 ? d.TFF1 : *qualifier & 0x80 ? d.TFF2 : nullptr;
+            const uint8_t *keys = shifts & 0x40 ? d.TFF1 : shifts & 0x80 ? d.TFF2 : nullptr;
             if (keys) {
                 keys += (code - 0x50) * FFkLong;
                 if (*keys) {
@@ -102,16 +103,14 @@ bool key_event(WData &d, struct InputEvent *e, bool here)
     }
     if (convert) {
         // The keymap, without CONTROL
-        uint8_t shifts = *qualifier;
-        *qualifier &= ~0x08;
+        e->ie_Qualifier &= ~0x08;
         uint8_t buffer[64];
         LONG n = hal::key_to_text(e, reinterpret_cast<char *>(buffer), sizeof buffer, ptr<void>(peek_l(w_con_io + 20)));
-        *qualifier = shifts;
+        e->ie_Qualifier = (e->ie_Qualifier & 0xFF00) | shifts;
         code = e->ie_Code;
         ascii = n >= 1 ? buffer[0] : 0;
     }
     {
-        uint8_t shifts = *qualifier;
         if ((shifts & d.AmigA_Shifts) == d.AmigA_Shifts && (ascii == d.AmigA_Ascii1 || ascii == d.AmigA_Ascii2)) {
             d.ClTable[code >> 3] |= 1 << (code & 7);
             return true;

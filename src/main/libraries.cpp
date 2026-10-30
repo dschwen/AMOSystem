@@ -160,9 +160,9 @@ int library_load(uint32_t n, const char *command, const uint8_t *image)
     // the sizes of the routines, then their addresses
     if (!source.read(ptr<void>(sizes + 4), peek_l(ptr<void>(sizes))))
         return 1;
-    const uint16_t *length = ptr<uint16_t>(sizes + 4);
+    const be_u16 *length = ptr<be_u16>(sizes + 4);
     uint32_t code = address(tokens) + peek_l(header + 4);
-    uint32_t *entry = reinterpret_cast<uint32_t *>(tokens - LB_Size);
+    auto *entry = reinterpret_cast<be_u32 *>(tokens - LB_Size);
     for (uint32_t i = 0; i < (routines & 0xFFFF); i++) {
         *--entry = code;
         uint16_t words = *length++;
@@ -339,7 +339,7 @@ int library_reloc(uint32_t n)
         reloc_old_tokens(tokens);
 
     uint16_t routines = lb_word(tokens, LB_NRout);
-    const uint16_t *sizes = ptr<uint16_t>(lb_long(tokens, LB_LibSizes));
+    const be_u16 *sizes = ptr<be_u16>(lb_long(tokens, LB_LibSizes));
     for (uint16_t i = 0; i < routines; i++) {
         uint8_t *p = ptr<uint8_t>(lb_jump(tokens, i));
         uint16_t words = sizes[i];
@@ -474,9 +474,9 @@ void library_get_params(uint32_t n)
             poke_w(p + 2, params);
             uint16_t kind = (flags & 0x7000) >> 12;
             if (flags & 0x40)
-                patch(*reinterpret_cast<uint32_t *>(tokens - LB_Size + offset), kind, params, false);
+                patch(*reinterpret_cast<be_u32 *>(tokens - LB_Size + offset), kind, params, false);
             if (flags & 0x80)
-                patch(*reinterpret_cast<uint32_t *>(tokens - LB_Size - 4 + offset), kind, peek_w(p + 2),
+                patch(*reinterpret_cast<be_u32 *>(tokens - LB_Size - 4 + offset), kind, peek_w(p + 2),
                       true);
         }
         p = skip_definition(p + 4);
@@ -529,7 +529,7 @@ int libraries_load()
 void library_patch()
 {
     uint8_t *tokens = library(0);
-    uint16_t *sizes = ptr<uint16_t>(lb_long(tokens, LB_LibSizes));
+    be_u16 *sizes = ptr<be_u16>(lb_long(tokens, LB_LibSizes));
     const uint8_t *p = main_amos_jmps;
     uint16_t n = peek_w(p);
     p += 2;
@@ -548,7 +548,7 @@ void library_patch()
         const uint8_t *list = ptr<uint8_t>(peek_l(e + 2));
         if (peek_w(list) != lb_word(ext, LB_NRout))
             continue;
-        const uint16_t *ext_sizes = ptr<uint16_t>(lb_long(ext, LB_LibSizes));
+        const be_u16 *ext_sizes = ptr<be_u16>(lb_long(ext, LB_LibSizes));
         bool empty = true;
         for (const uint8_t *q = list + 2; uint16_t r = peek_w(q); q += 6)
             if (ext_sizes[r])

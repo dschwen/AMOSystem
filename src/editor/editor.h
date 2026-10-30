@@ -143,11 +143,11 @@ const uint8_t *function_keys(uint8_t n);
 
 // editor/macros.cpp: Ed_MemReserve, Ed_MemFree, Ed_ListeNew, Ed_ListeDel,
 // Ed_ListeDelAll, Ed_IChaine, Ed_DChaine, Ed_AChaine, Ed_Dialogue, EdMa_Adr
-uint8_t *memory_reserve(uint32_t *at, uint32_t size);
-void memory_release(uint32_t *at);
-uint8_t *list_new(uint32_t *list, uint32_t size);
-void list_delete(uint32_t *list, uint8_t *e);
-void list_delete_all(uint32_t *list);
+uint8_t *memory_reserve(be_u32 *at, uint32_t size);
+void memory_release(be_u32 *at);
+uint8_t *list_new(be_u32 *list, uint32_t size);
+void list_delete(be_u32 *list, uint8_t *e);
+void list_delete_all(be_u32 *list);
 void dialogue_strings_reset();
 uint8_t *dialogue_string(const uint8_t *text, const uint8_t **after = nullptr);
 uint8_t *dialogue_string_add(const uint8_t *text, const uint8_t **after = nullptr);
@@ -161,7 +161,7 @@ void set_banks();
 void sound_play(uint8_t c);
 uint16_t text_count(const uint8_t *list);
 uint16_t text_free(const uint8_t *list);
-bool text_change(uint32_t *at, const uint8_t *text, uint16_t n);
+bool text_change(be_u32 *at, const uint8_t *text, uint16_t n);
 
 // editor/screen.cpp: Ed_Unpack / Es_Unpack (title: the direct mode's
 // title screen), Ed_MemoryDraw, Ed_MemoryAff, Ed_LimM

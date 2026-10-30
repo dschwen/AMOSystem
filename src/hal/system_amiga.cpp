@@ -6,6 +6,7 @@
 
 #include <hardware/intbits.h>
 #include <exec/execbase.h>
+#include <dos/dosextens.h>
 
 namespace amos::hal {
 
@@ -18,6 +19,8 @@ void release(void *memory, uint32_t size) { FreeMem(memory, size); }
 
 Task *find_task(const char *name) { return FindTask(name); }
 void signal(Task *task, uint32_t signals) { Signal(task, signals); }
+uint32_t requester_window() { return uint32_t(reinterpret_cast<Process *>(FindTask(nullptr))->pr_WindowPtr); }
+void set_requester_window(uint32_t window) { reinterpret_cast<Process *>(FindTask(nullptr))->pr_WindowPtr = reinterpret_cast<APTR>(window); }
 
 Library *open_library(const char *name, uint32_t version) { return OpenLibrary(name, version); }
 void close_library(Library *library) { CloseLibrary(library); }

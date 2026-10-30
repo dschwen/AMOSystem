@@ -8,7 +8,7 @@ using namespace amos;
 namespace {
 
 // The VBL counters, changed by the interrupt
-inline uint32_t vbl_count() { return *static_cast<volatile uint32_t *>(&wdata().VblCount); }
+inline uint32_t vbl_count() { return *static_cast<volatile be_u32 *>(&wdata().VblCount); }
 
 void test_normal()
 {
@@ -113,7 +113,7 @@ extern "C" uint32_t lib_fn_rnd(int32_t n)
     uint32_t value;
     do {
         value = next_random();
-        uint16_t beam = *reinterpret_cast<volatile uint16_t *>(0xdff006) & beam_mask;
+        uint16_t beam = *reinterpret_cast<volatile be_u16 *>(0xdff006) & beam_mask;
         value = (value & 0xFFFF0000u) | static_cast<uint16_t>(value + beam);
         value &= mask;
     } while (value > max);
@@ -135,7 +135,7 @@ extern "C" void lib_in_randomize(uint32_t n) { idata().Seed = n; }
 
 // TIMER=n, =TIMER
 extern "C" void lib_in_timer(uint32_t n) { wdata().VblTimer = n; }
-extern "C" uint32_t lib_fn_timer() { return *static_cast<volatile uint32_t *>(&wdata().VblTimer); }
+extern "C" uint32_t lib_fn_timer() { return *static_cast<volatile be_u32 *>(&wdata().VblTimer); }
 
 // =PI#, as a float in d3 or a double in d3/d4
 extern "C" uint64_t lib_fn_pi()

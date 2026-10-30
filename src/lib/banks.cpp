@@ -30,13 +30,13 @@ void mem_free(void *address, uint32_t length)
 
 // The element before element in the list (the list head itself for the
 // first), or null if element is not in it
-uint32_t *lst_find_previous(uint32_t *list, uint8_t *element)
+be_u32 *lst_find_previous(be_u32 *list, uint8_t *element)
 {
-    uint32_t *previous = list;
+    be_u32 *previous = list;
     while (uint32_t next = *previous) {
         if (ptr<uint8_t>(next) == element)
             return previous;
-        previous = ptr<uint32_t>(next);
+        previous = ptr<be_u32>(next);
     }
     return nullptr;
 }
@@ -46,11 +46,11 @@ constexpr int BankHeader = 24;
 uint8_t *bank_of(uint32_t element) { return ptr<uint8_t>(element) + BankHeader; }
 
 // The bank with this number: its element, or null
-uint32_t *bank_element(uint32_t number)
+be_u32 *bank_element(uint32_t number)
 {
     for (uint32_t e = *bank_list(); e; e = peek_l(ptr<void>(e)))
         if (peek_l(ptr<uint8_t>(e) + 8) == number)
-            return ptr<uint32_t>(e);
+            return ptr<be_u32>(e);
     return nullptr;
 }
 
@@ -78,7 +78,7 @@ void erase_image(uint8_t *entry)
 
 // ---- lists ------------------------------------------------------------
 
-uint8_t *lst_cree(uint32_t *list, uint32_t length, uint32_t memflags)
+uint8_t *lst_cree(be_u32 *list, uint32_t length, uint32_t memflags)
 {
     uint8_t *element = mem_reserve(length + 8, memflags);
     if (element) {
@@ -89,31 +89,31 @@ uint8_t *lst_cree(uint32_t *list, uint32_t length, uint32_t memflags)
     return element;
 }
 
-uint8_t *lst_new(uint32_t *list, uint32_t length) { return lst_cree(list, length, MemClear | MemPublic); }
+uint8_t *lst_new(be_u32 *list, uint32_t length) { return lst_cree(list, length, MemClear | MemPublic); }
 
-void lst_del(uint32_t *list, uint8_t *element)
+void lst_del(be_u32 *list, uint8_t *element)
 {
-    if (uint32_t *previous = lst_find_previous(list, element)) {
+    if (be_u32 *previous = lst_find_previous(list, element)) {
         *previous = peek_l(element);
         mem_free(element, peek_l(element + 4) + 8);
     }
 }
 
-void lst_del_all(uint32_t *list)
+void lst_del_all(be_u32 *list)
 {
     while (*list)
         lst_del(list, ptr<uint8_t>(*list));
 }
 
-void lst_insert(uint32_t *list, uint8_t *element)
+void lst_insert(be_u32 *list, uint8_t *element)
 {
     poke_l(element, *list);
     *list = address(element);
 }
 
-void lst_remove(uint32_t *list, uint8_t *element)
+void lst_remove(be_u32 *list, uint8_t *element)
 {
-    if (uint32_t *previous = lst_find_previous(list, element))
+    if (be_u32 *previous = lst_find_previous(list, element))
         *previous = peek_l(element);
 }
 
@@ -121,7 +121,7 @@ void lst_remove(uint32_t *list, uint8_t *element)
 
 uint8_t *bank_find(uint32_t number)
 {
-    uint32_t *e = bank_element(number);
+    be_u32 *e = bank_element(number);
     return e ? bank_of(address(e)) : nullptr;
 }
 
@@ -273,25 +273,25 @@ uint8_t *bank_resize_images(uint8_t *old, int16_t mode, uint16_t count, uint16_t
         e[16 + i] = name[i];
     uint8_t *bank = e + 24;
     poke_w(bank, count);
-    const uint16_t *palette;
+    const be_u16 *palette;
     if (mode < 0 || (mode > 0 && old)) {
         if (mode > 0) {
             // take over the images that fit; the old bank loses them
             uint16_t n = peek_w(old) < count ? peek_w(old) : count;
-            uint32_t *from = reinterpret_cast<uint32_t *>(old + 2);
-            uint32_t *to = reinterpret_cast<uint32_t *>(bank + 2);
+            be_u32 *from = reinterpret_cast<be_u32 *>(old + 2);
+            be_u32 *to = reinterpret_cast<be_u32 *>(bank + 2);
             for (uint32_t i = 0; i < n * 2u; i++) {
                 to[i] = from[i];
                 from[i] = 0;
             }
         }
-        palette = reinterpret_cast<const uint16_t *>(old + 2 + peek_w(old) * 8);
+        palette = reinterpret_cast<const be_u16 *>(old + 2 + peek_w(old) * 8);
     } else if (idata().ScOnAd) {
-        palette = ptr<Screen>(idata().ScOnAd)->EcPal;
+        palette = reinterpret_cast<const be_u16 *>(ptr<Screen>(idata().ScOnAd)->EcPal);
     } else {
-        palette = idata().DefPal;
+        palette = reinterpret_cast<const be_u16 *>(idata().DefPal);
     }
-    uint16_t *to = reinterpret_cast<uint16_t *>(bank + 2 + count * 8);
+    be_u16 *to = reinterpret_cast<be_u16 *>(bank + 2 + count * 8);
     for (int i = 0; i < 32; i++)
         to[i] = palette[i];
     if (mode >= 0 && old)
@@ -309,7 +309,7 @@ uint8_t *bank_resize_images(uint8_t *old, int16_t mode, uint16_t count, uint16_t
 // element, or 0 (BEQ).
 extern "C" uint32_t lib_lst_cree(RegFrame &r)
 {
-    uint8_t *e = lst_cree(ptr<uint32_t>(r.a[0]), r.d[0], r.d[1]);
+    uint8_t *e = lst_cree(ptr<be_u32>(r.a[0]), r.d[0], r.d[1]);
     r.d[1] = r.d[0];
     r.a[1] = r.d[0] = address(e);
     return r.d[0];
@@ -329,22 +329,22 @@ extern "C" uint32_t lib_lst_chip_new(RegFrame &r)
 // a0 = list.
 extern "C" uint32_t lib_lst_del(RegFrame &r)
 {
-    lst_del(ptr<uint32_t>(r.a[0]), ptr<uint8_t>(r.a[1]));
+    lst_del(ptr<be_u32>(r.a[0]), ptr<uint8_t>(r.a[1]));
     return 0;
 }
 extern "C" uint32_t lib_lst_remove(RegFrame &r)
 {
-    lst_remove(ptr<uint32_t>(r.a[0]), ptr<uint8_t>(r.a[1]));
+    lst_remove(ptr<be_u32>(r.a[0]), ptr<uint8_t>(r.a[1]));
     return 0;
 }
 extern "C" uint32_t lib_lst_insert(RegFrame &r)
 {
-    lst_insert(ptr<uint32_t>(r.a[0]), ptr<uint8_t>(r.a[1]));
+    lst_insert(ptr<be_u32>(r.a[0]), ptr<uint8_t>(r.a[1]));
     return 0;
 }
 extern "C" uint32_t lib_lst_del_all(RegFrame &r)
 {
-    lst_del_all(ptr<uint32_t>(r.a[0]));
+    lst_del_all(ptr<be_u32>(r.a[0]));
     r.d[0] = r.a[1] = 0;
     return 0;
 }
@@ -361,7 +361,7 @@ extern "C" uint32_t lib_bnk_cur_program(RegFrame &)
 // found: a0 = a1 = bank, d0.w = its flags, d1 = its element.
 extern "C" uint32_t lib_bnk_get_adr(RegFrame &r)
 {
-    uint32_t *e = bank_element(r.d[0]);
+    be_u32 *e = bank_element(r.d[0]);
     if (!e) {
         r.a[0] = r.a[1] = r.d[1] = 0;
         return 0;
@@ -556,9 +556,9 @@ uint8_t *bank_insert_image(uint8_t *old, uint32_t n)
     uint8_t *bank = bank_resize_images(old, -1, count + 1, bank_flags(old));
     if (!bank)
         return nullptr;
-    uint32_t *from = reinterpret_cast<uint32_t *>(old + 2);
-    uint32_t *to = reinterpret_cast<uint32_t *>(bank + 2);
-    uint32_t *hole = nullptr;
+    be_u32 *from = reinterpret_cast<be_u32 *>(old + 2);
+    be_u32 *to = reinterpret_cast<be_u32 *>(bank + 2);
+    be_u32 *hole = nullptr;
     for (uint16_t i = 1; i <= count + (hole ? 1 : 0); i++) {
         if (i == static_cast<uint16_t>(n) && !hole) {
             hole = to;
@@ -593,8 +593,8 @@ void bank_delete_images(uint8_t *bank, int32_t first, int32_t last)
         uint8_t *smaller = bank_resize_images(bank, -1, left, bank_flags(bank));
         if (!smaller)
             return;
-        uint32_t *from = reinterpret_cast<uint32_t *>(bank + 2);
-        uint32_t *to = reinterpret_cast<uint32_t *>(smaller + 2);
+        be_u32 *from = reinterpret_cast<be_u32 *>(bank + 2);
+        be_u32 *to = reinterpret_cast<be_u32 *>(smaller + 2);
         for (int32_t i = 1; i <= count; i++, from += 2) {
             if (i < first || i > last) {
                 *to++ = from[0];

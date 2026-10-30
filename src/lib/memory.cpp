@@ -22,7 +22,7 @@ void transfer(const uint8_t *from, uint8_t *to, uint32_t length)
 }
 
 // The registers of the machine code calls: d0-d7, then a0-a6
-uint32_t *call_register(uint32_t n, uint32_t count, uint32_t first)
+be_u32 *call_register(uint32_t n, uint32_t count, uint32_t first)
 {
     if (n >= count)
         fon_call();
@@ -115,7 +115,7 @@ extern "C" void lib_in_poke(uint32_t a, uint32_t v) { *ptr<volatile uint8_t>(a) 
 extern "C" void lib_in_doke(uint32_t a, uint32_t v)
 {
     if (!(a & 1)) {
-        *ptr<volatile uint16_t>(a) = static_cast<uint16_t>(v);
+        *ptr<volatile be_u16>(a) = static_cast<uint16_t>(v);
         return;
     }
     volatile uint8_t *p = ptr<volatile uint8_t>(a);
@@ -126,7 +126,7 @@ extern "C" void lib_in_doke(uint32_t a, uint32_t v)
 extern "C" void lib_in_loke(uint32_t a, uint32_t v)
 {
     if (!(a & 1)) {
-        *ptr<volatile uint32_t>(a) = v;
+        *ptr<volatile be_u32>(a) = v;
         return;
     }
     volatile uint8_t *p = ptr<volatile uint8_t>(a);
@@ -140,7 +140,7 @@ extern "C" uint32_t lib_fn_peek(uint32_t a) { return *ptr<volatile uint8_t>(a); 
 extern "C" uint32_t lib_fn_deek(uint32_t a)
 {
     if (!(a & 1))
-        return *ptr<volatile uint16_t>(a);
+        return *ptr<volatile be_u16>(a);
     const volatile uint8_t *p = ptr<volatile uint8_t>(a);
     return static_cast<uint32_t>(p[0]) << 8 | p[1];
 }
@@ -148,7 +148,7 @@ extern "C" uint32_t lib_fn_deek(uint32_t a)
 extern "C" uint32_t lib_fn_leek(uint32_t a)
 {
     if (!(a & 1))
-        return *ptr<volatile uint32_t>(a);
+        return *ptr<volatile be_u32>(a);
     const volatile uint8_t *p = ptr<volatile uint8_t>(a);
     return static_cast<uint32_t>(p[0]) << 24 | static_cast<uint32_t>(p[1]) << 16 |
            static_cast<uint32_t>(p[2]) << 8 | p[3];

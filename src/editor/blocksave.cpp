@@ -77,7 +77,7 @@ void close()
 
 bool control_c()
 {
-    uint16_t &actualise = wdata().Actualise;
+    be_u16 &actualise = wdata().Actualise;
     if (!(actualise & BitControl))
         return false;
     actualise &= ~BitControl;

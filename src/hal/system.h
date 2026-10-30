@@ -30,6 +30,10 @@ void release(void *memory, uint32_t size);
 // Tasks: by name (null: the running one), signals
 Task *find_task(const char *name);
 void signal(Task *task, uint32_t signals);
+// The running process's window for the DOS requesters (pr_WindowPtr; -1
+// none)
+uint32_t requester_window();
+void set_requester_window(uint32_t window);
 
 // Libraries of the system (0: none), its version, its caches
 Library *open_library(const char *name, uint32_t version);

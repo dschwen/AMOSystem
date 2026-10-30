@@ -19,9 +19,9 @@ inline void barrier() { asm volatile("" ::: "memory"); }
 // copper builder's), its colour, its table of colours, what Rainbow
 // changed (RnAct, its high byte: 1 height, 2 base, 4 y) and the values
 struct Rainbow {
-    uint16_t RnDY, RnFY, RnTY, RnBase, RnColor, RnLong;
-    uint32_t RnBuf;
-    uint16_t RnAct, RnX, RnY, RnI;
+    be_u16 RnDY, RnFY, RnTY, RnBase, RnColor, RnLong;
+    be_u32 RnBuf;
+    be_u16 RnAct, RnX, RnY, RnI;
 };
 static_assert(sizeof(Rainbow) == 24);
 
@@ -273,7 +273,7 @@ uint32_t set_rainbow(AllRegs *r)
         if (!list)
             return syntax();
     }
-    uint16_t *to = ptr<uint16_t>(buffer);
+    be_u16 *to = ptr<be_u16>(buffer);
     uint16_t n = lines - 1;
     do {
         for (int i = 0; i < 3; i++)

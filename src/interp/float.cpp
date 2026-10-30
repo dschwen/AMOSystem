@@ -421,7 +421,7 @@ void float_swap(uint8_t *lib, uint8_t *main)
 {
     main[LB_Flags] ^= 1 << LBF_DFloat;
     int16_t first = int16_t(peek_w(lib + LB_DFloatSwap));
-    auto *entry = reinterpret_cast<uint32_t *>(lib - LB_Size - 4 - 4 * first);
+    auto *entry = reinterpret_cast<be_u32 *>(lib - LB_Size - 4 - 4 * first);
     uint16_t n = uint16_t((uint32_t(int32_t(int16_t(peek_w(lib + LB_FFloatSwap) - first))) >> 1) - 1);
     if (int16_t(n) < 0)
         return;

@@ -94,7 +94,7 @@ void free_all()
     // keeping the error routine: the program's errors then jumped to 0)
     if (m.Tt_JError)
         d.Prg_JError = m.Tt_JError;
-    for (uint32_t &v : d.VblRout)
+    for (be_u32 &v : d.VblRout)
         if (v == address(mon_view_inter)) {
             v = 0;
             break;
@@ -225,7 +225,7 @@ bool cold_start(uint32_t program)
     m.Tt_JError = d.Prg_JError;
     Regs w;
     call(mon_set_wpatch, w);
-    for (uint32_t *v = d.VblRout;; v++)
+    for (be_u32 *v = d.VblRout;; v++)
         if (!*v) {
             *v = address(mon_view_inter);
             break;

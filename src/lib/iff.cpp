@@ -83,7 +83,7 @@ uint32_t form_load(BPTR file, uint8_t *to, uint32_t count)
 
 // IffFormSize: the memory count FORMs take, and how many there are; the
 // file position does not change
-uint32_t form_size(BPTR file, uint32_t count, uint32_t *forms = nullptr)
+uint32_t form_size(BPTR file, uint32_t count, be_u32 *forms = nullptr)
 {
     uint8_t *header = ptr<uint8_t>(idata().Buffer);
     int32_t back = 0;
@@ -186,7 +186,7 @@ void iff_centre()
 void iff_palette()
 {
     IData &d = idata();
-    uint16_t *pal = ptr<uint16_t>(d.Buffer);
+    be_u16 *pal = ptr<be_u16>(d.Buffer);
     for (int i = 0; i < 32; i++)
         pal[i] = d.DefPal[i];
     if (d.IffFlag & 1 << CMAP) {
@@ -196,7 +196,7 @@ void iff_palette()
         if (!count)
             count = 1;
         const uint8_t *rgb = cmap + 8;
-        uint16_t *to = pal;
+        be_u16 *to = pal;
         // a dbra loop on the count minus one
         for (uint16_t i = count - 1;; i--) {
             uint16_t r = rgb[0] & 0xF0, g = rgb[1] >> 4, b = rgb[2] >> 4;

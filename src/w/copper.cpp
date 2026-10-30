@@ -102,7 +102,8 @@ uint32_t move(uint32_t *reg, uint16_t value)
 void sprite_moves(uint8_t *list)
 {
     poke_l(list, 0x1003FFFE);
-    for (uint16_t reg = 0x120, *m = ptr<uint16_t>(address(list) + 4); reg <= 0x13E; reg += 2, m += 2)
+    be_u16 *m = ptr<be_u16>(address(list) + 4);
+    for (uint16_t reg = 0x120; reg <= 0x13E; reg += 2, m += 2)
         *m = reg;
 }
 

@@ -77,7 +77,7 @@ int32_t amos_wb(int32_t to)
         if (d.WFlags & WFlagLoadView) {
             if (d.WFlags & WFlagWBClosed)
                 hal::open_workbench();
-            hal::close_screen(reinterpret_cast<::Screen *>(d.IntScreen));
+            hal::close_screen(ptr<::Screen>(d.IntScreen));
             hal::wait_frame();
             hal::wait_frame();
         }

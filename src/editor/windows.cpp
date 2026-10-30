@@ -369,7 +369,7 @@ void draw_windows()
         reinterpret_cast<uint8_t *>(&s->Sl_Flags)[0] |= 1 << 0;      // bset Sl_FlagVertical
         // the colours inactive, then active
         const uint8_t *colours = system_text(19);
-        uint16_t *to = reinterpret_cast<uint16_t *>(w->Edt_SlV + offsetof(Slider, Sl_Inactive));
+        auto *to = reinterpret_cast<be_u16 *>(w->Edt_SlV + offsetof(Slider, Sl_Inactive));
         for (int i = 0; i < 16; i++)
             to[i] = colours[i];
         // its buttons

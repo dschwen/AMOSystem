@@ -190,7 +190,7 @@ uint32_t set_pattern(int16_t n)
     rp->AreaPtrn = ptr<UWORD>(pattern);
     rp->AreaPtSz = shift;
     // The first word of each line of each plane
-    uint16_t *to = ptr<uint16_t>(pattern);
+    be_u16 *to = ptr<be_u16>(pattern);
     uint16_t line = width << 1;
     uint16_t plane = uint16_t(line * height);
     for (uint16_t p = 0; p < planes; p++, image += int16_t(plane)) {
@@ -218,8 +218,8 @@ struct Fill {
     uint16_t size;              // blitter size of the rectangle
     uint16_t colour;            // the colour being filled
     // The stack of seeds
-    uint32_t *table;            // the extra buffers, ending with -1
-    uint32_t *next;             // next entry of the table to use
+    be_u32 *table;            // the extra buffers, ending with -1
+    be_u32 *next;             // next entry of the table to use
     uint8_t *top;
     uint8_t *limit;
 
@@ -398,11 +398,11 @@ struct Fill {
         uint16_t fg = rp->FgPen, bg = rp->BgPen;
         uint16_t line = (size & 0x3F) | 0x40;
         // The pattern: its words, for each plane if multi-coloured
-        static const uint16_t solid = 0xFFFF;
-        const uint16_t *pattern = &solid, *end = &solid;
+        static const be_u16 solid(0xFFFF);
+        const be_u16 *pattern = &solid, *end = &solid;
         uint32_t plane_step = 0;
         if (rp->AreaPtrn) {
-            pattern = rp->AreaPtrn;
+            pattern = reinterpret_cast<const be_u16 *>(rp->AreaPtrn);
             int8_t sz = rp->AreaPtSz;
             uint8_t n = sz < 0 ? -sz : sz;
             uint16_t bytes = 1;
@@ -410,13 +410,13 @@ struct Fill {
                 bytes <<= 1;
             while (--n);
             bytes <<= 1;
-            end = reinterpret_cast<const uint16_t *>(reinterpret_cast<const uint8_t *>(pattern) + int16_t(bytes));
+            end = reinterpret_cast<const be_u16 *>(reinterpret_cast<const uint8_t *>(pattern) + int16_t(bytes));
             if (sz < 0)
                 plane_step = bytes;
         }
         for (int p = 0; p < s->EcNPlan; p++) {
             hal::wait_blit();
-            const uint16_t *w = pattern;
+            const be_u16 *w = pattern;
             uint8_t *a = ptr<uint8_t>(s->EcCurrent[p]) + start;
             c.bltcpt = a;
             c.bltdpt = a;
@@ -431,8 +431,8 @@ struct Fill {
                 if (w >= end)
                     w = pattern;
             } while (--n);
-            pattern = reinterpret_cast<const uint16_t *>(reinterpret_cast<const uint8_t *>(pattern) + plane_step);
-            end = reinterpret_cast<const uint16_t *>(reinterpret_cast<const uint8_t *>(end) + plane_step);
+            pattern = reinterpret_cast<const be_u16 *>(reinterpret_cast<const uint8_t *>(pattern) + plane_step);
+            end = reinterpret_cast<const be_u16 *>(reinterpret_cast<const uint8_t *>(end) + plane_step);
             fg >>= 1;
             bg >>= 1;
         }
@@ -475,7 +475,7 @@ void paint(AllRegs *r)
     // The stack in the buffer: the table of extra buffers, then the bottom
     // marker
     uint8_t *buffer = ptr<uint8_t>(r->d[5]);
-    f.table = reinterpret_cast<uint32_t *>(buffer);
+    f.table = reinterpret_cast<be_u32 *>(buffer);
     f.next = f.table;
     for (int i = 0; i < 16; i++)
         f.table[i] = 0;
@@ -493,7 +493,7 @@ void paint(AllRegs *r)
         f.mask(0x0C, 0xC0, 0x0C, 0xC0);
         f.draw();
     }
-    for (uint32_t *t = f.table; int32_t(*t) > 0; t++)
+    for (be_u32 *t = f.table; int32_t(*t) > 0; t++)
         free_mm(*t, ExtraSize);
 }
 
@@ -711,7 +711,7 @@ void set_clip_rect(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1)
     s->EcClipX1 = x1;
     s->EcClipY1 = y1;
     // the bounds of the layer's ClipRect
-    uint16_t *bounds = ptr<uint16_t>(peek_l(ptr<uint8_t>(s->Ec_Layer) + 8) + 16);
+    be_u16 *bounds = ptr<be_u16>(peek_l(ptr<uint8_t>(s->Ec_Layer) + 8) + 16);
     bounds[0] = x0;
     bounds[1] = y0;
     bounds[2] = x1 - 1;
@@ -722,11 +722,11 @@ void set_clip_rect(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1)
 // the font fields of the RastPort, then the clip rectangle
 struct Saved {
     uint8_t fg, bg, outline, mode;
-    uint16_t flags, line, x, y;
-    uint32_t pattern;
+    be_u16 flags, line, x, y;
+    be_u32 pattern;
     uint8_t pattern_size, pad;
     uint8_t font[14];
-    uint16_t clip[4];
+    be_u16 clip[4];
 };
 static_assert(sizeof(Saved) == 40);
 

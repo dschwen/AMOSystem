@@ -196,7 +196,7 @@ void clear_variables()
     d.CallReg[3] = address(&d.Ed_Config);
     Regs c;
     c.a[1] = address(&d.Sys_ClearRoutines);
-    w::call_routines(ptr<uint32_t>(c.a[1]));
+    w::call_routines(ptr<be_u32>(c.a[1]));
     lib(L_Bnk_EffTemp);
     bank_changed();
     lib(L_MenuReset);

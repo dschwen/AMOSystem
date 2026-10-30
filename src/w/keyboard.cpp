@@ -25,7 +25,7 @@ constexpr uint16_t ClLong = 32 * 3;
 constexpr uint16_t FFkLong = 24;
 constexpr uint32_t Lio = 0x30, Lmsg = 0x20;     // +WEqu.s
 
-volatile uint16_t &head() { return *static_cast<volatile uint16_t *>(&wdata().ClTete); }
+volatile be_u16 &head() { return *static_cast<volatile be_u16 *>(&wdata().ClTete); }
 
 // The next position in the ring buffer after at
 uint16_t next(uint16_t at)

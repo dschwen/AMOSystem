@@ -14,7 +14,7 @@ using namespace amos::w;
 namespace amos::w {
 
 // WCallRoutines: call the routines of the list (which empties)
-void call_routines(uint32_t *list)
+void call_routines(be_u32 *list)
 {
     uint32_t next = *list;
     if (!next)
@@ -57,7 +57,7 @@ uint32_t add_routine(uint32_t routine, uint32_t list)
     uint8_t *r = ptr<uint8_t>(routine);
     if (int32_t(peek_l(r)) < 0)
         return peek_l(r);
-    uint32_t *l = ptr<uint32_t>(list);
+    be_u32 *l = ptr<be_u32>(list);
     uint32_t link = (*l >> 1) | 0x80000000;
     poke_l(r, link);
     *l = routine;
@@ -92,7 +92,7 @@ void w_sy_add_flush_routine(AllRegs *r)
 
 void w_sy_call_routines(AllRegs *r)
 {
-    call_routines(ptr<uint32_t>(r->a[1]));
+    call_routines(ptr<be_u32>(r->a[1]));
     r->d[0] = 0;
 }
 

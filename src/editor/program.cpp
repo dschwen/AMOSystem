@@ -30,7 +30,7 @@ void run(uint8_t *routine)
     __builtin_unreachable();
 }
 
-uint32_t *dialogue_variables() { return ptr<uint32_t>(idata().Ed_VDialogues); }
+be_u32 *dialogue_variables() { return ptr<be_u32>(idata().Ed_VDialogues); }
 
 // Prg_ChgTTexte: a text buffer of size bytes for the program (0: none);
 // false if out of memory

@@ -76,7 +76,7 @@ uint8_t *buffer_line(uint16_t y) { return ptr<uint8_t>(window().Edt_BufE) + int1
 // The marked block: from line y1 column x1 to line y2 column x2 (the
 // cursor is one of its ends). False if there is none.
 struct Block {
-    uint16_t y1, y2, x1, x2;
+    be_u16 y1, y2, x1, x2;
 };
 
 bool block(Block &b)
@@ -99,7 +99,10 @@ bool block(Block &b)
         d2 = d3;
         d3 = t;
     }
-    b = {d0, d1, d2, d3};
+    b.y1 = d0;
+    b.y2 = d1;
+    b.x1 = d2;
+    b.x2 = d3;
     return true;
 }
 

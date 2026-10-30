@@ -437,7 +437,7 @@ void zap_new_config()
     IData &d = idata();
     uint32_t list = d.Ed_ZapParam;
     if (list <= 5) {
-        uint32_t *texts = list ? &d.Ed_Systeme + (list - 1) : &d.Sys_Messages;
+        be_u32 *texts = list ? &d.Ed_Systeme + (list - 1) : &d.Sys_Messages;
         uint32_t n = peek_l(ptr<uint8_t>(d.Name1));
         if (n <= text_count(ptr<uint8_t>(*texts)) && !text_change(texts, ptr<uint8_t>(d.Name1 + 4), uint16_t(n)))
             jump(ed_out_of_memory);

@@ -118,7 +118,7 @@ bool key()
                 break;
             d.EdMa_Play = 0;
         }
-        uint16_t &actualise = wdata().Actualise;
+        be_u16 &actualise = wdata().Actualise;
         if (actualise & BitControl) {
             actualise &= ~BitControl;
             key = 0x08330043;           // Control-C

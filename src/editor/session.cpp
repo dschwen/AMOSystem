@@ -215,7 +215,7 @@ void quit()
 
 // .Linke: an old address in *at made the new one, from the list of
 // structures at list
-void relink(uint32_t *at, const uint8_t *list)
+void relink(be_u32 *at, const uint8_t *list)
 {
     uint32_t old = *at;
     if (!old)
@@ -319,7 +319,7 @@ void warm_start()
         windows += 12 + peek_l(windows + 4);
     windows += 4;
     // the programs
-    uint32_t *link = &d.Prg_List;
+    be_u32 *link = &d.Prg_List;
     for (uint8_t *s = programs; peek_l(s); s += 12 + peek_l(s + 4)) {
         Program *p = ptr<Program>(memory(sizeof(Program), true));
         if (!p)

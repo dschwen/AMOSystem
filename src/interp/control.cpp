@@ -347,7 +347,7 @@ void go_menu(uint16_t mask, uint16_t actualise)
         return;
     d.ActuMask = mask & ~(1 << BitJump);
     wdata().Actualise = actualise;
-    jump_from_test(d.OMnType, ptr<uint32_t>(d.OMnBase)[n - 1]);
+    jump_from_test(d.OMnType, ptr<be_u32>(d.OMnBase)[n - 1]);
 }
 
 // OnBreakGo: the On Break procedure
@@ -1039,7 +1039,7 @@ void interp_in_on_menu()
     if (!m.a[0])
         error(24);
     d.OMnBase = m.a[0];
-    uint32_t *to = ptr<uint32_t>(m.a[0]) + n;
+    be_u32 *to = ptr<be_u32>(m.a[0]) + n;
     for (uint16_t i = 0; i < n; i++)
         *--to = pop_l();
     d.OMnType = type;
@@ -1080,7 +1080,7 @@ void interp_menu_procedure(EvalOut *o)
     }
     Regs routines;
     routines.a[1] = address(&d.Sys_ErrorRoutines);
-    w::call_routines(ptr<uint32_t>(routines.a[1]));
+    w::call_routines(ptr<be_u32>(routines.a[1]));
     if (d.Patch_Errors) {
         Regs r;
         r.d[0] = n;

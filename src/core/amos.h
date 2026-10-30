@@ -96,8 +96,8 @@ inline WData &wdata() { return *reinterpret_cast<WData *>(ctx().a5 - sizeof(WDat
 // Address of a routine of AMOSPro.Lib, as JJsr finds it
 inline const void *lib_address(int routine)
 {
-    auto table = reinterpret_cast<const void *const *>(idata().AdTokens[0] - LB_Size - 4);
-    return table[-routine];
+    auto table = reinterpret_cast<const be_u32 *>(uintptr_t(idata().AdTokens[0] - LB_Size - 4));
+    return reinterpret_cast<const void *>(uintptr_t(uint32_t(table[-routine])));
 }
 
 // The C++ function of a routine of AMOSPro.Lib whose glue is a RegRoutine
@@ -213,14 +213,14 @@ inline void sy_call(int function, Regs &r)
     if (wdata().SyVect == address(::w_sy_in))
         if (WFunction f = sy_direct[function])
             return w_direct_call(f, r);
-    amos_call(&r, reinterpret_cast<const uint8_t *>(wdata().SyVect) + 4 * function);
+    amos_call(&r, reinterpret_cast<const uint8_t *>(uintptr_t(uint32_t(wdata().SyVect))) + 4 * function);
 }
 inline void ec_call(int function, Regs &r)
 {
     if (wdata().EcVect == address(::w_ec_in))
         if (WFunction f = ec_direct[function])
             return w_direct_call(f, r);
-    amos_call(&r, reinterpret_cast<const uint8_t *>(wdata().EcVect) + 4 * function);
+    amos_call(&r, reinterpret_cast<const uint8_t *>(uintptr_t(uint32_t(wdata().EcVect))) + 4 * function);
 }
 } // namespace amos
 // AMOS.library's text window functions (w/windows.cpp)
@@ -231,7 +231,7 @@ inline void wi_call(int function, Regs &r)
 {
     if (wdata().WiVect == address(::w_wi_in))
         return w_direct_call([function](AllRegs *a) { ::w_window(uint32_t(function), a); }, r);
-    amos_call(&r, reinterpret_cast<const uint8_t *>(wdata().WiVect) + 4 * function);
+    amos_call(&r, reinterpret_cast<const uint8_t *>(uintptr_t(uint32_t(wdata().WiVect))) + 4 * function);
 }
 
 // The memory of AMOS.library (w/memory.cpp): SyCall MemReserve (size, the
@@ -244,7 +244,7 @@ constexpr uint32_t FastClear = 0x10001, Fast = 0x1, ChipClear = 0x10003, Chip = 
 // Routine lists (Sys_ClearRoutines...): AddRoutine (a link, then the code;
 // added if in no list), CallRoutines (the list empties)
 uint32_t add_routine(uint32_t routine, uint32_t list);
-void call_routines(uint32_t *list);
+void call_routines(be_u32 *list);
 } // namespace w
 
 // The banks (lib/banks.cpp): Bnk.EffAll, Bnk.Change
@@ -274,10 +274,10 @@ void ask_dir2(uint32_t lock);               // AskDir2: the directory of the loc
 // Big-endian memory access. The Amiga is big-endian and AMOS data is
 // word-aligned, so these are plain loads and stores here; a port to a
 // little-endian host only has to change them.
-inline uint16_t peek_w(const void *p) { return *static_cast<const uint16_t *>(p); }
-inline uint32_t peek_l(const void *p) { return *static_cast<const uint32_t *>(p); }
-inline void poke_w(void *p, uint16_t v) { *static_cast<uint16_t *>(p) = v; }
-inline void poke_l(void *p, uint32_t v) { *static_cast<uint32_t *>(p) = v; }
+inline uint16_t peek_w(const void *p) { return *static_cast<const be_u16 *>(p); }
+inline uint32_t peek_l(const void *p) { return *static_cast<const be_u32 *>(p); }
+inline void poke_w(void *p, uint16_t v) { *static_cast<be_u16 *>(p) = v; }
+inline void poke_l(void *p, uint32_t v) { *static_cast<be_u32 *>(p) = v; }
 
 
 

@@ -130,7 +130,7 @@ void view_next(int16_t n)
     view_info();
 }
 
-uint16_t *view_scroll()
+be_u16 *view_scroll()
 {
     MonData &m = mon();
     if (int16_t(m.Tt_View) < 0)
@@ -176,7 +176,7 @@ void view_show()
         m.Tt_ViewAd = address(s);
         Regs v;
         sy_call(sy::WaitVbl, v);
-        uint16_t *scroll = view_scroll();
+        be_u16 *scroll = view_scroll();
         uint16_t x = scroll[0], y = scroll[1];
         d.SccEcO = address(s);
         d.SccEcD = address(screen(Ecran1));
@@ -300,7 +300,7 @@ int16_t accelerate()
 // Tt_Up / Tt_Down / Tt_Left / Tt_Right: 0 (the button kept down)
 uint32_t view_move(int direction)
 {
-    uint16_t *s = view_scroll();
+    be_u16 *s = view_scroll();
     if (!s)
         return 0;
     int16_t step = accelerate();
@@ -342,7 +342,7 @@ void view_sizes()
 {
     MonData &m = mon();
     for (int n = 0; n < 8; n++) {
-        uint16_t *s = &m.ViewScrols[4 * n];
+        be_u16 *s = &m.ViewScrols[4 * n];
         s[0] = s[1] = 0;
         if (Screen *e = screen(uint16_t(n))) {
             s[2] = e->EcTx;
