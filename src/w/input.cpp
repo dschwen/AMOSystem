@@ -19,7 +19,6 @@
 #include <exec/io.h>
 
 // +W.s
-extern "C" uint8_t w_con_io[];
 
 #include <graphics/gfxbase.h>
 #include <graphics/rastport.h>
@@ -107,7 +106,7 @@ bool key_event(WData &d, struct InputEvent *e, bool here)
         // The keymap, without CONTROL
         e->ie_Qualifier &= ~0x08;
         uint8_t buffer[64];
-        LONG n = hal::key_to_text(e, reinterpret_cast<char *>(buffer), sizeof buffer, ptr<void>(peek_l(w_con_io + 20)));
+        LONG n = hal::key_to_text(e, reinterpret_cast<char *>(buffer), sizeof buffer, reinterpret_cast<struct IORequest *>(console_request())->io_Device);
         e->ie_Qualifier = (e->ie_Qualifier & 0xFF00) | shifts;
         code = e->ie_Code;
         ascii = n >= 1 ? buffer[0] : 0;

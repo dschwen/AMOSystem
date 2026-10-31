@@ -13,6 +13,7 @@
 #include <exec/interrupts.h>
 #include <exec/io.h>
 
+#include <stdlib.h>
 #include <time.h>
 #include <unistd.h>
 
@@ -48,9 +49,10 @@ void run_vbl()
     }
 }
 
-// The input handler's and the VBL's structures (w/w.h)
+// The input handler's and the VBL's structures, the IO requests (with
+// their reply port) of the input and console devices (w/w.h)
 Interrupt input_is, vbl_is;
-IOStdReq input_io;
+alignas(8) uint8_t input_io[256], console_io[256];
 
 uint32_t w_base;        // +W.s W_Base: the data zone, for the input handler
 
@@ -58,11 +60,16 @@ uint32_t w_base;        // +W.s W_Base: the data zone, for the input handler
 
 namespace amos::w {
 struct Interrupt *input_interrupt() { return &input_is; }
-struct IOStdReq *input_request() { return &input_io; }
+struct IOStdReq *input_request() { return reinterpret_cast<IOStdReq *>(input_io); }
+uint8_t *console_request() { return console_io; }
 struct Interrupt *vbl_interrupt() { return &vbl_is; }
 } // namespace amos::w
 
 namespace amos::host {
+
+void display_save(const char *path);
+void window_start();
+void window_frame();
 
 // The interrupts due
 void poll()
@@ -78,6 +85,12 @@ void poll()
         next_frame = t;
     next_frame += Frame;
     run_vbl();
+    window_frame();
+    // (debugging: AMOS_SHOT_FRAME=n, the frame n into AMOS_SHOT)
+    static int frames;
+    static const char *shot = getenv("AMOS_SHOT"), *at = getenv("AMOS_SHOT_FRAME");
+    if (shot && at && ++frames == atoi(at))
+        display_save(shot);
     in_interrupt = false;
 }
 
@@ -109,8 +122,10 @@ void add_vbl_server(Interrupt *server)
             s = server;
             break;
         }
-    if (!next_frame)
+    if (!next_frame) {
         next_frame = now() + Frame;
+        host::window_start();
+    }
 }
 
 void remove_vbl_server(Interrupt *server)

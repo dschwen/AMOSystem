@@ -36,6 +36,22 @@ bool info(DirLock l, void *info_data) { return Info(BPTR(l), static_cast<InfoDat
 bool assign_lock(const char *name, DirLock l) { return AssignLock(name, BPTR(l)); }
 bool device_exists(const char *name) { return DeviceProc(name) != nullptr; }
 
+bool volume_name(const void *info_data, char *name, int size)
+{
+    BPTR node = static_cast<const struct InfoData *>(info_data)->id_VolumeNode;
+    if (!node)
+        return false;
+    BSTR bname = peek_l(static_cast<uint8_t *>(BADDR(node)) + 0x28);     // dol_Name
+    if (!bname)
+        return false;
+    const uint8_t *p = static_cast<const uint8_t *>(BADDR(bname));
+    int n = 0;
+    for (const uint8_t *c = p + 1; *c && n < size - 1; c++)
+        name[n++] = char(*c);
+    name[n] = 0;
+    return true;
+}
+
 // DOS's list of devices (RootNode, DosInfo, DevInfo), under Forbid
 void each_device(void (*f)(const char *name, bool device, void *data), void *data)
 {

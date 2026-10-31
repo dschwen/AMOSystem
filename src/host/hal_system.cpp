@@ -8,9 +8,12 @@
 #include <string.h>
 #include <sys/mman.h>
 
+extern "C" char *getenv(const char *name) noexcept;    // (stdlib.h clashes with dos/dosextens.h)
+
 #include <exec/tasks.h>
 #include <exec/libraries.h>
 #include <dos/dosextens.h>
+#include <exec/io.h>
 
 namespace {
 
@@ -40,6 +43,8 @@ HostLibrary libraries[] = {
 
 namespace amos::host {
 
+void input_handler(Interrupt *is);
+
 // The name of a library of the system (null: not one)
 const char *library_name(uint32_t base)
 {
@@ -63,7 +68,7 @@ uint32_t available_memory(uint32_t flags)
 void forbid() {}
 void permit() {}
 
-// The memory: one arena below 4GB, managed as exec's lists: blocks of 8
+// The memory: one arena below 4GB, managed as exec's lists: blocks of 16
 // bytes, the first one free that fits, and any part of a block can be
 // freed (AMOS does). The free chunks are a list sorted by address.
 struct Chunk {
@@ -90,7 +95,42 @@ void arena_start()
     free_list->size = ArenaSize;
 }
 
-uint64_t rounded(uint32_t size) { return (uint64_t(size) + 7) & ~uint64_t(7); }
+// (in 16 bytes: a free chunk holds its header)
+uint64_t rounded(uint32_t size) { return (uint64_t(size) + 15) & ~uint64_t(15); }
+
+// (debugging: AMOS_MEMCHECK, the blocks given, sorted, for the frees)
+bool memcheck() { static bool check = getenv("AMOS_MEMCHECK"); return check; }
+struct Block {
+    uint8_t *at;
+    uint64_t size;
+};
+Block *blocks;
+int block_count;
+constexpr int MaxBlocks = 1 << 20;
+
+int block_index(uint8_t *at)   // the first block at or after at
+{
+    int lo = 0, hi = block_count;
+    while (lo < hi) {
+        int mid = (lo + hi) / 2;
+        if (blocks[mid].at < at)
+            lo = mid + 1;
+        else
+            hi = mid;
+    }
+    return lo;
+}
+
+void block_add(uint8_t *at, uint64_t size)
+{
+    if (!blocks)
+        blocks = static_cast<Block *>(mmap(nullptr, sizeof(Block) * MaxBlocks, PROT_READ | PROT_WRITE,
+                                           MAP_PRIVATE | MAP_ANONYMOUS, -1, 0));
+    int i = block_index(at);
+    memmove(blocks + i + 1, blocks + i, sizeof(Block) * size_t(block_count - i));
+    blocks[i] = {at, size};
+    block_count++;
+}
 
 void *allocate(uint32_t size, uint32_t flags)
 {
@@ -112,6 +152,8 @@ void *allocate(uint32_t size, uint32_t flags)
         }
         if (flags & 0x10000)
             memset(found, 0, n);
+        if (memcheck())
+            block_add(reinterpret_cast<uint8_t *>(found), n);
         return found;
     }
     return nullptr;
@@ -123,6 +165,22 @@ void release(void *memory, uint32_t size)
         return;
     uint8_t *at = static_cast<uint8_t *>(memory);
     uint64_t n = rounded(size);
+    // (debugging: AMOS_MEMCHECK: a free outside one block given)
+    if (memcheck()) {
+        int i = block_index(at + 1) - 1;
+        if (i < 0 || at + n > blocks[i].at + blocks[i].size) {
+            fprintf(stderr, "amos: memory %p+%u freed, not in one block\n", memory, size);
+            __builtin_trap();
+        }
+        // the block shrinks, or splits
+        Block b = blocks[i];
+        memmove(blocks + i, blocks + i + 1, sizeof(Block) * size_t(block_count - i - 1));
+        block_count--;
+        if (at > b.at)
+            block_add(b.at, uint64_t(at - b.at));
+        if (at + n < b.at + b.size)
+            block_add(at + n, uint64_t(b.at + b.size - (at + n)));
+    }
     Chunk **c = &free_list;
     while (*c && reinterpret_cast<uint8_t *>(*c) < at)
         c = &(*c)->next;
@@ -186,9 +244,30 @@ int32_t allocate_signal(int32_t) { return -1; }
 void free_signal(int32_t) {}
 void add_task(Task *, void *, void *) { host::missing("task", nullptr); }
 
-int32_t open_device(const char *, uint32_t, IORequest *, uint32_t) { return -1; }
+// The devices: input.device (AMOS.library's input handler) and
+// console.device (its keymap: hal::key_to_text) open; the others not
+int32_t open_device(const char *name, uint32_t, IORequest *io, uint32_t)
+{
+    if (strcmp(name, "input.device") && strcmp(name, "console.device"))
+        return -1;
+    io->io_Error = 0;
+    return 0;
+}
 void close_device(IORequest *) {}
-int32_t do_io(IORequest *) { return -1; }
+int32_t do_io(IORequest *io)
+{
+    switch (io->io_Command) {
+    case 9:     // IND_ADDHANDLER
+        host::input_handler(static_cast<Interrupt *>(reinterpret_cast<IOStdReq *>(io)->io_Data));
+        return 0;
+    case 10:    // IND_REMHANDLER
+        host::input_handler(nullptr);
+        return 0;
+    case 11:    // IND_WRITEEVENT: the screen blankers' fake events (none here)
+        return 0;
+    }
+    return -1;
+}
 void send_io(IORequest *) {}
 IORequest *check_io(IORequest *io) { return io; }
 void abort_io(IORequest *) {}

@@ -543,14 +543,13 @@ extern "C" uint32_t lib_fn_disc_info(const uint8_t *name)
     lock_free();
     char *to = reinterpret_cast<char *>(s + 2);
     uint16_t len = 0;
-    if (BPTR node = info->id_VolumeNode) {
-        if (BSTR bname = peek_l(static_cast<uint8_t *>(BADDR(node)) + 0x28)) {
-            const char *p = static_cast<const char *>(BADDR(bname)) + 1;
-            do {
-                len++;
-            } while ((*to++ = *p++));
-            to[-1] = ':';
-        }
+    char volume[108];
+    if (hal::volume_name(info, volume, sizeof volume)) {
+        const char *p = volume;
+        do {
+            len++;
+        } while ((*to++ = *p++));
+        to[-1] = ':';
     }
     for (int i = 0; i < 10; i++)
         to[i] = ' ';

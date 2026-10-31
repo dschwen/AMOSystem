@@ -103,7 +103,9 @@ uint32_t set_font(uint16_t n)
     if (uint32_t error = get_font(n, &entry_address))
         return error;
     const uint8_t *entry = ptr<uint8_t>(entry_address);
-    struct TextAttr *attr = ptr<struct TextAttr>(entry_address + 2);
+    // (the entry's TextAttr, in AMOS's memory: name, height, style, flags)
+    struct TextAttr text_attr = {ptr<char>(peek_l(entry + 2)), peek_w(entry + 6), entry[8], entry[9]};
+    struct TextAttr *attr = &text_attr;
     struct TextFont *font = nullptr;
     bool in_memory = peek_w(entry) == AFF_MEMORY;
     if (!in_memory) {

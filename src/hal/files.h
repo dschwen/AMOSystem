@@ -35,6 +35,8 @@ bool examine_next(DirLock l, void *fib);
 DirLock current_dir(DirLock l);                         // the old one
 DirLock parent_dir(DirLock l);
 bool info(DirLock l, void *info_data);                  // an InfoData
+// The name of the volume of an InfoData (info's), false if none
+bool volume_name(const void *info_data, char *name, int size);
 bool assign_lock(const char *name, DirLock l);
 bool device_exists(const char *name);                   // "name:" a device
 // The devices and assigns of DOS (their names, without the colon): f for

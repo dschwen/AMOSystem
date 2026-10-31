@@ -335,6 +335,7 @@ GLUE = {
     'WEntryA0': ('w_a0', 'fn'),
     'WEntryF': ('w_f', 'fn'),
     'WiEntry': ('window', 'n,size'),                     # src/w/windows_glue.s
+    'StackEntry': ('stack', 'name,target'),              # src/glue.i
     'PrgEntry': ('w', 'prg'),                            # src/verif
     'VerEntry': ('w', 'ver'),
 }
@@ -482,6 +483,7 @@ for path, stmts in parsed.items():
             fn = cname(fn) if fn else None
             if fn:
                 functions.add(fn)
+            target = key(ops['target'], path) if kind == 'stack' else None
             a1 = a2 = 0
             if kind == 'libcall':
                 a1, a2 = int(ops['params']), RESULT[ops['result']]
@@ -500,7 +502,7 @@ for path, stmts in parsed.items():
                 obj.emit(b'GetP')
             if op != 'RoutineRecord':
                 place(name, obj, path, where)
-            obj.entries.append((len(obj.bytes), kind, fn, a1, a2, name, None))
+            obj.entries.append((len(obj.bytes), kind, fn, a1, a2, name, target))
             obj.emit(bytes(4))
             code = False
             continue

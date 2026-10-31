@@ -17,13 +17,17 @@ using namespace amos;
 using namespace amos::w;
 
 // +W.s
-extern "C" uint8_t w_con_io[];
 
 namespace {
 
 constexpr uint16_t ClLong = 32 * 3;
 constexpr uint16_t FFkLong = 24;
+#if defined(__mc68000__)
 constexpr uint32_t Lio = 0x30, Lmsg = 0x20;     // +WEqu.s
+#else
+// (another host's structures are larger: room as they need)
+constexpr uint32_t Lio = sizeof(struct IOStdReq), Lmsg = sizeof(struct MsgPort);
+#endif
 
 volatile be_u16 &head() { return *static_cast<volatile be_u16 *>(&wdata().ClTete); }
 
@@ -105,12 +109,13 @@ void close_input(uint8_t *io)
 // OpConsole: console.device, for RawKeyConvert (w/input.cpp)
 void open_console()
 {
+    uint8_t *io = console_request();
     for (uint32_t i = 0; i < Lio + Lmsg; i++)
-        w_con_io[i] = 0;
-    hal::open_device(reinterpret_cast<CONST_STRPTR>("console.device"), uint32_t(-1), reinterpret_cast<struct IORequest *>(w_con_io), 0);
+        io[i] = 0;
+    hal::open_device(reinterpret_cast<CONST_STRPTR>("console.device"), uint32_t(-1), reinterpret_cast<struct IORequest *>(io), 0);
 }
 
-void close_console() { hal::close_device(reinterpret_cast<struct IORequest *>(w_con_io)); }
+void close_console() { hal::close_device(reinterpret_cast<struct IORequest *>(console_request())); }
 
 // ClVide: the key buffer emptied
 void clear_keys()

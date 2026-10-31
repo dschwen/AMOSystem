@@ -8,6 +8,7 @@
 #include "host/host.h"
 #include "lib/ffp.h"
 
+#include <fenv.h>
 #include <math.h>
 #include <string.h>
 
@@ -114,6 +115,15 @@ bool transcendental(int32_t offset, double x, double y, double &out)
     return true;
 }
 
+// The IEEE libraries' results are truncated (rounded toward zero). (Their
+// transcendental functions, and mathtrans's, are the host's: their last
+// digit can differ from the Amiga's.)
+struct TowardZero {
+    int old = fegetround();
+    TowardZero() { fesetround(FE_TOWARDZERO); }
+    ~TowardZero() { fesetround(old); }
+};
+
 int32_t ffp_call(uint32_t *r, int32_t offset)
 {
     uint32_t a = r[0], b = r[1];
@@ -161,6 +171,7 @@ int32_t trans_call(uint32_t *r, int32_t offset)
 
 int32_t ieee_call(uint32_t *r, int32_t offset)
 {
+    TowardZero toward_zero;
     double y = from_ieee(r[0], r[1]), z = from_ieee(r[2], r[3]);
     switch (offset) {
     case -30: r[0] = uint32_t(fix(y)); return int32_t(r[0]);                // IEEEDPFix
@@ -189,6 +200,7 @@ int32_t ieee_call(uint32_t *r, int32_t offset)
 
 int32_t ieee_trans_call(uint32_t *r, int32_t offset)
 {
+    TowardZero toward_zero;
     double out;
     if (offset == -102) {                                                   // IEEEDPTieee: to single
         r[0] = to_single(float(from_ieee(r[0], r[1])));
@@ -239,6 +251,29 @@ uint32_t music_lvo(uint32_t *r, uint32_t base, int32_t offset)
     const char *name = host::library_name(base);
     host::missing(name ? name : "library", reinterpret_cast<const void *>(intptr_t(offset)));
     return r[0];
+}
+
+} // extern "C"
+
+extern "C" {
+
+// Next of a float loop (control_glue.s): var += step with mathffp (as the
+// original, in either precision); 1 if the loop goes on: a step of 0 or
+// more while var is below the limit, a negative one while it is not
+uint32_t interp_next_float(uint8_t *var, uint32_t step, uint32_t limit, void *base)
+{
+    uint32_t r[4] = {0, step, 0, 0};
+    int32_t sign = interp_lvo(r, address(base), -48);           // SPTst(step)
+    r[0] = step;
+    r[1] = peek_l(var);
+    interp_lvo(r, address(base), -66);                          // SPAdd
+    poke_l(var, r[0]);
+    r[1] = limit;
+    int32_t c = interp_lvo(r, address(base), -42);              // SPCmp(var, limit)
+    // (as the original: equal to the limit ends a loop of positive step)
+    if (c < 0)
+        return sign >= 0;
+    return sign < 0;
 }
 
 } // extern "C"

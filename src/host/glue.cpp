@@ -115,6 +115,7 @@ const GlueEntry *glue_entry(const void *at)
 }
 
 void poll();
+[[noreturn]] void mark_jump(uint32_t mark, const void *target, const AllRegs &r, const void *then = nullptr);
 
 int32_t glue_call(const void *at, AllRegs &r)
 {
@@ -231,6 +232,8 @@ int32_t glue_call(const void *at, AllRegs &r)
         return tested(r.d[0], e->a2);
     case GlueKind::alias:
         return glue_call(e->target, r);
+    case GlueKind::stack:
+        mark_jump(idata().BasSp, e->target, r);
     case GlueKind::lib_jump:
         return glue_call(lib_address(e->a1), r);
     case GlueKind::hand:

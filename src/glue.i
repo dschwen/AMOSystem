@@ -139,6 +139,13 @@ RegRoutine	MACRO
 		rts
 		ENDM
 
+; StackEntry Name,target: the interpreter's stack back (BasSp: what was
+; on it given up), then target
+StackEntry	MACRO
+\1		move.l	1060(a5),sp		BasSp
+		jmp	\2
+		ENDM
+
 ; RoutineRecord name,cfunction: a record for AMOS.library's AddRoutine /
 ; CallRoutines (a link, then the code, called with jsr 4(a0), all the
 ; registers saved), calling cfunction()

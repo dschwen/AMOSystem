@@ -18,6 +18,8 @@ using namespace amos::host;
 
 namespace amos::host {
 
+void display_save(const char *path);
+
 // A point of the stack to come back to: Run its target there (the stack
 // above it given up), or Return the registers to the code that made it
 struct Mark {
@@ -25,6 +27,7 @@ struct Mark {
     const void *target;         // the entry to run, then
     const void *then;           // the entry run after it (its return)
     void (*fn)();               // or this C++ (the context its registers)
+    void (*regs_fn)(AllRegs &); // or this C++, with all the registers
     AllRegs regs;
 };
 
@@ -60,7 +63,9 @@ void to_context(const AllRegs &r)
 void run_at(Mark &m)
 {
     AllRegs r = m.regs;
-    if (m.fn) {
+    if (m.regs_fn) {
+        m.regs_fn(r);
+    } else if (m.fn) {
         to_context(r);
         m.fn();
         r = context_regs();
@@ -96,6 +101,17 @@ template <typename F> AllRegs mark_run(Mark &m, F first)
     m.target = target;
     m.then = then;
     m.fn = nullptr;
+    m.regs_fn = nullptr;
+    m.regs = r;
+    longjmp(m.jb, Run);
+}
+
+[[noreturn]] void mark_jump_regs(uint32_t mark, void (*fn)(AllRegs &), const AllRegs &r)
+{
+    Mark &m = *ptr<Mark>(mark);
+    m.target = m.then = nullptr;
+    m.fn = nullptr;
+    m.regs_fn = fn;
     m.regs = r;
     longjmp(m.jb, Run);
 }
@@ -105,6 +121,7 @@ template <typename F> AllRegs mark_run(Mark &m, F first)
     Mark &m = *ptr<Mark>(mark);
     m.target = m.then = nullptr;
     m.fn = fn;
+    m.regs_fn = nullptr;
     m.regs = r;
     longjmp(m.jb, Run);
 }
@@ -301,7 +318,57 @@ void w_int_call(const void *fn, uint8_t *data)
     glue_call(fn, r);
 }
 
-// The way out
-[[noreturn]] void main_get_out(uint32_t) { exit(0); }
+// The way out (AMOS_SHOT: the last frame into that file)
+[[noreturn]] void main_get_out(uint32_t)
+{
+    if (const char *shot = getenv("AMOS_SHOT"); shot && !getenv("AMOS_SHOT_FRAME"))
+        host::display_save(shot);
+    exit(0);
+}
 
 } // extern "C"
+
+// The editor driven by a program (+Edit.s Ed_ZapIn, Ed_ZapOut): it comes
+// back to interp_zap_in's mark (BasSp) with d0/a0 its answer
+extern "C" uint8_t ed_zap_in_entry[], ed_zap_prepare_entry[], ed_zap_out_entry[], ed_zap_result_entry[],
+    ed_function_call_entry[], ed_loop[];
+
+namespace amos::host {
+
+namespace {
+
+// .Go: the function on the editor's stack, then its loop
+void zap_go(AllRegs &r)
+{
+    glue_call(ed_zap_prepare_entry, r);
+    glue_call(ed_function_call_entry, r);
+    glue_call(ed_loop, r);
+}
+
+[[noreturn]] void zap_back(AllRegs &r)
+{
+    glue_call(ed_zap_result_entry, r);
+    mark_return(idata().BasSp, r);
+}
+
+} // namespace
+
+void host_Ed_ZapIn(AllRegs &r)
+{
+    glue_call(ed_zap_in_entry, r);
+    uint16_t w = uint16_t(r.d[0] - 1);
+    r.d[0] = (r.d[0] & 0xFFFF0000) | w;
+    if (int16_t(w) < 0)
+        mark_jump_regs(idata().BasSp, zap_go, r);
+    if (!w)
+        glue_call(ed_zap_out_entry, r);
+    zap_back(r);
+}
+
+void host_ed_zap_out(AllRegs &r)
+{
+    glue_call(ed_zap_out_entry, r);
+    zap_back(r);
+}
+
+} // namespace amos::host

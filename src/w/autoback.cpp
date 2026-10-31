@@ -4,6 +4,8 @@
 
 #include "w/w.h"
 
+#include <graphics/gfx.h>
+
 using namespace amos;
 using namespace amos::w;
 
@@ -18,9 +20,9 @@ constexpr int EcMaxPlans = 6;
 // The bitmap and current planes from planes (EcLogic or EcPhysic)
 void draw_into(Screen *s, const be_u32 *planes)
 {
-    be_u32 *bitmap = ptr<be_u32>(s->Ec_BitMap + 8);
+    struct BitMap *bitmap = ptr<struct BitMap>(s->Ec_BitMap);
     for (int p = 0; p < EcMaxPlans; p++) {
-        bitmap[p] = planes[p];
+        bitmap->Planes[p] = ptr<UBYTE>(planes[p]);
         s->EcCurrent[p] = planes[p];
     }
 }

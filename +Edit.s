@@ -344,6 +344,13 @@
 		XREF	_ed_search_entry,_ed_search_front_entry,_ed_search_back_entry,_ed_replace_text_entry
 		XREF	_ed_tokenise_entry,_ed_detok_entry,_ed_mon_detok_entry,_ed_tinst_entry
 		xdef	_ed_debut
+; StackEntry Name,target: the interpreter's stack back (BasSp), then
+; target (as src/glue.i's)
+StackEntry	MACRO
+\1		move.l	BasSp(a5),sp
+		jmp	\2
+		ENDM
+
 _ed_debut
 EDebut		dc.l	Ed_Cold-EDebut
 		dc.l	Ed_Title-EDebut
@@ -494,9 +501,7 @@ Ed_MemoryAff	jmp	_ed_memory_show_entry
 ; The editor's loop: editor/loop.cpp
 		xdef	_ed_loop
 _ed_loop
-Ed_Loop
-	move.l	BasSp(a5),sp
-	jmp	_ed_loop_entry
+		StackEntry Ed_Loop,_ed_loop_entry
 
 
 ; __________________________________________________________________________
@@ -1474,9 +1479,7 @@ Ed_ClEProc	jmp	_ed_clear_error_proc_entry
 ; Direct mode: editor/direct.cpp
 		xdef	_ed_esc_loop
 _ed_esc_loop
-Esc_Loop
-	move.l	BasSp(a5),sp
-	jmp	_ed_escape_loop_entry
+		StackEntry Esc_Loop,_ed_escape_loop_entry
 Esc_Esc	jmp	_ed_escape_leave_entry
 Esc_KMemEffD0	jmp	_ed_escape_forget_entry
 Esc_KMemEnd	jmp	_ed_escape_forget_all_entry

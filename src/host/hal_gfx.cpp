@@ -15,6 +15,7 @@
 #include <graphics/rastport.h>
 #include <graphics/regions.h>
 #include <graphics/text.h>
+#include <diskfont/diskfont.h>
 #include <graphics/view.h>
 
 #include <stdlib.h>
@@ -267,6 +268,12 @@ void fill_polygon(RastPort *rp, const int *xs, const int *ys, int n)
             }
         for (int i = 0; i + 1 < c; i += 2)
             span(p, cross[i], cross[i + 1], y);
+        // the bottom vertices (the edges stop above them)
+        for (int i = 0; i < n; i++) {
+            int prev = ys[(i + n - 1) % n], next = ys[(i + 1) % n];
+            if (ys[i] == y && prev < y && next < y)
+                span(p, xs[i], xs[i], y);
+        }
     }
     free(cross);
 }
@@ -688,7 +695,28 @@ Region *install_clip_region(Layer *layer, Region *region)
     return old;
 }
 
-int32_t avail_fonts(char *, int32_t, uint32_t) { return 0; }
+// AvailFonts: the fonts of the ROM (topaz 8 and 9, in memory), as the
+// Amiga's list (big-endian): their number, then for each its type and
+// its TextAttr (name, height, style, flags); the bytes missing
+int32_t avail_fonts(char *buffer, int32_t size, uint32_t types)
+{
+    static const char topaz[] = "topaz.font";
+    int n = types & AFF_MEMORY ? 2 : 0;
+    int32_t need = 2 + 10 * n;
+    if (size < need)
+        return need - size;
+    uint8_t *p = reinterpret_cast<uint8_t *>(buffer);
+    poke_w(p, uint16_t(n));
+    for (int i = 0; i < n; i++) {
+        uint8_t *e = p + 2 + 10 * i;
+        poke_w(e, AFF_MEMORY);
+        poke_l(e + 2, address(topaz));
+        poke_w(e + 6, uint16_t(8 + i));
+        e[8] = 0;
+        e[9] = FPF_ROMFONT;
+    }
+    return 0;
+}
 void own_blitter() {}
 void disown_blitter() {}
 void wait_blit() {}

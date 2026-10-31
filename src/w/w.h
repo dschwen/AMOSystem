@@ -28,10 +28,13 @@ inline Screen *current_screen() { return ptr<Screen>(wdata().EcCourant); }
 // and its IO request, the VBL's interrupt. (Their room is the Amiga's
 // size: another host's, larger, are elsewhere.)
 #if defined(__mc68000__)
+extern "C" uint8_t w_con_io[];
+inline uint8_t *console_request() { return w_con_io; }         // +W.s ConIo
 inline struct Interrupt *input_interrupt() { return reinterpret_cast<struct Interrupt *>(wdata().Interrupt); }
 inline struct IOStdReq *input_request() { return reinterpret_cast<struct IOStdReq *>(wdata().IoDevice); }
 inline struct Interrupt *vbl_interrupt() { return reinterpret_cast<struct Interrupt *>(wdata().VBL_Is); }
 #else
+uint8_t *console_request();
 struct Interrupt *input_interrupt();
 struct IOStdReq *input_request();
 struct Interrupt *vbl_interrupt();

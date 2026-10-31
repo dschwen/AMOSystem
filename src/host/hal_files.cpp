@@ -10,6 +10,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <sys/statvfs.h>
 #include <unistd.h>
 
 #include <dos/dos.h>
@@ -26,9 +27,11 @@ int32_t dos_error(int e)
     switch (e) {
     case ENOENT: return ERROR_OBJECT_NOT_FOUND;
     case EEXIST: return ERROR_OBJECT_EXISTS;
+    case EBUSY: return ERROR_OBJECT_IN_USE;
     case EACCES: return ERROR_READ_PROTECTED;
     case ENOSPC: return ERROR_DISK_FULL;
     case ENOTEMPTY: return ERROR_DIRECTORY_NOT_EMPTY;
+    case EISDIR: return ERROR_OBJECT_WRONG_TYPE;
     default: return ERROR_OBJECT_WRONG_TYPE;
     }
 }
@@ -48,6 +51,10 @@ void read_assigns()
     if (done)
         return;
     done = true;
+    // the start directory a volume (AMOSPRO:, unless an assign is it), so
+    // that the paths stay as short as an Amiga's
+    char *cwd = getcwd(nullptr, 0);
+    bool covered = false;
     const char *env = getenv("AMOS_ASSIGNS");
     while (env && *env && assign_count < 64) {
         const char *eq = strchr(env, '='), *end = strchr(env, ';');
@@ -61,6 +68,19 @@ void read_assigns()
         }
         env = *end ? end + 1 : end;
     }
+    for (int i = 0; i < assign_count && cwd; i++) {
+        char *a = realpath(assigns[i].path, nullptr);
+        if (a && !strcmp(a, cwd))
+            covered = true;
+        free(a);
+    }
+    if (cwd && !covered && assign_count < 64) {
+        Assign &a = assigns[assign_count++];
+        strcpy(a.name, "AMOSPRO");
+        a.path = cwd;
+        cwd = nullptr;
+    }
+    free(cwd);
 }
 
 const char *assigned(const char *volume, size_t n)
@@ -69,6 +89,9 @@ const char *assigned(const char *volume, size_t n)
     for (int i = 0; i < assign_count; i++)
         if (strlen(assigns[i].name) == n && !strncasecmp(assigns[i].name, volume, n))
             return assigns[i].path;
+    // RAM:'s volume, "Ram Disk"
+    if (n == 8 && !strncasecmp(volume, "Ram Disk", 8))
+        return assigned("RAM", 3);
     return nullptr;
 }
 
@@ -161,40 +184,67 @@ namespace amos::hal {
 
 void files_start(void *) {}
 
+// The files open, as AmigaDOS locks them: a new file exclusively, an old
+// one shared
+struct Open {
+    dev_t dev;
+    ino_t ino;
+    bool exclusive, used;
+};
+Open opened[1024];
+
 File open(const char *name, int32_t mode)
 {
+    const char *h = host_name(name);
+    struct stat st;
+    if (stat(h, &st) == 0) {
+        if (S_ISDIR(st.st_mode)) {
+            // (a directory is not a file: "object wrong type")
+            error = ERROR_OBJECT_WRONG_TYPE;
+            return 0;
+        }
+        for (const Open &o : opened)
+            if (o.used && o.dev == st.st_dev && o.ino == st.st_ino && (o.exclusive || mode == ModeNewFile)) {
+                error = ERROR_OBJECT_IN_USE;
+                return 0;
+            }
+    }
     // (an old file can be written too; read-only if it cannot)
     int flags = mode == ModeNewFile ? O_RDWR | O_CREAT | O_TRUNC : mode == ModeReadWrite ? O_RDWR | O_CREAT : O_RDWR;
-    const char *h = host_name(name);
     int fd = ::open(h, flags, 0644);
-    if (fd < 0 && mode == ModeOldFile && (errno == EACCES || errno == EROFS || errno == EISDIR))
+    if (fd < 0 && mode == ModeOldFile && (errno == EACCES || errno == EROFS))
         fd = ::open(h, O_RDONLY);
     if (fd < 0) {
         error = dos_error(errno);
         return 0;
     }
+    if (fd < 1024 && fstat(fd, &st) == 0)
+        opened[fd] = {st.st_dev, st.st_ino, mode == ModeNewFile, true};
+    error = 0;
     return File(fd + 1);
 }
 
 void close(File f)
 {
-    if (f)
-        ::close(int(f) - 1);
+    if (!f)
+        return;
+    int fd = int(f) - 1;
+    if (fd < 1024)
+        opened[fd].used = false;
+    ::close(fd);
 }
 
 int32_t read(File f, void *buffer, int32_t length)
 {
     ssize_t n = ::read(int(f) - 1, buffer, size_t(length));
-    if (n < 0)
-        error = dos_error(errno);
+    error = n < 0 ? dos_error(errno) : 0;
     return int32_t(n);
 }
 
 int32_t write(File f, const void *buffer, int32_t length)
 {
     ssize_t n = ::write(int(f) - 1, buffer, size_t(length));
-    if (n < 0)
-        error = dos_error(errno);
+    error = n < 0 ? dos_error(errno) : 0;
     return int32_t(n);
 }
 
@@ -214,23 +264,66 @@ bool wait_for_char(File, int32_t) { return false; }
 File output() { return 2; }         // stdout
 int32_t io_error() { return error; }
 
-DirLock lock(const char *name, int32_t)
+} // namespace amos::hal
+
+namespace {
+
+// A lock on a path of the host (its real path)
+amos::hal::DirLock lock_path(const char *h)
 {
-    const char *h = host_name(name);
-    struct stat st;
-    if (stat(h, &st) < 0) {
+    char *real = realpath(h, nullptr);
+    if (!real) {
         error = dos_error(errno);
         return 0;
     }
     for (int i = 1; i < 256; i++) {
         if (!locks[i].name) {
-            locks[i].name = strdup(h);
+            locks[i].name = real;
             locks[i].dir = nullptr;
-            return DirLock(i);
+            error = 0;
+            return amos::hal::DirLock(i);
         }
     }
+    free(real);
     error = ERROR_NO_FREE_STORE;
     return 0;
+}
+
+// The volumes Info gave (InfoData's id_VolumeNode: 1 + the index)
+char *volumes[64];
+int volume_count;
+
+// The volume a directory is the top of: the assign of that directory
+// (RAM: is "Ram Disk", as on the Amiga), or null
+const char *volume_of(const char *real)
+{
+    read_assigns();
+    for (int i = 0; i < assign_count; i++) {
+        char *a = realpath(assigns[i].path, nullptr);
+        bool same = a && !strcmp(a, real);
+        free(a);
+        if (same)
+            return strcasecmp(assigns[i].name, "RAM") ? assigns[i].name : "Ram Disk";
+    }
+    return nullptr;
+}
+
+} // namespace
+
+namespace amos::hal {
+
+// (the host's commands: "c:assign", built in, as a lock on its own
+// executable when there is no C:)
+bool builtin_command(const char *name)
+{
+    return !strcasecmp(name, "c:assign") && !assigned("C", 1);
+}
+
+DirLock lock(const char *name, int32_t)
+{
+    if (builtin_command(name))
+        return lock_path("/proc/self/exe");
+    return lock_path(host_name(name));
 }
 
 void unlock(DirLock l)
@@ -282,8 +375,13 @@ bool examine(DirLock l, void *fib)
 {
     if (!l || l >= 256 || !locks[l].name)
         return false;
-    const char *name = strrchr(locks[l].name, '/');
-    fill(static_cast<FileInfoBlock *>(fib), locks[l].name, name ? name + 1 : locks[l].name);
+    const char *name = volume_of(locks[l].name);
+    if (!name) {
+        name = strrchr(locks[l].name, '/');
+        name = name ? name + 1 : locks[l].name;
+    }
+    fill(static_cast<FileInfoBlock *>(fib), locks[l].name, name);
+    error = 0;
     if (locks[l].dir)
         closedir(locks[l].dir);
     locks[l].dir = opendir(locks[l].name);
@@ -317,6 +415,9 @@ DirLock parent_dir(DirLock l)
 {
     if (!l || l >= 256 || !locks[l].name)
         return 0;
+    // (the top of a volume has no parent)
+    if (volume_of(locks[l].name) || !strcmp(locks[l].name, "/"))
+        return 0;
     char path[1200];
     snprintf(path, sizeof path, "%s/..", locks[l].name);
     char *real = realpath(path, nullptr);
@@ -324,12 +425,65 @@ DirLock parent_dir(DirLock l)
         free(real);
         return 0;
     }
-    DirLock p = lock(real, LockShared);
+    DirLock p = lock_path(real);
     free(real);
     return p;
 }
 
-bool info(DirLock, void *) { return false; }
+// Info: the disk of the lock (the host's file system), its volume
+bool info(DirLock l, void *info_data)
+{
+    if (!l || l >= 256 || !locks[l].name)
+        return false;
+    struct statvfs fs;
+    if (statvfs(locks[l].name, &fs) < 0) {
+        error = dos_error(errno);
+        return false;
+    }
+    InfoData *id = static_cast<InfoData *>(info_data);
+    memset(id, 0, sizeof *id);
+    uint64_t block = 512;
+    uint64_t total = uint64_t(fs.f_blocks) * fs.f_frsize / block, avail = uint64_t(fs.f_bavail) * fs.f_frsize / block;
+    if (total > 0x7FFFFFFF)
+        total = 0x7FFFFFFF;
+    if (avail > total)
+        avail = total;
+    id->id_DiskState = ID_VALIDATED;
+    id->id_NumBlocks = int32_t(total);
+    id->id_NumBlocksUsed = int32_t(total - avail);
+    id->id_BytesPerBlock = int32_t(block);
+    id->id_DiskType = ID_DOS_DISK;
+    // the volume: the top directory above the lock that is an assign
+    char path[1024];
+    snprintf(path, sizeof path, "%s", locks[l].name);
+    for (;;) {
+        if (const char *v = volume_of(path)) {
+            for (int i = 0; i < volume_count; i++)
+                if (!strcmp(volumes[i], v))
+                    id->id_VolumeNode = i + 1;
+            if (!id->id_VolumeNode && volume_count < 64) {
+                volumes[volume_count++] = strdup(v);
+                id->id_VolumeNode = volume_count;
+            }
+            break;
+        }
+        char *slash = strrchr(path, '/');
+        if (!slash || slash == path)
+            break;
+        *slash = 0;
+    }
+    error = 0;
+    return true;
+}
+
+bool volume_name(const void *info_data, char *name, int size)
+{
+    BPTR node = static_cast<const InfoData *>(info_data)->id_VolumeNode;
+    if (node < 1 || node > volume_count)
+        return false;
+    snprintf(name, size_t(size), "%s", volumes[node - 1]);
+    return true;
+}
 // AssignLock: name (without its colon) the directory of the lock, which
 // it takes; no lock: the assign goes
 bool assign_lock(const char *name, DirLock l)
@@ -366,14 +520,22 @@ bool assign_lock(const char *name, DirLock l)
     unlock(l);
     return true;
 }
-bool device_exists(const char *) { return false; }
+// A device: here an assign or a volume ("name:")
+bool device_exists(const char *name)
+{
+    size_t n = strlen(name);
+    if (n && name[n - 1] == ':')
+        n--;
+    return n && assigned(name, n);
+}
 
 // The assigns (the host has no devices of its own)
 void each_device(void (*f)(const char *name, bool device, void *data), void *data)
 {
     read_assigns();
+    // (RAM: as its volume, "Ram Disk")
     for (int i = 0; i < assign_count; i++)
-        f(assigns[i].name, false, data);
+        f(strcasecmp(assigns[i].name, "RAM") ? assigns[i].name : "Ram Disk", false, data);
 }
 
 bool delete_file(const char *name)
@@ -405,7 +567,29 @@ DirLock create_dir(const char *name)
     return lock(name, LockShared);
 }
 
-bool execute(const char *, File, File) { return false; }
+// Execute: the host's commands (c:assign NAME: "directory")
+bool execute(const char *command, File, File)
+{
+    if (strncasecmp(command, "c:assign ", 9))
+        return false;
+    const char *p = command + 9;
+    char name[64];
+    int n = 0;
+    while (*p && *p != ' ' && n < 63)
+        name[n++] = *p++;
+    name[n] = 0;
+    while (*p == ' ')
+        p++;
+    char path[512];
+    n = 0;
+    if (*p == '"')
+        p++;
+    while (*p && *p != '"' && n < 511)
+        path[n++] = *p++;
+    path[n] = 0;
+    DirLock l = lock(path, LockShared);
+    return l && assign_lock(name, l);
+}
 void delay(int32_t ticks) { usleep(useconds_t(ticks) * 20000); }
 
 } // namespace amos::hal

@@ -24,6 +24,7 @@ enum class GlueKind : uint8_t {
     w_f,            // WEntryF: the same, the function's result tested
     window,         // WiEntry: w_window(a1, AllRegs *)
     alias,          // jmp/bra target
+    stack,          // StackEntry: the stack back at BasSp, then target
     lib_jump,       // JJmp: the routine a1 of AMOSPro.Lib
     hand,           // assembler done by src/host: host_<name>(AllRegs &)
     missing,        // assembler with no C++ here

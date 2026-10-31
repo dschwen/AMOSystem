@@ -517,8 +517,15 @@ void samples_install()
     sami_stop();
     for (uint32_t v = 0; v < 4; v++) {
         volatile SampleInt &s = sample_int(v);
+#if defined(__mc68000__)
         auto is = const_cast<struct Interrupt *>(reinterpret_cast<volatile struct Interrupt *>(s.Sami_is));
-        is->is_Data = is;
+#else
+        // (another host's Interrupt is larger than its room)
+        static struct Interrupt host_interrupts[4];
+        struct Interrupt *is = &host_interrupts[v];
+#endif
+        // its data: the voice's SampleInt (which begins with it)
+        is->is_Data = const_cast<SampleInt *>(&s);
         is->is_Code = ptr<void (void)>(m.Sami_handad);
         is->is_Node.ln_Type = 2;
         is->is_Node.ln_Pri = 0;
