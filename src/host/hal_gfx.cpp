@@ -7,7 +7,7 @@
 
 #include "hal/gfx.h"
 #include "hal/system.h"
-#include "host/host.h"
+#include "runtime/runtime.h"
 
 #include <graphics/clip.h>
 #include <graphics/gfx.h>

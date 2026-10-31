@@ -3,8 +3,8 @@
 // are below 4GB. The command line is the CLI's: [-c config] [-w]
 // [program [its command line]].
 
-#include "host/host.h"
-#include "host/glue.h"
+#include "runtime/runtime.h"
+#include "runtime/glue.h"
 #include "hal/system.h"
 
 #include <pthread.h>
@@ -43,6 +43,18 @@ void *amos_thread(void *)
 }
 
 } // namespace
+
+namespace amos::host {
+void display_save(const char *path);
+}
+
+// The way out (AMOS_SHOT: the last frame into that file)
+extern "C" [[noreturn]] void main_get_out(uint32_t)
+{
+    if (const char *shot = getenv("AMOS_SHOT"); shot && !getenv("AMOS_SHOT_FRAME"))
+        host::display_save(shot);
+    exit(0);
+}
 
 int main(int argc, char **argv)
 {

@@ -11,7 +11,7 @@
 // in hires pixels: 768 by 288 lines (the lines of the beam 26 to 313).
 
 #include "hal/chips.h"
-#include "host/host.h"
+#include "runtime/runtime.h"
 
 #include <stdio.h>
 #include <stdlib.h>

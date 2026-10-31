@@ -4,7 +4,7 @@
 // fonts are TextFonts of the host (native fields), their data below 4GB.
 
 #include "hal/system.h"
-#include "host/host.h"
+#include "runtime/runtime.h"
 
 #include <graphics/text.h>
 

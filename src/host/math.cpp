@@ -5,7 +5,7 @@
 // results are the libraries' (their autodocs): mathffp's two operands are
 // d0 (the left one) and d1, a comparison gives d0 against d1; the IEEE ones take d0/d1 and d2/d3.
 
-#include "host/host.h"
+#include "runtime/runtime.h"
 #include "lib/ffp.h"
 
 #include <fenv.h>

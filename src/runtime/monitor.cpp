@@ -5,8 +5,8 @@
 // out of errors. The assembler reset the stack to BasSp (or Tt_EvPile);
 // here those are marks (host/runtime.h).
 
-#include "host/host.h"
-#include "host/runtime.h"
+#include "runtime/runtime.h"
+#include "runtime/marks.h"
 
 #include <initializer_list>
 

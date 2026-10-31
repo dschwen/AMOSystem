@@ -2,7 +2,7 @@
 // addresses in 32 bits), one task, no devices or interrupts yet.
 
 #include "hal/system.h"
-#include "host/host.h"
+#include "runtime/runtime.h"
 
 #include <stdio.h>
 #include <string.h>

@@ -7,8 +7,8 @@
 // display (AMOS_DISPLAY=none, or no SDL) AMOS runs without a window and
 // without sound.
 
-#include "host/host.h"
-#include "host/glue.h"
+#include "runtime/runtime.h"
+#include "runtime/glue.h"
 
 #include <devices/inputevent.h>
 #include <exec/interrupts.h>

@@ -2,8 +2,8 @@
 // host_<label>(AllRegs &) for the entry <label> (tools/host_glue.py finds
 // them here). Each says what its assembler does.
 
-#include "host/host.h"
-#include "host/glue.h"
+#include "runtime/runtime.h"
+#include "runtime/glue.h"
 
 using namespace amos;
 using namespace amos::host;

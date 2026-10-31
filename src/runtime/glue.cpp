@@ -1,8 +1,8 @@
 // The assembler's entries on another host (host/glue.h): what each glue
 // macro does, in C++.
 
-#include "host/glue.h"
-#include "host/host.h"
+#include "runtime/glue.h"
+#include "runtime/runtime.h"
 #include "interp/interp.h"
 
 #include <stdlib.h>

@@ -444,10 +444,13 @@ bool info(DirLock l, void *info_data)
     memset(id, 0, sizeof *id);
     uint64_t block = 512;
     uint64_t total = uint64_t(fs.f_blocks) * fs.f_frsize / block, avail = uint64_t(fs.f_bavail) * fs.f_frsize / block;
+    // (at most 2GB free, the bytes that AMOS's 32 bits count)
     if (total > 0x7FFFFFFF)
         total = 0x7FFFFFFF;
     if (avail > total)
         avail = total;
+    if (avail > 0x7FFFFFFF / block)
+        avail = 0x7FFFFFFF / block;
     id->id_DiskState = ID_VALIDATED;
     id->id_NumBlocks = int32_t(total);
     id->id_NumBlocksUsed = int32_t(total - avail);
@@ -465,6 +468,9 @@ bool info(DirLock l, void *info_data)
                 volumes[volume_count++] = strdup(v);
                 id->id_VolumeNode = volume_count;
             }
+            // (RAM: is full, as the Amiga's)
+            if (!strcmp(v, "Ram Disk"))
+                id->id_NumBlocksUsed = id->id_NumBlocks;
             break;
         }
         char *slash = strrchr(path, '/');

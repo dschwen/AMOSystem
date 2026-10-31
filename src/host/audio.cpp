@@ -9,8 +9,8 @@
 
 #include "hal/chips.h"
 #include "hal/system.h"
-#include "host/glue.h"
-#include "host/host.h"
+#include "runtime/glue.h"
+#include "runtime/runtime.h"
 
 #include <exec/interrupts.h>
 

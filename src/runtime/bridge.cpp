@@ -1,37 +1,13 @@
-// The bridge between the C++ and the assembler (core/call.s) on another
-// host: there is no assembler, so a "call into the assembler" is what the
-// glue at that address does (host/glue.cpp).
+// The bridge between the C++ and the assembler's entries (core/amos.h
+// amos_call...): a "call into the assembler" is what the glue at that
+// address does (runtime/glue.cpp).
 
-#include "host/host.h"
-#include "host/glue.h"
+#include "runtime/runtime.h"
+#include "runtime/glue.h"
 
-#include <stdio.h>
-#include <stdlib.h>
 
 using namespace amos;
 
-namespace {
-Ctx context;            // the interpreter's registers (one task here)
-}
-
-uint8_t *amos_bridge;
-uint8_t amos_task[52];
-
-namespace amos {
-
-Ctx &ctx() { return context; }
-
-} // namespace amos
-
-namespace amos::host {
-
-[[noreturn]] void missing(const char *what, const void *address)
-{
-    fprintf(stderr, "amos: %s %p has no C++ on this host\n", what, address);
-    exit(70);
-}
-
-} // namespace amos::host
 
 namespace {
 

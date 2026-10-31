@@ -7,7 +7,7 @@
 // the time (a PAL frame of 312 lines each 20ms).
 
 #include "hal/chips.h"
-#include "host/host.h"
+#include "runtime/runtime.h"
 
 #include <string.h>
 #include <time.h>

@@ -305,7 +305,7 @@ $(HOST)/topaz.cpp: tools/extract_topaz.py
 	@mkdir -p $(dir $@)
 	$(PYTHON) tools/extract_topaz.py --out $@ --rom "$(KICKSTART)" --key "$(ROMKEY)"
 
-$(HOST)/host_glue.cpp: tools/host_glue.py $(GLUE_SOURCES) $(wildcard src/host/*.cpp) \
+$(HOST)/host_glue.cpp: tools/host_glue.py $(GLUE_SOURCES) $(wildcard src/host/*.cpp src/runtime/*.cpp) \
 		$(foreach i,$(HOST_IMAGES),$(HOST)/images/$(lastword $(subst :, ,$(i))).bin)
 	@mkdir -p $(dir $@)
 	$(PYTHON) tools/host_glue.py --out $@ --cxx 'L_Trappe=sizeof(amos::WData)' $(foreach e,$(GLUE_EQU),--equ $(e)) \
@@ -319,7 +319,9 @@ $(HOST)/obj/%.o: %.cpp $(CXX_GEN)
 -include $(HOST_OBJ:%.o=%.d)
 
 host: $(HOST_OBJ)
-	g++ -m64 -no-pie -o $(HOST)/amos $(HOST_OBJ) 2>&1 | grep -o "undefined reference to .*" | sort -u \
+	g++ -m64 -no-pie -o $(HOST)/amos $(HOST_OBJ) > $(HOST)/link.txt 2>&1 || \
+		{ grep -v "undefined reference" $(HOST)/link.txt | grep -i "error\|multiple" ; true; }
+	grep -o "undefined reference to .*" $(HOST)/link.txt | sort -u \
 		| tee $(HOST)/missing.txt | wc -l | sed 's/$$/ symbols missing (build\/host\/missing.txt)/'
 
 # Phase 7: which C++ files compile for another host (tools/host_check.sh)

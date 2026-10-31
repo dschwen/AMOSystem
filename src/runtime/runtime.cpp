@@ -5,9 +5,9 @@
 // their addresses. Also the entries of the assembler the interpreter calls
 // (chrget_glue.s, control_glue.s, run_glue.s...).
 
-#include "host/host.h"
-#include "host/glue.h"
-#include "host/runtime.h"
+#include "runtime/runtime.h"
+#include "runtime/glue.h"
+#include "runtime/marks.h"
 #include "interp/interp.h"
 #include "hal/chips.h"
 
@@ -18,7 +18,6 @@ using namespace amos::host;
 
 namespace amos::host {
 
-void display_save(const char *path);
 
 // What runs at a mark: its target (then what follows it), or its C++
 void run_at(Mark &m)
@@ -259,14 +258,6 @@ void w_int_call(const void *fn, uint8_t *data)
     r.a[5] = address(data);
     r.a[6] = hal::CustomBase;
     glue_call(fn, r);
-}
-
-// The way out (AMOS_SHOT: the last frame into that file)
-[[noreturn]] void main_get_out(uint32_t)
-{
-    if (const char *shot = getenv("AMOS_SHOT"); shot && !getenv("AMOS_SHOT_FRAME"))
-        host::display_save(shot);
-    exit(0);
 }
 
 } // extern "C"
