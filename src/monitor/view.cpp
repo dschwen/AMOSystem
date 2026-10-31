@@ -441,6 +441,9 @@ void screens_refresh() { recop(); }
 void view_reset() { view_sizes(); }
 } // namespace amos::monitor
 
+// (the data zone, for the VBL)
+uint32_t amos::monitor::view_data_zone;
+
 extern "C" {
 void mon_view_show(AllRegs *) { view_show(); }
 void mon_view_next(AllRegs *r) { view_next(int16_t(r->d[1])); }
@@ -512,4 +515,26 @@ void mon_tested(AllRegs *)
     banks_program();
 }
 void mon_tests_patch(AllRegs *) { tests_patch(); }
+
+// View_Inter, in the VBL: the colours of the screen the view shows into
+// the view's copper list and screen
+void mon_view_inter()
+{
+    uint8_t *a5 = ptr<uint8_t>(view_data_zone);
+    const IData &d = *reinterpret_cast<const IData *>(a5);
+    WData &w = *reinterpret_cast<WData *>(a5 - sizeof(WData));
+    int16_t view = int16_t(ptr<MonData>(d.Mon_Base)->Tt_View);
+    if (view < 0 || !w.EcAdr[view])
+        return;
+    const Screen *shown = ptr<Screen>(w.EcAdr[view]);
+    Screen *own = ptr<Screen>(w.EcAdr[Ecran1]);
+    uint32_t mark = peek_l(&w.CopMark[Ecran1 * 128]);
+    if (!mark)
+        return;
+    uint8_t *copper = ptr<uint8_t>(mark) + 2;
+    for (int i = 0; i < 11; i++) {
+        poke_w(copper + 4 * i, shown->EcPal[i]);
+        own->EcPal[i] = shown->EcPal[i];
+    }
+}
 }

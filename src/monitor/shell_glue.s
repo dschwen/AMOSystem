@@ -32,3 +32,8 @@ _mon_quit_entry WEntry _mon_quit,l
 ; The detokeniser's hook: all registers kept
 		xdef	_mon_split_hook
 _mon_split_hook WEntry _mon_split_token,l
+
+; Tt_Rien: the STOP key, tested apart
+		XREF	_mon_nothing
+		xdef	_mon_nothing_entry
+_mon_nothing_entry WEntry _mon_nothing,l

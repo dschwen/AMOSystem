@@ -208,19 +208,37 @@ inline void entry_call(const void *entry, Regs &r)
     amos_call(&r, entry);
 }
 
-inline void sy_call(int function, Regs &r)
+// The monitor's patches on the vectors (monitor/patch.cpp): called first,
+// true if they did the function
+namespace w {
+extern bool (*sy_patch)(int function, Regs &r);
+extern bool (*ec_patch)(int function, Regs &r);
+} // namespace w
+
+// The function of the vectors themselves (the monitor's patches call them)
+inline void sy_vector_call(int function, Regs &r)
 {
     if (wdata().SyVect == address(::w_sy_in))
         if (WFunction f = sy_direct[function])
             return w_direct_call(f, r);
     amos_call(&r, reinterpret_cast<const uint8_t *>(uintptr_t(uint32_t(wdata().SyVect))) + 4 * function);
 }
-inline void ec_call(int function, Regs &r)
+inline void ec_vector_call(int function, Regs &r)
 {
     if (wdata().EcVect == address(::w_ec_in))
         if (WFunction f = ec_direct[function])
             return w_direct_call(f, r);
     amos_call(&r, reinterpret_cast<const uint8_t *>(uintptr_t(uint32_t(wdata().EcVect))) + 4 * function);
+}
+inline void sy_call(int function, Regs &r)
+{
+    if (!w::sy_patch || !w::sy_patch(function, r))
+        sy_vector_call(function, r);
+}
+inline void ec_call(int function, Regs &r)
+{
+    if (!w::ec_patch || !w::ec_patch(function, r))
+        ec_vector_call(function, r);
 }
 } // namespace amos
 // AMOS.library's text window functions (w/windows.cpp)

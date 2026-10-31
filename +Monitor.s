@@ -92,7 +92,7 @@
 		XREF	_mon_no_init_entry
 		XREF	_mon_tested_entry
 		XREF	_mon_step_show_entry
-		XREF	_mon_cold_start_entry
+		XREF	_mon_cold_start_entry,_mon_nothing_entry
 		XREF	_mon_free_entry
 		XREF	_mon_test_error_entry
 		XREF	_mon_centre_click_entry
@@ -236,7 +236,7 @@ Tt_ReLoop	jmp	_mon_reloop_entry
 ; The routines of the buttons of the view screen, of the zones of the
 ; text screen and of its dialogue (for the loop)
 		xdef	_mon_keys,_mon_text_zones
-_mon_keys	dc.l	Tt_Rien			1:  STOP, teste separement
+_mon_keys	dc.l	_mon_nothing_entry			1:  STOP, teste separement
 		dc.l	_mon_step0_entry		2:  mode pas a pas
 		dc.l	_mon_step1_entry		3:  mode semi-rapide
 		dc.l	_mon_step2_entry		4:  mode rapide
@@ -259,27 +259,7 @@ _mon_text_zones	dc.l	_mon_listing_click_entry		1 : Zone de listing
 		dc.l	_mon_slider_vertical_click_entry		2 : Slider vertical
 		dc.l	_mon_info_slider_click_entry		3 : Slider infos
 		dc.l	_mon_centre_click_entry		4 : Bouton de centrage
-Tt_Rien	moveq	#1,d0
-	rts
-
-; int32_t mon_dispatch(routine, d0, d1): a routine of the loop, with a3
-; the program and a4 the monitor's data; 1 if it answers "not equal"
-		xdef	_mon_dispatch
-_mon_dispatch
-	movem.l	d2-d7/a2-a6,-(sp)
-	MGetCtx
-	move.l	Mon_Base(a5),a4
-	move.l	Tt_Program(a4),a3
-	move.l	4+44(sp),a0
-	move.l	8+44(sp),d0
-	move.l	12+44(sp),d1
-	jsr	(a0)
-	beq.s	.Eq
-	moveq	#1,d0
-	bra.s	.Out
-.Eq	moveq	#0,d0
-.Out	movem.l	(sp)+,d2-d7/a2-a6
-	rts
+; _mon_dispatch: monitor/shell.cpp
 
 ; ___________________________________________________________________
 ;
@@ -341,515 +321,7 @@ Tt_Show	jmp	_mon_show_entry
 Tt_Hide	jmp	_mon_hide_entry
 Tt_Mouse	jmp	_mon_mouse_free_entry
 
-; ___________________________________________________________________
-;
-;	PATCH SUR AMOS.LIBRARY
-; ___________________________________________________________________
-;
-;	Branche le patch sur W
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-		xdef	_mon_set_wpatch
-_mon_set_wpatch
-Set_WPatch
-	move.l	a0,-(sp)
-	lea	Old_EcVect(pc),a0
-	move.l	T_EcVect(a5),(a0)
-	lea	Old_SyVect(pc),a0
-	move.l	T_SyVect(a5),(a0)
-	lea	EcIn(pc),a0
-	move.l	a0,T_EcVect(a5)
-	lea	SyIn(pc),a0
-	move.l	a0,T_SyVect(a5)
-	move.l	(sp)+,a0
-	rts
-;	Enleve le patch sur W
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~
-		xdef	_mon_del_wpatch
-_mon_del_wpatch
-Del_WPatch
-	move.l	a0,-(sp)
-	lea	Old_EcVect(pc),a0
-	tst.l	(a0)
-	beq.s	.Skip1
-	move.l	(a0),T_EcVect(a5)
-	clr.l	(a0)
-.Skip1	lea	Old_SyVect(pc),a0
-	tst.l	(a0)
-	beq.s	.Skip2
-	move.l	(a0),T_SyVect(a5)
-	clr.l	(a0)
-.Skip2	move.l	(sp)+,a0
-	rts
-
-;	Patch des fonctions W ecrans...
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-EcIn	bsr	TT_WPatch		RAZ
-	bsr	TT_WPatch2		Copper
-	bsr	TT_WPatch2		Libre
-	bsr	TT_WPatchC		Cree
-	bsr	TT_WPatch		Del
-	bsr	TT_WPatch		First
-	bsr	TT_WPatch		Last
-	bsr	TT_WPatch		Active
-	bsr	TT_WPatch2		Forcecop
-	bsr	TT_WPatch
-	bsr	TT_WPatch
-	bsr	TT_WPatch
-	bsr	TT_WPatch
-	bsr	TT_WPatch
-	bsr	TT_WPatch
-	bsr	TT_WPatch
-	bsr	TT_WPatch
-	bsr	TT_WPatch
-	bsr	TT_WPatch
-	bsr	TT_WPatch
-	bsr	TT_WPatch
-	bsr	TT_WPatch
-	bsr	TT_WPatch
-	bsr	TT_WPatch
-	bsr	TT_WPatch
-	bsr	TT_WPatch
-	bsr	TT_WPatch
-	bsr	TT_WPatch
-	bsr	TT_WPatch
-	bsr	TT_WPatch
-	bsr	TT_WPatch
-	bsr	TT_WPatch
-	bsr	TT_WPatch
-	bsr	TT_WPatch
-	bsr	TT_WPatch
-	bsr	TT_WPatch
-	bsr	TT_WPatch
-	bsr	TT_WPatch
-	bsr	TT_WPatch
-	bsr	TT_WPatch
-	bsr	TT_WPatch
-	bsr	TT_WPatch
-	bsr	TT_WPatch
-	bsr	TT_WPatch
-	bsr	TT_WPatch
-	bsr	TT_WPatch
-	bsr	TT_WPatch
-	bsr	TT_WPatch
-	bsr	TT_WPatch
-	bsr	TT_WPatch
-	bsr	TT_WPatch
-	bsr	TT_WPatch
-	bsr	TT_WPatch
-	bsr	TT_WPatch
-	bsr	TT_WPatch
-	bsr	TT_WPatch
-	bsr	TT_WPatch
-	bsr	TT_WPatch
-	bsr	TT_WPatch
-	bsr	TT_WPatch
-	bsr	TT_WPatch
-	bsr	TT_WPatch
-	bsr	TT_WPatch
-	bsr	TT_WPatch
-	bsr	TT_WPatch
-	bsr	TT_WPatch
-	bsr	TT_WPatch
-	bsr	TT_WPatch
-	bsr	TT_WPatch
-	bsr	TT_WPatch
-	bsr	TT_WPatch
-	bsr	TT_WPatch
-	bsr	TT_WPatch
-	bsr	TT_WPatch
-	bsr	TT_WPatch
-	bsr	TT_WPatch
-	bsr	TT_WPatch
-	bsr	TT_WPatch		5 Fonctions de securite!
-	bsr	TT_WPatch
-	bsr	TT_WPatch
-	bsr	TT_WPatch
-	bsr	TT_WPatch
-	bsr	TT_WPatch
-
-;	Restore les ecrans puis appelle
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-TT_WPatch2
-	bsr.s	Tt_first
-;	Patch normal...
-; ~~~~~~~~~~~~~~~~~~~~~
-TT_WPatch
-	move.l	a0,-(sp)
-	move.l	4(sp),a0
-	sub.l	T_EcVect(a5),a0
-	subq.l	#4,a0
-	add.l	Old_EcVect(pc),a0
-	move.l	a0,4(sp)
-	move.l	(sp)+,a0
-	rts
-;	Appelle puis restore les ecrans
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-TT_WPatch1
-	move.l	(sp)+,a0
-	sub.l	T_EcVect(a5),a0
-	subq.l	#4,a0
-	add.l	Old_EcVect(pc),a0
-	jsr	(a0)
-; Routine: met les deux en premier...
-Tt_first
-	movem.l	a0-a6/d0-d7,-(sp)
-	move.l	Old_EcVect(pc),a0	* Ecran Tutor1
-	moveq	#Tt_Ecran1,d1
-	jsr	First*4(a0)
-	move.l	Old_EcVect(pc),a0	* Ecran Tutor2
-	moveq	#Tt_Ecran2,d1
-	jsr	First*4(a0)
-	move.l	Old_EcVect(pc),a0	* Ecran FSEL
-	moveq	#EcFsel,d1
-	jsr	First*4(a0)
-	move.l	Old_EcVect(pc),a0	* Ecran Requester
-	moveq	#EcReq,d1
-	jsr	First*4(a0)
-	movem.l	(sp)+,a0-a6/d0-d7
-	tst.l	d0
-	rts
-;	Patch pour CREATION ecran
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-TT_WPatchC
-; Appelle
-	move.l	(sp)+,a0
-	sub.l	T_EcVect(a5),a0
-	subq.l	#4,a0
-	add.l	Old_EcVect(pc),a0
-	jsr	(a0)
-	bne.s	.Err
-; Change les tables du TUTOR
-	movem.l	a0/a1/d0/d1,-(sp)
-	move.w	EcNumber(a0),d1
-	cmp.w	#8,d1
-	bcc.s	.skuo
-	lsl.w	#3,d1
-	move.l	Mon_Base(a5),a1
-	lea	ViewScrols(a1),a1
-	add.w	d1,a1
-	clr.l	(a1)
-	move.w	EcTx(a0),4(a1)
-	move.w	EcTy(a0),d0
-	tst.w	EcCon0(a0)
-	bmi.s	.skip
-	lsr.w	#1,d0
-.skip	move.w	d0,6(a1)
-.skuo	movem.l	(sp)+,a0/a1/d0/d1
-; Ok!
-.Err	tst.w	d0
-	rts
-
-;	Patch des fonctions W systeme
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-SyIn:	bsr 	TT_SPatch	ClInky		;0
-	bsr	TT_SPatch	ClVide		;1
-	bsr 	TT_SPatch	ClSh		;2
-	bsr	TT_SPatch	ClInst		;3
-	bsr	TT_SPatch	ClKeyM		;4
-	bsr	TT_SPatch	ClJoy		;5
-	bsr	TT_SPatch	ClPutK		;6
-	bsr	TT_SPatch	MHide		;7
-	bsr	TT_SPatch	MShow		;8
-	bsr	TT_SPatch	MChange		;9 - ChMouse
-	bsr	TT_SPatch	MXy		;10- XY Mouse
-	bsr	TT_SPatch	CXyHard		;11- Conversion SCREEN-> HARD
-	bsr	TT_SXyScr	CXyScr		;12- Conversion HARD-> SCREEN
-	bsr	TT_SPatch	MBout		;13
-	bsr	TT_SPatch	MSetAb		;14
-	bsr	TT_SGSIn	GetSIn		;15- Get screen IN
-	bsr	TT_SPatch	CXyWi		;16- Conversion SCREEN-> WINDOW courante
-	bsr	TT_SPatch	MLimA		;17- Limit mouse
-	bsr	TT_SZoHd	SyZoHd		;18- Zone coordonnees HARD
-	bsr	TT_SPatch	SyResZ		;19- Reserve des zones
-	bsr	TT_SPatch	SyRazZ		;20- Effacement zones
-	bsr	TT_SPatch	SySetZ		;21- Set zone
-	bsr	TT_SPatch	SyMouZ		;22- Zone souris!
-	bsr	TT_SPatch	WVbl		;23
-	bsr	TT_SPatch	HsSet		;24- Affiche un hard sprite
-	bsr	TT_SPatch	HsUSet		;25- Efface un hard sprite
-	bsr	TT_SPatch	ClFFk		;26
-	bsr	TT_SPatch	ClGFFk		;27
-	bsr	TT_SPatch	HsAff		;28- Recalcule les hard sprites
-	bsr	TT_SPatch	HsBank		;29- Fixe la banque de sprites
-	bsr	TT_SPatch	HsNXYA		;30- Instruction sprite
-	bsr	TT_SPatch	HsXOff		;31- Sprite off n
-	bsr	TT_SPatch	HsOff		;32- All sprite off
-	bsr	TT_SPatch	HsAct		;33- Actualisation HSprite
-	bsr	TT_SPatch	HsSBuf		;34- Set nombre de lignes
-	bsr	TT_SPatch	HsStAct		;35- Arrete les HS sans deasctiver!
-	bsr	TT_SPatch	HsReAct		;36- Re-Active tous!
-	bsr	TT_SPatch	MStore		;37- Stocke etat souris / Show on
-	bsr	TT_SPatch	MRecall		;38- Remet la souris
-	bsr	TT_SPatch	HsPri		;39- Priorites SPRITES/PLAYFIELD
-	bsr	TT_SPatch	TokAMAL		;40- Tokenise AMAL
-	bsr	TT_SPatch	CreAMAL		;41- Demarre AMAL
-	bsr	TT_SPatch	MvOAMAL		;42- On/Off/Freeze AMAL
-	bsr	TT_SPatch	DAllAMAL	;43- Enleve TOUT!
-	bsr	TT_SPatch	Animeur		;44- Un coup d'animation
-	bsr	TT_SPatch	RegAMAL		;45- Registre!
-	bsr	TT_SPatch	ClrAMAL		;46- Clear
-	bsr	TT_SPatch	FrzAMAL		;47- FREEZE all
-	bsr	TT_SPatch	UFrzAMAL	;48- UNFREEZE all
-	bsr	TT_SPatch	BobSet		;49- Entree set bob
-	bsr	TT_SPatch	BobOff		;50- Arret bob
-	bsr	TT_SPatch	BobSOff		;51- Arret tous bobs
-	bsr 	TT_SPatch	BobAct		;52- Actualisation bobs
-	bsr	TT_SPatch	BobAff		;53- Affichage bobs
-	bsr	TT_SPatch	BobEff		;54- Effacement bobs
-	bsr	TT_SPatch	ChipMM		;55- Reserve CHIP
-	bsr	TT_SPatch	FastMM		;56- Reserve FAST
-	bsr	TT_SPatch	BobLim		;57- Limite bobs!
-	bsr	TT_SPatch	SyZoGr		;58- Zone coord graphiques
-	bsr	TT_SPatch	GetBob		;59- Saisie graphique
-	bsr	TT_SPatch	Masque		;60- Calcul du masque
-	bsr	TT_SPatch	SpotH		;61- Fixe le point chaud
-	bsr	TT_SPatch	BbColl		;62- Collisions bob
-	bsr	TT_SPatch	GetCol		;63- Fonction collision
-	bsr	TT_SPatch	SpColl		;64- Collisions sprites
-	bsr	TT_SPatch	SyncO		;65- Synchro on/off
-	bsr	TT_SPatch	Sync		;66- Synchro step
-	bsr	TT_SPatch	SetPlay		;67- Set play direction...
-	bsr	TT_SPatch	BobXY		;68- Get XY Bob
-	bsr	TT_SPatch	HsXY		;69- Get XY Sprite
-	bsr	TT_SPatch	BobPut		;70- Put Bob!
-	bsr	TT_SPatch	TPatch		;71- Patch icon/bob!
-	bsr	TT_SPatch	MRout		;72- Souris relachee
-	bsr	TT_SPatch	MLimEc		;73- Limit mouse ecran
-	bsr	TT_SPatch	FreeMM		;74- Libere mem
-	bsr	TT_SPatch	HColSet		;75- Set HardCol
-	bsr	TT_SPatch	HColGet		;76- Get HardCol
-	bsr	TT_SPatch	TMovon		;77- Movon!
-	bsr	TT_SPatch	TKSpeed		;78- Key speed
-	bsr	TT_SPatch	TChanA		;79- =ChanAn
-	bsr	TT_SPatch	TChanM		;80- =ChanMv
-	bsr	TT_SPatch	TPrio		;81- Set priority
-	bsr	TT_SPatch	TGetDisc	;82- State of disc drive
-	bsr	TT_SPatch	Add_VBL		;83- Restart VBL
-	bsr	TT_SPatch	Rem_VBL		;84- Stop VBL
-	bsr	TT_SPatch	ClKwait		;85- Une touche en attente?
-	bsr	TT_SPatch	WMouScrFront	;86- Coordonnees souris devant ILLEGAL
-	bsr	TT_SPatch	WMemReserve	;87- (P) Reservation memoire secure
-	bsr	TT_SPatch	WMemFree	;88- (P) Liberation memoire secure
-	bsr	TT_SPatch	WMemCheck	;89- (P) Verification memoire
-	bsr	TT_SPatch	WMemFastClear	;90- (P)
-	bsr	TT_SPatch	WMemChipClear	;91-
-	bsr	TT_SPatch	WMemFast	;92-
-	bsr	TT_SPatch	WMemChip	;93-
-	bsr	TT_SPatch			;94-
-	bsr	TT_SPatch			;95-
-	bsr	TT_SPatch			;96-
-	bsr	TT_SPatch			;97-
-	bsr	TT_SPatch			;98-
-	bsr	TT_SPatch			;99-
-	bsr	TT_SPatch			;100-
-
-
-;	Patch systeme normal...
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-TT_SPatch
-	move.l	a0,-(sp)
-	move.l	4(sp),a0
-	sub.l	T_SyVect(a5),a0
-	subq.l	#4,a0
-	add.l	Old_SyVect(pc),a0
-	move.l	a0,4(sp)
-	move.l	(sp)+,a0
-	rts
-;	Patch fonction XyScr
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~
-TT_SXyScr
-	bsr	TT_SHere
-	bne	TT_SPatch
-	move.l	a4,(sp)
-	move.l	Mon_Base(a5),a4
-	bsr	TT_Hard2Screen
-	movem.l	(sp)+,a4
-	bpl.s	.Skip
-	moveq	#0,d1
-	moveq	#0,d2
-.Skip	moveq	#0,d0
-	rts
-;	Patch fonction Zone Hard
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-TT_SZoHd
-	bsr	TT_SHere
-	bne	TT_SPatch
-	move.l	a4,(sp)
-	move.l	Mon_Base(a5),a4
-	bsr	TT_Hard2Screen
-	move.l	(sp)+,a4
-	bmi.s	.Out
-	moveq	#8,d5
-	move.l	Old_SyVect(pc),a0
-	jsr	ZoGr*4(a0)
-.Skip	rts
-.Out	moveq	#0,d1
-	moveq	#0,d0
-	rts
-;	Patch fonction GetSCin
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-TT_SGSIn
-	bsr	TT_SHere
-	bne	TT_SPatch
-	move.l	a4,(sp)
-	move.l	Mon_Base(a5),a4
-	bsr	TT_EcIn
-	bmi.s	.Out
-	lsl.w	#2,d0
-	lea	T_EcAdr(a5),a1
-	move.l	0(a1,d0.w),d0
-	beq.s	.Out
-	move.l	d0,a1
-	bsr	XY2Ec
-	bmi.s	.Out
-	cmp.w	EcTx(a1),d1
-	bcc.s	.Out
-	cmp.w	EcTy(a1),d2
-	bcc.s	.Out
-	moveq	#0,d1
-	move.w	EcNumber(a1),d1
-	move.l	(sp)+,a4
-	moveq	#0,d0
-	rts
-.Out	move.l	#EntNul,d1
-	move.l	(sp)+,a4
-	moveq	#0,d0
-	rts
-
-;;	Boutons de la souris, uniquement dans le petit ecran
-;; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-;TT_SMBout
-;	move.l	Old_SyVect(pc),a0
-;	jsr	MouseKey*4(a0)
-;	tst.b	d1
-;	beq.s	.Skip
-;	bsr	TT_SHere
-;	bne.s	.Skip
-;	movem.l	d2-d7/a1-a2,-(sp)
-;	move.w	d1,-(sp)
-;	move.l	d2,d7
-;	move.l	Old_SyVect(pc),a0
-;	jsr	XyMou*4(a0)
-;	bsr	TT_EcIn
-;	cmp.l	#$01234567,d7
-;	beq.s	.Mon
-;; Demande de la part du programme: uniquement DANS l'ecran
-;	tst.l	d0
-;	bmi.s	.Non
-;	bra.s	.Oui
-;; Demande de la part du moniteur: uniquement en dehors de l'ecran, si RUN
-;.Mon	tst.l	d0
-;	bmi.s	.Oui
-;	move.l	Mon_Base(a5),a0
-;	tst.w	Step_Mode(a0)
-;	beq.s	.Oui
-;.Non	clr.w	(sp)
-;.Oui	move.w	(sp)+,d1
-;	movem.l	(sp)+,d2-d7/a1-a2
-;.Skip	rts
-
-;	Conversion coordonnÃÂÃÂÃÂÃÂ¯ÃÂÃÂÃÂÃÂ¿ÃÂÃÂÃÂÃÂ½es hard (d1/d2/d3) -> coordonnÃÂÃÂÃÂÃÂ¯ÃÂÃÂÃÂÃÂ¿ÃÂÃÂÃÂÃÂ½es ecran
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-TT_Hard2Screen
-	bsr	TT_EcToA1
-	bmi.s	.Out
-	move.l	a0,a1
-	bsr	TT_EcIn
-	bmi.s	.Out
-	move.w	EcNumber(a1),d3
-	addq.w	#1,d3
-	cmp.w	EcNumber(a1),d0
-	beq.s	XY2Ec
-.Out	moveq	#-1,d0
-	rts
-;	Converti D1/D2 en coord dans l'ecran A1
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-XY2Ec	movem.w	d1-d3,-(sp)
-	bsr	View_ScAd
-	movem.w	(sp)+,d1-d3
-	add.w	(a0)+,d1
-	add.w	(a0)+,d2
-; Si lowres, multiplie par 2 en Y
-	btst	#7,EcCon0(a1)
-	bne.s	.Hires
-	lsl.w	#1,d2
-.Hires
-	moveq	#0,d0
-	rts
-
-;	Trouve l'ÃÂÃÂÃÂÃÂ¯ÃÂÃÂÃÂÃÂ¿ÃÂÃÂÃÂÃÂ½cran sous les coordonnees hard...
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-;	D1/D2= X/Y HARD
-;	D3= 1er ecran
-;	D4= Ecran MAX
-TT_EcIn	movem.l	a0/d3,-(sp)
-	move.w	d2,-(sp)
-	move.w	d1,-(sp)
-	moveq	#Tt_Ecran1+1,d3
-	move.l	Old_SyVect(pc),a0
-	jsr	XyScr*4(a0)
-	tst.w	(sp)
-	beq.s	.Skip1
-	sub.w	#RedX,d1
-	bmi.s	.Pas
-	cmp.w	#RedTX,d1
-	bcc.s	.Pas
-.Skip1	tst.w	2(sp)
-	beq.s	.Ok
-	sub.w	#RedY,d2
-	bmi.s	.Pas
-	cmp.w	#RedTY,d2
-	bcc.s	.Pas
-; Dans le petit ecran...
-.Ok	moveq	#0,d0
-	move.w	Tt_View(a4),d0
-	bpl.s	.In
-.Pas	moveq	#-1,d0
-.In	addq.l	#4,sp
-	movem.l	(sp)+,a0/d3
-	rts
-
-;	Ecrans D3
-; ~~~~~~~~~~~~~~~
-;	<0	=> Rien du tout
-;	0	=> Ecran courant
-;	>0	=> Ecran+1
-TT_EcToA1
-	tst.w	d3
-	bmi.s	EcToD4
-	bne.s	EcToD2
-	move.l	T_EcCourant(a5),a0
-	rts
-EcToD2:	lsl.w	#2,d3
-	lea	T_EcAdr(a5),a0
-	move.l	-4(a0,d3.w),d3
-	beq.s	EcToD3
-	move.l	d3,a0
-	rts
-EcToD3:	addq.l	#4,sp
-	moveq	#3,d0
-	rts
-EcToD4:	moveq	#-1,d0
-	rts
-
-;	Retourne BNE si l'ecran du tuteur n'est pas la
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-TT_SHere
-	movem.l	a0/d0/d1,-(sp)
-	moveq	#1,d1
-	move.l	Mon_Base(a5),a0
-	tst.b	Tt_NotHere(a0)
-	bne.s	.Out
-	move.l	T_EcCourant(a5),d0
-	beq.s	.Out
-	move.l	d0,a0
-	move.w	EcNumber(a0),d0
-	cmp.w	#8,d0
-	bcc.s	.Out
-	moveq	#0,d1
-.Out	tst.w	d1
-	movem.l	(sp)+,a0/d0/d1
-	rts
+; The patches on AMOS.library (Set_WPatch, EcIn, SyIn): monitor/patch.cpp
 
 ; ___________________________________________________________________
 ;
@@ -937,6 +409,8 @@ Tt_Testing
 	bra	Tt_Tst3
 ; Enleve le message de test
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~
+		xdef	_mon_test_nothing
+_mon_test_nothing
 Tt_Tst1	rts
 Tt_Tst2	jmp	_mon_tested_entry
 Tt_Tst3	rts
@@ -1157,6 +631,8 @@ Tt_ReEv	move.l	sp,Tt_EvPile(a4)	Position pile en cas de menage
 	rts
 ;	En cas d'erreurs d'evaluation
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		xdef	_mon_ev_error
+_mon_ev_error
 Tt_EvError
 	move.l	Mon_Base(a5),a4
 	move.l	Tt_EvPile(a4),sp
@@ -1170,6 +646,8 @@ Tt_EvError
 	rts
 ;	En cas de menage
 ; ~~~~~~~~~~~~~~~~~~~~~~
+		xdef	_mon_menage
+_mon_menage
 Tt_Menage
 	move.l	Mon_Base(a5),a4
 	move.l	Tt_EvPile(a4),sp
@@ -1214,57 +692,15 @@ Ttt_DelAff	jmp	_mon_delete_show_entry
 View_Aff	jmp	_mon_view_show_entry
 View_Ec	jmp	_mon_view_next_entry
 
-;	Trouve l'adresse des positions de scrolling.
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-;	D1->	A0
-View_ScAd
-	move.w	Tt_View(a4),d0
-	bmi.s	.no
-	lsl.w	#3,d0
-	lea	ViewScrols(a4),a0
-	add.w	d0,a0
-	moveq	#0,d0
-	rts
-.no	moveq	#-1,d0
-	rts
 ;	Calcule la table lors d'init!
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 View_ScUpdate	jmp	_mon_view_sizes_entry
 
-;	Routine d'interruption, recopie la palette...
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-		xdef	_mon_view_inter
-_mon_view_inter
-View_Inter
-	move.l	Mon_Base(a5),a0
-	move.w	Tt_View(a0),d2
-	bmi.s	.skip
-	lsl.w	#2,d2
-	lea	T_EcAdr(a5),a0
-	move.l	0(a0,d2.w),d0
-	beq.s	.skip
-	move.l	d0,a2
-	lea	EcPal(a2),a2
-	move.l	Tt_Ecran1*4(a0),a1
-	lea	EcPal(a1),a1
-	move.l	T_CopMark+Tt_Ecran1*128(a5),d0
-	beq.s	.skip
-	move.l	d0,a0
-	addq.l	#2,a0
-	moveq	#11-1,d0
-.loop	move.w	(a2),(a0)
-	addq.l	#4,a0
-	move.w	(a2)+,(a1)+
-	dbra	d0,.loop
-.skip	rts
+; View_Inter: monitor/view.cpp (mon_view_inter)
 
 
 ;	Activation de l'ecran de texte
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ttt_Act	moveq	#Tt_Ecran2,d1
-	bra	Tt_EcAct
-View_Act
-	moveq	#Tt_Ecran1,d1
 Tt_EcAct	jmp	_mon_activate_entry
 
 ;	CLS de l'ÃÂÃÂÃÂÃÂ¯ÃÂÃÂÃÂÃÂ¿ÃÂÃÂÃÂÃÂ½cran de zoom
@@ -1292,21 +728,12 @@ Tt_Message	jmp	_mon_message_entry
 Wmky	jmp	_mon_wait_release_entry
 ; 	Entree souris moniteur
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Tt_MBout
-	SyCall	MouseKey
-	rts
 
 ;	XY Mouse dans l'ecran courant
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-XYMouEc	SyCall	XyMou
-	moveq	#0,d3
-	SyCall	XyScr
-	rts
 
 ; 	Attente multitache
 ; ~~~~~~~~~~~~~~~~~~~~~~~~
-Tt_Multi
-	JJmp	L_Sys_WaitMul
 
 ; 	Banques de mÃÂÃÂÃÂÃÂ¯ÃÂÃÂÃÂÃÂ¿ÃÂÃÂÃÂÃÂ½moire/dialogue du moniteur
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1315,9 +742,6 @@ Tt_PrgBanks	jmp	_mon_banks_program_entry
 
 ;		Donnees tutor
 		Even
-* Ancien vecteur ECRANS
-Old_EcVect	dc.l	0
-Old_SyVect	dc.l	0
 * Textes fenetre listing
 		xdef	_mon_window_init
 _mon_window_init

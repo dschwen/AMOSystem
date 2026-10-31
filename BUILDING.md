@@ -254,7 +254,11 @@ with `src/host` and no assembler:
   `build/` and boxes replace the characters without one).
 
 `build/host/amos` starts the editor in `build/dist/AMOS`; with a program
-as its argument (`AMOSPRO:...`, `AMOSTEST:...`) it runs that.
+as its argument (`AMOSPRO:...`, `AMOSTEST:...`) it runs that. The
+monitor needs `APSystem/AMOSPro_Monitor_Resource.Abk`, which is not in
+the sources (copy it from an installed AMOS Pro). Its stack-resetting
+entries (MonitorChr, Step_Out, Tt_Error, QUIT, the evaluator's error
+exits) are `src/host/monitor.cpp` on the host.
 `tests/host_run.py` runs the text tests of `tests/run.py` with it (editor
 and input tests are left out). The environment:
 

@@ -20,6 +20,13 @@ uint32_t lib_tk_find_line(RegFrame *r)
     return uint32_t(int32_t(int16_t(first)));
 }
 
+// Tk_FindN: the first line
+uint32_t lib_tk_find_first(RegFrame *r)
+{
+    r->d[0] = 1;
+    return lib_tk_find_line(r);
+}
+
 // Tk_SizeL: d0 the size of the line at a0
 uint32_t lib_tk_size_line(RegFrame *r)
 {

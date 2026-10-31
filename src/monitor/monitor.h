@@ -64,6 +64,10 @@ void mode_set(uint16_t mode);                       // Tt_SHelp / Tt_SBreak / Tt
 void view_erase();                                  // View_Cls
 void screens_refresh();                             // TtReCop
 void view_reset();                                  // View_ScUpdate
+extern uint32_t view_data_zone;                     // (a5, for View_Inter)
+
+// monitor/patch.cpp
+void patches(bool on);                              // Set_WPatch / Del_WPatch
 
 // monitor/help.cpp
 void run_help(uint16_t x, uint16_t y, uint16_t row);

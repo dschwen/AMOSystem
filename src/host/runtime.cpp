@@ -7,10 +7,10 @@
 
 #include "host/host.h"
 #include "host/glue.h"
+#include "host/runtime.h"
 #include "interp/interp.h"
 #include "hal/chips.h"
 
-#include <setjmp.h>
 #include <stdlib.h>
 
 using namespace amos;
@@ -19,45 +19,6 @@ using namespace amos::host;
 namespace amos::host {
 
 void display_save(const char *path);
-
-// A point of the stack to come back to: Run its target there (the stack
-// above it given up), or Return the registers to the code that made it
-struct Mark {
-    jmp_buf jb;
-    const void *target;         // the entry to run, then
-    const void *then;           // the entry run after it (its return)
-    void (*fn)();               // or this C++ (the context its registers)
-    void (*regs_fn)(AllRegs &); // or this C++, with all the registers
-    AllRegs regs;
-};
-
-namespace {
-
-enum { Run = 1, Return = 2 };
-
-AllRegs context_regs()
-{
-    const Ctx &c = ctx();
-    AllRegs r = {};
-    r.d[6] = c.d6;
-    r.d[7] = c.d7;
-    r.a[3] = address(c.a3);
-    r.a[4] = address(c.a4);
-    r.a[5] = address(c.a5);
-    r.a[6] = address(c.a6);
-    return r;
-}
-
-void to_context(const AllRegs &r)
-{
-    Ctx &c = ctx();
-    c.d6 = r.d[6];
-    c.d7 = r.d[7];
-    c.a3 = ptr<uint8_t>(r.a[3]);
-    c.a4 = ptr<uint8_t>(r.a[4]);
-    c.a5 = ptr<uint8_t>(r.a[5]);
-    c.a6 = ptr<uint8_t>(r.a[6]);
-}
 
 // What runs at a mark: its target (then what follows it), or its C++
 void run_at(Mark &m)
@@ -77,25 +38,7 @@ void run_at(Mark &m)
     m.regs = r;
 }
 
-} // namespace
-
-// The mark m set here: first(m) runs; a jump to the mark runs its target
-// there; a return (or the end of what ran) gives the registers back
-template <typename F> AllRegs mark_run(Mark &m, F first)
-{
-    switch (setjmp(m.jb)) {
-    case 0:
-        first();
-        return m.regs;
-    case Run:
-        run_at(m);
-        return m.regs;
-    default:
-        return m.regs;
-    }
-}
-
-[[noreturn]] void mark_jump(uint32_t mark, const void *target, const AllRegs &r, const void *then = nullptr)
+[[noreturn]] void mark_jump(uint32_t mark, const void *target, const AllRegs &r, const void *then)
 {
     Mark &m = *ptr<Mark>(mark);
     m.target = target;
@@ -103,7 +46,7 @@ template <typename F> AllRegs mark_run(Mark &m, F first)
     m.fn = nullptr;
     m.regs_fn = nullptr;
     m.regs = r;
-    longjmp(m.jb, Run);
+    longjmp(m.jb, MarkRun);
 }
 
 [[noreturn]] void mark_jump_regs(uint32_t mark, void (*fn)(AllRegs &), const AllRegs &r)
@@ -113,7 +56,7 @@ template <typename F> AllRegs mark_run(Mark &m, F first)
     m.fn = nullptr;
     m.regs_fn = fn;
     m.regs = r;
-    longjmp(m.jb, Run);
+    longjmp(m.jb, MarkRun);
 }
 
 [[noreturn]] void mark_jump_cpp(uint32_t mark, void (*fn)(), const AllRegs &r)
@@ -123,14 +66,14 @@ template <typename F> AllRegs mark_run(Mark &m, F first)
     m.fn = fn;
     m.regs_fn = nullptr;
     m.regs = r;
-    longjmp(m.jb, Run);
+    longjmp(m.jb, MarkRun);
 }
 
 [[noreturn]] void mark_return(uint32_t mark, const AllRegs &r)
 {
     Mark &m = *ptr<Mark>(mark);
     m.regs = r;
-    longjmp(m.jb, Return);
+    longjmp(m.jb, MarkReturn);
 }
 
 // The interpreter's base stack (BasSp), for the start: start() runs on it

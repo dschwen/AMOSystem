@@ -13,7 +13,8 @@ using namespace amos;
 using namespace amos::monitor;
 
 // +Monitor.s
-extern "C" uint8_t mon_dbl[], mon_view_inter[], mon_screen_front[], mon_set_wpatch[], mon_del_wpatch[],
+extern "C" void mon_view_inter();
+extern "C" uint8_t mon_dbl[], mon_screen_front[],
     mon_tests_patch_entry[], mon_screen_copy_entry[], mon_window_init[];
 
 namespace {
@@ -78,8 +79,7 @@ void free_all()
     if (!d.Mon_Base)
         return;
     MonData &m = mon();
-    Regs w;
-    call(mon_del_wpatch, w);
+    patches(false);
     Regs c;
     c.d[0] = 0;
     lib_call(L_SetChrPatch, c);
@@ -223,10 +223,10 @@ bool cold_start(uint32_t program)
     c.d[0] = L_Mon_MonitorChr;
     lib_call(L_SetChrPatch, c);
     m.Tt_JError = d.Prg_JError;
-    Regs w;
-    call(mon_set_wpatch, w);
+    patches(true);
     for (be_u32 *v = d.VblRout;; v++)
         if (!*v) {
+            view_data_zone = address(ctx().a5);
             *v = address(mon_view_inter);
             break;
         }

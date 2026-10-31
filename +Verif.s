@@ -140,7 +140,7 @@ Prg_Save	jmp	_ver_prg_save_entry
 ;	Debut Proc >>>		A1
 ; Tk_FindN / Tk_FindL, Tk_SizeL, Tk_EditL, Tk_FindA: src/core/source.cpp
 Tk_FindN
-	moveq	#1,d0
+	jmp	_tk_find_first
 Tk_FindL
 	jmp	_tk_find_line
 Tk_SizeL
