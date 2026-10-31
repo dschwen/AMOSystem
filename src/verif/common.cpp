@@ -6,7 +6,7 @@ using namespace amos;
 
 extern "C" {
 // the glue of the verifier's parts (verif/*_glue.s)
-extern uint8_t ver_tables_run_entry[], ver_free_tables_entry[], ver_prg_pull_entry[];
+
 uint32_t lib_d_close(RegFrame &);
 [[noreturn]] void interp_jump(const Regs *r, const void *fn);
 }

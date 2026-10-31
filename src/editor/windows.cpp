@@ -16,10 +16,7 @@ using namespace amos;
 using namespace amos::ed;
 
 // +Edit.s
-extern "C" uint8_t ed_all_aver_fin[], ed_unpack[], ed_enlarge[], ed_status_print[], ed_slider_routines[],
-    ed_button_routines[], ed_new[], ed_new_window[], ed_do_quit[], ed_too_many_windows[],
-    ed_out_of_memory[], ed_no_hide[], ed_not_done[], ed_branch_amos[], ed_menu_program[], ed_saved[], ed_warn[],
-    ed_aver_fin[], ed_get_systeme[], ed_undo_create_entry[], ed_cursor_normal[], ed_sl_update_y[], ed_loop[];
+
 
 namespace {
 

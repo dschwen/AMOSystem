@@ -45,10 +45,8 @@ uint8_t *lst_new(be_u32 *list, uint32_t length);
 void lst_del(be_u32 *list, uint8_t *element);
 }
 // fsel_glue (dialog_glue.s)
-extern "C" uint8_t lib_fs_flush_record[], lib_fs_end_record[];
+
 extern "C" void lib_fs_task_entry();
-extern "C" void lib_fs_error_patch();
-extern "C" void lib_fs_get_name();
 extern "C" uint32_t lib_fs_task_a5;
 
 namespace {

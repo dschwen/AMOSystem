@@ -16,9 +16,9 @@ using namespace amos::boot;
 
 extern "C" {
 // main_glue.s: where a program's error goes without the editor
-extern uint8_t main_run_error_run_only[], main_run_error_no_editor[];
+
 // The entry tables of the editor and the monitor (+Edit.s, +Monitor.s)
-extern const uint8_t ed_debut[], mon_debut[];
+
 [[noreturn]] void interp_jump(const Regs *r, const void *fn);
 }
 

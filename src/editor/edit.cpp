@@ -11,7 +11,7 @@ using namespace amos;
 using namespace amos::ed;
 
 // +Edit.s
-extern "C" uint8_t ed_not_edit[], ed_l_to_long[], ed_oof_buf[], ed_sam_play[];
+
 
 namespace {
 

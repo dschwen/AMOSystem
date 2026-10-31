@@ -16,7 +16,7 @@ using namespace amos;
 using namespace amos::monitor;
 
 // +Monitor.s
-extern "C" uint8_t mon_split_hook[];
+
 
 namespace {
 

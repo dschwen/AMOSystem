@@ -9,9 +9,7 @@ using namespace amos;
 using namespace amos::ed;
 
 // +Edit.s
-extern "C" uint8_t ed_not_done[], ed_not_done2[], ed_out_of_memory[], ed_menu_program[], ed_clear_var[],
-    ed_save_it_entry[], ed_undo_create_entry[], ed_marks_clear_entry[], ed_open_shown_window_entry[],
-    ed_load_entry[];
+
 
 namespace {
 

@@ -21,7 +21,7 @@ using namespace amos;
 
 extern "C" void w_vbl(uint8_t *data);
 extern "C" uint16_t host_chip_read(uint32_t offset);
-extern "C" uint8_t w_input[];
+
 extern "C" uint32_t amos_w_base;      // +W.s W_Base (runtime/hand.cpp)
 
 namespace {

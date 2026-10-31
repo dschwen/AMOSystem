@@ -17,7 +17,7 @@
 
 // The records that close the libraries and devices when the program is
 // cleared (dos_glue.s)
-extern "C" uint8_t lib_close_libs_on_clear[], lib_close_devs_on_clear[];
+
 
 using namespace amos;
 

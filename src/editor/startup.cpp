@@ -17,13 +17,7 @@ using namespace amos;
 using namespace amos::ed;
 
 // +Edit.s
-extern "C" uint8_t ed_system[], ed_menu_program[], ed_menus_editor_entry[], ed_config_set_palette_entry[],
-    ed_max_size_entry[], ed_shrink_all_entry[], ed_status_text_entry[], ed_dialogues_open_entry[],
-    ed_dialogues_close_entry[], ed_undo_create_all_entry[], ed_undo_free_all_entry[], ed_escape_forget_all_entry[],
-    ed_block_free_entry[], ed_menus_end_entry[], ed_delete_all_zones_entry[], ed_delete_windows_entry[],
-    ed_config_load_entry[], ed_resource_load_entry[], ed_macro_load_entry[], ed_sounds_changed_entry[],
-    ed_sounds_end_entry[], ed_macros_free_entry[], ed_config_free_entry[], ed_resource_free_entry[],
-    ed_appear[], ed_warm_start_entry[], ed_about_entry[], ed_get_systeme[], ed_button_routines[];
+
 
 namespace {
 

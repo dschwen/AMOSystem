@@ -12,7 +12,7 @@
 
 // The records that close the current file when the program stops on an
 // error or is cleared (Sys_ErrorRoutines / Sys_ClearRoutines), in dos_glue.s
-extern "C" uint8_t lib_close_on_error[], lib_close_on_clear[];
+
 
 namespace amos {
 

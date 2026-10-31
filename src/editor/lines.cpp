@@ -13,7 +13,7 @@ using namespace amos;
 using namespace amos::ed;
 
 // +Edit.s
-extern "C" uint8_t ed_sam_play[], ed_not_edit[], ed_l_to_long[];
+
 
 namespace {
 

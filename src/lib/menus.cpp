@@ -37,7 +37,7 @@ using namespace amos::menu;
 using EcScreen = amos::Screen;
 
 // menus_glue.s
-extern "C" uint8_t lib_menu_on_clear[], lib_menu_on_default[], lib_menu_on_error[];
+
 extern "C" uint32_t mn_call_procedure(const void *fn, const Ctx *regs, be_u32 *pile, const uint8_t *name);
 
 namespace {

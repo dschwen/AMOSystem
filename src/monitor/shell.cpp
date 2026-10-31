@@ -13,8 +13,8 @@ using namespace amos::monitor;
 extern "C" {
 // +Monitor.s: the routines of the buttons 1-16 of the view screen, and
 // of the zones of the text screen (1-3) and of its dialogue (1-4)
-extern const be_u32 mon_keys[16];
-extern const be_u32 mon_text_zones[7];
+
+
 // A routine of the monitor called with its registers (a3 the program, a4
 // the monitor's data); true if it answered "not equal"
 int32_t mon_dispatch(const void *routine, uint32_t d0, uint32_t d1);
@@ -25,7 +25,7 @@ int32_t mon_dispatch(const void *routine, uint32_t d0, uint32_t d1);
 [[noreturn]] void mon_step_out2();
 [[noreturn]] void mon_quit_back(uint32_t data);
 // Entries of the monitor's routines
-extern uint8_t mon_no_init_entry[], mon_free_entry[], mon_error[], mon_testing[];
+
 }
 
 namespace {
@@ -72,7 +72,7 @@ void dialogue_zones()
     if (!n || n > 4)
         return;
     activate_text();
-    mon_dispatch(ptr<void>(mon_text_zones[3 + n - 1]), g.d[0], (g.d[1] & 0xFFFF0000u) | uint16_t(n << 2));
+    mon_dispatch(ptr<void>(peek_l(mon_text_zones + 4 * (3 + n - 1))), g.d[0], (g.d[1] & 0xFFFF0000u) | uint16_t(n << 2));
 }
 
 } // namespace
@@ -119,7 +119,7 @@ extern "C" {
                 // the text screen's zones
                 if (n && n <= 7) {
                     activate_text();
-                    mon_dispatch(ptr<void>(mon_text_zones[n - 1]), 0, uint32_t(n - 1) << 2);
+                    mon_dispatch(ptr<void>(peek_l(mon_text_zones + 4 * (n - 1))), 0, uint32_t(n - 1) << 2);
                 }
                 break;
             }
@@ -136,7 +136,7 @@ extern "C" {
                 button_set(n, true);
                 d1 = 1;
             }
-            if (n > 16 || mon_dispatch(ptr<void>(mon_keys[n - 1]), uint32_t(n) << 2, d1))
+            if (n > 16 || mon_dispatch(ptr<void>(peek_l(mon_keys + 4 * (n - 1))), uint32_t(n) << 2, d1))
                 break;
         }
     }

@@ -19,7 +19,7 @@
 using namespace amos;
 
 // +Verif.s
-extern "C" uint8_t ver_program_test_entry[];
+
 
 namespace amos::verif {
 

@@ -36,6 +36,11 @@ namespace amos::host {
 
 int32_t native_call(const void *at, AllRegs &r) { return amiga_native_call(at, &r); }
 
+// The entries the host does with C++ (VblIn, IoHandler: the VBL server and the
+// input handler): here they are machine code, below, and these are never called
+void host_VblIn(AllRegs &) {}
+void host_IoHandler(AllRegs &) {}
+
 } // namespace amos::host
 
 // The file selector's task (lib/fsel.cpp): a5 its data zone
@@ -55,7 +60,7 @@ void w_auto_request(AllRegs *r);
 void w_easy_request(AllRegs *r);
 void ext_music_sami(void *s);
 extern uint32_t amos_w_base;
-extern uint32_t w_old_loadview[];
+
 }
 
 asm(R"(
@@ -161,8 +166,8 @@ _music_lvo:
 	rts
 
 | The VBL server (+W.s VblIn): a1 the data zone
-	.globl	_w_vbl_in
-_w_vbl_in:
+	.globl	_amiga_w_vbl_in
+_amiga_w_vbl_in:
 	movem.l	d2-d7/a2-a4,-(sp)
 	move.l	a1,-(sp)
 	jsr	_w_vbl
@@ -173,8 +178,8 @@ _w_vbl_in:
 	rts
 
 | The samples' audio interrupts (music_glue.s): a1 the voice's SampleInt
-	.globl	_music_sami_entry
-_music_sami_entry:
+	.globl	_amiga_music_sami_entry
+_amiga_music_sami_entry:
 	move.l	a1,-(sp)
 	jsr	_ext_music_sami
 	addq.l	#4,sp
@@ -193,8 +198,8 @@ _music_sami_entry:
 	rts
 
 | The input handler (+W.s IoHandler): a0 the events
-	.globl	_w_io_handler_entry
-_w_io_handler_entry:
+	.globl	_amiga_w_io_handler_entry
+_amiga_w_io_handler_entry:
 	move.l	a5,-(sp)
 	move.l	_amos_w_base,a5
 	pea	_w_io_handler
@@ -204,8 +209,8 @@ _w_io_handler_entry:
 	rts
 
 | AutoRequest and EasyRequest patched (+W.s AutoReq, EasyReq)
-	.globl	_w_auto_req_entry
-_w_auto_req_entry:
+	.globl	_amiga_w_auto_req_entry
+_amiga_w_auto_req_entry:
 	move.l	a5,-(sp)
 	move.l	_amos_w_base,a5
 	pea	_w_auto_request
@@ -214,8 +219,8 @@ _w_auto_req_entry:
 	move.l	(sp)+,a5
 	rts
 
-	.globl	_w_easy_req_entry
-_w_easy_req_entry:
+	.globl	_amiga_w_easy_req_entry
+_amiga_w_easy_req_entry:
 	move.l	a5,-(sp)
 	move.l	_amos_w_base,a5
 	pea	_w_easy_request
@@ -226,14 +231,19 @@ _w_easy_req_entry:
 
 | LoadView patched (+W.s AMOS_LoadView): nothing while AMOS is in front
 | (T_AMOSHere), else the system's
-	.globl	_w_amos_loadview
-_w_amos_loadview:
+	.globl	_amiga_w_amos_loadview
+_amiga_w_amos_loadview:
 	move.l	a0,-(sp)
 	move.l	_w_amos_here,a0
 	tst.b	(a0)
 	movem.l	(sp)+,a0
 	bne.s	.Llv_wb
-	move.l	_w_old_loadview,-(sp)
+	move.l	a0,-(sp)
+	move.l	_w_old_loadview,a0
+	move.l	(a0),-(sp)
+	move.l	4(sp),a0
+	move.l	(sp),4(sp)
+	addq.l	#4,sp
 .Llv_wb:
 	rts
 )");

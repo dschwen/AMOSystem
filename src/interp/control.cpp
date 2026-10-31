@@ -26,7 +26,7 @@ extern "C" {
 [[noreturn]] void interp_jump(const Regs *r, const void *fn);
 [[noreturn]] void interp_menu_return(uint32_t pile);
 // control_glue.s: the record of OMnEff for ClearVar
-extern uint8_t interp_omn_record[];
+
 // Next with floats (NextF): 1 stay in the loop
 uint32_t interp_next_float(uint8_t *var, uint32_t step, uint32_t limit, void *floatbase);
 }

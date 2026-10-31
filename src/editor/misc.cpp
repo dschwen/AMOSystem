@@ -17,8 +17,7 @@ using namespace amos;
 using namespace amos::ed;
 
 // +Edit.s
-extern "C" uint8_t ed_loop[], ed_out_of_memory[], ed_not_amos[], ed_zap_alert_entry[], ed_alert_clean_entry[],
-    ed_window_of_name_entry[], ed_close_window_entry[];
+
 
 namespace {
 

@@ -19,7 +19,7 @@ using namespace amos;
 using namespace amos::w;
 
 // +W.s: the palette (32 words) then the frame picture
-extern "C" uint8_t w_req_pal[];
+
 
 namespace {
 

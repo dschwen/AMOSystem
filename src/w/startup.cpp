@@ -31,9 +31,6 @@ using namespace amos::w;
 // +W.s and the glue of w/: the vector tables, the entries handed to the
 // system, the LoadView patch, the default font's special characters
 extern "C" uint32_t w_amos_here;       // (the patched LoadView tests T_AMOSHere there)
-extern "C" uint8_t w_sy_in[], w_ec_in[], w_wi_in[], w_io_handler_entry[], w_amos_loadview[], w_old_loadview[],
-    w_auto_req_entry[], w_easy_req_entry[], w_req_pal[], w_def_font[], w_gfx_base_var[], w_default_mouse[], w_amal_init[],
-    w_amal_end[], w_free_fonts[];
 
 namespace {
 
@@ -75,7 +72,7 @@ void requester_start(const be_u16 *palette)
 {
     WData &d = wdata();
     copy(w_req_pal + 8 * 2, palette + 8, 24 * 2);
-    uint32_t a = address(w_auto_req_entry), e = address(w_easy_req_entry);
+    uint32_t a = address(AMOS_ENTRY(w_auto_req_entry)), e = address(AMOS_ENTRY(w_easy_req_entry));
     set_requesters(a, e);
     d.PrevAuto = a;
     d.PrevEasy = e;
@@ -231,7 +228,7 @@ bool start(AllRegs *r)
     open_console();
     open_input(reinterpret_cast<uint8_t *>(input_request()));
     auto handler = input_interrupt();
-    handler->is_Code = reinterpret_cast<void (*)()>(w_io_handler_entry);
+    handler->is_Code = reinterpret_cast<void (*)()>(AMOS_ENTRY(w_io_handler_entry));
     handler->is_Data = nullptr;
     handler->is_Node.ln_Pri = 100;
     auto io = input_request();
@@ -254,7 +251,7 @@ bool start(AllRegs *r)
     // while AMOS is in front (it tests T_AMOSHere)
     if (d.WFlags & WFlagLoadView) {
         w_amos_here = address(&d.AMOSHere);
-        poke_l(w_old_loadview, hal::set_function(d.GfxBase, LVOLoadView, address(w_amos_loadview)));
+        poke_l(w_old_loadview, hal::set_function(d.GfxBase, LVOLoadView, address(AMOS_ENTRY(w_amos_loadview))));
         if (hal::os_version() >= 37)
             hal::clear_cache();
     }

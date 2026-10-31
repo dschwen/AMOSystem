@@ -21,7 +21,7 @@ using namespace amos;
 using namespace amos::boot;
 
 // +B.s: the user name and registration of the installation
-extern "C" const uint16_t main_user_reg[], main_user_name[];
+
 
 namespace {
 
@@ -32,7 +32,7 @@ char *name1() { return ptr<char>(idata().Name1); }
 
 // ResTempBuffer's records, to free the buffer when the program stops or is
 // cleared (main_glue.s)
-extern "C" uint8_t main_temp_on_clear[], main_temp_on_error[];
+
 
 void add_routine(uint8_t *record, be_u32 *list)
 {
@@ -285,7 +285,8 @@ void math_close()
 }
 
 // Sys_VerInstall: installed if there is a user name and a registration
-bool installed() { return main_user_name[0] && main_user_reg[0]; }
+// (the registration and the name begin with a length word)
+bool installed() { return peek_w(main_user_name) && peek_w(main_user_reg); }
 
 } // namespace amos::boot
 

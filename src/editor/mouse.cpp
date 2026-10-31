@@ -10,8 +10,7 @@ using namespace amos;
 using namespace amos::ed;
 
 // +Edit.s
-extern "C" uint8_t ed_macro_stop[], ed_menu[], ed_menu_error[], ed_function_call[],
-    ed_separation_top[], ed_separation_bottom[], ed_get_systeme[];
+
 
 namespace {
 

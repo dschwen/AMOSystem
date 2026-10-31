@@ -8,9 +8,12 @@
 using namespace amos;
 using namespace amos::host;
 
-extern "C" uint8_t w_ice_start[];
+
 extern "C" uint32_t amos_w_base;
 uint32_t amos_w_base;
+// the file selector's task: its data zone (lib/fsel.cpp, lib_fs_task_entry)
+extern "C" uint32_t lib_fs_task_a5;
+uint32_t lib_fs_task_a5;
 
 namespace amos::host {
 
@@ -68,7 +71,7 @@ void host_Init_Fin(AllRegs &) { main_init_fin(); }
 
 } // namespace amos::host
 
-extern "C" uint8_t ver_prg_run_it_entry[];
+
 
 namespace amos::host {
 

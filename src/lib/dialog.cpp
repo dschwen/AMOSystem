@@ -42,7 +42,7 @@ uint8_t *lst_new(be_u32 *list, uint32_t length);
 void lst_del(be_u32 *list, uint8_t *element);
 }
 // dialog_glue.s: the routine records of Dia_ClearVar
-extern "C" uint8_t lib_dia_on_clear[], lib_dia_on_default[];
+
 
 namespace amos {
 void add_routine(uint8_t *record, uint32_t list);

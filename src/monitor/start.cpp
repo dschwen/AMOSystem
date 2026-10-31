@@ -14,8 +14,7 @@ using namespace amos::monitor;
 
 // +Monitor.s
 extern "C" void mon_view_inter();
-extern "C" uint8_t mon_dbl[], mon_screen_front[],
-    mon_tests_patch_entry[], mon_screen_copy_entry[], mon_window_init[];
+
 
 namespace {
 

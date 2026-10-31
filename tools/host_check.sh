@@ -7,7 +7,7 @@ NDK=${NDK:-/opt/amiga/m68k-amigaos/ndk-include}
 ok=0
 bad=0
 for f in $(ls src/*/*.cpp | grep -v '_amiga\.cpp$'); do
-	err=$(g++ -m32 -ffreestanding -fpack-struct=2 -std=c++20 -fsyntax-only -Isrc -Ibuild/gen \
+	err=$(g++ -m32 -ffreestanding -fpack-struct=2 -std=c++20 -fsyntax-only -Isrc \
 		-idirafter "$NDK" "$f" 2>&1 | grep -m1 'error' | cut -c1-160)
 	if [ -z "$err" ]; then
 		ok=$((ok + 1))

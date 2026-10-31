@@ -15,7 +15,7 @@
 using namespace amos;
 
 // textout_glue.s: the routine record that closes the printer at ClearVar
-extern "C" uint8_t lib_prt_close_record[];
+
 
 namespace {
 

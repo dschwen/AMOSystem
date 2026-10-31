@@ -25,7 +25,7 @@ using namespace amos;
 using namespace amos::w;
 
 // +W.s
-extern "C" uint8_t w_dad_amal[], w_mouse_hide[], w_mouse_show[];
+
 
 namespace {
 

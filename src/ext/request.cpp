@@ -27,7 +27,7 @@ void ext_request_off() { requests(0); }
 
 extern "C" {
 // The warm start (ExtAdr+4, at each run): AMOS's requesters
-extern uint8_t ext_request_warm_entry[];
+
 void ext_request_warm() { requests(uint32_t(-1)); }
 }
 

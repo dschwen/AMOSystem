@@ -1,3 +1,9 @@
+> **This branch is AMOS Professional converted to C++.** The assembler is gone: AMOSPro, AMOS.library,
+> the editor, the monitor and the extensions are C++ (68000 for the Amiga, built with the Amiga
+> cross toolchain), and the same C++ runs as a program of a Unix computer (SDL window, sound,
+> files in a `devices` directory). How to build and run it, and what differs from the original:
+> [BUILDING.md](BUILDING.md). The original assembler sources are in the history of the repository.
+
 
 ### Welcome to the official AMOS Professional source code repository.
 

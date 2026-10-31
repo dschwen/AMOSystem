@@ -13,7 +13,7 @@ using namespace amos;
 using namespace amos::ed;
 
 // +Edit.s
-extern "C" uint8_t ed_not_done[], ed_l_to_long[], ed_oof_buf[], ed_loop[], ed_no_found[];
+
 extern "C" void ed_block_limits_2(AllRegs *r);
 
 namespace {

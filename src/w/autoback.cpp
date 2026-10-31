@@ -10,7 +10,7 @@ using namespace amos;
 using namespace amos::w;
 
 // w/bobs_glue.s, w/screens_glue.s, +W.s
-extern "C" uint8_t w_bob_update[], w_bob_show[], w_bob_erase[], w_sc_swap_all[];
+
 
 namespace {
 

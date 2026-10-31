@@ -14,7 +14,7 @@
 
 // The record that closes every channel when the program is cleared
 // (dos_glue.s)
-extern "C" uint8_t lib_close_all_on_clear[];
+
 extern "C" uint32_t lib_mulu32(amos::RegFrame &r);
 
 using namespace amos;

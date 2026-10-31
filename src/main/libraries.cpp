@@ -17,11 +17,10 @@ using namespace amos::boot;
 // the routine, a long, its address, until a 0 routine); ExtJmps, the same
 // for the extensions in AMOSPro (a word, the slot, a long, its list: the
 // number of routines of the extension, then its routines as AMOSJmps).
-extern "C" const uint8_t main_amos_jmps[], main_ext_jmps[];
+
 // main/library.s: AMOSPro.Lib, linked in (the file without its hunk
 // header); src/ext/*_image.s: the extensions' the same way
-extern "C" const uint8_t main_library[], ext_music_image[], ext_compact_image[], ext_request_image[],
-    ext_ioports_image[];
+
 
 namespace {
 

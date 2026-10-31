@@ -18,10 +18,7 @@ using namespace amos;
 using namespace amos::verif;
 
 // loops_glue.s: the entries of the routines of pass 2; +Verif.s
-extern "C" uint8_t ver_for_two[], ver_repeat_two[], ver_while_two[], ver_do_two[], ver_exit_two[],
-    ver_if_two[], ver_if_then_two[], ver_else_if_two[], ver_else_two[], ver_else_then_two[], ver_goto_two[],
-    ver_on_goto_two[], ver_next_alone[], ver_until_alone[], ver_wend_alone[], ver_loop_alone[],
-    ver_else_alone[], ver_end_if_alone[];
+
 
 
 namespace {

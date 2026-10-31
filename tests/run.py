@@ -193,9 +193,6 @@ def prepare(amos_tree, kickstart, rom_key, workbench):
         shutil.rmtree(RUN)
     amos = os.path.join(RUN, 'AMOS')
     shutil.copytree(amos_tree, amos, ignore=shutil.ignore_patterns('*.uaem'))
-    config = os.path.join(amos, 'AMOSPro_Interpreter_Config')
-    if not os.path.exists(config):
-        shutil.copy(os.path.join(ROOT, 'build', 'AMOSPro_Interpreter_Config'), config)
     # the editor's goldens were recorded with the original palette (the
     # built config's is blue)
     shutil.copy(os.path.join(ROOT, 'AMOS', 'APSystem', 'AMOSPro_Editor_Config'),
@@ -641,7 +638,7 @@ def main():
         if subprocess.run(['make', '-q', 'all'], cwd=ROOT, stdout=subprocess.DEVNULL,
                           stderr=subprocess.DEVNULL).returncode != 0:
             sys.exit('build/dist is not up to date: run "make dist" first')
-        for built, copy in (('AMOSPro', 'AMOSPro'), ('AMOSPro.Lib', 'APSystem/AMOSPro.Lib')):
+        for built, copy in (('AMOSPro', 'AMOSPro'),):
             a, b = os.path.join(ROOT, 'build', built), os.path.join(amos_tree, copy)
             if os.path.exists(a) and (not os.path.exists(b) or open(a, 'rb').read() != open(b, 'rb').read()):
                 sys.exit(f'{b} is older than build/{built}: run "make dist" first')

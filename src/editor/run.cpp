@@ -23,14 +23,7 @@ using namespace amos;
 using namespace amos::ed;
 
 // +Edit.s
-extern "C" uint8_t ed_loop[], ed_system[], ed_err_direct[], ed_err_run[], ed_err_run_hidden[], ed_err_test[],
-    ed_err_direct_run[], ed_test_message[], ed_direct_test_message[], ed_not_done[], ed_out_of_memory[],
-    ed_alert_100[], ed_already_runned[], ed_prg_load_err[], ed_fo_e[], ed_d_error[], ed_recop[], ed_hide[],
-    ed_appear[], ed_open_editor[], ed_close_editor[], ed_escape_hide_entry[], ed_redraw_entry[],
-    ed_config_redraw_entry[], ed_clear_var[], ed_branch_amos[], ed_menus_end_entry[], ed_menu_program[],
-    ed_block_free_entry[], ed_undo_reset_all_entry[], ed_recall_alert_entry[], ed_name_part_entry[],
-    ed_detok_entry[], ed_proc_open_entry[], ed_escape_max_mouse_entry[], ed_file_selector[], ed_window_new_entry[],
-    ed_new2[], ed_saved[], ed_alert_entry[], ed_delete_window_entry[], ed_av_name[];
+
 
 namespace {
 

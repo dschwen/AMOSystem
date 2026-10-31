@@ -16,7 +16,7 @@ using namespace amos;
 // devices.cpp, dos_glue.s
 extern "C" struct MsgPort *lib_create_port(const char *name, int32_t priority);
 extern "C" void lib_delete_port(struct MsgPort *port);
-extern "C" uint8_t lib_arexx_on_clear[];
+
 
 namespace {
 

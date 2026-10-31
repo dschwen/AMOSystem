@@ -15,7 +15,7 @@ using namespace amos::verif;
 
 // +Verif.s: the operators' table (a test kind before each, see Tst_Jumps)
 // and the operands still in the assembler, entered as from Ver_Operande
-extern "C" uint8_t ver_operators[], ver_equ_nul[], ver_equ_lvo[];
+
 
 namespace {
 

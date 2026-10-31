@@ -89,13 +89,3 @@ int32_t amos_call_cc(Regs *r, const void *fn)
 }
 
 } // extern "C"
-
-namespace amos {
-
-// The glue of each library routine with a C++ function (the Amiga's is
-// build/gen/lib_direct_entries.s): none here, the routines are called
-// through their entries
-extern const uint32_t lib_direct_entry[Lib_Size];
-const uint32_t lib_direct_entry[Lib_Size] = {};
-
-} // namespace amos

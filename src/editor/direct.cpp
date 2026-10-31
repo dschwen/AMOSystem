@@ -16,8 +16,7 @@ using namespace amos;
 using namespace amos::ed;
 
 // +Edit.s
-extern "C" uint8_t ed_loop[], ed_esc_loop[], ed_system[], ed_err_direct[], ed_hide[], ed_appear[],
-    ed_open_editor[], ed_wb[], ed_enlarge[], ed_button_routines[], ed_tokenise_entry[];
+
 
 namespace {
 

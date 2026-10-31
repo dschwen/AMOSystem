@@ -1,0 +1,33 @@
+// src_w_colours_glue_s: converted from the assembler (see tables.h)
+#include "tables/tables.h"
+
+using namespace amos;
+using namespace amos::host;
+
+extern "C" {
+alignas(4) uint8_t host_obj_src_w_colours_glue_s[44] = {
+};
+}
+
+namespace amos::host {
+
+void relocate_src_w_colours_glue_s()
+{
+}
+
+const GlueEntry entries_src_w_colours_glue_s[] = {
+    {host_obj_src_w_colours_glue_s + 0, GlueKind::w, reinterpret_cast<const void *>(&w_ec_set_colour), nullptr, 0, 4, "w_set_colour"},
+    {host_obj_src_w_colours_glue_s + 4, GlueKind::w, reinterpret_cast<const void *>(&w_ec_get_colour), nullptr, 0, 4, "w_get_colour"},
+    {host_obj_src_w_colours_glue_s + 8, GlueKind::w, reinterpret_cast<const void *>(&w_ec_set_palette), nullptr, 0, 4, "w_set_palette"},
+    {host_obj_src_w_colours_glue_s + 12, GlueKind::w, reinterpret_cast<const void *>(&w_ec_colour_back), nullptr, 0, 4, "w_colour_back"},
+    {host_obj_src_w_colours_glue_s + 16, GlueKind::w, reinterpret_cast<const void *>(&w_ec_flash_off), nullptr, 0, 4, "w_flash_off"},
+    {host_obj_src_w_colours_glue_s + 20, GlueKind::w, reinterpret_cast<const void *>(&w_ec_flash), nullptr, 0, 2, "w_flash"},
+    {host_obj_src_w_colours_glue_s + 24, GlueKind::w, reinterpret_cast<const void *>(&w_ec_shift), nullptr, 0, 4, "w_shift"},
+    {host_obj_src_w_colours_glue_s + 28, GlueKind::w, reinterpret_cast<const void *>(&w_ec_shift_off), nullptr, 0, 4, "w_shift_off"},
+    {host_obj_src_w_colours_glue_s + 32, GlueKind::w, reinterpret_cast<const void *>(&w_ec_fade), nullptr, 0, 4, "w_fade"},
+    {host_obj_src_w_colours_glue_s + 36, GlueKind::w, reinterpret_cast<const void *>(&w_ec_fade_off), nullptr, 0, 4, "w_fade_off"},
+    {host_obj_src_w_colours_glue_s + 40, GlueKind::w, reinterpret_cast<const void *>(&w_ec_fade_stop), nullptr, 0, 4, "w_fade_stop"},
+    {nullptr, GlueKind::missing, nullptr, nullptr, 0, 0, nullptr},
+};
+
+} // namespace amos::host

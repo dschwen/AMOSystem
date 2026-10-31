@@ -15,13 +15,7 @@ using namespace amos;
 using namespace amos::ed;
 
 // +Edit.s
-extern "C" uint8_t ed_function_table[], ed_function_flags[], ed_loop[], ed_zap_out[], ed_not_edit[],
-    ed_out_of_memory[], ed_close_window_entry[], ed_delete_window_entry[], ed_branch_amos[],
-    ed_program_reload_entry[], ed_follow_scroll_entry[], ed_block_show_entry[], ed_status_line_d0_entry[],
-    ed_undo_reset_all_entry[], ed_alert_rts_entry[], ed_sounds_changed_entry[], ed_menu_program[],
-    ed_cursor_on_entry[], ed_cursor_off_entry[], ed_cgo_entry[], ed_cdr_entry[], ed_shaut2_entry[],
-    ed_sbas2_entry[], ed_key_entry[], ed_mouse_entry[], ed_save_all_entry[], ed_clear_error_proc_entry[],
-    ed_program_command_entry[], ed_detok_entry[];
+
 
 namespace {
 

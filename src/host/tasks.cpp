@@ -97,7 +97,7 @@ void add_task(Task *, void *entry, void *)
 // The file selector's task (lib/fsel.cpp): a5 its data zone, a context of
 // its own
 extern "C" {
-uint32_t lib_fs_task_a5;
+extern uint32_t lib_fs_task_a5;
 void lib_fs_task();
 void lib_fs_task_entry()
 {

@@ -85,7 +85,7 @@ void run_at(Mark &m)
 
 } // namespace amos::host
 
-extern "C" uint8_t interp_prun_errors[];
+
 extern "C" {
 // interp/chrget.cpp, control.cpp
 [[noreturn]] void interp_new_chrget();
@@ -264,8 +264,7 @@ void w_int_call(const void *fn, uint8_t *data)
 
 // The editor driven by a program (+Edit.s Ed_ZapIn, Ed_ZapOut): it comes
 // back to interp_zap_in's mark (BasSp) with d0/a0 its answer
-extern "C" uint8_t ed_zap_in_entry[], ed_zap_prepare_entry[], ed_zap_out_entry[], ed_zap_result_entry[],
-    ed_function_call_entry[], ed_loop[];
+
 
 namespace amos::host {
 

@@ -9,7 +9,7 @@ using namespace amos;
 using namespace amos::w;
 
 // w/sprites_glue.s, +W.s
-extern "C" uint8_t w_sprites_show[], w_ec_force_cop[];
+
 
 namespace {
 

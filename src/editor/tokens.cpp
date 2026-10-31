@@ -26,7 +26,7 @@ using namespace amos;
 // +Edit.s: the operators' token table (their tokens are offsets from its
 // end), the name of a missing extension's instructions (the letter
 // written into it)
-extern "C" uint8_t ed_operators[], ed_operators_end[], ed_extension_missing[];
+
 extern "C" void lib_double_to_asc(uint32_t hi, uint32_t lo, char *to, int32_t digits, uint32_t mode);
 
 namespace {

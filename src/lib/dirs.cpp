@@ -12,7 +12,7 @@
 #include "hal/system.h"
 
 // The record that frees the list when the program is cleared (dos_glue.s)
-extern "C" uint8_t lib_fill_free_on_clear[];
+
 // files.cpp, dos.cpp
 extern "C" uint32_t lib_lock_get(amos::RegFrame &r);
 extern "C" uint32_t lib_dsk_dnom(amos::RegFrame &r);

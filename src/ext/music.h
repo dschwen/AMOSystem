@@ -9,7 +9,6 @@
 #include "core/amos.h"
 #include "hal/chips.h"
 
-extern "C" amos::MusicData music_data;
 
 namespace amos::music {
 
@@ -24,8 +23,8 @@ template <class T> native_t<T> decrement(volatile T &x)
     return v;
 }
 
-inline volatile MusicData &md() { return music_data; }
-inline uint32_t mb() { return address(&music_data); }
+inline volatile MusicData &md() { return *reinterpret_cast<volatile MusicData *>(music_data); }
+inline uint32_t mb() { return address(music_data); }
 
 inline volatile MusEnvelope &envelope(uint32_t v)
 {

@@ -30,12 +30,12 @@ using namespace amos::boot;
 
 extern "C" {
 // +W.s: the start of AMOS.library, its entry table
-extern uint8_t w_debut[];
+
 // +B.s: the way out: the stack back, the Workbench message (if any)
 // replied
 [[noreturn]] void main_get_out(uint32_t message);
 // main_glue.s: where the errors of a program run at the start go
-extern uint8_t main_run_error_run_only[];
+
 }
 
 namespace amos::boot {

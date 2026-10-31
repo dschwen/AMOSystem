@@ -21,8 +21,7 @@ using namespace amos;
 using namespace amos::ed;
 
 // +Edit.s
-extern "C" uint8_t ed_loop[], ed_system[], ed_saved[], ed_clear_var[], ed_branch_amos[], ed_get_systeme[],
-    ed_undo_create_all_entry[], ed_config_save_default_quiet_entry[], ed_macro_save_default_entry[];
+
 
 namespace {
 

@@ -30,8 +30,7 @@ using namespace amos;
 using namespace amos::w;
 
 // +W.s, the glue of w/
-extern "C" uint8_t w_ec_in[], w_ec_force_cop[], w_copper_make[], w_sc_close_range[], w_cblocks_delete[], w_blocks_delete[], w_rain_del[], w_dad_amal[], w_bb_ec_off[], w_wopen[], w_widela[],
-    w_flash_off[], w_shift_off[], w_fade_stop[], w_close_font[];
+
 
 namespace {
 

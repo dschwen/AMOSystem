@@ -14,8 +14,7 @@ using namespace amos;
 using namespace amos::ed;
 
 // +Edit.s
-extern "C" uint8_t ed_cursor_on_text[], ed_cursor_off_text[], ed_get_systeme[], ed_all_aver_fin[],
-    ed_aver_fin[], ed_sl_update_y[];
+
 
 namespace {
 

@@ -470,7 +470,7 @@ alignas(4) uint8_t data_zone[140] = {};
 
 extern "C" {
 // SerDef / SerEnd (ExtAdr+4, +8): the channels closed
-extern uint8_t ext_ioports_end_entry[];
+
 void ext_ioports_end()
 {
     ext_serial_close0();

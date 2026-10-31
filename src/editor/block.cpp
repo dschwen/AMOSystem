@@ -14,8 +14,7 @@ using namespace amos;
 using namespace amos::ed;
 
 // +Edit.s
-extern "C" uint8_t ed_cursor_block[], ed_cursor_normal[], ed_not_edit[], ed_oof_buf[],
-    ed_block_what[], ed_out_of_memory[], ed_pro_alert[];
+
 
 namespace {
 

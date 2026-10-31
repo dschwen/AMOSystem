@@ -45,8 +45,9 @@ struct GlueEntry {
     const char *name;
 };
 
-extern const GlueEntry glue_entries[];
-extern const int glue_entry_count;
+// The tables of src/tables: the lists of entries (each ends with an entry
+// with no address), and the relocation of their data
+extern const GlueEntry *const glue_entry_tables[];
 void glue_relocate();
 
 // The data of the assembler: n bytes (1, 2 or 4), big-endian

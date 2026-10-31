@@ -9,7 +9,7 @@ using namespace amos;
 using namespace amos::ed;
 
 // +Edit.s
-extern "C" uint8_t ed_test_program[];
+
 
 namespace {
 

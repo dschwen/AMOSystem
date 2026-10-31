@@ -14,9 +14,7 @@ using namespace amos;
 using namespace amos::host;
 
 // The monitor's routines (its glue)
-extern "C" uint8_t mon_cold_start_entry[], mon_tests_entry[], mon_reloop_entry[], mon_step_show_entry[],
-    mon_show_entry[], mon_reinit_entry[], mon_test_error_entry[], mon_tests_patch_entry[], mon_message_entry[],
-    mon_banks_program_entry[], mon_banks_monitor_entry[], mon_error[], mon_ev_error[], mon_menage[];
+
 
 extern "C" void interp_run_instruction(uint32_t t);
 

@@ -10,8 +10,7 @@ using namespace amos;
 using namespace amos::ed;
 
 // +Edit.s
-extern "C" uint8_t ed_va_tester[], ed_fo_e[], ed_r_alert[], ed_marks_to_addresses_entry[],
-    ed_marks_to_numbers_entry[];
+
 
 namespace {
 

@@ -12,7 +12,7 @@ using namespace amos;
 using namespace amos::w;
 
 // +W.s / w/sprites_glue.s
-extern "C" uint8_t w_sprite_set[], w_sprite_unset[], w_sprites_show[];
+
 
 namespace {
 

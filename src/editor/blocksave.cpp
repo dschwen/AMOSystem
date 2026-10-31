@@ -17,8 +17,7 @@ using namespace amos;
 using namespace amos::ed;
 
 // +Edit.s
-extern "C" uint8_t ed_block_what[], ed_file_selector[], ed_not_done[], ed_save_over[], ed_av_name[], ed_d_error[],
-    ed_aver_fin[], ed_warn[], ed_print_error[], ed_header[], ed_get_message[];
+extern "C" uint8_t ed_get_message[];
 
 namespace {
 

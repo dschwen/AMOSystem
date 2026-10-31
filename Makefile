@@ -1,293 +1,87 @@
 # Cross build of AMOS Professional from a Unix host.
 #
-#   make          assemble everything into build/
-#   make dist     build/dist/AMOS: the shipped AMOS tree with the freshly
-#                 built binaries copied over the prebuilt ones
-#   make verify   compare the binaries that are still pure assembler with the
-#                 prebuilt ones in AMOS/
+#   make          build/AMOSPro, the program (C++, no assembler)
+#   make dist     build/dist/AMOS: the shipped AMOS tree with the freshly built
+#                 AMOSPro and the editor's configuration with the blue palette
 #   make test     run the AMOS test programs in FS-UAE (tests/run.py)
+#   make host     build/host/amos: AMOS as a program of this computer
 #   make install-hd
-#                 replace the AMOS Pro binaries on the FS-UAE Workbench drive
-#                 (HD=...), backing up the originals to HD_BACKUP
+#                 replace AMOSPro on the FS-UAE Workbench drive (HD=...),
+#                 backing up the original to HD_BACKUP
 #   make clean
 #
-# Needs vasmm68k_mot, m68k-amigaos-gcc/g++ and m68k-amigaos-objdump from the
-# Amiga cross toolchain (https://github.com/AmigaPorts/m68k-amigaos-gcc) and
-# python3.
+# Needs m68k-amigaos-gcc/g++ from the Amiga cross toolchain
+# (https://github.com/AmigaPorts/m68k-amigaos-gcc) and python3.
 
 AMIGA_PREFIX ?= /opt/amiga
 export PATH := $(AMIGA_PREFIX)/bin:$(PATH)
 
-VASM    := vasmm68k_mot
 CC      := m68k-amigaos-gcc
 CXX     := m68k-amigaos-g++
 PYTHON  := python3
 BUILD   := build
-GEN     := $(BUILD)/gen
 OBJ     := $(BUILD)/obj
-CI      := $(BUILD)/ci
 DIST    := $(BUILD)/dist/AMOS
+HOST    := $(BUILD)/host
 
-# GenAm/GenIm2 compatible settings. EzFlag selects the Easy AMOS variant of
-# AMOS.library and was set on the original command line.
-INCLUDES := -I$(CI) -I. -I$(GEN) -Iincludes -Iextensions
-ASFLAGS  := -quiet -devpac -nosym -DEzFlag=0 $(INCLUDES)
-EXEFLAGS := $(ASFLAGS) -Fhunkexe -kick1hunks
-OBJFLAGS := $(ASFLAGS) -Fhunk -kick1hunks
-
-# C++ for the converted parts. 68000 code, no exceptions or RTTI, no C
-# library startup: the code runs inside AMOS, called through asm glue.
+# C++ for the 68000, no exceptions or RTTI, no C library startup: AMOS
+# starts itself (src/amiga/start.cpp).
 CPUFLAGS := -m68000
 CXXFLAGS := $(CPUFLAGS) -Os -std=c++20 -fomit-frame-pointer -fno-exceptions -fno-rtti \
-            -ffreestanding -fno-threadsafe-statics -Wall -Wextra -Werror -Isrc -I$(GEN) -MMD -MP
+            -ffreestanding -fno-threadsafe-statics -Wall -Wextra -Werror -Isrc -MMD -MP
 # libgcc for the arithmetic helpers, with libnix13 (Kickstart 1.3 compatible)
 # supplying the ones this toolchain's libgcc leaves out (__divsi3...)
 LDFLAGS  := $(CPUFLAGS) -nostdlib -nostartfiles
 LDLIBS   := -L$(AMIGA_PREFIX)/m68k-amigaos/libnix/lib -lgcc -lnix13 -lgcc
 
-# C++ and assembler sources of the converted parts, one directory per
-# program they are linked into; src/core is linked into all of them.
-#   src/lib      routines moved out of AMOSPro.Lib   -> AMOSPro
-#   src/main     the main program                    -> AMOSPro
-#   src/verif    the verifier (+Verif.s)             -> AMOSPro
-#   src/interp   the interpreter core (+ILib.s)      -> AMOSPro
-#   src/w        AMOS.library (linked into AMOSPro)
-#   src/editor   AMOSPro_Editor
-#   src/monitor  AMOSPro_Monitor
-#   src/core     the C++/asm bridge and data layout (an archive)
-src_objs = $(strip $(patsubst %.s,$(OBJ)/%.o,$(sort $(wildcard $(addsuffix /*.s,$(1))))) \
-           $(patsubst %.cpp,$(OBJ)/%.o,$(sort $(wildcard $(addsuffix /*.cpp,$(1))))))
-OBJ_AMOSPRO := $(call src_objs,src/lib src/main src/verif src/interp src/ext src/hal)
-OBJ_W       := $(call src_objs,src/w)
-OBJ_EDITOR  := $(call src_objs,src/editor)
-OBJ_MONITOR := $(call src_objs,src/monitor)
-OBJ_COMMON  := $(call src_objs,src/core)
-COMMON_LIB  := $(OBJ)/libcommon.a
-ALL_CXX     := $(shell find src -name '*.cpp')
+# The C++ of AMOSPro, one directory for each part
+#   src/lib      the routines of AMOSPro.Lib       src/w        AMOS.library
+#   src/main     the start and the loaders         src/editor   the editor
+#   src/verif    the verifier                      src/monitor  the monitor
+#   src/interp   the interpreter                   src/hal      the system
+#   src/ext      the extensions                    src/core     the layouts and the bridge
+#   src/runtime  the glue's runtime                src/tables   the tables, data and entries
+#   src/amiga    the machine code (start, entries the system calls)
+AMIGA_DIRS   := src/lib src/main src/verif src/interp src/ext src/hal src/w src/editor src/monitor src/core \
+                src/runtime src/tables
+AMIGA_CXX    := $(sort $(wildcard $(addsuffix /*.cpp,$(AMIGA_DIRS))))
+AMOSPRO_LINK := $(OBJ)/src/amiga/start.o $(OBJ)/src/amiga/native.o $(patsubst %.cpp,$(OBJ)/%.o,$(AMIGA_CXX))
 
-# link_program(output, linker script, objects): link, then mark chip hunks
-define link_program
-	$(CC) $(LDFLAGS) -T $(2) -Wl,-Map,$(1).map -o $(1) $(3) $(COMMON_LIB) $(LDLIBS)
-	$(PYTHON) tools/chiphunks.py $(1) $(1).map
-endef
-
-# The generated headers carry a fixed date so that builds are reproducible
-STAMP := 01-01-2026 00:00:00
-
-LIB_GEN := $(GEN)/+LEqu.s $(GEN)/+Internal_Jumps.s $(GEN)/+Lib_Size.s \
-           $(GEN)/+ILib_Size.s $(GEN)/+ILib_Functions.s $(GEN)/lib_routines.h
-TOKTAB  := $(GEN)/+Toktab_Verif.Bin
-EXTENSIONS := Music Compact Request IO_Ports
-EXT_GEN := $(foreach e,$(EXTENSIONS),$(GEN)/+$(e)_Size.s $(GEN)/+$(e)_Labels.s $(GEN)/+$(e)_Jumps.s)
-
-COMMON_SRC := +AMOS_Includes.s +Equ.s +CEqu.s +WEqu.s +Debug.s +Version.s
-
-BINARIES := $(BUILD)/AMOSPro $(BUILD)/AMOSPro.Lib \
-            $(BUILD)/AMOSPro_Music.Lib $(BUILD)/AMOSPro_Compact.Lib \
-            $(BUILD)/AMOSPro_Request.Lib $(BUILD)/AMOSPro_IOPorts.Lib \
-            $(BUILD)/AMOSPro_Editor_Config $(BUILD)/AMOSPro_Interpreter_Config
-
-# Built file -> prebuilt reference, relative to AMOS/
-REFERENCE_AMOSPro                    := AMOSPro
-REFERENCE_AMOSPro_Interpreter_Config := AMOSPro_Interpreter_Config
-REFERENCE_DEFAULT                     = APSystem/$(1)
-reference = AMOS/$(or $(REFERENCE_$(1)),$(call REFERENCE_DEFAULT,$(1)))
-
-.PHONY: all dist verify test test-reference install-hd host-check host clean
+.PHONY: all dist test test-reference install-hd host-check host clean
 .SECONDARY:
 .DELETE_ON_ERROR:
 
-all: $(BINARIES)
+all: $(BUILD)/AMOSPro
 
-# ---- generated sources -------------------------------------------------------
-
-$(LIB_GEN) &: +ILib.s +Lib.s tools/make_labels.py | $(GEN)
-	$(PYTHON) tools/make_labels.py --src . --out $(GEN) --stamp '$(STAMP)'
-
-# The C++ view of the assembler data structures
-CXX_GEN := $(GEN)/core/layout.h $(GEN)/lib_routines.h
-
-$(GEN)/core/layout.h: +Equ.s +CEqu.s +WEqu.s +MEqu.s extensions/+Music_Data.s tools/gen_layout.py $(LIB_GEN) $(CI)/.stamp
-	@mkdir -p $(dir $@)
-	$(PYTHON) tools/gen_layout.py --out $@ --vasm $(VASM) -DEzFlag=0 $(INCLUDES)
-
-$(TOKTAB): +Lib.s tools/make_toktable.py | $(GEN)
-	$(PYTHON) tools/make_toktable.py $< $@
-
-$(GEN)/+%_Size.s $(GEN)/+%_Labels.s $(GEN)/+%_Jumps.s &: extensions/+%.s tools/library_digest.py tools/make_labels.py | $(GEN)
-	$(PYTHON) tools/library_digest.py $< --out $(GEN) --stamp '$(STAMP)'
-
-# Symlinks for includes whose case differs from the file on disk
-$(CI)/.stamp: tools/case_links.py | $(GEN)
-	rm -rf $(CI) && mkdir -p $(CI)
-	$(PYTHON) tools/case_links.py --out $(CI) -I $(GEN) -I . -I includes -I extensions \
-		+B.s +W.s +Lib.s +Edit.s +Monitor.s +Editor_Config.s +Interpreter_Config.s \
-		$(foreach e,$(EXTENSIONS),extensions/+$(e).s)
-	touch $@
-
-$(GEN):
-	mkdir -p $@
-
-PREREQ := $(LIB_GEN) $(CI)/.stamp $(COMMON_SRC)
-
-# ---- binaries -----------------------------------------------------------------
-
-# The assembler's sources of tables, data and glue entries (tools/host_glue.py
-# makes C++ of them), and the library images (no code), as data
-HOST        := $(BUILD)/host
-GLUE_SOURCES := +B.s +W.s +Edit.s +Monitor.s +Verif.s $(wildcard src/*/*.s)
-GLUE_EQU    := +Equ.s +WEqu.s +CEqu.s $(GEN)/+LEqu.s extensions/+Music_Data.s
-HOST_IMAGES := main_library:library ext_music_image:music_image ext_compact_image:compact_image \
-               ext_request_image:request_image ext_ioports_image:ioports_image
-
-# Programs: the assembler source becomes one object, linked with the C++ of
-# its src/ directory. The linker scripts keep the hunk order the assembler
-# code depends on.
-$(OBJ)/src/%.o: src/%.s $(wildcard src/*.i src/*/*.i)
-	@mkdir -p $(dir $@)
-	$(VASM) $(OBJFLAGS) -Isrc -o $@ $<
-
-$(OBJ)/src/%.o: src/%.cpp $(CXX_GEN)
+$(OBJ)/src/%.o: src/%.cpp
 	@mkdir -p $(dir $@)
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
 
-$(COMMON_LIB): $(OBJ_COMMON)
+# (their machine code in the order written)
+$(OBJ)/src/amiga/%.o: src/amiga/%.cpp
 	@mkdir -p $(dir $@)
-	rm -f $@
-	$(if $^,m68k-amigaos-ar rcs $@ $^,m68k-amigaos-ar rcs $@)
+	$(CXX) $(CXXFLAGS) -fno-toplevel-reorder -c -o $@ $<
 
--include $(ALL_CXX:%.cpp=$(OBJ)/%.d)
-
-$(OBJ)/B.o: +B.s +Verif.s $(PREREQ) $(EXT_GEN)
+# (the tables are converted data: no warnings as errors)
+$(OBJ)/src/tables/%.o: src/tables/%.cpp
 	@mkdir -p $(dir $@)
-	$(VASM) $(OBJFLAGS) -o $@ $<
+	$(CXX) $(CXXFLAGS) -Wno-error -c -o $@ $<
 
-# AMOSPro is C++: all of it, AMOS.library, the editor and the monitor; the
-# assembler's tables, data and glue entries are build/gen/amiga_glue.cpp
-# (tools/host_glue.py, as for another host), run by src/runtime. src/amiga
-# has the machine code of its start and of the entries the system calls
-# (amiga/start.o first: the program begins there).
-AMIGA_DIRS  := src/lib src/main src/verif src/interp src/ext src/hal src/w src/editor src/monitor src/core \
-               src/runtime
-AMIGA_CXX   := $(filter-out %_host.cpp,$(sort $(wildcard $(addsuffix /*.cpp,$(AMIGA_DIRS)))))
-AMOSPRO_LINK := $(OBJ)/src/amiga/start.o $(OBJ)/src/amiga/native.o $(patsubst %.cpp,$(OBJ)/%.o,$(AMIGA_CXX)) \
-                $(OBJ)/gen/lib_direct.o $(OBJ)/gen/w_direct.o $(OBJ)/gen/wentry_table.o $(OBJ)/gen/amiga_glue.o
+-include $(AMIGA_CXX:%.cpp=$(OBJ)/%.d)
+
+# link/amospro.ld begins the code with the program's entry. This ld writes no
+# memory flags: tools/chiphunks.py marks the chip hunks from the map.
 $(BUILD)/AMOSPro: $(AMOSPRO_LINK) link/amospro.ld tools/chiphunks.py
 	$(CC) $(LDFLAGS) -T link/amospro.ld -Wl,-Map,$@.map -o $@ $(AMOSPRO_LINK) $(LDLIBS)
 	$(PYTHON) tools/chiphunks.py $@ $@.map
 
-# (their machine code in the order written)
-$(OBJ)/src/amiga/%.o: src/amiga/%.cpp $(CXX_GEN)
-	@mkdir -p $(dir $@)
-	$(CXX) $(CXXFLAGS) -fno-toplevel-reorder -c -o $@ $<
-
-$(GEN)/amiga_glue.cpp: tools/host_glue.py $(GLUE_SOURCES) $(wildcard src/runtime/*.cpp src/amiga/*.cpp) \
-		$(foreach i,$(HOST_IMAGES),$(HOST)/images/$(lastword $(subst :, ,$(i))).bin)
-	$(PYTHON) tools/host_glue.py --out $@ --underscore --host-dir src/runtime --host-dir src/amiga \
-		--cxx 'L_Trappe=sizeof(amos::WData)' $(foreach e,$(GLUE_EQU),--equ $(e)) \
-		$(foreach i,$(HOST_IMAGES),--image $(firstword $(subst :, ,$(i)))=$(HOST)/images/$(lastword $(subst :, ,$(i))).bin) \
-		-- $(GLUE_SOURCES)
-$(OBJ)/gen/amiga_glue.o: $(GEN)/amiga_glue.cpp $(CXX_GEN)
-	@mkdir -p $(dir $@)
-	$(CXX) $(CXXFLAGS) -Wno-error -c -o $@ $<
-
-# AMOS.library was built with GenIm2, which matches symbols without case
-$(OBJ)/W.o: +W.s $(PREREQ) $(wildcard bin/*)
-	@mkdir -p $(dir $@)
-	$(VASM) $(OBJFLAGS) -nocase -o $@ $<
-
-
-$(BUILD)/AMOSPro.Lib: +Lib.s +ILib.s $(PREREQ) $(TOKTAB) bin/+Dialog_Funcs.bin
-	$(VASM) $(EXEFLAGS) -o $@ $<
-
-# The same library, linked into AMOSPro (main/libraries.cpp loads it from
-# there)
-$(OBJ)/src/main/library.o: src/main/library.s +Lib.s +ILib.s $(PREREQ) $(TOKTAB) bin/+Dialog_Funcs.bin
-	@mkdir -p $(dir $@)
-	$(VASM) $(OBJFLAGS) -o $@ $<
-
-$(OBJ)/Edit.o: +Edit.s $(PREREQ)
-	@mkdir -p $(dir $@)
-	$(VASM) $(OBJFLAGS) -o $@ $<
-
-
-$(OBJ)/Monitor.o: +Monitor.s $(PREREQ)
-	@mkdir -p $(dir $@)
-	$(VASM) $(OBJFLAGS) -o $@ $<
-
-
-$(BUILD)/AMOSPro_IOPorts.Lib: extensions/+IO_Ports.s $(GEN)/+IO_Ports_Size.s $(PREREQ)
-	$(VASM) $(EXEFLAGS) -o $@ $<
-
-$(BUILD)/AMOSPro_%.Lib: extensions/+%.s $(GEN)/+%_Size.s $(PREREQ)
-	$(VASM) $(EXEFLAGS) -o $@ $<
-
-# The extensions, linked into AMOSPro too (main/libraries.cpp)
-$(OBJ)/src/ext/music_image.o: src/ext/music_image.s extensions/+Music.s $(GEN)/+Music_Size.s $(PREREQ) $(EXT_GEN)
-	@mkdir -p $(dir $@)
-	$(VASM) $(OBJFLAGS) -o $@ $<
-$(OBJ)/src/ext/compact_image.o: src/ext/compact_image.s extensions/+Compact.s $(GEN)/+Compact_Size.s $(PREREQ) $(EXT_GEN)
-	@mkdir -p $(dir $@)
-	$(VASM) $(OBJFLAGS) -o $@ $<
-$(OBJ)/src/ext/request_image.o: src/ext/request_image.s extensions/+Request.s $(GEN)/+Request_Size.s $(PREREQ) $(EXT_GEN)
-	@mkdir -p $(dir $@)
-	$(VASM) $(OBJFLAGS) -o $@ $<
-$(OBJ)/src/ext/ioports_image.o: src/ext/ioports_image.s extensions/+IO_Ports.s $(GEN)/+IO_Ports_Size.s $(PREREQ) $(EXT_GEN)
-	@mkdir -p $(dir $@)
-	$(VASM) $(OBJFLAGS) -o $@ $<
-
-# The C++ functions of the library routines, for direct calls (core/amos.h)
-$(GEN)/lib_direct.cpp $(GEN)/lib_direct_entries.s: tools/lib_direct.py $(wildcard src/*/*_glue.s) $(GEN)/lib_routines.h
-	$(PYTHON) tools/lib_direct.py --out $(GEN)/lib_direct.cpp --entries $(GEN)/lib_direct_entries.s \
-		--routines $(GEN)/lib_routines.h $(wildcard src/*/*_glue.s)
-$(OBJ)/gen/lib_direct.o: $(GEN)/lib_direct.cpp $(CXX_GEN)
-	@mkdir -p $(dir $@)
-	$(CXX) $(CXXFLAGS) -c -o $@ $<
-$(GEN)/w_direct.cpp: tools/w_direct.py +W.s $(wildcard src/w/*_glue.s)
-	$(PYTHON) tools/w_direct.py --out $@ +W.s $(wildcard src/w/*_glue.s)
-$(OBJ)/gen/w_direct.o: $(GEN)/w_direct.cpp $(CXX_GEN)
-	@mkdir -p $(dir $@)
-	$(CXX) $(CXXFLAGS) -c -o $@ $<
-$(GEN)/wentry_table.cpp: tools/wentry_table.py $(wildcard src/*/*_glue.s)
-	$(PYTHON) tools/wentry_table.py --out $@ $(wildcard src/*/*_glue.s)
-$(OBJ)/gen/wentry_table.o: $(GEN)/wentry_table.cpp $(CXX_GEN)
-	@mkdir -p $(dir $@)
-	$(CXX) $(CXXFLAGS) -c -o $@ $<
-$(OBJ)/gen/lib_direct_entries.o: $(GEN)/lib_direct_entries.s
-	@mkdir -p $(dir $@)
-	$(VASM) $(OBJFLAGS) -o $@ $<
-
-# Configs are raw data: the contents of the single hunk, padded to a longword
-# (what c/genim2 followed by c/Get_Chunk produced)
-$(BUILD)/AMOSPro_%_Config: +%_Config.s $(PREREQ) $(wildcard bin/*)
-	$(VASM) $(ASFLAGS) -Fbin -o $@ $<
-	$(PYTHON) -c "import sys; p=sys.argv[1]; d=open(p,'rb').read(); open(p,'wb').write(d+bytes(-len(d)%4))" $@
-
-# ---- distribution and verification ------------------------------------------
+# ---- distribution --------------------------------------------------------------
 
 dist: all
 	rm -rf $(DIST) && mkdir -p $(dir $(DIST))
 	cp -a AMOS $(DIST)
-	$(foreach b,$(BINARIES),cp $(b) $(DIST)/$(subst AMOS/,,$(call reference,$(notdir $(b))));)
-
-# Programs with C++ in them no longer match the prebuilt binaries
-CONVERTED := $(BUILD)/AMOSPro $(BUILD)/AMOSPro.Lib $(BUILD)/AMOSPro_%.Lib
-
-VERIFY := $(filter-out $(CONVERTED) %_Config,$(BINARIES))
-
-verify: all
-	@status=0; \
-	for b in $(VERIFY); do \
-		n=$$(basename $$b); \
-		case $$n in AMOSPro) r=AMOS/AMOSPro;; *) r=AMOS/APSystem/$$n;; esac; \
-		$(PYTHON) tools/bincmp.py $$r $$b || status=1; \
-	done; \
-	n=$$(cmp -l $(BUILD)/AMOSPro_Editor_Config AMOS/APSystem/AMOSPro_Editor_Config \
-		| awk '$$1 < 34 || $$1 > 49' | wc -l); \
-	[ $$n = 0 ] && echo "$(BUILD)/AMOSPro_Editor_Config: identical but the palette" || status=1; \
-	cmp $(BUILD)/AMOSPro_Interpreter_Config AMOS/AMOSPro_Interpreter_Config \
-		&& echo "$(BUILD)/AMOSPro_Interpreter_Config: identical" || status=1; \
-	exit $$status
+	cp $(BUILD)/AMOSPro $(DIST)/AMOSPro
+	$(PYTHON) tools/blue_palette.py AMOS/APSystem/AMOSPro_Editor_Config $(DIST)/APSystem/AMOSPro_Editor_Config
 
 test: dist
 	$(PYTHON) tests/run.py
@@ -295,32 +89,22 @@ test: dist
 test-reference:
 	$(PYTHON) tests/run.py --reference
 
-# The FS-UAE directory drive with an installed AMOS Pro. Only programs and
-# libraries are replaced; configs (which hold user settings) are left alone.
+# The FS-UAE directory drive with an installed AMOS Pro. Only the program is
+# replaced; configs (which hold user settings) are left alone.
 HD        ?= ../Minimal Workbench v3.1
 HD_BACKUP ?= ../AMOS_Pro-original-binaries
 
 install-hd: all
 	$(PYTHON) tools/install_hd.py --build $(BUILD) --hd "$(HD)" --backup "$(HD_BACKUP)"
 
-# Phase 7: AMOS for another host (64 bits, AMOS's memory below 4GB):
-# the portable C++, src/host (the runtime and the HAL's backends) and the
-# generated tables. Not complete yet: links what there is and lists what
-# is missing.
-HOST_SRC    := $(filter-out %_amiga.cpp src/amiga/%,$(wildcard src/*/*.cpp)) $(GEN)/lib_direct.cpp $(GEN)/w_direct.cpp \
-               $(GEN)/wentry_table.cpp $(HOST)/host_glue.cpp $(HOST)/topaz.cpp
+# ---- AMOS for another host -----------------------------------------------------
+# 64 bits, AMOS's memory below 4GB: the portable C++, src/host (the HAL's
+# backends) and src/tables.
+
+HOST_SRC    := $(filter-out %_amiga.cpp src/amiga/%,$(wildcard src/*/*.cpp)) $(HOST)/topaz.cpp
 HOST_OBJ    := $(patsubst %.cpp,$(HOST)/obj/%.o,$(HOST_SRC))
 HOST_FLAGS  := -m64 -O0 -g -D__use_amiga_stdc_c99 -std=c++20 -fno-exceptions -fno-rtti -fno-threadsafe-statics -fpack-struct=2 \
-               -Isrc/host/include -Isrc -I$(GEN) -idirafter $(AMIGA_PREFIX)/m68k-amigaos/ndk-include -MMD -MP
-
-# The library images: HOST_IMAGES (above)
-$(HOST)/images/library.bin: $(OBJ)/src/main/library.o
-$(HOST)/images/%_image.bin: $(OBJ)/src/ext/%_image.o
-$(HOST)/images/library.bin: SRC = src/main/library.s
-$(HOST)/images/%_image.bin: SRC = src/ext/$*.s
-$(HOST)/images/%.bin:
-	@mkdir -p $(dir $@)
-	$(VASM) $(ASFLAGS) -Isrc -Fbin -o $@ $(SRC) 2>&1 | grep -v "warning 58\|included from\|^$$\|^>" || true
+               -Isrc/host/include -Isrc -idirafter $(AMIGA_PREFIX)/m68k-amigaos/ndk-include -MMD -MP
 
 # topaz, from the user's Kickstart (as the tests' emulator has it)
 KICKSTART ?= $(HOME)/Programs/CAMOS/FS-UAE/Kickstarts/amiga-os-310-a1200.rom
@@ -329,14 +113,7 @@ $(HOST)/topaz.cpp: tools/extract_topaz.py
 	@mkdir -p $(dir $@)
 	$(PYTHON) tools/extract_topaz.py --out $@ --rom "$(KICKSTART)" --key "$(ROMKEY)"
 
-$(HOST)/host_glue.cpp: tools/host_glue.py $(GLUE_SOURCES) $(wildcard src/host/*.cpp src/runtime/*.cpp) \
-		$(foreach i,$(HOST_IMAGES),$(HOST)/images/$(lastword $(subst :, ,$(i))).bin)
-	@mkdir -p $(dir $@)
-	$(PYTHON) tools/host_glue.py --out $@ --cxx 'L_Trappe=sizeof(amos::WData)' $(foreach e,$(GLUE_EQU),--equ $(e)) \
-		$(foreach i,$(HOST_IMAGES),--image $(firstword $(subst :, ,$(i)))=$(HOST)/images/$(lastword $(subst :, ,$(i))).bin) \
-		-- $(GLUE_SOURCES)
-
-$(HOST)/obj/%.o: %.cpp $(CXX_GEN)
+$(HOST)/obj/%.o: %.cpp
 	@mkdir -p $(dir $@)
 	g++ $(HOST_FLAGS) -c -o $@ $<
 
@@ -348,8 +125,8 @@ host: $(HOST_OBJ)
 	grep -o "undefined reference to .*" $(HOST)/link.txt | sort -u \
 		| tee $(HOST)/missing.txt | wc -l | sed 's/$$/ symbols missing (build\/host\/missing.txt)/'
 
-# Phase 7: which C++ files compile for another host (tools/host_check.sh)
-host-check: $(CXX_GEN)
+# Which C++ files compile for another host (tools/host_check.sh)
+host-check:
 	sh tools/host_check.sh
 
 clean:

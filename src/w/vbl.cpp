@@ -20,7 +20,6 @@ using namespace amos::w;
 // w/vbl_glue.s: call fn with a5 the data zone and a6 the custom chips
 extern "C" void w_int_call(const void *fn, uint8_t *data);
 // +W.s
-extern "C" uint8_t w_animator[], w_vbl_in[];
 
 namespace {
 
@@ -282,7 +281,7 @@ void add_vbl()
     is->is_Node.ln_Pri = 100;
     is->is_Node.ln_Name = nullptr;
     is->is_Data = reinterpret_cast<uint8_t *>(&d) + sizeof(WData);
-    is->is_Code = reinterpret_cast<void (*)()>(w_vbl_in);
+    is->is_Code = reinterpret_cast<void (*)()>(AMOS_ENTRY(w_vbl_in));
     hal::add_vbl_server(is);
 }
 

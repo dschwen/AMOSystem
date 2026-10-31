@@ -25,8 +25,7 @@ using namespace amos;
 using namespace amos::ed;
 
 // +Edit.s
-extern "C" uint8_t ed_set_banks[], ed_not_done[], ed_not_done2[], ed_out_of_memory[], ed_d_error[],
-    ed_alert_100[], ed_file_selector[], ed_save_over[], ed_warn[], ed_aver_fin[], ed_get_systeme[];
+
 
 namespace {
 

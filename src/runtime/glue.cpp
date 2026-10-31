@@ -97,10 +97,14 @@ template <typename F> void w_go(AllRegs &r, F f)
 void glue_start()
 {
     glue_relocate();
-    sorted = static_cast<const GlueEntry **>(hal::allocate(uint32_t(sizeof(GlueEntry *) * glue_entry_count), 0));
-    for (int i = 0; i < glue_entry_count; i++)
-        sorted[i] = &glue_entries[i];
-    sorted_count = glue_entry_count;
+    int count = 0;
+    for (const GlueEntry *const *t = glue_entry_tables; *t; t++)
+        for (const GlueEntry *e = *t; e->at; e++)
+            count++;
+    sorted = static_cast<const GlueEntry **>(hal::allocate(uint32_t(sizeof(GlueEntry *) * count), 0));
+    for (const GlueEntry *const *t = glue_entry_tables; *t; t++)
+        for (const GlueEntry *e = *t; e->at; e++)
+            sorted[sorted_count++] = e;
     sort_entries();
 }
 
@@ -265,3 +269,24 @@ int32_t glue_call(const void *at, AllRegs &r)
 }
 
 } // namespace amos::host
+
+namespace amos {
+
+// The function of a WEntry glue (found by the address of its entry, or of
+// an alias of it), for the C++ that calls it directly
+WFunction wentry_function(const void *entry)
+{
+    for (int hop = 0; hop < 3; hop++) {
+        const host::GlueEntry *e = host::glue_entry(entry);
+        if (!e)
+            return nullptr;
+        if (e->kind == host::GlueKind::alias) {
+            entry = e->target;
+            continue;
+        }
+        return e->kind == host::GlueKind::w ? reinterpret_cast<WFunction>(e->fn) : nullptr;
+    }
+    return nullptr;
+}
+
+} // namespace amos

@@ -14,7 +14,7 @@ extern "C" {
 // chrget_glue.s
 void interp_exec(const void *routine, uint32_t d0, uint32_t d1);
 void interp_exec_value(const void *routine, uint32_t d0, uint32_t d1, const amos::interp::Value *v);
-extern uint8_t interp_iret[];
+
 // float.cpp
 void interp_open_math_libraries();
 // control.cpp

@@ -21,7 +21,6 @@ using namespace amos::music;
 extern "C" {
 // music_glue.s: the routines handed to AMOS; a library function with d0,
 // d1, a0, a1 from r (d0 back)
-extern uint8_t music_default[], music_end[], music_bank_check[], music_sami_entry[];
 uint32_t music_lvo(uint32_t *r, uint32_t base, int32_t lvo);
 // lib/devices.cpp: amiga.lib
 struct MsgPort *lib_create_port(const char *name, int32_t priority);
@@ -792,7 +791,7 @@ void ext_music_init()
         m.TempoBase = 120;
         m.MusClock = 3579545;
     }
-    m.Sami_handad = address(music_sami_entry);
+    m.Sami_handad = address(AMOS_ENTRY(music_sami_entry));
     // the data of the extension's data zone
     for (uint32_t v = 0; v < 4; v++) {
         volatile SampleInt &s = sample_int(v);

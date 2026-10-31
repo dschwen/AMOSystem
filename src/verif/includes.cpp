@@ -23,7 +23,7 @@ extern "C" uint32_t lib_instr_find(const uint8_t *hay, uint32_t hay_len, const u
                                    uint32_t start);
 // includes_glue.s: the routine record of Equ_Free, called when memory is
 // short
-extern "C" uint8_t ver_equ_flush[];
+
 
 namespace {
 

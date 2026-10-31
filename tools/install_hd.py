@@ -19,13 +19,8 @@ import uaem
 
 # built file -> path on the drive; "{amos}" is the AMOS Pro directory
 FILES = [
+    # AMOS.library, the editor, the monitor and the libraries are in AMOSPro
     ('AMOSPro', '{amos}/AMOSPro'),
-    ('AMOSPro.Lib', '{amos}/APSystem/AMOSPro.Lib'),
-    ('AMOSPro_Music.Lib', '{amos}/APSystem/AMOSPro_Music.Lib'),
-    ('AMOSPro_Compact.Lib', '{amos}/APSystem/AMOSPro_Compact.Lib'),
-    ('AMOSPro_Request.Lib', '{amos}/APSystem/AMOSPro_Request.Lib'),
-    ('AMOSPro_IOPorts.Lib', '{amos}/APSystem/AMOSPro_IOPorts.Lib'),
-    # AMOS.library, the editor and the monitor are linked into AMOSPro
 ]
 
 

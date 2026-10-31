@@ -2,216 +2,145 @@
 
 Requirements: the Amiga cross toolchain from
 https://github.com/AmigaPorts/m68k-amigaos-gcc (installed in `/opt/amiga`, or
-pass `AMIGA_PREFIX=...`), GNU make and python3.
+pass `AMIGA_PREFIX=...`), GNU make and python3. AMOS Pro is C++ now: there is
+no assembler in the build.
 
 ```
-make            # assemble everything into build/
-make verify     # compare with the prebuilt binaries shipped in AMOS/
-make dist       # build/dist/AMOS: the AMOS tree with the new binaries
+make            # build/AMOSPro
+make dist       # build/dist/AMOS: the AMOS tree with the new AMOSPro
+make host       # build/host/amos: AMOS as a program of this computer
 ```
 
-## What replaces the original Amiga tools
+## What replaced the original Amiga tools
 
-| Original (Amiga)              | Here                         |
-|-------------------------------|------------------------------|
-| `c/Genam`, `c/genim2`         | `vasmm68k_mot -devpac`        |
-| `c/Make_Labels`               | `tools/make_labels.py`        |
-| `c/Make_Toktable`             | `tools/make_toktable.py`      |
-| `c/Library_Digest`            | `tools/library_digest.py`     |
-| `c/Get_Chunk`                 | `vasm -Fbin` plus longword padding |
-| AmigaDOS case-insensitive names | `tools/case_links.py` (symlinks in `build/ci`) |
+AMOS Pro was built on an Amiga with HiSoft GenAm and helper programs in AMOS
+BASIC. The conversion moved through these stages, and what is left of each:
 
-Generated files go to `build/gen`; nothing is written into the source tree.
+| Original (Amiga)              | Stage                            | Now |
+|-------------------------------|----------------------------------|-----|
+| `c/Genam`, `c/genim2`         | `vasmm68k_mot -devpac`           | the assembler is gone |
+| `c/Make_Labels`, `c/Library_Digest` | `tools/make_labels.py`...  | `src/core/lib_routines.h`, `src/tables` |
+| `c/Make_Toktable`             | `tools/make_toktable.py`         | the verifier's table is in `src/tables` |
+| `c/Get_Chunk`                 | `vasm -Fbin`                     | the editor's configuration of the distribution is patched by `tools/blue_palette.py` |
+
+What the assembler sources held (tables, data, the glue's entries, the
+layouts) is C++ in `src/tables` and `src/core`; see below. The original
+sources are in the history of the repository.
 
 ## How the programs are linked
 
-AMOSPro is C++: `src/lib`, `src/main`, `src/verif`, `src/interp`,
-`src/ext`, `src/hal`, `src/w` (AMOS.library), `src/editor`,
-`src/monitor`, `src/core` and `src/runtime`, compiled with
-`m68k-amigaos-g++` and linked with gcc and `link/amospro.ld`. The
-assembler sources (`+B.s`, `+W.s`, `+Edit.s`, `+Monitor.s`, `+Verif.s`
-and the `src/*/*_glue.s`) no longer contribute code to it: they are the
-declarations of its tables, data and entries, and `tools/host_glue.py`
-turns them into `build/gen/amiga_glue.cpp` (the same tool and the same
-C++ as the build for another host, with `--underscore` for the Amiga's
-C symbols and chip memory for the sections the assembler put there):
+AMOSPro is C++: `src/lib`, `src/main`, `src/verif`, `src/interp`, `src/ext`,
+`src/hal`, `src/w` (AMOS.library), `src/editor`, `src/monitor`, `src/core`,
+`src/runtime` and `src/tables`, compiled with `m68k-amigaos-g++` and linked
+with gcc and `link/amospro.ld`.
 
-- each label is a place in a data array, byte for byte what the
-  assembler laid out (the jump tables AMOSPro patches, the token tables,
-  the messages, the default mouse bank);
-- each entry of the assembler (a glue macro of `src/glue.i`, a `bra`
-  table, a routine written in assembler) is a record: what it was and the
-  C++ function behind it. `src/runtime/glue.cpp` does what the macro did
-  when something calls the entry's address (`amos_call` and the others,
-  the interpreter's tables, the programs' routine lists);
-- the exits of the assembler that reset the stack (`BasSp`, the PRUN and
-  editor-zap stacks, a menu's procedure, the monitor's step) are marks
-  set with `setjmp` (`src/runtime/marks.h`, `runtime.cpp`, `monitor.cpp`);
-  the `BasSp` the data zone keeps is the address of the mark.
+`src/tables` is what the assembler sources were: their tables, data and glue
+entries, converted once to C++ (one file for each assembler source: its
+bytes as an array, the relocations of its addresses, its entries). Nothing
+generates them any more; they are the source.
 
-`src/amiga` is what is left of the machine: its start (`start.cpp`: the
+- each label is a place in a data array, byte for byte what the assembler
+  laid out (the jump tables AMOSPro patches, the token tables, the messages,
+  the default mouse bank, the libraries' images). The labels that the C++
+  uses are constants in `tables/labels.h` (`extern uint8_t *const name`);
+- each entry of the assembler (a glue macro, a `bra` table, a routine
+  written in assembler) is a record of `GlueEntry` (`src/runtime/glue.h`):
+  what it was and the C++ function behind it. `src/runtime/glue.cpp` does
+  what the macro did when something calls the entry's address (`amos_call`
+  and the others, the interpreter's tables, the programs' routine lists);
+- the exits that reset the stack (`BasSp`, the PRUN and editor-zap stacks, a
+  menu's procedure, the monitor's step) are marks set with `setjmp`
+  (`src/runtime/marks.h`, `runtime.cpp`, `monitor.cpp`); the `BasSp` the data
+  zone keeps is the address of the mark.
+
+`src/amiga` is what is machine code by nature: its start (`start.cpp`: the
 program's first code, its own 64K stack, `Get_Out`), and `native.cpp`:
 `setjmp`/`longjmp`, the call of code at an address with all the registers
 (the machine code of programs, the system's libraries), the math and
-narrator libraries' calls, and the entries the system calls (the VBL
-server, the input handler, the patched requesters and LoadView, the audio
-interrupts of the samples). `amiga/start.cpp` is linked first and
-`.text.entry` is first in the linker script: the program begins there.
-This `ld` writes no memory flags, so `tools/chiphunks.py` marks the
-`.datachip`/`.bsschip` hunks as chip memory after linking, using the map
-file.
+narrator libraries' calls, and the entries the system calls (the VBL server,
+the input handler, the patched requesters and LoadView, the audio interrupts
+of the samples). `amiga/start.cpp`'s entry is first: `.text.entry` is first
+in the linker script. This `ld` writes no memory flags, so
+`tools/chiphunks.py` marks the `.datachip`/`.bsschip` hunks as chip memory
+after linking, using the map file.
 
 AMOS.library, the editor and the monitor were programs of their own that
-AMOSPro loaded with LoadSeg. They are linked in: "loading" the editor or
-the monitor puts their entry tables (`ed_debut`, `mon_debut`) into the
-library's jump table (`src/main/modules.cpp`); KILL EDITOR no longer
-gives their memory back. AMOSPro.Lib and the four extensions are
-libraries in the raw format AMOSPro loads and patches (their routines are
-C++ linked into AMOSPro; the files keep their token tables and the
-parameter collectors). They are assembled twice: as files, which the
-tools read (the tokenizer reads their token tables), and as data
-(`src/main/library.s`, `src/ext/*_image.s`, built to `build/host/images`
-and read by `host_glue.py`). The loader takes library 0 from its image,
-and an extension from its image when the configuration names its file;
-any other extension is still loaded from its file.
+AMOSPro loaded with LoadSeg. They are linked in: "loading" the editor or the
+monitor puts their entry tables (`ed_debut`, `mon_debut`) into the library's
+jump table (`src/main/modules.cpp`); KILL EDITOR no longer gives their memory
+back. AMOSPro.Lib and the four extensions are libraries in the raw format
+AMOSPro loads and patches: their images (the token table, the jump table,
+the title) are in `src/tables`, their routines C++. The loader takes library
+0 from its image, and an extension from its image when the configuration
+names its file; any other extension is still loaded from its file. The
+`AMOS/APSystem/*.Lib` files of the distribution are what the tools read
+(the tokenizer reads their token tables).
 
 C++ is compiled for the 68000 with `-Os`, without exceptions, RTTI or a C
 library startup. libgcc and libnix13 supply arithmetic helpers such as
 `__divsi3`.
 
-## Moving an AMOSPro.Lib routine to C++
+## Adding or changing a routine
 
-AMOSPro.Lib is loaded raw, so the code of a routine that moves out of it is
-linked into the AMOSPro program instead:
+The routines of AMOSPro.Lib are C++ in `src/lib`, `src/interp`, `src/main`
+and the other directories, numbered as the library's jump table is
+(`src/core/lib_routines.h`: add new routines at its end). An instruction or
+function that the tokens table names is called through its entry in
+`src/tables`: a record that says what the assembler's glue macro said
+(`LibCall`: the C function, the number of its integer parameters, the kind
+of result; `WEntry`: a function of `AllRegs *`; `RegRoutine`...) and where
+its slot in the library's jump table is. The ChrGet, the loop that runs a
+program's instructions, is C++ (`src/interp/chrget.cpp`): it recognises an
+entry of kind `libcall` with integer parameters or none, evaluates its
+parameters and calls the C function itself; every other routine goes
+through `interp_exec`.
 
-1. In `+Lib.s`/`+ILib.s`, replace the routine's `Lib_Par`/`Lib_Def` and its
-   body with `Lib_Int Name` (`tools/move_to_cpp.py` does this). The routine keeps its number. A helper routine
-   that nothing else uses any more becomes `Lib_Empty`, which keeps the
-   numbering. `tools/make_labels.py` lists every `Lib_Int` in
-   `+Internal_Jumps.s` (`AMOSJmps`), and `Library_Patch` (src/main/libraries.cpp) writes the address
-   from that list into the jump table at start-up.
-2. Write the entry point in `src/lib/*_glue.s` with the macros in
-   `src/glue.i`. For an instruction or function this is one line,
-   `LibCall Name,_c_function,params,Int|Float|String|None`: the parameters
-   go to the C function as 32-bit values (a string as the address of its
-   length word), and its return value becomes the AMOS result.
-3. Implement the routine in `src/lib/*.cpp` as an `extern "C"` function.
-
-The ChrGet, the loop that runs a program's instructions, is C++
-(`src/interp/chrget.cpp`). Each `LibCall` entry has a tag before it (its C
-function, parameters and result, then `"LCal"`, then the `"GetP"` slot of
-the loader). The loop and the evaluator recognise an instruction or
-function whose routine is a tagged entry with integer parameters (the
-collectors `Ent_1`...`Ent_N` of `L_Parameters`, which the loader put in
-front of it) or none, and evaluate its parameters and call the C function
-themselves. Every other routine is called through `interp_exec`
-(`chrget_glue.s`), with the parameter collector in front of it and the
-interpreter registers of the context. `Prg_InsRet`, where instructions
-that jump go back to, is `interp_iret`, which enters the loop again at a6.
-
-The extensions (`extensions/+*.s`) are still libraries of their own, but
-their routines move into AMOSPro the same way: `Lib_Int` in the
-extension, the entry `Ext_<Extension>_<routine>` in `src/ext/*_glue.s`.
-`tools/library_digest.py` writes the extension's list
-(`+<Extension>_Jumps.s`: its number of routines, then each number and
-entry), and `Library_Patch` (`ExtJmps` in +B.s) writes them into the jump
-table of the slot the extension is loaded in, when that library has the
-same number of routines and those are empty. An extension reaches its own
-routines PC-relatively (`Rbsr`), its `Rjsr` goes to the main library: a
-call from extension code into one of its routines in AMOSPro goes
-through the jump table at `AdTokens+slot*4(a5)`.
-
-A helper that +ILib.s reaches with local branches (`bsr FindVar`) keeps a
-one-line `Label Rjmp L_Label` in the library. If it had no number of its
-own, it takes the slot of a routine of the dropped compiler: the empty
-`Lib_Def`s `PlusF`... and `Cmp...` at the start of +ILib.s are only
-referenced by APCmp (`FindVar` took `PlusF`'s).
-
-`make_labels.py` refuses two things the loader cannot handle: a
-PC-relative `Rbsr`/`Rbra`/`Rbcc` to a `Lib_Int` routine (it cannot reach the
-program, so use `Rjsr`/`Rjmp`), and code in the library that could fall
-through into a `Lib_Int`.
+The tokens table of the library, the table the `.AMOS` programs' token
+numbers are offsets in, is part of `src/tables` (the library image,
+`main_library`, and those of the four extensions): the offsets must not
+change. `tools/amostok.py` (the tests' tokenizer) reads the same tables
+from `AMOS/APSystem/*.Lib`.
 
 ### The C++ side (`src/core/amos.h`)
 
 - `amos::idata()` is the interpreter data above a5 (`IData`), and
   `amos::wdata()` the AMOS.library data below it (`WData`, the `T_` fields
-  without the prefix). `tools/gen_layout.py` generates these and every other
-  RS structure of `+Equ.s`/`+CEqu.s`/`+WEqu.s` (`Screen`, `Bob`, `Window`,
-  `Program`...) into `build/gen/core/layout.h`. vasm computes the offsets,
-  and a `static_assert` checks each field. The header also has the
+  without the prefix). `src/core/layout.h` has these and every other
+  structure of AMOS's data (`Screen`, `Bob`, `Window`, `Program`...), the
+  offsets of their fields as the assembler had them (`static_assert`ed), in
+  big-endian types (`core/endian.h`) on a little-endian host; and the
   AMOS.library function numbers (`amos::sy::WaitVbl`, `amos::wi::Locate`...).
-  `build/gen/lib_routines.h` has the routine numbers (`amos::L_Demande`).
-- The glue saves the interpreter registers (d6-d7/a3-a6) in the task's
-  context, `ctx()`, on every entry into C++: one for the main task, one for
-  any other, which is the file selector's (it runs Interface code in a task
-  of its own while the main task reads the directory). The contexts are a
-  block that `amos_bridge` points to (`src/core/call.s`); AMOSPro records
-  its main task in it at startup and passes its address in `T_CBridge` to
-  AMOS.library, whose own copy of the bridge then uses it. (`tc_UserData`
-  is not free for this: AMOS.library keeps its data zone there.)
-  AMOS.library is no longer assembled with `OPT P+`: its code calls C++ in
-  other hunks, which LoadSeg relocates. Calls back into the assembler run with them:
+  `src/core/lib_routines.h` has the routine numbers (`amos::L_Demande`).
+- The interpreter's registers (d6-d7/a3-a6) are in the task's context,
+  `ctx()`: one for the main task, one for the file selector's (it runs
+  Interface code in a task of its own while the main task reads the
+  directory). On the Amiga the contexts are a block that `amos_bridge` points
+  to (`src/amiga/start.cpp`); AMOS.library gets its address in `T_CBridge`.
   `lib_call(L_x, regs)` (`JJsr`), `sy_call`/`ec_call`/`wi_call`
-  (`SyCall`/`EcCall`/`WiCall`) with d0-d5/a0-a2 in an `amos::Regs`.
-- Most of these calls no longer go through the assembler. `lib_call`
-  calls the C++ function of a routine whose glue is a `RegRoutine`
-  directly (`tools/lib_direct.py` makes the table from the glue files),
-  when the jump table still points to that glue: the float routines are
-  swapped in the table. `sy_call` and `ec_call` call AMOS.library's C++
-  (`tools/w_direct.py`, from the vector tables of `+W.s` and the `WEntry`
-  glue) while the vectors are AMOS.library's own; the monitor patches
-  them while it runs. Both set up the registers and the context as the
-  glue would, and put the context back afterwards. `error(n)` calls the
-  error routine (`interp_error`) directly, and the routines of
-  `main/system.cpp` (`boot::sys_message`, `boot::temp_buffer`...) and of
-  AMOS.library's memory (`w::reserve`, `w::add_routine`...) are plain C++
-  calls.
+  (`SyCall`/`EcCall`/`WiCall`) with d0-d5/a0-a2 in an `amos::Regs` call the
+  routine's entry (`src/runtime/glue.cpp`); the functions of AMOS.library's
+  vector tables are called directly (`src/tables/w_direct.cpp`), after the
+  monitor's patches (`w::sy_patch`, `w::ec_patch`). The context is put back
+  afterwards.
 - `error(n)`, `fon_call()` and `lib_jump(L_x, d0)` raise errors. They do not
-  return: the interpreter resets its stack.
+  return: the interpreter resets its stack to its mark.
 - Strings (`src/lib/strings.h`): `str_alloc` (`L_Demande`), `str_finish`
   (`L_FinBin`), `str_empty`.
-- A call into the assembler restores the context afterwards. Extension
-  code, for one, changes a3 without restoring it, as the original callers
-  saved all registers.
-- Calls back into the assembler may not return either. Errors reset the
-  stack, and a full string space restarts the whole instruction after the
-  garbage collection. So no C++ object with a destructor may be alive across
-  such a call, and side effects belong after the string allocation, as in
-  the assembler.
-- Interrupt code must not use `CCall`/`amos_ctx`.
+- Calls may not return: errors reset the stack, and a full string space
+  restarts the whole instruction after the garbage collection. So no C++
+  object with a destructor may be alive across such a call, and side effects
+  belong after the string allocation, as in the original.
+- Interrupt code (`w_vbl`, the input handler, the audio interrupts) must not
+  use the contexts' saving (`amiga_w_go`): it runs under another code.
 - `lib_eval(L_x, regs)` calls a routine that reads parameters from the
   program itself (`MnDim`, the evaluator): the interpreter then continues at
   the a6 (and with the a3) it leaves.
 
-Routines that other assembler code calls with registers (`L_InstrFind`,
-`Bnk.GetAdr`...) keep a register entry. `RegRoutine Name,_c_function` hands
-the C function all of d0-d7/a0-a2 in a `RegFrame` to read and change, and
-sets the condition codes from its return value for callers that branch on
-them. `move_to_cpp.py` also turns the library's PC-relative `Rbsr`/`Rbra`/
-`Rbcc` to converted routines into `Rjsr`/`Rjmp`.
-
-AMOS.library functions move to C++ a vector table at a time. The text
-windows are the first: `T_WiVect` points to the table in
-`src/w/windows_glue.s`, whose entries hand all registers to
-`w_window(n, AllRegs *)` and set the condition codes from d0 as before.
-The glue makes the caller's d6-d7/a3-a6 the task's context for the C++
-code (it needs a5) and puts the old context back afterwards, as callers
-are assembler, C++ (through `amos_call`) or other tasks (requesters).
-Other functions of the vector tables (the drawing ones of the screen
-table: `Cls`, clip, `Set Pattern`, `Paint`, sliders) keep their entry in
-`+W.s`, which jumps to a `WEntry` (`src/w/wglue.i`) that does the same for
-one C function. Assembler routines the C++ still calls (`TAbk1`-`4`,
-`FastMm`, `SySetZ`, `Ec_SetClip`...) are exported from `+W.s` under `_w_`
-names; `src/w/w.h` declares them. The writing modes, which the
-assembler patched into its own code, are two variables, shared by all
-windows as before.
-
-Converted so far: the integer paths of `Abs` and `Sgn`, the string
-functions of `String.s` (except `Left$`/`Mid$`/`Right$`, `Str$` and `Val`,
-which are in `+ILib.s`), the keyboard and joystick functions, `Locate`,
-the banks (`Bnk.*`, the bank instructions) and lists (`Lst.*` of `+B.s`),
-the number to text conversions.
+Routines that other code calls with registers (`L_InstrFind`, `Bnk.GetAdr`...)
+have a register entry: `RegRoutine` hands the C function all of d0-d7/a0-a2
+in a `RegFrame` to read and change, and sets the condition codes from its
+return value for callers that branch on them. The functions of AMOS.library
+are `WEntry` entries: `void f(AllRegs *)`.
 
 ### The portability layer (`src/hal`)
 
@@ -250,10 +179,9 @@ compile.
 `make host` links the C++ into a Linux x86-64 program, `build/host/amos`,
 with `src/host` and no assembler:
 
-- the bridge: `tools/host_glue.py` turns the assembler sources' glue
-  entries, tables and data into C++ (`build/host/host_glue.cpp`), each
-  label an address the C++ keeps as on the Amiga; the stack-resetting
-  exits of the interpreter are `setjmp` marks (`host/runtime.cpp`);
+- the bridge: the same `src/tables` and `src/runtime` as the Amiga's, each
+  table label an address the C++ keeps as on the Amiga; the stack-resetting
+  exits of the interpreter are `setjmp` marks (`runtime/runtime.cpp`);
 - memory below 4GB (`MAP_32BIT`, as AMOS keeps its addresses in 32 bits),
   given out as exec does; AMOS's data (programs, banks, token tables)
   stay big-endian (`core/endian.h`);
@@ -324,9 +252,9 @@ original behaviour, quirks included (the tests record the original
 binaries' results). Where a fix changes a recorded result, the golden file
 has the corrected one.
 
-The editor's default palette is blue instead of teal (`Ed_Palette` in
-`+Editor_Config.s`: colours 2, 5 and 6 are $037, $5AE and $27C instead of
-$077, $0DD and $0AA). It is a change of taste, not a fix: a config saved
+The editor's default palette is blue instead of teal (`Ed_Palette` of the
+editor's configuration: colours 2, 5 and 6 are $037, $5AE and $27C instead of
+$077, $0DD and $0AA; `make dist` makes it with `tools/blue_palette.py`). It is a change of taste, not a fix: a config saved
 by the editor keeps its own palette, and `make install-hd` leaves the
 installed configs alone. The emulator tests run with the original config,
 which their editor screenshots were recorded with.
@@ -571,7 +499,7 @@ Input handler (AMOS.library)
   now, so `ConIo` has its full size.
 - console.device was opened at the start and never closed.
 
-Programs in memory (+Verif.s)
+Programs in memory (the verifier)
 - `Prg_Save` left the file open when writing it failed (a full disk, say),
   so it stayed locked until AMOS quit. It is closed now.
 - The table of `Include`s had room for 15 of them, and a program with more
@@ -627,7 +555,7 @@ ARexx
   taken off the port and never replied to, so its sender waited for ever;
   it is now replied to.
 
-Start-up and system files (`+B.s`)
+Start-up and system files (the main program)
 - A mouse file named in the interpreter configuration was never loaded:
   the start measured its size by seeking to its end, then stayed there and
   read nothing, so AMOS stopped with "Cannot read system files". It now
@@ -639,37 +567,13 @@ Start-up and system files (`+B.s`)
 - A name on the command line (or `-c` configuration name) longer than 127
   characters overran the start's buffer; it is now cut there.
 
-## Assembler compatibility notes
-
-- Fixed in the sources for the build only, without changing the code:
-  `bne.` and `cmp.s` typos that GenAm tolerated, and two Latin-1 characters
-  in `+Editor_Config.s` strings that had been replaced by U+FFFD.
-
-- `+W.s` (AMOS.library) was built with GenIm2, which matches symbols without
-  regard to case, so it is assembled with `-nocase`. All other sources need
-  case-sensitive symbols (they contain e.g. both `.skip` and `.Skip`).
-- `EzFlag` (Easy AMOS variant of AMOS.library) is not defined in the sources
-  and is passed as `-DEzFlag=0`.
-- `-kick1hunks` keeps relocations in `HUNK_RELOC32`, as GenAm did, so the
-  binaries still load on Kickstart 1.3.
-
 ## Verification
 
-`tools/bincmp.py` compares hunk files semantically. It accepts the
-encoding choices on which GenAm and vasm differ (`andi` vs `and #imm`, the
-order of `exg` operands, padding, memory flags in the hunk id, reloc order)
-and reports everything else. Before the conversion all nine programs and
-libraries were equivalent to the prebuilt ones. Now AMOSPro and the
-`.Lib` files have C++ in them and the emulator tests are what checks them;
-`make verify` compares the two config files: the interpreter's is
-byte-identical, the editor's differs only in its palette (blue, see the
-deliberate differences).
-
-Three source fixes were needed:
-- `+B.s`: `bne.` is now `bne`, assembled as `bne.w` as before.
-- `+Edit.s`: `cmp.s` is now `cmp.b`.
-- `+Editor_Config.s`: the `ç`/`©` bytes in two strings had been replaced by
-  U+FFFD in an earlier re-encoding of the repository, and are restored.
+The emulator tests (below) check AMOSPro against the results recorded from
+the original binaries. The editor's configuration in `build/dist` is the
+prebuilt one with the palette made blue (`tools/blue_palette.py`: the only
+change, see the deliberate differences); the tests run with the original
+configuration their screenshots were recorded with.
 
 ## Tests in the emulator
 

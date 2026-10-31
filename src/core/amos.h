@@ -20,13 +20,31 @@
 //   condition codes need a register to test instead.
 #pragma once
 
+#include "tables/labels.h"
+
+// The entries the system calls (the VBL server, the input handler...): on
+// the Amiga the machine code of src/amiga/native.cpp, on another host the
+// entry of the tables that stands for it
+#if defined(__mc68000__)
+extern "C" {
+void amiga_w_vbl_in();
+void amiga_music_sami_entry();
+void amiga_w_io_handler_entry();
+void amiga_w_auto_req_entry();
+void amiga_w_easy_req_entry();
+void amiga_w_amos_loadview();
+}
+#define AMOS_ENTRY(name) amiga_##name
+#else
+#define AMOS_ENTRY(name) name
+#endif
 #include <stdint.h>
 
 #include "core/layout.h"
-#include "lib_routines.h"
+#include "core/lib_routines.h"
 
 // AMOS.library's vector tables of SyCall and EcCall (+W.s)
-extern "C" uint8_t w_sy_in[], w_ec_in[], w_wi_in[];
+
 
 namespace amos {
 
@@ -100,33 +118,13 @@ inline const void *lib_address(int routine)
     return reinterpret_cast<const void *>(uintptr_t(uint32_t(table[-routine])));
 }
 
-// The C++ function of a routine of AMOSPro.Lib whose glue is a RegRoutine
-// (build/gen/lib_direct.cpp), or null
 using RegFunction = uint32_t (*)(RegFrame &);
-extern const RegFunction lib_direct[];
-// Its glue (build/gen/lib_direct_entries.s), or 0
-extern const uint32_t lib_direct_entry[];
 
 // Calls the assembler at entry with registers r (below)
 inline void entry_call(const void *entry, Regs &r);
 
-// JJsr: call a routine of AMOSPro.Lib. A routine in C++ is called
-// directly, as through the glue: d6/d7 from r in the context during the
-// call, the context as it was afterwards.
-inline void lib_call(int routine, Regs &r)
-{
-    RegFunction f = lib_direct[routine];
-    if (f && lib_direct_entry[routine] == address(lib_address(routine))) {
-        Ctx &c = ctx();
-        Ctx saved = c;
-        c.d6 = r.d[6];
-        c.d7 = r.d[7];
-        f(reinterpret_cast<RegFrame &>(r));
-        ctx() = saved;
-        return;
-    }
-    entry_call(lib_address(routine), r);
-}
+// JJsr: call a routine of AMOSPro.Lib (the entry of its jump table)
+inline void lib_call(int routine, Regs &r) { entry_call(lib_address(routine), r); }
 
 // JJsr to a routine that answers in the condition codes: -1 "less than",
 // 0 "equal", 1 "greater than"
@@ -191,12 +189,7 @@ template <typename F> inline void w_direct_call(F f, Regs &r)
     for (int i = 0; i < 3; i++)
         r.a[i] = a.a[i];
 }
-// A WEntry glue (w/wglue.i) and its C++ function; the function of an
-// entry, or null (main/direct.cpp)
-struct WEntryPair {
-    const void *entry;
-    WFunction function;
-};
+// The function of a WEntry glue, found by its entry's address (runtime/glue.cpp), or null
 WFunction wentry_function(const void *entry);
 
 // Calls the assembler at entry with registers r; directly the C++ of a
