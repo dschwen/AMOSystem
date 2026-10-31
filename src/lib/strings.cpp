@@ -293,6 +293,14 @@ extern "C" uint32_t lib_instr_find(const uint8_t *hay, uint32_t hay_len, const u
     }
 }
 
+// The same with registers. In: a1/d1 = string and length, a2/d2 = string
+// to find and length, d4 = start. Out: d3 = d0 = position or 0.
+extern "C" uint32_t lib_instr_find_reg(RegFrame &r)
+{
+    r.d[3] = r.d[0] = lib_instr_find(ptr<uint8_t>(r.a[1]), r.d[1], ptr<uint8_t>(r.a[2]), r.d[2], r.d[4]);
+    return r.d[0];
+}
+
 // =INSTR(a$,b$[,start])
 extern "C" uint32_t lib_fn_instr2(const uint8_t *hay, const uint8_t *needle)
 {

@@ -1067,6 +1067,19 @@ void interp_menu_procedure(EvalOut *o)
     interp_jump(&r, ptr<void>(d.Prg_InsRet));
 }
 
+uint32_t interp_menu_procedure_reg(RegFrame &r)
+{
+    EvalOut o = {0, 0, 0, 0, 0, r.a[0]};
+    interp_menu_procedure(&o);
+    r.d[0] = o.d0;
+    r.d[1] = o.d1;
+    r.d[2] = o.d2;
+    r.d[3] = o.d3;
+    r.d[4] = o.d4;
+    r.a[0] = o.a0;
+    return r.d[0];
+}
+
 // Errors: d0 the number, d1 the first one On Error can take (19 for
 // AMOS's), d2 -1 or the extension (a0 its messages)
 [[noreturn]] void interp_error(uint32_t n, uint32_t first, uint32_t extension, uint32_t messages)
@@ -1143,6 +1156,11 @@ void interp_menu_procedure(EvalOut *o)
     r.d[2] = extension;
     interp_jump(&r, ptr<void>(handler));
 }
+
+// L_Error: error d0 of AMOSPro; L_ErrorExt: d1 the first one On Error can
+// take, d2 the extension, a0 its messages
+uint32_t interp_error_reg(RegFrame &r) { interp_error(r.d[0], 19, uint32_t(-1), r.a[0]); }
+uint32_t interp_error_ext_reg(RegFrame &r) { interp_error(r.d[0], r.d[1], r.d[2], r.a[0]); }
 
 void interp_omn_eff()
 {

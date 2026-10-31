@@ -310,3 +310,28 @@ void ext_unpack2(uint32_t b, uint32_t s)
     d.ScOn = uint16_t(e->EcNumber + 1);
 }
 }
+
+// The extension's cold start (routine 0): d1 "APex" from AMOSPro 1.10 on.
+// Out: d0 the extension's number, d1 (low word) its version; d0 = -1 and
+// a0 = 0 for another version.
+static uint32_t cold_start(RegFrame &r, uint32_t number, uint16_t version, void (*start)())
+{
+    if (r.d[1] != 0x41506578) {
+        r.d[0] = uint32_t(-1);
+        r.a[0] = 0;
+        return r.d[0];
+    }
+    if (start)
+        start();
+    r.d[0] = number;
+    r.d[1] = (r.d[1] & 0xFFFF0000) | version;
+    return r.d[0];
+}
+
+extern "C" {
+uint32_t ext_compact_cold(RegFrame &r) { return cold_start(r, ExtNb, 0x0110, nullptr); }
+// Custom: error d0 of the extension, its messages; Custom2: with the
+// messages in a0
+uint32_t ext_compact_custom(RegFrame &r) { interp_error(r.d[0], 0, ExtNb, address(ErrMes)); }
+uint32_t ext_compact_custom2(RegFrame &r) { interp_error(r.d[0], 0, ExtNb, r.a[0]); }
+}

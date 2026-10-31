@@ -1159,7 +1159,7 @@ int16_t Animator::operand(uint16_t op)
     case AmM1:
         return hal::cia_a_pra() & 0x40 ? 0 : -1;
     case AmM2:
-        return *reinterpret_cast<volatile uint8_t *>(&hal::custom_word(0x016)) & 0x04 ? -1 : 0;
+        return hal::custom_word(0x016) & 0x0400 ? -1 : 0;
     case AmXS:
     case AmYS:
     case AmXH:

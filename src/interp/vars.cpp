@@ -403,4 +403,21 @@ void interp_fn_fn(EvalOut *o)
 
 // GetTablo: a0 the slot. Out: a0 the element.
 void interp_get_tablo(EvalOut *o) { o->a0 = address(array_element(ptr<uint8_t>(o->a0))); }
+
+// The same with registers (L_FindVar: d0-d2/a0; L_GetTablo: a0)
+uint32_t interp_find_var_reg(RegFrame &r)
+{
+    EvalOut o;
+    interp_find_var(&o);
+    r.d[0] = o.d0;
+    r.d[1] = o.d1;
+    r.d[2] = o.d2;
+    r.a[0] = o.a0;
+    return r.d[0];
+}
+uint32_t interp_get_tablo_reg(RegFrame &r)
+{
+    r.a[0] = address(array_element(ptr<uint8_t>(r.a[0])));
+    return r.d[0];
+}
 }

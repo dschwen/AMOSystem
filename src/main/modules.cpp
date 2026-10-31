@@ -399,4 +399,7 @@ void main_in_close_editor()
     interp_jump(e, lib_address(L_Ed_ErrRun));
 }
 
+uint32_t main_run_error_run_only_reg(RegFrame &r) { main_run_error(uint32_t(-1), reinterpret_cast<Regs *>(&r)); }
+uint32_t main_run_error_no_editor_reg(RegFrame &r) { main_run_error(0, reinterpret_cast<Regs *>(&r)); }
+
 } // extern "C"

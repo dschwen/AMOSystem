@@ -912,6 +912,13 @@ void ext_music_go_sam(uint32_t voices, uint32_t length, uint32_t frequency, uint
 {
     go_sample(uint16_t(voices), start, length, frequency);
 }
+// The same with registers (the editor's): d1 voices, a1 sample, d2 length,
+// d3 frequency
+uint32_t ext_music_go_sam_reg(RegFrame &r)
+{
+    ext_music_go_sam(r.d[1], r.d[2], r.d[3], r.a[1]);
+    return 0;
+}
 
 // ---- instructions ------------------------------------------------------
 
@@ -1414,3 +1421,22 @@ void ext_med_cont()
 
 void ext_med_midi_on() { md().Med_Midi = 1; }
 }
+
+// The extension's cold start (routine 0): d1 "APex" from AMOSPro 1.10 on.
+// Out: d0 the extension's number, d1 (low word) its version; d0 = -1 and
+// a0 = 0 for another version.
+static uint32_t cold_start(RegFrame &r, uint32_t number, uint16_t version, void (*start)())
+{
+    if (r.d[1] != 0x41506578) {
+        r.d[0] = uint32_t(-1);
+        r.a[0] = 0;
+        return r.d[0];
+    }
+    if (start)
+        start();
+    r.d[0] = number;
+    r.d[1] = (r.d[1] & 0xFFFF0000) | version;
+    return r.d[0];
+}
+
+extern "C" uint32_t ext_music_cold(RegFrame &r) { return cold_start(r, ExtNb, 0x0110, ext_music_init); }

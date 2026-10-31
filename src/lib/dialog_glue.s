@@ -88,16 +88,8 @@
 ; Routine records of Dia_ClearVar: a link, then the code (called with
 ; jsr 4(a0), all registers saved). The channels close when the program is
 ; cleared or reset.
-		xdef	_lib_dia_on_clear
-		xdef	_lib_dia_on_default
-_lib_dia_on_clear
-		dc.l	0
-		CCall	_lib_dia_close_all
-		rts
-_lib_dia_on_default
-		dc.l	0
-		CCall	_lib_dia_close_all
-		rts
+		RoutineRecord _lib_dia_on_clear,_lib_dia_close_all
+		RoutineRecord _lib_dia_on_default,_lib_dia_close_all
 
 ; Read Text (lib/interface.cpp)
 		LibCall	InReadText1,_lib_in_read_text1,1,None		READ TEXT a$
@@ -113,11 +105,7 @@ _lib_dia_on_default
 		LibCall	InArexxAnswer1,_lib_in_arexx_answer1,1,None	AREXX ANSWER c
 		LibCall	InArexxAnswer2,_lib_in_arexx_answer2,2,None	AREXX ANSWER c,a$
 ; Closes the port when the program is cleared
-		xdef	_lib_arexx_on_clear
-_lib_arexx_on_clear
-		dc.l	0
-		CCall	_lib_arx_close
-		rts
+		RoutineRecord _lib_arexx_on_clear,_lib_arx_close
 
 ; The file selector (lib/fsel.cpp)
 		RegRoutine Dsk.FileSelector,_lib_dsk_file_selector
@@ -128,16 +116,8 @@ _lib_arexx_on_clear
 ; The routine of the list of names (called with registers by the list)
 		RegRoutine _lib_fs_get_name,_lib_fs_get_name_c
 ; Records: the flush routine of AMOS.library, Sys_EndRoutines
-		xdef	_lib_fs_flush_record
-		xdef	_lib_fs_end_record
-_lib_fs_flush_record
-		dc.l	0
-		CCall	_lib_fs_flush
-		rts
-_lib_fs_end_record
-		dc.l	0
-		CCall	_lib_fs_end
-		rts
+		RoutineRecord _lib_fs_flush_record,_lib_fs_flush
+		RoutineRecord _lib_fs_end_record,_lib_fs_end
 ; Disk errors while the selector runs (Fs_ErrPatch): back into it
 		xdef	_lib_fs_error_patch
 _lib_fs_error_patch

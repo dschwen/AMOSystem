@@ -36,12 +36,7 @@
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					INITIALISATION LIBRAIRIE
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	Init
-Init
-; - - - - - - - - - - - - -
-	move.w	#$00FF,d0		Librairie numero 0
-	move.w	#Ver_Number,d1
-	rts
+	Lib_Int	Init		src/lib/stubs.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					ROUTINES A NETTOYER
@@ -226,10 +221,7 @@ Init
 	Lib_Int	New_ChrGet		src/interp/chrget.cpp
 
 ; - - - - - - - - - - - - -
-	Lib_Par InEnd
-; - - - - - - - - - - - - -
-InEnd	moveq	#NbEnd,d0
-	bra	RunErr
+	Lib_Int	InEnd		src/lib/stubs.cpp
 
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -285,11 +277,7 @@ InEnd	moveq	#NbEnd,d0
 
 
 ; - - - - - - - - - - - - -
-	Lib_Def	RIllDir
-RIllDir
-; - - - - - - - - - - - - -
-	moveq	#17,d0
-	bra	RunErr
+	Lib_Int	RIllDir		src/lib/stubs.cpp
 	Lib_Empty			OOfData, now an error() in src/interp
 	Lib_Empty			OOfBuf, now an error() in src/interp
 	Lib_Empty			InpTL, now an error() in src/interp
@@ -307,10 +295,6 @@ RIllDir
 	Lib_Empty			RetGsb, now an error() in src/interp
 	Lib_Empty			PopGsb, now an error() in src/interp
 ; The errors: interp/control.cpp
-RunErr:	moveq	#19,d1
-	moveq	#-1,d2
-RunErrExt
-	Rjmp	L_ErrorExt
 	Lib_Int	Error
 	Lib_Int	ErrorExt
 
@@ -473,17 +457,12 @@ RunErrExt
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					REM
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InRem
-; - - - - - - - - - - - - -
-	add.w	(a6)+,a6
-	rts
+	Lib_Int	InRem		src/lib/stubs.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					SET BUFFER  / SET STACK
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par InSetBuffer
-; - - - - - - - - - - - - -
-	rts
+	Lib_Int	InSetBuffer	src/lib/stubs_glue.s
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					Source: branch.s
@@ -642,10 +621,7 @@ RunErrExt
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 	Lib_Int	InElse		src/interp/control.cpp
 ; - - - - - - - - - - - - -
-	Lib_Def	FnElse
-; - - - - - - - - - - - - -
-	move.l	#EntNul,d3
-	Ret_Int
+	Lib_Int	FnElse		src/lib/stubs.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					GOSUB
@@ -799,17 +775,11 @@ OP_Jumps
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					Instruction vide
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	InNull
-; - - - - - - - - - - - - -
-	rts
+	Lib_Int	InNull		src/lib/stubs_glue.s
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 					OPERATEUR NULL
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Par FnNull
-; - - - - - - - - - - - - -
-	move.l	#EntNul,d3
-	subq.l	#2,a6
-	Ret_Int
+	Lib_Int	FnNull		src/lib/stubs.cpp
 
 ; Variables: interp/vars.cpp
 FindVar	Rjmp	L_FindVar

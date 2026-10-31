@@ -106,17 +106,7 @@ C_Lib
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 	COLD START
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	Compact_Cold
-; - - - - - - - - - - - - -
-	cmp.l	#"APex",d1		Version 1.10 or over?
-	bne.s	BadVer
-	moveq	#ExtNb,d0		* Extension number
-	move.w	#$0110,d1		* Current version
-	rts
-; In case this extension is runned on AMOSPro V1.00
-BadVer	moveq	#-1,d0			* Bad version number
-	sub.l	a0,a0
-	rts
+	Lib_Int	Compact_Cold		src/ext/compact.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 	ONE EMPTY SPACE
@@ -151,25 +141,11 @@ BadVer	moveq	#-1,d0			* Bad version number
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 	ERRORS: First routine
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	Custom
-; - - - - - - - - - - - - -
-	lea	ErrMes(pc),a0
-	moveq	#0,d1
-	moveq	#ExtNb,d2
-	moveq	#0,d3
-	Rjmp	L_ErrorExt
-ErrMes	dc.b 	"Not a packed bitmap",0
-	dc.b 	"Not a packed screen",0
-	even
+	Lib_Int	Custom			src/ext/compact.cpp
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ;	ERRORS: Second routine
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	Custom2
-; - - - - - - - - - - - - -
-	moveq	#0,d1
-	moveq	#ExtNb,d2
-	moveq	#0,d3
-	Rjmp	L_ErrorExt
+	Lib_Int	Custom2			src/ext/compact.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 	Finish the library

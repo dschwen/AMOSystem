@@ -12,6 +12,8 @@
 #include "core/amiga.h"
 #include "w/w.h"
 
+#include <exec/tasks.h>
+
 #include <devices/input.h>
 #include <devices/inputevent.h>
 #include <exec/io.h>
@@ -173,7 +175,7 @@ void send_fake_event()
     e.ie_Code = IECODE_NOBUTTON;
     e.ie_Qualifier = IEQUALIFIER_RELATIVEMOUSE;
     e.ie_position.ie_addr = ptr<void>(FakeCode);
-    auto io = reinterpret_cast<struct IOStdReq *>(wdata().IoDevice);
+    auto io = input_request();
     io->io_Data = &e;
     io->io_Command = IND_WRITEEVENT;
     io->io_Length = 22;
@@ -264,8 +266,8 @@ void w_sy_test_cyclic(AllRegs *)
     // An AMOS started later stops this one: it changes the first letter of
     // the task name to "S", AMOS_Stopped makes it "W" and waits while it is
     // (with the Workbench in front and no interrupts)
-    auto name = ptr<char>(peek_l(ptr<uint8_t>(d.MyTask) + 10));
-    if (*name != 'S')
+    auto name = ptr<struct Task>(d.MyTask)->tc_Node.ln_Name;
+    if (!name || *name != 'S')
         return;
     d.Inhibit = 0xFFFF;
     bool was_here = amos_wb(-1);

@@ -7,6 +7,7 @@
 
 #define GRAPHICS_BASE_NAME (amos::ptr<struct GfxBase>(amos::wdata().GfxBase))
 #include <proto/graphics.h>
+#include <graphics/gfxbase.h>
 #define DISKFONT_BASE_NAME (amos::ptr<struct Library>(amos::wdata().FntBase))
 #include <proto/diskfont.h>
 #define LAYERS_BASE_NAME (amos::ptr<struct Library>(amos::wdata().LayBase))
@@ -69,5 +70,10 @@ void disown_blitter() { DisownBlitter(); }
 void wait_blit() { WaitBlit(); }
 void wait_frame() { WaitTOF(); }
 void load_view(View *view) { LoadView(view); }
+
+void gfx_call(int16_t lvo, AllRegs &r) { amos_call_all(&r, ptr<uint8_t>(wdata().GfxBase) + lvo); }
+
+uint32_t system_copper() { return address(GRAPHICS_BASE_NAME->copinit); }
+uint16_t system_bplcon0() { return GRAPHICS_BASE_NAME->system_bplcon0; }
 
 } // namespace amos::hal

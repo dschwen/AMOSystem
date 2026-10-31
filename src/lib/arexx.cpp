@@ -175,7 +175,7 @@ extern "C" void lib_in_arexx_answer2(uint32_t code, const uint8_t *text)
         UBYTE *s = hal::rexx_text(reinterpret_cast<const char *>(str_chars(text)), str_len(text));
         if (!s)
             error(24);
-        m->rm_Result2 = reinterpret_cast<LONG>(s);
+        m->rm_Result2 = LONG(address(s));
     }
     m->rm_Result1 = static_cast<LONG>(code);
     hal::reply_message(&m->rm_Node);

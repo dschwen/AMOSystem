@@ -439,7 +439,7 @@ extern "C" uint32_t lib_lib_call(RegFrame &r)
 }
 
 // =EXECALL(f), =GFXCALL(f), =DOSCALL(f), =INTCALL(f)
-extern "C" uint32_t lib_fn_exe_call(uint32_t f) { return library_call(peek_l(ptr<void>(4)), f); }
+extern "C" uint32_t lib_fn_exe_call(uint32_t f) { return library_call(hal::exec_base(), f); }
 extern "C" uint32_t lib_fn_gfx_call(uint32_t f) { return library_call(wdata().GfxBase, f); }
 extern "C" uint32_t lib_fn_dos_call(uint32_t f) { return library_call(idata().DosBase, f); }
 extern "C" uint32_t lib_fn_int_call(uint32_t f) { return library_call(wdata().IntBase, f); }

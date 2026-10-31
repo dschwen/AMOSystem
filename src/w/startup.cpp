@@ -228,12 +228,12 @@ bool start(AllRegs *r)
     // The input handler
     clear_keys();
     open_console();
-    open_input(d.IoDevice);
-    auto handler = reinterpret_cast<struct Interrupt *>(d.Interrupt);
+    open_input(reinterpret_cast<uint8_t *>(input_request()));
+    auto handler = input_interrupt();
     handler->is_Code = reinterpret_cast<void (*)()>(w_io_handler_entry);
     handler->is_Data = nullptr;
     handler->is_Node.ln_Pri = 100;
-    auto io = reinterpret_cast<struct IOStdReq *>(d.IoDevice);
+    auto io = input_request();
     io->io_Data = handler;
     io->io_Command = IND_ADDHANDLER;
     hal::do_io(reinterpret_cast<struct IORequest *>(io));
@@ -287,11 +287,11 @@ void end()
     if (d.WFlags & WFlagLoadView && peek_l(w_old_loadview))
         hal::set_function(d.GfxBase, LVOLoadView, peek_l(w_old_loadview));
     if (d.DevHere) {
-        auto io = reinterpret_cast<struct IOStdReq *>(d.IoDevice);
-        io->io_Data = d.Interrupt;
+        auto io = input_request();
+        io->io_Data = input_interrupt();
         io->io_Command = IND_REMHANDLER;
         hal::do_io(reinterpret_cast<struct IORequest *>(io));
-        close_input(d.IoDevice);
+        close_input(reinterpret_cast<uint8_t *>(input_request()));
         // (the original left console.device open)
         close_console();
     }

@@ -115,6 +115,13 @@ Ret_Float	MACRO
 		moveq	#1,d2
 		rts
 		ENDM
+; LibNop Name: an instruction or function whose parameter collector does
+; it all (the value as it left it)
+LibNop		MACRO
+		LibEntry \1
+		rts
+		ENDM
+
 ; RegRoutine Name,cfunction
 ;
 ; A routine the assembler calls with registers: uint32_t cfunction(RegFrame
@@ -129,6 +136,77 @@ RegRoutine	MACRO
 		addq.l	#4,sp
 		tst.l	d0
 		movem.l	(sp)+,d0-d7/a0-a2
+		rts
+		ENDM
+
+; RoutineRecord name,cfunction: a record for AMOS.library's AddRoutine /
+; CallRoutines (a link, then the code, called with jsr 4(a0), all the
+; registers saved), calling cfunction()
+RoutineRecord	MACRO
+		xdef	\1
+\1		dc.l	0
+		CCall	\2
+		rts
+		ENDM
+
+; CRoutine Name,cfunction: a routine taking its parameters on the stack,
+; the C way (for the binary extensions)
+CRoutine	MACRO
+		LibRoutine \1
+		jmp	\2
+		ENDM
+
+; Instructions and routines calling cfunction() with no registers:
+; InCall Name,cfunction (with the "GetP" of Lib_Par), RoutineCall
+; Name,cfunction (Lib_Def)
+InCall		MACRO
+		LibEntry \1
+		CCall	\2
+		rts
+		ENDM
+RoutineCall	MACRO
+		LibRoutine \1
+		CCall	\2
+		rts
+		ENDM
+
+; TestCall Name,cfunction: the same, all registers kept (the tests
+; between instructions)
+TestCall	MACRO
+		LibRoutine \1
+		movem.l	d0-d7/a0-a2,-(sp)
+		CCall	\2
+		movem.l	(sp)+,d0-d7/a0-a2
+		rts
+		ENDM
+
+; EvalCall cfunction: cfunction(EvalOut *) gives d0-d4/a0 (interp.h)
+EvalCall	MACRO
+		lea	-24(sp),sp
+		pea	(sp)
+		CCall	\1
+		addq.l	#4,sp
+		movem.l	(sp)+,d0-d4/a0
+		rts
+		ENDM
+; Functions: FnCall Name,cfunction; routines: EvalRoutine Name,cfunction
+FnCall		MACRO
+		LibEntry \1
+		EvalCall \2
+		ENDM
+EvalRoutine	MACRO
+		LibRoutine \1
+		EvalCall \2
+		ENDM
+; Functions with their parameter in d3 (collected): FnCallD3 Name,cfunction
+FnCallD3	MACRO
+		LibEntry \1
+		lea	-24(sp),sp
+		move.l	d3,12(sp)
+		pea	(sp)
+		CCall	\2
+		addq.l	#4,sp
+		movem.l	(sp)+,d0-d4/a0
 		rts
 		ENDM
 

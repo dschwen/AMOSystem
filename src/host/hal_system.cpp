@@ -9,12 +9,47 @@
 #include <sys/mman.h>
 
 #include <exec/tasks.h>
+#include <exec/libraries.h>
+#include <dos/dosextens.h>
 
 namespace {
 
-Task the_task;
+// The one task: a process started from a CLI
+Process the_process = [] {
+    Process p = {};
+    p.pr_CLI = 1;
+    return p;
+}();
+
+// The libraries of the system: a base each (room for the library's
+// structure: GfxBase...), known by its name
+struct HostLibrary {
+    const char *name;
+    Library *base;
+};
+HostLibrary libraries[] = {
+    {"dos.library", nullptr}, {"intuition.library", nullptr}, {"graphics.library", nullptr},
+    {"layers.library", nullptr}, {"diskfont.library", nullptr}, {"icon.library", nullptr},
+    {"mathffp.library", nullptr}, {"mathtrans.library", nullptr}, {"mathieeedoubbas.library", nullptr},
+    {"mathieeedoubtrans.library", nullptr}, {"mathieeesingbas.library", nullptr},
+    {"mathieeesingtrans.library", nullptr}, {"rexxsyslib.library", nullptr}, {"asl.library", nullptr},
+    {"workbench.library", nullptr}, {"keymap.library", nullptr}, {"console.device", nullptr},
+};
 
 } // namespace
+
+namespace amos::host {
+
+// The name of a library of the system (null: not one)
+const char *library_name(uint32_t base)
+{
+    for (auto &l : libraries)
+        if (l.base && address(l.base) == base)
+            return l.name;
+    return nullptr;
+}
+
+} // namespace amos::host
 
 namespace amos::hal {
 
@@ -28,32 +63,114 @@ uint32_t available_memory(uint32_t flags)
 void forbid() {}
 void permit() {}
 
-// Each block mapped on its own, below 4GB; cleared as mmap's are
-void *allocate(uint32_t size, uint32_t)
+// The memory: one arena below 4GB, managed as exec's lists: blocks of 8
+// bytes, the first one free that fits, and any part of a block can be
+// freed (AMOS does). The free chunks are a list sorted by address.
+struct Chunk {
+    Chunk *next;
+    uint64_t size;
+};
+Chunk *free_list;
+uint8_t *arena;
+constexpr uint64_t ArenaSize = 512ull << 20;
+
+void arena_start()
+{
+    if (arena)
+        return;
+    void *m = mmap(nullptr, ArenaSize, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS | MAP_32BIT | MAP_NORESERVE,
+                   -1, 0);
+    if (m == MAP_FAILED) {
+        fprintf(stderr, "amos: no memory below 4GB\n");
+        __builtin_trap();
+    }
+    arena = static_cast<uint8_t *>(m);
+    free_list = reinterpret_cast<Chunk *>(arena);
+    free_list->next = nullptr;
+    free_list->size = ArenaSize;
+}
+
+uint64_t rounded(uint32_t size) { return (uint64_t(size) + 7) & ~uint64_t(7); }
+
+void *allocate(uint32_t size, uint32_t flags)
 {
     if (!size)
         return nullptr;
-    void *m = mmap(nullptr, size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS | MAP_32BIT, -1, 0);
-    return m == MAP_FAILED ? nullptr : m;
+    arena_start();
+    uint64_t n = rounded(size);
+    for (Chunk **c = &free_list; *c; c = &(*c)->next) {
+        if ((*c)->size < n)
+            continue;
+        Chunk *found = *c;
+        if (found->size == n) {
+            *c = found->next;
+        } else {
+            Chunk *rest = reinterpret_cast<Chunk *>(reinterpret_cast<uint8_t *>(found) + n);
+            rest->next = found->next;
+            rest->size = found->size - n;
+            *c = rest;
+        }
+        if (flags & 0x10000)
+            memset(found, 0, n);
+        return found;
+    }
+    return nullptr;
 }
 
 void release(void *memory, uint32_t size)
 {
-    if (memory)
-        munmap(memory, size);
+    if (!memory || !size)
+        return;
+    uint8_t *at = static_cast<uint8_t *>(memory);
+    uint64_t n = rounded(size);
+    Chunk **c = &free_list;
+    while (*c && reinterpret_cast<uint8_t *>(*c) < at)
+        c = &(*c)->next;
+    Chunk *chunk = reinterpret_cast<Chunk *>(at);
+    chunk->size = n;
+    chunk->next = *c;
+    *c = chunk;
+    // merged with the next and the previous ones
+    if (chunk->next && at + chunk->size == reinterpret_cast<uint8_t *>(chunk->next)) {
+        chunk->size += chunk->next->size;
+        chunk->next = chunk->next->next;
+    }
+    for (Chunk *p = free_list; p && p != chunk; p = p->next)
+        if (p->next == chunk && reinterpret_cast<uint8_t *>(p) + p->size == at) {
+            p->size += chunk->size;
+            p->next = chunk->next;
+            break;
+        }
 }
 
 void *allocate_at(uint32_t, void *) { return nullptr; }
 
-Task *find_task(const char *name) { return name ? nullptr : &the_task; }
+Task *find_task(const char *name) { return name ? nullptr : &the_process.pr_Task; }
 void signal(Task *, uint32_t) {}
 static uint32_t the_requester_window;
 uint32_t requester_window() { return the_requester_window; }
 void set_requester_window(uint32_t window) { the_requester_window = window; }
 
-Library *open_library(const char *, uint32_t) { return nullptr; }
+Library *open_library(const char *name, uint32_t version)
+{
+    for (auto &l : libraries)
+        if (!strcmp(l.name, name)) {
+            if (!l.base) {
+                l.base = static_cast<Library *>(allocate(4096, 0x10000));
+                if (!l.base)
+                    return nullptr;
+                l.base->lib_Version = 40;
+                l.base->lib_Node.ln_Name = const_cast<char *>(l.name);
+            }
+            if (version > l.base->lib_Version)
+                return nullptr;
+            return l.base;
+        }
+    return nullptr;
+}
 void close_library(Library *) {}
 uint16_t os_version() { return 40; }
+uint32_t exec_base() { return 0; }
 uint8_t vblank_frequency() { return 50; }
 void clear_cache() {}
 uint32_t set_function(uint32_t, int16_t, uint32_t) { return 0; }
@@ -77,8 +194,6 @@ IORequest *check_io(IORequest *io) { return io; }
 void abort_io(IORequest *) {}
 int32_t wait_io(IORequest *) { return -1; }
 
-void add_vbl_server(Interrupt *) {}
-void remove_vbl_server(Interrupt *) {}
 Interrupt *set_interrupt(int32_t, Interrupt *) { return nullptr; }
 
 // RawDoFmt: %[-][0][width][.limit][l]d, u, x, s, b (a BSTR), c; the

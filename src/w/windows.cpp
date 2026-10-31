@@ -304,7 +304,7 @@ struct Win {
                 hal::wait_blit();
                 c.bltdpt = plane(p) + offset;
                 c.bltcdat = paper_word(p);
-                c.bltsize = size;
+                hal::blit(size);
             }
             offset += line();
         } while (n-- != 0);
@@ -334,7 +334,7 @@ struct Win {
                 hal::wait_blit();
                 c.bltcpt = plane(p) + from;
                 c.bltdpt = plane(p) + to;
-                c.bltsize = size;
+                hal::blit(size);
             }
             from += delta;
             to += delta;
@@ -366,7 +366,7 @@ struct Win {
                 c.bltdpt = a;
                 uint8_t first = a[1];
                 c.bltbpt = a + 2;
-                c.bltsize = size;
+                hal::blit(size);
                 hal::wait_blit();
                 a[0] = first;
                 a[last] = paper_byte(p);
@@ -396,7 +396,7 @@ struct Win {
                 uint8_t *a = plane(p) + offset;
                 c.bltbpt = a;
                 c.bltdpt = a;
-                c.bltsize = size;
+                hal::blit(size);
                 hal::wait_blit();
                 a[0] = paper_byte(p);
             }

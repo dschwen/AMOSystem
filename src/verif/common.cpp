@@ -4,14 +4,41 @@
 
 using namespace amos;
 
-// +Verif.s
-extern "C" uint8_t ver_error[];
+extern "C" {
+// the glue of the verifier's parts (verif/*_glue.s)
+extern uint8_t ver_tables_run_entry[], ver_free_tables_entry[], ver_prg_pull_entry[];
+uint32_t lib_d_close(RegFrame &);
+[[noreturn]] void interp_jump(const Regs *r, const void *fn);
+}
 
 namespace amos::verif {
 
 uint8_t *pc;
 
-void fail(uint16_t n) { amos_goto(ver_error, n); }
+// VerErr: the tokens back, the includes, the equates' file and the tables
+// freed, the program pulled; then its caller's error handler (Prg_JError)
+// with d0 = -n (a message of the test), a0 = 0
+void fail(uint16_t n)
+{
+    IData &d = idata();
+    Regs run;
+    entry_call(ver_tables_run_entry, run);
+    d.VerPos = includes_address(d.VerPos);
+    includes_clear();
+    RegFrame close = {};
+    lib_d_close(close);
+    Regs tables;
+    entry_call(ver_free_tables_entry, tables);
+    d.VerCheck1_3 = 0;
+    uint32_t handler = d.Prg_JError;
+    Regs pull;
+    entry_call(ver_prg_pull_entry, pull);
+    Regs e;
+    e.d[0] = uint32_t(-int32_t(n));
+    e.a[0] = 0;
+    e.a[2] = handler;
+    interp_jump(&e, ptr<void>(handler));
+}
 
 bool finished(uint16_t token) { return !token || token == tk::DP || token == tk::Then || token == tk::Else; }
 

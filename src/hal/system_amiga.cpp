@@ -19,6 +19,7 @@ void release(void *memory, uint32_t size) { FreeMem(memory, size); }
 
 Task *find_task(const char *name) { return FindTask(name); }
 void signal(Task *task, uint32_t signals) { Signal(task, signals); }
+uint32_t exec_base() { return *reinterpret_cast<const uint32_t *>(4); }
 uint32_t requester_window() { return uint32_t(reinterpret_cast<Process *>(FindTask(nullptr))->pr_WindowPtr); }
 void set_requester_window(uint32_t window) { reinterpret_cast<Process *>(FindTask(nullptr))->pr_WindowPtr = reinterpret_cast<APTR>(window); }
 

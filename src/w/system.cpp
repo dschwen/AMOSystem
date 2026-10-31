@@ -72,7 +72,7 @@ int32_t amos_wb(int32_t to)
         here[0] = 0;
         here[1] = 0xFF;
         chips().dmacon = d.OldDma;
-        chips().cop1lc = peek_l(ptr<uint8_t>(d.GfxBase) + 38);       // GfxBase->copinit
+        chips().cop1lc = hal::system_copper();
         chips().copjmp1 = 0;
         if (d.WFlags & WFlagLoadView) {
             if (d.WFlags & WFlagWBClosed)

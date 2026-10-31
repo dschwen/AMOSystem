@@ -96,30 +96,7 @@ C_Lib
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 	COLD START
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	Cold
-; - - - - - - - - - - - - -
-	cmp.l	#"APex",d1			Version 1.10 or over?
-	bne.s	BadVer
-	movem.l	a3-a6,-(sp)
-	lea	Warm(pc),a0
-	move.l	a0,ExtAdr+ExtNb*16+4(a5)
-	movem.l	(sp)+,a3-a6
-	moveq	#ExtNb,d0		* NO ERRORS
-	move.w	#VerNumber,d1		* Current version
-	rts
-; In case this extension is runned on AMOSPro V1.00
-BadVer	moveq	#-1,d0			* Bad version number
-	sub.l	a0,a0
-	rts
-
-; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-;	SCREEN RESET: back to AMOS requester (Called by AMOSPro)
-; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Warm
-; - - - - - - - - - - - - -
-	moveq	#-1,d0				Request On
-	SyCall	Request_OnOff
-	rts
+	Lib_Int	Cold			src/ext/request.cpp
 
 ;--------------------------------------------------------------------
 

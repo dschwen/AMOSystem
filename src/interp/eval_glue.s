@@ -6,72 +6,26 @@
 
 		SECTION	.text,CODE
 
-; EvalCall cfunction: cfunction(EvalOut *) gives d0-d4/a0
-EvalCall	MACRO
-		lea	-24(sp),sp
-		pea	(sp)
-		CCall	\1
-		addq.l	#4,sp
-		movem.l	(sp)+,d0-d4/a0
-		rts
-		ENDM
 
 ; New_Evalue: the expression at a6. Out: d2-d4 the value, d0 the token
 ; after it (a6 there, or past it if it is a closing parenthesis).
-		LibRoutine New_Evalue
-		EvalCall _interp_new_evalue
+		EvalRoutine New_Evalue,_interp_new_evalue
 
 ; =Max(a,b), =Min(a,b)
-		LibEntry FnMax
-		EvalCall _interp_fn_max
-		LibEntry FnMin
-		EvalCall _interp_fn_min
+		FnCall	FnMax,_interp_fn_max
+		FnCall	FnMin,_interp_fn_min
 
 ; Var = expression; Var as an operand
-		LibEntry InVar
-		CCall	_interp_in_var
-		rts
-		LibEntry FnVar
-		EvalCall _interp_fn_var
+		InCall	InVar,_interp_in_var
+		FnCall	FnVar,_interp_fn_var
 
 ; FindVar: the variable after the token at a6. Out: a0 its address, d2
 ; its type (d0, d1 changed).
-		LibRoutine FindVar
-		movem.l	d3-d4/a1,-(sp)
-		lea	-24(sp),sp
-		pea	(sp)
-		CCall	_interp_find_var
-		addq.l	#4,sp
-		movem.l	(sp)+,d0-d2
-		addq.l	#8,sp
-		move.l	(sp)+,a0
-		movem.l	(sp)+,d3-d4/a1
-		rts
+		RegRoutine FindVar,_interp_find_var_reg
 
 ; GetTablo: a0 an array's slot. Out: a0 the element (d0 changed).
-		LibRoutine GetTablo
-		movem.l	d1/a1,-(sp)
-		lea	-24(sp),sp
-		move.l	a0,20(sp)
-		pea	(sp)
-		CCall	_interp_get_tablo
-		addq.l	#4,sp
-		move.l	20(sp),a0
-		lea	24(sp),sp
-		movem.l	(sp)+,d1/a1
-		rts
+		RegRoutine GetTablo,_interp_get_tablo_reg
 
-; Instructions: InCall Name,cfunction
-InCall		MACRO
-		LibEntry \1
-		CCall	\2
-		rts
-		ENDM
-; Functions: FnCall Name,cfunction (cfunction(EvalOut *))
-FnCall		MACRO
-		LibEntry \1
-		EvalCall \2
-		ENDM
 
 		InCall	InDim,_interp_in_dim
 		InCall	InSwap,_interp_in_swap
@@ -108,17 +62,6 @@ FnCall		MACRO
 		InCall	InData,_interp_in_data
 		InCall	InRead,_interp_in_read
 
-; Functions with their parameter in d3 (collected): FnCallD3 Name,cfunction
-FnCallD3	MACRO
-		LibEntry \1
-		lea	-24(sp),sp
-		move.l	d3,12(sp)
-		pea	(sp)
-		CCall	\2
-		addq.l	#4,sp
-		movem.l	(sp)+,d0-d4/a0
-		rts
-		ENDM
 
 ; Strings: interp/text.cpp
 		InCall	InLeft,_interp_in_left
@@ -165,6 +108,5 @@ FnCallD3	MACRO
 
 ; The extensions' instructions and functions: interp/extensions.cpp
 		InCall	InExtCall,_interp_in_ext_call
-		LibRoutine FnExtCall
-		EvalCall _interp_fn_ext_call
+		EvalRoutine FnExtCall,_interp_fn_ext_call
 		InCall	InField,_interp_in_field

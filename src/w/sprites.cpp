@@ -13,6 +13,7 @@
 
 #include "core/amiga.h"
 #include "w/w.h"
+#include "hal/system.h"
 
 #include <graphics/gfxbase.h>
 #include <graphics/rastport.h>
@@ -184,12 +185,12 @@ uint8_t *copy_column(uint8_t *to, const uint8_t *&from, uint16_t width, uint16_t
     c.dmacon = 0x8040;
     c.bltcpt = const_cast<uint8_t *>(from);
     c.bltdpt = to;
-    c.bltsize = size;
+    hal::blit(size);
     from += plane;
     hal::wait_blit();
     c.bltcpt = const_cast<uint8_t *>(from);
     c.bltdpt = to + 2;
-    c.bltsize = size;
+    hal::blit(size);
     from += plane;
     return to + int16_t(height << 2);
 }
@@ -725,7 +726,7 @@ void w_sy_sprite_buffer(AllRegs *r)
     barrier();
     d.HsChange = address(empty);
     while (*static_cast<volatile be_u32 *>(&d.HsChange))
-        ;
+        hal::idle();
     sprite_buffers_free();
     r->d[0] = 0;
     if (sprite_buffers(lines)) {

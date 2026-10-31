@@ -49,6 +49,8 @@ PRun_Back	movem.l	(sp)+,a3-a6/d6/d7
 		movem.l	d6-d7/a3-a6,(a1)
 		movem.l	(sp)+,d2-d7/a2-a6
 		rts
+		xdef	_interp_prun_errors
+_interp_prun_errors
 PRun_Errors	move.l	Ru_BasSp(a5),sp
 		bra.s	PRun_Back
 

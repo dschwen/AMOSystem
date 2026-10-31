@@ -685,23 +685,7 @@ C_Lib
 ; The length of this routine (and of any routine) must not exceed 32K
 
 ; - - - - - - - - - - - - -
-	Lib_Def	Mus_Cold
-; - - - - - - - - - - - - -
-; The extension is in AMOSPro (src/ext/music*.cpp): MusInit, through the
-; jump table, hands AMOS its data zone and routines.
-	cmp.l	#"APex",d1		Version 1.10 or over?
-	bne.s	BadVer
-	movem.l	a3-a6,-(sp)
-	move.l	AdTokens+(ExtNb+1)*4(a5),a0
-	move.l	-LB_Size-4-L_MusInit*4(a0),a0
-	jsr	(a0)
-	movem.l	(sp)+,a3-a6
-	moveq	#ExtNb,d0		* NO ERRORS
-	move.w	#$0110,d1		* Version
-	rts
-BadVer	moveq	#-1,d0			* Bad version number
-	sub.l	a0,a0
-	rts
+	Lib_Int	Mus_Cold		src/ext/music.cpp
 
 	Lib_Int	MusInit
 	Lib_Empty			MOff

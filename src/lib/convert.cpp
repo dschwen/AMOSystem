@@ -106,3 +106,16 @@ extern "C" char *lib_long_to_bin(char *out, uint32_t value, int32_t digits)
 {
     return amos::long_to_bin(out, value, digits);
 }
+
+// L_LongToHex, L_LongToBin. In: d0 = number, d3 = digits (negative: no
+// leading zeros), a0 = output. Out: a0 after the text.
+extern "C" uint32_t lib_long_to_hex_reg(amos::RegFrame &r)
+{
+    r.a[0] = r.d[0] = amos::address(amos::long_to_hex(amos::ptr<char>(r.a[0]), r.d[0], int32_t(r.d[3])));
+    return r.d[0];
+}
+extern "C" uint32_t lib_long_to_bin_reg(amos::RegFrame &r)
+{
+    r.a[0] = r.d[0] = amos::address(amos::long_to_bin(amos::ptr<char>(r.a[0]), r.d[0], int32_t(r.d[3])));
+    return r.d[0];
+}

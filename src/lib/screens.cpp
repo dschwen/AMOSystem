@@ -146,22 +146,35 @@ void tmp_ras_get()
             d.RasLong = length;
         }
     }
+#if defined(__mc68000__)
     struct TmpRas *t = reinterpret_cast<struct TmpRas *>(d.ATmpRas);
+#else
+    // (another host's TmpRas is larger than its room in the data)
+    static struct TmpRas host_tmp_ras;
+    struct TmpRas *t = &host_tmp_ras;
+#endif
     rastport()->TmpRas = t;
     hal::init_tmp_ras(t, ptr<BYTE>(buffer), static_cast<LONG>(length));
 }
 
 // GfxF0: call fn with registers r (a6 = graphics.library), in both buffers
-// of a screen with Autoback
-void gfx_autoback(const void *fn, AllRegs &r)
+// of a screen with Autoback; fn null: the graphics.library function lvo
+void gfx_autoback(const void *fn, int16_t lvo, AllRegs &r)
 {
+    auto call = [&](AllRegs &c) {
+        if (fn)
+            amos_call_all(&c, fn);
+        else
+            hal::gfx_call(lvo, c);
+    };
     EcScreen *s = ptr<EcScreen>(idata().ScOnAd);
     if (!s->EcAuto) {
-        amos_call_all(&r, fn);
+        call(r);
         return;
     }
-    // The graphic cursor (cp_x/cp_y) for the second buffer
-    uint32_t cursor = peek_l(ptr<uint8_t>(r.a[1]) + 36);
+    // The graphic cursor for the second buffer
+    struct RastPort *rp = ptr<struct RastPort>(r.a[1]);
+    int16_t cx = rp->cp_x, cy = rp->cp_y;
     r.d[7] = 0;
     const AllRegs saved = r;
     auto back = [&](int function) {
@@ -175,14 +188,15 @@ void gfx_autoback(const void *fn, AllRegs &r)
     back(ec::AutoBack1);
     AllRegs c = saved;
     if (s->EcFlags & DoubleBuffer) {
-        amos_call_all(&c, fn);
+        call(c);
         back(ec::AutoBack2);
         c = saved;
-        poke_l(ptr<uint8_t>(c.a[1]) + 36, cursor);
-        amos_call_all(&c, fn);
+        rp->cp_x = cx;
+        rp->cp_y = cy;
+        call(c);
         back(ec::AutoBack3);
     } else {
-        amos_call_all(&c, fn);
+        call(c);
         back(ec::AutoBack4);
     }
     r = saved;
@@ -209,7 +223,7 @@ void gfx(int16_t lvo, Regs &r)
     r.d[5] = static_cast<uint16_t>(lvo);
     r.a[1] = wdata().RastPort;
     AllRegs a = all_regs(r);
-    gfx_autoback(ptr<uint8_t>(wdata().GfxBase) + lvo, a);
+    gfx_autoback(nullptr, lvo, a);
 }
 
 // AdrEc: a screen by number, or null
@@ -322,18 +336,20 @@ extern "C" uint32_t lib_sco0(RegFrame &r)
             return 0;
         sh -= over;
     }
-    // bitmaps for graphics.library, in chip memory
+    // bitmaps for graphics.library (BltBitMap's temporary row: the chip
+    // buffer)
     uint8_t *chip = ptr<uint8_t>(wdata().ChipBuf);
-    auto make_bitmap = [](uint8_t *bm, EcScreen *s, const be_u32 *planes) {
-        poke_w(bm, s->EcTLigne);
-        poke_w(bm + 2, s->EcTy);
-        poke_w(bm + 4, s->EcNPlan);
-        poke_w(bm + 6, 0);
+    auto make_bitmap = [](struct BitMap &bm, EcScreen *s, const be_u32 *planes) {
+        bm = {};
+        bm.BytesPerRow = s->EcTLigne;
+        bm.Rows = s->EcTy;
+        bm.Depth = static_cast<UBYTE>(s->EcNPlan);
         for (int i = 0; i < 6; i++)
-            poke_l(bm + 8 + 4 * i, planes[i]);
+            bm.Planes[i] = ptr<UBYTE>(planes[i]);
     };
-    make_bitmap(chip, from, ptr<be_u32>(idata().SccEcO));
-    make_bitmap(chip + 40, to, ptr<be_u32>(idata().SccEcD));
+    struct BitMap bm_from, bm_to;
+    make_bitmap(bm_from, from, ptr<be_u32>(idata().SccEcO));
+    make_bitmap(bm_to, to, ptr<be_u32>(idata().SccEcD));
     Regs b = {};
     b.d[0] = static_cast<uint16_t>(x1);
     b.d[1] = static_cast<uint16_t>(y1);
@@ -342,15 +358,15 @@ extern "C" uint32_t lib_sco0(RegFrame &r)
     b.d[4] = sw;
     b.d[5] = sh;
     b.d[6] = r.d[6];
-    b.a[0] = address(chip);
-    b.a[1] = address(chip + 40);
-    b.a[2] = address(chip + 80);
+    b.a[0] = address(&bm_from);
+    b.a[1] = address(&bm_to);
+    b.a[2] = address(chip);
     // the library's own blitter copy, for aligned plain copies
     ec_call(ec::ScCpyW, b);
     if (b.d[7])
-        hal::blit_bitmap(reinterpret_cast<struct BitMap *>(chip), static_cast<int16_t>(x1), static_cast<int16_t>(y1),
-                  reinterpret_cast<struct BitMap *>(chip + 40), static_cast<int16_t>(x2), static_cast<int16_t>(y2),
-                  sw, sh, static_cast<uint8_t>(r.d[6]), 0xFF, ptr<PLANEPTR>(address(chip + 80)));
+        hal::blit_bitmap(&bm_from, static_cast<int16_t>(x1), static_cast<int16_t>(y1), &bm_to,
+                         static_cast<int16_t>(x2), static_cast<int16_t>(y2), sw, sh, static_cast<uint8_t>(r.d[6]),
+                         0xFF, chip);
     return 0;
 }
 
@@ -1155,7 +1171,7 @@ extern "C" void lib_in_paint3(uint32_t x, uint32_t y, uint32_t mode)
     // GfxPnt: AMOS.library's paint, with Autoback (a6 left as it is)
     AllRegs a = all_regs(r);
     a.a[6] = address(ctx().a6);
-    gfx_autoback(ptr<uint8_t>(wdata().EcVect) + 4 * ec::SuPaint, a);
+    gfx_autoback(ptr<uint8_t>(wdata().EcVect) + 4 * ec::SuPaint, 0, a);
     tmp_ras_free();
 }
 
@@ -1970,7 +1986,7 @@ extern "C" uint32_t lib_gfx_func(RegFrame &r)
     for (int i = 0; i < 3; i++)
         g.a[i] = r.a[i];
     AllRegs a = all_regs(g);
-    gfx_autoback(ptr<uint8_t>(wdata().GfxBase) + static_cast<int16_t>(r.d[5]), a);
+    gfx_autoback(nullptr, static_cast<int16_t>(r.d[5]), a);
     for (int i = 0; i < 6; i++)
         r.d[i] = a.d[i];
     for (int i = 0; i < 3; i++)

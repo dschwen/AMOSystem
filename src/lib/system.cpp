@@ -2,6 +2,8 @@
 
 #include "lib/convert.h"
 #include "lib/strings.h"
+#include "hal/system.h"
+#include "hal/chips.h"
 
 using namespace amos;
 
@@ -27,8 +29,10 @@ void wait_multi()
 void wait_normal(uint32_t n)
 {
     uint32_t until = n + vbl_count();
-    while (until > vbl_count())
+    while (until > vbl_count()) {
         wait_multi();
+        hal::idle();
+    }
 }
 
 // L_Mulu32: the assembler's 32-bit multiplication. It adds the cross
@@ -113,7 +117,7 @@ extern "C" uint32_t lib_fn_rnd(int32_t n)
     uint32_t value;
     do {
         value = next_random();
-        uint16_t beam = *reinterpret_cast<volatile be_u16 *>(0xdff006) & beam_mask;
+        uint16_t beam = hal::custom_word(0x006) & beam_mask;
         value = (value & 0xFFFF0000u) | static_cast<uint16_t>(value + beam);
         value &= mask;
     } while (value > max);
@@ -162,6 +166,7 @@ extern "C" uint32_t lib_wait_rout(RegFrame &r)
     while (until > vbl_count()) {
         Regs t = {};
         lib_call(L_Test_PaSaut, t);
+        hal::idle();
     }
     return 0;
 }

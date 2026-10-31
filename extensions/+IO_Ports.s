@@ -213,77 +213,7 @@ C_Lib
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 	COLD START
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	Lib_Def	IOCold
-; - - - - - - - - - - - - -
-	cmp.l	#"APex",d1		Version 1.10 or over?
-	bne.s	BadVer
-	movem.l	a3-a6,-(sp)
-	lea	DT(pc),a3
-	move.l	a3,ExtAdr+ExtNb*16(a5)
-	lea	SerDef(pc),a0
-	move.l	a0,ExtAdr+ExtNb*16+4(a5)
-	lea	SerEnd(pc),a0
-	move.l	a0,ExtAdr+ExtNb*16+8(a5)
-	movem.l	(sp)+,a3-a6
-	moveq	#ExtNb,d0		* NO ERRORS
-	move.w	#VerNumber,d1		* Current version
-	rts
-; In case this extension is runned on AMOSPro V1.00
-BadVer	moveq	#-1,d0			* Bad version number
-	sub.l	a0,a0
-	rts
-
-;	SCREEN RESET (called by AMOSPro)
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-SerDef
-;	QUIT (called by AMOSPro)
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-SerEnd	move.l	AdTokens+(ExtNb+1)*4(a5),a0	Serial Close, in AMOSPro:
-	move.l	-LB_Size-4-L_InSerialClose0*4(a0),a0	through the jump table
-	jsr	(a0)
-	Dlea	PrinterIO,a2
-	Rjsr	L_Dev.CloseA2
-	Dlea	ParallelIO,a2
-	Rjsr	L_Dev.CloseA2
-	rts
-
-*************** Data zone
-DT
-SerialIO	ds.l	3*NSerial	Serial IO Port
-PrinterIO	ds.l	3		Printer IO Port
-ParallelIO	ds.l	3		Parallel IO Port
-BufIn		dc.l	0
-Prt_Query	dc.l	0		Espace pour informations
-Prt_Request	dc.l	0		Ancien requester
-
-; Screen Dump
-; ~~~~~~~~~~~
-width:		dc.w	0
-height:		dc.w	0
-viewModes	dc.w	0
-depth:		dc.w	0
-screen		dc.l	0
-vPort		dc.l	0
-rPort		dc.l	0
-colourmap	dc.l	0
-oldCtable	dc.l	0
-special		dc.w	$84
-srcX		dc.w	0
-srcY		dc.w	0
-pwidth		dc.w	0
-pheight		dc.w	0
-temp1		dc.w	0
-temp2		dc.w	0
-destCols	dc.l	0
-destRows	dc.l	0
-ScreenBase:	dc.l 	0
-
-; Nom des devices
-; ~~~~~~~~~~~~~~~
-SerName		dc.b	"serial.device",0
-PrtName		dc.b	"printer.device",0
-ParName		dc.b	"parallel.device",0
-		even
+	Lib_Int	IOCold		src/ext/ioports.cpp
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ; 	Leave one empty routine here!

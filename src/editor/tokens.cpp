@@ -27,6 +27,7 @@ using namespace amos;
 // end), the name of a missing extension's instructions (the letter
 // written into it)
 extern "C" uint8_t ed_operators[], ed_operators_end[], ed_extension_missing[];
+extern "C" void lib_double_to_asc(uint32_t hi, uint32_t lo, char *to, int32_t digits, uint32_t mode);
 
 namespace {
 
@@ -700,8 +701,7 @@ Detokenised detokenise(const uint8_t *a6, uint8_t *a1, const uint8_t *at, bool m
                 a6 += 4;
                 d5 = 0;
             } else if (t == tk::DFl) {
-                using ToAsc = void (*)(uint32_t, uint32_t, uint8_t *, int32_t, int32_t);
-                reinterpret_cast<ToAsc>(lib_address(L_DoubleToAsc))(peek_l(a6), peek_l(a6 + 4), a4, 15, 2);
+                lib_double_to_asc(peek_l(a6), peek_l(a6 + 4), reinterpret_cast<char *>(a4), 15, 2);
                 a6 += 8;
                 while (*a4)
                     a4++;

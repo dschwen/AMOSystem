@@ -49,21 +49,9 @@
 ; Routine records of MnClearVar: a link, then the code (called with
 ; jsr 4(a0), all registers saved). The menu goes when the program is
 ; cleared or reset; an error in a menu procedure stops the program.
-		xdef	_lib_menu_on_clear
-		xdef	_lib_menu_on_default
-		xdef	_lib_menu_on_error
-_lib_menu_on_clear
-		dc.l	0
-		CCall	_lib_menu_clear
-		rts
-_lib_menu_on_default
-		dc.l	0
-		CCall	_lib_menu_clear
-		rts
-_lib_menu_on_error
-		dc.l	0
-		CCall	_lib_menu_error
-		rts
+		RoutineRecord _lib_menu_on_clear,_lib_menu_clear
+		RoutineRecord _lib_menu_on_default,_lib_menu_clear
+		RoutineRecord _lib_menu_on_error,_lib_menu_error
 
 ; uint32_t mn_call_procedure(const void *fn, const Ctx *regs,
 ;                            uint32_t *pile, const uint8_t *name)

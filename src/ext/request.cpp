@@ -24,3 +24,33 @@ void ext_request_on() { requests(uint32_t(-1)); }
 // REQUEST OFF: none, the answer is always "cancel"
 void ext_request_off() { requests(0); }
 }
+
+extern "C" {
+// The warm start (ExtAdr+4, at each run): AMOS's requesters
+extern uint8_t ext_request_warm_entry[];
+void ext_request_warm() { requests(uint32_t(-1)); }
+}
+
+// The extension's cold start (routine 0): d1 "APex" from AMOSPro 1.10 on.
+// Out: d0 the extension's number, d1 (low word) its version; d0 = -1 and
+// a0 = 0 for another version.
+static uint32_t cold_start(RegFrame &r, uint32_t number, uint16_t version, void (*start)())
+{
+    if (r.d[1] != 0x41506578) {
+        r.d[0] = uint32_t(-1);
+        r.a[0] = 0;
+        return r.d[0];
+    }
+    if (start)
+        start();
+    r.d[0] = number;
+    r.d[1] = (r.d[1] & 0xFFFF0000) | version;
+    return r.d[0];
+}
+
+extern "C" uint32_t ext_request_cold(RegFrame &r)
+{
+    constexpr uint32_t ExtNb = 3 - 1;
+    idata().ExtAdr[ExtNb * 4 + 1] = address(ext_request_warm_entry);
+    return cold_start(r, ExtNb, 0x0200, nullptr);
+}

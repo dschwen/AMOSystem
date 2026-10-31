@@ -6,6 +6,7 @@
 // conversion (w/collision.cpp).
 
 #include "w/w.h"
+#include "hal/system.h"
 
 using namespace amos;
 using namespace amos::w;
@@ -33,7 +34,7 @@ void show_sprites_3()
 {
     for (int i = 0; i < 3; i++) {
         while (*static_cast<volatile be_u32 *>(&wdata().HsChange))
-            ;
+            hal::idle();
         call(w_sprites_show);
     }
 }

@@ -170,8 +170,15 @@ void polygon()
     if (!d.ScOn)
         screen_not_open();
     RastPort *rp = ptr<RastPort>(wdata().RastPort);
-    hal::init_area(reinterpret_cast<AreaInfo *>(d.AAreaInfo), d.AAreaBuf, AAreaSize);
-    rp->AreaInfo = reinterpret_cast<AreaInfo *>(d.AAreaInfo);
+#if defined(__mc68000__)
+    AreaInfo *area = reinterpret_cast<AreaInfo *>(d.AAreaInfo);
+#else
+    // (another host's AreaInfo is larger than its room in the data)
+    static AreaInfo host_area;
+    AreaInfo *area = &host_area;
+#endif
+    hal::init_area(area, d.AAreaBuf, AAreaSize);
+    rp->AreaInfo = area;
     int32_t x, y;
     if (peek_token() == tk::To) {
         pc() += 2;

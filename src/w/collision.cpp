@@ -92,7 +92,7 @@ bool collide(const uint8_t *bank, const Placed &source, int16_t x, int16_t y, ui
     c.bltapt = const_cast<uint8_t *>(a->mask + 4 + uint32_t(row_a) * uint16_t(skip_a) + (dx >> 4) * 2);
     c.bltalwm = 0xFFFF;
     c.bltafwm = 0xFFFF >> shift;
-    c.bltsize = uint16_t(height << 6 | words);
+    hal::blit(uint16_t(height << 6 | words));
     hal::wait_blit();
     return !(c.dmaconr & BlitZero);
 }

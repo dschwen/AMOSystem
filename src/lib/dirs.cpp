@@ -348,38 +348,28 @@ void fill_devices()
     poke_l(buffer + 124, 0);
     fill_poke(buffer, 0);
     d.FillFNb = 0;
-    hal::forbid();
-    auto dos = ptr<uint8_t>(d.DosBase);
-    auto root = static_cast<uint8_t *>(BADDR(peek_l(ptr<uint8_t>(peek_l(dos + 34)) + 24)));
-    for (uint8_t *node = static_cast<uint8_t *>(BADDR(peek_l(root + 4))); node;
-         node = static_cast<uint8_t *>(BADDR(peek_l(node)))) {
-        if (!peek_l(node + 8))
-            continue;
-        uint8_t kind = upper(*ptr<uint8_t>(d.Name1));
-        bool device = !peek_l(node + 4);
-        if (kind == 'D' && !device)
-            continue;
-        if (kind == 'A' && device)
-            continue;
-        uint32_t bname = peek_l(node + 40);
-        if (!bname)
-            continue;
-        const uint8_t *name = static_cast<const uint8_t *>(BADDR(bname));
-        int16_t len = static_cast<int8_t>(*name++);
-        if (len - 1 < 0)
-            continue;
-        uint8_t *to = buffer + 8;
-        for (int16_t i = 0; i < len; i++)
-            *to++ = *name++;
-        *to++ = ':';
-        *to = 0;
-        const char *filter = ptr<char>(d.Name2);
-        if (*filter && !joker(filter, reinterpret_cast<char *>(buffer + 8)))
-            continue;
-        poke_l(buffer + 124, 0xFFFFFFFFu);
-        fill_poke(buffer, ' ');
-    }
-    hal::permit();
+    struct Fill {
+        IData &d;
+        uint8_t *buffer;
+    } fill = {d, buffer};
+    hal::each_device(
+        [](const char *name, bool device, void *data) {
+            Fill &f = *static_cast<Fill *>(data);
+            uint8_t kind = upper(*ptr<uint8_t>(f.d.Name1));
+            if ((kind == 'D' && !device) || (kind == 'A' && device) || !*name)
+                return;
+            uint8_t *to = f.buffer + 8;
+            while (*name)
+                *to++ = uint8_t(*name++);
+            *to++ = ':';
+            *to = 0;
+            const char *filter = ptr<char>(f.d.Name2);
+            if (*filter && !joker(filter, reinterpret_cast<char *>(f.buffer + 8)))
+                return;
+            poke_l(f.buffer + 124, 0xFFFFFFFFu);
+            fill_poke(f.buffer, ' ');
+        },
+        &fill);
     fill_sort();
 }
 

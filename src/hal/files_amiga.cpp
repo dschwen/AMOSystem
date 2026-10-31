@@ -1,6 +1,7 @@
 // hal/files.h on the Amiga: dos.library
 
 #include "hal/files.h"
+#include "hal/system.h"
 
 #include "core/amos.h"
 #include "core/amiga.h"
@@ -34,6 +35,31 @@ DirLock parent_dir(DirLock l) { return DirLock(ParentDir(BPTR(l))); }
 bool info(DirLock l, void *info_data) { return Info(BPTR(l), static_cast<InfoData *>(info_data)); }
 bool assign_lock(const char *name, DirLock l) { return AssignLock(name, BPTR(l)); }
 bool device_exists(const char *name) { return DeviceProc(name) != nullptr; }
+
+// DOS's list of devices (RootNode, DosInfo, DevInfo), under Forbid
+void each_device(void (*f)(const char *name, bool device, void *data), void *data)
+{
+    forbid();
+    auto root = static_cast<uint8_t *>(BADDR(peek_l(ptr<uint8_t>(peek_l(reinterpret_cast<uint8_t *>(DOS_BASE_NAME) + 34)) + 24)));
+    for (uint8_t *node = static_cast<uint8_t *>(BADDR(peek_l(root + 4))); node;
+         node = static_cast<uint8_t *>(BADDR(peek_l(node)))) {
+        if (!peek_l(node + 8))
+            continue;
+        uint32_t bname = peek_l(node + 40);
+        if (!bname)
+            continue;
+        const uint8_t *s = static_cast<const uint8_t *>(BADDR(bname));
+        int len = int8_t(*s++);
+        if (len < 1)
+            continue;
+        char name[128];
+        for (int i = 0; i < len && i < 127; i++)
+            name[i] = char(s[i]);
+        name[len < 127 ? len : 127] = 0;
+        f(name, !peek_l(node + 4), data);
+    }
+    permit();
+}
 
 bool delete_file(const char *name) { return DeleteFile(name); }
 bool rename(const char *from, const char *to) { return Rename(from, to); }

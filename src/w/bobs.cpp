@@ -254,7 +254,7 @@ uint32_t get_image(Screen *s, be_u32 *entry, uint16_t x, uint16_t y, uint16_t tx
         c.bltcon1 = 0;
         for (uint16_t p = 0; p < planes; p++) {
             c.bltapt = ptr<uint8_t>(s->EcCurrent[p]) + offset;
-            c.bltsize = uint16_t(ty << 6) | words;
+            hal::blit(uint16_t(ty << 6) | words);
             hal::wait_blit();
         }
     } else {
@@ -273,7 +273,7 @@ uint32_t get_image(Screen *s, be_u32 *entry, uint16_t x, uint16_t y, uint16_t tx
                 c.bltbpt = from;
                 uint16_t before = peek_w(to);
                 c.bltdpt = to;
-                c.bltsize = size;
+                hal::blit(size);
                 uint8_t *at = to;
                 from += int16_t(s->EcTLigne);
                 to += line;
@@ -485,7 +485,7 @@ void draw(amos::Bob *b, const be_u32 *planes, uint32_t data, uint32_t step, uint
             c.bltbpt = ptr<uint8_t>(data);
             c.bltcpt = to;
             c.bltdpt = to;
-            c.bltsize = size;
+            hal::blit(size);
         });
     } else if (routine == Draw16) {
         c.bltbmod = b->BbAModO;
@@ -501,7 +501,7 @@ void draw(amos::Bob *b, const be_u32 *planes, uint32_t data, uint32_t step, uint
             each([&](uint8_t *to) {
                 c.bltapt = ptr<uint8_t>(data);
                 c.bltdpt = to;
-                c.bltsize = size;
+                hal::blit(size);
             });
         } else {
             c.bltcon0 = b->BbACon0;
@@ -513,7 +513,7 @@ void draw(amos::Bob *b, const be_u32 *planes, uint32_t data, uint32_t step, uint
                 c.bltbpt = ptr<uint8_t>(data);
                 c.bltcpt = to;
                 c.bltdpt = to;
-                c.bltsize = size;
+                hal::blit(size);
             });
         }
     } else if (!masked) {
@@ -528,7 +528,7 @@ void draw(amos::Bob *b, const be_u32 *planes, uint32_t data, uint32_t step, uint
             c.bltbpt = ptr<uint8_t>(data);
             c.bltcpt = to;
             c.bltdpt = to;
-            c.bltsize = size;
+            hal::blit(size);
         });
     } else {
         c.bltcon0 = b->BbACon0;
@@ -544,7 +544,7 @@ void draw(amos::Bob *b, const be_u32 *planes, uint32_t data, uint32_t step, uint
                 c.bltbpt = ptr<uint8_t>(data);
                 c.bltcpt = to;
                 c.bltdpt = to;
-                c.bltsize = size;
+                hal::blit(size);
             });
         } else {
             // A line at a time
@@ -558,7 +558,7 @@ void draw(amos::Bob *b, const be_u32 *planes, uint32_t data, uint32_t step, uint
                 do {
                     hal::wait_blit();
                     c.bltadat = 0;
-                    c.bltsize = line;
+                    hal::blit(line);
                 } while (--n);
             });
         }
@@ -891,7 +891,7 @@ void erase()
                 hal::wait_blit();
                 c.bltadat = colour & 1 ? 0xFFFF : 0;
                 c.bltdpt = ptr<uint8_t>(planes[p]) + offset;
-                c.bltsize = size;
+                hal::blit(size);
             }
             continue;
         }
@@ -906,7 +906,7 @@ void erase()
                 continue;
             hal::wait_blit();
             c.bltdpt = ptr<uint8_t>(planes[p]) + offset;
-            c.bltsize = size;
+            hal::blit(size);
         }
     }
     hal::wait_blit();
@@ -942,7 +942,7 @@ void show()
                     continue;
                 hal::wait_blit();
                 c.bltapt = ptr<uint8_t>(planes[p]) + offset;
-                c.bltsize = dc->ASize;
+                hal::blit(dc->ASize);
             }
         }
     }

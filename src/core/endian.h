@@ -18,6 +18,10 @@ using be_i32 = int32_t;
 
 #else
 
+} // namespace amos
+#include <type_traits>
+namespace amos {
+
 template <typename T> struct BigEndian {
     uint8_t b[sizeof(T)];
 
@@ -61,18 +65,28 @@ template <typename T> struct BigEndian {
     void operator=(T v) volatile { set(v); }
     BigEndian &operator=(const BigEndian &) = default;
 
-    template <typename U> BigEndian &operator+=(U v) { return *this = T(get() + v); }
-    template <typename U> BigEndian &operator-=(U v) { return *this = T(get() - v); }
-    template <typename U> BigEndian &operator|=(U v) { return *this = T(get() | v); }
-    template <typename U> BigEndian &operator&=(U v) { return *this = T(get() & v); }
-    template <typename U> BigEndian &operator^=(U v) { return *this = T(get() ^ v); }
+    template <typename U> requires(std::is_integral_v<U>) BigEndian &operator+=(U v) { return *this = T(get() + v); }
+    template <typename U> requires(std::is_integral_v<U>) BigEndian &operator-=(U v) { return *this = T(get() - v); }
+    template <typename U> requires(std::is_integral_v<U>) BigEndian &operator|=(U v) { return *this = T(get() | v); }
+    template <typename U> requires(std::is_integral_v<U>) BigEndian &operator&=(U v) { return *this = T(get() & v); }
+    template <typename U> requires(std::is_integral_v<U>) BigEndian &operator^=(U v) { return *this = T(get() ^ v); }
     BigEndian &operator<<=(int n) { return *this = T(get() << n); }
     BigEndian &operator>>=(int n) { return *this = T(get() >> n); }
-    template <typename U> void operator+=(U v) volatile { set(T(get() + v)); }
-    template <typename U> void operator-=(U v) volatile { set(T(get() - v)); }
-    template <typename U> void operator|=(U v) volatile { set(T(get() | v)); }
-    template <typename U> void operator&=(U v) volatile { set(T(get() & v)); }
-    template <typename U> void operator^=(U v) volatile { set(T(get() ^ v)); }
+    template <typename U> requires(std::is_integral_v<U>) void operator+=(U v) volatile { set(T(get() + v)); }
+    template <typename U> requires(std::is_integral_v<U>) void operator-=(U v) volatile { set(T(get() - v)); }
+    template <typename U> requires(std::is_integral_v<U>) void operator|=(U v) volatile { set(T(get() | v)); }
+    template <typename U> requires(std::is_integral_v<U>) void operator&=(U v) volatile { set(T(get() & v)); }
+    template <typename U> requires(std::is_integral_v<U>) void operator^=(U v) volatile { set(T(get() ^ v)); }
+    BigEndian &operator+=(T v) { return *this = T(get() + v); }
+    BigEndian &operator-=(T v) { return *this = T(get() - v); }
+    BigEndian &operator|=(T v) { return *this = T(get() | v); }
+    BigEndian &operator&=(T v) { return *this = T(get() & v); }
+    BigEndian &operator^=(T v) { return *this = T(get() ^ v); }
+    void operator+=(T v) volatile { set(T(get() + v)); }
+    void operator-=(T v) volatile { set(T(get() - v)); }
+    void operator|=(T v) volatile { set(T(get() | v)); }
+    void operator&=(T v) volatile { set(T(get() & v)); }
+    void operator^=(T v) volatile { set(T(get() ^ v)); }
     BigEndian &operator++() { return *this = T(get() + 1); }
     BigEndian &operator--() { return *this = T(get() - 1); }
     T operator++(int)

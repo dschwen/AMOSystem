@@ -21,8 +21,4 @@
 
 ; The routine record that closes the printer at ClearVar: a link, code
 		XREF	_lib_prt_close_fn
-		xdef	_lib_prt_close_record
-_lib_prt_close_record
-		dc.l	0
-		CCall	_lib_prt_close_fn
-		rts
+		RoutineRecord _lib_prt_close_record,_lib_prt_close_fn

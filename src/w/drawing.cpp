@@ -14,6 +14,8 @@
 
 #include "hal/gfx.h"
 
+#include <graphics/clip.h>
+
 using namespace amos;
 using namespace amos::w;
 
@@ -54,7 +56,7 @@ void cls_blit(Screen *s, uint16_t colour, uint16_t x1, uint16_t y1, uint16_t x2,
         uint8_t *a = ptr<uint8_t>(s->EcCurrent[p]) + offset;
         c.bltcpt = a;
         c.bltdpt = a;
-        c.bltsize = size;
+        hal::blit(size);
         hal::wait_blit();
     }
     hal::disown_blitter();
@@ -243,7 +245,7 @@ struct Fill {
             c.bltdmod = 0;
             c.bltcon0 = 0x0D00 | (bits & 1 ? first_set : first);
             c.bltcon1 = 0;
-            c.bltsize = size;
+            hal::blit(size);
             first = other;
             first_set = other_set;
             hal::wait_blit();
@@ -427,7 +429,7 @@ struct Fill {
                 uint16_t v = (fg & 1 ? bits : 0) | (bg & 1 ? uint16_t(~bits) : 0);
                 hal::wait_blit();
                 c.bltbdat = v;
-                c.bltsize = line;
+                hal::blit(line);
                 if (w >= end)
                     w = pattern;
             } while (--n);
@@ -678,7 +680,7 @@ uint32_t screen_copy(const AllRegs *r)
         c.bltapt = a;
         c.bltcpt = d;
         c.bltdpt = d;
-        c.bltsize = size;
+        hal::blit(size);
     }
     hal::wait_blit();
     hal::disown_blitter();
@@ -711,11 +713,11 @@ void set_clip_rect(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1)
     s->EcClipX1 = x1;
     s->EcClipY1 = y1;
     // the bounds of the layer's ClipRect
-    be_u16 *bounds = ptr<be_u16>(peek_l(ptr<uint8_t>(s->Ec_Layer) + 8) + 16);
-    bounds[0] = x0;
-    bounds[1] = y0;
-    bounds[2] = x1 - 1;
-    bounds[3] = y1 - 1;
+    struct Rectangle &bounds = ptr<struct Layer>(s->Ec_Layer)->ClipRect->bounds;
+    bounds.MinX = int16_t(x0);
+    bounds.MinY = int16_t(y0);
+    bounds.MaxX = int16_t(x1 - 1);
+    bounds.MaxY = int16_t(y1 - 1);
 }
 
 // T_EcSave: pens, draw mode, flags, line pattern, position, area pattern,

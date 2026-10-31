@@ -39,6 +39,7 @@ void set_requester_window(uint32_t window);
 Library *open_library(const char *name, uint32_t version);
 void close_library(Library *library);
 uint16_t os_version();                          // exec's
+uint32_t exec_base();                           // exec.library
 uint8_t vblank_frequency();                     // 50 (PAL) or 60
 void clear_cache();
 // SetFunction: library's function at offset becomes function; the old one
@@ -74,6 +75,13 @@ int32_t wait_io(IORequest *io);
 // RawDoFmt: format (exec's %-codes, 16-bit arguments unless l) with args,
 // each character to put(c, data); returns the args past those used
 const void *raw_format(const char *format, const void *args, void (*put)(char c, void *data), void *data);
+
+// A wait loop's turn: another host lets its interrupts (emulated) run
+#if defined(__mc68000__)
+inline void idle() {}
+#else
+void idle();
+#endif
 
 // Interrupts: a server of the vertical blank; the handler of interrupt n
 // (the old one)

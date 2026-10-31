@@ -8,154 +8,65 @@
 
 		SECTION	.text,CODE
 
-St_AdTokens	equ	32			IData offsets (core/layout.h)
-St_ErrorSave	equ	2640
-St_ErrorRegs	equ	2567
-EcEBase		equ	45			+Equ.s
-DEBase		equ	EcEBase+35-1
-SpEBase		equ	DEBase+25
-
-; A routine of AMOSPro.Lib, through its jump table (a0 lost)
-LJmp		MACRO
-		move.l	St_AdTokens(a5),a0
-		move.l	-36-4-\1*4(a0),a0
-		jmp	(a0)
-		ENDM
-LJsr		MACRO
-		move.l	St_AdTokens(a5),a0
-		move.l	-36-4-\1*4(a0),a0
-		jsr	(a0)
-		ENDM
-
-; Error n
-Err		MACRO
-		LibRoutine \1
-		moveq	#\2,d0
-		LJmp	L_GoError
-		ENDM
-; Error n of the screens and windows
-EcErr		MACRO
-		LibRoutine \1
-		moveq	#\2,d0
-		LJmp	L_EcWiErr
-		ENDM
-
-		LibRoutine GoError
-		LJmp	L_Error
-		Err	TypeMis,34
-		Err	FilOO,DEBase+17
-		Err	FilNO,DEBase+18
-		Err	FilTM,DEBase+19
-		Err	EOFil,DEBase+21
-		Err	IffFor2,30
-		Err	DiForm,DEBase+16
-		Err	BkAlRes,35
-		Err	BkNoRes,36
-		Err	OOfMem,24
-		Err	StooLong,21
-		Err	FonCall,23
-		Err	AdrErr,25
-		Err	CantFit,32
-		Err	IffFor,30
-		Err	IffCmp,31
-		Err	FftE,37
-		Err	SpErr,SpEBase
-		EcErr	ScNOp,3
-		EcErr	RainErr,31
-		EcErr	IllScN,6			Illegal screen number
-		EcErr	BFonCall,22
-		EcErr	WFonCall,16
-
-; EcWiErr: d0 an error of the screens (1: out of memory)
-		LibRoutine EcWiErr
-		cmp.w	#1,d0
-		bne.s	.Err
-		LJmp	L_OOfMem
-.Err		add.w	#EcEBase-1,d0
-		LJmp	L_GoError
-; CopErr: d0 an error of the copper
-		LibRoutine CopErr
-		add.w	#EcEBase+32-2,d0
-		LJmp	L_GoError
-; AdBErr: d1 = 0 no bank, else no such image
-		LibRoutine AdBErr
-		tst.w	d1
-		bne.s	.Img
-		LJmp	L_BkNoRes
-.Img		moveq	#EcEBase+30-1,d0
-		LJmp	L_GoError
+		RegRoutine GoError,_lib_go_error
+		RegRoutine TypeMis,_lib_err_type_mis
+		RegRoutine FilOO,_lib_err_fil_oo
+		RegRoutine FilNO,_lib_err_fil_no
+		RegRoutine FilTM,_lib_err_fil_tm
+		RegRoutine EOFil,_lib_err_eo_fil
+		RegRoutine IffFor2,_lib_err_iff_for2
+		RegRoutine DiForm,_lib_err_di_form
+		RegRoutine BkAlRes,_lib_err_bk_al_res
+		RegRoutine BkNoRes,_lib_err_bk_no_res
+		RegRoutine OOfMem,_lib_err_oo_f_mem
+		RegRoutine StooLong,_lib_err_stoo_long
+		RegRoutine FonCall,_lib_err_fon_call
+		RegRoutine AdrErr,_lib_err_adr_err
+		RegRoutine CantFit,_lib_err_cant_fit
+		RegRoutine IffFor,_lib_err_iff_for
+		RegRoutine IffCmp,_lib_err_iff_cmp
+		RegRoutine FftE,_lib_err_fft_e
+		RegRoutine SpErr,_lib_err_sp_err
+		RegRoutine ScNOp,_lib_err_sc_n_op
+		RegRoutine RainErr,_lib_err_rain_err
+		RegRoutine IllScN,_lib_err_ill_sc_n
+		RegRoutine BFonCall,_lib_err_b_fon_call
+		RegRoutine WFonCall,_lib_err_w_fon_call
+		RegRoutine EcWiErr,_lib_ec_wi_err
+		RegRoutine CopErr,_lib_cop_err
+		RegRoutine AdBErr,_lib_ad_b_err
 
 ; Syntax error, STOP, font not found, ERROR n
-		LibEntry Syntax
-		moveq	#22,d0
-		LJmp	L_GoError
-		LibEntry Syntax2
-		LJmp	L_Syntax
-		LibEntry InStop
-		moveq	#9,d0
-		LJmp	L_GoError
-		LibEntry FnfE
-		moveq	#44,d0
-		LJmp	L_GoError
-		LibEntry InError
-		cmp.l	#256,d3
-		bcs.s	.Skip
-		move.l	#255,d3
-.Skip		move.l	d3,d0
-		LJmp	L_GoError
+		LibCall	Syntax,_lib_syntax,0,None
+		LibCall	Syntax2,_lib_syntax,0,None
+		LibCall	InStop,_lib_in_stop,0,None
+		LibCall	FnfE,_lib_fnf_e,0,None
+		LibCall	InError,_lib_in_error,1,None
 
 ; =TRUE, =FALSE, the functions that are only a token
-		LibEntry FnTrue
-		moveq	#-1,d3
-		Ret_Int
-		LibEntry FnOne
-		moveq	#1,d3
-		Ret_Int
-		LibEntry FnFalse
-		moveq	#0,d3
-		Ret_Int
-		LibEntry FnInt
-		rts
-		LibEntry FnPSel
-		rts
+		LibCall	FnTrue,_lib_fn_true,0,Int
+		LibCall	FnOne,_lib_fn_one,0,Int
+		LibCall	FnFalse,_lib_fn_false,0,Int
+		LibNop	FnInt
+		LibNop	FnPSel
+		LibNop	InSetBuffer
+		LibNop	InNull
+		LibCall	FnElse,_lib_fn_else,0,Int
+		LibCall	FnNull,_lib_fn_null,0,Int
 
-; The registers of the program kept for the errors
-		LibRoutine SaveRegs
-		movem.l	d6-d7,St_ErrorSave(a5)
-		move.b	#1,St_ErrorRegs(a5)
-		rts
-		LibRoutine LoadRegs
-		movem.l	St_ErrorSave(a5),d6-d7
-		clr.b	St_ErrorRegs(a5)
-		rts
+; The library's start (its number, its version), END, REM, illegal
+; direct mode
+		RegRoutine Init,_lib_init
+		LibCall	InEnd,_lib_in_end,0,None
+		InCall	InRem,_lib_in_rem
+		RegRoutine RIllDir,_lib_r_ill_dir
 
-; MajD0: d0 in capitals
-		LibRoutine MajD0
-		cmp.b	#"a",d0
-		bcs.s	.Ski
-		cmp.b	#"z",d0
-		bhi.s	.Ski
-		sub.b	#$20,d0
-.Ski		rts
-
-; AdBob, AdIcon: d1 an image (its flags above). Out: a2 its address, d5
-; its number, d0 = 0
-AdImage		MACRO
-		LibRoutine \1
-		and.l	#$3FFF,d1
-		bne.s	.Some\@
-		LJmp	L_FonCall
-.Some\@		move.l	d1,d0
-		LJsr	\2
-		bne.s	.Ok\@
-		LJmp	L_AdBErr
-.Ok\@		move.l	a0,a2
-		move.w	d1,d5
-		moveq	#0,d0
-		rts
-		ENDM
-		AdImage	AdBob,L_Bnk.AdBob
-		AdImage	AdIcon,L_Bnk.AdIcon
+; The registers of the program kept for the errors, MajD0, AdBob, AdIcon
+		RegRoutine SaveRegs,_lib_save_regs
+		RegRoutine LoadRegs,_lib_load_regs
+		RegRoutine MajD0,_lib_maj_d0
+		RegRoutine AdBob,_lib_ad_bob
+		RegRoutine AdIcon,_lib_ad_icon
 
 ; The names of the banks
 		xdef	BkSpr,BkIco,BkMus,BkAmal,BkMenu,BkDat,BkWrk,BkAsm,BkIff,Bnk_NoLoad,NHunk

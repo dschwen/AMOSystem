@@ -462,3 +462,46 @@ uint32_t ext_fn_parallel_input2(int32_t length, uint32_t terminator)
     return read_string(c, &io->IOPar, uint32_t(length));
 }
 }
+
+namespace {
+// DT, the data zone (with Special's default)
+alignas(4) uint8_t data_zone[140] = {};
+} // namespace
+
+extern "C" {
+// SerDef / SerEnd (ExtAdr+4, +8): the channels closed
+extern uint8_t ext_ioports_end_entry[];
+void ext_ioports_end()
+{
+    ext_serial_close0();
+    close_device(channel(PrinterIO));
+    close_device(channel(ParallelIO));
+}
+}
+
+// The extension's cold start (routine 0): d1 "APex" from AMOSPro 1.10 on.
+// Out: d0 the extension's number, d1 (low word) its version; d0 = -1 and
+// a0 = 0 for another version.
+static uint32_t cold_start(RegFrame &r, uint32_t number, uint16_t version, void (*start)())
+{
+    if (r.d[1] != 0x41506578) {
+        r.d[0] = uint32_t(-1);
+        r.a[0] = 0;
+        return r.d[0];
+    }
+    if (start)
+        start();
+    r.d[0] = number;
+    r.d[1] = (r.d[1] & 0xFFFF0000) | version;
+    return r.d[0];
+}
+
+extern "C" uint32_t ext_ioports_cold(RegFrame &r)
+{
+    IData &d = idata();
+    d.ExtAdr[ExtNb * 4] = address(data_zone);
+    d.ExtAdr[ExtNb * 4 + 1] = address(ext_ioports_end_entry);
+    d.ExtAdr[ExtNb * 4 + 2] = address(ext_ioports_end_entry);
+    poke_w(data_zone + Special, 0x84);
+    return cold_start(r, ExtNb, 0x0200, nullptr);
+}

@@ -48,3 +48,7 @@
 		LibCall	Ext_IO_Ports_FnParallelError,_ext_fn_parallel_error,0,Int
 		LibCall	Ext_IO_Ports_FnParallelInput1,_ext_fn_parallel_input1,1,String
 		LibCall	Ext_IO_Ports_FnParallelInput2,_ext_fn_parallel_input2,2,String
+
+; The cold start; the end, at each run and at the end (ExtAdr+4, +8)
+		RegRoutine Ext_IO_Ports_IOCold,_ext_ioports_cold
+		RoutineCall _ext_ioports_end_entry,_ext_ioports_end

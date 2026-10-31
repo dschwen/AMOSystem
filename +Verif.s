@@ -73,41 +73,6 @@ Free_VerTables	jmp	_ver_free_tables_entry
 SsTest	jmp	_ver_test_entry
 
 
-; Traitement message d'erreur
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~
-		xdef	_ver_error
-_ver_error
-VerErr	move.l	d0,-(sp)
-; Remet les tokens
-; ~~~~~~~~~~~~~~~~
-	bsr	Ver_Run
-; Efface les buffers d'inclusion
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	move.l	VerPos(a5),a0
-	bsr	Includes_Adr
-	move.l	a0,VerPos(a5)
-	bsr	Includes_Clear
-; Efface les equates
-; ~~~~~~~~~~~~~~~~~~
-	jsr	D_Close
-; Efface les tables
-; ~~~~~~~~~~~~~~~~~
-	bsr	Free_VerTables
-; Plus de check1.3
-; ~~~~~~~~~~~~~~~~
-	clr.b	VerCheck1.3(a5)
-; Depile le programme
-; ~~~~~~~~~~~~~~~~~~~
-	move.l	Prg_JError(a5),a2
-	bsr	Prg_Pull
-; Branche � l'appelant
-; ~~~~~~~~~~~~~~~~~~~~
-	move.l	(sp)+,d0
-	neg.l	d0				Message negatif= TEST
-	sub.l	a0,a0				Trouver le message
-	jmp	(a2)				On branche
-
-
 ; Equates and compiled procedures: verif/includes.cpp
 Equ_Free	jmp	_ver_equ_free_entry
 

@@ -77,7 +77,11 @@ Native find_native(const uint8_t *a4, uint16_t t, const void *routine, bool func
 // as gcc returns them, for the functions of 32 and of 64 bits.
 uint64_t call_native(const Native &n)
 {
+#if defined(__mc68000__)
     uint32_t p[10];
+#else
+    uint64_t p[10];     // (64 bits: the pointers among them are read whole)
+#endif
     for (int i = 0; i < n.params; i++) {
         if (i)
             interp::pc() += 2;
@@ -86,7 +90,11 @@ uint64_t call_native(const Native &n)
             v = interp::to_integer(v);
         p[i] = v.v1;
     }
+#if defined(__mc68000__)
     using U = uint32_t;
+#else
+    using U = uint64_t;
+#endif
     using R = uint64_t;
     switch (n.params) {
     case 0:
@@ -245,7 +253,12 @@ bool native_function(uint16_t t, const void *r, Value &v)
     if (n->params)
         pc() += 2;
     uint64_t x = call_native(*n);
+#if defined(__mc68000__)
     uint32_t hi = uint32_t(x >> 32);
+#else
+    // (another host returns 32 bits in the low half)
+    uint32_t hi = n->result == LCDouble ? uint32_t(x >> 32) : uint32_t(x);
+#endif
     switch (n->result) {
     case 0:
         v = {TInt, hi, 0};

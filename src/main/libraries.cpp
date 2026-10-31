@@ -518,7 +518,14 @@ int libraries_load()
         if (!*name)
             continue;
         command = sys_add_path_com(name);
-        if (int e = library_load(n, command, extension_image(name)))
+        const uint8_t *image = extension_image(name);
+#if !defined(__mc68000__)
+        // another host cannot run the 68000 code of an extension's file:
+        // only the extensions linked in
+        if (!image)
+            continue;
+#endif
+        if (int e = library_load(n, command, image))
             return e;
     }
     return 0;
@@ -548,15 +555,21 @@ void library_patch()
         const uint8_t *list = ptr<uint8_t>(peek_l(e + 2));
         if (peek_w(list) != lb_word(ext, LB_NRout))
             continue;
+        // (the list ends with routine 0, which may also come first: the
+        // cold start)
+        auto each = [list](auto f) {
+            for (const uint8_t *q = list + 2; q == list + 2 || peek_w(q); q += 6)
+                f(peek_w(q), peek_l(q + 2));
+        };
         const be_u16 *ext_sizes = ptr<be_u16>(lb_long(ext, LB_LibSizes));
         bool empty = true;
-        for (const uint8_t *q = list + 2; uint16_t r = peek_w(q); q += 6)
+        each([&](uint16_t r, uint32_t) {
             if (ext_sizes[r])
                 empty = false;
+        });
         if (!empty)
             continue;
-        for (const uint8_t *q = list + 2; uint16_t r = peek_w(q); q += 6)
-            lb_jump(ext, r) = peek_l(q + 2);
+        each([&](uint16_t r, uint32_t routine) { lb_jump(ext, r) = routine; });
     }
 }
 

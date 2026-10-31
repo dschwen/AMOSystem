@@ -33,26 +33,117 @@ int32_t dos_error(int e)
     }
 }
 
-// AmigaDOS's names: "volume:dir/file"; here the volume is a directory of
-// the current one, and "/" alone goes up
+// The volumes and assigns: "NAME=directory" pairs of AMOS_ASSIGNS
+// (separated by ';'), and those made by assign_lock
+struct Assign {
+    char name[32];
+    char *path;
+};
+Assign assigns[64];
+int assign_count;
+
+void read_assigns()
+{
+    static bool done;
+    if (done)
+        return;
+    done = true;
+    const char *env = getenv("AMOS_ASSIGNS");
+    while (env && *env && assign_count < 64) {
+        const char *eq = strchr(env, '='), *end = strchr(env, ';');
+        if (!end)
+            end = env + strlen(env);
+        if (eq && eq < end && size_t(eq - env) < sizeof assigns[0].name) {
+            Assign &a = assigns[assign_count++];
+            memcpy(a.name, env, size_t(eq - env));
+            a.name[eq - env] = 0;
+            a.path = strndup(eq + 1, size_t(end - eq - 1));
+        }
+        env = *end ? end + 1 : end;
+    }
+}
+
+const char *assigned(const char *volume, size_t n)
+{
+    read_assigns();
+    for (int i = 0; i < assign_count; i++)
+        if (strlen(assigns[i].name) == n && !strncasecmp(assigns[i].name, volume, n))
+            return assigns[i].path;
+    return nullptr;
+}
+
+// The entry of directory dir named name, whatever its case (AmigaDOS's
+// names are not case-sensitive): into to, false if there is none
+bool find_entry(const char *dir, const char *name, size_t n, char *to, size_t size)
+{
+    DIR *d = opendir(*dir ? dir : ".");
+    if (!d)
+        return false;
+    bool found = false;
+    while (struct dirent *e = readdir(d)) {
+        if (strlen(e->d_name) == n && !strncasecmp(e->d_name, name, n)) {
+            snprintf(to, size, "%s", e->d_name);
+            found = true;
+            break;
+        }
+    }
+    closedir(d);
+    return found;
+}
+
+// AmigaDOS's names: "volume:dir/file" (the volume an assign, or a
+// directory of the current one), "/" alone up a directory; each part
+// found whatever its case
 const char *host_name(const char *name)
 {
     static char buffer[1024];
     char *to = buffer;
+    *to = 0;
     const char *colon = strchr(name, ':');
     if (colon) {
         size_t n = size_t(colon - name);
-        memcpy(to, name, n);
-        to += n;
-        *to++ = '/';
+        if (const char *path = assigned(name, n)) {
+            snprintf(buffer, sizeof buffer, "%s", path);
+        } else if (n) {
+            // a directory of the current one, else of the root (the names
+            // of the locks begin with the root's directory: "home:...")
+            char entry[256];
+            if (find_entry("", name, n, entry, sizeof entry))
+                snprintf(buffer, sizeof buffer, "%s", entry);
+            else if (find_entry("/", name, n, entry, sizeof entry))
+                snprintf(buffer, sizeof buffer, "/%s", entry);
+            else
+                snprintf(buffer, sizeof buffer, "%.*s", int(n), name);
+        } else {
+            snprintf(buffer, sizeof buffer, "/");
+        }
+        to = buffer + strlen(buffer);
         name = colon + 1;
     }
-    for (; *name && to < buffer + sizeof buffer - 4; name++) {
-        if (*name == '/' && (to == buffer || to[-1] == '/')) {
-            *to++ = '.';
-            *to++ = '.';
+    // the parts
+    while (*name) {
+        const char *end = strchr(name, '/');
+        size_t n = end ? size_t(end - name) : strlen(name);
+        if (to > buffer && to[-1] != '/' && to < buffer + sizeof buffer - 2)
+            *to++ = '/';
+        if (!n) {
+            // "/": the parent
+            if (to + 3 < buffer + sizeof buffer) {
+                *to++ = '.';
+                *to++ = '.';
+            }
+        } else {
+            *to = 0;
+            char entry[256];
+            if (find_entry(buffer, name, n, entry, sizeof entry))
+                snprintf(to, size_t(buffer + sizeof buffer - to), "%s", entry);
+            else
+                snprintf(to, size_t(buffer + sizeof buffer - to), "%.*s", int(n), name);
+            to += strlen(to);
         }
-        *to++ = *name;
+        name += n;
+        if (*name == '/')
+            name++;
     }
     *to = 0;
     return buffer[0] ? buffer : ".";
@@ -72,8 +163,12 @@ void files_start(void *) {}
 
 File open(const char *name, int32_t mode)
 {
-    int flags = mode == ModeNewFile ? O_RDWR | O_CREAT | O_TRUNC : mode == ModeReadWrite ? O_RDWR | O_CREAT : O_RDONLY;
-    int fd = ::open(host_name(name), flags, 0644);
+    // (an old file can be written too; read-only if it cannot)
+    int flags = mode == ModeNewFile ? O_RDWR | O_CREAT | O_TRUNC : mode == ModeReadWrite ? O_RDWR | O_CREAT : O_RDWR;
+    const char *h = host_name(name);
+    int fd = ::open(h, flags, 0644);
+    if (fd < 0 && mode == ModeOldFile && (errno == EACCES || errno == EROFS || errno == EISDIR))
+        fd = ::open(h, O_RDONLY);
     if (fd < 0) {
         error = dos_error(errno);
         return 0;
@@ -150,17 +245,35 @@ void unlock(DirLock l)
 
 namespace {
 
+// A FileInfoBlock as dos.library fills it: big-endian (AMOS reads it in
+// its memory), the date of the file in days, minutes and ticks since 1978
+void put_l(uint8_t *at, uint32_t v)
+{
+    at[0] = uint8_t(v >> 24);
+    at[1] = uint8_t(v >> 16);
+    at[2] = uint8_t(v >> 8);
+    at[3] = uint8_t(v);
+}
+
 void fill(FileInfoBlock *fib, const char *path, const char *name)
 {
     struct stat st;
-    memset(fib, 0, sizeof *fib);
+    uint8_t *f = reinterpret_cast<uint8_t *>(fib);
+    memset(f, 0, sizeof *fib);
     if (stat(path, &st) == 0) {
-        fib->fib_DirEntryType = S_ISDIR(st.st_mode) ? ST_USERDIR : ST_FILE;
-        fib->fib_EntryType = fib->fib_DirEntryType;
-        fib->fib_Size = int32_t(st.st_size);
-        fib->fib_NumBlocks = int32_t((st.st_size + 511) / 512);
+        int32_t type = S_ISDIR(st.st_mode) ? ST_USERDIR : ST_FILE;
+        put_l(f + 4, uint32_t(type));                               // fib_DirEntryType
+        put_l(f + 120, uint32_t(type));                             // fib_EntryType
+        put_l(f + 124, uint32_t(st.st_size));                       // fib_Size
+        put_l(f + 128, uint32_t((st.st_size + 511) / 512));         // fib_NumBlocks
+        int64_t t = int64_t(st.st_mtime) - 252460800;               // since 1.1.1978
+        if (t < 0)
+            t = 0;
+        put_l(f + 132, uint32_t(t / 86400));                        // ds_Days
+        put_l(f + 136, uint32_t(t % 86400 / 60));                   // ds_Minute
+        put_l(f + 140, uint32_t(t % 60 * 50));                      // ds_Tick
     }
-    strncpy(reinterpret_cast<char *>(fib->fib_FileName), name, sizeof fib->fib_FileName - 1);
+    strncpy(reinterpret_cast<char *>(f + 8), name, 107);            // fib_FileName
 }
 
 } // namespace
@@ -217,8 +330,51 @@ DirLock parent_dir(DirLock l)
 }
 
 bool info(DirLock, void *) { return false; }
-bool assign_lock(const char *, DirLock) { return false; }
+// AssignLock: name (without its colon) the directory of the lock, which
+// it takes; no lock: the assign goes
+bool assign_lock(const char *name, DirLock l)
+{
+    read_assigns();
+    size_t n = strlen(name);
+    if (n && name[n - 1] == ':')
+        n--;
+    if (!n || n >= sizeof assigns[0].name)
+        return false;
+    int i = 0;
+    while (i < assign_count && !(strlen(assigns[i].name) == n && !strncasecmp(assigns[i].name, name, n)))
+        i++;
+    if (!l) {
+        if (i == assign_count)
+            return false;
+        free(assigns[i].path);
+        assigns[i] = assigns[--assign_count];
+        return true;
+    }
+    if (l >= 256 || !locks[l].name)
+        return false;
+    if (i == assign_count) {
+        if (assign_count == 64)
+            return false;
+        assign_count++;
+        memcpy(assigns[i].name, name, n);
+        assigns[i].name[n] = 0;
+    } else {
+        free(assigns[i].path);
+    }
+    char *real = realpath(locks[l].name, nullptr);
+    assigns[i].path = real ? real : strdup(locks[l].name);
+    unlock(l);
+    return true;
+}
 bool device_exists(const char *) { return false; }
+
+// The assigns (the host has no devices of its own)
+void each_device(void (*f)(const char *name, bool device, void *data), void *data)
+{
+    read_assigns();
+    for (int i = 0; i < assign_count; i++)
+        f(assigns[i].name, false, data);
+}
 
 bool delete_file(const char *name)
 {

@@ -37,6 +37,9 @@ DirLock parent_dir(DirLock l);
 bool info(DirLock l, void *info_data);                  // an InfoData
 bool assign_lock(const char *name, DirLock l);
 bool device_exists(const char *name);                   // "name:" a device
+// The devices and assigns of DOS (their names, without the colon): f for
+// each, device true for a device (not an assign)
+void each_device(void (*f)(const char *name, bool device, void *data), void *data);
 
 
 bool delete_file(const char *name);

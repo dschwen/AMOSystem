@@ -7,6 +7,9 @@
 #include <hardware/custom.h>
 #include "hal/chips.h"
 
+struct Interrupt;
+struct IOStdReq;
+
 // +W.s, exported under _w_ names
 extern "C" uint8_t w_tabk1[], w_tabk2[], w_tabk3[], w_tabk4[], w_fast_mm[], w_fast_mm2[], w_chip_mm[], w_chip_mm2[], w_free_mm[],
     w_sy_set_z[];
@@ -20,6 +23,19 @@ constexpr uint32_t EntNul = 0x80000000;
 inline volatile struct Custom &chips() { return hal::custom(); }
 
 inline Screen *current_screen() { return ptr<Screen>(wdata().EcCourant); }
+
+// The system's structures in the data zone: the input handler's interrupt
+// and its IO request, the VBL's interrupt. (Their room is the Amiga's
+// size: another host's, larger, are elsewhere.)
+#if defined(__mc68000__)
+inline struct Interrupt *input_interrupt() { return reinterpret_cast<struct Interrupt *>(wdata().Interrupt); }
+inline struct IOStdReq *input_request() { return reinterpret_cast<struct IOStdReq *>(wdata().IoDevice); }
+inline struct Interrupt *vbl_interrupt() { return reinterpret_cast<struct Interrupt *>(wdata().VBL_Is); }
+#else
+struct Interrupt *input_interrupt();
+struct IOStdReq *input_request();
+struct Interrupt *vbl_interrupt();
+#endif
 
 // FastMm (cleared), FastMm2, ChipMm (cleared): 0 if no memory
 uint32_t fast_mm(uint32_t size);

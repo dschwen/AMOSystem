@@ -2,6 +2,7 @@
 
 #include "core/amiga.h"
 #include "w/w.h"
+#include "hal/system.h"
 
 namespace amos::w {
 
@@ -33,7 +34,7 @@ void wait_vbl()
     const volatile be_u32 &count = wdata().VblCount;
     uint32_t now = count;
     while (count == now)
-        ;
+        hal::idle();
 }
 
 } // namespace amos::w

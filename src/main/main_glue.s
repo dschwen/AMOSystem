@@ -19,18 +19,8 @@
 
 ; RunErr_RunOnly / RunErr_NoEditor: where the errors of a program run
 ; without the editor go (Prg_JError), with d0-d1/a0-a1
-		xdef	_main_run_error_run_only
-		xdef	_main_run_error_no_editor
-_main_run_error_run_only
-		movem.l	d0-d7/a0-a2,-(sp)
-		pea	(sp)
-		pea	-1.w
-		bra.s	RunError
-_main_run_error_no_editor
-		movem.l	d0-d7/a0-a2,-(sp)
-		pea	(sp)
-		clr.l	-(sp)
-RunError	CCall	_main_run_error			never comes back
+		RegRoutine _main_run_error_run_only,_main_run_error_run_only_reg
+		RegRoutine _main_run_error_no_editor,_main_run_error_no_editor_reg
 
 ; The system (main/system.cpp)
 		RegRoutine RamFast,_main_ram_fast
@@ -54,13 +44,5 @@ RunError	CCall	_main_run_error			never comes back
 
 ; ResTempBuffer's records: the temporary buffer freed when the program is
 ; cleared or stops on an error (AddRoutine: a link, then the code)
-		xdef	_main_temp_on_clear
-		xdef	_main_temp_on_error
-_main_temp_on_clear
-		dc.l	0
-		CCall	_main_free_temp_buffer
-		rts
-_main_temp_on_error
-		dc.l	0
-		CCall	_main_free_temp_buffer
-		rts
+		RoutineRecord _main_temp_on_clear,_main_free_temp_buffer
+		RoutineRecord _main_temp_on_error,_main_free_temp_buffer

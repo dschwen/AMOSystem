@@ -24,10 +24,22 @@ volatile struct Custom &custom();
 volatile uint8_t &cia_a_pra();
 #endif
 
+// The blitter started on the registers set (BLTSIZE written with size: its
+// height << 6 | its width in words)
+inline void blit(uint16_t size) { custom().bltsize = size; }
+
+// A register of 16 bits (another host's emulates the chips: host/include/
+// hardware/custom.h)
+#if defined(__mc68000__)
+using ChipWord = uint16_t;
+#else
+using ChipWord = ChipReg;
+#endif
+
 // The custom registers by their offset (as the 16 bits at $DFF000+offset)
-inline volatile uint16_t &custom_word(uint32_t offset)
+inline volatile ChipWord &custom_word(uint32_t offset)
 {
-    return *reinterpret_cast<volatile uint16_t *>(reinterpret_cast<volatile uint8_t *>(&custom()) + offset);
+    return *reinterpret_cast<volatile ChipWord *>(reinterpret_cast<volatile uint8_t *>(&custom()) + offset);
 }
 
 } // namespace amos::hal

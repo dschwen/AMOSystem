@@ -7,6 +7,10 @@
 
 #include <stdint.h>
 
+namespace amos {
+struct AllRegs;
+}
+
 struct RastPort;
 struct TextFont;
 struct TextAttr;
@@ -72,6 +76,15 @@ Region *install_clip_region(Layer *layer, Region *region);
 
 // The fonts there are (AvailFonts: into buffer; the bytes missing)
 int32_t avail_fonts(char *buffer, int32_t size, uint32_t types);
+
+// A function of graphics.library by its offset, with the registers of its
+// call (a1 the RastPort, the others the function's: WritePixel, Draw,
+// DrawEllipse, PolyDraw, Text, RectFill); a6 graphics.library
+void gfx_call(int16_t lvo, amos::AllRegs &r);
+
+// The system's view: its copper list, its BPLCON0 bits
+uint32_t system_copper();
+uint16_t system_bplcon0();
 
 // The blitter, the display
 void own_blitter();

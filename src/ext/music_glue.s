@@ -71,19 +71,13 @@
 		LibCall	Ext_Music_InMedCont,_ext_med_cont,0,None
 
 ; MusInit, from the extension's cold start
-		LibRoutine Ext_Music_MusInit
-		CCall	_ext_music_init
-		rts
+		RoutineCall Ext_Music_MusInit,_ext_music_init
+		RegRoutine Ext_Music_Mus_Cold,_ext_music_cold
 
 ; The routines handed to AMOS: Default, End, the check of the banks
-		xdef	_music_default,_music_end,_music_bank_check
-_music_default	CCall	_ext_music_default
-		rts
-_music_end	CCall	_ext_music_end
-		rts
-_music_bank_check
-		CCall	_ext_music_bank_check
-		rts
+		RoutineCall _music_default,_ext_music_default
+		RoutineCall _music_end,_ext_music_end
+		RoutineCall _music_bank_check,_ext_music_bank_check
 
 ; The audio interrupts of the samples: exec calls them with a1 = is_Data
 		xdef	_music_sami_entry
@@ -111,15 +105,7 @@ _music_lvo	movem.l	d2-d7/a2-a6,-(sp)
 ; calls the address 4 bytes before the data zone. d1 voices, a1 sample,
 ; d2 length, d3 frequency.
 		XREF	_ext_music_go_sam
-_music_go_sam	movem.l	d0-d7/a0-a2,-(sp)
-		move.l	a1,-(sp)
-		move.l	d3,-(sp)
-		move.l	d2,-(sp)
-		move.l	d1,-(sp)
-		CCall	_ext_music_go_sam
-		lea	16(sp),sp
-		movem.l	(sp)+,d0-d7/a0-a2
-		rts
+		RegRoutine _music_go_sam,_ext_music_go_sam_reg
 
 ; The data zone (described by +Music_Data.s), after its entry for the
 ; editor

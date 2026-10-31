@@ -35,16 +35,5 @@
 
 ; L_InstrFind, called by the string subtraction, the verifier and the
 ; monitor. In: a1/d1 = string and length, a2/d2 = string to find and
-; length, d4 = start. Out: d3 = position or 0. Keeps d1/d2/a2.
-		LibRoutine InstrFind
-		move.l	d1,-(sp)
-		move.l	d4,-(sp)
-		move.l	d2,-(sp)
-		move.l	a2,-(sp)
-		move.l	d1,-(sp)
-		move.l	a1,-(sp)
-		CCall	_lib_instr_find
-		lea	20(sp),sp
-		move.l	(sp)+,d1
-		move.l	d0,d3
-		rts
+; length, d4 = start. Out: d3 = position or 0.
+		RegRoutine InstrFind,_lib_instr_find_reg

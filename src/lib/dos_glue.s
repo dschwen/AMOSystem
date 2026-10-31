@@ -20,16 +20,8 @@
 ; Routine records for AMOS.library's AddRoutine/CallRoutines: a link,
 ; then the code (called with jsr 4(a0), all registers saved). They close
 ; the current file when the program stops on an error or is cleared.
-		xdef	_lib_close_on_error
-		xdef	_lib_close_on_clear
-_lib_close_on_error
-		dc.l	0
-		CCall	_lib_close_current
-		rts
-_lib_close_on_clear
-		dc.l	0
-		CCall	_lib_close_current
-		rts
+		RoutineRecord _lib_close_on_error,_lib_close_current
+		RoutineRecord _lib_close_on_clear,_lib_close_current
 
 ; Saving and loading banks (lib/bankfiles.cpp)
 		RegRoutine Bnk.SaveA0,_lib_bnk_save_a0
@@ -85,22 +77,14 @@ _lib_close_on_clear
 		LibCall	InBSave,_lib_in_bsave,3,None			BSAVE a$,s TO e
 
 ; Closes all the channels when the program is cleared
-		xdef	_lib_close_all_on_clear
-_lib_close_all_on_clear
-		dc.l	0
-		CCall	_lib_close_all
-		rts
+		RoutineRecord _lib_close_all_on_clear,_lib_close_all
 
 ; Libraries and devices (lib/devices.cpp). The amiga.lib routines take
 ; their arguments on the stack, the C way.
-		LibRoutine CreatePort
-		jmp	_lib_create_port
-		LibRoutine DeletePort
-		jmp	_lib_delete_port
-		LibRoutine CreateExtIO
-		jmp	_lib_create_ext_io
-		LibRoutine DeleteExtIO
-		jmp	_lib_delete_ext_io
+		CRoutine CreatePort,_lib_create_port
+		CRoutine DeletePort,_lib_delete_port
+		CRoutine CreateExtIO,_lib_create_ext_io
+		CRoutine DeleteExtIO,_lib_delete_ext_io
 		RegRoutine Lib.Close,_lib_lib_close
 		RegRoutine Lib.CloseD0,_lib_lib_close_d0
 		RegRoutine Lib.GetA2,_lib_lib_get_a2
@@ -128,16 +112,8 @@ _lib_close_all_on_clear
 		LibCall	FnDevCheck,_lib_fn_dev_check,1,Int		=DEV CHECK(n)
 		LibCall	InExec,_lib_in_exec,1,None			EXEC a$
 
-		xdef	_lib_close_libs_on_clear
-		xdef	_lib_close_devs_on_clear
-_lib_close_libs_on_clear
-		dc.l	0
-		CCall	_lib_close_libs
-		rts
-_lib_close_devs_on_clear
-		dc.l	0
-		CCall	_lib_close_devs
-		rts
+		RoutineRecord _lib_close_libs_on_clear,_lib_close_libs
+		RoutineRecord _lib_close_devs_on_clear,_lib_close_devs
 
 ; Directories (lib/dirs.cpp)
 		RegRoutine FillAll,_lib_fill_all
@@ -168,11 +144,7 @@ _lib_close_devs_on_clear
 		LibCall	FnDevFirst,_lib_fn_dev_first,1,String		=DEV FIRST$(a$)
 		LibCall	FnPrgFirst,_lib_fn_dev_first,1,String		=PRG FIRST$(a$)
 
-		xdef	_lib_fill_free_on_clear
-_lib_fill_free_on_clear
-		dc.l	0
-		CCall	_lib_fill_free
-		rts
+		RoutineRecord _lib_fill_free_on_clear,_lib_fill_free
 
 ; IFF (lib/iff.cpp)
 		LibCall	InMaskIff,_lib_in_mask_iff,1,None		IFF MASK m

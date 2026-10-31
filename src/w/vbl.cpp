@@ -277,7 +277,7 @@ namespace amos::w {
 void add_vbl()
 {
     WData &d = wdata();
-    auto is = reinterpret_cast<struct Interrupt *>(d.VBL_Is);
+    auto is = vbl_interrupt();
     is->is_Node.ln_Type = NT_INTERRUPT;
     is->is_Node.ln_Pri = 100;
     is->is_Node.ln_Name = nullptr;
@@ -289,7 +289,7 @@ void add_vbl()
 // Rem_VBL
 void rem_vbl()
 {
-    auto is = reinterpret_cast<struct Interrupt *>(wdata().VBL_Is);
+    auto is = vbl_interrupt();
     if (is->is_Code)
         hal::remove_vbl_server(is);
 }

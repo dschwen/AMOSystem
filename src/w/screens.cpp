@@ -372,7 +372,7 @@ uint32_t open(const AllRegs *r, uint32_t *result)
     s->EcTyM = ty - 1;
     s->EcTPlan = uint32_t(line) * uint16_t(ty);
     s->EcNPlan = planes;
-    uint16_t system = peek_w(ptr<uint8_t>(d.GfxBase) + 164) & 0x03FB;
+    uint16_t system = hal::system_bplcon0() & 0x03FB;
     s->EcCon0 = uint16_t(r->d[5]) | uint16_t(planes << 12) | system;
     s->EcCon2 = 0x24;
 
@@ -836,6 +836,6 @@ void w_ec_max_raw(AllRegs *r)
 void w_ec_ntsc(AllRegs *r)
 {
     r->d[0] = 0;
-    r->d[1] = *(ptr<uint8_t>(peek_l(ptr<uint8_t>(4))) + 530) == 50 ? 0 : 0xFFFFFFFF;
+    r->d[1] = hal::vblank_frequency() == 50 ? 0 : 0xFFFFFFFF;
 }
 }

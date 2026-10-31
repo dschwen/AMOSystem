@@ -49,15 +49,8 @@ _interp_menu_return
 ; Error d0 (L_Error: of AMOSPro, d1 = 19 the first that On Error can
 ; take, d2 = -1) / ErrorExt (d1, d2 = the extension, a0 its messages).
 ; Never returns.
-		LibRoutine Error
-		moveq	#19,d1
-		moveq	#-1,d2
-		LibRoutine ErrorExt
-		move.l	a0,-(sp)
-		move.l	d2,-(sp)
-		move.l	d1,-(sp)
-		move.l	d0,-(sp)
-		CCall	_interp_error
+		RegRoutine Error,_interp_error_reg
+		RegRoutine ErrorExt,_interp_error_ext_reg
 
 ; uint32_t interp_next_float(uint32_t *var, uint32_t step, uint32_t limit,
 ;                            void *floatbase)
@@ -94,35 +87,12 @@ _interp_next_float
 
 ; The routine record of On Menu's OMnEff for ClearVar: a link, then code
 		XREF	_interp_omn_eff
-		xdef	_interp_omn_record
-_interp_omn_record
-		dc.l	0
-		CCall	_interp_omn_eff
-		rts
+		RoutineRecord _interp_omn_record,_interp_omn_eff
 
-; The tests between instructions: all registers kept
-TestCall	MACRO
-		LibRoutine \1
-		movem.l	d0-d7/a0-a2,-(sp)
-		CCall	\2
-		movem.l	(sp)+,d0-d7/a0-a2
-		rts
-		ENDM
 		TestCall Test_PaSaut,_interp_test_pasaut
 		TestCall Test_Normal,_interp_test_normal
 		TestCall Test_Force,_interp_test_force
 
-; Instructions (InCall: with the "GetP" of Lib_Par; RoutineCall: Lib_Def)
-InCall		MACRO
-		LibEntry \1
-		CCall	\2
-		rts
-		ENDM
-RoutineCall	MACRO
-		LibRoutine \1
-		CCall	\2
-		rts
-		ENDM
 		InCall	InLab,_interp_in_lab
 		InCall	InSystem,_interp_in_system
 		InCall	InEdit,_interp_in_edit
@@ -167,24 +137,11 @@ RoutineCall	MACRO
 		InCall	InOnMenu,_interp_in_on_menu
 
 ; =Errtrap
-		LibEntry FnErrTrap
-		lea	-24(sp),sp
-		pea	(sp)
-		CCall	_interp_fn_err_trap
-		addq.l	#4,sp
-		movem.l	(sp)+,d0-d4/a0
-		rts
+		FnCall	FnErrTrap,_interp_fn_err_trap
 
 ; MenuProcedure: a0 the procedure's name. Out: d0 = -1 if there is none
 ; (else the procedure runs, and its End Proc comes back through MnPile)
-		LibRoutine MenuProcedure
-		lea	-24(sp),sp
-		move.l	a0,20(sp)
-		pea	(sp)
-		CCall	_interp_menu_procedure
-		addq.l	#4,sp
-		movem.l	(sp)+,d0-d4/a0
-		rts
+		RegRoutine MenuProcedure,_interp_menu_procedure_reg
 
 ; [[noreturn]] void interp_restart(uint32_t sp, uint32_t ret,
 ;                                  const AllRegs *r)
