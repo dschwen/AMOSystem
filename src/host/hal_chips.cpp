@@ -218,7 +218,17 @@ void host_chip_write(uint32_t offset, uint16_t v)
 
 namespace amos::hal {
 
-volatile struct Custom &custom() { return registers; }
+// (the registers as the system leaves them: DMA on for the copper, the
+// bitplanes, the blitter, the sprites and the disk)
+volatile struct Custom &custom()
+{
+    static bool started;
+    if (!started) {
+        started = true;
+        set_word(0x002, 0x03F0);        // DMACONR
+    }
+    return registers;
+}
 volatile uint8_t &cia_a_pra() { return cia_a; }
 
 } // namespace amos::hal

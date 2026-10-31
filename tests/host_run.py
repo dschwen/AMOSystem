@@ -5,8 +5,7 @@ compare their text results with the golden ones.
 The programs are those of tests/run.py (tests/amos/<name>.asc, the same
 prologue and epilogue). Each runs in a directory of its own, the drive
 AMOSTEST: (AMOS_ASSIGNS), with build/dist/AMOS as the current directory and
-AMOSPRO:. The topaz font comes from the Kickstart the emulator uses
-(AMOS_KICKSTART, AMOS_ROMKEY). Editor tests and tests with input scripts are
+AMOSPRO:. Editor tests and tests with input scripts are
 left out, as are the screenshots (only the .txt results are compared).
 
   host_run.py [NAME...]
@@ -75,8 +74,6 @@ def main():
         ram = os.path.join(hd, 'ram')
         os.makedirs(ram, exist_ok=True)
         env['AMOS_ASSIGNS'] = f'AMOSTEST={hd};AMOSPRO={TREE};RAM={ram}'
-        env.setdefault('AMOS_KICKSTART', run.DEFAULT_KICKSTART)
-        env.setdefault('AMOS_ROMKEY', run.DEFAULT_ROM_KEY)
         try:
             p = subprocess.run([AMOS, f'AMOSTEST:{name}.AMOS'], cwd=TREE, env=env, timeout=args.timeout,
                                stdout=subprocess.PIPE, stderr=subprocess.STDOUT)

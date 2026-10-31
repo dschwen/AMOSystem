@@ -463,6 +463,8 @@ for path, stmts in parsed.items():
             obj.emit(bytes(4))
             code = True
             continue
+        if lop == 'section':
+            obj.align(4)            # (a section starts aligned)
         if lop == 'xdef' or lop in IGNORED and lop != 'include':
             for l in named:
                 place(l, obj, path, where)

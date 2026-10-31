@@ -279,7 +279,7 @@ install-hd: all
 # is missing.
 HOST        := $(BUILD)/host
 HOST_SRC    := $(filter-out %_amiga.cpp,$(wildcard src/*/*.cpp)) $(GEN)/lib_direct.cpp $(GEN)/w_direct.cpp \
-               $(GEN)/wentry_table.cpp $(HOST)/host_glue.cpp
+               $(GEN)/wentry_table.cpp $(HOST)/host_glue.cpp $(HOST)/topaz.cpp
 HOST_OBJ    := $(patsubst %.cpp,$(HOST)/obj/%.o,$(HOST_SRC))
 HOST_FLAGS  := -m64 -O0 -g -D__use_amiga_stdc_c99 -std=c++20 -fno-exceptions -fno-rtti -fno-threadsafe-statics -fpack-struct=2 \
                -Isrc/host/include -Isrc -I$(GEN) -idirafter $(AMIGA_PREFIX)/m68k-amigaos/ndk-include -MMD -MP
@@ -296,6 +296,13 @@ $(HOST)/images/%_image.bin: SRC = src/ext/$*.s
 $(HOST)/images/%.bin:
 	@mkdir -p $(dir $@)
 	$(VASM) $(ASFLAGS) -Isrc -Fbin -o $@ $(SRC) 2>&1 | grep -v "warning 58\|included from\|^$$\|^>" || true
+
+# topaz, from the user's Kickstart (as the tests' emulator has it)
+KICKSTART ?= $(HOME)/Programs/CAMOS/FS-UAE/Kickstarts/amiga-os-310-a1200.rom
+ROMKEY ?= $(HOME)/Programs/CAMOS/Minimal Workbench v3.1/Devs/Kickstarts/rom.key
+$(HOST)/topaz.cpp: tools/extract_topaz.py
+	@mkdir -p $(dir $@)
+	$(PYTHON) tools/extract_topaz.py --out $@ --rom "$(KICKSTART)" --key "$(ROMKEY)"
 
 $(HOST)/host_glue.cpp: tools/host_glue.py $(GLUE_SOURCES) $(wildcard src/host/*.cpp) \
 		$(foreach i,$(HOST_IMAGES),$(HOST)/images/$(lastword $(subst :, ,$(i))).bin)

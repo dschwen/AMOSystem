@@ -1,8 +1,7 @@
-// The fonts on another host: topaz, the Amiga's font in ROM, read from the
-// Kickstart image the user gives (AMOS_KICKSTART, a Cloanto-encrypted one
-// with its key in AMOS_ROMKEY); without it a stand-in of the same size
-// (boxes). The fonts are TextFonts of the host (native fields), their
-// data below 4GB.
+// The fonts on another host: topaz, the Amiga's font in ROM, taken from
+// the user's Kickstart when AMOS is built (tools/extract_topaz.py: build/
+// host/topaz.cpp); without it a stand-in of the same size (boxes). The
+// fonts are TextFonts of the host (native fields), their data below 4GB.
 
 #include "hal/system.h"
 #include "host/host.h"
@@ -10,10 +9,20 @@
 #include <graphics/text.h>
 
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 
 using namespace amos;
+
+namespace amos::host {
+struct RomFont {
+    uint16_t ysize, xsize, baseline, boldsmear, modulo;
+    uint8_t style, flags, lo, hi;
+    const uint8_t *data;
+    const uint32_t *locs;
+};
+extern const RomFont rom_fonts[];
+extern const int rom_font_count;
+} // namespace amos::host
 
 namespace {
 
@@ -25,61 +34,6 @@ struct Font {
 
 Font *fonts[16];
 
-uint8_t *read_file(const char *name, long &size)
-{
-    FILE *f = name ? fopen(name, "rb") : nullptr;
-    if (!f)
-        return nullptr;
-    fseek(f, 0, SEEK_END);
-    size = ftell(f);
-    fseek(f, 0, SEEK_SET);
-    uint8_t *data = static_cast<uint8_t *>(malloc(size_t(size)));
-    if (data && fread(data, 1, size_t(size), f) != size_t(size)) {
-        free(data);
-        data = nullptr;
-    }
-    fclose(f);
-    return data;
-}
-
-// The Kickstart image, decrypted, and its base address
-uint8_t *rom;
-long rom_size;
-uint32_t rom_base;
-
-bool load_rom()
-{
-    static bool tried;
-    if (tried)
-        return rom != nullptr;
-    tried = true;
-    long size;
-    uint8_t *data = read_file(getenv("AMOS_KICKSTART"), size);
-    if (!data)
-        return false;
-    if (size > 11 && !memcmp(data, "AMIROMTYPE1", 11)) {
-        long key_size;
-        uint8_t *key = read_file(getenv("AMOS_ROMKEY"), key_size);
-        if (!key || !key_size) {
-            free(data);
-            return false;
-        }
-        memmove(data, data + 11, size_t(size - 11));
-        size -= 11;
-        for (long i = 0; i < size; i++)
-            data[i] ^= key[i % key_size];
-        free(key);
-    }
-    rom = data;
-    rom_size = size;
-    rom_base = 0x1000000 - uint32_t(size);         // $F80000 for 512K
-    return true;
-}
-
-uint32_t rom_l(uint32_t at) { return uint32_t(rom[at] << 24 | rom[at + 1] << 16 | rom[at + 2] << 8 | rom[at + 3]); }
-uint16_t rom_w(uint32_t at) { return uint16_t(rom[at] << 8 | rom[at + 1]); }
-bool in_rom(uint32_t address) { return address >= rom_base && address - rom_base < uint32_t(rom_size); }
-
 // A copy below 4GB
 template <typename T> T *low_copy(const void *from, size_t n)
 {
@@ -89,43 +43,48 @@ template <typename T> T *low_copy(const void *from, size_t n)
     return to;
 }
 
-// The font size of the ROM (its TextFont, named "topaz.font"), as a font
-// of the host
+Font *font_from(const host::RomFont &r, uint16_t size);
+
+// The topaz of size, from the ROM's (build/host/topaz.cpp), as a font of
+// the host
 Font *rom_font(uint16_t size)
 {
-    if (!load_rom())
-        return nullptr;
-    for (uint32_t at = 0; at + 52 < uint32_t(rom_size); at += 2) {
-        if (rom_w(at + 20) != size || rom[at + 32] >= rom[at + 33])  // tf_YSize, tf_LoChar < tf_HiChar
+    for (int i = 0; i < host::rom_font_count; i++) {
+        const host::RomFont &r = host::rom_fonts[i];
+        if (r.ysize != size)
             continue;
-        uint32_t name = rom_l(at + 10);
-        if (!in_rom(name) || strcmp(reinterpret_cast<const char *>(rom + name - rom_base), "topaz.font"))
-            continue;
-        uint32_t data = rom_l(at + 34), loc = rom_l(at + 40);
-        if (!in_rom(data) || !in_rom(loc))
-            continue;
+        return font_from(r, size);
+    }
+    // (a size the ROM does not have: topaz 8's characters in its height)
+    for (int i = 0; i < host::rom_font_count; i++)
+        if (host::rom_fonts[i].ysize == 8)
+            return font_from(host::rom_fonts[i], size);
+    return nullptr;
+}
+
+Font *font_from(const host::RomFont &r, uint16_t size)
+{
+    {
         Font *f = low_copy<Font>(nullptr, sizeof(Font));
         TextFont &t = f->font;
         t.tf_YSize = size;
-        t.tf_Style = rom[at + 22];
-        t.tf_Flags = rom[at + 23];
-        t.tf_XSize = rom_w(at + 24);
-        t.tf_Baseline = rom_w(at + 26);
-        t.tf_BoldSmear = rom_w(at + 28);
-        t.tf_LoChar = rom[at + 32];
-        t.tf_HiChar = rom[at + 33];
-        t.tf_Modulo = rom_w(at + 38);
-        int chars = t.tf_HiChar - t.tf_LoChar + 2;
-        t.tf_CharData = low_copy<uint8_t>(rom + data - rom_base, size_t(t.tf_Modulo) * size);
-        ULONG *locs = low_copy<ULONG>(nullptr, sizeof(ULONG) * size_t(chars));
-        for (int i = 0; i < chars; i++)
-            locs[i] = rom_l(loc - rom_base + 4 * uint32_t(i));
-        t.tf_CharLoc = locs;
+        t.tf_Style = r.style;
+        t.tf_Flags = r.flags;
+        t.tf_XSize = r.xsize;
+        t.tf_Baseline = r.baseline;
+        t.tf_BoldSmear = r.boldsmear;
+        t.tf_LoChar = r.lo;
+        t.tf_HiChar = r.hi;
+        t.tf_Modulo = r.modulo;
+        int chars = r.hi - r.lo + 2;
+        uint8_t *data = low_copy<uint8_t>(nullptr, size_t(r.modulo) * size);
+        memcpy(data, r.data, size_t(r.modulo) * (size < r.ysize ? size : r.ysize));
+        t.tf_CharData = data;
+        t.tf_CharLoc = low_copy<ULONG>(r.locs, sizeof(ULONG) * size_t(chars));
         snprintf(f->name, sizeof f->name, "topaz.font");
         t.tf_Message.mn_Node.ln_Name = f->name;
         return f;
     }
-    return nullptr;
 }
 
 // Without the ROM: boxes of the size asked for
@@ -175,7 +134,7 @@ TextFont *font_open(const char *name, uint16_t size)
     if (!f) {
         static bool told;
         if (!told)
-            fprintf(stderr, "amos: no topaz font (AMOS_KICKSTART, AMOS_ROMKEY): boxes instead\n");
+            fprintf(stderr, "amos: built without a Kickstart's topaz: boxes instead\n");
         told = true;
         f = stand_in(size);
     }
