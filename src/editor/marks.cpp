@@ -64,6 +64,23 @@ void auto_mark()
 } // namespace amos::ed
 
 extern "C" {
+// Ed_SMark1-9, Ed_GMark1-9: mark n (the editor's function keys, d0 0)
+#define MARK(n)                                                                                                        \
+    void ed_set_mark_##n(AllRegs *r)                                                                                   \
+    {                                                                                                                  \
+        r->d[0] = (r->d[0] & 0xFFFF0000) | uint16_t(r->d[0] + n);                                                      \
+        ed_set_mark(r);                                                                                                \
+    }                                                                                                                  \
+    void ed_goto_mark_##n(AllRegs *r)                                                                                  \
+    {                                                                                                                  \
+        r->d[0] = (r->d[0] & 0xFFFF0000) | uint16_t(r->d[0] + n);                                                      \
+        ed_goto_mark(r);                                                                                               \
+    }
+void ed_set_mark(AllRegs *r);
+void ed_goto_mark(AllRegs *r);
+MARK(1) MARK(2) MARK(3) MARK(4) MARK(5) MARK(6) MARK(7) MARK(8) MARK(9)
+#undef MARK
+
 void ed_marks_change_fn(AllRegs *r) { marks_change(uint16_t(r->d[0]), int16_t(r->d[1])); }
 void ed_auto_marks_fn(AllRegs *) { auto_mark(); }
 

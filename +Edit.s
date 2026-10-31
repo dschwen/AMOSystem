@@ -88,6 +88,16 @@
 		XREF	_ed_close_fn_entry
 		XREF	_ed_workbench_entry
 		XREF	_ed_cold_entry
+		XREF	_ed_go_help_entry,_ed_escape_output_entry,_ed_nothing_entry
+		XREF	_ed_set_mark_1_entry,_ed_goto_mark_1_entry
+		XREF	_ed_set_mark_2_entry,_ed_goto_mark_2_entry
+		XREF	_ed_set_mark_3_entry,_ed_goto_mark_3_entry
+		XREF	_ed_set_mark_4_entry,_ed_goto_mark_4_entry
+		XREF	_ed_set_mark_5_entry,_ed_goto_mark_5_entry
+		XREF	_ed_set_mark_6_entry,_ed_goto_mark_6_entry
+		XREF	_ed_set_mark_7_entry,_ed_goto_mark_7_entry
+		XREF	_ed_set_mark_8_entry,_ed_goto_mark_8_entry
+		XREF	_ed_set_mark_9_entry,_ed_goto_mark_9_entry
 		XREF	_ed_title_entry
 		XREF	_ed_end_entry
 		XREF	_ed_open_editor_entry
@@ -529,7 +539,6 @@ Ed_MSepBas	jmp	_ed_drag_bottom_entry
 ;
 ; The keys: src/editor/keys.cpp
 Ed_Key		jmp	_ed_key_entry
-Ed_KEnd		rts
 
 
 ; Appelle le menu editeur et retourne le choix, si choix
@@ -601,9 +610,7 @@ Ed_FCall	jmp	_ed_function_call_entry
 
 ; Branchement a HELP par F5
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_GoHelp
-	moveq	#26,d2
-	bra	Ed_FCall
+Ed_GoHelp	jmp	_ed_go_help_entry
 
 ; ___________________________________________________________________
 ;
@@ -649,21 +656,11 @@ Ed_ListeDel	jmp	_ed_list_delete_entry
 
 ; Clearvar du programme courant
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-		xdef	_ed_clear_var
-_ed_clear_var
-Edt_ClearVar
-	bsr	EdM_Program
-	JJsr	L_Prg_SetBanks
-	JJsr	L_ClearVar
-	rts
+; Edt_ClearVar: menu_glue.s (_ed_clear_var)
 ;
 ; Actualisation des ecrans
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-		xdef	_ed_recop
-_ed_recop
-EdReCop	SyCall	WaitVbl
-	EcCall	CopForce
-	rts
+; EdReCop: screen_glue.s (_ed_recop)
 
 ; ______________________________________________________________________
 ;
@@ -728,25 +725,25 @@ JFonc:	dc.l	_ed_cursor_up_entry		* 1  Cur Haut
 	dc.l	_ed_delete_word_left_entry		* 37 Back Mot
 	dc.l	_ed_hide_window_entry		* 38 Hide Project
 	dc.l	_ed_set_mark_entry		* 39 Set Marks
-	dc.l	Ed_SMark1
-	dc.l	Ed_SMark2
-	dc.l	Ed_SMark3
-	dc.l	Ed_SMark4
-	dc.l	Ed_SMark5
-	dc.l	Ed_SMark6
-	dc.l	Ed_SMark7
-	dc.l	Ed_SMark8
-	dc.l	Ed_SMark9
+	dc.l	_ed_set_mark_1_entry
+	dc.l	_ed_set_mark_2_entry
+	dc.l	_ed_set_mark_3_entry
+	dc.l	_ed_set_mark_4_entry
+	dc.l	_ed_set_mark_5_entry
+	dc.l	_ed_set_mark_6_entry
+	dc.l	_ed_set_mark_7_entry
+	dc.l	_ed_set_mark_8_entry
+	dc.l	_ed_set_mark_9_entry
 	dc.l	_ed_goto_mark_entry		* 49 Goto Mark
-	dc.l	Ed_GMark1
-	dc.l	Ed_GMark2
-	dc.l	Ed_GMark3
-	dc.l	Ed_GMark4
-	dc.l	Ed_GMark5
-	dc.l	Ed_GMark6
-	dc.l	Ed_GMark7
-	dc.l	Ed_GMark8
-	dc.l	Ed_GMark9
+	dc.l	_ed_goto_mark_1_entry
+	dc.l	_ed_goto_mark_2_entry
+	dc.l	_ed_goto_mark_3_entry
+	dc.l	_ed_goto_mark_4_entry
+	dc.l	_ed_goto_mark_5_entry
+	dc.l	_ed_goto_mark_6_entry
+	dc.l	_ed_goto_mark_7_entry
+	dc.l	_ed_goto_mark_8_entry
+	dc.l	_ed_goto_mark_9_entry
 	dc.l	_ed_block_on_entry		* 59 Marche / Arret Bloc
 	dc.l	_ed_block_forget_entry		* 60 Forget Bloc
 	dc.l	_ed_open_load_entry		* 61 Open + Load
@@ -1096,7 +1093,6 @@ Ed_Back		jmp	_ed_backspace_entry
 ;
 ; Cursor movement: src/editor/cursor.cpp
 Ed_ChtT		jmp	_ed_cursor_up_t_entry
-CFin:		rts
 Ed_CBasT	jmp	_ed_cursor_down_t_entry
 Ed_CGo		jmp	_ed_cgo_entry
 Ed_CDr		jmp	_ed_cdr_entry
@@ -1115,12 +1111,6 @@ Ed_HTex		jmp	_ed_text_top_t_entry
 Ed_BTex		jmp	_ed_text_bottom_t_entry
 
 ;
-; Copie chaine
-; ~~~~~~~~~~~~
-EdCocop	move.b	(a0)+,(a1)+
-	bne.s	EdCocop
-	rts
-;
 ;
 ; Ramene VRAI si D2 est une lettre ou un chiffre
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1137,50 +1127,7 @@ Une_Lettre	jmp	_ed_letter_entry
 Prg_MarkRaz	jmp	_ed_marks_clear_entry
 Ed_AutoMarks	jmp	_ed_auto_marks_entry
 
-; Set MARK
-; ~~~~~~~~
-Ed_SMark9
-	addq.w	#1,d0
-Ed_SMark8
-	addq.w	#1,d0
-Ed_SMark7
-	addq.w	#1,d0
-Ed_SMark6
-	addq.w	#1,d0
-Ed_SMark5
-	addq.w	#1,d0
-Ed_SMark4
-	addq.w	#1,d0
-Ed_SMark3
-	addq.w	#1,d0
-Ed_SMark2
-	addq.w	#1,d0
-Ed_SMark1
-	addq.w	#1,d0
-Ed_SMark0	jmp	_ed_set_mark_entry
-;
-; Va a une marque
-; ~~~~~~~~~~~~~~~
-Ed_GMark9
-	addq.w	#1,d0
-Ed_GMark8
-	addq.w	#1,d0
-Ed_GMark7
-	addq.w	#1,d0
-Ed_GMark6
-	addq.w	#1,d0
-Ed_GMark5
-	addq.w	#1,d0
-Ed_GMark4
-	addq.w	#1,d0
-Ed_GMark3
-	addq.w	#1,d0
-Ed_GMark2
-	addq.w	#1,d0
-Ed_GMark1
-	addq.w	#1,d0
-Ed_GMark0	jmp	_ed_goto_mark_entry
-
+; Ed_SMark1-9, Ed_GMark1-9: marks_glue.s
 Ed_Marks2Adress	jmp	_ed_marks_to_addresses_entry
 Ed_Marks2Number	jmp	_ed_marks_to_numbers_entry
 Ed_MarksChange	jmp	_ed_marks_change_entry
@@ -1410,11 +1357,10 @@ Ed_DErrRun	jmp	_ed_error_direct_run_entry
 		xdef	_ed_direct_test_message
 _ed_direct_test_message
 Ed_DTestMessage
-	rts				0 -> Rien
-	nop
-	rts				1 -> Rien
-	nop
+	bra	Ed_DTNone		0 -> Rien
+	bra	Ed_DTNone		1 -> Rien
 	bra	Esc_Hide		2 -> Fermeture de l'ecran
+Ed_DTNone	jmp	_ed_nothing_entry
 		xdef	_ed_err_run_hidden
 _ed_err_run_hidden
 Ed_ErrRunHidden	jmp	_ed_error_run_hidden_entry
@@ -1483,9 +1429,7 @@ _ed_esc_loop
 Esc_Esc	jmp	_ed_escape_leave_entry
 Esc_KMemEffD0	jmp	_ed_escape_forget_entry
 Esc_KMemEnd	jmp	_ed_escape_forget_all_entry
-Esc_BtGetOutput
-	move.b	Esc_Output(a5),Bt_Pos+1(a2)
-	rts
+Esc_BtGetOutput	jmp	_ed_escape_output_entry
 		xdef	_ed_err_direct
 _ed_err_direct
 Ed_ErrDirect	jmp	_ed_error_direct_entry
@@ -1521,192 +1465,8 @@ Ed_LimM	jmp	_ed_limit_mouse_entry
 ;
 ;							Messages editeur
 ;_____________________________________________________________________________
-;
-; Line not editable
-; ~~~~~~~~~~~~~~~~~
-		xdef	_ed_not_edit
-_ed_not_edit
-Ed_NotEdit
-	move.w	#183,d0
-	bsr	Ed_GetMessage
-	moveq	#100,d0
-	bra	Ed_Alert
-;
-; Line too long
-; ~~~~~~~~~~~~~
-		xdef	_ed_l_to_long
-_ed_l_to_long
-Ed_LToLong
-	move.w	#199,d0			***- Line too long
-	bsr	Ed_GetMessage
-	moveq	#50,d0
-	bra	Ed_Alert
-;
-; Top of text
-; ~~~~~~~~~~~
-		xdef	_ed_top_of_text
-_ed_top_of_text
-Ed_CHtE
-	move.w	#200,d0			***- Top of text
-	bsr	Ed_GetMessage
-	moveq	#25,d0
-	bra	Ed_Alert
-;
-; Bottom of text
-; ~~~~~~~~~~~~~~
-		xdef	_ed_bottom_of_text
-_ed_bottom_of_text
-Ed_CBasE
-	move.w	#201,d0			***- Bottom of text
-	bsr	Ed_GetMessage
-	moveq	#25,d0
-	bra	Ed_Alert
-;
-; Mark not set
-; ~~~~~~~~~~~~
-		xdef	_ed_no_mark
-_ed_no_mark
-Ed_NoMark
-	moveq	#65,d0
-	bra	Ed_Al100
-;
-; Out of mem tokenisation
-; ~~~~~~~~~~~~~~~~~~~~~~~
-		xdef	_ed_oof_buf
-_ed_oof_buf
-Ed_OofBuf
-	bsr	Ed_NewBuf		Reaffiche la ligne!
-	move.w	#202,d0			***- Out of buffer space
-	bsr	Ed_GetMessage
-	move.w	#200,d0
-	bra	Ed_Alert
-;
-; Can't fold procedure
-; ~~~~~~~~~~~~~~~~~~~~
-		xdef	_ed_fo_e
-_ed_fo_e
-Ed_FoE	move.w	#203,d0			***- Not a procedure
-		xdef	_ed_alert_100
-_ed_alert_100
-Ed_Al100
-	bsr	Ed_GetMessage
-	moveq	#100,d0
-	bra	Ed_Alert
-
-; Out of memory / alert
-; ~~~~~~~~~~~~~~~~~~~~~
-		xdef	_ed_out_of_memory
-_ed_out_of_memory
-Ed_OMm	move.w	#204,d0			***- Out of memory
-	bsr	Ed_GetMessage
-	moveq	#120,d0
-	bra	Ed_Alert
-;
-; Not found
-; ~~~~~~~~~
-		xdef	_ed_no_found
-_ed_no_found
-Ed_NoFound
-	bsr	Ed_NewBuf
-	move.w	#205,d0			***- Not found
-	bsr	Ed_GetMessage
-	moveq	#100,d0
-	bra	Ed_Alert
-;
-; NOT DONE
-; ~~~~~~~~
-		xdef	_ed_not_done
-_ed_not_done
-Ed_NotDone
-	bsr	Ed_NewBuf
-		xdef	_ed_not_done2
-_ed_not_done2
-Ed_NotDone2
-	move.w	#206,d0			***- Not done
-	bsr	Ed_GetMessage
-	moveq	#100,d0
-	bra	Ed_Alert
-
-;
-; Not an AMOS Program
-; ~~~~~~~~~~~~~~~~~~~
-		xdef	_ed_not_amos
-_ed_not_amos
-Ed_PaAMOS
-	bsr	Ed_Close
-	move.w	#207,d0			***- Not an amos program
-	bsr	Ed_GetMessage
-	moveq	#100,d0
-	bra	Ed_Alert
-;
-; Pas de place pour le programme
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_PaPlace
-	bsr	Ed_Close
-	move.w	#208,d0			***- Buffer too small
-	bsr	Ed_GetMessage
-	moveq	#100,d0
-	bra	Ed_Alert
-
-; What bloc?
-; ~~~~~~~~~~
-		xdef	_ed_block_what
-_ed_block_what
-Ed_BlocWhat
-	moveq	#6,d0
-	bra.s	Ed_ProAlert
-; Too many windows
-; ~~~~~~~~~~~~~~~~
-		xdef	_ed_too_many_windows
-_ed_too_many_windows
-Ed_2ManyWindow
-	moveq	#3,d0
-	bsr	Ed_GetMessage
-	bra.s	Ed_AlertDialog
-
-; Hide window, last window
-;~~~~~~~~~~~~~~~~~~~~~~~~~
-		xdef	_ed_no_hide
-_ed_no_hide
-Ed_NoHide
-	moveq	#2,d0
-	bra	Ed_Al100
-
-; Program already runned
-;~~~~~~~~~~~~~~~~~~~~~~~
-		xdef	_ed_already_runned
-_ed_already_runned
-Ed_AlRunned
-	moveq	#12,d0
-	bra	Ed_Al100
-
-; No more UNDO
-; ~~~~~~~~~~~~
-		xdef	_ed_no_undo,_ed_no_redo
-_ed_no_undo
-Ed_NoUndo
-	moveq	#4,d0
-	bra	Ed_Al100
-; No more REDO
-; ~~~~~~~~~~~~
-_ed_no_redo
-Ed_NoRedo
-	moveq	#5,d0
-	bra	Ed_Al100
-;
-; Appel alerte message indexe
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~
-		xdef	_ed_pro_alert
-_ed_pro_alert
-Ed_ProAlert
-	bsr	Ed_GetMessage
-	moveq	#127,d0
-	bra	Ed_Alert
-; Branche un message en dialog box
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ed_AlertDialog
-	moveq	#127,d0
-	bra	Ed_Alert
+; The alerts (Ed_NotEdit, Ed_LToLong... Ed_ProAlert): editor/status.cpp,
+; their entries in status_glue.s
 
 ;_____________________________________________________________________________
 ;
@@ -1774,7 +1534,6 @@ Ed_ReturnQuiet	jmp	_ed_return_quiet_entry
 Ed_TokCur	jmp	_ed_tok_cur_entry
 Ed_TokStok	jmp	_ed_tok_stok_entry
 Ed_TokStok2	jmp	_ed_tok_stok2_entry
-TokX		rts
 
 
 ; Ed_BufUntok, Ed_Untok (d0 the program's line, d1 the window's): src/editor/cursor.cpp

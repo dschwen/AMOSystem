@@ -649,6 +649,12 @@ void show()
 } // namespace
 
 extern "C" {
+// Esc_BtGetOutput: the output button (a2) at Esc_Output
+void ed_escape_output(AllRegs *r)
+{
+    be_u16 &pos = ptr<Button>(r->a[2])->Bt_Pos;
+    pos = uint16_t((pos & 0xFF00) | idata().Esc_Output);
+}
 void ed_escape(AllRegs *) { escape(); }
 void ed_escape_loop(AllRegs *) { escape_loop(); }
 void ed_escape_leave(AllRegs *) { leave(); }

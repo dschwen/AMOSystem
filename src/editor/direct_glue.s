@@ -45,3 +45,8 @@ _ed_escape_display_entry WEntry _ed_escape_display,l
 _ed_escape_display_d0_entry WEntry _ed_escape_display_d0,l
 		xdef	_ed_get_error_entry
 _ed_get_error_entry WEntry _ed_get_error,l
+
+; Esc_BtGetOutput
+		XREF	_ed_escape_output
+		xdef	_ed_escape_output_entry
+_ed_escape_output_entry WEntry _ed_escape_output,l

@@ -36,3 +36,8 @@ _ed_appear_entry WEntry _ed_appear_fn,l
 _ed_redraw_entry WEntry _ed_redraw,l
 		xdef	_ed_limit_mouse_entry
 _ed_limit_mouse_entry WEntry _ed_limit_mouse,l
+
+; EdReCop
+		XREF	_ed_recop_fn
+		xdef	_ed_recop
+_ed_recop WEntry _ed_recop_fn,l

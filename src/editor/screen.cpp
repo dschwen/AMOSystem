@@ -249,6 +249,7 @@ void editor_redraw()
 } // namespace
 
 extern "C" {
+void ed_recop_fn(AllRegs *) { recop(); }
 void ed_hide_fn(AllRegs *) { editor_hide(); }
 void ed_appear_fn(AllRegs *) { editor_appear(); }
 void ed_redraw(AllRegs *) { editor_redraw(); }

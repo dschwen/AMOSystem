@@ -721,6 +721,7 @@ void procedure_machine_code()
 } // namespace
 
 extern "C" {
+void ed_nothing(AllRegs *) {}
 void ed_run(AllRegs *) { run_program(); }
 void ed_run_hidden(AllRegs *r) { run_hidden(uint16_t(r->d[1])); }
 void ed_run_hide(AllRegs *r) { run_hidden_window(ptr<EditWindow>(r->a[0])); }

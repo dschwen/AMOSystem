@@ -990,6 +990,16 @@ void next_hidden()
 extern "C" {
 void ed_menus_editor(AllRegs *) { editor_menus(); }
 void ed_menus_program(AllRegs *) { program_menus(); }
+
+// Edt_ClearVar: the variables of the current program cleared
+void ed_clear_var_fn(AllRegs *)
+{
+    program_menus();
+    Regs r;
+    lib_call(L_Prg_SetBanks, r);
+    Regs c;
+    lib_call(L_ClearVar, c);
+}
 void ed_menus_end(AllRegs *) { menus_end(); }
 void ed_menu_error_fn(AllRegs *) { menu_error(); }
 void ed_menu_init(AllRegs *r) { r->d[0] = menu_init() ? 0 : 1; }

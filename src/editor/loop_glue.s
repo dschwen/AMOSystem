@@ -40,3 +40,8 @@ _ed_zap_new_config_entry WEntry _ed_zap_new_config,l
 _ed_zap_new_line_entry WEntry _ed_zap_new_line,l
 		xdef	_ed_zap_new_line_tok_entry
 _ed_zap_new_line_tok_entry WEntry _ed_zap_new_line_tok,l
+
+; Ed_GoHelp
+		XREF	_ed_go_help
+		xdef	_ed_go_help_entry
+_ed_go_help_entry WEntry _ed_go_help,l

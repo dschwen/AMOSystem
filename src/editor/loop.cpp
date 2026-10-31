@@ -465,6 +465,12 @@ void zap_new_line()
 extern "C" {
 void ed_loop_fn(AllRegs *) { editor_loop(); }
 void ed_function_call_fn(AllRegs *r) { function_call(uint16_t(r->d[2])); }
+// Ed_GoHelp: the help (F5), function 26
+void ed_go_help(AllRegs *r)
+{
+    r->d[2] = 26;
+    ed_function_call_fn(r);
+}
 
 // d0 the function, d1 the parameter; d0 0 (d2 the function), 1 or 2
 void ed_zap_in(AllRegs *r)

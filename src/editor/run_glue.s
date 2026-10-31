@@ -75,3 +75,8 @@ _ed_test_end_entry WEntry _ed_test_end,l
 _ed_test_run_entry WEntry _ed_test_run,l
 		xdef	_ed_procedure_machine_code_entry
 _ed_procedure_machine_code_entry WEntry _ed_procedure_machine_code,l
+
+; Nothing (the test's display routines in direct mode)
+		XREF	_ed_nothing
+		xdef	_ed_nothing_entry
+_ed_nothing_entry WEntry _ed_nothing,l

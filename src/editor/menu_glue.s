@@ -72,3 +72,8 @@ _ed_flip_insert_entry WEntry _ed_flip_insert,l
 _ed_flip_sounds_entry WEntry _ed_flip_sounds,l
 		xdef	_ed_insert_button_entry
 _ed_insert_button_entry WEntry _ed_insert_button,l
+
+; Edt_ClearVar
+		XREF	_ed_clear_var_fn
+		xdef	_ed_clear_var
+_ed_clear_var WEntry _ed_clear_var_fn,l

@@ -356,6 +356,55 @@ void ed_get_next_message(AllRegs *r)
 
 void ed_alert_fn(AllRegs *r) { alert(ptr<uint8_t>(r->a[0]), uint16_t(r->d[0])); }
 
+// The alerts of the editor's messages (+Edit.s): message n for time
+[[noreturn]] static void message_alert(uint16_t n, uint16_t time)
+{
+    uint8_t length;
+    alert(message_of(ptr<uint8_t>(idata().Ed_Messages), n, &length), time);
+}
+
+void ed_not_edit_fn(AllRegs *) { message_alert(183, 100); }         // Ed_NotEdit
+void ed_line_too_long(AllRegs *) { message_alert(199, 50); }        // Ed_LToLong
+void ed_top_of_text_fn(AllRegs *) { message_alert(200, 25); }       // Ed_CHtE
+void ed_bottom_of_text_fn(AllRegs *) { message_alert(201, 25); }    // Ed_CBasE
+void ed_no_mark_fn(AllRegs *) { message_alert(65, 100); }           // Ed_NoMark
+void ed_fold_error(AllRegs *) { message_alert(203, 100); }          // Ed_FoE
+void ed_alert_100_fn(AllRegs *r) { message_alert(uint16_t(r->d[0]), 100); }   // Ed_Al100
+void ed_out_of_memory_fn(AllRegs *) { message_alert(204, 120); }    // Ed_OMm
+void ed_not_done2_fn(AllRegs *) { message_alert(206, 100); }        // Ed_NotDone2
+void ed_block_what_fn(AllRegs *) { message_alert(6, 127); }         // Ed_BlocWhat
+void ed_too_many_windows_fn(AllRegs *) { message_alert(3, 127); }   // Ed_2ManyWindow
+void ed_no_hide_fn(AllRegs *) { message_alert(2, 100); }            // Ed_NoHide
+void ed_already_runned_fn(AllRegs *) { message_alert(12, 100); }    // Ed_AlRunned
+void ed_no_undo_fn(AllRegs *) { message_alert(4, 100); }            // Ed_NoUndo
+void ed_no_redo_fn(AllRegs *) { message_alert(5, 100); }            // Ed_NoRedo
+void ed_pro_alert_fn(AllRegs *r) { message_alert(uint16_t(r->d[0]), 127); }   // Ed_ProAlert
+
+// Ed_OofBuf, Ed_NoFound, Ed_NotDone: the line shown again first
+void ed_out_of_buffer(AllRegs *)
+{
+    new_buffer();
+    message_alert(202, 200);
+}
+void ed_no_found_fn(AllRegs *)
+{
+    new_buffer();
+    message_alert(205, 100);
+}
+void ed_not_done_fn(AllRegs *)
+{
+    new_buffer();
+    message_alert(206, 100);
+}
+
+// Ed_PaAMOS: the file closed first
+void ed_close_fn(AllRegs *r);
+void ed_not_amos_fn(AllRegs *r)
+{
+    ed_close_fn(r);
+    message_alert(207, 100);
+}
+
 // Ed_ZapAlert: the same when a program drives the editor
 void ed_zap_alert(AllRegs *r)
 {
