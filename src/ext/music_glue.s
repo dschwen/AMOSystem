@@ -83,23 +83,11 @@
 		xdef	_music_sami_entry
 _music_sami_entry
 		move.l	a1,-(sp)
-		jsr	_ext_music_sami
-		addq.l	#4,sp
-		rts
 
 ; uint32_t music_lvo(uint32_t *r, uint32_t base, int32_t lvo): the
 ; library function with d0, d1, a0, a1 from r; d0 back (also in r[0])
 		xdef	_music_lvo
 _music_lvo	movem.l	d2-d7/a2-a6,-(sp)
-		move.l	4+44(sp),a2
-		move.l	8+44(sp),a6
-		move.l	12+44(sp),d2
-		movem.l	(a2),d0-d1/a0-a1
-		jsr	0(a6,d2.l)
-		move.l	4+44(sp),a2
-		move.l	d0,(a2)
-		movem.l	(sp)+,d2-d7/a2-a6
-		rts
 
 ; GoSam with registers, for the editor (+Edit.s, editor/config.cpp): it
 ; calls the address 4 bytes before the data zone. d1 voices, a1 sample,

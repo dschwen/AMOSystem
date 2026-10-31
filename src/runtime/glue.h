@@ -6,6 +6,13 @@
 
 #include "core/amos.h"
 
+// The data of a section of chip memory (the Amiga's)
+#if defined(__mc68000__)
+#define AMOS_CHIP __attribute__((section(".datachip")))
+#else
+#define AMOS_CHIP
+#endif
+
 namespace amos::host {
 
 enum class GlueKind : uint8_t {

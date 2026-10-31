@@ -22,6 +22,7 @@ using namespace amos;
 extern "C" void w_vbl(uint8_t *data);
 extern "C" uint16_t host_chip_read(uint32_t offset);
 extern "C" uint8_t w_input[];
+extern "C" uint32_t amos_w_base;      // +W.s W_Base (runtime/hand.cpp)
 
 namespace {
 
@@ -55,7 +56,6 @@ void run_vbl()
 Interrupt input_is, vbl_is;
 alignas(8) uint8_t input_io[256], console_io[256];
 
-uint32_t w_base;        // +W.s W_Base: the data zone, for the input handler
 
 } // namespace
 
@@ -113,11 +113,9 @@ void host_VblIn(AllRegs &r)
 // +W.s IoHandler: the input handler (a0 the events), a5 the data zone
 void host_IoHandler(AllRegs &r)
 {
-    r.a[5] = w_base;
+    r.a[5] = amos_w_base;
     host::glue_call(w_input, r);
 }
-
-void set_w_base(uint32_t a5) { w_base = a5; }
 
 } // namespace amos::host
 

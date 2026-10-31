@@ -200,32 +200,15 @@ Tjsr	MACRO
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 In_Editor
 	move.l	Edt_Runned(a5),a3	Le programme courant
-	move.l	Edt_Prg(a3),a3		Structure programme
-	bsr	Tt_ColdStart
-	bne	.OMem
-	clr.w	Tt_Run(a4)
-	bra.s	Tt_Tests
 .OMem	rts
 
 ; 	Entree du moniteur par le programme
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 In_Program
 	movem.l	a3-a6/d6/d7,-(sp)
-	move.l	Mon_Base(a5),d0
-	bne.s	.DejaLa
-	move.l	Prg_Runned(a5),a3
-	bsr	Tt_ColdStart
-	bne.s	.Out
-	move.w	#1,Tt_Init(a4)
-	move.w	#1,Tt_Run(a4)
-	lea	Tt_Error(pc),a0		Erreur>>> se branche au moniteur
-	move.l	a0,Prg_JError(a5)
 .Ok	moveq	#0,d0
 .Out	movem.l	(sp)+,a3-a6/d6/d7
-	rts
 .DejaLa	move.l	d0,a0
-	addq.w	#1,Step_Stop(a0)
-	bra.s	.Ok
 
 ;	Boucle de tests du moniteur
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -270,8 +253,6 @@ _mon_text_zones	dc.l	_mon_listing_click_entry		1 : Zone de listing
 ; (a4 the monitor's data after the start; the flags: out of memory)
 Tt_ColdStart
 	jsr	_mon_cold_start_entry
-	move.l	Mon_Base(a5),a4
-	rts
 Tt_Free	jmp	_mon_free_entry
 
 ;	TOUCHE: quit/ Retour ÃÂÃÂÃÂÃÂ¯ÃÂÃÂÃÂÃÂ¿ÃÂÃÂÃÂÃÂ½ l'editeur
@@ -280,39 +261,13 @@ Tt_Free	jmp	_mon_free_entry
 		xdef	_mon_quit_back
 _mon_quit_back
 	MGetCtx
-	move.l	4(sp),a4
 ; Retour a l'editeur ou au programme???
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	move.l	a4,a1
-	move.l	#Tt_DzLong,d0
-	clr.l	Mon_Base(a5)
-	tst.w	Tt_Run(a4)
-	bne.s	.torun
 ; Retour ÃÂÃÂÃÂÃÂ¯ÃÂÃÂÃÂÃÂ¿ÃÂÃÂÃÂÃÂ½ l'ÃÂÃÂÃÂÃÂ¯ÃÂÃÂÃÂÃÂ¿ÃÂÃÂÃÂÃÂ½diteur
 .parun	SyCall	MemFree			Plus de datazone
-	clr.l	Prg_Runned(a5)		Plus de programme courant
-	JJsr	L_Includes_Clear	Libere la memoire
-	JJsr	L_ClearVar
-	move.l	#1000,d0		Fait un EDIT
-	sub.l	a0,a0
-	move.l	Prg_JError(a5),a1
-	jmp	(a1)
 ; Retour au programme
 .torun	tst.w	Tt_Init(a4)
-	ble.s	.parun
-	move.l	BasSp(a5),sp
-	move.l	Prg_InsRet(a5),-(sp)
-	lea	Step_Data(a4),a0
-	move.l	(a0)+,-(sp)
-	movem.l	(a0),a3-a6/d4-d5/d6-d7
-	SyCall	MemFree
-	move.w	ScOn(a5),d1
-	beq.s	.skip
-	subq.w	#1,d1
-	EcCall	Active
 .skip	move.l	d4,d0
-	move.l	d5,d1
-	rts
 
 ;
 ; Actualisation des ecrans
@@ -419,87 +374,27 @@ Tt_Tst3	rts
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 MonitorChr
 	pea	_interp_step_instruction	The instruction, its parameters collected (interp/chrget.cpp)
-	cmp.w	#_TkDP,-2(a6)		Pas sur un :
-	beq	.Back			RTS direct
-	lea	-2(a6),a1
-	move.l	d0,d4			Sauve les adresses importantes
-	move.l	d1,d5
 ; Mode RAPIDE, saute tout sauf si breakpoint...
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	moveq	#0,d2			Pas STOP!
-	move.l	Mon_Base(a5),a0
-	cmp.w	#2,Step_Mode(a0)
-	bcs.s	.skipB
-	bne.s	.skip
-	bset	#1,T_Actualise+1(a5)
 .skip	tst.w	Step_Stop(a0)
-	bne.s	.skipA
-	cmp.l	Step_Break(a0),a1
-	bne.s	.GoBack
 .skipA	clr.w	Step_Mode(a0)
-	moveq	#-1,d2
 ; Mode LENT, avec affichage...
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .skipB	tst.w	Tt_Init(a0)
-	beq	.skippy
-	bmi.s	.skipB0
-	bclr	#BitControl,T_Actualise(a5)	Control-C a chaque coup!
-	bne.s	.skipB0
-	tst.w	Step_Stop(a0)
-	bne.s	.skipB0
-	cmp.l	Step_Break(a0),a1
-	bne.s	.skipB1
-	exg	a0,a1				Break message
-	moveq	#10,d0
-	bsr	Tt_Message
-	exg	a0,a1
-	move.l	a1,Step_Mess(a0)
 .skipB0	clr.l	Step_Break(a0)
-	clr.w	Step_Mode(a0)
-	clr.w	Step_Stop(a0)
-	moveq	#-1,d2
-	bra.s	.skipB2
 .skipB1	cmp.w	#_TkEndP,-2(a6)			Fin de procedure?
-	bne.s	.skipB2
-	bsr	TstPatch			Reaffiche + sort
-	bra.s	.GoBack
 ; Rebranche ÃÂÃÂÃÂÃÂ¯ÃÂÃÂÃÂÃÂ¿ÃÂÃÂÃÂÃÂ½ l'instruction
 .GoOut	bset	#1,T_Actualise+1(a5)		Reaffichage si long...
-	bset	#1,ActuMask+1(a5)
 .GoBack	move.l	d4,d0				Recharge les registres
-	move.l	d5,d1
 .Back	rts					Rebranche ÃÂÃÂÃÂÃÂ¯ÃÂÃÂÃÂÃÂ¿ÃÂÃÂÃÂÃÂ½ l'instruction
 ; Localise l'instruction
 .skipB2	move.l	Prg_Run(a5),a1
-	move.l	d7,a0				Adresse de la ligne
-	tst.l	d7
-	beq.s	.GoBack
-	JJsrR	L_Tk_FindA,a2
-	tst.w	d2				Arret force?
-	bne.s	.stopit
-	tst.l	d1				Procedure fermee?
-	bne.s	.GoOut
 .stopit	tst.l	d1				Procedure fermee?
-	bne.s	.lockee
-	move.l	a6,d1
-	subq.l	#2,d1
-	moveq	#0,d2
-	bra.s	.nolock
 .lockee	addq.l	#2,d1
-	moveq	#-1,d2
 ; Poke les adresses
 .nolock	move.l	a0,a2
 .skippy	move.l	Mon_Base(a5),a0
-	lea	Step_Data(a0),a0	Stockage des donnees
-	move.l	(sp),(a0)+		Adresse de retour
-	movem.l	a3-a6/d4-d5/d6-d7,(a0)	Registres importants
-	move.l	BasSp(a5),sp
-	move.l	Prg_InsRet(a5),-(sp)
-	move.l	Mon_Base(a5),a4		Sauve la pile / Flag general
-	move.l	Tt_Program(a4),a3
 ; The screens, the listing, the instruction: monitor/step.cpp
-	jsr	_mon_step_show_entry
-	beq	Tt_ReLoop
 
 ;	Sortie du mode pas a pas, reactive l'ancien ecran
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -507,23 +402,12 @@ MonitorChr
 		xdef	_mon_step_out,_mon_step_out2
 _mon_step_out
 	MGetCtx
-	move.l	Mon_Base(a5),a4
-	bra.s	Step_Out
 _mon_step_out2
 	MGetCtx
-	move.l	Mon_Base(a5),a4
-	bra.s	Step_Out2
 Step_Out
 	bset	#1,T_Actualise+1(a5)
-	bset	#1,ActuMask+1(a5)
 Step_Out2
 	bsr	Tt_PrgBanks
-	move.l	BasSp(a5),sp
-	move.l	Prg_InsRet(a5),-(sp)
-	move.w	ScOn(a5),d1
-	beq.s	.Skip
-	subq.w	#1,d1
-	EcCall	Active
 .Skip
 
 	IFNE	Debug=2
@@ -534,8 +418,6 @@ Step_Out2
 	ENDC
 
 	move.l	Step_Data(a4),a0
-	movem.l	Step_Data+4(a4),a3-a6/d0-d1/d6-d7
-	jmp	(a0)
 
 
 ;	Entree generale des erreurs "Patch2"
@@ -544,55 +426,18 @@ Step_Out2
 _mon_error
 Tt_Error
 	move.l	BasSp(a5),sp
-	move.l	Prg_InsRet(a5),-(sp)
-	bsr	Tt_GetTheMessage
-	move.l	Mon_Base(a5),a1
-	tst.w	Tt_Init(a1)
-	beq.s	.Test
 ; Erreur lors de RUN
 ; ~~~~~~~~~~~~~~~~~~
-	move.w	d2,d3
-	move.l	a0,d1			Si EDIT ou DIRECT
-	bne.s	.Mh
-	moveq	#15,d0
-	bsr	Tt_Message
 .Mh	move.w	d0,d1
-	move.l	a0,Step_Mess(a1)
-	move.l	d7,a6
-	move.l	PLoop(a5),a3
-	move.w	-2(a6),d0
-	move.w	0(a4,d0.w),d1		Pointe la table de tokens
-	bsr	Tt_Show
-	clr.w	Step_Mode(a1)
-	cmp.w	#9,d3			Control-C?
-	beq	MonitorChr
-	cmp.w	#1003,d3		INIT
-	beq	Tt_ReInit
-	move.w	#-1,Tt_Init(a1)		Arret du STEP, pas des expressions
-	bra	MonitorChr
 ; Erreurs lors du test! (monitor/step.cpp)
 .Test	jsr	_mon_test_error_entry
-	move.l	Mon_Base(a5),a4
-	bra	Tt_ReLoop
 
 ; Trouve le message d'erreur en retour de programme
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Tt_GetTheMessage
 	move.l	a1,-(sp)
-	move.w	d0,d2
-	move.l	a0,d1
-	bne.s	.Clair
-	cmp.w	#256,d0			Un message?
-	bge.s	.Clair
-	move.l	Ed_TstMessages(a5),a0	Message testing
-	neg.w	d0
-	bpl.s	.MTest
-	neg.w	d0
-	move.l	Ed_RunMessages(a5),a0
-	addq.w	#1,d0
 .MTest	JJsrR	L_GetMessage,a1
 .Clair	move.l	(sp)+,a1
-	rts
 
 Tt_Souligne	jmp	_mon_choose_entry
 Tt_MouMou	jmp	_mon_mouse_position_entry
@@ -612,53 +457,20 @@ Tt_Decoup	jmp	_mon_split_entry
 _mon_evaluate
 Tt_Evalue
 	movem.l	d1/d4-d7/a0-a5,-(sp)
-	move.l	a6,Tt_EvDebut(a4)
-	lea	Tt_EvError(pc),a0	Patche les erreurs
-	move.l	a0,Patch_Errors(a5)
-	lea	Tt_Menage(pc),a0	Patche le menage
-	move.l	a0,Patch_Menage(a5)
-	bsr	Tt_PrgBanks
 Tt_ReEv	move.l	sp,Tt_EvPile(a4)	Position pile en cas de menage
-	move.l	AdTokens(a5),a4		Recharge la table
-	moveq	#0,d7
-	move.l	PLoop(a5),a3
-	JJsr	L_New_Evalue
-	movem.l	(sp)+,d1/d4-d7/a0-a5
-	bsr	Tt_TtBanks
-	clr.l	Patch_Errors(a5)
-	clr.l	Patch_Menage(a5)
-	moveq	#0,d0
-	rts
 ;	En cas d'erreurs d'evaluation
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 		xdef	_mon_ev_error
 _mon_ev_error
 Tt_EvError
 	move.l	Mon_Base(a5),a4
-	move.l	Tt_EvPile(a4),sp
-	movem.l	(sp)+,d1/d4-d7/a0-a5
-	bsr	Tt_TtBanks
-	clr.l	Patch_Errors(a5)
-	clr.l	Patch_Menage(a5)
-	moveq	#0,d3
-	moveq	#0,d2
-	moveq	#-1,d0
-	rts
 ;	En cas de menage
 ; ~~~~~~~~~~~~~~~~~~~~~~
 		xdef	_mon_menage
 _mon_menage
 Tt_Menage
 	move.l	Mon_Base(a5),a4
-	move.l	Tt_EvPile(a4),sp
-	move.l	Tt_EvDebut(a4),d0
-	beq.s	.err
-	move.l	d0,a6
-	clr.l	Tt_EvDebut(a4)
-	movem.l	(sp),d1/d4-d7/a0-a5
-	bra.s	Tt_ReEv
 .err	moveq	#11,d0
-	JJsr	L_Error
 
 
 ; ___________________________________________________________________

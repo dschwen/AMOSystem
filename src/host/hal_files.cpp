@@ -576,6 +576,21 @@ DirLock create_dir(const char *name)
 // Execute: the host's commands (c:assign NAME: "directory")
 bool execute(const char *command, File, File)
 {
+    // Wait n (seconds): the command word at the end of its path
+    {
+        const char *word = command, *end = command;
+        while (*end && *end != ' ')
+            end++;
+        for (const char *p = command; p < end; p++)
+            if (*p == '/' || *p == ':')
+                word = p + 1;
+        if (end - word == 4 && !strncasecmp(word, "wait", 4)) {
+            double seconds = atof(end);
+            if (seconds > 0)
+                usleep(useconds_t(seconds * 1e6));
+            return true;
+        }
+    }
     if (strncasecmp(command, "c:assign ", 9))
         return false;
     const char *p = command + 9;

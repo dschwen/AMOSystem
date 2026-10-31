@@ -22,3 +22,10 @@ _w_get_function_key WEntry _w_sy_get_function_key,l
 _w_key_speed	WEntry	_w_sy_key_speed,l
 		xdef	_w_clear_key
 _w_clear_key	WEntry	_w_sy_clear_key,l
+
+; ClKWait (the condition codes from its answer), TGetDisc, ClKeyM/WMemCheck
+		XREF	_w_sy_key_waiting,_w_sy_get_disc,_w_sy_nothing
+		xdef	_w_key_waiting_entry,_w_get_disc_entry,_w_nothing_entry
+_w_key_waiting_entry WEntryF _w_sy_key_waiting
+_w_get_disc_entry WEntry _w_sy_get_disc,l
+_w_nothing_entry WEntry _w_sy_nothing,l

@@ -4,7 +4,7 @@
 
 #include "core/amos.h"
 
-extern uint8_t amos_task[];
+extern "C" uint8_t amos_task[];
 
 namespace amos::host {
 

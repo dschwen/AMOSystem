@@ -132,6 +132,14 @@ PREREQ := $(LIB_GEN) $(CI)/.stamp $(COMMON_SRC)
 
 # ---- binaries -----------------------------------------------------------------
 
+# The assembler's sources of tables, data and glue entries (tools/host_glue.py
+# makes C++ of them), and the library images (no code), as data
+HOST        := $(BUILD)/host
+GLUE_SOURCES := +B.s +W.s +Edit.s +Monitor.s +Verif.s $(wildcard src/*/*.s)
+GLUE_EQU    := +Equ.s +WEqu.s +CEqu.s $(GEN)/+LEqu.s extensions/+Music_Data.s
+HOST_IMAGES := main_library:library ext_music_image:music_image ext_compact_image:compact_image \
+               ext_request_image:request_image ext_ioports_image:ioports_image
+
 # Programs: the assembler source becomes one object, linked with the C++ of
 # its src/ directory. The linker scripts keep the hunk order the assembler
 # code depends on.
@@ -154,13 +162,34 @@ $(OBJ)/B.o: +B.s +Verif.s $(PREREQ) $(EXT_GEN)
 	@mkdir -p $(dir $@)
 	$(VASM) $(OBJFLAGS) -o $@ $<
 
-# AMOS.library, the editor and the monitor are linked in too (main/boot.cpp
-# starts AMOS.library from _w_debut, main/modules.cpp finds the entry
-# tables of the others)
-AMOSPRO_LINK := $(OBJ)/B.o $(OBJ_AMOSPRO) $(OBJ)/gen/lib_direct.o $(OBJ)/gen/lib_direct_entries.o $(OBJ)/gen/w_direct.o $(OBJ)/gen/wentry_table.o $(OBJ)/W.o $(OBJ_W) $(OBJ)/Edit.o $(OBJ_EDITOR) \
-                $(OBJ)/Monitor.o $(OBJ_MONITOR)
-$(BUILD)/AMOSPro: $(AMOSPRO_LINK) $(COMMON_LIB) link/amospro.ld tools/chiphunks.py
-	$(call link_program,$@,link/amospro.ld,$(AMOSPRO_LINK))
+# AMOSPro is C++: all of it, AMOS.library, the editor and the monitor; the
+# assembler's tables, data and glue entries are build/gen/amiga_glue.cpp
+# (tools/host_glue.py, as for another host), run by src/runtime. src/amiga
+# has the machine code of its start and of the entries the system calls
+# (amiga/start.o first: the program begins there).
+AMIGA_DIRS  := src/lib src/main src/verif src/interp src/ext src/hal src/w src/editor src/monitor src/core \
+               src/runtime
+AMIGA_CXX   := $(filter-out %_host.cpp,$(sort $(wildcard $(addsuffix /*.cpp,$(AMIGA_DIRS)))))
+AMOSPRO_LINK := $(OBJ)/src/amiga/start.o $(OBJ)/src/amiga/native.o $(patsubst %.cpp,$(OBJ)/%.o,$(AMIGA_CXX)) \
+                $(OBJ)/gen/lib_direct.o $(OBJ)/gen/w_direct.o $(OBJ)/gen/wentry_table.o $(OBJ)/gen/amiga_glue.o
+$(BUILD)/AMOSPro: $(AMOSPRO_LINK) link/amospro.ld tools/chiphunks.py
+	$(CC) $(LDFLAGS) -T link/amospro.ld -Wl,-Map,$@.map -o $@ $(AMOSPRO_LINK) $(LDLIBS)
+	$(PYTHON) tools/chiphunks.py $@ $@.map
+
+# (their machine code in the order written)
+$(OBJ)/src/amiga/%.o: src/amiga/%.cpp $(CXX_GEN)
+	@mkdir -p $(dir $@)
+	$(CXX) $(CXXFLAGS) -fno-toplevel-reorder -c -o $@ $<
+
+$(GEN)/amiga_glue.cpp: tools/host_glue.py $(GLUE_SOURCES) $(wildcard src/runtime/*.cpp src/amiga/*.cpp) \
+		$(foreach i,$(HOST_IMAGES),$(HOST)/images/$(lastword $(subst :, ,$(i))).bin)
+	$(PYTHON) tools/host_glue.py --out $@ --underscore --host-dir src/runtime --host-dir src/amiga \
+		--cxx 'L_Trappe=sizeof(amos::WData)' $(foreach e,$(GLUE_EQU),--equ $(e)) \
+		$(foreach i,$(HOST_IMAGES),--image $(firstword $(subst :, ,$(i)))=$(HOST)/images/$(lastword $(subst :, ,$(i))).bin) \
+		-- $(GLUE_SOURCES)
+$(OBJ)/gen/amiga_glue.o: $(GEN)/amiga_glue.cpp $(CXX_GEN)
+	@mkdir -p $(dir $@)
+	$(CXX) $(CXXFLAGS) -Wno-error -c -o $@ $<
 
 # AMOS.library was built with GenIm2, which matches symbols without case
 $(OBJ)/W.o: +W.s $(PREREQ) $(wildcard bin/*)
@@ -278,18 +307,13 @@ install-hd: all
 # the portable C++, src/host (the runtime and the HAL's backends) and the
 # generated tables. Not complete yet: links what there is and lists what
 # is missing.
-HOST        := $(BUILD)/host
-HOST_SRC    := $(filter-out %_amiga.cpp,$(wildcard src/*/*.cpp)) $(GEN)/lib_direct.cpp $(GEN)/w_direct.cpp \
+HOST_SRC    := $(filter-out %_amiga.cpp src/amiga/%,$(wildcard src/*/*.cpp)) $(GEN)/lib_direct.cpp $(GEN)/w_direct.cpp \
                $(GEN)/wentry_table.cpp $(HOST)/host_glue.cpp $(HOST)/topaz.cpp
 HOST_OBJ    := $(patsubst %.cpp,$(HOST)/obj/%.o,$(HOST_SRC))
 HOST_FLAGS  := -m64 -O0 -g -D__use_amiga_stdc_c99 -std=c++20 -fno-exceptions -fno-rtti -fno-threadsafe-statics -fpack-struct=2 \
                -Isrc/host/include -Isrc -I$(GEN) -idirafter $(AMIGA_PREFIX)/m68k-amigaos/ndk-include -MMD -MP
-GLUE_SOURCES := +B.s +W.s +Edit.s +Monitor.s +Verif.s $(wildcard src/*/*.s)
-GLUE_EQU    := +Equ.s +WEqu.s +CEqu.s $(GEN)/+LEqu.s extensions/+Music_Data.s
 
-# The library images (no code: their routines are in AMOSPro), as data
-HOST_IMAGES := main_library:library ext_music_image:music_image ext_compact_image:compact_image \
-               ext_request_image:request_image ext_ioports_image:ioports_image
+# The library images: HOST_IMAGES (above)
 $(HOST)/images/library.bin: $(OBJ)/src/main/library.o
 $(HOST)/images/%_image.bin: $(OBJ)/src/ext/%_image.o
 $(HOST)/images/library.bin: SRC = src/main/library.s

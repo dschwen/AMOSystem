@@ -2,8 +2,7 @@
 // function keys, Key State, Key Shift, Key Speed. The input handler
 // (w/input.cpp) fills the key buffer: three bytes a key (shifts, scan code,
 // ASCII), T_ClTete the last one written, T_ClQueue the last one read.
-// Also the opening of input.device and console.device. (ClKWait and
-// TGetDisc answer in the condition codes and stay in +W.s.)
+// Also the opening of input.device and console.device.
 
 #include "core/amiga.h"
 #include "w/w.h"
@@ -128,6 +127,19 @@ void clear_keys()
 } // namespace amos::w
 
 extern "C" {
+// ClKWait: d0 0, "not equal" if a key waits (the buffer's ends apart)
+uint32_t w_sy_key_waiting(AllRegs *r)
+{
+    WData &w = wdata();
+    r->d[0] = 0;
+    r->d[1] = (r->d[1] & 0xFFFF0000u) | w.ClQueue;
+    return uint32_t(int32_t(int16_t(uint16_t(w.ClQueue - w.ClTete))));
+}
+// TGetDisc: d0 the state of the disc drive (the input handler's)
+void w_sy_get_disc(AllRegs *r) { r->d[0] = uint32_t(int32_t(int16_t(wdata().DiscIn))); }
+// ClKeyM, WMemCheck: nothing
+void w_sy_nothing(AllRegs *) {}
+
 // ClVide: Clear Key
 void w_sy_clear_key(AllRegs *r)
 {

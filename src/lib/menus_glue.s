@@ -64,13 +64,3 @@
 		xdef	_mn_call_procedure
 _mn_call_procedure
 		movem.l	d2-d7/a2-a6,-(sp)
-		move.l	4+44(sp),a2		fn
-		move.l	8+44(sp),a1		regs
-		move.l	12+44(sp),a0		pile
-		move.l	16+44(sp),d0		name
-		movem.l	(a1),d6-d7/a3-a6
-		move.l	sp,(a0)
-		move.l	d0,a0
-		jsr	(a2)
-		movem.l	(sp)+,d2-d7/a2-a6
-		rts

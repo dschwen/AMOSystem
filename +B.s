@@ -101,13 +101,7 @@ Init_Fin
 ; Enleve le hunk init
 ; ~~~~~~~~~~~~~~~~~~~
 	lea	Hunk_1-8(pc),a0
-	lea	Hunk_2-8,a1
-	move.l	4(a1),4(a0)		Deconnecte le hunk 2
-	move.l	(a1),d0			Libere la memoire
-	move.l	$4.w,a6
-	jsr	_LVOFreeMem(a6)
 ; The program to run, or the editor (main/boot.cpp)
-	BCall	_main_init_fin
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ;	SORTIE GENERALE (main/boot.cpp)
@@ -121,24 +115,9 @@ _main_get_out
 	move.l	4(sp),d7
 Get_Out	move.l	SaveSp(pc),a7
 ; The CLI's stack back, AMOSPro's freed
-	tst.w	OwnStack_On
-	beq.s	.OldStack
-	clr.w	OwnStack_On
-	move.l	$4.w,a6
-	lea	OwnStack,a0
-	jsr	-732(a6)			StackSwap
-	move.l	OwnStack,a1			stk_Lower
-	move.l	#OwnStack_Size,d0
-	jsr	_LVOFreeMem(a6)
 .OldStack
 	tst.l	d7
-	beq.s	.PaMe
-	move.l	$4.w,a6
-	jsr	_LVOForbid(a6)
-	move.l 	d7,a1
-	jsr	-378(a6)
 .PaMe	moveq	#0,d0
-	rts
 
 
 ; Ne pas changer la position du nom, apres dos.library!
@@ -205,25 +184,11 @@ VersionN:	dc.b	" Version "
 
 ;	IFNE	Debug
 PreBug 	btst	#6,$BFE001
-	beq.s	BugBug
-	rts
 BugBug	movem.l	d0-d2/a0-a2,-(sp)
 .Ll	move.w	#$FF0,$DFF180
- 	btst	#6,$BFE001
-	bne.s	.Ll
-	move.w	#20,d0
 .L0	move.w	#10000,d1
 .L1	move.w	d0,$DFF180
-	dbra	d1,.L1
-	dbra	d0,.L0
-	btst	#6,$BFE001
-	beq.s	.Ill
-	movem.l	(sp)+,d0-d2/a0-a2
-	rts
 .Ill	EcCalD	AMOS_WB,0
-	movem.l	(sp)+,d0-d2/a0-a2
-	illegal
-	rts
 ;	ENDC
 
 
@@ -260,38 +225,13 @@ Cold_Start
 
 ; A stack of its own: the C++ needs more than a CLI's default 4K (it
 ; overflowed into the memory below). Given back in Get_Out.
-	move.l	a0,OwnStack_A0
-	move.l	d0,OwnStack_D0
-	move.l	$4.w,a6
-	move.l	#OwnStack_Size,d0
-	moveq	#1,d1				MEMF_PUBLIC
-	jsr	_LVOAllocMem(a6)
-	tst.l	d0
-	beq.s	.NoStack
-	lea	OwnStack,a0
-	move.l	d0,(a0)				stk_Lower
-	add.l	#OwnStack_Size,d0
-	move.l	d0,4(a0)			stk_Upper
-	move.l	d0,8(a0)			stk_Pointer
-	jsr	-732(a6)			StackSwap
-	move.w	#1,OwnStack_On
 .NoStack
 	move.l	OwnStack_A0,a0
-	move.l	OwnStack_D0,d0
 
 ; The main task, for the C++ code (src/core/call.s)
-	move.l	$4.w,a6
-	move.l	276(a6),_amos_task		ThisTask
 
 ; The start (main/boot.cpp), with the command line and the stack of the
 ; interpreter (BasSp)
-	move.l	sp,d1
-	move.l	d1,-(sp)
-	move.l	d0,-(sp)
-	move.l	a0,-(sp)
-	BCall	_main_cold_start
-	lea	12(sp),sp
-	jmp	Init_Fin
 
 		even
 

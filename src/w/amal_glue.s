@@ -41,6 +41,3 @@ _w_amal_end	WEntry	_w_sy_amal_dall,l
 ; context)
 		xdef	_w_animator
 _w_animator	move.l	a5,-(sp)
-		jsr	_w_amal_animate_data
-		addq.l	#4,sp
-		rts

@@ -6,12 +6,15 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <strings.h>
+#include <unistd.h>
 #include <sys/mman.h>
 
 extern "C" char *getenv(const char *name) noexcept;    // (stdlib.h clashes with dos/dosextens.h)
 
 #include <exec/tasks.h>
 #include <exec/libraries.h>
+#include <exec/devices.h>
 #include <dos/dosextens.h>
 #include <exec/io.h>
 
@@ -37,7 +40,25 @@ HostLibrary libraries[] = {
     {"mathieeedoubtrans.library", nullptr}, {"mathieeesingbas.library", nullptr},
     {"mathieeesingtrans.library", nullptr}, {"rexxsyslib.library", nullptr}, {"asl.library", nullptr},
     {"workbench.library", nullptr}, {"keymap.library", nullptr}, {"console.device", nullptr},
+    {"exec.library", nullptr}, {"translator.library", nullptr},
 };
+
+// A library's base has its jump table (the offsets, a negative number of
+// bytes) below it: a call there is made by library_call
+constexpr uint32_t JumpTable = 1024;
+
+Library *library_base(HostLibrary &l)
+{
+    if (!l.base) {
+        auto *block = static_cast<uint8_t *>(amos::hal::allocate(4096 + JumpTable, 0x10000));
+        if (!block)
+            return nullptr;
+        l.base = reinterpret_cast<Library *>(block + JumpTable);
+        l.base->lib_Version = 40;
+        l.base->lib_Node.ln_Name = const_cast<char *>(l.name);
+    }
+    return l.base;
+}
 
 } // namespace
 
@@ -213,13 +234,8 @@ Library *open_library(const char *name, uint32_t version)
 {
     for (auto &l : libraries)
         if (!strcmp(l.name, name)) {
-            if (!l.base) {
-                l.base = static_cast<Library *>(allocate(4096, 0x10000));
-                if (!l.base)
-                    return nullptr;
-                l.base->lib_Version = 40;
-                l.base->lib_Node.ln_Name = const_cast<char *>(l.name);
-            }
+            if (!library_base(l))
+                return nullptr;
             if (version > l.base->lib_Version)
                 return nullptr;
             return l.base;
@@ -227,35 +243,135 @@ Library *open_library(const char *name, uint32_t version)
     return nullptr;
 }
 void close_library(Library *) {}
+
+// A call into a library's jump table (Doscall, Execall, Lib Call): the
+// few functions that have an answer here, the others 0 in d0
+bool library_call(uint32_t at, AllRegs &r)
+{
+    for (auto &l : libraries) {
+        uint32_t base = address(l.base);
+        if (!l.base || at >= base || at + JumpTable < base)
+            continue;
+        int32_t lvo = int32_t(at - base);
+        r.d[0] = 0;
+        if (!strcmp(l.name, "exec.library")) {
+            if (lvo == -294)                    // FindTask
+                r.d[0] = r.a[1] ? 0 : address(find_task(nullptr));
+        } else if (!strcmp(l.name, "dos.library")) {
+            if (lvo == -198)                    // Delay (ticks of 20ms)
+                usleep(r.d[1] * 20000);
+        }
+        return true;
+    }
+    return false;
+}
 uint16_t os_version() { return 40; }
-uint32_t exec_base() { return 0; }
+uint32_t exec_base()
+{
+    for (auto &l : libraries)
+        if (!strcmp(l.name, "exec.library"))
+            return library_base(l) ? address(l.base) : 0;
+    return 0;
+}
 uint8_t vblank_frequency() { return 50; }
 void clear_cache() {}
 uint32_t set_function(uint32_t, int16_t, uint32_t) { return 0; }
 
 void add_head(void *, void *) {}
-void add_port(MsgPort *) {}
-void remove_port(MsgPort *) {}
-MsgPort *find_port(const char *) { return nullptr; }
-Message *get_message(MsgPort *) { return nullptr; }
-Message *wait_port(MsgPort *) { return nullptr; }
+
+// The public ports of the program (there is no other task to talk to)
+namespace {
+MsgPort *ports[64];
+uint32_t signals_used = 0xFFFF;     // the system's: bits 0-15
+} // namespace
+
+void add_port(MsgPort *port)
+{
+    port->mp_MsgList.lh_Head = reinterpret_cast<Node *>(&port->mp_MsgList.lh_Tail);
+    port->mp_MsgList.lh_Tail = nullptr;
+    port->mp_MsgList.lh_TailPred = reinterpret_cast<Node *>(&port->mp_MsgList.lh_Head);
+    for (MsgPort *&p : ports)
+        if (!p) {
+            p = port;
+            return;
+        }
+}
+void remove_port(MsgPort *port)
+{
+    for (MsgPort *&p : ports)
+        if (p == port)
+            p = nullptr;
+}
+MsgPort *find_port(const char *name)
+{
+    for (MsgPort *p : ports)
+        if (p && p->mp_Node.ln_Name && !strcasecmp(p->mp_Node.ln_Name, name))
+            return p;
+    return nullptr;
+}
+Message *get_message(MsgPort *port)
+{
+    Node *first = port->mp_MsgList.lh_Head;
+    if (!first->ln_Succ)
+        return nullptr;
+    first->ln_Succ->ln_Pred = first->ln_Pred;
+    first->ln_Pred->ln_Succ = first->ln_Succ;
+    return reinterpret_cast<Message *>(first);
+}
+Message *wait_port(MsgPort *port)
+{
+    for (;;) {
+        if (Message *m = get_message(port))
+            return m;
+        idle();
+    }
+}
 void reply_message(Message *) {}
-int32_t allocate_signal(int32_t) { return -1; }
-void free_signal(int32_t) {}
+int32_t allocate_signal(int32_t n)
+{
+    for (int i = n >= 0 ? n : 16; i < 32; i++)
+        if (!(signals_used & (1u << i))) {
+            signals_used |= 1u << i;
+            return i;
+        }
+    return -1;
+}
+void free_signal(int32_t n)
+{
+    if (n >= 16 && n < 32)
+        signals_used &= ~(1u << n);
+}
 void add_task(Task *, void *, void *) { host::missing("task", nullptr); }
 
 // The devices: input.device (AMOS.library's input handler) and
 // console.device (its keymap: hal::key_to_text) open; the others not
+// The devices there are: input.device (AMOS.library's input handler) and
+// console.device (its keymap), and timer.device and serial.device, which
+// open and complete what they are asked at once; narrator.device too: the
+// host has no speech, what is said is silent
+namespace {
+constexpr int DeviceCount = 5;
+Device devices[DeviceCount];
+const char *const device_names[DeviceCount] = {"input.device", "console.device", "timer.device", "serial.device",
+                                               "narrator.device"};
+} // namespace
+
 int32_t open_device(const char *name, uint32_t, IORequest *io, uint32_t)
 {
-    if (strcmp(name, "input.device") && strcmp(name, "console.device"))
-        return -1;
-    io->io_Error = 0;
-    return 0;
+    for (int i = 0; i < DeviceCount; i++)
+        if (!strcmp(name, device_names[i])) {
+            devices[i].dd_Library.lib_Node.ln_Name = const_cast<char *>(device_names[i]);
+            io->io_Device = &devices[i];
+            io->io_Error = 0;
+            return 0;
+        }
+    return -1;
 }
-void close_device(IORequest *) {}
+void close_device(IORequest *io) { io->io_Device = nullptr; }
 int32_t do_io(IORequest *io)
 {
+    if (io->io_Device != &devices[0] && io->io_Device != &devices[1])
+        return 0;
     switch (io->io_Command) {
     case 9:     // IND_ADDHANDLER
         host::input_handler(static_cast<Interrupt *>(reinterpret_cast<IOStdReq *>(io)->io_Data));

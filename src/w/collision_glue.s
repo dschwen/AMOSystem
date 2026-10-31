@@ -17,10 +17,3 @@ _w_sprite_col	WEntry	_w_sy_sprite_collisions,l
 ; GetCol: d1 the number, d0 the result. Also from AMAL in the VBL: a5 the
 ; data zone, no task context.
 _w_get_col	movem.l	d1/a0-a1,-(sp)
-		move.l	d1,-(sp)
-		move.l	a5,-(sp)
-		jsr	_w_collision_get
-		addq.l	#8,sp
-		movem.l	(sp)+,d1/a0-a1
-		tst.l	d0
-		rts

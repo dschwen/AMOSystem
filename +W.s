@@ -110,22 +110,9 @@ WDebut	bra	Startall	Cold start
 
 BugBug	movem.l	d0-d2/a0-a2,-(sp)
 .Ll	move.w	#$FF0,$DFF180
- 	btst	#6,$BFE001
-	bne.s	.Ll
-	move.w	#20,d0
 .L0	move.w	#10000,d1
 .L1	move.w	d0,$DFF180
-	dbra	d1,.L1
-	dbra	d0,.L0
-	btst	#6,$BFE001
-	beq.s	.Ill
-	movem.l	(sp)+,d0-d2/a0-a2
-	rts
 .Ill	moveq	#0,d1
-	bsr	TAMOSWb
-	movem.l	(sp)+,d0-d2/a0-a2
-	illegal
-	rts
 
 		Version
 
@@ -167,18 +154,6 @@ BbEcOff:	jmp	_w_bobs_screen_off
 
 ***********************************************************
 *	ADRESSE D'UN BOB: D1= Numero!
-BobAd:
-*******
-	move.l	T_BbDeb(a5),d0
-	beq.s	AdBb1
-AdBb0:	move.l	d0,a1
-	cmp.w	BbNb(a1),d1
-	beq.s	AdBb2
-	bcs.s	AdBb1
-	move.l	BbNext(a1),d0
-	bne.s	AdBb0
-AdBb1	moveq	#1,d0
-AdBb2	rts
 
 BobPut:	jmp	_w_bob_put
 BobAct:	jmp	_w_bob_update
@@ -188,7 +163,6 @@ BobAct:	jmp	_w_bob_update
 
 ******* Initialisation: fabrique la table
 ******* Fin, libere la memoire
-RbEnd	rts
 
 RevTrap	jmp	_w_flip
 Masque:	jmp	_w_mask
@@ -389,14 +363,6 @@ TRDel	jmp	_w_rain_del
 
 ***********************************************************
 *-----*	Ss programme ---> adresse d'un ecran
-EcGet:	move.w	d1,d0
-	lsl.w	#2,d0
-	lea	T_EcAdr(a5),a0
-	add.w	d0,a0
-	move.l	(a0),d0
-	rts
-EcGE:	moveq	#0,d0
-	rts
 
 ******* Trouve le premier ecran libre
 EcLibre:	jmp	_w_sc_free_number
@@ -503,74 +469,20 @@ TCopBs	jmp	_w_cop_base
 ;    *  *  *  *    *	******************************************
 ; ****  *  **** ****
 ;-----------------------------------------------------------------
-;-----> Wait mouse key
-WaitMK:	bsr	MBout
-	cmp.w	#2,d1
-	bne.s	WaitMk
-Att:	bsr	MBout
-	cmp.w	#0,d1
-	bne.s	Att
-	rts
-
-;-----> OWN BLITTER
-OwnBlit:movem.l	d0/d1/a0/a1/a6,-(sp)
-	move.l	GfxBase(pc),a6
-	jsr	_LVOOwnBlitter(a6)		OwnBlitter
-	movem.l	(sp)+,d0/d1/a0/a1/a6
-;-----> Wait blitter fini
-BlitWait
-	move.l	a6,-(sp)
-	move.l	GfxBase(pc),a6
-	jsr	_LVOWaitBlit(a6)
-	move.l	(sp)+,a6
-	rts
-;-----> DISOWN BLITTER
-DOwnBlit
-	movem.l	d0/d1/a0/a1/a6,-(sp)
-	move.l	GfxBase(pc),a6
-	jsr	DisownBlitter(a6)
-	movem.l	(sp)+,d0/d1/a0/a1/a6
-	rts
-
-;-----> Position du faisceau
-PosVbl:	move.l 	$004(a6),d0
-	lsr.l 	#8,d0
-	and.w 	#$1FF,d0
-	rts
 
 ******* RESERVATION MEMOIRE
 		xdef	_w_fast_mm
 _w_fast_mm
 FastMm	movem.l	a0/d1,-(sp)
-	move.l	#CLEAR|PUBLIC,d1
-	bsr	WMemReserve
-	move.l	a0,d0
-	movem.l	(sp)+,a0/d1
-	rts
 		xdef	_w_fast_mm2
 _w_fast_mm2
 FastMm2	movem.l	a0/d1,-(sp)
-	move.l	#PUBLIC,d1
-	bsr	WMemReserve
-	move.l	a0,d0
-	movem.l	(sp)+,a0/d1
-	rts
 		xdef	_w_chip_mm
 _w_chip_mm
 ChipMm	movem.l	a0/d1,-(sp)
-	move.l	#CLEAR|PUBLIC|CHIP,d1
-	bsr	WMemReserve
-	move.l	a0,d0
-	movem.l	(sp)+,a0/d1
-	rts
 		xdef	_w_chip_mm2
 _w_chip_mm2
 ChipMm2	movem.l	a0/d1,-(sp)
-	move.l	#PUBLIC|CHIP,d1
-	bsr	WMemReserve
-	move.l	a0,d0
-	movem.l	(sp)+,a0/d1
-	rts
 		xdef	_w_free_mm
 _w_free_mm
 FreeMm	bra	WMemFree
@@ -613,9 +525,6 @@ TChanM		jmp	_w_amal_chan_m
 ; src/core/call.s), then src/w/startup.cpp, like StartAll, EndAll, IceEnd
 IceStart
 	lea	W_Base(pc),a0
-	move.l	a5,(a0)
-	move.l	T_CBridge(a5),_amos_bridge
-	jmp	_w_ice_start
 StartAll	jmp	_w_start_all
 EndAll		jmp	_w_end_all
 IceEnd		jmp	_w_ice_end
@@ -637,8 +546,6 @@ TaskName	dc.b	" AMOS",0
 _w_amos_loadview
 AMOS_LoadView
 	tst.b	0.l			T_AMOSHere, modifie lors du patch...
-	bne.s	.Wb
-	move.l	Old_LoadView(pc),-(sp)
 .Wb	rts
 _w_old_loadview
 Old_LoadView	dc.l	0		Ici et pas ailleurs...
@@ -820,10 +727,7 @@ WMemChipClear	jmp	_w_mem_chip_clear
 WMemChip	jmp	_w_mem_chip
 WMemReserve	jmp	_w_mem_reserve
 WMemFree	jmp	_w_mem_free
-WMemInit
-WMemEnd
-WMemCheck
-	rts
+WMemCheck	jmp	_w_nothing_entry
 WAddFlushRoutine	jmp	_w_add_flush_routine
 WAddRoutine	jmp	_w_add_routine
 WMemFlush	jmp	_w_mem_flush
@@ -842,13 +746,6 @@ Rem_VBL	jmp	_w_rem_vbl
 		xdef	_w_vbl_in
 _w_vbl_in
 VblIn:	movem.l	d2-d7/a2-a4,-(sp)
-	move.l	a1,-(sp)
-	jsr	_w_vbl
-	addq.l	#4,sp
-	movem.l	(sp)+,d2-d7/a2-a4
-	lea	$DFF000,a0
-	moveq	#0,d0
-	rts
 
 ; Wait Vbl: src/w/support.cpp
 WVbl	jmp	_w_wvbl
@@ -962,10 +859,6 @@ RevBloc	jmp	_w_block_flip
 _w_io_handler_entry
 IoHandler
 	move.l	a5,-(sp)
-	move.l	W_Base(pc),a5
-	jsr	_w_input
-	move.l	(sp)+,a5
-	rts
 WSend_FakeEvent	jmp	_w_send_fake_event
 
 ; Clear Key: src/w/keyboard.cpp
@@ -973,17 +866,14 @@ ClVide	jmp	_w_clear_key
 
 ; KEY WAIT, retourne BNE si des touches en attente
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-ClKWait	moveq	#0,d0
-	move.w	T_ClQueue(a5),d1
-	cmp.w	T_ClTete(a5),d1
-	rts
+ClKWait	jmp	_w_key_waiting_entry
 
 ; Inkey: src/w/keyboard.cpp
 ClInky	jmp	_w_inkey
 
 ; Change KEY MAP A1
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-ClKeyM	rts
+ClKeyM	jmp	_w_nothing_entry
 
 ; Key Speed, Key Shift, Key State, Put Key, function keys: src/w/keyboard.cpp
 TKSpeed	jmp	_w_key_speed
@@ -995,10 +885,7 @@ ClGFFk:	jmp	_w_get_function_key
 
 ; RETOUR L'ETAT DU FLAG DISC
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-TGetDisc
-	move.w	T_DiscIn(a5),d0
-	ext.l	d0
-	rts
+TGetDisc	jmp	_w_get_disc_entry
 
 ;	Gestion cyclique hors interruptions
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1007,8 +894,6 @@ WTest_Cyclique	jmp	_w_test_cyclic
 
 
 ; Error "illegal function call" of the zone functions
-PErr7:	moveq	#16,d0
-	rts
 
 
 
@@ -1029,17 +914,9 @@ WRequest_OnOff	jmp	_w_request_on_off
 		xdef	_w_auto_req_entry
 _w_auto_req_entry
 AutoReq	move.l	a5,-(sp)
-	move.l	W_Base(pc),a5
-	jsr	_w_auto_req
-	move.l	(sp)+,a5
-	rts
 		xdef	_w_easy_req_entry
 _w_easy_req_entry
 EasyReq	move.l	a5,-(sp)
-	move.l	W_Base(pc),a5
-	jsr	_w_easy_req
-	move.l	(sp)+,a5
-	rts
 
 		xdef	_w_req_pal
 _w_req_pal

@@ -30,6 +30,7 @@ using namespace amos::w;
 
 // +W.s and the glue of w/: the vector tables, the entries handed to the
 // system, the LoadView patch, the default font's special characters
+extern "C" uint32_t w_amos_here;       // (the patched LoadView tests T_AMOSHere there)
 extern "C" uint8_t w_sy_in[], w_ec_in[], w_wi_in[], w_io_handler_entry[], w_amos_loadview[], w_old_loadview[],
     w_auto_req_entry[], w_easy_req_entry[], w_req_pal[], w_def_font[], w_gfx_base_var[], w_default_mouse[], w_amal_init[],
     w_amal_end[], w_free_fonts[];
@@ -252,7 +253,7 @@ bool start(AllRegs *r)
     // With LoadView, AMOS's LoadView keeps the system's view from showing
     // while AMOS is in front (it tests T_AMOSHere)
     if (d.WFlags & WFlagLoadView) {
-        poke_l(w_amos_loadview + 2, address(&d.AMOSHere));
+        w_amos_here = address(&d.AMOSHere);
         poke_l(w_old_loadview, hal::set_function(d.GfxBase, LVOLoadView, address(w_amos_loadview)));
         if (hal::os_version() >= 37)
             hal::clear_cache();

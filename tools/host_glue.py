@@ -34,6 +34,8 @@ ap.add_argument('--image', action='append', default=[])
 ap.add_argument('--equ', action='append', default=[])
 ap.add_argument('--include', action='append', default=['.', 'build/gen', 'includes', 'extensions', 'src'])
 ap.add_argument('--list-missing', action='store_true')
+ap.add_argument('--strip', action='store_true', help='remove the assembler code that does nothing (rewrites the sources)')
+ap.add_argument('--underscore', action='store_true', help='the C symbols begin with _ (the Amiga)')
 ap.add_argument('--cxx', action='append', default=[], help='NAME=EXPR: an equate the C++ knows')
 ap.add_argument('sources', nargs='+')
 args = ap.parse_args()
@@ -50,6 +52,9 @@ for root, _, files in (w for d in (args.host_dir or ['src/runtime', 'src/host'])
             for m in re.finditer(r'\bvoid\s+host_(\w+)\s*\(\s*(?:amos::)?AllRegs\s*&', text):
                 hand_impl.add(m.group(1))
             for m in re.finditer(r'^(?:\[\[noreturn\]\]\s*)?[A-Za-z_][\w:]*[\s*&]+(\w+)(?:\[\w*\])?\s*[(;=\[]', text, re.M):
+                defined.add(m.group(1))
+            # (labels of machine code in a .cpp: .globl _name)
+            for m in re.finditer(r'\.globl\s+_(\w+)', text):
                 defined.add(m.group(1))
             # (extern "C" functions, not the declarations of data)
             for m in re.finditer(r'^extern "C"\s*(?:\[\[noreturn\]\]\s*)?[A-Za-z_][\w:]*[\s*&]+(\w+)\s*\([^;]*$', text, re.M):
@@ -373,6 +378,7 @@ GETP = {'LibCall', 'LibNop', 'InCall', 'FnCall', 'FnCallD3', 'FloatPar'}
 RESULT = {'Int': 0, 'Float': 1, 'String': 2, 'None': 3, 'Double': 4}
 IGNORED = {'include', 'incdir', 'section', 'xref', 'opt', 'output', 'cnop', 'list', 'nolist', 'end', 'idnt',
            'machine', 'mc68000', 'mcinit', 'mc', 'rept', 'endr', 'fail', 'printt', 'printv', 'ttl'}
+DATA = {'amos_bridge'}
 JUMPS = {'jmp': 6, 'bra': 4, 'bra.w': 4, 'bra.s': 2, 'bra.b': 2}
 
 def cname(sym):
@@ -406,8 +412,9 @@ exported_lower = {e.lower(): e for e in exported}
 
 # ---- pass 2: the layout ---------------------------------------------------
 class Obj:
-    def __init__(self, name):
+    def __init__(self, name, chip=False):
         self.name = name
+        self.chip = chip        # (in chip memory on the Amiga)
         self.bytes = bytearray()
         self.entries = []       # (offset, kind, fn, arg1, arg2, label, target)
         self.relocs = []        # (offset, size, expression, source)
@@ -422,6 +429,8 @@ class Obj:
 objects = []
 labels_at = {}          # key -> (obj, offset)
 problems = []
+contributing = set()    # the statements that made something (the strip keeps them)
+all_where = {}
 functions = set()
 
 def key(label, source):
@@ -465,11 +474,17 @@ def cexpr(expr, source, local):
     return out
 
 for path, stmts in parsed.items():
-    obj = Obj(re.sub(r'\W', '_', path))
+    main_obj = obj = Obj(re.sub(r'\W', '_', path))
     objects.append(obj)
     local = ''
     code = False        # in a routine of assembler (after a hand entry)
+    last = None
     for labels, op, operands, where in stmts:
+        # (what the previous statement changed: it matters to the strip)
+        now = (sum(len(o.bytes) + len(o.entries) + len(o.relocs) for o in objects), len(labels_at), code)
+        if last is not None and now != last[0]:
+            contributing.add(last[1])
+        last = (now, where)
         lop = (op or '').lower()
         named = []
         for l in labels:
@@ -493,6 +508,12 @@ for path, stmts in parsed.items():
             code = True
             continue
         if lop == 'section':
+            # a section of chip memory: an object of its own
+            if re.search(r',\s*\w+_C\b', operands, re.I):
+                obj = Obj(main_obj.name + '_chip', chip=True)
+                objects.append(obj)
+            else:
+                obj = main_obj
             obj.align(4)            # (a section starts aligned)
         if lop == 'xdef' or lop in IGNORED and lop != 'include':
             for l in named:
@@ -632,6 +653,38 @@ for path, stmts in parsed.items():
                 place(l, obj, path, where)
         code = True
 
+    if last is not None:
+        end = (sum(len(o.bytes) + len(o.entries) + len(o.relocs) for o in objects), len(labels_at), code)
+        if end != last[0]:
+            contributing.add(last[1])
+    for _l, _o, _p, w in stmts:
+        all_where[w] = _o
+
+# ---- the strip: the assembler code the C++ replaces, which does nothing here ---
+KEEP_OPS = IGNORED | {'xdef', 'even', 'equ', 'set', 'rsreset', 'macro', 'endm', 'ifeq', 'ifne', 'ifd', 'ifnd', 'else',
+                      'endc', 'include', 'incbin', 'jjmp', 'libroutine', 'libentry'}
+if args.strip:
+    keep_macros = {k.lower() for k in GLUE}
+    for path in {w.rsplit(':', 1)[0] for w in all_where}:
+        if path not in args.sources and path not in inlined:
+            continue
+        out, removed = [], 0
+        for n, line in enumerate(open(path, encoding='latin-1'), 1):
+            code_part = strip_comment(line)
+            label, op, operands = fields(code_part) if code_part.strip() else (None, None, '')
+            lop = (op or '').lower()
+            where = f'{path}:{n}'
+            if (op and where in all_where and where not in contributing and lop not in KEEP_OPS
+                    and not lop.startswith(('dc', 'ds', 'rs', 'if')) and lop not in keep_macros):
+                removed += 1
+                if label and not label.startswith('.'):
+                    out.append(label + '\n')
+                continue
+            out.append(line)
+        if removed:
+            open(path, 'w', encoding='latin-1').write(''.join(out))
+            print(f'host_glue: {path}: {removed} lines of code removed', file=sys.stderr)
+
 # ---- output ---------------------------------------------------------------
 def oid(o):
     return f'host_obj_{o.name}'
@@ -681,11 +734,13 @@ with open(args.out, 'w') as f:
     hands = sorted({e[2] for o in objects for e in o.entries if e[0] is not None and e[1] == 'hand'})
     w('extern "C" {\n')
     for fn in sorted(functions - c_names):
-        w(f'void {fn}();\n')
+        # (C++ data the assembler's tables point at: the contexts' block)
+        w(f'extern uint8_t *{fn};\n' if fn in DATA else f'void {fn}();\n')
     for o in objects:
         size = max(len(o.bytes), 4)
         init = ','.join(str(b) for b in o.bytes) if any(o.bytes) else ''
-        w(f'alignas(4) uint8_t {oid(o)}[{size}] = {{{init}}};\n')
+        chip = 'AMOS_CHIP ' if o.chip else ''
+        w(f'{chip}alignas(4) uint8_t {oid(o)}[{size}] = {{{init}}};\n')
     w('}\n\nnamespace amos::host {\n')
     for h in hands:
         w(f'void host_{h}(AllRegs &r);\n')
@@ -693,7 +748,8 @@ with open(args.out, 'w') as f:
     for k, (o, off) in sorted(labels_at.items()):
         if '::' not in k and re.match(r'^\w+$', cname(k)) and cname(k) not in defined:
             c = cname(k)
-            w(f'__asm__(".globl {c}\\n.set {c}, {oid(o)}+{off}");\n')
+            u = '_' if args.underscore else ''
+            w(f'__asm__(".globl {u}{c}\\n.set {u}{c}, {u}{oid(o)}+{off}");\n')
     w('\n')
     w(''.join(body))
 

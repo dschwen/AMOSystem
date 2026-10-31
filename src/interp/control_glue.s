@@ -14,12 +14,6 @@
 		xdef	_interp_continue
 _interp_continue
 		move.l	4(sp),d0
-		move.l	8(sp),d1
-		GetCtx	a0
-		movem.l	(a0),d6-d7/a3-a6
-		move.l	d0,sp
-		move.l	d1,-(sp)
-		rts
 
 ; [[noreturn]] void interp_jump(const Regs *r, const void *fn)
 ;
@@ -28,12 +22,6 @@ _interp_continue
 		xdef	_interp_jump
 _interp_jump
 		GetCtx	a0
-		movem.l	(a0),d6-d7/a3-a6
-		move.l	4(sp),a0
-		move.l	8(sp),-(sp)
-		movem.l	(a0),d0-d5
-		movem.l	8*4(a0),a0-a2
-		rts
 
 ; [[noreturn]] void interp_menu_return(uint32_t pile)
 ;
@@ -42,9 +30,6 @@ _interp_jump
 		xdef	_interp_menu_return
 _interp_menu_return
 		move.l	4(sp),a0
-		lea	-4(a0),sp
-		moveq	#0,d0
-		rts
 
 ; Error d0 (L_Error: of AMOSPro, d1 = 19 the first that On Error can
 ; take, d2 = -1) / ErrorExt (d1, d2 = the extension, a0 its messages).
@@ -60,30 +45,10 @@ _interp_menu_return
 		xdef	_interp_next_float
 _interp_next_float
 		movem.l	d2-d4/a2/a6,-(sp)
-		move.l	24(sp),a2
-		move.l	28(sp),d3
-		move.l	32(sp),d4
-		move.l	36(sp),a6
-		move.l	d3,d1
-		jsr	-48(a6)			SPTst
-		move.l	d0,d2
-		move.l	d3,d0
-		move.l	(a2),d1
-		jsr	-66(a6)			SPAdd
-		move.l	d0,(a2)
-		move.l	d4,d1
-		jsr	-42(a6)			SPCmp
-		blt.s	.Lt
-		tst.l	d2
-		bmi.s	.Stay
-		bra.s	.Out
 .Lt		tst.l	d2
-		bpl.s	.Stay
 .Out		moveq	#0,d0
-		bra.s	.X
 .Stay		moveq	#1,d0
 .X		movem.l	(sp)+,d2-d4/a2/a6
-		rts
 
 ; The routine record of On Menu's OMnEff for ClearVar: a link, then code
 		XREF	_interp_omn_eff
@@ -151,12 +116,3 @@ _interp_next_float
 		xdef	_interp_restart
 _interp_restart
 		move.l	4(sp),d0
-		move.l	8(sp),d1
-		move.l	12(sp),a0
-		move.l	d0,sp
-		move.l	d1,-(sp)
-		move.l	8*4(a0),-(sp)
-		movem.l	(a0),d0-d7
-		movem.l	9*4(a0),a1-a6
-		move.l	8*4(a0),a0
-		rts

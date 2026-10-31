@@ -4,8 +4,7 @@
 #include "runtime/glue.h"
 #include "runtime/runtime.h"
 #include "interp/interp.h"
-
-#include <stdlib.h>
+#include "hal/system.h"
 
 using namespace amos;
 
@@ -16,10 +15,17 @@ namespace {
 const GlueEntry **sorted;       // the entries by address
 int sorted_count;
 
-int by_address(const void *a, const void *b)
+// The entries sorted by address (Shell's sort: no C library here)
+void sort_entries()
 {
-    auto x = (*static_cast<const GlueEntry *const *>(a))->at, y = (*static_cast<const GlueEntry *const *>(b))->at;
-    return x < y ? -1 : x > y;
+    for (int gap = sorted_count / 2; gap > 0; gap /= 2)
+        for (int i = gap; i < sorted_count; i++) {
+            const GlueEntry *e = sorted[i];
+            int j = i;
+            for (; j >= gap && sorted[j - gap]->at > e->at; j -= gap)
+                sorted[j] = sorted[j - gap];
+            sorted[j] = e;
+        }
 }
 
 // CCall: the interpreter registers into the context for the C++, back
@@ -45,11 +51,11 @@ void from_context(AllRegs &r)
     r.a[6] = address(c.a6);
 }
 
-// A C function of n 32-bit parameters (passed as 64 bits: the pointers
-// among them are read whole); its result as 64 bits
-uint64_t call_c(const void *fn, int n, const uint64_t *p)
+// A C function of n 32-bit parameters (passed as machine words: on another
+// host the pointers among them are read whole); its result as a word
+using U = uintptr_t;
+U call_c(const void *fn, int n, const U *p)
 {
-    using U = uint64_t;
     switch (n) {
     case 0: return reinterpret_cast<U (*)()>(fn)();
     case 1: return reinterpret_cast<U (*)(U)>(fn)(p[0]);
@@ -91,11 +97,11 @@ template <typename F> void w_go(AllRegs &r, F f)
 void glue_start()
 {
     glue_relocate();
-    sorted = static_cast<const GlueEntry **>(malloc(sizeof(GlueEntry *) * glue_entry_count));
+    sorted = static_cast<const GlueEntry **>(hal::allocate(uint32_t(sizeof(GlueEntry *) * glue_entry_count), 0));
     for (int i = 0; i < glue_entry_count; i++)
         sorted[i] = &glue_entries[i];
     sorted_count = glue_entry_count;
-    qsort(sorted, sorted_count, sizeof *sorted, by_address);
+    sort_entries();
 }
 
 const GlueEntry *glue_entry(const void *at)
@@ -116,16 +122,20 @@ const GlueEntry *glue_entry(const void *at)
 
 void poll();
 [[noreturn]] void mark_jump(uint32_t mark, const void *target, const AllRegs &r, const void *then = nullptr);
+int32_t native_call(const void *at, AllRegs &r);
 
 int32_t glue_call(const void *at, AllRegs &r)
 {
+#if !defined(__mc68000__)
+    // (the interrupts due, between two routines)
     poll();
+#endif
     const GlueEntry *e = glue_entry(at);
     if (!e)
-        missing("address", at);
+        return native_call(at, r);
     switch (e->kind) {
     case GlueKind::libcall: {
-        uint64_t p[10];
+        U p[10];
         int n = e->a1;
         if (n) {
             p[n - 1] = r.d[3];
@@ -135,7 +145,15 @@ int32_t glue_call(const void *at, AllRegs &r)
             }
         }
         to_context(r);
-        uint64_t v = call_c(e->fn, n, p);
+        uint64_t v;
+#if defined(__mc68000__)
+        // (a double comes back in d0/d1)
+        if (e->a2 == 4)
+            v = reinterpret_cast<uint64_t (*)(U, U, U, U, U, U, U, U, U, U)>(e->fn)(p[0], p[1], p[2], p[3], p[4],
+                                                                                   p[5], p[6], p[7], p[8], p[9]);
+        else
+#endif
+            v = call_c(e->fn, n, p);
         from_context(r);
         switch (e->a2) {
         case 0:     // Int

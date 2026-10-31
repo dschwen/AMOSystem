@@ -76,20 +76,3 @@ _w_widela	WiEntry	20,l
 
 ; d0 = the function, the registers at 4(sp)
 WiGo		lea	4(sp),a1
-		GetCtx	a0
-		movem.l	(a0),d1-d6		keep the context
-		movem.l	d1-d6,-(sp)
-		move.l	24(a1),(a0)+		the caller's d6-d7/a3-a6
-		move.l	28(a1),(a0)+
-		move.l	44(a1),(a0)+
-		move.l	48(a1),(a0)+
-		move.l	52(a1),(a0)+
-		move.l	56(a1),(a0)
-		move.l	a1,-(sp)
-		move.l	d0,-(sp)
-		jsr	_w_window
-		addq.l	#8,sp
-		GetCtx	a0
-		movem.l	(sp)+,d1-d6
-		movem.l	d1-d6,(a0)
-		rts

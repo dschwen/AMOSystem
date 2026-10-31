@@ -14,25 +14,9 @@
 		xdef	_interp_lvo
 _interp_lvo
 		movem.l	d2-d3/a6,-(sp)
-		move.l	16(sp),a0
-		move.l	20(sp),a6
-		move.l	24(sp),d0
-		lea	0(a6,d0.l),a1
-		move.l	a0,-(sp)
-		movem.l	(a0),d0-d3
-		jsr	(a1)
-		beq.s	.Eq
-		blt.s	.Lt
-		moveq	#1,d2
-		bra.s	.Out
 .Lt		moveq	#-1,d2
-		bra.s	.Out
 .Eq		moveq	#0,d2
 .Out		move.l	(sp)+,a0
-		movem.l	d0-d1,(a0)
-		move.l	d2,d0
-		movem.l	(sp)+,d2-d3/a6
-		rts
 
 		RegRoutine IntToFl1,_interp_int_to_fl1
 		RegRoutine DIntToFl1,_interp_dint_to_fl1

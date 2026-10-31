@@ -25,36 +25,55 @@ Generated files go to `build/gen`; nothing is written into the source tree.
 
 ## How the programs are linked
 
-AMOSPro is one program: its assembler parts are assembled to objects
-with vasm and linked with `m68k-amigaos-ld` (through gcc) together with
-the C++ of the `src/` directories:
+AMOSPro is C++: `src/lib`, `src/main`, `src/verif`, `src/interp`,
+`src/ext`, `src/hal`, `src/w` (AMOS.library), `src/editor`,
+`src/monitor`, `src/core` and `src/runtime`, compiled with
+`m68k-amigaos-g++` and linked with gcc and `link/amospro.ld`. The
+assembler sources (`+B.s`, `+W.s`, `+Edit.s`, `+Monitor.s`, `+Verif.s`
+and the `src/*/*_glue.s`) no longer contribute code to it: they are the
+declarations of its tables, data and entries, and `tools/host_glue.py`
+turns them into `build/gen/amiga_glue.cpp` (the same tool and the same
+C++ as the build for another host, with `--underscore` for the Amiga's
+C symbols and chip memory for the sections the assembler put there):
 
-| part | assembler | C++ / glue |
-|---|---|---|
-| the main program | `+B.s` (+ `+Verif.s`) | `src/main`, `src/lib`, `src/verif`, `src/interp`, `src/ext` |
-| AMOS.library | `+W.s` | `src/w` |
-| the editor | `+Edit.s` | `src/editor` |
-| the monitor | `+Monitor.s` | `src/monitor` |
+- each label is a place in a data array, byte for byte what the
+  assembler laid out (the jump tables AMOSPro patches, the token tables,
+  the messages, the default mouse bank);
+- each entry of the assembler (a glue macro of `src/glue.i`, a `bra`
+  table, a routine written in assembler) is a record: what it was and the
+  C++ function behind it. `src/runtime/glue.cpp` does what the macro did
+  when something calls the entry's address (`amos_call` and the others,
+  the interpreter's tables, the programs' routine lists);
+- the exits of the assembler that reset the stack (`BasSp`, the PRUN and
+  editor-zap stacks, a menu's procedure, the monitor's step) are marks
+  set with `setjmp` (`src/runtime/marks.h`, `runtime.cpp`, `monitor.cpp`);
+  the `BasSp` the data zone keeps is the address of the mark.
+
+`src/amiga` is what is left of the machine: its start (`start.cpp`: the
+program's first code, its own 64K stack, `Get_Out`), and `native.cpp`:
+`setjmp`/`longjmp`, the call of code at an address with all the registers
+(the machine code of programs, the system's libraries), the math and
+narrator libraries' calls, and the entries the system calls (the VBL
+server, the input handler, the patched requesters and LoadView, the audio
+interrupts of the samples). `amiga/start.cpp` is linked first and
+`.text.entry` is first in the linker script: the program begins there.
+This `ld` writes no memory flags, so `tools/chiphunks.py` marks the
+`.datachip`/`.bsschip` hunks as chip memory after linking, using the map
+file.
 
 AMOS.library, the editor and the monitor were programs of their own that
-AMOSPro loaded with LoadSeg. They are linked in now: the start calls
-AMOS.library at `_w_debut`, and "loading" the editor or the monitor puts
-their entry tables (`_ed_debut`, `_mon_debut`) into the library's jump
-table (`src/main/modules.cpp`); KILL EDITOR no longer gives their memory
-back. `src/core` (the C++/assembler bridge) is an archive linked in.
-`link/amospro.ld` keeps the assembler code of `+B.s` in the first hunk: it
-holds the entry point. The init hunk `I` must come second, because
-`Init_Fin` frees it. This `ld` writes no memory flags, so
-`tools/chiphunks.py` marks the `.datachip`/`.bsschip` hunks (and
-AMOS.library's chip data, section `m`) as chip memory after linking, using
-the map file. AMOSPro.Lib and the four extensions are libraries in the
-raw format AMOSPro loads and patches (their routines are now C++ linked
-into AMOSPro; the files keep their token tables and the parameter
-collectors). They are assembled twice: as files, which the tools read
-(the tokenizer reads their token tables), and as data linked into AMOSPro
-(`src/main/library.s`, `src/ext/*_image.s`). The loader takes library 0
-from its image, and an extension from its image when the configuration
-names its file; any other extension is still loaded from its file.
+AMOSPro loaded with LoadSeg. They are linked in: "loading" the editor or
+the monitor puts their entry tables (`ed_debut`, `mon_debut`) into the
+library's jump table (`src/main/modules.cpp`); KILL EDITOR no longer
+gives their memory back. AMOSPro.Lib and the four extensions are
+libraries in the raw format AMOSPro loads and patches (their routines are
+C++ linked into AMOSPro; the files keep their token tables and the
+parameter collectors). They are assembled twice: as files, which the
+tools read (the tokenizer reads their token tables), and as data
+(`src/main/library.s`, `src/ext/*_image.s`, built to `build/host/images`
+and read by `host_glue.py`). The loader takes library 0 from its image,
+and an extension from its image when the configuration names its file;
+any other extension is still loaded from its file.
 
 C++ is compiled for the 68000 with `-Os`, without exceptions, RTTI or a C
 library startup. libgcc and libnix13 supply arithmetic helpers such as
@@ -272,9 +291,21 @@ and input tests are left out). The environment:
 | `AMOS_TRAP=seconds` | stops the program there, for a debugger |
 | `AMOS_COPPER`, `AMOS_MEMCHECK` | debugging: the copper lists, checked frees |
 
-Not on the host yet: the narrator (`Say`), ARexx, Amiga devices and library calls (`Lib Call`, `Dev Open`...). Results
-that differ from the Amiga's: the last digit of transcendental functions
-(the host's libm), and peeks at Amiga addresses (`Leek(4)`).
+What the host does not do like the Amiga:
+- Libraries and devices are stand-ins. A library opens with a jump table
+  whose calls (Doscall, Execall, Lib Call) do nothing and answer 0, but
+  exec's FindTask and dos's Delay. input.device and console.device are the
+  window's; timer.device, serial.device and narrator.device open and
+  complete what they are asked at once (no serial port behind the serial
+  device, no speech: Say is silent, its mouth stays shut; translator.library
+  gives the text back as phonemes). The IORequests' structures are the
+  host's, so the Peeks of a program at a device's block (Serial Base(n)+n)
+  read other things.
+- ARexx ports are in-process only: Arexx Open/Close/Exist work, no message
+  arrives.
+- A command run with Exec: only `Wait n` and `c:assign`.
+- The last digit of transcendental functions (the host's libm), and peeks at
+  Amiga addresses (`Leek(4)`).
 
 ### Deliberate differences from the original
 

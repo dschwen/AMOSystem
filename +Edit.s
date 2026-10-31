@@ -624,21 +624,12 @@ Ed_GoHelp	jmp	_ed_go_help_entry
 ; Programs driving the editor: editor/loop.cpp
 Ed_ZapIn
 	jsr	_ed_zap_in_entry
-	subq.w	#1,d0
-	bmi.s	.Go
-	beq	Ed_ZapOut
-	bra	Ed_ZapX
 .Go	move.l	BasSp(a5),sp
-	jsr	_ed_zap_prepare_entry
-	bsr	Ed_FCall
-	bra	Ed_Loop
 		xdef	_ed_zap_out
 _ed_zap_out
 Ed_ZapOut
 	jsr	_ed_zap_out_entry
 Ed_ZapX	jsr	_ed_zap_result_entry
-	move.l	BasSp(a5),sp
-	rts
 Ed_ZapFonction	jmp	_ed_zap_function_entry
 
 

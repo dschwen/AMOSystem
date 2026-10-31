@@ -127,8 +127,6 @@ _lib_fs_error_patch
 		xdef	_lib_fs_task_entry
 _lib_fs_task_entry
 		move.l	_lib_fs_task_a5,a5
-		CCall	_lib_fs_task
-		rts
 
 		SECTION	.bss,BSS
 		xdef	_lib_fs_task_a5

@@ -249,31 +249,21 @@ int32_t interp_lvo(uint32_t *r, uint32_t base, int32_t offset)
 uint32_t music_lvo(uint32_t *r, uint32_t base, int32_t offset)
 {
     const char *name = host::library_name(base);
+    // translator.library's Translate(a0 text, d0 its length, a1 buffer, d1
+    // its size): the text itself for the phonemes (the narrator is silent)
+    if (name && !strcmp(name, "translator.library") && offset == -30) {
+        uint32_t length = r[0], room = r[1];
+        const uint8_t *text = ptr<const uint8_t>(r[2]);
+        uint8_t *to = ptr<uint8_t>(r[3]);
+        uint32_t n = length < room ? length : room;
+        for (uint32_t i = 0; i < n; i++)
+            to[i] = text[i];
+        r[0] = 0;
+        return 0;
+    }
     host::missing(name ? name : "library", reinterpret_cast<const void *>(intptr_t(offset)));
     return r[0];
 }
 
 } // extern "C"
 
-extern "C" {
-
-// Next of a float loop (control_glue.s): var += step with mathffp (as the
-// original, in either precision); 1 if the loop goes on: a step of 0 or
-// more while var is below the limit, a negative one while it is not
-uint32_t interp_next_float(uint8_t *var, uint32_t step, uint32_t limit, void *base)
-{
-    uint32_t r[4] = {0, step, 0, 0};
-    int32_t sign = interp_lvo(r, address(base), -48);           // SPTst(step)
-    r[0] = step;
-    r[1] = peek_l(var);
-    interp_lvo(r, address(base), -66);                          // SPAdd
-    poke_l(var, r[0]);
-    r[1] = limit;
-    int32_t c = interp_lvo(r, address(base), -42);              // SPCmp(var, limit)
-    // (as the original: equal to the limit ends a loop of positive step)
-    if (c < 0)
-        return sign >= 0;
-    return sign < 0;
-}
-
-} // extern "C"

@@ -9,14 +9,16 @@ using namespace amos;
 using namespace amos::host;
 
 extern "C" uint8_t w_ice_start[];
+extern "C" uint32_t amos_w_base;
+uint32_t amos_w_base;
 
 namespace amos::host {
 
-// +W.s IceStart: W_Base, the contexts, then w/startup.cpp
-void set_w_base(uint32_t a5);
+// +W.s IceStart: W_Base (the data zone, for the input handler and the
+// requesters), the contexts, then w/startup.cpp
 void host_IceStart(AllRegs &r)
 {
-    set_w_base(r.a[5]);
+    amos_w_base = r.a[5];
     glue_call(w_ice_start, r);
 }
 
@@ -52,6 +54,17 @@ namespace amos::host {
 // music_glue.s music_sami_entry: the audio interrupt of a voice's
 // sample, a1 its data
 void host_music_sami_entry(AllRegs &r) { ext_music_sami(ptr<SampleInt>(r.a[1])); }
+
+} // namespace amos::host
+
+extern "C" [[noreturn]] void main_the_end();
+extern "C" [[noreturn]] void main_init_fin();
+
+namespace amos::host {
+
+// +B.s TheEnd, Init_Fin: the general way out; the start's end
+void host_TheEnd(AllRegs &) { main_the_end(); }
+void host_Init_Fin(AllRegs &) { main_init_fin(); }
 
 } // namespace amos::host
 
