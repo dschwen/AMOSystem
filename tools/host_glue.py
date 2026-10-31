@@ -233,8 +233,25 @@ def find(name):
     return None
 
 inlined = set()         # sources included by others (+B.s: +Verif.s)
+macros = {}             # name -> its lines (macros without parameters: Version)
 
-def statements(path):
+def macro_definitions(path):
+    """the macros of an include that is not read for its statements"""
+    name = None
+    for line in open(path, encoding='latin-1'):
+        code = strip_comment(line)
+        label, op, operands = fields(code) if code.strip() else (None, None, '')
+        lop = (op or '').lower()
+        if name is not None:
+            if lop == 'endm':
+                name = None
+            else:
+                macros[name].append(line)
+        elif lop == 'macro' and label:
+            name = label.lower()
+            macros[name] = []
+
+def statements(path, lines=None):
     """(labels, opcode, operands, where): conditionals, macro definitions,
     the RS layouts and the equates done; the jump lists included"""
     out = []
@@ -243,7 +260,7 @@ def statements(path):
     active = True
     in_macro = False
     rs = 0
-    for n, line in enumerate(open(path, encoding='latin-1'), 1):
+    for n, line in enumerate(lines if lines is not None else open(path, encoding='latin-1'), 1):
         code = strip_comment(line)
         if not code.strip():
             continue
@@ -304,10 +321,19 @@ def statements(path):
             if labels:
                 out.append((labels, op, operands, f'{path}:{n}'))
                 labels = []
+            if p := find(f):
+                macro_definitions(p)
             continue
         if label:
             labels.append(label)
         if op is None:
+            continue
+        if lop in macros and not operands:
+            sub = statements(f'{path}:{n}', macros[lop])
+            if sub and labels:
+                sub[0] = (labels + sub[0][0],) + sub[0][1:]
+                labels = []
+            out += sub
             continue
         out.append((labels, op, operands, f'{path}:{n}'))
         labels = []
@@ -343,7 +369,7 @@ LABELLED = {'WEntry', 'WEntryA0', 'WEntryF', 'WiEntry'}     # their entry is the
 GETP = {'LibCall', 'LibNop', 'InCall', 'FnCall', 'FnCallD3', 'FloatPar'}
 RESULT = {'Int': 0, 'Float': 1, 'String': 2, 'None': 3, 'Double': 4}
 IGNORED = {'include', 'incdir', 'section', 'xref', 'opt', 'output', 'cnop', 'list', 'nolist', 'end', 'idnt',
-           'machine', 'mc68000', 'version', 'mcinit', 'mc', 'rept', 'endr', 'fail', 'printt', 'printv', 'ttl'}
+           'machine', 'mc68000', 'mcinit', 'mc', 'rept', 'endr', 'fail', 'printt', 'printv', 'ttl'}
 JUMPS = {'jmp': 6, 'bra': 4, 'bra.w': 4, 'bra.s': 2, 'bra.b': 2}
 
 def cname(sym):

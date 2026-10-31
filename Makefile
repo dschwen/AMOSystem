@@ -242,7 +242,7 @@ dist: all
 	$(foreach b,$(BINARIES),cp $(b) $(DIST)/$(subst AMOS/,,$(call reference,$(notdir $(b))));)
 
 # Programs with C++ in them no longer match the prebuilt binaries
-CONVERTED := $(BUILD)/AMOSPro $(BUILD)/AMOSPro.Lib
+CONVERTED := $(BUILD)/AMOSPro $(BUILD)/AMOSPro.Lib $(BUILD)/AMOSPro_%.Lib
 
 VERIFY := $(filter-out $(CONVERTED) %_Config,$(BINARIES))
 
@@ -253,8 +253,9 @@ verify: all
 		case $$n in AMOSPro) r=AMOS/AMOSPro;; *) r=AMOS/APSystem/$$n;; esac; \
 		$(PYTHON) tools/bincmp.py $$r $$b || status=1; \
 	done; \
-	cmp $(BUILD)/AMOSPro_Editor_Config AMOS/APSystem/AMOSPro_Editor_Config \
-		&& echo "$(BUILD)/AMOSPro_Editor_Config: identical" || status=1; \
+	n=$$(cmp -l $(BUILD)/AMOSPro_Editor_Config AMOS/APSystem/AMOSPro_Editor_Config \
+		| awk '$$1 < 34 || $$1 > 49' | wc -l); \
+	[ $$n = 0 ] && echo "$(BUILD)/AMOSPro_Editor_Config: identical but the palette" || status=1; \
 	cmp $(BUILD)/AMOSPro_Interpreter_Config AMOS/AMOSPro_Interpreter_Config \
 		&& echo "$(BUILD)/AMOSPro_Interpreter_Config: identical" || status=1; \
 	exit $$status

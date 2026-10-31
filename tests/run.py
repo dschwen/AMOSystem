@@ -196,6 +196,10 @@ def prepare(amos_tree, kickstart, rom_key, workbench):
     config = os.path.join(amos, 'AMOSPro_Interpreter_Config')
     if not os.path.exists(config):
         shutil.copy(os.path.join(ROOT, 'build', 'AMOSPro_Interpreter_Config'), config)
+    # the editor's goldens were recorded with the original palette (the
+    # built config's is blue)
+    shutil.copy(os.path.join(ROOT, 'AMOS', 'APSystem', 'AMOSPro_Editor_Config'),
+                os.path.join(amos, 'APSystem', 'AMOSPro_Editor_Config'))
     # the monitor's resource bank is not in the sources: the one of the
     # Workbench drive's AMOS Pro, read only
     resource = os.path.join(amos, 'APSystem', 'AMOSPro_Monitor_Resource.Abk')

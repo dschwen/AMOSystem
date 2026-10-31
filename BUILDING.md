@@ -229,19 +229,45 @@ on 2 bytes; the generated layouts are packed so themselves). All of them
 compile.
 
 `make host` links the C++ into a Linux x86-64 program, `build/host/amos`,
-with `src/host`: the bridge (`amos_call` and the others call the C++
-behind a glue entry through the WEntry table), the HAL's backends (files:
-POSIX; memory: below 4GB with `MAP_32BIT`, as AMOS keeps its addresses in
-32 bits; the display, Workbench and chips: stubs so far) and
-`build/host/host_symbols.cpp` (`tools/host_tables.py`: each assembler
-label the C++ refers to becomes an object of its own, an address the C++
-keeps as on the Amiga). It links completely, with no assembler. It does
-not run AMOS yet: still to come are the start (`main`), the stack exits
-of the interpreter (setjmp-style), the library lists of the assembler
-(AMOSJmps...), the display, input and audio backends, and the byte order:
-AMOS's data (programs, banks, token tables) are big-endian, which
-`peek`/`poke` can swap on a little-endian host, but direct accesses to such
-data have to be found.
+with `src/host` and no assembler:
+
+- the bridge: `tools/host_glue.py` turns the assembler sources' glue
+  entries, tables and data into C++ (`build/host/host_glue.cpp`), each
+  label an address the C++ keeps as on the Amiga; the stack-resetting
+  exits of the interpreter are `setjmp` marks (`host/runtime.cpp`);
+- memory below 4GB (`MAP_32BIT`, as AMOS keeps its addresses in 32 bits),
+  given out as exec does; AMOS's data (programs, banks, token tables)
+  stay big-endian (`core/endian.h`);
+- files: POSIX, with AmigaDOS's names; the current directory is
+  `AMOSPRO:`, other volumes are assigns (`AMOS_ASSIGNS`; `RAM:`'s volume
+  name is "Ram Disk", as on the Amiga);
+- the custom chips as registers, a copper and a renderer
+  (`host/display.cpp`: bitplanes, hires, dual playfield, EHB, HAM,
+  sprites) and a blitter (`host/hal_chips.cpp`);
+- a window (`host/sdl.cpp`: libSDL2 loaded at run time, magnified twice)
+  whose keyboard and mouse become the Amiga's input events;
+- topaz 8 and 9 from the user's Kickstart (`tools/extract_topaz.py`,
+  `KICKSTART=` and `ROMKEY=` for an encrypted one; the result stays in
+  `build/` and boxes replace the characters without one).
+
+`build/host/amos` starts the editor in `build/dist/AMOS`; with a program
+as its argument (`AMOSPRO:...`, `AMOSTEST:...`) it runs that.
+`tests/host_run.py` runs the text tests of `tests/run.py` with it (editor
+and input tests are left out). The environment:
+
+| Variable | Use |
+|---|---|
+| `AMOS_ASSIGNS` | `NAME=path;...`: assigns (volumes) |
+| `AMOS_DISPLAY=none` | no window |
+| `AMOS_SCALE` | the window's magnification (1-9, 2 by default) |
+| `AMOS_SHOT=file.ppm` | the last frame into that file; with `AMOS_SHOT_FRAME=n`, frame n |
+| `AMOS_TRAP=seconds` | stops the program there, for a debugger |
+| `AMOS_COPPER`, `AMOS_MEMCHECK` | debugging: the copper lists, checked frees |
+
+Not on the host yet: audio (Paula, the Music extension, the narrator),
+ARexx, Amiga devices and library calls (`Lib Call`, `Dev Open`...). Results
+that differ from the Amiga's: the last digit of transcendental functions
+(the host's libm), and peeks at Amiga addresses (`Leek(4)`).
 
 ### Deliberate differences from the original
 
@@ -249,6 +275,13 @@ Bugs of the assembler that the C++ fixes. Everything else keeps the
 original behaviour, quirks included (the tests record the original
 binaries' results). Where a fix changes a recorded result, the golden file
 has the corrected one.
+
+The editor's default palette is blue instead of teal (`Ed_Palette` in
+`+Editor_Config.s`: colours 2, 5 and 6 are $037, $5AE and $27C instead of
+$077, $0DD and $0AA). It is a change of taste, not a fix: a config saved
+by the editor keeps its own palette, and `make install-hd` leaves the
+installed configs alone. The emulator tests run with the original config,
+which their editor screenshots were recorded with.
 
 AMOSPro starts on a stack of its own (64K, StackSwap in Cold_Start, given
 back in Get_Out): the C++ needs more than the 4K a CLI gives by default,
@@ -569,13 +602,15 @@ Start-up and system files (`+B.s`)
 
 ## Verification
 
-`tools/bincmp.py` compares hunk files semantically. `make verify` covers
-the programs that are still pure assembler: AMOSPro and AMOSPro.Lib differ
-from the originals now, and the emulator tests are what checks them. It accepts the encoding
-choices on which GenAm and vasm differ (`andi` vs `and #imm`, the order of `exg`
-operands, padding, memory flags in the hunk id, reloc order) and reports
-everything else. All nine programs and libraries are equivalent to the
-prebuilt ones, and the two config files are byte-identical.
+`tools/bincmp.py` compares hunk files semantically. It accepts the
+encoding choices on which GenAm and vasm differ (`andi` vs `and #imm`, the
+order of `exg` operands, padding, memory flags in the hunk id, reloc order)
+and reports everything else. Before the conversion all nine programs and
+libraries were equivalent to the prebuilt ones. Now AMOSPro and the
+`.Lib` files have C++ in them and the emulator tests are what checks them;
+`make verify` compares the two config files: the interpreter's is
+byte-identical, the editor's differs only in its palette (blue, see the
+deliberate differences).
 
 Three source fixes were needed:
 - `+B.s`: `bne.` is now `bne`, assembled as `bne.w` as before.

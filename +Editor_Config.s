@@ -75,7 +75,7 @@ Debut
 .EdM_Keys	dc.b	-1		25
 .Esc_KMemMax	dc.w	20		26
 ; Editor palette
-.Ed_Palette	dc.w	$000,$06f,$077,$eee,$f00,$0dd,$0aa,$FF3		28
+.Ed_Palette	dc.w	$000,$06f,$037,$eee,$f00,$5ae,$27c,$FF3		28
 ; Escape mode position
 		dc.w	200		44
 		dc.w	256		46
