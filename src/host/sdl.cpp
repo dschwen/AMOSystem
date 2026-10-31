@@ -221,7 +221,13 @@ void window_start()
         return;
     if (sdl.Init(0x20) < 0)                 // SDL_INIT_VIDEO
         return;
-    window = sdl.CreateWindow("AMOS Professional", 0x2FFF0000, 0x2FFF0000, FrameWidth, FrameHeight * 2, 0x20);
+    // magnified (AMOS_SCALE, 2 by default): a hires pixel to scale by scale,
+    // a line to twice that (the frame's lines are PAL's 288)
+    int scale = 2;
+    if (const char *s = getenv("AMOS_SCALE"))
+        scale = s[0] >= '1' && s[0] <= '9' ? s[0] - '0' : 2;
+    window = sdl.CreateWindow("AMOS Professional", 0x2FFF0000, 0x2FFF0000, FrameWidth * scale, FrameHeight * 2 * scale,
+                              0x20);
     if (!window)
         return;
     renderer = sdl.CreateRenderer(window, -1, 0);
