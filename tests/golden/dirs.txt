@@ -25,4 +25,5 @@ ERROR  23
 ERROR  23
 ERROR  23
 [ Ram Disk:                            ]
+[ RAM:                                 ]
 end

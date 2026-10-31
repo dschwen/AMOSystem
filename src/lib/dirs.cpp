@@ -835,6 +835,9 @@ extern "C" uint32_t lib_fn_dev_first(const uint8_t *filter)
     d.FillF32 = 1;
     d.DirComp = 0;
     d.FillFSize = d.DirLNom;
+    // (both the devices and the assigns: the original took the first letter
+    // of the current directory, "D" or "A", for the kind wanted)
+    *ptr<char>(d.Name1) = 0;
     fill_devices();
     check_no_monitor();
     return fill_next_string();

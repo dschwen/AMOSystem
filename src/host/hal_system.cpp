@@ -341,7 +341,6 @@ void free_signal(int32_t n)
     if (n >= 16 && n < 32)
         signals_used &= ~(1u << n);
 }
-void add_task(Task *, void *, void *) { host::missing("task", nullptr); }
 
 // The devices: input.device (AMOS.library's input handler) and
 // console.device (its keymap: hal::key_to_text) open; the others not

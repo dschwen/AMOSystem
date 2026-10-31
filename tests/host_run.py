@@ -29,13 +29,26 @@ AMOS = os.path.join(ROOT, 'build', 'host', 'amos')
 TREE = os.path.join(ROOT, 'build', 'dist', 'AMOS')
 
 
+HOST_ONLY = os.path.join(ROOT, 'tests', 'host_only')    # tests of what only the host has (its devices)
+
+
+def source_of(name):
+    p = os.path.join(HOST_ONLY, name + '.asc')
+    return p if os.path.exists(p) else os.path.join(run.TESTS, name + '.asc')
+
+
+def golden_of(name):
+    p = os.path.join(HOST_ONLY, name + '.txt')
+    return p if os.path.exists(p) else os.path.join(run.GOLDEN, name + '.txt')
+
+
 def prepare(name, tables):
     """The test's drive: its program, the programs it uses, out/"""
     hd = os.path.join(RUN, name)
     shutil.rmtree(hd, ignore_errors=True)
     out = os.path.join(hd, 'out')
     os.makedirs(out)
-    with open(os.path.join(run.TESTS, name + '.asc'), encoding='latin-1') as f:
+    with open(source_of(name), encoding='latin-1') as f:
         body = f.read()
     head = ''
     if body.lower().startswith('set double precision'):
@@ -63,10 +76,11 @@ def main():
     ap.add_argument('--timeout', type=int, default=30)
     args = ap.parse_args()
     tables = amostok.Tables([os.path.join(TREE, 'APSystem')])
-    tests = args.tests or sorted(f[:-4] for f in os.listdir(run.TESTS) if f.endswith('.asc'))
+    tests = args.tests or sorted(f[:-4] for d in (run.TESTS, HOST_ONLY) for f in os.listdir(d) if f.endswith('.asc'))
     passed = failed = skipped = 0
     for name in tests:
-        if run.is_editor_test(name) or os.path.exists(os.path.join(run.TESTS, name + '.input')):
+        own = os.path.exists(os.path.join(HOST_ONLY, name + '.asc'))
+        if not own and (run.is_editor_test(name) or os.path.exists(os.path.join(run.TESTS, name + '.input'))):
             skipped += 1
             continue
         hd, out = prepare(name, tables)
@@ -74,6 +88,7 @@ def main():
         ram = os.path.join(hd, 'ram')
         os.makedirs(ram, exist_ok=True)
         env['AMOS_ASSIGNS'] = f'AMOSTEST={hd};AMOSPRO={TREE};RAM={ram}'
+        env['AMOS_DEVICES'] = os.path.join(hd, 'devices')
         env['AMOS_DISPLAY'] = 'none'           # no window, no sound
         try:
             p = subprocess.run([AMOS, f'AMOSTEST:{name}.AMOS'], cwd=TREE, env=env, timeout=args.timeout,
@@ -82,7 +97,7 @@ def main():
             note = note[-1] if note else f'exit {p.returncode}'
         except subprocess.TimeoutExpired:
             note = 'timeout'
-        want = os.path.join(run.GOLDEN, name + '.txt')
+        want = golden_of(name)
         got = os.path.join(out, name + '.txt')
         if os.path.exists(want) and os.path.exists(got) and open(want, 'rb').read() == open(got, 'rb').read():
             passed += 1

@@ -258,8 +258,17 @@ with `src/host` and no assembler:
   given out as exec does; AMOS's data (programs, banks, token tables)
   stay big-endian (`core/endian.h`);
 - files: POSIX, with AmigaDOS's names; the current directory is
-  `AMOSPRO:`, other volumes are assigns (`AMOS_ASSIGNS`; `RAM:`'s volume
-  name is "Ram Disk", as on the Amiga);
+  `AMOSPRO:`. The disks are the **devices directory**: each directory in
+  `devices/` (in the directory AMOS starts in; `AMOS_DEVICES` names another)
+  is a volume, and `Work:Programs/game.AMOS` is the file
+  `devices/Work/Programs/game.AMOS` (names are not case-sensitive, as
+  AmigaDOS's). A new devices directory comes with `RAM` (`RAM:`, whose
+  volume is "Ram Disk") and `Work`; a directory made in it appears at once
+  as a volume, in the file selector's "Devices" too. Assigns (`AMOS_ASSIGNS`,
+  `c:assign`, AMOS's own AMOSPro_...) are listed apart, as on the Amiga;
+  Load, Save and the editor's file selector use them all;
+- the file selector's task, and any other, runs while the program waits
+  (`host/tasks.cpp`: coroutines, no pre-emption);
 - the custom chips as registers, a copper and a renderer
   (`host/display.cpp`: bitplanes, hires, dual playfield, EHB, HAM,
   sprites) and a blitter (`host/hal_chips.cpp`);
@@ -283,7 +292,8 @@ and input tests are left out). The environment:
 
 | Variable | Use |
 |---|---|
-| `AMOS_ASSIGNS` | `NAME=path;...`: assigns (volumes) |
+| `AMOS_ASSIGNS` | `NAME=path;...`: assigns |
+| `AMOS_DEVICES` | the devices directory (`devices` where AMOS starts) |
 | `AMOS_DISPLAY=none` | no window, no sound |
 | `AMOS_SCALE` | the window's magnification (1-9, 2 by default) |
 | `AMOS_SHOT=file.ppm` | the last frame into that file; with `AMOS_SHOT_FRAME=n`, frame n |
@@ -320,6 +330,11 @@ $077, $0DD and $0AA). It is a change of taste, not a fix: a config saved
 by the editor keeps its own palette, and `make install-hd` leaves the
 installed configs alone. The emulator tests run with the original config,
 which their editor screenshots were recorded with.
+
+`Dev First$` and `Prg First$` listed only the devices, or only the assigns,
+when the name of the current directory began with `D`, respectively `A`:
+they took that letter for the kind of list the file selector asks for
+(its "Devices" and "Assigns" buttons). They list both now.
 
 AMOSPro starts on a stack of its own (64K, StackSwap in Cold_Start, given
 back in Get_Out): the C++ needs more than the 4K a CLI gives by default,

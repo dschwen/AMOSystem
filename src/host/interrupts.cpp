@@ -73,6 +73,9 @@ void window_start();
 void window_frame();
 void audio_interrupts();
 void audio_frame();
+void run_tasks();
+void task_yield();
+bool in_task();
 
 // The interrupts due
 void poll()
@@ -144,21 +147,32 @@ void remove_vbl_server(Interrupt *server)
 // A wait loop: the interrupts due, a little sleep
 void idle()
 {
+    if (host::in_task()) {
+        host::task_yield();
+        return;
+    }
     host::poll();
     usleep(500);
+    host::run_tasks();
 }
 
 // WaitTOF: the next frame (its interrupts)
 void wait_frame()
 {
+    if (host::in_task()) {
+        host::task_yield();
+        return;
+    }
     if (!next_frame) {
         usleep(Frame);
+        host::run_tasks();
         return;
     }
     uint64_t t = now();
     if (t < next_frame)
         usleep(useconds_t(next_frame - t));
     host::poll();
+    host::run_tasks();
 }
 
 } // namespace amos::hal

@@ -204,7 +204,7 @@ uint16_t file_selector(uint16_t n)
         return 1;
     // the parameters as on the interpreter's stack: the last one first,
     // each a string (a length word, the text)
-    uint32_t parameters[4];
+    be_u32 parameters[4];
     for (int i = 0; i < 4; i++)
         parameters[3 - i] = address(message(uint16_t(n + i))) - 2;
     d.Ed_FSel = 1;

@@ -3,6 +3,12 @@
 
 #include "hal/files.h"
 
+namespace amos::host {
+void run_tasks();
+void task_yield();
+bool in_task();
+}
+
 #include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -41,9 +47,12 @@ int32_t dos_error(int e)
 struct Assign {
     char name[32];
     char *path;
+    bool volume;        // a directory of the devices directory
 };
 Assign assigns[64];
 int assign_count;
+
+void scan_devices();
 
 void read_assigns()
 {
@@ -62,6 +71,7 @@ void read_assigns()
             end = env + strlen(env);
         if (eq && eq < end && size_t(eq - env) < sizeof assigns[0].name) {
             Assign &a = assigns[assign_count++];
+            a.volume = false;
             memcpy(a.name, env, size_t(eq - env));
             a.name[eq - env] = 0;
             a.path = strndup(eq + 1, size_t(end - eq - 1));
@@ -76,19 +86,89 @@ void read_assigns()
     }
     if (cwd && !covered && assign_count < 64) {
         Assign &a = assigns[assign_count++];
+        a.volume = false;
         strcpy(a.name, "AMOSPRO");
         a.path = cwd;
         cwd = nullptr;
     }
     free(cwd);
+    scan_devices();
+}
+
+// The devices directory: each directory in it is a volume, the directories
+// and files below it those of the volume (AMOS_DEVICES, or "devices" in
+// the directory AMOS starts in). A volume made there appears at once. It
+// comes with RAM: (and a first disk, Work:) when it is new.
+char *devices_root;
+
+void devices_open()
+{
+    if (devices_root)
+        return;
+    const char *env = getenv("AMOS_DEVICES");
+    char path[1024];
+    if (env && *env) {
+        snprintf(path, sizeof path, "%s", env);
+    } else {
+        char *cwd = getcwd(nullptr, 0);
+        snprintf(path, sizeof path, "%s/devices", cwd ? cwd : ".");
+        free(cwd);
+    }
+    bool fresh = mkdir(path, 0777) == 0;
+    devices_root = realpath(path, nullptr);
+    if (!devices_root)
+        return;
+    char volume[1100];
+    snprintf(volume, sizeof volume, "%s/RAM", devices_root);
+    mkdir(volume, 0777);
+    if (fresh) {
+        snprintf(volume, sizeof volume, "%s/Work", devices_root);
+        mkdir(volume, 0777);
+    }
+}
+
+// The directories of the devices directory that are not assigns yet
+void scan_devices()
+{
+    devices_open();
+    if (!devices_root)
+        return;
+    DIR *d = opendir(devices_root);
+    if (!d)
+        return;
+    while (struct dirent *e = readdir(d)) {
+        if (e->d_name[0] == '.' || strlen(e->d_name) >= sizeof assigns[0].name || assign_count >= 64)
+            continue;
+        char path[1100];
+        snprintf(path, sizeof path, "%s/%s", devices_root, e->d_name);
+        struct stat st;
+        if (stat(path, &st) != 0 || !S_ISDIR(st.st_mode))
+            continue;
+        bool known = false;
+        for (int i = 0; i < assign_count; i++)
+            if (!strcasecmp(assigns[i].name, e->d_name))
+                known = true;
+        if (known)
+            continue;
+        Assign &a = assigns[assign_count++];
+        strcpy(a.name, e->d_name);
+        a.path = strdup(path);
+        a.volume = true;
+    }
+    closedir(d);
 }
 
 const char *assigned(const char *volume, size_t n)
 {
     read_assigns();
-    for (int i = 0; i < assign_count; i++)
-        if (strlen(assigns[i].name) == n && !strncasecmp(assigns[i].name, volume, n))
-            return assigns[i].path;
+    for (int pass = 0; pass < 2; pass++) {
+        for (int i = 0; i < assign_count; i++)
+            if (strlen(assigns[i].name) == n && !strncasecmp(assigns[i].name, volume, n))
+                return assigns[i].path;
+        // (a volume made since: in the devices directory)
+        if (!pass)
+            scan_devices();
+    }
     // RAM:'s volume, "Ram Disk"
     if (n == 8 && !strncasecmp(volume, "Ram Disk", 8))
         return assigned("RAM", 3);
@@ -516,6 +596,7 @@ bool assign_lock(const char *name, DirLock l)
         if (assign_count == 64)
             return false;
         assign_count++;
+        assigns[i].volume = false;
         memcpy(assigns[i].name, name, n);
         assigns[i].name[n] = 0;
     } else {
@@ -535,13 +616,17 @@ bool device_exists(const char *name)
     return n && assigned(name, n);
 }
 
-// The assigns (the host has no devices of its own)
+// The volumes: the assigns and the directories of the devices directory
 void each_device(void (*f)(const char *name, bool device, void *data), void *data)
 {
     read_assigns();
-    // (RAM: as its volume, "Ram Disk")
-    for (int i = 0; i < assign_count; i++)
-        f(strcasecmp(assigns[i].name, "RAM") ? assigns[i].name : "Ram Disk", false, data);
+    scan_devices();
+    for (int i = 0; i < assign_count; i++) {
+        f(assigns[i].name, assigns[i].volume, data);
+        // (RAM: is a device whose volume is "Ram Disk")
+        if (!strcasecmp(assigns[i].name, "RAM"))
+            f("Ram Disk", false, data);
+    }
 }
 
 bool delete_file(const char *name)
@@ -611,6 +696,16 @@ bool execute(const char *command, File, File)
     DirLock l = lock(path, LockShared);
     return l && assign_lock(name, l);
 }
-void delay(int32_t ticks) { usleep(useconds_t(ticks) * 20000); }
+void delay(int32_t ticks)
+{
+    for (; ticks > 0; ticks--) {
+        if (host::in_task())
+            host::task_yield();
+        else {
+            usleep(20000);
+            host::run_tasks();
+        }
+    }
+}
 
 } // namespace amos::hal
