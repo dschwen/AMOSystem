@@ -273,8 +273,6 @@ IORequest *check_io(IORequest *io) { return io; }
 void abort_io(IORequest *) {}
 int32_t wait_io(IORequest *) { return -1; }
 
-Interrupt *set_interrupt(int32_t, Interrupt *) { return nullptr; }
-
 // RawDoFmt: %[-][0][width][.limit][l]d, u, x, s, b (a BSTR), c; the
 // arguments are 16-bit words unless l, as exec's
 const void *raw_format(const char *format, const void *args, void (*put)(char, void *), void *data)

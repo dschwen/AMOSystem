@@ -20,6 +20,7 @@
 using namespace amos;
 
 extern "C" void w_vbl(uint8_t *data);
+extern "C" uint16_t host_chip_read(uint32_t offset);
 extern "C" uint8_t w_input[];
 
 namespace {
@@ -70,11 +71,17 @@ namespace amos::host {
 void display_save(const char *path);
 void window_start();
 void window_frame();
+void audio_interrupts();
+void audio_frame();
 
 // The interrupts due
 void poll()
 {
-    if (in_interrupt || !next_frame)
+    if (in_interrupt)
+        return;
+    if (host_chip_read(0x01E) & 0x0780)     // INTREQR: the audio's
+        audio_interrupts();
+    if (!next_frame)
         return;
     uint64_t t = now();
     if (t < next_frame)
@@ -85,6 +92,7 @@ void poll()
         next_frame = t;
     next_frame += Frame;
     run_vbl();
+    audio_frame();
     window_frame();
     // (debugging: AMOS_SHOT_FRAME=n, the frame n into AMOS_SHOT)
     static int frames;

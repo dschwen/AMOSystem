@@ -74,6 +74,7 @@ def main():
         ram = os.path.join(hd, 'ram')
         os.makedirs(ram, exist_ok=True)
         env['AMOS_ASSIGNS'] = f'AMOSTEST={hd};AMOSPRO={TREE};RAM={ram}'
+        env['AMOS_DISPLAY'] = 'none'           # no window, no sound
         try:
             p = subprocess.run([AMOS, f'AMOSTEST:{name}.AMOS'], cwd=TREE, env=env, timeout=args.timeout,
                                stdout=subprocess.PIPE, stderr=subprocess.STDOUT)

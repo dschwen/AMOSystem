@@ -246,6 +246,9 @@ with `src/host` and no assembler:
   sprites) and a blitter (`host/hal_chips.cpp`);
 - a window (`host/sdl.cpp`: libSDL2 loaded at run time, magnified twice)
   whose keyboard and mouse become the Amiga's input events;
+- Paula (`host/audio.cpp`): the four voices played by their DMA from the
+  registers, the audio interrupts at each block (exec's vectors,
+  `SetIntVector`), mixed each frame into SDL's sound;
 - topaz 8 and 9 from the user's Kickstart (`tools/extract_topaz.py`,
   `KICKSTART=` and `ROMKEY=` for an encrypted one; the result stays in
   `build/` and boxes replace the characters without one).
@@ -258,14 +261,14 @@ and input tests are left out). The environment:
 | Variable | Use |
 |---|---|
 | `AMOS_ASSIGNS` | `NAME=path;...`: assigns (volumes) |
-| `AMOS_DISPLAY=none` | no window |
+| `AMOS_DISPLAY=none` | no window, no sound |
 | `AMOS_SCALE` | the window's magnification (1-9, 2 by default) |
 | `AMOS_SHOT=file.ppm` | the last frame into that file; with `AMOS_SHOT_FRAME=n`, frame n |
+| `AMOS_WAV=file.wav` | the sound recorded into that file |
 | `AMOS_TRAP=seconds` | stops the program there, for a debugger |
 | `AMOS_COPPER`, `AMOS_MEMCHECK` | debugging: the copper lists, checked frees |
 
-Not on the host yet: audio (Paula, the Music extension, the narrator),
-ARexx, Amiga devices and library calls (`Lib Call`, `Dev Open`...). Results
+Not on the host yet: the narrator (`Say`), ARexx, Amiga devices and library calls (`Lib Call`, `Dev Open`...). Results
 that differ from the Amiga's: the last digit of transcendental functions
 (the host's libm), and peeks at Amiga addresses (`Leek(4)`).
 

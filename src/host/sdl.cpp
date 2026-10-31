@@ -2,8 +2,10 @@
 // build needs no SDL of its own). Each frame (host/display.cpp) is shown;
 // the keyboard and the mouse become the input events of the Amiga (raw
 // keys, relative mouse moves, the buttons in the qualifiers) for the input
-// handler AMOS.library installs (input.device's IND_ADDHANDLER). Without a
-// display (AMOS_DISPLAY=none, or no SDL) AMOS runs without a window.
+// handler AMOS.library installs (input.device's IND_ADDHANDLER); the sound
+// of the audio's voices (host/audio.cpp) is queued to SDL's. Without a
+// display (AMOS_DISPLAY=none, or no SDL) AMOS runs without a window and
+// without sound.
 
 #include "host/host.h"
 #include "host/glue.h"
@@ -43,7 +45,14 @@ struct Sdl {
     int (*SetRelativeMouseMode)(int);
     const char *(*GetError)();
     int (*ShowCursor)(int);
+    int (*InitSubSystem)(uint32_t);
+    uint32_t (*OpenAudioDevice)(const char *, int, const void *, void *, int);
+    void (*PauseAudioDevice)(uint32_t, int);
+    int (*QueueAudio)(uint32_t, const void *, uint32_t);
+    uint32_t (*GetQueuedAudioSize)(uint32_t);
 } sdl;
+
+uint32_t audio_device;
 
 void *window, *renderer, *texture;
 bool shown;
@@ -67,7 +76,34 @@ bool load()
            symbol(lib, sdl.RenderCopy, "SDL_RenderCopy") && symbol(lib, sdl.RenderPresent, "SDL_RenderPresent") &&
            symbol(lib, sdl.PollEvent, "SDL_PollEvent") &&
            symbol(lib, sdl.SetRelativeMouseMode, "SDL_SetRelativeMouseMode") &&
-           symbol(lib, sdl.GetError, "SDL_GetError") && symbol(lib, sdl.ShowCursor, "SDL_ShowCursor");
+           symbol(lib, sdl.GetError, "SDL_GetError") && symbol(lib, sdl.ShowCursor, "SDL_ShowCursor") &&
+           symbol(lib, sdl.InitSubSystem, "SDL_InitSubSystem") &&
+           symbol(lib, sdl.OpenAudioDevice, "SDL_OpenAudioDevice") &&
+           symbol(lib, sdl.PauseAudioDevice, "SDL_PauseAudioDevice") &&
+           symbol(lib, sdl.QueueAudio, "SDL_QueueAudio") &&
+           symbol(lib, sdl.GetQueuedAudioSize, "SDL_GetQueuedAudioSize");
+}
+
+// The sound: 44.1kHz, 16 bits, stereo, queued
+constexpr int Rate = 44100, FrameBytes = Rate / 50 * 4;
+void audio_start()
+{
+    if (sdl.InitSubSystem(0x10) < 0)        // SDL_INIT_AUDIO
+        return;
+    struct {
+        int freq;
+        uint16_t format;
+        uint8_t channels, silence;
+        uint16_t samples, padding;
+        uint32_t size;
+        void *callback, *userdata;
+    } want = {Rate, 0x8010, 2, 0, 1024, 0, 0, nullptr, nullptr};    // AUDIO_S16LSB
+    audio_device = sdl.OpenAudioDevice(nullptr, 0, &want, nullptr, 0);
+    if (!audio_device)
+        return;
+    static const uint8_t silence[FrameBytes * 2] = {};
+    sdl.QueueAudio(audio_device, silence, sizeof silence);
+    sdl.PauseAudioDevice(audio_device, 0);
 }
 
 // ---- the input --------------------------------------------------------------
@@ -217,9 +253,10 @@ void events()
 void window_start()
 {
     const char *want = getenv("AMOS_DISPLAY");
-    if ((want && !strcmp(want, "none")) || !getenv("DISPLAY") || !load())
+    if ((want && !strcmp(want, "none")) || !load())
         return;
-    if (sdl.Init(0x20) < 0)                 // SDL_INIT_VIDEO
+    audio_start();
+    if (!getenv("DISPLAY") || sdl.Init(0x20) < 0)   // SDL_INIT_VIDEO
         return;
     // magnified (AMOS_SCALE, 2 by default): a hires pixel to scale by scale,
     // a line to twice that (the frame's lines are PAL's 288)
@@ -252,5 +289,12 @@ void window_frame()
 }
 
 void input_handler(Interrupt *is) { handler = is; }
+
+// A frame's sound (count stereo samples), unless the sound is behind
+void audio_queue(const int16_t *samples, int count)
+{
+    if (audio_device && sdl.GetQueuedAudioSize(audio_device) < FrameBytes * 4)
+        sdl.QueueAudio(audio_device, samples, uint32_t(count) * 4);
+}
 
 } // namespace amos::host

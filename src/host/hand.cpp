@@ -45,6 +45,16 @@ void host_w_get_col(AllRegs &r) { r.d[0] = uint32_t(w_collision_get(ptr<uint8_t>
 
 } // namespace amos::host
 
+#include "ext/music.h"
+
+namespace amos::host {
+
+// music_glue.s music_sami_entry: the audio interrupt of a voice's
+// sample, a1 its data
+void host_music_sami_entry(AllRegs &r) { ext_music_sami(ptr<SampleInt>(r.a[1])); }
+
+} // namespace amos::host
+
 extern "C" uint8_t ver_prg_run_it_entry[];
 
 namespace amos::host {

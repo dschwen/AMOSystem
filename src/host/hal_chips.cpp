@@ -2,7 +2,8 @@
 // (host/include/hardware/custom.h) and CIA A's port A. The registers the
 // display, the sprites and the audio read keep what was written; the
 // set/clear registers (DMACON, INTENA, INTREQ, ADKCON) change their read
-// side; a write to BLTSIZE does the blit. The beam's position comes from
+// side; a write to BLTSIZE does the blit, one to DMACON starts or stops
+// the audio's voices (host/audio.cpp). The beam's position comes from
 // the time (a PAL frame of 312 lines each 20ms).
 
 #include "hal/chips.h"
@@ -10,6 +11,10 @@
 
 #include <string.h>
 #include <time.h>
+
+namespace amos::host {
+void audio_dma(uint16_t before, uint16_t after);
+}
 
 namespace {
 
@@ -196,9 +201,12 @@ uint16_t host_chip_read(uint32_t offset)
 void host_chip_write(uint32_t offset, uint16_t v)
 {
     switch (offset) {
-    case 0x096:             // DMACON
+    case 0x096: {           // DMACON (the audio's voices started, stopped)
+        uint16_t before = word(0x002);
         set_clear(0x002, v);
+        amos::host::audio_dma(before, word(0x002));
         return;
+    }
     case 0x09A:             // INTENA
         set_clear(0x01C, v);
         return;

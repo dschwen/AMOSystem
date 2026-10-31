@@ -47,10 +47,12 @@ enum : uint32_t {
 [[noreturn]] void music_disk_error() { error(DEBase + 15); }
 
 // The default envelopes, after the periods in the extension
-const uint16_t EnvDef[] = {1, 64, 4, 55, 5, 50, 25, 0, 0, 0};
-const uint16_t EnvShoot[] = {1, 64, 10, 0, 0, 0};
-const uint16_t EnvBoom[] = {1, 64, 10, 50, 50, 0, 0, 0};
-const uint16_t EnvBell[] = {1, 64, 4, 40, 25, 0, 0, 0};
+// (in AMOS's byte order: the voices' envelopes read them from memory)
+constexpr be_u16 B(uint16_t v) { return be_u16(v); }
+const be_u16 EnvDef[] = {B(1), B(64), B(4), B(55), B(5), B(50), B(25), B(0), B(0), B(0)};
+const be_u16 EnvShoot[] = {B(1), B(64), B(10), B(0), B(0), B(0)};
+const be_u16 EnvBoom[] = {B(1), B(64), B(10), B(50), B(50), B(0), B(0), B(0)};
+const be_u16 EnvBell[] = {B(1), B(64), B(4), B(40), B(25), B(0), B(0), B(0)};
 
 // Octaves: offset of the wave's part, its length in words
 const uint16_t TFreq[] = {0, 256 / 2, 0, 256 / 2, 256, 128 / 2, 384, 64 / 2, 448, 32 / 2,
@@ -494,7 +496,7 @@ void go_bell(uint16_t mask, uint32_t note, uint32_t wait, int16_t forced, uint32
 }
 
 // Shout: noise down the four voices
-void shout(uint16_t note, const uint16_t *env)
+void shout(uint16_t note, const be_u16 *env)
 {
     stop_dma(0);
     voices(0);
