@@ -92,6 +92,18 @@ void read_assigns()
         cwd = nullptr;
     }
     free(cwd);
+    // START: where AMOS was started (the programs named on the command line)
+    if (const char *start = getenv("AMOS_START_DIR"); start && *start && assign_count < 64) {
+        bool known = false;
+        for (int i = 0; i < assign_count; i++)
+            known |= !strcasecmp(assigns[i].name, "START");
+        if (!known) {
+            Assign &a = assigns[assign_count++];
+            a.volume = false;
+            strcpy(a.name, "START");
+            a.path = strdup(start);
+        }
+    }
     scan_devices();
 }
 
@@ -107,14 +119,34 @@ void devices_open()
         return;
     const char *env = getenv("AMOS_DEVICES");
     char path[1024];
+    struct stat st;
+    const char *start = getenv("AMOS_START_DIR");
+    const char *home = getenv("HOME");
+    const char *data = getenv("XDG_DATA_HOME");
+    bool fresh;
     if (env && *env) {
         snprintf(path, sizeof path, "%s", env);
+        fresh = mkdir(path, 0777) == 0;
+    } else if (start && (snprintf(path, sizeof path, "%s/devices", start), stat(path, &st) == 0 && S_ISDIR(st.st_mode))) {
+        fresh = false;      // (a devices directory where AMOS was started)
     } else {
-        char *cwd = getcwd(nullptr, 0);
-        snprintf(path, sizeof path, "%s/devices", cwd ? cwd : ".");
-        free(cwd);
+        // the user's own: $XDG_DATA_HOME/amos/devices (~/.local/share/amos/devices)
+        if (data && *data)
+            snprintf(path, sizeof path, "%s/amos", data);
+        else
+            snprintf(path, sizeof path, "%s/.local/share/amos", home ? home : ".");
+        char parent[1024];
+        snprintf(parent, sizeof parent, "%s", path);
+        for (char *s = parent + 1; *s; s++)
+            if (*s == '/') {
+                *s = 0;
+                mkdir(parent, 0777);
+                *s = '/';
+            }
+        mkdir(path, 0777);
+        strncat(path, "/devices", sizeof path - strlen(path) - 1);
+        fresh = mkdir(path, 0777) == 0;
     }
-    bool fresh = mkdir(path, 0777) == 0;
     devices_root = realpath(path, nullptr);
     if (!devices_root)
         return;

@@ -9,7 +9,18 @@ no assembler in the build.
 make            # build/AMOSPro
 make dist       # build/dist/AMOS: the AMOS tree with the new AMOSPro
 make host       # build/host/amos: AMOS as a program of this computer
+make install-host [PREFIX=~/.local]    # install it; make uninstall-host removes it
 ```
+
+The installed `amos` (`PREFIX/bin/amos`, the AMOS tree in `PREFIX/share/amos/AMOS`)
+runs from any directory: it finds its tree from where the program is
+(`AMOS_HOME` names another), and runs in it. Where it was started is the
+volume `START:`: `amos prog.AMOS` or `amos /home/me/prog.AMOS` runs
+`START:prog.AMOS`. The disks are the devices directory: `AMOS_DEVICES`, else
+`devices` in the directory it was started in, if there is one, else
+`~/.local/share/amos/devices` (`$XDG_DATA_HOME/amos/devices`), which `make
+uninstall-host` leaves. The topaz font is made at build time from a Kickstart
+(`KICKSTART=`, `ROMKEY=`, see `make host`); the installation needs no ROM.
 
 ## What replaced the original Amiga tools
 
@@ -193,7 +204,8 @@ with `src/host` and no assembler:
   stay big-endian (`core/endian.h`);
 - files: POSIX, with AmigaDOS's names; the current directory is
   `AMOSPRO:`. The disks are the **devices directory**: each directory in
-  `devices/` (in the directory AMOS starts in; `AMOS_DEVICES` names another)
+  `devices/` (in the directory AMOS starts in if there is one, else in the
+  user's data directory; `AMOS_DEVICES` names another)
   is a volume, and `Work:Programs/game.AMOS` is the file
   `devices/Work/Programs/game.AMOS` (names are not case-sensitive, as
   AmigaDOS's). A new devices directory comes with `RAM` (`RAM:`, whose
@@ -227,7 +239,8 @@ and input tests are left out). The environment:
 | Variable | Use |
 |---|---|
 | `AMOS_ASSIGNS` | `NAME=path;...`: assigns |
-| `AMOS_DEVICES` | the devices directory (`devices` where AMOS starts) |
+| `AMOS_HOME` | the AMOS tree (found from the program by default) |
+| `AMOS_DEVICES` | the devices directory |
 | `AMOS_DISPLAY=none` | no window, no sound |
 | `AMOS_SCALE` | the window's magnification (1-9, 2 by default) |
 | `AMOS_SHOT=file.ppm` | the last frame into that file; with `AMOS_SHOT_FRAME=n`, frame n |

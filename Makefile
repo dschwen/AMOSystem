@@ -5,6 +5,9 @@
 #                 AMOSPro and the editor's configuration with the blue palette
 #   make test     run the AMOS test programs in FS-UAE (tests/run.py)
 #   make host     build/host/amos: AMOS as a program of this computer
+#   make install-host [PREFIX=~/.local]
+#                 install it: PREFIX/bin/amos and the AMOS tree in PREFIX/share/amos
+#   make uninstall-host [PREFIX=~/.local]
 #   make install-hd
 #                 replace AMOSPro on the FS-UAE Workbench drive (HD=...),
 #                 backing up the original to HD_BACKUP
@@ -47,7 +50,7 @@ AMIGA_DIRS   := src/lib src/main src/verif src/interp src/ext src/hal src/w src/
 AMIGA_CXX    := $(sort $(wildcard $(addsuffix /*.cpp,$(AMIGA_DIRS))))
 AMOSPRO_LINK := $(OBJ)/src/amiga/start.o $(OBJ)/src/amiga/native.o $(patsubst %.cpp,$(OBJ)/%.o,$(AMIGA_CXX))
 
-.PHONY: all dist test test-reference install-hd host-check host clean
+.PHONY: all dist test test-reference install-hd host-check host host-release install-host uninstall-host clean
 .SECONDARY:
 .DELETE_ON_ERROR:
 
@@ -103,7 +106,8 @@ install-hd: all
 
 HOST_SRC    := $(filter-out %_amiga.cpp src/amiga/%,$(wildcard src/*/*.cpp)) $(HOST)/topaz.cpp
 HOST_OBJ    := $(patsubst %.cpp,$(HOST)/obj/%.o,$(HOST_SRC))
-HOST_FLAGS  := -m64 -O0 -g -D__use_amiga_stdc_c99 -std=c++20 -fno-exceptions -fno-rtti -fno-threadsafe-statics -fpack-struct=2 \
+HOST_OPT    ?= -O0 -g
+HOST_FLAGS  := -m64 $(HOST_OPT) -D__use_amiga_stdc_c99 -std=c++20 -fno-exceptions -fno-rtti -fno-threadsafe-statics -fpack-struct=2 \
                -Isrc/host/include -Isrc -idirafter $(AMIGA_PREFIX)/m68k-amigaos/ndk-include -MMD -MP
 
 # topaz, from the user's Kickstart (as the tests' emulator has it)
@@ -124,6 +128,29 @@ host: $(HOST_OBJ)
 		{ grep -v "undefined reference" $(HOST)/link.txt | grep -i "error\|multiple" ; true; }
 	grep -o "undefined reference to .*" $(HOST)/link.txt | sort -u \
 		| tee $(HOST)/missing.txt | wc -l | sed 's/$$/ symbols missing (build\/host\/missing.txt)/'
+
+# The same, optimised, in build/host-release (what is installed)
+host-release:
+	$(MAKE) host HOST=$(BUILD)/host-release HOST_OPT='-O2'
+
+# Install: the program, and the AMOS tree it runs in (it finds it from where it is: ../share/amos/AMOS),
+# so that it does not matter where it is started. The tree is written to (the configurations), so
+# the default is a user's own directory.
+PREFIX ?= $(HOME)/.local
+
+install-host: host-release dist
+	install -d $(DESTDIR)$(PREFIX)/bin $(DESTDIR)$(PREFIX)/share/amos
+	install -m 755 $(BUILD)/host-release/amos $(DESTDIR)$(PREFIX)/bin/amos
+	rm -rf $(DESTDIR)$(PREFIX)/share/amos/AMOS
+	cp -a $(DIST) $(DESTDIR)$(PREFIX)/share/amos/AMOS
+	@echo "installed $(DESTDIR)$(PREFIX)/bin/amos and $(DESTDIR)$(PREFIX)/share/amos/AMOS"
+
+# (the devices directories, the user's disks, are left: $${XDG_DATA_HOME:-~/.local/share}/amos/devices)
+uninstall-host:
+	rm -f $(DESTDIR)$(PREFIX)/bin/amos
+	rm -rf $(DESTDIR)$(PREFIX)/share/amos/AMOS
+	-rmdir $(DESTDIR)$(PREFIX)/share/amos
+	@echo "uninstalled; the devices (disks) in $${XDG_DATA_HOME:-~/.local/share}/amos/devices are kept"
 
 # Which C++ files compile for another host (tools/host_check.sh)
 host-check:
