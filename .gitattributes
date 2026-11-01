@@ -3,3 +3,4 @@
 
 # AMOS output, compared byte for byte (AMOS writes CR/LF line ends)
 tests/golden/** binary
+tests/host_only/**/*.txt binary
