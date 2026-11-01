@@ -5,6 +5,7 @@
 // IoHandler) and the system structures of its data zone (w/w.h).
 
 #include "hal/gfx.h"
+#include "core/ioreq.h"
 #include "hal/system.h"
 #include "runtime/glue.h"
 #include "runtime/runtime.h"
@@ -61,7 +62,7 @@ alignas(8) uint8_t input_io[256], console_io[256];
 
 namespace amos::w {
 struct Interrupt *input_interrupt() { return &input_is; }
-struct IOStdReq *input_request() { return reinterpret_cast<IOStdReq *>(input_io); }
+IOReq *input_request() { return reinterpret_cast<IOReq *>(input_io); }
 uint8_t *console_request() { return console_io; }
 struct Interrupt *vbl_interrupt() { return &vbl_is; }
 } // namespace amos::w

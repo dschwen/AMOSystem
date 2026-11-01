@@ -3,12 +3,12 @@
 #pragma once
 
 #include "core/amos.h"
+#include "core/ioreq.h"
 
 #include <hardware/custom.h>
 #include "hal/chips.h"
 
 struct Interrupt;
-struct IOStdReq;
 
 // +W.s, exported under _w_ names
 
@@ -30,12 +30,12 @@ inline Screen *current_screen() { return ptr<Screen>(wdata().EcCourant); }
 
 inline uint8_t *console_request() { return w_con_io; }         // +W.s ConIo
 inline struct Interrupt *input_interrupt() { return reinterpret_cast<struct Interrupt *>(wdata().Interrupt); }
-inline struct IOStdReq *input_request() { return reinterpret_cast<struct IOStdReq *>(wdata().IoDevice); }
+inline IOReq *input_request() { return reinterpret_cast<IOReq *>(wdata().IoDevice); }
 inline struct Interrupt *vbl_interrupt() { return reinterpret_cast<struct Interrupt *>(wdata().VBL_Is); }
 #else
 uint8_t *console_request();
 struct Interrupt *input_interrupt();
-struct IOStdReq *input_request();
+IOReq *input_request();
 struct Interrupt *vbl_interrupt();
 #endif
 

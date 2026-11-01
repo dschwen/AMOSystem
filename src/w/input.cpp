@@ -10,6 +10,7 @@
 // core/call_go.s).
 
 #include "core/amiga.h"
+#include "core/ioreq.h"
 #include "w/w.h"
 
 #include <exec/tasks.h>
@@ -106,7 +107,7 @@ bool key_event(WData &d, struct InputEvent *e, bool here)
         // The keymap, without CONTROL
         e->ie_Qualifier &= ~0x08;
         uint8_t buffer[64];
-        LONG n = hal::key_to_text(e, reinterpret_cast<char *>(buffer), sizeof buffer, reinterpret_cast<struct IORequest *>(console_request())->io_Device);
+        LONG n = hal::key_to_text(e, reinterpret_cast<char *>(buffer), sizeof buffer, ptr<void>(reinterpret_cast<IOReq *>(console_request())->io_Device));
         e->ie_Qualifier = (e->ie_Qualifier & 0xFF00) | shifts;
         code = e->ie_Code;
         ascii = n >= 1 ? buffer[0] : 0;
@@ -175,10 +176,10 @@ void send_fake_event()
     e.ie_Qualifier = IEQUALIFIER_RELATIVEMOUSE;
     e.ie_position.ie_addr = ptr<void>(FakeCode);
     auto io = input_request();
-    io->io_Data = &e;
+    io->io_Data = address(&e);
     io->io_Command = IND_WRITEEVENT;
     io->io_Length = 22;
-    hal::do_io(reinterpret_cast<struct IORequest *>(io));
+    hal::do_io(io);
 }
 
 } // namespace amos::w

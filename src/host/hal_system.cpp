@@ -2,6 +2,7 @@
 // addresses in 32 bits), one task, no devices or interrupts yet.
 
 #include "hal/system.h"
+#include "core/ioreq.h"
 #include "runtime/runtime.h"
 
 #include <stdio.h>
@@ -439,39 +440,90 @@ const char *const device_names[DeviceCount] = {"input.device", "console.device",
                                                "narrator.device"};
 } // namespace
 
-int32_t open_device(const char *name, uint32_t, IORequest *io, uint32_t)
+// (the requests in the 68000's layout, core/ioreq.h; io_Device the address
+// of one of the devices here)
+static int device_of(const IOReq *io)
+{
+    for (int i = 0; i < DeviceCount; i++)
+        if (uint32_t(io->io_Device) == address(&devices[i]))
+            return i;
+    return -1;
+}
+
+int32_t open_device(const char *name, uint32_t, IOReq *io, uint32_t)
 {
     for (int i = 0; i < DeviceCount; i++)
         if (!strcmp(name, device_names[i])) {
             devices[i].dd_Library.lib_Node.ln_Name = const_cast<char *>(device_names[i]);
-            io->io_Device = &devices[i];
+            io->io_Device = address(&devices[i]);
             io->io_Error = 0;
+            if (i == 3) {
+                // serial.device's settings in the request, as Kickstart 3.1's
+                // with the default preferences (measured): of the flags asked
+                // for, SERF_SHARED stays
+                auto *ser = reinterpret_cast<IOExtSer *>(io);
+                ser->io_CtlChar = 0x11130000;
+                ser->io_RBufLen = 512;
+                ser->io_ExtFlags = 0;
+                ser->io_Baud = 9600;
+                ser->io_BrkTime = 250000;
+                for (uint8_t &t : ser->io_TermArray)
+                    t = 0;
+                ser->io_ReadLen = 8;
+                ser->io_WriteLen = 8;
+                ser->io_StopBits = 1;
+                ser->io_SerFlags &= 0x20;
+                ser->io_Status = 0;
+            }
             return 0;
         }
     return -1;
 }
-void close_device(IORequest *io) { io->io_Device = nullptr; }
+void close_device(IOReq *io) { io->io_Device = 0; }
 // The narrator's write: the text said (the sound queued)
-static void narrate(IORequest *io)
+static void narrate(IOReq *io)
 {
-    auto *request = reinterpret_cast<IOStdReq *>(io);
-    if (io->io_Command == 3 && request->io_Data)      // CMD_WRITE
-        host::speak(static_cast<const char *>(request->io_Data), uint32_t(request->io_Length));
+    if (io->io_Command == 3 && io->io_Data)       // CMD_WRITE
+        host::speak(ptr<const char>(io->io_Data), uint32_t(io->io_Length));
 }
 
-int32_t do_io(IORequest *io)
+// serial.device (no port behind it): SDCMD_SETPARAMS checks the settings as
+// Kickstart 3.1's does (measured): a buffer under 64 bytes is SerErr_BufErr,
+// a speed outside 110-292000 or XON/XOFF with both characters 0
+// SerErr_InvParam; the others are done at once
+static int32_t serial_io(IOReq *io)
 {
-    if (io->io_Device == &devices[4]) {
+    auto *ser = reinterpret_cast<IOExtSer *>(io);
+    int8_t error = 0;
+    if (uint16_t(io->io_Command) == 11) {       // SDCMD_SETPARAMS
+        uint32_t baud = ser->io_Baud;
+        if (uint32_t(ser->io_RBufLen) < 64)
+            error = 4;
+        else if (baud < 110 || baud > 292000 || (!(ser->io_SerFlags & 0x80) && !(uint32_t(ser->io_CtlChar) >> 16)))
+            error = 5;
+    } else if (uint16_t(io->io_Command) == 3) { // CMD_WRITE
+        io->io_Actual = io->io_Length;
+    }
+    io->io_Error = error;
+    return error;
+}
+
+int32_t do_io(IOReq *io)
+{
+    int device = device_of(io);
+    if (device == 4) {
         narrate(io);
         while (host::speaking())        // (done when it has been heard)
             idle();
         return 0;
     }
-    if (io->io_Device != &devices[0] && io->io_Device != &devices[1])
+    if (device == 3)
+        return serial_io(io);
+    if (device != 0 && device != 1)
         return 0;
-    switch (io->io_Command) {
+    switch (uint16_t(io->io_Command)) {
     case 9:     // IND_ADDHANDLER
-        host::input_handler(static_cast<Interrupt *>(reinterpret_cast<IOStdReq *>(io)->io_Data));
+        host::input_handler(ptr<Interrupt>(io->io_Data));
         return 0;
     case 10:    // IND_REMHANDLER
         host::input_handler(nullptr);
@@ -483,22 +535,22 @@ int32_t do_io(IORequest *io)
 }
 // The narrator: a write speaks the text (host/speech.cpp), if there is a voice; a request sent
 // is done when the sound has played
-void send_io(IORequest *io)
+void send_io(IOReq *io)
 {
-    if (io->io_Device == &devices[4])
+    if (device_of(io) == 4)
         narrate(io);
     else
         do_io(io);
 }
-IORequest *check_io(IORequest *io) { return io->io_Device == &devices[4] && host::speaking() ? nullptr : io; }
-void abort_io(IORequest *io)
+IOReq *check_io(IOReq *io) { return device_of(io) == 4 && host::speaking() ? nullptr : io; }
+void abort_io(IOReq *io)
 {
-    if (io->io_Device == &devices[4])
+    if (device_of(io) == 4)
         host::speech_stop();
 }
-int32_t wait_io(IORequest *io)
+int32_t wait_io(IOReq *io)
 {
-    while (io->io_Device == &devices[4] && host::speaking())
+    while (device_of(io) == 4 && host::speaking())
         idle();
     return -1;
 }

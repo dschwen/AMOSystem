@@ -10,7 +10,9 @@ struct Library;
 struct Interrupt;
 struct MsgPort;
 struct Message;
-struct IORequest;
+namespace amos {
+struct IOReq;
+}
 
 namespace amos::hal {
 
@@ -64,13 +66,13 @@ void free_signal(int32_t n);
 void add_task(Task *task, void *entry, void *final_pc);
 
 // Devices (their units and IO requests, as exec's)
-int32_t open_device(const char *name, uint32_t unit, IORequest *io, uint32_t flags);
-void close_device(IORequest *io);
-int32_t do_io(IORequest *io);
-void send_io(IORequest *io);
-IORequest *check_io(IORequest *io);          // the request if done, or null
-void abort_io(IORequest *io);
-int32_t wait_io(IORequest *io);
+int32_t open_device(const char *name, uint32_t unit, IOReq *io, uint32_t flags);
+void close_device(IOReq *io);
+int32_t do_io(IOReq *io);
+void send_io(IOReq *io);
+IOReq *check_io(IOReq *io);          // the request if done, or null
+void abort_io(IOReq *io);
+int32_t wait_io(IOReq *io);
 
 // RawDoFmt: format (exec's %-codes, 16-bit arguments unless l) with args,
 // each character to put(c, data); returns the args past those used

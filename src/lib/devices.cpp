@@ -2,6 +2,7 @@
 // the amiga.lib port and IO request routines
 
 #include "core/amiga.h"
+#include "core/ioreq.h"
 #include "lib/devices.h"
 #include "lib/dos.h"
 #include "lib/strings.h"
@@ -65,26 +66,27 @@ extern "C" void lib_delete_port(struct MsgPort *port)
     hal::release(port, sizeof(struct MsgPort));
 }
 
-extern "C" struct IORequest *lib_create_ext_io(struct MsgPort *port, int32_t size)
+// (the requests in the 68000's layout: core/ioreq.h)
+extern "C" IOReq *lib_create_ext_io(struct MsgPort *port, int32_t size)
 {
     if (!port)
         return nullptr;
-    auto io = static_cast<struct IORequest *>(hal::allocate(size, MEMF_CLEAR | MEMF_PUBLIC));
+    auto io = static_cast<IOReq *>(hal::allocate(size, MEMF_CLEAR | MEMF_PUBLIC));
     if (!io)
         return nullptr;
     io->io_Message.mn_Node.ln_Type = NT_REPLYMSG;
     io->io_Message.mn_Length = static_cast<UWORD>(size);
-    io->io_Message.mn_ReplyPort = port;
+    io->io_Message.mn_ReplyPort = address(port);
     return io;
 }
 
-extern "C" void lib_delete_ext_io(struct IORequest *io)
+extern "C" void lib_delete_ext_io(IOReq *io)
 {
     if (!io)
         return;
     io->io_Message.mn_Node.ln_Type = 0xFF;
-    io->io_Device = reinterpret_cast<struct Device *>(-1);
-    io->io_Unit = reinterpret_cast<struct Unit *>(-1);
+    io->io_Device = 0xFFFFFFFFu;
+    io->io_Unit = 0xFFFFFFFFu;
     hal::release(io, io->io_Message.mn_Length);
 }
 
@@ -145,7 +147,7 @@ void close_device(DeviceChannel &d)
         d.opened() = 0;
         hal::close_device(d.io());
     }
-    if (struct IORequest *io = d.io()) {
+    if (IOReq *io = d.io()) {
         d.set_io(nullptr);
         lib_delete_ext_io(io);
     }
@@ -204,7 +206,7 @@ void open_device(DeviceChannel &d, const char *name, uint32_t length, uint32_t u
 }
 
 // Dev.GetIO
-struct IORequest *device_io(DeviceChannel &d)
+IOReq *device_io(DeviceChannel &d)
 {
     if (!d.opened())
         error(141);
@@ -212,9 +214,9 @@ struct IORequest *device_io(DeviceChannel &d)
 }
 
 // Dev.SendIO / Dev.DoIO: command, waiting for the one sent before
-struct IORequest *start_command(DeviceChannel &d, uint16_t command)
+IOReq *start_command(DeviceChannel &d, uint16_t command)
 {
-    struct IORequest *io = device_io(d);
+    IOReq *io = device_io(d);
     if (d.state() == 2)
         hal::wait_io(io);
     io->io_Command = command;
@@ -238,7 +240,7 @@ void do_command(DeviceChannel &d, uint16_t command)
 // Dev.CheckIO: -1 if nothing was started, else exec's CheckIO
 uint32_t check_device(DeviceChannel &d)
 {
-    struct IORequest *io = device_io(d);
+    IOReq *io = device_io(d);
     if (!d.state())
         return -1u;
     return address(hal::check_io(io));

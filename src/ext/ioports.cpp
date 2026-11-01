@@ -4,6 +4,7 @@
 // address in its ExtAdr), where its end routine closes the channels.
 
 #include "core/amiga.h"
+#include "core/ioreq.h"
 #include "lib/devices.h"
 #include "lib/strings.h"
 
@@ -49,14 +50,14 @@ DeviceChannel &serial(uint32_t n)
         fon_call();
     return channel(SerialIO + int(n) * 12);
 }
-struct IOExtSer *serial_io(uint32_t n) { return reinterpret_cast<struct IOExtSer *>(device_io(serial(n))); }
-struct IOStdReq *std_io(DeviceChannel &c) { return reinterpret_cast<struct IOStdReq *>(device_io(c)); }
+amos::IOExtSer *serial_io(uint32_t n) { return reinterpret_cast<amos::IOExtSer *>(device_io(serial(n))); }
+IOReq *std_io(DeviceChannel &c) { return device_io(c); }
 
 // Stpar
 void set_params(uint32_t n) { do_command(serial(n), SDCMD_SETPARAMS); }
 
 // A string of n characters read from the channel (n checked first)
-uint32_t read_string(DeviceChannel &c, struct IOStdReq *io, uint32_t n)
+uint32_t read_string(DeviceChannel &c, IOReq *io, uint32_t n)
 {
     if (n >= StringMax)
         fon_call();
@@ -64,7 +65,7 @@ uint32_t read_string(DeviceChannel &c, struct IOStdReq *io, uint32_t n)
     uint8_t *s = str_alloc(room);
     idata().HiChaine = address(s) + 2 + uint16_t(room);
     poke_w(s, uint16_t(n));
-    io->io_Data = s + 2;
+    io->io_Data = address(s + 2);
     io->io_Length = n;
     do_command(c, CMD_READ);
     return address(s);
@@ -73,12 +74,12 @@ uint32_t read_string(DeviceChannel &c, struct IOStdReq *io, uint32_t n)
 // The text of string s written with command
 void write_string(DeviceChannel &c, const uint8_t *s, uint16_t command, bool wait)
 {
-    struct IOStdReq *io = std_io(c);
+    IOReq *io = std_io(c);
     uint16_t n = str_len(s);
     if (!n)
         fon_call();
     io->io_Length = n;
-    io->io_Data = const_cast<uint8_t *>(s + 2);
+    io->io_Data = address(s + 2);
     if (wait)
         do_command(c, command);
     else
@@ -87,10 +88,10 @@ void write_string(DeviceChannel &c, const uint8_t *s, uint16_t command, bool wai
 
 void write_memory(DeviceChannel &c, uint32_t at, uint32_t length, uint16_t command, bool wait)
 {
-    struct IOStdReq *io = std_io(c);
+    IOReq *io = std_io(c);
     if (!length)
         fon_call();
-    io->io_Data = ptr<void>(at);
+    io->io_Data = at;
     io->io_Length = length;
     if (wait)
         do_command(c, command);
@@ -185,10 +186,10 @@ void ext_serial_open5(uint32_t n, uint32_t unit, uint32_t shared, uint32_t xon, 
         flags &= ~SERF_XDISABLED;
     if (shared)
         flags |= SERF_SHARED;
-    open_device(c, "serial.device", sizeof(struct IOExtSer), unit, 0, 145, 16,
-                uint32_t(offsetof(struct IOExtSer, io_SerFlags)) << 16 | flags);
+    open_device(c, "serial.device", sizeof(amos::IOExtSer), unit, 0, 145, 16,
+                uint32_t(offsetof(amos::IOExtSer, io_SerFlags)) << 16 | flags);
     if (unit) {
-        auto io = reinterpret_cast<struct IOExtSer *>(c.io());
+        auto io = reinterpret_cast<amos::IOExtSer *>(c.io());
         io->io_Baud = 1200;
         io->io_ReadLen = 7;
         io->io_WriteLen = 7;
@@ -221,11 +222,11 @@ void ext_serial_out(uint32_t n, uint32_t at, int32_t length)
 // =SERIAL GET(channel): a character, or -1
 int32_t ext_fn_serial_get(uint32_t n)
 {
-    struct IOExtSer *io = serial_io(n);
+    amos::IOExtSer *io = serial_io(n);
     do_command(serial(n), SDCMD_QUERY);
     if (!io->IOSer.io_Actual)
         return -1;
-    io->IOSer.io_Data = dt() + BufIn;
+    io->IOSer.io_Data = address(dt() + BufIn);
     io->IOSer.io_Length = 1;
     do_command(serial(n), CMD_READ);
     return dt()[BufIn];
@@ -234,7 +235,7 @@ int32_t ext_fn_serial_get(uint32_t n)
 // =SERIAL INPUT$(channel): what has arrived
 uint32_t ext_fn_serial_input(uint32_t n)
 {
-    struct IOExtSer *io = serial_io(n);
+    amos::IOExtSer *io = serial_io(n);
     do_command(serial(n), SDCMD_QUERY);
     uint32_t count = io->IOSer.io_Actual;
     if (!count)
@@ -251,7 +252,7 @@ void ext_serial_speed(uint32_t n, uint32_t baud)
 
 void ext_serial_bits(uint32_t n, uint32_t bits, uint32_t stop)
 {
-    struct IOExtSer *io = serial_io(n);
+    amos::IOExtSer *io = serial_io(n);
     io->io_ReadLen = uint8_t(bits);
     io->io_WriteLen = uint8_t(bits);
     io->io_StopBits = uint8_t(stop);
@@ -261,7 +262,7 @@ void ext_serial_bits(uint32_t n, uint32_t bits, uint32_t stop)
 // parity: -1 none, 0 even, 1 odd, 2 space, 3 mark
 void ext_serial_parity(uint32_t n, uint32_t parity)
 {
-    struct IOExtSer *io = serial_io(n);
+    amos::IOExtSer *io = serial_io(n);
     io->io_SerFlags &= ~(SERF_PARTY_ON | SERF_PARTY_ODD);
     io->io_ExtFlags &= ~(SEXTF_MSPON | SEXTF_MARK);
     switch (int16_t(parity)) {
@@ -284,7 +285,7 @@ void ext_serial_parity(uint32_t n, uint32_t parity)
 // SERIAL X channel,characters (-1: no xon/xoff)
 void ext_serial_x(uint32_t n, uint32_t x)
 {
-    struct IOExtSer *io = serial_io(n);
+    amos::IOExtSer *io = serial_io(n);
     io->io_SerFlags |= SERF_XDISABLED;
     if (x != uint32_t(-1)) {
         io->io_SerFlags &= ~SERF_XDISABLED;
@@ -301,7 +302,7 @@ void ext_serial_buf(uint32_t n, uint32_t length)
 
 void ext_serial_fast(uint32_t n)
 {
-    struct IOExtSer *io = serial_io(n);
+    amos::IOExtSer *io = serial_io(n);
     io->io_SerFlags &= ~SERF_PARTY_ON;
     io->io_ExtFlags &= ~SEXTF_MSPON;
     io->io_SerFlags |= SERF_XDISABLED;
@@ -322,7 +323,7 @@ int32_t ext_fn_serial_check(uint32_t n) { return truth(check_device(serial(n)));
 uint32_t ext_fn_serial_error(uint32_t n) { return uint8_t(serial_io(n)->IOSer.io_Error); }
 uint32_t ext_fn_serial_status(uint32_t n)
 {
-    struct IOExtSer *io = serial_io(n);
+    amos::IOExtSer *io = serial_io(n);
     do_command(serial(n), SDCMD_QUERY);
     return io->io_Status;
 }
@@ -366,8 +367,8 @@ void ext_printer_abort() { abort_device(channel(PrinterIO)); }
 int32_t ext_fn_printer_online()
 {
     DeviceChannel &c = channel(PrinterIO);
-    struct IOStdReq *io = std_io(c);
-    io->io_Data = dt() + Prt_Query;
+    IOReq *io = std_io(c);
+    io->io_Data = address(dt() + Prt_Query);
     do_command(c, PRD_QUERY);
     return io->io_Actual == 1 && !(dt()[Prt_Query] & 1) ? -1 : 0;
 }
@@ -427,7 +428,7 @@ void ext_parallel_abort() { abort_device(channel(ParallelIO)); }
 uint32_t ext_fn_parallel_status()
 {
     DeviceChannel &c = channel(ParallelIO);
-    auto io = reinterpret_cast<struct IOExtPar *>(device_io(c));
+    auto io = reinterpret_cast<amos::IOExtPar *>(device_io(c));
     do_command(c, PDCMD_QUERY);
     return io->io_Status;
 }
@@ -438,7 +439,7 @@ uint32_t ext_fn_parallel_error() { return uint8_t(std_io(channel(ParallelIO))->i
 uint32_t ext_fn_parallel_input1(int32_t length)
 {
     DeviceChannel &c = channel(ParallelIO);
-    auto io = reinterpret_cast<struct IOExtPar *>(device_io(c));
+    auto io = reinterpret_cast<amos::IOExtPar *>(device_io(c));
     io->io_ParFlags &= ~PARF_EOFMODE;
     if (length <= 0)
         fon_call();
@@ -448,7 +449,7 @@ uint32_t ext_fn_parallel_input1(int32_t length)
 uint32_t ext_fn_parallel_input2(int32_t length, uint32_t terminator)
 {
     DeviceChannel &c = channel(ParallelIO);
-    auto io = reinterpret_cast<struct IOExtPar *>(device_io(c));
+    auto io = reinterpret_cast<amos::IOExtPar *>(device_io(c));
     bool was = io->io_ParFlags & PARF_EOFMODE;
     io->io_ParFlags |= PARF_EOFMODE;
     auto term = reinterpret_cast<uint8_t *>(&io->io_PTermArray);

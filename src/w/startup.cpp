@@ -8,6 +8,7 @@
 // runs.
 
 #include "core/amiga.h"
+#include "core/ioreq.h"
 #include "w/w.h"
 
 #include <devices/input.h>
@@ -232,9 +233,9 @@ bool start(AllRegs *r)
     handler->is_Data = nullptr;
     handler->is_Node.ln_Pri = 100;
     auto io = input_request();
-    io->io_Data = handler;
+    io->io_Data = address(handler);
     io->io_Command = IND_ADDHANDLER;
-    hal::do_io(reinterpret_cast<struct IORequest *>(io));
+    hal::do_io(io);
     d.DevHere = 0xFFFF;
     // The default screen position
     d.DefWX = 129;
@@ -286,9 +287,9 @@ void end()
         hal::set_function(d.GfxBase, LVOLoadView, peek_l(w_old_loadview));
     if (d.DevHere) {
         auto io = input_request();
-        io->io_Data = input_interrupt();
+        io->io_Data = address(input_interrupt());
         io->io_Command = IND_REMHANDLER;
-        hal::do_io(reinterpret_cast<struct IORequest *>(io));
+        hal::do_io(io);
         close_input(reinterpret_cast<uint8_t *>(input_request()));
         // (the original left console.device open)
         close_console();

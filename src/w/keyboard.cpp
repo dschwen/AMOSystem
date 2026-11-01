@@ -5,6 +5,7 @@
 // Also the opening of input.device and console.device.
 
 #include "core/amiga.h"
+#include "core/ioreq.h"
 #include "w/w.h"
 
 #include <devices/input.h>
@@ -25,7 +26,7 @@ constexpr uint16_t FFkLong = 24;
 constexpr uint32_t Lio = 0x30, Lmsg = 0x20;     // +WEqu.s
 #else
 // (another host's structures are larger: room as they need)
-constexpr uint32_t Lio = sizeof(struct IOStdReq), Lmsg = sizeof(struct MsgPort);
+constexpr uint32_t Lio = sizeof(IOReq), Lmsg = sizeof(struct MsgPort);
 #endif
 
 volatile be_u16 &head() { return *static_cast<volatile be_u16 *>(&wdata().ClTete); }
@@ -94,14 +95,14 @@ void open_input(uint8_t *io)
     auto port = reinterpret_cast<struct MsgPort *>(io + Lio);
     port->mp_SigTask = hal::find_task(nullptr);
     hal::add_port(port);
-    hal::open_device(reinterpret_cast<CONST_STRPTR>("input.device"), 0, reinterpret_cast<struct IORequest *>(io), 0);
-    reinterpret_cast<struct IORequest *>(io)->io_Message.mn_ReplyPort = port;
+    hal::open_device(reinterpret_cast<CONST_STRPTR>("input.device"), 0, reinterpret_cast<IOReq *>(io), 0);
+    reinterpret_cast<IOReq *>(io)->io_Message.mn_ReplyPort = address(port);
 }
 
 // ClInput
 void close_input(uint8_t *io)
 {
-    hal::close_device(reinterpret_cast<struct IORequest *>(io));
+    hal::close_device(reinterpret_cast<IOReq *>(io));
     hal::remove_port(reinterpret_cast<struct MsgPort *>(io + Lio));
 }
 
@@ -111,10 +112,10 @@ void open_console()
     uint8_t *io = console_request();
     for (uint32_t i = 0; i < Lio + Lmsg; i++)
         io[i] = 0;
-    hal::open_device(reinterpret_cast<CONST_STRPTR>("console.device"), uint32_t(-1), reinterpret_cast<struct IORequest *>(io), 0);
+    hal::open_device(reinterpret_cast<CONST_STRPTR>("console.device"), uint32_t(-1), reinterpret_cast<IOReq *>(io), 0);
 }
 
-void close_console() { hal::close_device(reinterpret_cast<struct IORequest *>(console_request())); }
+void close_console() { hal::close_device(reinterpret_cast<IOReq *>(console_request())); }
 
 // ClVide: the key buffer emptied
 void clear_keys()
@@ -243,11 +244,11 @@ void w_sy_key_speed(AllRegs *r)
     uint8_t *io = ptr<uint8_t>(r->a[1]);
     open_input(io);
     set_time(io, r->d[1]);
-    reinterpret_cast<struct IOStdReq *>(io)->io_Command = IND_SETTHRESH;
-    hal::do_io(reinterpret_cast<struct IORequest *>(io));
+    reinterpret_cast<IOReq *>(io)->io_Command = IND_SETTHRESH;
+    hal::do_io(reinterpret_cast<IOReq *>(io));
     set_time(io, r->d[2]);
-    reinterpret_cast<struct IOStdReq *>(io)->io_Command = IND_SETPERIOD;
-    hal::do_io(reinterpret_cast<struct IORequest *>(io));
+    reinterpret_cast<IOReq *>(io)->io_Command = IND_SETPERIOD;
+    hal::do_io(reinterpret_cast<IOReq *>(io));
     close_input(io);
     r->d[0] = 0;
 }

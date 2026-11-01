@@ -478,23 +478,20 @@ void draw_ellipse(RastPort *rp, int32_t cx, int32_t cy, int32_t a, int32_t b)
     }
 }
 
-// (with AREAOUTLINE, its border in the outline pen)
+// (with AREAOUTLINE, its border in the outline pen as Draw draws it, the
+// line pattern going on: from the top left corner down, then right, up and
+// left, measured)
 void rect_fill(RastPort *rp, int32_t x1, int32_t y1, int32_t x2, int32_t y2)
 {
     fill_rect(rp, x1, y1, x2, y2);
     if (!(rp->Flags & AREAOUTLINE))
         return;
-    Painter p(rp);
     int8_t pen = rp->FgPen;
     rp->FgPen = rp->AOlPen;
-    for (int x = x1; x <= x2; x++) {
-        p.dot(x + p.ox, y1 + p.oy, true);
-        p.dot(x + p.ox, y2 + p.oy, true);
-    }
-    for (int y = y1 + 1; y < y2; y++) {
-        p.dot(x1 + p.ox, y + p.oy, true);
-        p.dot(x2 + p.ox, y + p.oy, true);
-    }
+    line(rp, x1, y1, x1, y2);
+    line(rp, x1, y2, x2, y2);
+    line(rp, x2, y2, x2, y1);
+    line(rp, x2, y1, x1, y1);
     rp->FgPen = pen;
 }
 

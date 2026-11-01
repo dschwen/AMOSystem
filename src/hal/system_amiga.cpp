@@ -1,6 +1,7 @@
 // hal/system.h on the Amiga: exec.library
 
 #include "hal/system.h"
+#include "core/ioreq.h"
 
 #include "core/amiga.h"
 
@@ -54,13 +55,15 @@ int32_t allocate_signal(int32_t n) { return AllocSignal(n); }
 void free_signal(int32_t n) { FreeSignal(n); }
 void add_task(Task *task, void *entry, void *final_pc) { AddTask(task, entry, final_pc); }
 
-int32_t open_device(const char *name, uint32_t unit, IORequest *io, uint32_t flags) { return OpenDevice(name, unit, io, flags); }
-void close_device(IORequest *io) { CloseDevice(io); }
-int32_t do_io(IORequest *io) { return DoIO(io); }
-void send_io(IORequest *io) { SendIO(io); }
-IORequest *check_io(IORequest *io) { return CheckIO(io); }
-void abort_io(IORequest *io) { AbortIO(io); }
-int32_t wait_io(IORequest *io) { return WaitIO(io); }
+// (amos::IOReq: the NDK's IORequest, its layout on the Amiga)
+static IORequest *rq(IOReq *io) { return reinterpret_cast<IORequest *>(io); }
+int32_t open_device(const char *name, uint32_t unit, IOReq *io, uint32_t flags) { return OpenDevice(name, unit, rq(io), flags); }
+void close_device(IOReq *io) { CloseDevice(rq(io)); }
+int32_t do_io(IOReq *io) { return DoIO(rq(io)); }
+void send_io(IOReq *io) { SendIO(rq(io)); }
+IOReq *check_io(IOReq *io) { return reinterpret_cast<IOReq *>(CheckIO(rq(io))); }
+void abort_io(IOReq *io) { AbortIO(rq(io)); }
+int32_t wait_io(IOReq *io) { return WaitIO(rq(io)); }
 
 void add_vbl_server(Interrupt *server) { AddIntServer(INTB_VERTB, server); }
 void remove_vbl_server(Interrupt *server) { RemIntServer(INTB_VERTB, server); }

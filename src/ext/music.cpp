@@ -3,6 +3,7 @@
 // of the banks. See music.h; the interrupt side is music_play.cpp.
 
 #include "core/amiga.h"
+#include "core/ioreq.h"
 #include "ext/music.h"
 #include "lib/banks.h"
 #include "lib/strings.h"
@@ -25,8 +26,8 @@ uint32_t music_lvo(uint32_t *r, uint32_t base, int32_t lvo);
 // lib/devices.cpp: amiga.lib
 struct MsgPort *lib_create_port(const char *name, int32_t priority);
 void lib_delete_port(struct MsgPort *port);
-struct IORequest *lib_create_ext_io(struct MsgPort *port, int32_t size);
-void lib_delete_ext_io(struct IORequest *io);
+amos::IOReq *lib_create_ext_io(struct MsgPort *port, int32_t size);
+void lib_delete_ext_io(amos::IOReq *io);
 }
 
 namespace {
@@ -505,7 +506,7 @@ void shout(uint16_t note, const be_u16 *env)
 
 // ---- the narrator ------------------------------------------------------
 
-struct IOStdReq *write_io() { return ptr<struct IOStdReq>(md().WriteIo); }
+IOReq *write_io() { return ptr<IOReq>(md().WriteIo); }
 uint8_t *read_io() { return const_cast<uint8_t *>(md().ReadIo); }
 
 // Sami_install / Sami_remove: the audio interrupts are the samples'
@@ -552,7 +553,7 @@ void samples_remove()
 // NarInit: the narrator's defaults
 void narrator_defaults()
 {
-    if (struct IOStdReq *io = write_io()) {
+    if (IOReq *io = write_io()) {
         uint8_t *b = reinterpret_cast<uint8_t *>(io);
         poke_w(b + 48, 150);
         poke_w(b + 50, 110);
@@ -568,16 +569,16 @@ void narrator_defaults()
 // TALK STOP: a speech in multitask mode stopped
 void talk_stop()
 {
-    struct IOStdReq *io = write_io();
+    IOReq *io = write_io();
     if (!io)
         return;
     uint8_t *b = reinterpret_cast<uint8_t *>(io);
     if (!b[66])
         return;
     b[66] = 0;
-    if (!hal::check_io(reinterpret_cast<struct IORequest *>(io)))
-        hal::abort_io(reinterpret_cast<struct IORequest *>(io));
-    hal::wait_io(reinterpret_cast<struct IORequest *>(io));
+    if (!hal::check_io(io))
+        hal::abort_io(io);
+    hal::wait_io(io);
     samples_install();
 }
 
@@ -591,7 +592,7 @@ void narrator_open()
     }
     m.WritePort = address(lib_create_port(nullptr, 0));
     m.WriteIo = address(lib_create_ext_io(ptr<struct MsgPort>(m.WritePort), 88));
-    if (hal::open_device(const_cast<char *>("narrator.device"), 0, ptr<struct IORequest>(m.WriteIo), 0))
+    if (hal::open_device(const_cast<char *>("narrator.device"), 0, ptr<IOReq>(m.WriteIo), 0))
         error(NoNar);
     m.ReadPort = address(lib_create_port(nullptr, 0));
     uint8_t *r = read_io();
@@ -644,20 +645,19 @@ void say(const uint8_t *text, uint32_t multi)
         count = 1024;
     }
     samples_remove();
-    struct IOStdReq *io = write_io();
-    // (the flag of the request, a byte of AMOS's own, before the fields the system reads: on
-    // another host they overlap)
+    IOReq *io = write_io();
+    // (the flag of the request, a byte of AMOS's own)
     uint8_t *b = reinterpret_cast<uint8_t *>(io);
     b[66] = uint16_t(multi) ? 1 : 0;
     io->io_Command = CMD_WRITE;
     io->io_Length = count;
-    io->io_Data = buffer;
+    io->io_Data = address(buffer);
     if (!uint16_t(multi)) {
-        hal::do_io(reinterpret_cast<struct IORequest *>(io));
+        hal::do_io(io);
         samples_install();
         voices(0x0F);
     } else {
-        hal::send_io(reinterpret_cast<struct IORequest *>(io));
+        hal::send_io(io);
     }
 }
 
@@ -855,9 +855,9 @@ void ext_music_end()
 {
     volatile MusicData &m = md();
     talk_stop();
-    if (struct IOStdReq *io = write_io()) {
-        hal::close_device(reinterpret_cast<struct IORequest *>(io));
-        lib_delete_ext_io(reinterpret_cast<struct IORequest *>(io));
+    if (IOReq *io = write_io()) {
+        hal::close_device(io);
+        lib_delete_ext_io(io);
         lib_delete_port(ptr<struct MsgPort>(m.WritePort));
         lib_delete_port(ptr<struct MsgPort>(m.ReadPort));
     }
@@ -1304,10 +1304,10 @@ void ext_mouth_read()
 {
     volatile MusicData &m = md();
     uint8_t *r = read_io();
-    struct IOStdReq *w = write_io();
+    IOReq *w = write_io();
     if (m.TranBase && w && reinterpret_cast<uint8_t *>(w)[66]) {
         poke_w(r + 28, CMD_READ);
-        hal::do_io(reinterpret_cast<struct IORequest *>(r));
+        hal::do_io(reinterpret_cast<IOReq *>(r));
         if (int8_t(r[0x1F]) != -8)      // ND_NoWrite
             return;
     }

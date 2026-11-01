@@ -251,9 +251,10 @@ pixel, a line to two, as FS-UAE shows them) on a virtual display (Xvfb),
 driven by the same input scripts, their screenshots compared with the
 Amiga's. Their test drive has an `S` folder and a `Workbench:` volume as the
 emulator's has; RAM: and the devices directory are beside it. A few results
-differ from the Amiga's in known ways (the maths libraries' last digit, the
-serial device, the devices and assigns, the compiler's extension, and three
-screenshot details not understood yet): `tests/host_only/variants` has the
+differ from the Amiga's in known ways (the maths libraries' last digit, a
+serial write the emulator never completes, the devices and assigns, the
+compiler's extension, and four screenshot details, three not understood
+yet): `tests/host_only/variants` has the
 host's own result, with the reason of each (its README). The environment:
 
 | Variable | Use |
@@ -274,15 +275,17 @@ What the host does not do like the Amiga:
   exec's FindTask and dos's Delay. input.device and console.device are the
   window's; timer.device, serial.device and narrator.device open and
   complete what they are asked at once (no serial port behind the serial
-  device). The narrator speaks when espeak-ng is installed (libespeak-ng,
+  device; its settings at OpenDevice and the checks of SDCMD_SETPARAMS are
+  Kickstart 3.1's, measured). The narrator speaks when espeak-ng is installed (libespeak-ng,
   loaded when AMOS first says something, as SDL is: `host/speech.cpp`); the
   host's translator.library gives the text back for the phonemes, so it is
   the text that is said; `AMOS_SPEECH_WAV=file` also writes the speech to a
   file. (Tried with the Ubuntu packages libespeak-ng1 and espeak-ng-data, unpacked
   with `dpkg-deb -x` and used through `LD_LIBRARY_PATH` and `ESPEAK_DATA_PATH`:
   a sentence of eight words came out as 2.3 seconds of speech.) Without espeak-ng, or without sound, Say is silent and its mouth
-  stays shut. The IORequests' structures are the host's, so the Peeks of a
-  program at a device's block (Serial Base(n)+n) read other things.
+  stays shut. The IO requests are in the 68000's layout on every host
+  (`core/ioreq.h`), so a program's Peeks at a device's block (Serial
+  Base(n)+n) read what they read on the Amiga.
 - ARexx ports are in-process only: Arexx Open/Close/Exist work, no message
   arrives.
 - A command run with Exec: only `Wait n` and `c:assign`.
