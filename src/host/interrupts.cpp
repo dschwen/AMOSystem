@@ -78,14 +78,18 @@ void run_tasks();
 void task_yield();
 bool in_task();
 
-// The interrupts due
-void poll()
+// The interrupts due (between two routines, the clock read every 64th
+// time: a routine is far shorter than a frame; in a wait, always)
+void poll(bool waiting)
 {
     if (in_interrupt)
         return;
     if (host_chip_read(0x01E) & 0x0780)     // INTREQR: the audio's
         audio_interrupts();
     if (!next_frame)
+        return;
+    static unsigned calls;
+    if (!waiting && ++calls & 63)
         return;
     uint64_t t = now();
     if (t < next_frame)
@@ -152,7 +156,7 @@ void idle()
         host::task_yield();
         return;
     }
-    host::poll();
+    host::poll(true);
     usleep(500);
     host::run_tasks();
 }
@@ -172,7 +176,7 @@ void wait_frame()
     uint64_t t = now();
     if (t < next_frame)
         usleep(useconds_t(next_frame - t));
-    host::poll();
+    host::poll(true);
     host::run_tasks();
 }
 

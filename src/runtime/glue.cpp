@@ -108,7 +108,9 @@ void glue_start()
     sort_entries();
 }
 
-const GlueEntry *glue_entry(const void *at)
+// The entry at an address: the sorted table searched, the answers kept in
+// a small cache (a call goes through here)
+const GlueEntry *glue_search(const void *at)
 {
     int lo = 0, hi = sorted_count - 1;
     while (lo <= hi) {
@@ -124,7 +126,25 @@ const GlueEntry *glue_entry(const void *at)
     return nullptr;
 }
 
-void poll();
+const GlueEntry *glue_entry(const void *at)
+{
+    struct Cached {
+        const void *at;
+        const GlueEntry *entry;
+    };
+#if defined(__mc68000__)
+    constexpr unsigned Size = 512;      // (4KB of the Amiga's memory)
+#else
+    constexpr unsigned Size = 4096;
+#endif
+    static Cached cache[Size];
+    Cached &c = cache[(reinterpret_cast<uintptr_t>(at) >> 1) & (Size - 1)];
+    if (c.at != at)
+        c = {at, glue_search(at)};
+    return c.entry;
+}
+
+void poll(bool waiting = false);
 [[noreturn]] void mark_jump(uint32_t mark, const void *target, const AllRegs &r, const void *then = nullptr);
 int32_t native_call(const void *at, AllRegs &r);
 
