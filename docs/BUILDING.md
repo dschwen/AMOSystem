@@ -257,8 +257,9 @@ with `src/host` and no assembler:
 - the copper's colour changes during a line where the beam is then;
 - AMOS behind the Workbench (the WB button, Amiga-A, `Amos To Back`): the
   window gives the mouse pointer back to the desktop (its title says so),
-  and a click in it brings AMOS to the front, as Amiga-A does
-  (`hal::amos_in_front`).
+  shows the last AMOS frame dimmed (the system's copper list is empty, the
+  frames would be black), and a click in it brings AMOS to the front, as
+  Amiga-A does (`hal::amos_in_front`).
 
 `build/host/amos` starts the editor in `build/dist/AMOS`; with a program
 as its argument (`AMOSPRO:...`, `AMOSTEST:...`) it runs that. The

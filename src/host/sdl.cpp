@@ -20,6 +20,7 @@
 
 // (stdlib.h's struct timeval clashes with devices/timer.h's)
 extern "C" char *getenv(const char *name) noexcept;
+extern "C" uint16_t host_chip_read(uint32_t offset);
 extern "C" [[noreturn]] void exit(int status) noexcept;
 
 using namespace amos;
@@ -65,6 +66,10 @@ bool shown;
 // pointer hidden), unless AMOS is behind the Workbench
 bool captured = true, skip_motion = true;
 uint32_t frame[FrameWidth * FrameHeight];
+// The last frame AMOS drew, dimmed: shown while AMOS is behind the Workbench
+// (there is no copper list then, the frames would be black)
+uint32_t held[FrameWidth * FrameHeight];
+bool holding;
 
 template <typename F> bool symbol(void *lib, F &f, const char *name)
 {
@@ -362,8 +367,22 @@ void window_frame()
 {
     if (!shown)
         return;
-    display_frame(frame);
-    sdl.UpdateTexture(texture, nullptr, frame, FrameWidth * 4);
+    // (the system's copper list, address 0: AMOS is behind the Workbench)
+    bool behind = !(host_chip_read(0x80) | host_chip_read(0x82));
+    if (behind) {
+        if (!holding) {
+            for (int i = 0; i < FrameWidth * FrameHeight; i++) {
+                uint32_t c = frame[i];
+                held[i] = (c >> 1 & 0x7F7F7F) + (c >> 2 & 0x3F3F3F);     // 3/4 of its brightness
+            }
+            holding = true;
+            sdl.UpdateTexture(texture, nullptr, held, FrameWidth * 4);
+        }
+    } else {
+        holding = false;
+        display_frame(frame);
+        sdl.UpdateTexture(texture, nullptr, frame, FrameWidth * 4);
+    }
     sdl.RenderClear(renderer);
     sdl.RenderCopy(renderer, texture, nullptr, nullptr);
     sdl.RenderPresent(renderer);
