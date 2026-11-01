@@ -1,9 +1,13 @@
 # Plan: devices, floppies and hard disks on the host
 
-Status: decided (section 9). **D1 is built** (the model, `amos.conf`, the
-command line, the library for folders, the launch folder, a volatile `RAM:`;
-as described in docs/BUILDING.md's host list and the README); D2 onward are
-not. Section 1 is how it worked before D1.
+Status: decided (section 9). **D1, D2 and D3 are built**: the model,
+`amos.conf`, the command line, the library for folders, the launch folder, a
+volatile `RAM:` (D1); disks put in and taken out while AMOS runs, the
+requester that ends by itself (D2); drag and drop, the F12 Devices panel with
+its folder browser, the hint line, saving the setup (D3), as described in
+docs/BUILDING.md's host list and the README. D4 (ADF images) onward are not.
+Not done of D3: a dropped `.AMOS` program does not run (the message says so),
+and the file association belongs to D6. Section 1 is how it worked before D1.
 
 ## 1. Today
 
@@ -121,10 +125,16 @@ working (they are what the tests use).
 The window takes **files dropped on it** (SDL's drop events: the same on all
 three systems):
 
+- a folder: mounted as a hard disk, labelled with its name (built);
 - an `.adf`: inserted into `DF0:` (`DF1:` with Shift; if one is in, it is
-  replaced, which is the Amiga's eject and insert);
-- a folder: mounted as a hard disk, labelled with its name;
-- an `.AMOS` program: run (a program is loaded as a program is).
+  replaced, which is the Amiga's eject and insert): D4, for now the window says
+  that images are not supported yet;
+- an `.AMOS` program: to be run (a program is loaded as a program is): not
+  built, the window says so.
+
+`AMOS_DROP="SECONDS:SPEC,..."` fakes drops for the tests (`SPEC`: a folder,
+`df0=folder` to put it in that unit, `df0=` to take the disk out): the host's
+own tests need no window for it (`tests/host_only/insert`).
 
 ### 5.3 The window: the Devices panel (F12)
 
@@ -134,8 +144,12 @@ released while it is open, as for the Workbench): the list of units with
 their media and labels; for each: **Insert...**, **Eject**, a write-protect
 toggle; for hard disks **Mount folder...**; **New blank floppy**; the
 library's folders; the assigns; **Save** (writes `amos.conf`). Drawn with
-the topaz font the host already has (a list, buttons, a text line: about 400
-lines, no UI library). The file choice is a small file browser in the same
+the topaz font the host already has (a list, buttons, a text line: 350
+lines in `host/overlay.cpp`, no UI library). Keys: Up/Down, `I` or Enter
+(put a folder in the unit: the browser opens in the library, Enter opens a
+folder, Backspace goes up, "Use this folder" chooses), `E`, `W`, `M`, `S`,
+Esc and F12 close; the mouse clicks the rows and buttons, a double click
+inserts. Built. The file choice is a small file browser in the same
 panel (the same on every system, usable with the keyboard), with the
 system's own dialog (tinyfiledialogs, zlib licence) as an option later.
 

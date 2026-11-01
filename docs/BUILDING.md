@@ -245,6 +245,15 @@ with `src/host` and no assembler:
   the Amiga's "Please insert volume" requester. `Drive`, `Dev First$`, `Disc
   Info$` and the file selector's lists know the units, the labels and the
   assigns. `image =` (a disk image) is not supported yet;
+- the Devices panel (F12, `host/overlay.cpp`, drawn into the frame with the
+  topaz font, the keys and the mouse its own while it is open, AMOS goes on
+  behind): the units with their disks, put a folder in (a browser), take it
+  out, write-protect, mount a hard disk, save the setup to `amos.conf` (the
+  old file kept as `amos.conf.bak`); the window takes dropped folders
+  (`host/drops.cpp`); a message of what happened, and while AMOS asks for a
+  disk ("Please insert volume X") a line at the bottom. A disk put in or
+  taken out raises the input events DISKINSERTED and DISKREMOVED, so AMOS's
+  own requester ends by itself. `AMOS_DROP` fakes drops, for the tests;
 - **no `std::filesystem`, no `std::error_code`** in the host: it is built with
   `-fpack-struct=2` for the Amiga's structures, which changes the layout of
   such classes in our code but not in `libstdc++.so`, so a call across the
@@ -289,7 +298,8 @@ the sources (copy it from an installed AMOS Pro). Its stack-resetting
 entries (MonitorChr, Step_Out, Tt_Error, QUIT, the evaluator's error
 exits) are `src/host/monitor.cpp` on the host.
 `tests/host_run.py` runs all the tests of `tests/run.py` with it, and
-`tests/host_only` (what only the host has: its devices), comparing every
+`tests/host_only` (what only the host has: its devices, its Devices panel),
+comparing every
 file they write (the IFF pictures too) with the golden ones. The editor and
 input tests run in a window of their own (`AMOS_SCALE=1`: a hires pixel to a
 pixel, a line to two, as FS-UAE shows them) on a virtual display (Xvfb),
@@ -308,6 +318,7 @@ host's own result, with the reason of each (its README). The environment:
 | `AMOS_HOME` | the AMOS tree (found from the program by default) |
 | `AMOS_DEVICES` | the devices directory |
 | `AMOS_CONFIG` | the user's `amos.conf` (else `~/.config/amos/amos.conf`) |
+| `AMOS_DROP` | `SECONDS:SPEC,...`: folders dropped on the window at those times (for tests) |
 | `AMOS_DISPLAY=none` | no window, no sound |
 | `AMOS_SCALE` | the window's magnification (1-9, 2 by default) |
 | `AMOS_SHOT=file.ppm` | the last frame into that file; with `AMOS_SHOT_FRAME=n`, frame n |

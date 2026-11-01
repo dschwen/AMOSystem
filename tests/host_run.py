@@ -45,6 +45,7 @@ run.RUN = RUN                   # (where its messages say the screenshots are)
 
 
 HOST_ONLY = os.path.join(ROOT, 'tests', 'host_only')    # tests of what only the host has (its devices)
+run.INPUT_DIRS.append(HOST_ONLY)
 
 
 def source_of(name):
@@ -175,7 +176,7 @@ def run_window(name, hd, out, tree, timeout):
     """A test in a window on a virtual display, its input script played:
     (finished, the editor's screenshots)"""
     script, runs = [], 1
-    path = os.path.join(run.TESTS, name + '.input')
+    path = run.input_path(name)
     if os.path.exists(path):
         with open(path) as f:
             script = [cmd for cmd in (run.parse_input_line(line) for line in f) if cmd]
@@ -184,7 +185,7 @@ def run_window(name, hd, out, tree, timeout):
             timeout = max(timeout, int(cmd[1]))
         elif cmd[0] == 'runs':
             runs = int(cmd[1])
-    editor = run.is_editor_test(name)
+    editor = not os.path.exists(os.path.join(HOST_ONLY, name + '.asc')) and run.is_editor_test(name)
     if runs > 1:
         # AMOS writes to its own drive then (the configuration, the session)
         private = os.path.join(os.path.dirname(hd), 'AMOS')
@@ -194,6 +195,8 @@ def run_window(name, hd, out, tree, timeout):
     env = environment(hd, tree)
     env['AMOS_SCALE'] = '1'
     env['SDL_AUDIODRIVER'] = 'dummy'
+    if os.path.exists(os.path.join(HOST_ONLY, name + '.asc')):
+        env['SHOT_AREA'] = '256,224,1024,800'      # (the whole window, on the 1280x1024 display)
     xvfb, env['DISPLAY'] = run.start_xvfb()
     # the pointer where the scripts start it (its move there is no motion
     # for AMOS then: FS-UAE only grabs the mouse after it)
@@ -291,7 +294,7 @@ def compare(name, out):
     """tests/run.py's comparison, the host's variants of the text results"""
     got = run.outputs(out, name)
     problems = []
-    for f in sorted(set(got) | set(run.outputs(run.GOLDEN, name)) | {f for f in run.outputs(HOST_ONLY, name) if not f.endswith(('.asc', '.conf', '.args', '.files', '.env'))}):
+    for f in sorted(set(got) | set(run.outputs(run.GOLDEN, name)) | {f for f in run.outputs(HOST_ONLY, name) if not f.endswith(('.asc', '.conf', '.args', '.files', '.env', '.input'))}):
         want = golden_of(f)
         if f not in got:
             problems.append(f'{f} missing')
@@ -327,7 +330,8 @@ def main():
 
     def one(name):
         own = os.path.exists(os.path.join(HOST_ONLY, name + '.asc'))
-        window = not own and (run.is_editor_test(name) or os.path.exists(os.path.join(run.TESTS, name + '.input')))
+        window = (not own and (run.is_editor_test(name) or os.path.exists(os.path.join(run.TESTS, name + '.input')))) or \
+                 (own and os.path.exists(os.path.join(HOST_ONLY, name + '.input')))
         if window and args.text_only:
             return None
         hd, out = prepare(name, tables)

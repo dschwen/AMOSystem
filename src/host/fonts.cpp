@@ -5,6 +5,7 @@
 // fonts are TextFonts of the host (native fields), their data below 4GB.
 
 #include "hal/system.h"
+#include "host/romfont.h"
 #include "runtime/runtime.h"
 
 #include <graphics/text.h>
@@ -14,16 +15,7 @@
 
 using namespace amos;
 
-namespace amos::host {
-struct RomFont {
-    uint16_t ysize, xsize, baseline, boldsmear, modulo;
-    uint8_t style, flags, lo, hi;
-    const uint8_t *data;
-    const uint32_t *locs;
-};
-extern const RomFont rom_fonts[];
-extern const int rom_font_count;
-} // namespace amos::host
+
 
 namespace {
 

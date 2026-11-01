@@ -31,6 +31,16 @@ constexpr int FrameWidth = 768, FrameHeight = 288;
 void display_frame(uint32_t *out);
 void mouse_buttons(bool left, bool right);
 void pointer_capture(bool on);
+void drop(const char *spec);                 // drops.cpp
+namespace overlay {                          // overlay.cpp
+bool active();
+bool visible();
+void toggle();
+void key(int scancode, bool down);
+void mouse(int x, int y, int button, bool down);
+void wheel(int dy);
+void draw(uint32_t *frame);
+} // namespace overlay
 
 namespace {
 
@@ -50,6 +60,7 @@ struct Sdl {
     const char *(*GetError)();
     int (*ShowCursor)(int);
     void (*SetWindowTitle)(void *, const char *);
+    void (*Free)(void *);
     int (*InitSubSystem)(uint32_t);
     uint32_t (*OpenAudioDevice)(const char *, int, const void *, void *, int);
     void (*PauseAudioDevice)(uint32_t, int);
@@ -69,7 +80,9 @@ uint32_t frame[FrameWidth * FrameHeight];
 // The last frame AMOS drew, dimmed: shown while AMOS is behind the Workbench
 // (there is no copper list then, the frames would be black)
 uint32_t held[FrameWidth * FrameHeight];
-bool holding;
+bool holding, held_uploaded;
+uint32_t composed[FrameWidth * FrameHeight];     // the frame with the host's overlay on it
+int scale = 2;                                   // the window's magnification
 
 template <typename F> bool symbol(void *lib, F &f, const char *name)
 {
@@ -95,6 +108,7 @@ int SDL_SetRelativeMouseMode(int);
 const char *SDL_GetError();
 int SDL_ShowCursor(int);
 void SDL_SetWindowTitle(void *, const char *);
+void SDL_free(void *);
 int SDL_InitSubSystem(uint32_t);
 uint32_t SDL_OpenAudioDevice(const char *, int, const void *, void *, int);
 void SDL_PauseAudioDevice(uint32_t, int);
@@ -120,6 +134,7 @@ bool load()
     sdl.GetError = SDL_GetError;
     sdl.ShowCursor = SDL_ShowCursor;
     sdl.SetWindowTitle = SDL_SetWindowTitle;
+    sdl.Free = SDL_free;
     sdl.InitSubSystem = SDL_InitSubSystem;
     sdl.OpenAudioDevice = SDL_OpenAudioDevice;
     sdl.PauseAudioDevice = SDL_PauseAudioDevice;
@@ -142,7 +157,7 @@ bool load()
            symbol(lib, sdl.PollEvent, "SDL_PollEvent") &&
            symbol(lib, sdl.SetRelativeMouseMode, "SDL_SetRelativeMouseMode") &&
            symbol(lib, sdl.GetError, "SDL_GetError") && symbol(lib, sdl.ShowCursor, "SDL_ShowCursor") &&
-           symbol(lib, sdl.SetWindowTitle, "SDL_SetWindowTitle") &&
+           symbol(lib, sdl.SetWindowTitle, "SDL_SetWindowTitle") && symbol(lib, sdl.Free, "SDL_free") &&
            symbol(lib, sdl.InitSubSystem, "SDL_InitSubSystem") &&
            symbol(lib, sdl.OpenAudioDevice, "SDL_OpenAudioDevice") &&
            symbol(lib, sdl.PauseAudioDevice, "SDL_PauseAudioDevice") &&
@@ -271,6 +286,8 @@ uint16_t qualifier_of(uint8_t raw)
     return 0;
 }
 
+void apply_pointer();
+
 void events()
 {
     uint8_t e[64];
@@ -280,10 +297,20 @@ void events()
         if (type == 0x100) {                // SDL_QUIT
             exit(0);
         } else if (type == 0x300 || type == 0x301) {    // SDL_KEYDOWN, SDL_KEYUP
-            if (type == 0x300 && e[13])     // (repeats: the Amiga's own)
-                continue;
             int32_t scancode;
             memcpy(&scancode, e + 16, 4);
+            if (type == 0x300 && scancode == 69 && !e[13]) {    // F12: the Devices panel
+                overlay::toggle();
+                apply_pointer();
+                continue;
+            }
+            if (overlay::active()) {            // (its keys, repeats too)
+                overlay::key(scancode, type == 0x300);
+                apply_pointer();
+                continue;
+            }
+            if (type == 0x300 && e[13])     // (repeats: the Amiga's own)
+                continue;
             uint8_t raw = raw_key(scancode);
             if (raw == 0xFF)
                 continue;
@@ -301,12 +328,31 @@ void events()
             memcpy(&yrel, e + 32, 4);
             // (SDL's first motion after the pointer was taken has the
             // pointer's position for its move); the system's pointer: not AMOS's
-            if (skip_motion || !captured) {
+            if (skip_motion || !captured || overlay::active()) {
                 skip_motion = false;
                 continue;
             }
             send(IECLASS_RAWMOUSE, IECODE_NOBUTTON, int16_t(xrel), int16_t(yrel));
+        } else if (type == 0x1000) {        // SDL_DROPFILE: a folder (or a file) dropped on the window
+            char *file;
+            memcpy(&file, e + 8, sizeof file);
+            if (file) {
+                drop(file);
+                sdl.Free(file);
+            }
+        } else if (type == 0x403) {         // SDL_MOUSEWHEEL
+            int32_t dy;
+            memcpy(&dy, e + 20, 4);
+            if (overlay::active())
+                overlay::wheel(dy);
         } else if (type == 0x401 || type == 0x402) {    // buttons
+            if (overlay::active()) {        // (the panel's, in the frame's cells)
+                int32_t x, y;
+                memcpy(&x, e + 20, 4);
+                memcpy(&y, e + 24, 4);
+                overlay::mouse(x / scale, y / (2 * scale), e[16], type == 0x401);
+                continue;
+            }
             bool down = type == 0x401;
             uint16_t code, q;
             switch (e[16]) {
@@ -347,7 +393,7 @@ void window_start()
         return;
     // magnified (AMOS_SCALE, 2 by default): a hires pixel to scale by scale,
     // a line to twice that (the frame's lines are PAL's 288)
-    int scale = 2;
+    scale = 2;
     if (const char *s = getenv("AMOS_SCALE"))
         scale = s[0] >= '1' && s[0] <= '9' ? s[0] - '0' : 2;
     window = sdl.CreateWindow("AMOS Professional", 0x2FFF0000, 0x2FFF0000, FrameWidth * scale, FrameHeight * 2 * scale,
@@ -362,13 +408,14 @@ void window_start()
     pointer_capture(captured);
 }
 
-// A frame: shown, the events of the window to AMOS
+// A frame: shown (with the host's overlay on it, if there is one), the events of the window to AMOS
 void window_frame()
 {
     if (!shown)
         return;
     // (the system's copper list, address 0: AMOS is behind the Workbench)
     bool behind = !(host_chip_read(0x80) | host_chip_read(0x82));
+    const uint32_t *picture;
     if (behind) {
         if (!holding) {
             for (int i = 0; i < FrameWidth * FrameHeight; i++) {
@@ -376,12 +423,24 @@ void window_frame()
                 held[i] = (c >> 1 & 0x7F7F7F) + (c >> 2 & 0x3F3F3F);     // 3/4 of its brightness
             }
             holding = true;
-            sdl.UpdateTexture(texture, nullptr, held, FrameWidth * 4);
+            held_uploaded = false;
         }
+        picture = held;
     } else {
         holding = false;
         display_frame(frame);
-        sdl.UpdateTexture(texture, nullptr, frame, FrameWidth * 4);
+        picture = frame;
+    }
+    bool over = overlay::visible();
+    if (over) {
+        memcpy(composed, picture, sizeof composed);
+        overlay::draw(composed);
+        picture = composed;
+    }
+    // (the held picture only once, when nothing is on it)
+    if (!behind || over || !held_uploaded) {
+        sdl.UpdateTexture(texture, nullptr, picture, FrameWidth * 4);
+        held_uploaded = behind && !over;
     }
     sdl.RenderClear(renderer);
     sdl.RenderCopy(renderer, texture, nullptr, nullptr);
@@ -395,6 +454,20 @@ void input_handler(Interrupt *is) { handler = is; }
 // "Please insert volume" ends by itself when a disk comes)
 void disk_event(bool inserted) { send(inserted ? IECLASS_DISKINSERTED : IECLASS_DISKREMOVED, 0); }
 
+namespace {
+// The pointer is AMOS's (relative moves, the system's cursor hidden) while AMOS is in front and
+// the Devices panel is shut; else the user's
+void apply_pointer()
+{
+    if (!shown)
+        return;
+    bool mine = captured && !overlay::active();
+    sdl.SetRelativeMouseMode(mine ? 1 : 0);
+    sdl.ShowCursor(mine ? 0 : 1);
+    skip_motion = mine;
+}
+} // namespace
+
 // AMOS in front: the window takes the pointer; behind the Workbench: it gives
 // it back (a click brings AMOS to the front)
 void pointer_capture(bool on)
@@ -402,10 +475,8 @@ void pointer_capture(bool on)
     captured = on;
     if (!shown)
         return;
-    sdl.SetRelativeMouseMode(on ? 1 : 0);
-    sdl.ShowCursor(on ? 0 : 1);
+    apply_pointer();
     sdl.SetWindowTitle(window, on ? "AMOS Professional" : "AMOS Professional (behind the Workbench: click to come back)");
-    skip_motion = on;
 }
 
 bool window_shown() { return shown; }

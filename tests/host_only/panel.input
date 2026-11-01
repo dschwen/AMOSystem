@@ -1,0 +1,39 @@
+# the Devices panel and the hint, in the window (host only)
+timeout 120
+# the paths differ from a checkout to another: the folders' column, the browser's path, the setup file's lines
+mask 288 40 740 330
+mask 0 60 768 84
+mask 0 470 768 515
+sync ready
+wait 0.5
+key F12
+wait 0.4
+shot panel
+key i
+wait 0.4
+shot browser
+key Escape
+key Escape
+wait 0.4
+shot closed
+sync asking
+wait 1
+shot hint
+key F12
+key i
+# (the browser starts in the library, lib: up to the files, into disks, into Disk2, use it)
+key Down
+key Return
+key Down
+key Down
+key Return
+key Down
+key Down
+key Return
+key Return
+wait 0.6
+shot inserted
+key F12
+# (the message of the disk has gone by then)
+wait 5.8
+shot done

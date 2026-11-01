@@ -229,7 +229,9 @@ def is_editor_test(name):
 def screenshot(env, path):
     subprocess.run(['scrot', '-o', path], env=env, stdout=subprocess.DEVNULL,
                    stderr=subprocess.DEVNULL, check=True)
-    image = Image.open(path).convert('RGB').crop(EDITOR_AREA)
+    # (a test of its own can name another area: SHOT_AREA=x1,y1,x2,y2 in its environment)
+    area = tuple(int(v) for v in env['SHOT_AREA'].split(',')) if 'SHOT_AREA' in env else EDITOR_AREA
+    image = Image.open(path).convert('RGB').crop(area)
     image.save(path)
     return image
 
@@ -273,9 +275,20 @@ def record_editor(name, shots):
 MEMORY_GAUGES = (536, 0, 610, 32)
 
 
+INPUT_DIRS = [TESTS]        # (the host's own tests add theirs)
+
+
+def input_path(name):
+    for d in INPUT_DIRS:
+        path = os.path.join(d, name + '.input')
+        if os.path.exists(path):
+            return path
+    return os.path.join(TESTS, name + '.input')
+
+
 def extra_masks(name):
     """The "mask" rectangles of a test's input script."""
-    path = os.path.join(TESTS, name + '.input')
+    path = input_path(name)
     if not os.path.exists(path):
         return []
     with open(path) as f:
