@@ -241,10 +241,13 @@ What the host does not do like the Amiga:
   exec's FindTask and dos's Delay. input.device and console.device are the
   window's; timer.device, serial.device and narrator.device open and
   complete what they are asked at once (no serial port behind the serial
-  device, no speech: Say is silent, its mouth stays shut; translator.library
-  gives the text back as phonemes). The IORequests' structures are the
-  host's, so the Peeks of a program at a device's block (Serial Base(n)+n)
-  read other things.
+  device). The narrator speaks when espeak-ng is installed (libespeak-ng,
+  loaded when AMOS first says something, as SDL is: `host/speech.cpp`); the
+  host's translator.library gives the text back for the phonemes, so it is
+  the text that is said; `AMOS_SPEECH_WAV=file` also writes the speech to a
+  file. Without espeak-ng, or without sound, Say is silent and its mouth
+  stays shut. The IORequests' structures are the host's, so the Peeks of a
+  program at a device's block (Serial Base(n)+n) read other things.
 - ARexx ports are in-process only: Arexx Open/Close/Exist work, no message
   arrives.
 - A command run with Exec: only `Wait n` and `c:assign`.

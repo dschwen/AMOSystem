@@ -50,6 +50,7 @@ struct Sdl {
     void (*PauseAudioDevice)(uint32_t, int);
     int (*QueueAudio)(uint32_t, const void *, uint32_t);
     uint32_t (*GetQueuedAudioSize)(uint32_t);
+    void (*ClearQueuedAudio)(uint32_t);
 } sdl;
 
 uint32_t audio_device;
@@ -81,7 +82,8 @@ bool load()
            symbol(lib, sdl.OpenAudioDevice, "SDL_OpenAudioDevice") &&
            symbol(lib, sdl.PauseAudioDevice, "SDL_PauseAudioDevice") &&
            symbol(lib, sdl.QueueAudio, "SDL_QueueAudio") &&
-           symbol(lib, sdl.GetQueuedAudioSize, "SDL_GetQueuedAudioSize");
+           symbol(lib, sdl.GetQueuedAudioSize, "SDL_GetQueuedAudioSize") &&
+           symbol(lib, sdl.ClearQueuedAudio, "SDL_ClearQueuedAudio");
 }
 
 // The sound: 44.1kHz, 16 bits, stereo, queued
@@ -291,6 +293,20 @@ void window_frame()
 void input_handler(Interrupt *is) { handler = is; }
 
 // A frame's sound (count stereo samples), unless the sound is behind
+// Speech (host/speech.cpp): stereo samples at 44.1kHz queued at once, whether the sound
+// is still playing, the sound stopped
+void audio_play(const int16_t *samples, int count)
+{
+    if (audio_device)
+        sdl.QueueAudio(audio_device, samples, uint32_t(count) * 4);
+}
+bool audio_busy() { return audio_device && sdl.GetQueuedAudioSize(audio_device) > FrameBytes * 2; }
+void audio_stop()
+{
+    if (audio_device)
+        sdl.ClearQueuedAudio(audio_device);
+}
+
 void audio_queue(const int16_t *samples, int count)
 {
     if (audio_device && sdl.GetQueuedAudioSize(audio_device) < FrameBytes * 4)

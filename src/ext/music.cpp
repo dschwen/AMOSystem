@@ -645,17 +645,18 @@ void say(const uint8_t *text, uint32_t multi)
     }
     samples_remove();
     struct IOStdReq *io = write_io();
+    // (the flag of the request, a byte of AMOS's own, before the fields the system reads: on
+    // another host they overlap)
+    uint8_t *b = reinterpret_cast<uint8_t *>(io);
+    b[66] = uint16_t(multi) ? 1 : 0;
     io->io_Command = CMD_WRITE;
     io->io_Length = count;
     io->io_Data = buffer;
-    uint8_t *b = reinterpret_cast<uint8_t *>(io);
     if (!uint16_t(multi)) {
-        b[66] = 0;
         hal::do_io(reinterpret_cast<struct IORequest *>(io));
         samples_install();
         voices(0x0F);
     } else {
-        b[66] = 1;      // and the mouths
         hal::send_io(reinterpret_cast<struct IORequest *>(io));
     }
 }

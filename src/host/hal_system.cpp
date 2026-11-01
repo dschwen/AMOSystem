@@ -404,8 +404,22 @@ int32_t open_device(const char *name, uint32_t, IORequest *io, uint32_t)
     return -1;
 }
 void close_device(IORequest *io) { io->io_Device = nullptr; }
+// The narrator's write: the text said (the sound queued)
+static void narrate(IORequest *io)
+{
+    auto *request = reinterpret_cast<IOStdReq *>(io);
+    if (io->io_Command == 3 && request->io_Data)      // CMD_WRITE
+        host::speak(static_cast<const char *>(request->io_Data), uint32_t(request->io_Length));
+}
+
 int32_t do_io(IORequest *io)
 {
+    if (io->io_Device == &devices[4]) {
+        narrate(io);
+        while (host::speaking())        // (done when it has been heard)
+            idle();
+        return 0;
+    }
     if (io->io_Device != &devices[0] && io->io_Device != &devices[1])
         return 0;
     switch (io->io_Command) {
@@ -420,10 +434,27 @@ int32_t do_io(IORequest *io)
     }
     return -1;
 }
-void send_io(IORequest *) {}
-IORequest *check_io(IORequest *io) { return io; }
-void abort_io(IORequest *) {}
-int32_t wait_io(IORequest *) { return -1; }
+// The narrator: a write speaks the text (host/speech.cpp), if there is a voice; a request sent
+// is done when the sound has played
+void send_io(IORequest *io)
+{
+    if (io->io_Device == &devices[4])
+        narrate(io);
+    else
+        do_io(io);
+}
+IORequest *check_io(IORequest *io) { return io->io_Device == &devices[4] && host::speaking() ? nullptr : io; }
+void abort_io(IORequest *io)
+{
+    if (io->io_Device == &devices[4])
+        host::speech_stop();
+}
+int32_t wait_io(IORequest *io)
+{
+    while (io->io_Device == &devices[4] && host::speaking())
+        idle();
+    return -1;
+}
 
 // RawDoFmt: %[-][0][width][.limit][l]d, u, x, s, b (a BSTR), c; the
 // arguments are 16-bit words unless l, as exec's

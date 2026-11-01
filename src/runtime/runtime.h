@@ -11,6 +11,11 @@ namespace amos::host {
 // Stops: a routine (at address) the host has no C++ for
 [[noreturn]] void missing(const char *what, const void *address);
 
+// The narrator's voice (host/speech.cpp)
+bool speak(const char *text, uint32_t length);
+bool speaking();
+void speech_stop();
+
 // The other tasks (host/tasks.cpp): they run while the program waits
 void run_tasks();
 void task_yield();
