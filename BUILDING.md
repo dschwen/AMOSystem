@@ -76,6 +76,12 @@ names its file; any other extension is still loaded from its file. The
 `AMOS/APSystem/*.Lib` files of the distribution are what the tools read
 (the tokenizer reads their token tables).
 
+`extensions/` holds extensions of other authors (Intuition, Personal, Misc):
+their binary libraries, manuals and examples. AMOSPro still loads such a
+library from its file when the configuration names it; their assembler
+sources were removed with the rest of the assembler (they are in the history
+of the repository).
+
 C++ is compiled for the 68000 with `-Os`, without exceptions, RTTI or a C
 library startup. libgcc and libnix13 supply arithmetic helpers such as
 `__divsi3`.
@@ -242,8 +248,14 @@ What the host does not do like the Amiga:
 - ARexx ports are in-process only: Arexx Open/Close/Exist work, no message
   arrives.
 - A command run with Exec: only `Wait n` and `c:assign`.
-- The last digit of transcendental functions (the host's libm), and peeks at
-  Amiga addresses (`Leek(4)`).
+- The last digit of transcendental functions: the Amiga's math libraries
+  (mathtrans, mathieeedoubtrans) have their own series, the host uses its
+  libm; the results differ in the last digit of `expr2`, `floats`, `floats2`
+  and `maths`.
+- Addresses 1 to 4095 are a page of their own (ExecBase at 4), so that
+  `Leek(4)` and `Btst(n,4)` work; the Amiga's vectors are not there.
+- The memory is exec-like (8-byte blocks, parts of a block can be freed and
+  taken again: `Bank Shrink`).
 
 ### Deliberate differences from the original
 

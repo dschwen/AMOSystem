@@ -108,8 +108,10 @@ void interp_in_menu()
         d.MnAdEc = d.ScOnAd;
     }
     // the colours of the current window
-    const Window *w = ptr<Window>(ptr<Screen>(d.ScOnAd)->EcWindow);
-    uint8_t paper = uint8_t(w->WiPaper), pen = uint8_t(w->WiPen);
+    // (without a screen the original read the first bytes of the memory: zeros)
+    const Screen *sc = ptr<Screen>(d.ScOnAd);
+    const Window *w = sc ? ptr<Window>(sc->EcWindow) : nullptr;
+    uint8_t paper = w ? uint8_t(w->WiPaper) : 0, pen = w ? uint8_t(w->WiPen) : 0;
     m->MnInkA1 = paper;
     m->MnInkB1 = pen;
     m->MnInkC1 = paper;

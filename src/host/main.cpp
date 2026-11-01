@@ -74,6 +74,8 @@ int main(int argc, char **argv)
 
     amos_bridge = amos_task;
     host::glue_start();
+    // (address 4: ExecBase)
+    host::put(amos_low_page + 4, 4, hal::exec_base());
 
     // AMOS's stack, below 4GB
     constexpr size_t StackSize = 8 * 1024 * 1024;

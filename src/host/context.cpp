@@ -8,6 +8,9 @@
 
 using namespace amos;
 
+extern "C" uint8_t amos_low_page[4096];
+uint8_t amos_low_page[4096];
+
 namespace {
 Ctx context;            // the interpreter's registers (one task here)
 }

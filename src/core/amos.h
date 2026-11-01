@@ -49,7 +49,18 @@ void amiga_w_amos_loadview();
 namespace amos {
 
 // AMOS keeps addresses in 32 bits (another host keeps its memory below 4GB)
+#if defined(__mc68000__)
 template <typename T> inline T *ptr(uint32_t address) { return reinterpret_cast<T *>(uintptr_t(address)); }
+#else
+// Another host: the first 4K of an Amiga is its vectors, which programs read (ExecBase at
+// 4: Leek(4)); a page of its own stands for them. 0 stays the null pointer.
+extern "C" uint8_t amos_low_page[4096];
+template <typename T> inline T *ptr(uint32_t address)
+{
+    return address && address < 4096 ? reinterpret_cast<T *>(amos_low_page + address)
+                                     : reinterpret_cast<T *>(uintptr_t(address));
+}
+#endif
 template <typename T> inline uint32_t address(T *p) { return uint32_t(reinterpret_cast<uintptr_t>(p)); }
 
 // The interpreter registers, as saved by the glue

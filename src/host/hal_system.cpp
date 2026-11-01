@@ -89,14 +89,19 @@ uint32_t available_memory(uint32_t flags)
 void forbid() {}
 void permit() {}
 
-// The memory: one arena below 4GB, managed as exec's lists: blocks of 16
-// bytes, the first one free that fits, and any part of a block can be
-// freed (AMOS does). The free chunks are a list sorted by address.
-struct Chunk {
-    Chunk *next;
+// The memory: one arena below 4GB, managed as exec's lists: blocks of 8
+// bytes, the first free one that fits, and any part of a block can be
+// freed (AMOS does) or taken again (AllocAbs: Bank Shrink). The free ranges
+// are a table sorted by address, apart from the memory: what is freed keeps
+// its contents (exec only writes the first 8 bytes of it, and AMOS relies on
+// the rest of a header it frees and takes again).
+struct Range {
+    uint8_t *at;
     uint64_t size;
 };
-Chunk *free_list;
+constexpr int MaxRanges = 1 << 20;
+Range *ranges;
+int range_count;
 uint8_t *arena;
 constexpr uint64_t ArenaSize = 512ull << 20;
 
@@ -111,13 +116,13 @@ void arena_start()
         __builtin_trap();
     }
     arena = static_cast<uint8_t *>(m);
-    free_list = reinterpret_cast<Chunk *>(arena);
-    free_list->next = nullptr;
-    free_list->size = ArenaSize;
+    ranges = static_cast<Range *>(mmap(nullptr, sizeof(Range) * MaxRanges, PROT_READ | PROT_WRITE,
+                                       MAP_PRIVATE | MAP_ANONYMOUS | MAP_NORESERVE, -1, 0));
+    ranges[0] = {arena, ArenaSize};
+    range_count = 1;
 }
 
-// (in 16 bytes: a free chunk holds its header)
-uint64_t rounded(uint32_t size) { return (uint64_t(size) + 15) & ~uint64_t(15); }
+uint64_t rounded(uint32_t size) { return (uint64_t(size) + 7) & ~uint64_t(7); }
 
 // (debugging: AMOS_MEMCHECK, the blocks given, sorted, for the frees)
 bool memcheck() { static bool check = getenv("AMOS_MEMCHECK"); return check; }
@@ -159,22 +164,21 @@ void *allocate(uint32_t size, uint32_t flags)
         return nullptr;
     arena_start();
     uint64_t n = rounded(size);
-    for (Chunk **c = &free_list; *c; c = &(*c)->next) {
-        if ((*c)->size < n)
+    for (int i = 0; i < range_count; i++) {
+        if (ranges[i].size < n)
             continue;
-        Chunk *found = *c;
-        if (found->size == n) {
-            *c = found->next;
+        uint8_t *found = ranges[i].at;
+        if (ranges[i].size == n) {
+            memmove(ranges + i, ranges + i + 1, sizeof(Range) * size_t(range_count - i - 1));
+            range_count--;
         } else {
-            Chunk *rest = reinterpret_cast<Chunk *>(reinterpret_cast<uint8_t *>(found) + n);
-            rest->next = found->next;
-            rest->size = found->size - n;
-            *c = rest;
+            ranges[i].at += n;
+            ranges[i].size -= n;
         }
         if (flags & 0x10000)
             memset(found, 0, n);
         if (memcheck())
-            block_add(reinterpret_cast<uint8_t *>(found), n);
+            block_add(found, n);
         return found;
     }
     return nullptr;
@@ -202,27 +206,60 @@ void release(void *memory, uint32_t size)
         if (at + n < b.at + b.size)
             block_add(at + n, uint64_t(b.at + b.size - (at + n)));
     }
-    Chunk **c = &free_list;
-    while (*c && reinterpret_cast<uint8_t *>(*c) < at)
-        c = &(*c)->next;
-    Chunk *chunk = reinterpret_cast<Chunk *>(at);
-    chunk->size = n;
-    chunk->next = *c;
-    *c = chunk;
-    // merged with the next and the previous ones
-    if (chunk->next && at + chunk->size == reinterpret_cast<uint8_t *>(chunk->next)) {
-        chunk->size += chunk->next->size;
-        chunk->next = chunk->next->next;
+    // into the table, merged with the ranges before and after
+    int i = 0;
+    while (i < range_count && ranges[i].at < at)
+        i++;
+    bool before = i > 0 && ranges[i - 1].at + ranges[i - 1].size == at;
+    bool after = i < range_count && at + n == ranges[i].at;
+    if (before && after) {
+        ranges[i - 1].size += n + ranges[i].size;
+        memmove(ranges + i, ranges + i + 1, sizeof(Range) * size_t(range_count - i - 1));
+        range_count--;
+    } else if (before) {
+        ranges[i - 1].size += n;
+    } else if (after) {
+        ranges[i].at = at;
+        ranges[i].size += n;
+    } else {
+        memmove(ranges + i + 1, ranges + i, sizeof(Range) * size_t(range_count - i));
+        ranges[i] = {at, n};
+        range_count++;
     }
-    for (Chunk *p = free_list; p && p != chunk; p = p->next)
-        if (p->next == chunk && reinterpret_cast<uint8_t *>(p) + p->size == at) {
-            p->size += chunk->size;
-            p->next = chunk->next;
-            break;
-        }
 }
 
-void *allocate_at(uint32_t, void *) { return nullptr; }
+// AllocAbs: the memory at address, if it is free (taken out of its range)
+void *allocate_at(uint32_t size, void *where)
+{
+    if (!size || !where)
+        return nullptr;
+    arena_start();
+    uint8_t *at = static_cast<uint8_t *>(where);
+    uint64_t n = rounded(size);
+    for (int i = 0; i < range_count; i++) {
+        uint8_t *start = ranges[i].at;
+        if (at < start || at + n > start + ranges[i].size)
+            continue;
+        uint64_t before = uint64_t(at - start), after = ranges[i].size - before - n;
+        if (before && after) {
+            memmove(ranges + i + 1, ranges + i, sizeof(Range) * size_t(range_count - i));
+            range_count++;
+            ranges[i].size = before;
+            ranges[i + 1] = {at + n, after};
+        } else if (before) {
+            ranges[i].size = before;
+        } else if (after) {
+            ranges[i] = {at + n, after};
+        } else {
+            memmove(ranges + i, ranges + i + 1, sizeof(Range) * size_t(range_count - i - 1));
+            range_count--;
+        }
+        if (memcheck())
+            block_add(at, n);
+        return where;
+    }
+    return nullptr;
+}
 
 Task *find_task(const char *name) { return name ? nullptr : &the_process.pr_Task; }
 void signal(Task *, uint32_t) {}
