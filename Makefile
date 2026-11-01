@@ -50,7 +50,7 @@ AMIGA_DIRS   := src/lib src/main src/verif src/interp src/ext src/hal src/w src/
 AMIGA_CXX    := $(sort $(wildcard $(addsuffix /*.cpp,$(AMIGA_DIRS))))
 AMOSPRO_LINK := $(OBJ)/src/amiga/start.o $(OBJ)/src/amiga/native.o $(patsubst %.cpp,$(OBJ)/%.o,$(AMIGA_CXX))
 
-.PHONY: all dist test test-reference install-hd host-check host host-release install-host uninstall-host clean
+.PHONY: all dist test test-reference install-hd host-check host host-sdl host-release install-host uninstall-host clean
 .SECONDARY:
 .DELETE_ON_ERROR:
 
@@ -107,7 +107,12 @@ install-hd: all
 HOST_SRC    := $(filter-out %_amiga.cpp src/amiga/%,$(wildcard src/*/*.cpp)) $(HOST)/topaz.cpp $(HOST)/keymap.cpp
 HOST_OBJ    := $(patsubst %.cpp,$(HOST)/obj/%.o,$(HOST_SRC))
 HOST_OPT    ?= -O0 -g
-HOST_FLAGS  := -m64 $(HOST_OPT) -D__use_amiga_stdc_c99 -std=c++20 -fno-exceptions -fno-rtti -fno-threadsafe-statics -fpack-struct=2 \
+# SDL2: dlopen'ed when AMOS starts (default), or HOST_SDL=link: linked to
+# the system's libSDL2-2.0.so.0 (no SDL headers needed)
+HOST_SDL    ?= dlopen
+HOST_SDLDEF := $(if $(filter link,$(HOST_SDL)),-DAMOS_SDL_LINKED)
+HOST_SDLLIB := $(if $(filter link,$(HOST_SDL)),-l:libSDL2-2.0.so.0)
+HOST_FLAGS  := -m64 $(HOST_OPT) $(HOST_SDLDEF) -D__use_amiga_stdc_c99 -std=c++20 -fno-exceptions -fno-rtti -fno-threadsafe-statics -fpack-struct=2 \
                -Isrc/host/include -Isrc -idirafter $(AMIGA_PREFIX)/m68k-amigaos/ndk-include -MMD -MP
 
 # topaz and the usa keymap, from the user's Kickstart (as the tests'
@@ -128,10 +133,14 @@ $(HOST)/obj/%.o: %.cpp
 -include $(HOST_OBJ:%.o=%.d)
 
 host: $(HOST_OBJ)
-	g++ -m64 -no-pie -o $(HOST)/amos $(HOST_OBJ) > $(HOST)/link.txt 2>&1 || \
+	g++ -m64 -no-pie -o $(HOST)/amos $(HOST_OBJ) $(HOST_SDLLIB) > $(HOST)/link.txt 2>&1 || \
 		{ grep -v "undefined reference" $(HOST)/link.txt | grep -i "error\|multiple" ; true; }
 	grep -o "undefined reference to .*" $(HOST)/link.txt | sort -u \
 		| tee $(HOST)/missing.txt | wc -l | sed 's/$$/ symbols missing (build\/host\/missing.txt)/'
+
+# Linked to SDL2 instead of loading it, in build/host-sdl
+host-sdl:
+	$(MAKE) host HOST=$(BUILD)/host-sdl HOST_SDL=link
 
 # The same, optimised, in build/host-release (what is installed)
 host-release:

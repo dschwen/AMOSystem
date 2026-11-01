@@ -9,6 +9,7 @@ no assembler in the build.
 make            # build/AMOSPro
 make dist       # build/dist/AMOS: the AMOS tree with the new AMOSPro
 make host       # build/host/amos: AMOS as a program of this computer
+make host-sdl   # the same linked to SDL2 (build/host-sdl/amos)
 make install-host [PREFIX=~/.local]    # install it; make uninstall-host removes it
 ```
 
@@ -218,7 +219,9 @@ with `src/host` and no assembler:
 - the custom chips as registers, a copper and a renderer
   (`host/display.cpp`: bitplanes, hires, dual playfield, EHB, HAM,
   sprites) and a blitter (`host/hal_chips.cpp`);
-- a window (`host/sdl.cpp`: libSDL2 loaded at run time, magnified twice)
+- a window (`host/sdl.cpp`: libSDL2 loaded at run time, or linked to it
+  with `make host-sdl` (`build/host-sdl/amos`, no SDL headers needed);
+  magnified twice)
   whose keyboard and mouse become the Amiga's input events;
 - Paula (`host/audio.cpp`): the four voices played by their DMA from the
   registers, the audio interrupts at each block (exec's vectors,

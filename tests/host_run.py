@@ -15,6 +15,7 @@ AMOS N times, the later ones with no program.
 
   host_run.py [NAME...]          all tests, or these
   host_run.py --text-only        without the editor and input tests
+  host_run.py --build build/host-sdl   the build linked to SDL2 (make host-sdl)
 """
 
 import argparse
@@ -283,7 +284,11 @@ def main():
     ap.add_argument('--timeout', type=int, default=30)
     ap.add_argument('--text-only', action='store_true', help='leave out the editor and input tests')
     ap.add_argument('-j', '--jobs', type=int, default=4)
+    ap.add_argument('--build', help='the host build to test (default build/host; build/host-sdl: make host-sdl)')
     args = ap.parse_args()
+    global AMOS
+    if args.build:
+        AMOS = os.path.join(os.path.abspath(args.build), 'amos')
     tables = amostok.Tables([os.path.join(TREE, 'APSystem')])
     tests = args.tests or sorted(f[:-4] for d in (run.TESTS, HOST_ONLY) for f in os.listdir(d) if f.endswith('.asc'))
     unknown = [t for t in tests if not os.path.exists(source_of(t))]

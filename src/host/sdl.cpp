@@ -1,5 +1,6 @@
 // The window of another host: SDL2, loaded when AMOS starts (dlopen: the
-// build needs no SDL of its own). Each frame (host/display.cpp) is shown;
+// build needs no SDL of its own), or linked to it (make HOST_SDL=link: the
+// library's functions declared here, no headers needed). Each frame (host/display.cpp) is shown;
 // the keyboard and the mouse become the input events of the Amiga (raw
 // keys, relative mouse moves, the buttons in the qualifiers) for the input
 // handler AMOS.library installs (input.device's IND_ADDHANDLER); the sound
@@ -66,6 +67,56 @@ template <typename F> bool symbol(void *lib, F &f, const char *name)
     return f != nullptr;
 }
 
+#if defined(AMOS_SDL_LINKED)
+} // namespace
+} // namespace amos::host
+// (SDL2's functions, as Sdl's members declare them)
+extern "C" {
+int SDL_Init(uint32_t);
+void *SDL_CreateWindow(const char *, int, int, int, int, uint32_t);
+void *SDL_CreateRenderer(void *, int, uint32_t);
+void *SDL_CreateTexture(void *, uint32_t, int, int, int);
+int SDL_UpdateTexture(void *, const void *, const void *, int);
+int SDL_RenderClear(void *);
+int SDL_RenderCopy(void *, void *, const void *, const void *);
+void SDL_RenderPresent(void *);
+int SDL_PollEvent(void *);
+int SDL_SetRelativeMouseMode(int);
+const char *SDL_GetError();
+int SDL_ShowCursor(int);
+int SDL_InitSubSystem(uint32_t);
+uint32_t SDL_OpenAudioDevice(const char *, int, const void *, void *, int);
+void SDL_PauseAudioDevice(uint32_t, int);
+int SDL_QueueAudio(uint32_t, const void *, uint32_t);
+uint32_t SDL_GetQueuedAudioSize(uint32_t);
+void SDL_ClearQueuedAudio(uint32_t);
+}
+namespace amos::host {
+namespace {
+
+bool load()
+{
+    sdl.Init = SDL_Init;
+    sdl.CreateWindow = SDL_CreateWindow;
+    sdl.CreateRenderer = SDL_CreateRenderer;
+    sdl.CreateTexture = SDL_CreateTexture;
+    sdl.UpdateTexture = SDL_UpdateTexture;
+    sdl.RenderClear = SDL_RenderClear;
+    sdl.RenderCopy = SDL_RenderCopy;
+    sdl.RenderPresent = SDL_RenderPresent;
+    sdl.PollEvent = SDL_PollEvent;
+    sdl.SetRelativeMouseMode = SDL_SetRelativeMouseMode;
+    sdl.GetError = SDL_GetError;
+    sdl.ShowCursor = SDL_ShowCursor;
+    sdl.InitSubSystem = SDL_InitSubSystem;
+    sdl.OpenAudioDevice = SDL_OpenAudioDevice;
+    sdl.PauseAudioDevice = SDL_PauseAudioDevice;
+    sdl.QueueAudio = SDL_QueueAudio;
+    sdl.GetQueuedAudioSize = SDL_GetQueuedAudioSize;
+    sdl.ClearQueuedAudio = SDL_ClearQueuedAudio;
+    return true;
+}
+#else
 bool load()
 {
     void *lib = dlopen("libSDL2-2.0.so.0", RTLD_NOW);
@@ -86,6 +137,7 @@ bool load()
            symbol(lib, sdl.GetQueuedAudioSize, "SDL_GetQueuedAudioSize") &&
            symbol(lib, sdl.ClearQueuedAudio, "SDL_ClearQueuedAudio");
 }
+#endif
 
 // The sound: 44.1kHz, 16 bits, stereo, queued
 constexpr int Rate = 44100, FrameBytes = Rate / 50 * 4;
