@@ -1,6 +1,6 @@
 # Plan: devices, floppies and hard disks on the host
 
-Status: a plan. Nothing here is built; section 1 is how it works today.
+Status: decided (section 9). D1 is being built; section 1 is how it worked before it.
 
 ## 1. Today
 
@@ -211,20 +211,16 @@ and against the structure of real disks; the window's parts by hand (the
 host has no way to drop a file: a small `AMOS_DROP=file` environment
 variable fakes one for the tests).
 
-## 9. Decisions needed
+## 9. Decisions (made)
 
-1. **Images**: the driver of our own (recommended, in three steps) or
-   unpacking when inserted (quick, but not the disk's directory order, free
-   space or names).
-2. **The panel**: our own overlay with its file browser (recommended: one
-   code for the three systems, no dependency), the systems' own dialogs, or both.
-3. **The configuration**: INI-style `amos.conf` (recommended, no
-   dependency), or TOML/JSON (a library).
-4. **The launch folder mounted under its own name**: yes, as in 4.3 (some
-   programs need it), or only by configuration.
-5. **Images read-only until the user allows writing** (recommended), or
-   writable from the start.
-6. **HDF images** (hard disks as one file with a partition table): out of this
-   plan, or a later step (D7).
-7. **The first unit names** for folders: `DH0:`, `DH1:` in the order they
-   were set up (recommended), or only labels.
+1. **Images**: the driver of our own, in the three steps of 6 (not unpacking).
+2. **The panel**: our own overlay with its own file browser (one code for the
+   three systems); the systems' own dialogs only if that is ever wanted.
+3. **The configuration**: INI-style `amos.conf`.
+4. **The launch folder** is mounted under its own name (4.3).
+5. **Images are write-protected** until the user allows writing.
+6. **Hard disks are folders only**: no HDF images (D7 keeps `.adz` and native
+   dialogs).
+7. **Unit names for folders**: `DH0:`, `DH1:`... in the order they were set up
+   (the folders of the devices directory and the library, by name, take
+   the numbers the configuration leaves free).
