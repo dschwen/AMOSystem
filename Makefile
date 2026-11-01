@@ -1,20 +1,22 @@
 # Cross build of AMOS Professional from a Unix host.
 #
 #   make          build/AMOSPro, the program (C++, no assembler)
-#   make dist     build/dist/AMOS: the shipped AMOS tree with the freshly built
-#                 AMOSPro and the editor's configuration with the blue palette
+#   make dist     build/dist/AMOS: the AMOS tree (AMOS/, with the programs of
+#                 examples/) with the freshly built AMOSPro and the editor's
+#                 configuration with the blue palette
 #   make test     run the AMOS test programs in FS-UAE (tests/run.py)
 #   make host     build/host/amos: AMOS as a program of this computer
 #   make install-host [PREFIX=~/.local]
 #                 install it: PREFIX/bin/amos and the AMOS tree in PREFIX/share/amos
 #   make uninstall-host [PREFIX=~/.local]
 #   make install-hd
-#                 replace AMOSPro on the FS-UAE Workbench drive (HD=...),
-#                 backing up the original to HD_BACKUP
+#                 replace AMOSPro on the emulator's hard disk (HD=amiga/harddisk),
+#                 backing up the original to HD_BACKUP (amiga/backup)
 #   make clean
 #
 # Needs m68k-amigaos-gcc/g++ from the Amiga cross toolchain
-# (https://github.com/AmigaPorts/m68k-amigaos-gcc) and python3.
+# (https://github.com/AmigaPorts/m68k-amigaos-gcc, in AMIGA_PREFIX) and python3:
+# see README.md.
 
 AMIGA_PREFIX ?= /opt/amiga
 export PATH := $(AMIGA_PREFIX)/bin:$(PATH)
@@ -83,6 +85,7 @@ $(BUILD)/AMOSPro: $(AMOSPRO_LINK) link/amospro.ld tools/chiphunks.py
 dist: all
 	rm -rf $(DIST) && mkdir -p $(dir $(DIST))
 	cp -a AMOS $(DIST)
+	cp -a examples/. $(DIST)/
 	cp $(BUILD)/AMOSPro $(DIST)/AMOSPro
 	$(PYTHON) tools/blue_palette.py AMOS/APSystem/AMOSPro_Editor_Config $(DIST)/APSystem/AMOSPro_Editor_Config
 
@@ -92,10 +95,11 @@ test: dist
 test-reference:
 	$(PYTHON) tests/run.py --reference
 
-# The FS-UAE directory drive with an installed AMOS Pro. Only the program is
-# replaced; configs (which hold user settings) are left alone.
-HD        ?= ../Minimal Workbench v3.1
-HD_BACKUP ?= ../AMOS_Pro-original-binaries
+# The emulator's hard disk (amiga/, see README.md) with an installed AMOS Pro.
+# Only the program is replaced; configs (which hold user settings) are left
+# alone.
+HD        ?= amiga/harddisk
+HD_BACKUP ?= amiga/backup
 
 install-hd: all
 	$(PYTHON) tools/install_hd.py --build $(BUILD) --hd "$(HD)" --backup "$(HD_BACKUP)"
@@ -116,9 +120,9 @@ HOST_FLAGS  := -m64 $(HOST_OPT) $(HOST_SDLDEF) -D__use_amiga_stdc_c99 -std=c++20
                -Isrc/host/include -Isrc -idirafter $(AMIGA_PREFIX)/m68k-amigaos/ndk-include -MMD -MP
 
 # topaz and the usa keymap, from the user's Kickstart (as the tests'
-# emulator has them)
-KICKSTART ?= $(HOME)/Programs/CAMOS/FS-UAE/Kickstarts/amiga-os-310-a1200.rom
-ROMKEY ?= $(HOME)/Programs/CAMOS/Minimal Workbench v3.1/Devs/Kickstarts/rom.key
+# emulator has them; without one the host uses stand-ins)
+KICKSTART ?= amiga/kickstarts/amiga-os-310-a1200.rom
+ROMKEY ?= amiga/harddisk/Devs/Kickstarts/rom.key
 $(HOST)/topaz.cpp: tools/extract_topaz.py
 	@mkdir -p $(dir $@)
 	$(PYTHON) tools/extract_topaz.py --out $@ --rom "$(KICKSTART)" --key "$(ROMKEY)"

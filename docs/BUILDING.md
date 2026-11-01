@@ -1,4 +1,8 @@
-# Building AMOS Professional on a Unix host
+# AMOS Professional in C++: the details
+
+How the C++ is organised, how the programs are linked, what the host does,
+what differs from the original, and how the tests work. The
+[README](../README.md) has the requirements and the quick start.
 
 Requirements: the Amiga cross toolchain from
 https://github.com/AmigaPorts/m68k-amigaos-gcc (installed in `/opt/amiga`, or
@@ -100,11 +104,10 @@ names its file; any other extension is still loaded from its file. The
 `AMOS/APSystem/*.Lib` files of the distribution are what the tools read
 (the tokenizer reads their token tables).
 
-`extensions/` holds extensions of other authors (Intuition, Personal, Misc):
-their binary libraries, manuals and examples. AMOSPro still loads such a
-library from its file when the configuration names it; their assembler
-sources were removed with the rest of the assembler (they are in the history
-of the repository).
+Extensions of other authors (Intuition, Personal, Misc: binary libraries,
+manuals, sources) were in `extensions/`; they are in the history of the
+repository. AMOSPro on the Amiga still loads such a library from its file
+when the configuration names it (the host runs only the C++ extensions).
 
 C++ is compiled for the 68000 with `-Os`, without exceptions, RTTI or a C
 library startup. libgcc and libnix13 supply arithmetic helpers such as
@@ -665,7 +668,7 @@ configuration their screenshots were recorded with.
 make test             # build/dist against the golden results
 make test-reference   # the prebuilt binaries in AMOS/ against the same goldens
 python3 tests/run.py --reference --update-golden [NAME...]   # record goldens
-python3 tests/run.py --amos-tree "../Minimal Workbench v3.1/AMOS_Pro"
+python3 tests/run.py --amos-tree amiga/harddisk/AMOS_Pro
 ```
 
 Each `tests/amos/<name>.asc` is a plain-text AMOS listing. `tests/run.py`
@@ -702,9 +705,10 @@ Things to know when writing tests:
 - `Rnd` is not reproducible, even after `Randomize`.
 
 Requirements: fs-uae, Xvfb, scrot, python3 with Pillow, the A1200 Kickstart
-3.1 ROM (`../FS-UAE/Kickstarts`) with its `rom.key` (the ROM is
+3.1 ROM (`amiga/kickstarts`) with its `rom.key` (the ROM is
 Cloanto-encrypted; the key comes from `Devs/Kickstarts` on the Workbench
-drive), and the Workbench directory drive `../Minimal Workbench v3.1`.
+drive), and the Workbench directory drive `amiga/harddisk`: see
+[README.md](../README.md), "The Amiga test environment".
 fs-uae runs in a non-cycle-exact, maximum-speed CPU mode without sound. A test
 takes about 2 seconds, and four run in parallel.
 
@@ -716,5 +720,5 @@ Other tools:
 - `tools/ilbm2png.py`: view an IFF screenshot.
 - `tools/uaem.py`: write the `.uaem` sidecar files of FS-UAE directory drives.
 - `make install-hd`: put the built binaries into the AMOS Pro on the Workbench
-  drive. The originals are backed up to `../AMOS_Pro-original-binaries`, and
+  drive. The originals are backed up to `amiga/backup`, and
   the config files are left alone.

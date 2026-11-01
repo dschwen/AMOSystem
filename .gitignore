@@ -1,2 +1,8 @@
 build/
 __pycache__/
+
+# The Amiga test environment's own files (see README.md): the Workbench
+# hard disk, the Kickstart, the backup of the original binaries
+amiga/harddisk/
+amiga/kickstarts/
+amiga/backup/

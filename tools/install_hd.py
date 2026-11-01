@@ -7,8 +7,8 @@ with its .uaem sidecar, to the backup directory (an existing backup is never
 overwritten, so the first backup keeps the true originals). The new files
 keep the protection bits and comments of the old sidecars.
 
-  install_hd.py --build build --hd "../Minimal Workbench v3.1" \\
-                [--amos AMOS_Pro] [--backup ../AMOS_Pro-original-binaries]
+  install_hd.py --build build --hd amiga/harddisk \\
+                [--amos AMOS_Pro] [--backup amiga/backup]
 """
 
 import argparse

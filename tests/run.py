@@ -84,9 +84,11 @@ TK_ENDPROC = 0x0390
 import xinput   # noqa: E402
 import uaem     # noqa: E402
 
-CAMOS = os.path.dirname(ROOT)
-DEFAULT_KICKSTART = os.path.join(CAMOS, 'FS-UAE', 'Kickstarts', 'amiga-os-310-a1200.rom')
-DEFAULT_WORKBENCH = os.path.join(CAMOS, 'Minimal Workbench v3.1')
+# The emulator's files (amiga/, see README.md; not in the repository): the
+# Kickstart and the Workbench hard disk
+AMIGA = os.path.join(ROOT, 'amiga')
+DEFAULT_KICKSTART = os.path.join(AMIGA, 'kickstarts', 'amiga-os-310-a1200.rom')
+DEFAULT_WORKBENCH = os.path.join(AMIGA, 'harddisk')
 # The Kickstart is a Cloanto-encrypted image; it needs the matching rom.key
 DEFAULT_ROM_KEY = os.path.join(DEFAULT_WORKBENCH, 'Devs', 'Kickstarts', 'rom.key')
 TESTS = os.path.join(ROOT, 'tests', 'amos')

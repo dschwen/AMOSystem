@@ -1,0 +1,27 @@
+# FS-UAE: an Amiga 1200 with the Workbench hard disk of this folder and the
+# AMOS tree built by "make dist" (README.md, "The Amiga test environment").
+#
+#   fs-uae amiga/AMOS.fs-uae
+#
+# The tests (tests/run.py) make a configuration of their own for each test,
+# with the same Amiga, from the same files.
+
+[fs-uae]
+amiga_model = A1200
+chip_memory = 2048
+cpu = 68020
+jit_compiler = 0
+zorro_iii_memory = 16384
+kickstart_file = $CONFIG/kickstarts/amiga-os-310-a1200.rom
+
+# DH0: the Workbench (boots from it)
+hard_drive_0 = $CONFIG/harddisk
+hard_drive_0_label = Workbench
+
+# AMOSPRO: the AMOS tree with the AMOSPro built from this repository
+hard_drive_1 = $CONFIG/../build/dist/AMOS
+hard_drive_1_label = AMOSPRO
+hard_drive_1_priority = -128
+
+floppy_drive_count = 1
+fullscreen = 0
