@@ -262,7 +262,9 @@ What the host does not do like the Amiga:
   loaded when AMOS first says something, as SDL is: `host/speech.cpp`); the
   host's translator.library gives the text back for the phonemes, so it is
   the text that is said; `AMOS_SPEECH_WAV=file` also writes the speech to a
-  file. Without espeak-ng, or without sound, Say is silent and its mouth
+  file. (Tried with the Ubuntu packages libespeak-ng1 and espeak-ng-data, unpacked
+  with `dpkg-deb -x` and used through `LD_LIBRARY_PATH` and `ESPEAK_DATA_PATH`:
+  a sentence of eight words came out as 2.3 seconds of speech.) Without espeak-ng, or without sound, Say is silent and its mouth
   stays shut. The IORequests' structures are the host's, so the Peeks of a
   program at a device's block (Serial Base(n)+n) read other things.
 - ARexx ports are in-process only: Arexx Open/Close/Exist work, no message
