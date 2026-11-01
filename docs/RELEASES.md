@@ -89,14 +89,18 @@ Until then, keep the platform's variants for the few tests concerned
 
 - A target `make dist-host` that makes the tree without the Amiga binary
   (today `make dist` needs the cross compiler to build `AMOSPro`; the host
-  does not read it).
-- The NDK headers: the host build includes 46 of them (428KB) from the
-  cross toolchain. The Mac and Windows jobs cannot have the toolchain
-  cheaply. Either the Linux job builds (or caches) the toolchain and hands
-  the `ndk-include` directory to the others as an artifact, or the 46
-  headers are copied into the repository. The second is simpler and faster,
-  **if their licence allows it** (to be checked: the NDK's terms depend on
-  its version). Decision 1 in section 8.
+  does not read it). Not done yet.
+- The NDK headers: the host build includes 46 of them (428KB). **Done**:
+  they are Hyperion's NDK 3.2, with no stated licence (the toolchain's
+  `COPYING-THIRD-PARTY.md`: "unknown license"), so they are not bundled.
+  `make host` uses the toolchain's copy if there is one, else
+  `tools/fetch_ndk.py` downloads `NDK3.2.lha` from Aminet (the sha256 the
+  toolchain pins), checks it and extracts `Include_H` with `tools/lha.py`
+  (a Python LHA extractor: 687 headers in 1.4 seconds, CRC-checked), with no
+  toolchain and no LHA tool, on any system with python3. The host compiles
+  and passes its suite against these unpatched headers (the toolchain only
+  adds `__stdargs` to the `clib` prototypes and regenerates `proto/`).
+  Each CI job caches `build/download`.
 - Compilers: MinGW-w64 g++ (UCRT) on Windows, Apple clang on macOS, g++ on
   Linux. The code uses `-fpack-struct=2` and GCC's `__builtin_longjmp`; both
   clang and MinGW g++ have them. A first step is to see that clang++ compiles
@@ -201,7 +205,7 @@ a release build (the extractors stay for builds from source).
 
 | Step | Size (days of work, a guess) | Needs |
 |---|---|---|
-| 1 Linux release | 1-2 | decision 1 (the NDK headers) |
+| 1 Linux release | 1-2 | |
 | 3 macOS arm64 spike | 1 | a Mac to run it, or a runner |
 | 2 the `os` layer | 3-4 | |
 | 7 CI | 2 | step 1 |
@@ -214,8 +218,7 @@ Windows follow as steps 4 and 5 finish.
 
 ## 8. Decisions needed
 
-1. **NDK headers**: copy the 46 into the repository (fast CI; check the
-   licence first), or build and cache the Amiga toolchain in CI.
+1. **NDK headers**: decided, see 2.3 (downloaded, not bundled).
 2. **Windows toolchain**: MinGW-w64 (recommended: the same g++, the same flags
    as Linux) or MSVC/clang-cl (needs more changes: `-fpack-struct`, GNU
    builtins).

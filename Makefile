@@ -52,7 +52,7 @@ AMIGA_DIRS   := src/lib src/main src/verif src/interp src/ext src/hal src/w src/
 AMIGA_CXX    := $(sort $(wildcard $(addsuffix /*.cpp,$(AMIGA_DIRS))))
 AMOSPRO_LINK := $(OBJ)/src/amiga/start.o $(OBJ)/src/amiga/native.o $(patsubst %.cpp,$(OBJ)/%.o,$(AMIGA_CXX))
 
-.PHONY: all dist test test-reference install-hd host-check host host-sdl host-release game install-host uninstall-host clean
+.PHONY: all dist test test-reference install-hd host-check host host-sdl host-release game ndk install-host uninstall-host clean
 .SECONDARY:
 .DELETE_ON_ERROR:
 
@@ -116,8 +116,12 @@ HOST_OPT    ?= -O0 -g
 HOST_SDL    ?= dlopen
 HOST_SDLDEF := $(if $(filter link,$(HOST_SDL)),-DAMOS_SDL_LINKED)
 HOST_SDLLIB := $(if $(filter link,$(HOST_SDL)),-l:libSDL2-2.0.so.0)
+# The NDK's headers: the Amiga toolchain's if it is there, else NDK3.2's from
+# Aminet (tools/fetch_ndk.py: build/ndk, no licence to bundle them: see it)
+NDK_TOOLCHAIN := $(AMIGA_PREFIX)/m68k-amigaos/ndk-include
+NDK_INCLUDE   ?= $(if $(wildcard $(NDK_TOOLCHAIN)/exec/types.h),$(NDK_TOOLCHAIN),$(BUILD)/ndk/Include_H)
 HOST_FLAGS  := -m64 $(HOST_OPT) $(HOST_SDLDEF) -D__use_amiga_stdc_c99 -std=c++20 -fno-exceptions -fno-rtti -fno-threadsafe-statics -fpack-struct=2 \
-               -Isrc/host/include -Isrc -idirafter $(AMIGA_PREFIX)/m68k-amigaos/ndk-include -MMD -MP
+               -Isrc/host/include -Isrc -idirafter $(NDK_INCLUDE) -MMD -MP
 
 # topaz and the usa keymap, from the user's Kickstart (as the tests'
 # emulator has them); without one, AROS's topaz 8 (data/fonts/topaz8) and a
@@ -131,7 +135,13 @@ $(HOST)/keymap.cpp: tools/extract_keymap.py
 	@mkdir -p $(dir $@)
 	$(PYTHON) tools/extract_keymap.py --out $@ --rom "$(KICKSTART)" --key "$(ROMKEY)"
 
-$(HOST)/obj/%.o: %.cpp
+# (the downloaded NDK headers, when there are no others)
+$(BUILD)/ndk/Include_H/exec/types.h:
+	$(PYTHON) tools/fetch_ndk.py --out $(BUILD)/ndk --cache $(BUILD)/download
+
+ndk: $(BUILD)/ndk/Include_H/exec/types.h
+
+$(HOST)/obj/%.o: %.cpp $(if $(filter $(BUILD)/ndk/Include_H,$(NDK_INCLUDE)),$(BUILD)/ndk/Include_H/exec/types.h)
 	@mkdir -p $(dir $@)
 	g++ $(HOST_FLAGS) -c -o $@ $<
 

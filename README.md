@@ -28,11 +28,11 @@ from the original, the tests) are [docs/BUILDING.md](docs/BUILDING.md).
 | `AMOS/` | the AMOS tree: the original `AMOSPro` and `APSystem` (the reference binaries of the tests, the configurations, the resources), `Accessories`, `Compiler` (the compiler's shells; its folder is what makes the `AMOSPro_Compiler:` assign) |
 | `examples/` | the example programs of AMOS Pro: `Examples`, `Tutorial`, `Productivity1`, `Productivity2` (`make dist` puts them into the AMOS tree) |
 | `link/` | the Amiga linker script |
-| `tools/` | the build's and the tests' scripts (tokenizer, ROM extractors, hunk flags...) |
+| `tools/` | the build's and the tests' scripts (tokenizer, ROM extractors, NDK fetch and its LHA extractor, hunk flags...) |
 | `tests/` | the test programs, their golden results, the runners |
 | `amiga/` | the Amiga test environment: the FS-UAE configuration (the emulator's own files are not in the repository, see below) |
 | `data/` | data the builds use: `fonts/topaz8`, AROS's topaz 8 as raw data (its README, the AROS Public License) |
-| `docs/` | BUILDING.md, HISTORY.md |
+| `docs/` | BUILDING.md, HISTORY.md, RELEASES.md (the plan for binary releases) |
 | `build/` | everything built (not in the repository) |
 
 ## Requirements
@@ -56,8 +56,13 @@ from the original, the tests) are [docs/BUILDING.md](docs/BUILDING.md).
 ### The Linux build
 
 - Linux on x86-64, **g++ with C++20** (GCC 13 or later), GNU make, python3.
-- The **NDK headers of the cross toolchain** above (`AMIGA_PREFIX`): the C++
-  is the Amiga's, the system structures are the NDK's.
+- The **NDK's C headers** (46 of them are included): the C++ is the Amiga's,
+  the system structures are the NDK's. The cross toolchain's copy
+  (`AMIGA_PREFIX/m68k-amigaos/ndk-include`) is used if there is one; without
+  the toolchain the build downloads NDK 3.2 from Aminet by itself (`make
+  ndk`, `tools/fetch_ndk.py`: the same archive and sha256 the toolchain
+  uses; python3 only, no LHA tool). They are Hyperion's, under no stated
+  licence, so they are not in this repository.
 - To run it:
   - **SDL2** (`libSDL2-2.0.so.0`, Debian/Ubuntu `libsdl2-2.0-0`) for the
     window, the keyboard, the mouse and the sound. Only the library is needed,
