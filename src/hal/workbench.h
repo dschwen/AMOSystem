@@ -23,6 +23,9 @@ void panic_requester(const char *text);
 
 bool open_workbench();
 bool close_workbench();
+// AMOS to the front (true) or behind the Workbench: on another host, the
+// window takes the mouse pointer, or gives it back
+void amos_in_front(bool front);
 ::Screen *open_screen(NewScreen *ns);
 void close_screen(::Screen *s);
 

@@ -29,6 +29,7 @@ namespace amos::host {
 constexpr int FrameWidth = 768, FrameHeight = 288;
 void display_frame(uint32_t *out);
 void mouse_buttons(bool left, bool right);
+void pointer_capture(bool on);
 
 namespace {
 
@@ -47,6 +48,7 @@ struct Sdl {
     int (*SetRelativeMouseMode)(int);
     const char *(*GetError)();
     int (*ShowCursor)(int);
+    void (*SetWindowTitle)(void *, const char *);
     int (*InitSubSystem)(uint32_t);
     uint32_t (*OpenAudioDevice)(const char *, int, const void *, void *, int);
     void (*PauseAudioDevice)(uint32_t, int);
@@ -59,6 +61,9 @@ uint32_t audio_device;
 
 void *window, *renderer, *texture;
 bool shown;
+// The mouse pointer AMOS's (the window has it: relative moves, the system's
+// pointer hidden), unless AMOS is behind the Workbench
+bool captured = true, skip_motion = true;
 uint32_t frame[FrameWidth * FrameHeight];
 
 template <typename F> bool symbol(void *lib, F &f, const char *name)
@@ -84,6 +89,7 @@ int SDL_PollEvent(void *);
 int SDL_SetRelativeMouseMode(int);
 const char *SDL_GetError();
 int SDL_ShowCursor(int);
+void SDL_SetWindowTitle(void *, const char *);
 int SDL_InitSubSystem(uint32_t);
 uint32_t SDL_OpenAudioDevice(const char *, int, const void *, void *, int);
 void SDL_PauseAudioDevice(uint32_t, int);
@@ -108,6 +114,7 @@ bool load()
     sdl.SetRelativeMouseMode = SDL_SetRelativeMouseMode;
     sdl.GetError = SDL_GetError;
     sdl.ShowCursor = SDL_ShowCursor;
+    sdl.SetWindowTitle = SDL_SetWindowTitle;
     sdl.InitSubSystem = SDL_InitSubSystem;
     sdl.OpenAudioDevice = SDL_OpenAudioDevice;
     sdl.PauseAudioDevice = SDL_PauseAudioDevice;
@@ -130,6 +137,7 @@ bool load()
            symbol(lib, sdl.PollEvent, "SDL_PollEvent") &&
            symbol(lib, sdl.SetRelativeMouseMode, "SDL_SetRelativeMouseMode") &&
            symbol(lib, sdl.GetError, "SDL_GetError") && symbol(lib, sdl.ShowCursor, "SDL_ShowCursor") &&
+           symbol(lib, sdl.SetWindowTitle, "SDL_SetWindowTitle") &&
            symbol(lib, sdl.InitSubSystem, "SDL_InitSubSystem") &&
            symbol(lib, sdl.OpenAudioDevice, "SDL_OpenAudioDevice") &&
            symbol(lib, sdl.PauseAudioDevice, "SDL_PauseAudioDevice") &&
@@ -286,10 +294,10 @@ void events()
             int32_t xrel, yrel;
             memcpy(&xrel, e + 28, 4);
             memcpy(&yrel, e + 32, 4);
-            // (SDL's first motion has the pointer's position for its move)
-            static bool first = true;
-            if (first) {
-                first = false;
+            // (SDL's first motion after the pointer was taken has the
+            // pointer's position for its move); the system's pointer: not AMOS's
+            if (skip_motion || !captured) {
+                skip_motion = false;
                 continue;
             }
             send(IECLASS_RAWMOUSE, IECODE_NOBUTTON, int16_t(xrel), int16_t(yrel));
@@ -301,6 +309,18 @@ void events()
             case 3: code = IECODE_RBUTTON, q = IEQUALIFIER_RBUTTON; break;
             case 2: code = IECODE_MBUTTON, q = IEQUALIFIER_MIDBUTTON; break;
             default: continue;
+            }
+            if (!captured) {
+                // AMOS behind the Workbench: a click in the window brings
+                // it to the front, as Amiga-A (left Amiga and A) does
+                if (down && e[16] == 1) {
+                    uint16_t keep = qualifier;
+                    qualifier |= IEQUALIFIER_LCOMMAND;
+                    send(IECLASS_RAWKEY, 0x20);
+                    send(IECLASS_RAWKEY, 0x20 | 0x80);
+                    qualifier = keep;
+                }
+                continue;
             }
             qualifier = down ? uint16_t(qualifier | q) : uint16_t(qualifier & ~q);
             mouse_buttons(qualifier & IEQUALIFIER_LEFTBUTTON, qualifier & IEQUALIFIER_RBUTTON);
@@ -333,8 +353,8 @@ void window_start()
     texture = renderer ? sdl.CreateTexture(renderer, 0x16362004, 1, FrameWidth, FrameHeight) : nullptr;
     if (!texture)
         return;
-    sdl.SetRelativeMouseMode(1);
     shown = true;
+    pointer_capture(captured);
 }
 
 // A frame: shown, the events of the window to AMOS
@@ -351,6 +371,19 @@ void window_frame()
 }
 
 void input_handler(Interrupt *is) { handler = is; }
+
+// AMOS in front: the window takes the pointer; behind the Workbench: it gives
+// it back (a click brings AMOS to the front)
+void pointer_capture(bool on)
+{
+    captured = on;
+    if (!shown)
+        return;
+    sdl.SetRelativeMouseMode(on ? 1 : 0);
+    sdl.ShowCursor(on ? 0 : 1);
+    sdl.SetWindowTitle(window, on ? "AMOS Professional" : "AMOS Professional (behind the Workbench: click to come back)");
+    skip_motion = on;
+}
 
 bool window_shown() { return shown; }
 

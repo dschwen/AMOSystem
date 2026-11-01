@@ -68,6 +68,7 @@ int32_t amos_wb(int32_t to)
         chips().copjmp1 = 0;
         here[0] = 0xFF;
         here[1] = 0;
+        hal::amos_in_front(true);
     } else if (to == 0 && here[0]) {
         here[0] = 0;
         here[1] = 0xFF;
@@ -82,6 +83,7 @@ int32_t amos_wb(int32_t to)
             hal::wait_frame();
         }
         here[1] = 0;
+        hal::amos_in_front(false);
     }
     return int8_t(here[0]);
 }

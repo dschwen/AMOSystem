@@ -52,6 +52,7 @@ void workbench_start(void *intuition, void *icon)
 
 bool open_workbench() { return OpenWorkBench(); }
 bool close_workbench() { return CloseWorkBench(); }
+void amos_in_front(bool) {}
 
 bool put_icon(const char *name, DiskObject *icon) { return PutDiskObject(name, icon); }
 DiskObject *get_icon(const char *name) { return GetDiskObject(name); }

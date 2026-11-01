@@ -253,7 +253,11 @@ with `src/host` and no assembler:
 - chip memory below 4MB (24-bit addresses, as the Amiga's), apart from the
   other memory; NIL:; DOS's "Please insert volume" requester (AMOS's, with
   Request On) for a volume that is not there;
-- the copper's colour changes during a line where the beam is then.
+- the copper's colour changes during a line where the beam is then;
+- AMOS behind the Workbench (the WB button, Amiga-A, `Amos To Back`): the
+  window gives the mouse pointer back to the desktop (its title says so),
+  and a click in it brings AMOS to the front, as Amiga-A does
+  (`hal::amos_in_front`).
 
 `build/host/amos` starts the editor in `build/dist/AMOS`; with a program
 as its argument (`AMOSPRO:...`, `AMOSTEST:...`) it runs that. The

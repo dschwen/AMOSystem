@@ -7,6 +7,7 @@
 #include <devices/inputevent.h>
 
 namespace amos::host {
+void pointer_capture(bool on);
 struct RomKeymap {
     const uint8_t *types;
     const uint32_t *map;
@@ -80,6 +81,7 @@ namespace amos::hal {
 void workbench_start(void *, void *) {}
 void panic_requester(const char *text) { fprintf(stderr, "AMOS: %s\n", text); }
 bool open_workbench() { return true; }
+void amos_in_front(bool front) { host::pointer_capture(front); }
 bool close_workbench() { return true; }
 ::Screen *open_screen(NewScreen *) { return nullptr; }
 void close_screen(::Screen *) {}
