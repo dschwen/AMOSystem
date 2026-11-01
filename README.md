@@ -6,7 +6,7 @@ AMOS Professional 2.00, François Lionet's BASIC for the Amiga, converted from
 - **AMOSPro for the Amiga**: the original program (interpreter, editor,
   monitor, AMOS.library, the extensions), compiled for the 68000 with a cross
   compiler. It loads and runs the same `.AMOS` programs as the original.
-- **`amos` for Linux**: AMOS as a program of this computer, with an SDL2
+- **`amos` for Linux and macOS (x86-64)**: AMOS as a program of this computer, with an SDL2
   window, sound, and the disks as folders. `amos-player` runs a program on its
   own (no editor), and `make game` bundles a program with it.
 
@@ -76,6 +76,32 @@ from the original, the tests) are [docs/BUILDING.md](docs/BUILDING.md).
   build uses AROS's topaz 8 (`data/fonts/topaz8`, in the repository) and a
   plain keymap. The ROM is
   looked for in `amiga/kickstarts` (`KICKSTART=`, `ROMKEY=` name others).
+
+### The macOS build
+
+The macOS host build targets **x86-64** and needs Apple's Command Line
+Tools (Clang with C++20 and make) and **python3**. Install the Command Line
+Tools with `xcode-select --install` if needed. The NDK headers are downloaded
+automatically, as for the Linux host build; no Amiga cross compiler is needed.
+
+For the window and sound, download
+[SDL2-2.30.12.dmg](https://www.libsdl.org/release/SDL2-2.30.12.dmg), open it,
+and copy **SDL2.framework** into **/Library/Frameworks**. The resulting
+library path is `/Library/Frameworks/SDL2.framework/SDL2`. AMOS loads it at
+runtime; no SDL headers or Homebrew packages are required.
+
+From the repository directory:
+
+```sh
+make host
+AMOS_HOME="$PWD/AMOS" ./build/host/amos
+```
+
+`AMOS_HOME` points to the checked-in AMOS tree and avoids depending on the
+current installation layout. `make host-release` builds the optimised
+executable in `build/host-release/amos`. Use `make host` or `host-release`
+on macOS; `host-sdl` currently uses Linux-specific library link flags.
+Native Apple Silicon builds are not yet supported.
 
 ### The tests
 

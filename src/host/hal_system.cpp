@@ -16,7 +16,10 @@ extern "C" char *getenv(const char *name) noexcept;    // (stdlib.h clashes with
 #include <exec/tasks.h>
 #include <exec/libraries.h>
 #include <exec/devices.h>
+// Keep the NDK's Amiga timeval separate from the host's POSIX type.
+#define timeval AmigaTimeval
 #include <dos/dosextens.h>
+#undef timeval
 #include <exec/io.h>
 
 namespace {
@@ -139,12 +142,18 @@ void arena_start()
         __builtin_trap();
     }
     arena = static_cast<uint8_t *>(m);
+    int chip_flags = MAP_PRIVATE | MAP_ANONYMOUS | MAP_NORESERVE;
+#if defined(__linux__)
+    chip_flags |= MAP_FIXED_NOREPLACE;
+#endif
     void *chip = mmap(reinterpret_cast<void *>(ChipAt), ChipSize, PROT_READ | PROT_WRITE,
-                      MAP_PRIVATE | MAP_ANONYMOUS | MAP_FIXED_NOREPLACE | MAP_NORESERVE, -1, 0);
+                      chip_flags, -1, 0);
     if (chip == reinterpret_cast<void *>(ChipAt)) {
         pool_start(chip_pool, static_cast<uint8_t *>(chip), ChipSize);
         pool_start(fast_pool, arena, ArenaSize);
     } else {
+        if (chip != MAP_FAILED)
+            munmap(chip, ChipSize);
         // (taken: the chip memory at the start of the arena)
         pool_start(chip_pool, arena, ChipSize);
         pool_start(fast_pool, arena + ChipSize, ArenaSize - ChipSize);

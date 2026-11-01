@@ -111,6 +111,13 @@ install-hd: all
 HOST_SRC    := $(filter-out %_amiga.cpp src/amiga/%,$(wildcard src/*/*.cpp)) $(HOST)/topaz.cpp $(HOST)/keymap.cpp
 HOST_OBJ    := $(patsubst %.cpp,$(HOST)/obj/%.o,$(HOST_SRC))
 HOST_OPT    ?= -O0 -g
+# AMOS stores program and arena addresses in 32 bits. Darwin otherwise
+# reserves the first 4GB and places the executable above them.
+ifeq ($(shell uname -s),Darwin)
+HOST_LDFLAGS ?= -Wl,-no_pie,-pagezero_size,0x1000
+else
+HOST_LDFLAGS ?= -no-pie
+endif
 # SDL2: dlopen'ed when AMOS starts (default), or HOST_SDL=link: linked to
 # the system's libSDL2-2.0.so.0 (no SDL headers needed)
 HOST_SDL    ?= dlopen
@@ -148,7 +155,7 @@ $(HOST)/obj/%.o: %.cpp $(if $(filter $(BUILD)/ndk/Include_H,$(NDK_INCLUDE)),$(BU
 -include $(HOST_OBJ:%.o=%.d)
 
 host: $(HOST_OBJ)
-	g++ -m64 -no-pie -o $(HOST)/amos $(HOST_OBJ) $(HOST_SDLLIB) > $(HOST)/link.txt 2>&1 || \
+	g++ -m64 $(HOST_LDFLAGS) -o $(HOST)/amos $(HOST_OBJ) $(HOST_SDLLIB) > $(HOST)/link.txt 2>&1 || \
 		{ grep -v "undefined reference" $(HOST)/link.txt | grep -i "error\|multiple" ; true; }
 	grep -o "undefined reference to .*" $(HOST)/link.txt | sort -u \
 		| tee $(HOST)/missing.txt | wc -l | sed 's/$$/ symbols missing (build\/host\/missing.txt)/'

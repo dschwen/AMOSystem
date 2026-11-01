@@ -146,7 +146,19 @@ bool load()
 #else
 bool load()
 {
+#if defined(__APPLE__)
+    void *lib = nullptr;
+    const char *paths[] = {"libSDL2.dylib", "/usr/local/lib/libSDL2.dylib",
+                           "/opt/homebrew/lib/libSDL2.dylib",
+                           "/Library/Frameworks/SDL2.framework/SDL2"};
+    for (const char *path : paths) {
+        lib = dlopen(path, RTLD_NOW);
+        if (lib)
+            break;
+    }
+#else
     void *lib = dlopen("libSDL2-2.0.so.0", RTLD_NOW);
+#endif
     if (!lib)
         return false;
     return symbol(lib, sdl.Init, "SDL_Init") && symbol(lib, sdl.CreateWindow, "SDL_CreateWindow") &&
@@ -389,7 +401,11 @@ void window_start()
     if ((want && !strcmp(want, "none")) || !load())
         return;
     audio_start();
-    if (!getenv("DISPLAY") || sdl.Init(0x20) < 0)   // SDL_INIT_VIDEO
+#if !defined(__APPLE__)
+    if (!getenv("DISPLAY"))
+        return;
+#endif
+    if (sdl.Init(0x20) < 0)   // SDL_INIT_VIDEO
         return;
     // magnified (AMOS_SCALE, 2 by default): a hires pixel to scale by scale,
     // a line to twice that (the frame's lines are PAL's 288)

@@ -253,12 +253,21 @@ void read_entries(Lock &l)
         }
         Entry &x = list[n++];
         x = {strdup(e->d_name), 0, 0, e->d_ino};
+#if defined(__APPLE__)
+        struct stat st;
+        if (fstatat(dirfd(d), e->d_name, &st, AT_SYMLINK_NOFOLLOW) == 0) {
+            const auto &t = st.st_birthtimespec;
+            x.sec = t.tv_sec;
+            x.nsec = t.tv_nsec;
+        }
+#else
         struct statx st;
         if (statx(dirfd(d), e->d_name, AT_SYMLINK_NOFOLLOW, STATX_BTIME | STATX_MTIME, &st) == 0) {
             const struct statx_timestamp &t = st.stx_mask & STATX_BTIME ? st.stx_btime : st.stx_mtime;
             x.sec = t.tv_sec;
             x.nsec = t.tv_nsec;
         }
+#endif
     }
     closedir(d);
     qsort(list, size_t(n), sizeof(Entry), [](const void *a, const void *b) {

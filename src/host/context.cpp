@@ -15,11 +15,14 @@ namespace {
 Ctx context;            // the interpreter's registers (one task here)
 }
 
-uint8_t *amos_bridge;
 extern "C" uint8_t amos_task[52];
 uint8_t amos_task[52];
 
 namespace amos {
+
+extern "C" {
+uint8_t *amos_bridge;
+}
 
 Ctx &ctx() { return context; }
 

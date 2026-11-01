@@ -4,6 +4,12 @@
 // the wait for a frame, a delay: host::run_tasks) and gives the processor
 // back where it waits itself (host::task_yield); there is no pre-emption.
 
+// macOS exposes the ucontext routines only when X/Open interfaces are enabled.
+// Feature-test macros must precede all headers, including project headers.
+#if defined(__APPLE__) && !defined(_XOPEN_SOURCE)
+#define _XOPEN_SOURCE 700
+#endif
+
 #include "hal/system.h"
 #include "runtime/runtime.h"
 

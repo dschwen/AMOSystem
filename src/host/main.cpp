@@ -3,6 +3,10 @@
 // are below 4GB. The command line is the CLI's: [-c config] [-w]
 // [program [its command line]].
 
+#if defined(__APPLE__) && !defined(_XOPEN_SOURCE)
+#define _XOPEN_SOURCE 700
+#endif
+
 #include "runtime/runtime.h"
 #include "runtime/glue.h"
 #include "hal/system.h"
@@ -17,6 +21,9 @@
 #include <string>
 #include "host/devices.h"
 #include <sys/stat.h>
+#if defined(__APPLE__)
+#include <ucontext.h>
+#endif
 
 using namespace amos;
 
@@ -41,10 +48,17 @@ void start(uint32_t base)
     main_init_fin();
 }
 
+#if defined(__APPLE__)
+void amos_main_context()
+{
+    host::base_run(start);
+}
+#else
 void *amos_thread(void *)
 {
     host::base_run(start);
 }
+#endif
 
 } // namespace
 
@@ -189,6 +203,24 @@ int main(int argc, char **argv)
         fprintf(stderr, "amos: no memory for the stack\n");
         return 1;
     }
+#if defined(__APPLE__)
+    // Cocoa requires SDL video on the main thread. Switch only its stack:
+    // AMOS still needs stack addresses representable in 32 bits.
+    ucontext_t caller, interpreter;
+    if (getcontext(&interpreter) != 0) {
+        perror("amos: getcontext");
+        return 1;
+    }
+    interpreter.uc_stack.ss_sp = stack;
+    interpreter.uc_stack.ss_size = StackSize;
+    interpreter.uc_stack.ss_flags = 0;
+    interpreter.uc_link = &caller;
+    makecontext(&interpreter, amos_main_context, 0);
+    if (swapcontext(&caller, &interpreter) != 0) {
+        perror("amos: swapcontext");
+        return 1;
+    }
+#else
     pthread_attr_t attr;
     pthread_attr_init(&attr);
     pthread_attr_setstack(&attr, stack, StackSize);
@@ -203,5 +235,6 @@ int main(int argc, char **argv)
         pthread_kill(thread, SIGTRAP);
     }
     pthread_join(thread, nullptr);
+#endif
     return 0;
 }

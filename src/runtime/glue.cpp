@@ -54,8 +54,9 @@ void from_context(AllRegs &r)
 // A C function of n 32-bit parameters (passed as machine words: on another
 // host the pointers among them are read whole); its result as a word
 using U = uintptr_t;
-U call_c(const void *fn, int n, const U *p)
+U call_c(const void *address, int n, const U *p)
 {
+    void *fn = const_cast<void *>(address);
     switch (n) {
     case 0: return reinterpret_cast<U (*)()>(fn)();
     case 1: return reinterpret_cast<U (*)(U)>(fn)(p[0]);
@@ -173,7 +174,7 @@ int32_t glue_call(const void *at, AllRegs &r)
 #if defined(__mc68000__)
         // (a double comes back in d0/d1)
         if (e->a2 == 4)
-            v = reinterpret_cast<uint64_t (*)(U, U, U, U, U, U, U, U, U, U)>(e->fn)(p[0], p[1], p[2], p[3], p[4],
+            v = reinterpret_cast<uint64_t (*)(U, U, U, U, U, U, U, U, U, U)>(const_cast<void *>(e->fn))(p[0], p[1], p[2], p[3], p[4],
                                                                                    p[5], p[6], p[7], p[8], p[9]);
         else
 #endif
@@ -209,7 +210,7 @@ int32_t glue_call(const void *at, AllRegs &r)
         for (int i = 0; i < 3; i++)
             f.a[i] = r.a[i];
         to_context(r);
-        uint32_t v = reinterpret_cast<uint32_t (*)(RegFrame &)>(e->fn)(f);
+        uint32_t v = reinterpret_cast<uint32_t (*)(RegFrame &)>(const_cast<void *>(e->fn))(f);
         from_context(r);
         for (int i = 0; i < 8; i++)
             r.d[i] = f.d[i];
@@ -219,14 +220,14 @@ int32_t glue_call(const void *at, AllRegs &r)
     }
     case GlueKind::call:
         to_context(r);
-        reinterpret_cast<void (*)()>(e->fn)();
+        reinterpret_cast<void (*)()>(const_cast<void *>(e->fn))();
         from_context(r);
         return int32_t(r.d[0]);
     case GlueKind::test:
     case GlueKind::record: {
         uint32_t d6 = r.d[6], d7 = r.d[7];
         to_context(r);
-        reinterpret_cast<void (*)()>(e->fn)();
+        reinterpret_cast<void (*)()>(const_cast<void *>(e->fn))();
         from_context(r);
         r.d[6] = d6;
         r.d[7] = d7;
@@ -238,7 +239,7 @@ int32_t glue_call(const void *at, AllRegs &r)
         if (e->kind == GlueKind::eval_d3)
             o.d3 = r.d[3];
         to_context(r);
-        reinterpret_cast<void (*)(interp::EvalOut *)>(e->fn)(&o);
+        reinterpret_cast<void (*)(interp::EvalOut *)>(const_cast<void *>(e->fn))(&o);
         from_context(r);
         r.d[0] = o.d0;
         r.d[1] = o.d1;
@@ -251,7 +252,7 @@ int32_t glue_call(const void *at, AllRegs &r)
     case GlueKind::float_: {
         uint32_t o[3] = {0, r.d[3], r.d[4]};
         to_context(r);
-        reinterpret_cast<void (*)(uint32_t *)>(e->fn)(o);
+        reinterpret_cast<void (*)(uint32_t *)>(const_cast<void *>(e->fn))(o);
         from_context(r);
         r.d[2] = o[0];
         r.d[3] = o[1];
@@ -259,14 +260,14 @@ int32_t glue_call(const void *at, AllRegs &r)
         return int32_t(r.d[0]);
     }
     case GlueKind::w:
-        w_go(r, [&] { reinterpret_cast<void (*)(AllRegs *)>(e->fn)(&r); });
+        w_go(r, [&] { reinterpret_cast<void (*)(AllRegs *)>(const_cast<void *>(e->fn))(&r); });
         return tested(r.d[0], e->a2);
     case GlueKind::w_a0:
-        w_go(r, [&] { reinterpret_cast<void (*)(AllRegs *)>(e->fn)(&r); });
+        w_go(r, [&] { reinterpret_cast<void (*)(AllRegs *)>(const_cast<void *>(e->fn))(&r); });
         return r.a[0] ? 1 : 0;
     case GlueKind::w_f: {
         uint32_t v = 0;
-        w_go(r, [&] { v = reinterpret_cast<uint32_t (*)(AllRegs *)>(e->fn)(&r); });
+        w_go(r, [&] { v = reinterpret_cast<uint32_t (*)(AllRegs *)>(const_cast<void *>(e->fn))(&r); });
         return int32_t(v);
     }
     case GlueKind::window:
@@ -279,7 +280,7 @@ int32_t glue_call(const void *at, AllRegs &r)
     case GlueKind::lib_jump:
         return glue_call(lib_address(e->a1), r);
     case GlueKind::hand:
-        reinterpret_cast<void (*)(AllRegs &)>(e->fn)(r);
+        reinterpret_cast<void (*)(AllRegs &)>(const_cast<void *>(e->fn))(r);
         return int32_t(r.d[0]);
     case GlueKind::c_routine:
     case GlueKind::missing:
@@ -304,7 +305,7 @@ WFunction wentry_function(const void *entry)
             entry = e->target;
             continue;
         }
-        return e->kind == host::GlueKind::w ? reinterpret_cast<WFunction>(e->fn) : nullptr;
+        return e->kind == host::GlueKind::w ? reinterpret_cast<WFunction>(const_cast<void *>(e->fn)) : nullptr;
     }
     return nullptr;
 }

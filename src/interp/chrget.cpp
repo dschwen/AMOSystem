@@ -43,7 +43,7 @@ constexpr uint8_t LCNone = 3, LCDouble = 4;
 
 struct Native {
     const void *routine;    // the table's entry it was found for
-    const void *fn;         // the C function, or 0: the routine is called
+    void *fn;               // the C function, or 0: the routine is called
     uint8_t params, result;
 };
 Native instructions[Tokens / 2], functions[Tokens / 2];
