@@ -15,6 +15,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <string>
+#include "host/devices.h"
 #include <sys/stat.h>
 
 using namespace amos;
@@ -124,13 +125,38 @@ int main(int argc, char **argv)
         memcpy(p, "-r ", 3);
         p += 3;
     }
+    bool first = true;
     for (int i = 1; i < argc; i++) {
         std::string arg = argv[i];
+        // the host's own options: --df0 path[=label][,ro], --dh1..., --assign NAME=path,
+        // --library path, --devices path, --config file (docs/DEVICES.md)
+        if (arg.compare(0, 2, "--") == 0) {
+            std::string name = arg.substr(2), value;
+            size_t eq = name.find('=');
+            if (eq != std::string::npos) {
+                value = name.substr(eq + 1);
+                name.resize(eq);
+            } else if (i + 1 < argc) {
+                value = argv[++i];
+            }
+            if (!host::devices::option(name.c_str(), value.c_str())) {
+                fprintf(stderr, "amos: unknown option %s\n", arg.c_str());
+                return 1;
+            }
+            continue;
+        }
         if (arg[0] != '-' && arg.find(':') == std::string::npos) {
             std::string absolute = arg[0] == '/' ? arg : start_dir + "/" + arg;
             struct stat st;
             if (stat(absolute.c_str(), &st) == 0 && S_ISREG(st.st_mode)) {
                 size_t slash = absolute.rfind('/');
+                // (its profile, and its folder a disk of its own name)
+                if (char *real = realpath(absolute.c_str(), nullptr)) {
+                    std::string program = real;
+                    free(real);
+                    host::devices::set_program(program.c_str());
+                    setenv("AMOS_PROGRAM_DIR", program.substr(0, program.rfind('/')).c_str(), 1);
+                }
                 if (arg[0] == '/') {
                     start_dir = absolute.substr(0, slash ? slash : 1);
                     arg = absolute.substr(slash + 1);
@@ -141,8 +167,9 @@ int main(int argc, char **argv)
         size_t n = arg.size();
         if (p + n + 2 >= command + sizeof command)
             break;
-        if (i > 1)
+        if (!first)
             *p++ = ' ';
+        first = false;
         memcpy(p, arg.data(), n);
         p += n;
     }

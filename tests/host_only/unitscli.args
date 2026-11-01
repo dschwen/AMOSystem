@@ -1,0 +1,1 @@
+--df0 "@FILES@/disks/one=Cli Disk,ro" --dh2 @FILES@/hard --assign ALIAS=@FILES@/disks/two --library @FILES@/lib

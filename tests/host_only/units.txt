@@ -1,0 +1,21 @@
+drive-1-1-1 0-1-1 0
+names-1-1-1-1 0-1
+exist-1-1-1-1-1-1
+shelf-1-1
+Game Disk 1:|Big:|two:|Shelf:
+[ DF0:                                 ]
+[ DF1:                                 ]
+[ DF2:                                 ]
+[ DH0:                                 ]
+[ DH1:                                 ]
+[ DH3:                                 ]
+read two
+create 90
+kill 90
+rename 90
+mkdir 90
+df0 create 0
+empty 93
+none 86
+missing 81
+end

@@ -364,28 +364,37 @@ bool ed_config_load_texts();     // editor/config.cpp
 // Run only (-r): the program stopped, AMOSPro stops; an error (not End,
 // not the editor's or direct mode's keys) told, with its message from the
 // editor's configuration if it can be loaded
-[[noreturn]] void run_only_end(uint16_t code)
+[[noreturn]] void run_only_end(uint16_t raw)
 {
+    // (a negative code is the verifier's: its message is in the test
+    // messages, the program was not started; 0 and above 999 are ends)
+    int16_t code = int16_t(raw);
     if (!code || code == 10 || code >= 1000)
         the_end(nullptr);
     static char text[160];
     const char *message = "";
-    if (ed_config_load_texts() && idata().Ed_RunMessages)
-        message = boot::message(idata().Ed_RunMessages, code + 1);
+    if (ed_config_load_texts()) {
+        if (code < 0 && idata().Ed_TstMessages)
+            message = boot::message(idata().Ed_TstMessages, uint32_t(-code));
+        else if (code > 0 && idata().Ed_RunMessages)
+            message = boot::message(idata().Ed_RunMessages, uint32_t(code) + 1);
+    }
     char *to = text;
-    for (const char *p = "Error "; *p;)
-        *to++ = *p++;
+    auto put = [&to](const char *p) {
+        while (*p && to < text + sizeof text - 1)
+            *to++ = *p++;
+    };
+    put(code < 0 ? "Syntax error " : "Error ");
     char digits[6];
     int n = 0;
+    uint32_t number = uint32_t(code < 0 ? -code : code);
     do
-        digits[n++] = char('0' + code % 10);
-    while (code /= 10);
+        digits[n++] = char('0' + number % 10);
+    while (number /= 10);
     while (n)
         *to++ = digits[--n];
-    *to++ = ':';
-    *to++ = ' ';
-    while (*message && to < text + sizeof text - 1)
-        *to++ = *message++;
+    put(": ");
+    put(message);
     *to = 0;
     the_end(text);
 }

@@ -87,6 +87,17 @@ def prepare(name, tables):
     program = amostok.tokenize_program(listing, tables)
     run.lock_procedures(program)
     program.save(os.path.join(hd, name + '.AMOS'))
+    # the host's own tests of the devices (docs/DEVICES.md): their disks (name.files, copied), the
+    # configuration (name.conf: @FILES@ the copy) and the options of the command line (name.args)
+    files = os.path.join(HOST_ONLY, name + '.files')
+    if os.path.isdir(files):
+        shutil.copytree(files, os.path.join(os.path.dirname(hd), 'files'))
+    conf = os.path.join(HOST_ONLY, name + '.conf')
+    if os.path.exists(conf):
+        with open(conf) as f:
+            text = f.read().replace('@FILES@', os.path.join(os.path.dirname(hd), 'files'))
+        with open(os.path.join(os.path.dirname(hd), 'amos.conf'), 'w') as f:
+            f.write(text)
     extra = os.path.join(run.TESTS, name + '.d')
     if os.path.isdir(extra):
         for f in sorted(os.listdir(extra)):
@@ -121,6 +132,10 @@ def environment(hd, tree):
     os.makedirs(ram, exist_ok=True)
     env['AMOS_ASSIGNS'] = f'AMOSTEST={hd};AMOSPRO={tree};RAM={ram}'
     env['AMOS_DEVICES'] = os.path.join(os.path.dirname(hd), 'devices')
+    # (not the user's own: the test's, if it has one)
+    conf = os.path.join(os.path.dirname(hd), 'amos.conf')
+    env['AMOS_CONFIG'] = conf if os.path.exists(conf) else os.devnull
+    env['TMPDIR'] = os.path.dirname(hd)
     # the Amiga's tests: a volume Workbench, as the emulator has (its C:
     # without Echo, a command of the shell's), with the host's own ones
     if not os.path.exists(os.path.join(HOST_ONLY, os.path.basename(os.path.dirname(hd)) + '.asc')):
@@ -134,7 +149,13 @@ def run_text(name, hd, timeout):
     env = environment(hd, TREE)
     env['AMOS_DISPLAY'] = 'none'           # no window, no sound
     try:
-        p = subprocess.run([AMOS, f'AMOSTEST:{name}.AMOS'], cwd=TREE, env=env, timeout=timeout,
+        args = []
+        argfile = os.path.join(HOST_ONLY, name + '.args')
+        if os.path.exists(argfile):
+            import shlex
+            with open(argfile) as f:
+                args = shlex.split(f.read().replace('@FILES@', os.path.join(os.path.dirname(hd), 'files')))
+        p = subprocess.run([AMOS] + args + [f'AMOSTEST:{name}.AMOS'], cwd=TREE, env=env, timeout=timeout,
                            stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         note = p.stdout.decode('latin-1').strip().splitlines()
         return note[-1] if note else f'exit {p.returncode}'
@@ -262,7 +283,7 @@ def compare(name, out):
     """tests/run.py's comparison, the host's variants of the text results"""
     got = run.outputs(out, name)
     problems = []
-    for f in sorted(set(got) | set(run.outputs(run.GOLDEN, name)) | {f for f in run.outputs(HOST_ONLY, name) if not f.endswith('.asc')}):
+    for f in sorted(set(got) | set(run.outputs(run.GOLDEN, name)) | {f for f in run.outputs(HOST_ONLY, name) if not f.endswith(('.asc', '.conf', '.args', '.files'))}):
         want = golden_of(f)
         if f not in got:
             problems.append(f'{f} missing')

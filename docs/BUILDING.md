@@ -219,16 +219,37 @@ with `src/host` and no assembler:
   given out as exec does; AMOS's data (programs, banks, token tables)
   stay big-endian (`core/endian.h`);
 - files: POSIX, with AmigaDOS's names; the current directory is
-  `AMOSPRO:`. The disks are the **devices directory**: each directory in
-  `devices/` (in the directory AMOS starts in if there is one, else in the
-  user's data directory; `AMOS_DEVICES` names another)
-  is a volume, and `Work:Programs/game.AMOS` is the file
-  `devices/Work/Programs/game.AMOS` (names are not case-sensitive, as
-  AmigaDOS's). A new devices directory comes with `RAM` (`RAM:`, whose
-  volume is "Ram Disk") and `Work`; a directory made in it appears at once
-  as a volume, in the file selector's "Devices" too. Assigns (`AMOS_ASSIGNS`,
-  `c:assign`, AMOS's own AMOSPro_...) are listed apart, as on the Amiga;
-  Load, Save and the editor's file selector use them all;
+  `AMOSPRO:`. The disks (`host/devices.cpp`, docs/DEVICES.md): folders that
+  are volumes, named by their label, with **units** that name some of
+  them: `DF0:`...`DF3:` (floppies; `DF0:` and `DF1:` always exist, empty
+  until a folder is put in; `floppy_drives` in `[devices]` changes how
+  many) and `DH0:`...`DH9:` (hard disks). Where they come from, in the order
+  they are read: the configuration (`amos.conf` of the user, the program's
+  `Name.amos.conf`, then the command line: `[df0] path= label= readonly=`,
+  `[dh3]`..., `[assign] NAME=path`, `[library] path=`, `[devices]
+  directory=`; `--df0 path[=label][,ro]`, `--dh3`, `--assign NAME=path`,
+  `--library path`, `--devices path`, `--config file`; `AMOS_CONFIG` names
+  the user's file), `AMOS_ASSIGNS`, the devices directory (`AMOS_DEVICES`,
+  the configuration's, `./devices`, else `~/.local/share/amos/devices`; a
+  new one has `Work`: each folder in it a volume, a unit `DH0:`... in
+  the order of the names; one made later appears at once), the **library**
+  (folders in it are disks that a program can ask for by their label:
+  the first time one is asked for, it is mounted in the next free `DH`
+  unit), the folder of the program run (a volume of its own name), and
+  `RAM:`, which is a folder made new at every start and removed at the end
+  (the volume "Ram Disk"). `Work:Programs/game.AMOS` is the file
+  `.../Work/Programs/game.AMOS` (names are not case-sensitive, as
+  AmigaDOS's). A write-protected disk (`readonly = yes`, `,ro`) refuses to
+  create, change, delete or rename (error 223, "disk write-protected"); an
+  empty unit is "no disk in drive" (226); a name that is nothing gives
+  the Amiga's "Please insert volume" requester. `Drive`, `Dev First$`, `Disc
+  Info$` and the file selector's lists know the units, the labels and the
+  assigns. `image =` (a disk image) is not supported yet;
+- **no `std::filesystem`, no `std::error_code`** in the host: it is built with
+  `-fpack-struct=2` for the Amiga's structures, which changes the layout of
+  such classes in our code but not in `libstdc++.so`, so a call across the
+  boundary writes in the wrong place (this crashed `remove_all` at the first
+  try). Use POSIX calls; plain `std::string`/`std::vector` are fine;
 - the file selector's task, and any other, runs while the program waits
   (`host/tasks.cpp`: coroutines, no pre-emption);
 - the custom chips as registers, a copper and a renderer
@@ -286,6 +307,7 @@ host's own result, with the reason of each (its README). The environment:
 | `AMOS_ASSIGNS` | `NAME=path;...`: assigns |
 | `AMOS_HOME` | the AMOS tree (found from the program by default) |
 | `AMOS_DEVICES` | the devices directory |
+| `AMOS_CONFIG` | the user's `amos.conf` (else `~/.config/amos/amos.conf`) |
 | `AMOS_DISPLAY=none` | no window, no sound |
 | `AMOS_SCALE` | the window's magnification (1-9, 2 by default) |
 | `AMOS_SHOT=file.ppm` | the last frame into that file; with `AMOS_SHOT_FRAME=n`, frame n |

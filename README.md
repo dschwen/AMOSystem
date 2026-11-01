@@ -109,11 +109,38 @@ amos-player prog.AMOS     # runs the program only (AMOSPro's -r): no editor, no 
 ```
 
 `amos` finds its AMOS tree from where it is installed (`AMOS_HOME` names
-another). The folder it was started in is the volume `START:`; the disks are
-the folders of the devices directory (`AMOS_DEVICES`, else `./devices`, else
-`~/.local/share/amos/devices`, made with `RAM` and `Work`), each one a volume.
-The window is magnified twice (`AMOS_SCALE`). docs/BUILDING.md lists the other
-environment variables and what the host does not do as the Amiga does.
+another). The folder it was started in is the volume `START:`, and the
+folder of the program the volume of its own name. **The disks** are folders:
+`DF0:`...`DF3:` (floppies) and `DH0:`...`DH9:` (hard disks) hold folders as
+disks, labelled with the folder's name or as you say. They are set up in
+`amos.conf` (`~/.config/amos/amos.conf`, or a program's `Name.amos.conf`
+beside it) or on the command line:
+
+```
+amos --df0 "~/disks/Game 1=Game Disk 1" --df1 ~/disks/Game2,ro --dh1 ~/amiga/Work prog.AMOS
+```
+
+```
+[df0]
+path = ~/disks/Game1
+label = Game Disk 1
+[df1]
+path = ~/disks/Game2
+readonly = yes
+[dh1]
+path = ~/amiga/Work
+[library]
+path = ~/disks          # disks found by their label when a program asks for them
+[assign]
+FONTS = ~/amiga/Fonts
+```
+
+The folders of the devices directory (`AMOS_DEVICES`, else `./devices`, else
+`~/.local/share/amos/devices`, made with `Work`) are disks too, and `RAM:` is
+empty at every start. The window is magnified twice (`AMOS_SCALE`).
+docs/DEVICES.md has the plan for the rest (disk images, a window to set them
+up); docs/BUILDING.md lists the other environment variables and what the host
+does not do as the Amiga does.
 
 `make game GAME=prog.AMOS DATA=folder NAME=mygame` makes `build/game/mygame`,
 a folder that runs on its own wherever it is put: the launcher `mygame`,

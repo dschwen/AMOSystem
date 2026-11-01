@@ -3,6 +3,7 @@
 
 #include "hal/files.h"
 #include "hal/system.h"
+#include "host/devices.h"
 #include "runtime/runtime.h"
 
 extern "C" void w_easy_request(amos::AllRegs *r);
@@ -42,175 +43,18 @@ int32_t dos_error(int e)
     case EBUSY: return ERROR_OBJECT_IN_USE;
     case EACCES: return ERROR_READ_PROTECTED;
     case ENOSPC: return ERROR_DISK_FULL;
+    case EROFS: return ERROR_WRITE_PROTECTED;
     case ENOTEMPTY: return ERROR_DIRECTORY_NOT_EMPTY;
     case EISDIR: return ERROR_OBJECT_WRONG_TYPE;
     default: return ERROR_OBJECT_WRONG_TYPE;
     }
 }
 
-// The volumes and assigns: "NAME=directory" pairs of AMOS_ASSIGNS
-// (separated by ';'), and those made by assign_lock
-struct Assign {
-    char name[32];
-    char *path;
-    bool volume;        // a directory of the devices directory
-};
-Assign assigns[64];
-int assign_count;
-
-void scan_devices();
-
-void read_assigns()
-{
-    static bool done;
-    if (done)
-        return;
-    done = true;
-    // the start directory a volume (AMOSPRO:, unless an assign is it), so
-    // that the paths stay as short as an Amiga's
-    char *cwd = getcwd(nullptr, 0);
-    bool covered = false;
-    const char *env = getenv("AMOS_ASSIGNS");
-    while (env && *env && assign_count < 64) {
-        const char *eq = strchr(env, '='), *end = strchr(env, ';');
-        if (!end)
-            end = env + strlen(env);
-        if (eq && eq < end && size_t(eq - env) < sizeof assigns[0].name) {
-            Assign &a = assigns[assign_count++];
-            a.volume = false;
-            memcpy(a.name, env, size_t(eq - env));
-            a.name[eq - env] = 0;
-            a.path = strndup(eq + 1, size_t(end - eq - 1));
-        }
-        env = *end ? end + 1 : end;
-    }
-    for (int i = 0; i < assign_count && cwd; i++) {
-        char *a = realpath(assigns[i].path, nullptr);
-        if (a && !strcmp(a, cwd))
-            covered = true;
-        free(a);
-    }
-    if (cwd && !covered && assign_count < 64) {
-        Assign &a = assigns[assign_count++];
-        a.volume = false;
-        strcpy(a.name, "AMOSPRO");
-        a.path = cwd;
-        cwd = nullptr;
-    }
-    free(cwd);
-    // START: where AMOS was started (the programs named on the command line)
-    if (const char *start = getenv("AMOS_START_DIR"); start && *start && assign_count < 64) {
-        bool known = false;
-        for (int i = 0; i < assign_count; i++)
-            known |= !strcasecmp(assigns[i].name, "START");
-        if (!known) {
-            Assign &a = assigns[assign_count++];
-            a.volume = false;
-            strcpy(a.name, "START");
-            a.path = strdup(start);
-        }
-    }
-    scan_devices();
-}
-
-// The devices directory: each directory in it is a volume, the directories
-// and files below it those of the volume (AMOS_DEVICES, or "devices" in
-// the directory AMOS starts in). A volume made there appears at once. It
-// comes with RAM: (and a first disk, Work:) when it is new.
-char *devices_root;
-
-void devices_open()
-{
-    if (devices_root)
-        return;
-    const char *env = getenv("AMOS_DEVICES");
-    char path[1024];
-    struct stat st;
-    const char *start = getenv("AMOS_START_DIR");
-    const char *home = getenv("HOME");
-    const char *data = getenv("XDG_DATA_HOME");
-    bool fresh;
-    if (env && *env) {
-        snprintf(path, sizeof path, "%s", env);
-        fresh = mkdir(path, 0777) == 0;
-    } else if (start && (snprintf(path, sizeof path, "%s/devices", start), stat(path, &st) == 0 && S_ISDIR(st.st_mode))) {
-        fresh = false;      // (a devices directory where AMOS was started)
-    } else {
-        // the user's own: $XDG_DATA_HOME/amos/devices (~/.local/share/amos/devices)
-        if (data && *data)
-            snprintf(path, sizeof path, "%s/amos", data);
-        else
-            snprintf(path, sizeof path, "%s/.local/share/amos", home ? home : ".");
-        char parent[1024];
-        snprintf(parent, sizeof parent, "%s", path);
-        for (char *s = parent + 1; *s; s++)
-            if (*s == '/') {
-                *s = 0;
-                mkdir(parent, 0777);
-                *s = '/';
-            }
-        mkdir(path, 0777);
-        strncat(path, "/devices", sizeof path - strlen(path) - 1);
-        fresh = mkdir(path, 0777) == 0;
-    }
-    devices_root = realpath(path, nullptr);
-    if (!devices_root)
-        return;
-    char volume[1100];
-    snprintf(volume, sizeof volume, "%s/RAM", devices_root);
-    mkdir(volume, 0777);
-    if (fresh) {
-        snprintf(volume, sizeof volume, "%s/Work", devices_root);
-        mkdir(volume, 0777);
-    }
-}
-
-// The directories of the devices directory that are not assigns yet
-void scan_devices()
-{
-    devices_open();
-    if (!devices_root)
-        return;
-    DIR *d = opendir(devices_root);
-    if (!d)
-        return;
-    while (struct dirent *e = readdir(d)) {
-        if (e->d_name[0] == '.' || strlen(e->d_name) >= sizeof assigns[0].name || assign_count >= 64)
-            continue;
-        char path[1100];
-        snprintf(path, sizeof path, "%s/%s", devices_root, e->d_name);
-        struct stat st;
-        if (stat(path, &st) != 0 || !S_ISDIR(st.st_mode))
-            continue;
-        bool known = false;
-        for (int i = 0; i < assign_count; i++)
-            if (!strcasecmp(assigns[i].name, e->d_name))
-                known = true;
-        if (known)
-            continue;
-        Assign &a = assigns[assign_count++];
-        strcpy(a.name, e->d_name);
-        a.path = strdup(path);
-        a.volume = true;
-    }
-    closedir(d);
-}
-
+// The disks, the units and the assigns are host/devices.cpp's
 const char *assigned(const char *volume, size_t n)
 {
-    read_assigns();
-    for (int pass = 0; pass < 2; pass++) {
-        for (int i = 0; i < assign_count; i++)
-            if (strlen(assigns[i].name) == n && !strncasecmp(assigns[i].name, volume, n))
-                return assigns[i].path;
-        // (a volume made since: in the devices directory)
-        if (!pass)
-            scan_devices();
-    }
-    // RAM:'s volume, "Ram Disk"
-    if (n == 8 && !strncasecmp(volume, "Ram Disk", 8))
-        return assigned("RAM", 3);
-    return nullptr;
+    amos::host::devices::Status status;
+    return amos::host::devices::resolve(volume, n, status);
 }
 
 // The entry of directory dir named name, whatever its case (AmigaDOS's
@@ -275,15 +119,17 @@ bool insert_volume(const char *volume, size_t n)
     return r.d[0] != 0;
 }
 
-bool not_mounted;      // host_name's volume is not there (cancelled)
+// host_name's volume is not there (cancelled: ERROR_DEVICE_NOT_MOUNTED), or its
+// unit is empty (ERROR_NO_DISK); 0 if it is
+int name_error;
 
 // AmigaDOS's names: "volume:dir/file" (the volume an assign, or a
 // directory of the current one), "/" alone up a directory; each part
 // found whatever its case. A volume that is not there: its requester, and
-// not_mounted if it is cancelled
+// name_error if it is cancelled
 const char *host_name(const char *name)
 {
-    not_mounted = false;
+    name_error = 0;
     static char buffer[1024];
     char *to = buffer;
     *to = 0;
@@ -293,8 +139,12 @@ const char *host_name(const char *name)
         // NIL:, the device that takes everything and gives nothing
         if (n == 3 && !strncasecmp(name, "NIL", 3))
             return "/dev/null";
-        if (const char *path = assigned(name, n)) {
+        amos::host::devices::Status status;
+        if (const char *path = amos::host::devices::resolve(name, n, status)) {
             snprintf(buffer, sizeof buffer, "%s", path);
+        } else if (status == amos::host::devices::Status::no_disk) {
+            name_error = ERROR_NO_DISK;
+            snprintf(buffer, sizeof buffer, "%.*s", int(n), name);
         } else if (n) {
             // a directory of the current one, else of the root (the names
             // of the locks begin with the root's directory: "home:...")
@@ -309,7 +159,7 @@ const char *host_name(const char *name)
                 else if (insert_volume(name, n))
                     continue;
                 else {
-                    not_mounted = true;
+                    name_error = ERROR_DEVICE_NOT_MOUNTED;
                     snprintf(buffer, sizeof buffer, "%.*s", int(n), name);
                 }
                 break;
@@ -436,8 +286,8 @@ Open opened[1024];
 File open(const char *name, int32_t mode)
 {
     const char *h = host_name(name);
-    if (not_mounted) {
-        last_error = ERROR_DEVICE_NOT_MOUNTED;
+    if (name_error) {
+        last_error = name_error;
         return 0;
     }
     struct stat st;
@@ -453,9 +303,14 @@ File open(const char *name, int32_t mode)
                 return 0;
             }
     }
-    // (an old file can be written too; read-only if it cannot)
+    // (an old file can be written too; read-only if it cannot, or if its disk is write-protected)
+    bool protect = amos::host::devices::read_only(h);
+    if (protect && mode != ModeOldFile) {
+        last_error = ERROR_WRITE_PROTECTED;
+        return 0;
+    }
     int flags = mode == ModeNewFile ? O_RDWR | O_CREAT | O_TRUNC : mode == ModeReadWrite ? O_RDWR | O_CREAT : O_RDWR;
-    int fd = ::open(h, flags, 0644);
+    int fd = protect ? ::open(h, O_RDONLY) : ::open(h, flags, 0644);
     if (fd < 0 && mode == ModeOldFile && (errno == EACCES || errno == EROFS))
         fd = ::open(h, O_RDONLY);
     if (fd < 0) {
@@ -488,7 +343,8 @@ int32_t read(File f, void *buffer, int32_t length)
 int32_t write(File f, const void *buffer, int32_t length)
 {
     ssize_t n = ::write(int(f) - 1, buffer, size_t(length));
-    last_error = n < 0 ? dos_error(errno) : 0;
+    // (a file of a write-protected disk is open for reading only)
+    last_error = n < 0 ? (errno == EBADF ? ERROR_WRITE_PROTECTED : dos_error(errno)) : 0;
     return int32_t(n);
 }
 
@@ -536,20 +392,8 @@ amos::hal::DirLock lock_path(const char *h)
 char *volumes[64];
 int volume_count;
 
-// The volume a directory is the top of: the assign of that directory
-// (RAM: is "Ram Disk", as on the Amiga), or null
-const char *volume_of(const char *real)
-{
-    read_assigns();
-    for (int i = 0; i < assign_count; i++) {
-        char *a = realpath(assigns[i].path, nullptr);
-        bool same = a && !strcmp(a, real);
-        free(a);
-        if (same)
-            return strcasecmp(assigns[i].name, "RAM") ? assigns[i].name : "Ram Disk";
-    }
-    return nullptr;
-}
+// The volume a directory is the top of (RAM: is "Ram Disk", as on the Amiga), or null
+const char *volume_of(const char *real) { return amos::host::devices::volume_of(real); }
 
 } // namespace
 
@@ -567,8 +411,8 @@ DirLock lock(const char *name, int32_t)
     if (builtin_command(name))
         return lock_path("/proc/self/exe");
     const char *h = host_name(name);
-    if (not_mounted) {
-        last_error = ERROR_DEVICE_NOT_MOUNTED;
+    if (name_error) {
+        last_error = name_error;
         return 0;
     }
     return lock_path(h);
@@ -742,66 +586,41 @@ bool volume_name(const void *info_data, char *name, int size)
 // it takes; no lock: the assign goes
 bool assign_lock(const char *name, DirLock l)
 {
-    read_assigns();
     size_t n = strlen(name);
     if (n && name[n - 1] == ':')
         n--;
-    if (!n || n >= sizeof assigns[0].name)
-        return false;
-    int i = 0;
-    while (i < assign_count && !(strlen(assigns[i].name) == n && !strncasecmp(assigns[i].name, name, n)))
-        i++;
-    if (!l) {
-        if (i == assign_count)
-            return false;
-        free(assigns[i].path);
-        assigns[i] = assigns[--assign_count];
-        return true;
-    }
+    if (!l)
+        return amos::host::devices::assign(name, n, nullptr);
     if (l >= 256 || !locks[l].name)
         return false;
-    if (i == assign_count) {
-        if (assign_count == 64)
-            return false;
-        assign_count++;
-        assigns[i].volume = false;
-        memcpy(assigns[i].name, name, n);
-        assigns[i].name[n] = 0;
-    } else {
-        free(assigns[i].path);
-    }
-    char *real = realpath(locks[l].name, nullptr);
-    assigns[i].path = real ? real : strdup(locks[l].name);
+    bool done = amos::host::devices::assign(name, n, locks[l].name);
     unlock(l);
-    return true;
+    return done;
 }
-// A device: here an assign or a volume ("name:")
+// A device: a unit (even without a disk), an assign or a volume ("name:")
 bool device_exists(const char *name)
 {
     size_t n = strlen(name);
     if (n && name[n - 1] == ':')
         n--;
-    return n && assigned(name, n);
+    return n && amos::host::devices::exists(name, n);
 }
 
-// The volumes: the assigns and the directories of the devices directory
+// The names for Dev First$ and the file selector: the units, the volumes, the assigns
 void each_device(void (*f)(const char *name, bool device, void *data), void *data)
 {
-    read_assigns();
-    scan_devices();
-    for (int i = 0; i < assign_count; i++) {
-        f(assigns[i].name, assigns[i].volume, data);
-        // (RAM: is a device whose volume is "Ram Disk")
-        if (!strcasecmp(assigns[i].name, "RAM"))
-            f("Ram Disk", false, data);
-    }
+    amos::host::devices::each(f, data);
 }
 
 bool delete_file(const char *name)
 {
     const char *h = host_name(name);
-    if (not_mounted) {
-        last_error = ERROR_DEVICE_NOT_MOUNTED;
+    if (name_error) {
+        last_error = name_error;
+        return false;
+    }
+    if (amos::host::devices::read_only(h)) {
+        last_error = ERROR_WRITE_PROTECTED;
         return false;
     }
     if (::unlink(h) == 0 || ::rmdir(h) == 0)
@@ -815,9 +634,13 @@ bool rename(const char *from, const char *to)
     char f[1024];
     strncpy(f, host_name(from), sizeof f - 1);
     f[sizeof f - 1] = 0;
-    const char *t = not_mounted ? nullptr : host_name(to);
-    if (not_mounted) {
-        last_error = ERROR_DEVICE_NOT_MOUNTED;
+    const char *t = name_error ? nullptr : host_name(to);
+    if (name_error) {
+        last_error = name_error;
+        return false;
+    }
+    if (amos::host::devices::read_only(f) || amos::host::devices::read_only(t)) {
+        last_error = ERROR_WRITE_PROTECTED;
         return false;
     }
     if (::rename(f, t) == 0)
@@ -829,8 +652,12 @@ bool rename(const char *from, const char *to)
 DirLock create_dir(const char *name)
 {
     const char *h = host_name(name);
-    if (not_mounted) {
-        last_error = ERROR_DEVICE_NOT_MOUNTED;
+    if (name_error) {
+        last_error = name_error;
+        return 0;
+    }
+    if (amos::host::devices::read_only(h)) {
+        last_error = ERROR_WRITE_PROTECTED;
         return 0;
     }
     if (mkdir(h, 0755) < 0) {

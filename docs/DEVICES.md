@@ -1,6 +1,9 @@
 # Plan: devices, floppies and hard disks on the host
 
-Status: decided (section 9). D1 is being built; section 1 is how it worked before it.
+Status: decided (section 9). **D1 is built** (the model, `amos.conf`, the
+command line, the library for folders, the launch folder, a volatile `RAM:`;
+as described in docs/BUILDING.md's host list and the README); D2 onward are
+not. Section 1 is how it worked before D1.
 
 ## 1. Today
 

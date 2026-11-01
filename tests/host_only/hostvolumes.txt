@@ -6,4 +6,6 @@ hello
 [ a.txt                        7       ]
 [ b.bin                        1000    ]
 [ bank.abk                     1020    ]
-{ Work:                                }
+{ DF0:                                 }
+{ DF1:                                 }
+{ DH0:                                 }

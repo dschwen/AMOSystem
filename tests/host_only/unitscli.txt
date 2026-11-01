@@ -1,0 +1,5 @@
+drive-1-1-1-1-1-1
+exist-1-1-1-1
+ro 90
+Cli Disk:|hard:
+end
