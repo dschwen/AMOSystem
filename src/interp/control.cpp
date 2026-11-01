@@ -221,7 +221,9 @@ void call_procedure(uint8_t *proc, uint32_t back, uint16_t errors)
     for (uint8_t *v = vars; v < top; v++)
         *v = 0;
     p += 6 + int8_t(p[4]);
-    if (peek_token() == tk::Bra1) {
+    // (no program pointer for a menu's procedure: the assembler read the
+    // word at address 0 then)
+    if (pc() && peek_token() == tk::Bra1) {
         do {
             pc() += 2;
             uint8_t *param = p + 4;

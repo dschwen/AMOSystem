@@ -206,7 +206,7 @@ const GlueEntry entries_src_lib_dialog_glue_s[] = {
     {host_obj_src_lib_dialog_glue_s + 1152, GlueKind::reg, reinterpret_cast<const void *>(&lib_fs_get_name_c), nullptr, 0, 0, "lib_fs_get_name"},
     {host_obj_src_lib_dialog_glue_s + 1160, GlueKind::record, reinterpret_cast<const void *>(&lib_fs_flush), nullptr, 0, 0, "lib_fs_flush_record"},
     {host_obj_src_lib_dialog_glue_s + 1168, GlueKind::record, reinterpret_cast<const void *>(&lib_fs_end), nullptr, 0, 0, "lib_fs_end_record"},
-    {host_obj_src_lib_dialog_glue_s + 1172, GlueKind::alias, nullptr, reinterpret_cast<const void *>(reinterpret_cast<const uint8_t *>(&lib_fs_error)), 0, 0, "lib_fs_error_patch"},
+    {host_obj_src_lib_dialog_glue_s + 1172, GlueKind::call, reinterpret_cast<const void *>(&lib_fs_error), nullptr, 0, 0, "lib_fs_error_patch"},
     {host_obj_src_lib_dialog_glue_s + 1178, GlueKind::missing, nullptr, nullptr, 0, 0, "lib_fs_task_entry"},
     {nullptr, GlueKind::missing, nullptr, nullptr, 0, 0, nullptr},
 };

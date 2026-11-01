@@ -1395,11 +1395,12 @@ void instruction(Run &r, int i, const int32_t *p)
         rp = rastport();
         rp->cp_x = x1;
         rp->cp_y = y1;
-        WORD *points = reinterpret_cast<WORD *>(e + 4);
+        // (PolyDraw's points: words of the 68000's)
+        be_u16 *points = reinterpret_cast<be_u16 *>(e + 4);
         const WORD square[8] = {x1, y2, x2, y2, x2, y1, x1, y1};
         for (int k = 0; k < 8; k++)
-            points[k] = square[k];
-        hal::poly_draw(rp, 4, points);
+            points[k] = static_cast<uint16_t>(square[k]);
+        hal::poly_draw(rp, 4, reinterpret_cast<WORD *>(points));
         break;
     }
     case IGLine:

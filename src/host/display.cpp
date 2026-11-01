@@ -39,6 +39,7 @@ struct State {
 
 struct Write {
     int line;                   // the line it takes effect on
+    int at;                     // a colour's: the lores position it shows from (0: the line's start)
     uint16_t offset, value;
 };
 Write writes[8192];
@@ -70,8 +71,14 @@ void copper(State &start)
             } else if (reg == 0x8A) {   // COPJMP2
                 pc = start[0x84] << 16 | start[0x86];
             } else if (write_count < 8192) {
-                // (before the bitplanes' start: this line; else the next)
-                writes[write_count++] = {cc < 0x30 ? line : line + 1, reg, w2};
+                // (before the bitplanes' start: this line; else the next;
+                // a colour shows from where the beam is then, in this line:
+                // measured on the Amiga, 4 lores pixels before 2 * cc)
+                bool colour = reg >= 0x180 && reg < 0x1C0;
+                if (colour && cc >= 0x30)
+                    writes[write_count++] = {line, 2 * cc - 4, reg, w2};
+                else
+                    writes[write_count++] = {cc < 0x30 ? line : line + 1, 0, reg, w2};
                 if (reg >= 0x80 && reg <= 0x86)
                     start[reg] = w2;
             }
@@ -157,9 +164,17 @@ void display_frame(uint32_t *out)
     bool vdisplay = false;
     int w = 0;
     for (int line = 0; line < Lines; line++) {
-        // the writes for this line
+        // the writes for this line (the colours later in it: later)
+        const Write *later = nullptr;
+        int later_count = 0;
         for (; w < write_count && writes[w].line <= line; w++) {
             uint16_t o = writes[w].offset, v = writes[w].value;
+            if (writes[w].at) {
+                if (!later)
+                    later = &writes[w];
+                later_count = int(&writes[w] - later) + 1;
+                continue;
+            }
             if (o == 0x96) {            // DMACON through the copper
                 host_chip_write(o, v);
                 dma = host_chip_read(0x02);
@@ -302,14 +317,29 @@ void display_frame(uint32_t *out)
                 }
             }
         }
-        if (!row)
+        if (!row) {
+            for (; later_count; later++, later_count--)
+                if (later->at)
+                    st[later->offset] = later->value;
             continue;
+        }
         // the pixels: the window, the playfields, the sprites in front of them
         uint32_t ham_colour = colours[0];
         int pf1p = con2 & 7, pf2p = con2 >> 3 & 7;
         bool pf2_first = con2 & 0x40;
         for (int x = 0; x < FrameWidth; x++) {
             int lores = FirstX + x / 2;
+            // the colours written during the line, from their position
+            while (later_count && later->at <= lores) {
+                if (later->at) {
+                    int c = (later->offset - 0x180) >> 1;
+                    st[later->offset] = later->value;
+                    colours[c] = rgb(later->value);
+                    colours[c + 32] = rgb(uint16_t(later->value >> 1 & 0x777));
+                }
+                later++;
+                later_count--;
+            }
             bool window = vdisplay && lores >= hstart && lores < hstop;
             uint32_t c = colours[0];
             int playfield = 0;      // 0 none, 1 or 2
@@ -350,6 +380,10 @@ void display_frame(uint32_t *out)
             }
             row[x] = window ? c : colours[0];
         }
+        // (and those past the frame's right edge)
+        for (; later_count; later++, later_count--)
+            if (later->at)
+                st[later->offset] = later->value;
     }
 }
 

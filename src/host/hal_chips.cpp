@@ -20,6 +20,7 @@ namespace {
 
 volatile struct Custom registers;
 volatile uint8_t cia_a = 0xFF;      // no button pressed
+uint16_t potinp = 0x5500;           // POTINP: the ports' pins 5 and 9 high (no button)
 
 uint16_t word(uint32_t offset) { return reinterpret_cast<volatile ChipReg *>(reinterpret_cast<volatile uint8_t *>(&registers) + offset)->raw; }
 void set_word(uint32_t offset, uint16_t v)
@@ -194,6 +195,8 @@ uint16_t host_chip_read(uint32_t offset)
         return uint16_t(beam());
     case 0x07C:             // DENISEID: ECS
         return 0x00FC;
+    case 0x016:             // POTINP: the right button (port 0's pin 9)
+        return potinp;
     }
     return word(offset);
 }
@@ -223,6 +226,18 @@ void host_chip_write(uint32_t offset, uint16_t v)
 }
 
 } // extern "C"
+
+namespace amos::host {
+
+// The mouse's buttons, as the ports show them: the left one is port 0's
+// fire button (CIA A's /FIR0), the right one its pin 9 (POTINP's DATLY)
+void mouse_buttons(bool left, bool right)
+{
+    cia_a = left ? uint8_t(cia_a & ~0x40) : uint8_t(cia_a | 0x40);
+    potinp = right ? uint16_t(potinp & ~0x0400) : uint16_t(potinp | 0x0400);
+}
+
+} // namespace amos::host
 
 namespace amos::hal {
 

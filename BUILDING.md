@@ -223,9 +223,19 @@ with `src/host` and no assembler:
 - Paula (`host/audio.cpp`): the four voices played by their DMA from the
   registers, the audio interrupts at each block (exec's vectors,
   `SetIntVector`), mixed each frame into SDL's sound;
-- topaz 8 and 9 from the user's Kickstart (`tools/extract_topaz.py`,
-  `KICKSTART=` and `ROMKEY=` for an encrypted one; the result stays in
-  `build/` and boxes replace the characters without one).
+- topaz 8 and 9 and the usa keymap (its Alt characters and dead keys)
+  from the user's Kickstart (`tools/extract_topaz.py`,
+  `tools/extract_keymap.py`; `KICKSTART=` and `ROMKEY=` for an encrypted
+  one; the results stay in `build/`; without one, boxes replace the
+  characters and a plain table the keymap);
+- graphics.library's drawing as the Kickstart's (measured with probes in
+  the emulator): the blitter's lines (their rounding, the pattern's counter,
+  the first dot in COMPLEMENT mode), AreaEnd's fill, the multi-coloured
+  patterns, the algorithmic styles of Text, RectFill's outline;
+- chip memory below 4MB (24-bit addresses, as the Amiga's), apart from the
+  other memory; NIL:; DOS's "Please insert volume" requester (AMOS's, with
+  Request On) for a volume that is not there;
+- the copper's colour changes during a line where the beam is then.
 
 `build/host/amos` starts the editor in `build/dist/AMOS`; with a program
 as its argument (`AMOSPRO:...`, `AMOSTEST:...`) it runs that. The
@@ -233,12 +243,18 @@ monitor needs `APSystem/AMOSPro_Monitor_Resource.Abk`, which is not in
 the sources (copy it from an installed AMOS Pro). Its stack-resetting
 entries (MonitorChr, Step_Out, Tt_Error, QUIT, the evaluator's error
 exits) are `src/host/monitor.cpp` on the host.
-`tests/host_run.py` runs the text tests of `tests/run.py` with it (editor
-and input tests are left out: they drive the emulator's keyboard and compare
-its screenshots), and `tests/host_only` (what only the host has: its devices).
-Six tests differ from the Amiga's golden in known lines (the maths libraries'
-last digit, the serial device): `tests/host_only/variants` has the host's own
-result, with the reason of each line (its README). The environment:
+`tests/host_run.py` runs all the tests of `tests/run.py` with it, and
+`tests/host_only` (what only the host has: its devices), comparing every
+file they write (the IFF pictures too) with the golden ones. The editor and
+input tests run in a window of their own (`AMOS_SCALE=1`: a hires pixel to a
+pixel, a line to two, as FS-UAE shows them) on a virtual display (Xvfb),
+driven by the same input scripts, their screenshots compared with the
+Amiga's. Their test drive has an `S` folder and a `Workbench:` volume as the
+emulator's has; RAM: and the devices directory are beside it. A few results
+differ from the Amiga's in known ways (the maths libraries' last digit, the
+serial device, the devices and assigns, the compiler's extension, and three
+screenshot details not understood yet): `tests/host_only/variants` has the
+host's own result, with the reason of each (its README). The environment:
 
 | Variable | Use |
 |---|---|
@@ -297,6 +313,17 @@ which their editor screenshots were recorded with.
 when the name of the current directory began with `D`, respectively `A`:
 they took that letter for the kind of list the file selector asks for
 (its "Devices" and "Assigns" buttons). They list both now.
+
+`Save Iff`'s packer (ByteRun1) looks up to two bytes past the end of the row
+it packs. On the last row of the last plane that is past the screen's
+planes (each of the others is followed by the next), in whatever memory
+follows them, and those bytes could change how the row was packed (not the
+picture). They are read as zeros now, as they were on the Amiga when the
+golden files were recorded.
+
+A menu's procedure (the `(PR name)` object) was called with no program
+pointer, and the call looked for its parameters in the word at address 0
+(0 on the Amiga, so none). It does not read there now.
 
 AMOSPro starts on a stack of its own (64K, StackSwap in Cold_Start, given
 back in Get_Out): the C++ needs more than the 4K a CLI gives by default,

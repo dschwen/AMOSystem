@@ -610,10 +610,21 @@ void save_body(Writer &o, Screen *s, uint8_t compression)
     int32_t start = file_seek(0, OffsetCurrent);
     uint32_t written = 0, offset = 0;
     uint16_t line = s->EcTLigne;
+    // (the packer reads up to two bytes past the row: on the last row of
+    // the last plane, past the planes (the others are one after the other),
+    // they are zeros here, whatever memory follows them)
+    uint8_t last[256 + 2] = {};
     for (uint16_t y = s->EcTy; y; y--, offset += line) {
         uint8_t *to = o.start;
-        for (uint16_t p = 0; p < planes; p++)
-            to = pack_row(ptr<uint8_t>(s->EcLogic[p]) + offset, line, to);
+        for (uint16_t p = 0; p < planes; p++) {
+            const uint8_t *row = ptr<uint8_t>(s->EcLogic[p]) + offset;
+            if (y == 1 && p == planes - 1 && line <= 256) {
+                for (uint16_t i = 0; i < line; i++)
+                    last[i] = row[i];
+                row = last;
+            }
+            to = pack_row(row, line, to);
+        }
         uint32_t n = to - o.start;
         written += n;
         if (!file_write(o.start, n))

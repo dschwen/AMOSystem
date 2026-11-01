@@ -296,7 +296,7 @@ def compare_editor(name, shots):
         best = count if best is None else min(best, count)
         if not count:
             return []
-    return [f'screen differs ({best} pixels, see build/test-run/{name}/shot0.png)']
+    return [f'screen differs ({best} pixels, see {os.path.relpath(RUN, ROOT)}/{name}/shot0.png)']
 
 
 KEYSYMS = {' ': 'space', '.': 'period', ',': 'comma', '$': 'dollar', '"': 'quotedbl', '-': 'minus'}

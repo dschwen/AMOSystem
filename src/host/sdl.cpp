@@ -27,6 +27,7 @@ namespace amos::host {
 
 constexpr int FrameWidth = 768, FrameHeight = 288;
 void display_frame(uint32_t *out);
+void mouse_buttons(bool left, bool right);
 
 namespace {
 
@@ -233,6 +234,12 @@ void events()
             int32_t xrel, yrel;
             memcpy(&xrel, e + 28, 4);
             memcpy(&yrel, e + 32, 4);
+            // (SDL's first motion has the pointer's position for its move)
+            static bool first = true;
+            if (first) {
+                first = false;
+                continue;
+            }
             send(IECLASS_RAWMOUSE, IECODE_NOBUTTON, int16_t(xrel), int16_t(yrel));
         } else if (type == 0x401 || type == 0x402) {    // buttons
             bool down = type == 0x401;
@@ -244,6 +251,7 @@ void events()
             default: continue;
             }
             qualifier = down ? uint16_t(qualifier | q) : uint16_t(qualifier & ~q);
+            mouse_buttons(qualifier & IEQUALIFIER_LEFTBUTTON, qualifier & IEQUALIFIER_RBUTTON);
             send(IECLASS_RAWMOUSE, down ? code : uint16_t(code | IECODE_UP_PREFIX));
         }
     }
@@ -291,6 +299,8 @@ void window_frame()
 }
 
 void input_handler(Interrupt *is) { handler = is; }
+
+bool window_shown() { return shown; }
 
 // A frame's sound (count stereo samples), unless the sound is behind
 // Speech (host/speech.cpp): stereo samples at 44.1kHz queued at once, whether the sound

@@ -35,7 +35,7 @@ class Display:
         with "shift+", "ctrl+", "alt+", "lamiga+" or "ramiga+" in front for
         modifiers."""
         *mods, name = keysym.split('+') if len(keysym) > 1 else [keysym]
-        modifiers = {'shift': 'Shift_L', 'ctrl': 'Control_L', 'alt': 'Alt_L',
+        modifiers = {'shift': 'Shift_L', 'ctrl': 'Control_L', 'alt': 'Alt_R',
                      'lamiga': 'Super_L', 'ramiga': 'Super_R'}
         codes = []
         for k in [modifiers[m] for m in mods] + [name]:

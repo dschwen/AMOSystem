@@ -778,14 +778,15 @@ struct Drag {
         struct RastPort *rp = rastport();
         rp->cp_x = x;
         rp->cp_y = y;
-        WORD *points = ptr<WORD>(idata().MnTDraw);
+        // (PolyDraw's points: words of the 68000's)
+        be_u16 *points = ptr<be_u16>(idata().MnTDraw);
         const WORD outline[10] = {x, y, xr, y, xr, yb, x, yb, x, y};
         for (int i = 0; i < 10; i++)
-            points[i] = outline[i];
+            points[i] = static_cast<uint16_t>(outline[i]);
         sy_fn(sy::WaitVbl);
-        hal::poly_draw(rp, 5, points);
+        hal::poly_draw(rp, 5, reinterpret_cast<WORD *>(points));
         sy_fn(sy::WaitVbl);
-        hal::poly_draw(rp, 5, points);
+        hal::poly_draw(rp, 5, reinterpret_cast<WORD *>(points));
         rp->LinePtrn = static_cast<UWORD>(rp->LinePtrn << 1 | rp->LinePtrn >> 15);
     }
 };
@@ -840,8 +841,8 @@ void drag(MenuItem *m, uint16_t level, Levels &levels)
         g.draw();
     while ((mouse_key() & 3) == 3);
     // Move the item, and back the next one (positions are relative)
-    const WORD *corner = ptr<WORD>(d.MnTDraw);
-    int16_t dx = static_cast<int16_t>(corner[0] - m->MnXX), dy = static_cast<int16_t>(corner[1] - m->MnYY);
+    const be_u16 *corner = ptr<be_u16>(d.MnTDraw);
+    int16_t dx = static_cast<int16_t>(int16_t(corner[0]) - m->MnXX), dy = static_cast<int16_t>(int16_t(corner[1]) - m->MnYY);
     m->MnX = static_cast<uint16_t>(m->MnX + dx);
     m->MnY = static_cast<uint16_t>(m->MnY + dy);
     flags(m) |= MnFixed;

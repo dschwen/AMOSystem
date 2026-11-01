@@ -50,7 +50,8 @@ constexpr uint32_t JumpTable = 1024;
 Library *library_base(HostLibrary &l)
 {
     if (!l.base) {
-        auto *block = static_cast<uint8_t *>(amos::hal::allocate(4096 + JumpTable, 0x10000));
+        // (in chip memory, ExecBase as on the Amiga)
+        auto *block = static_cast<uint8_t *>(amos::hal::allocate(4096 + JumpTable, 0x10000 | amos::hal::MemoryChip));
         if (!block)
             return nullptr;
         l.base = reinterpret_cast<Library *>(block + JumpTable);
@@ -89,21 +90,42 @@ uint32_t available_memory(uint32_t flags)
 void forbid() {}
 void permit() {}
 
-// The memory: one arena below 4GB, managed as exec's lists: blocks of 8
-// bytes, the first free one that fits, and any part of a block can be
-// freed (AMOS does) or taken again (AllocAbs: Bank Shrink). The free ranges
-// are a table sorted by address, apart from the memory: what is freed keeps
-// its contents (exec only writes the first 8 bytes of it, and AMOS relies on
-// the rest of a header it frees and takes again).
+// The memory: two arenas below 4GB, chip and fast memory as the Amiga's.
+// Chip memory is below the program (1MB to 4MB), its addresses 24 bits as
+// the Amiga's (Btst(2,4) reads the top byte of ExecBase's address), and a
+// chip block is followed by free chip memory, as there (the IFF packer reads
+// past the end of a bitplane). Each is managed as exec's
+// lists: blocks of 8 bytes, the first free one that fits, and any part of
+// a block can be freed (AMOS does) or taken again (AllocAbs: Bank Shrink).
+// The free ranges are a table sorted by address, apart from the memory:
+// what is freed keeps its contents (exec only writes the first 8 bytes of
+// it, and AMOS relies on the rest of a header it frees and takes again).
+// Fast memory, when there is none left, comes from the chip arena.
 struct Range {
     uint8_t *at;
     uint64_t size;
 };
 constexpr int MaxRanges = 1 << 20;
-Range *ranges;
-int range_count;
+struct Pool {
+    uint8_t *start;
+    uint64_t size;
+    Range *ranges;
+    int range_count;
+    bool has(const uint8_t *at) const { return at >= start && at < start + size; }
+};
+Pool chip_pool, fast_pool;
 uint8_t *arena;
-constexpr uint64_t ArenaSize = 512ull << 20;
+constexpr uint64_t ChipAt = 1ull << 20, ChipSize = 3ull << 20, ArenaSize = 512ull << 20;
+
+void pool_start(Pool &pool, uint8_t *start, uint64_t size)
+{
+    pool.start = start;
+    pool.size = size;
+    pool.ranges = static_cast<Range *>(mmap(nullptr, sizeof(Range) * MaxRanges, PROT_READ | PROT_WRITE,
+                                            MAP_PRIVATE | MAP_ANONYMOUS | MAP_NORESERVE, -1, 0));
+    pool.ranges[0] = {start, size};
+    pool.range_count = 1;
+}
 
 void arena_start()
 {
@@ -116,11 +138,19 @@ void arena_start()
         __builtin_trap();
     }
     arena = static_cast<uint8_t *>(m);
-    ranges = static_cast<Range *>(mmap(nullptr, sizeof(Range) * MaxRanges, PROT_READ | PROT_WRITE,
-                                       MAP_PRIVATE | MAP_ANONYMOUS | MAP_NORESERVE, -1, 0));
-    ranges[0] = {arena, ArenaSize};
-    range_count = 1;
+    void *chip = mmap(reinterpret_cast<void *>(ChipAt), ChipSize, PROT_READ | PROT_WRITE,
+                      MAP_PRIVATE | MAP_ANONYMOUS | MAP_FIXED_NOREPLACE | MAP_NORESERVE, -1, 0);
+    if (chip == reinterpret_cast<void *>(ChipAt)) {
+        pool_start(chip_pool, static_cast<uint8_t *>(chip), ChipSize);
+        pool_start(fast_pool, arena, ArenaSize);
+    } else {
+        // (taken: the chip memory at the start of the arena)
+        pool_start(chip_pool, arena, ChipSize);
+        pool_start(fast_pool, arena + ChipSize, ArenaSize - ChipSize);
+    }
 }
+
+Pool &pool_of(const uint8_t *at) { return chip_pool.has(at) ? chip_pool : fast_pool; }
 
 uint64_t rounded(uint32_t size) { return (uint64_t(size) + 7) & ~uint64_t(7); }
 
@@ -158,12 +188,11 @@ void block_add(uint8_t *at, uint64_t size)
     block_count++;
 }
 
-void *allocate(uint32_t size, uint32_t flags)
+// The first free block of n bytes in a pool
+uint8_t *take(Pool &pool, uint64_t n)
 {
-    if (!size)
-        return nullptr;
-    arena_start();
-    uint64_t n = rounded(size);
+    Range *ranges = pool.ranges;
+    int &range_count = pool.range_count;
     for (int i = 0; i < range_count; i++) {
         if (ranges[i].size < n)
             continue;
@@ -175,13 +204,27 @@ void *allocate(uint32_t size, uint32_t flags)
             ranges[i].at += n;
             ranges[i].size -= n;
         }
-        if (flags & 0x10000)
-            memset(found, 0, n);
-        if (memcheck())
-            block_add(found, n);
         return found;
     }
     return nullptr;
+}
+
+void *allocate(uint32_t size, uint32_t flags)
+{
+    if (!size)
+        return nullptr;
+    arena_start();
+    uint64_t n = rounded(size);
+    uint8_t *found = flags & MemoryChip ? take(chip_pool, n) : take(fast_pool, n);
+    if (!found && !(flags & (MemoryChip | MemoryFast)))
+        found = take(chip_pool, n);
+    if (!found)
+        return nullptr;
+    if (flags & 0x10000)
+        memset(found, 0, n);
+    if (memcheck())
+        block_add(found, n);
+    return found;
 }
 
 void release(void *memory, uint32_t size)
@@ -207,6 +250,8 @@ void release(void *memory, uint32_t size)
             block_add(at + n, uint64_t(b.at + b.size - (at + n)));
     }
     // into the table, merged with the ranges before and after
+    Range *ranges = pool_of(at).ranges;
+    int &range_count = pool_of(at).range_count;
     int i = 0;
     while (i < range_count && ranges[i].at < at)
         i++;
@@ -236,6 +281,8 @@ void *allocate_at(uint32_t size, void *where)
     arena_start();
     uint8_t *at = static_cast<uint8_t *>(where);
     uint64_t n = rounded(size);
+    Range *ranges = pool_of(at).ranges;
+    int &range_count = pool_of(at).range_count;
     for (int i = 0; i < range_count; i++) {
         uint8_t *start = ranges[i].at;
         if (at < start || at + n > start + ranges[i].size)

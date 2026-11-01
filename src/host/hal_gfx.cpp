@@ -42,8 +42,9 @@ struct Clip {
     int x0, y0, x1, y1;     // inclusive
 };
 
-// The rectangles a RastPort draws into (at most 64), in bitmap coordinates;
-// the origin of its coordinates
+// The rectangles a RastPort draws into, in bitmap coordinates (one: the
+// layer's ClipRect, which install_clip_region sets as layers.library builds
+// it, and AMOS then changes, Ec_SetClip); the origin of its coordinates
 int clips(const RastPort *rp, Clip *out, int &ox, int &oy)
 {
     const BitMap *bm = rp->BitMap;
@@ -64,27 +65,17 @@ int clips(const RastPort *rp, Clip *out, int &ox, int &oy)
     lb = meet(lb, all);
     if (const ClipRect *cr = l->ClipRect)
         lb = meet(lb, Clip{cr->bounds.MinX, cr->bounds.MinY, cr->bounds.MaxX, cr->bounds.MaxY});
-    if (!l->ClipRegion) {
-        out[0] = lb;
-        return 1;
-    }
-    int n = 0;
-    const Region *r = l->ClipRegion;
-    for (const RegionRectangle *rr = r->RegionRectangle; rr && n < 64; rr = rr->Next) {
-        Clip c = {r->bounds.MinX + rr->bounds.MinX + ox, r->bounds.MinY + rr->bounds.MinY + oy,
-                  r->bounds.MinX + rr->bounds.MaxX + ox, r->bounds.MinY + rr->bounds.MaxY + oy};
-        c = meet(c, lb);
-        if (c.x0 <= c.x1 && c.y0 <= c.y1)
-            out[n++] = c;
-    }
-    return n;
+    if (lb.x0 > lb.x1 || lb.y0 > lb.y1)
+        return 0;
+    out[0] = lb;
+    return 1;
 }
 
 // ---- pixels ------------------------------------------------------------------
 
 struct Painter {
     RastPort *rp;
-    Clip clip[64];
+    Clip clip[1];
     int n, ox, oy;
 
     explicit Painter(RastPort *r) : rp(r) { n = clips(r, clip, ox, oy); }
@@ -152,32 +143,51 @@ struct Painter {
     }
 };
 
-// The line from (x0,y0) to (x1,y1) (RastPort coordinates), its pattern
+// The dots of the blitter's line from (x0,y0) to (x1,y1) (measured on
+// Kickstart 3.1): one for each step of the major axis, a step of the
+// minor one where the error 2*minor - major... is not negative
+template <typename Plot> void line_dots(int x0, int y0, int x1, int y1, Plot plot)
+{
+    int dx = abs(x1 - x0), dy = abs(y1 - y0);
+    int sx = x0 < x1 ? 1 : -1, sy = y0 < y1 ? 1 : -1;
+    bool steep = dy > dx;
+    int major = steep ? dy : dx, minor = steep ? dx : dy;
+    int e = 2 * minor - major;
+    for (int i = 0; i <= major; i++) {
+        plot(i, x0, y0);
+        if (e >= 0) {
+            if (steep)
+                x0 += sx;
+            else
+                y0 += sy;
+            e -= 2 * major;
+        }
+        if (steep)
+            y0 += sy;
+        else
+            x0 += sx;
+        e += 2 * minor;
+    }
+}
+
+// The line from (x0,y0) to (x1,y1) (RastPort coordinates), as Draw does it:
+// the pattern's bit linpatcnt & 15 for the first dot, one less for each
+// next, linpatcnt down by the length; in COMPLEMENT mode the first dot only
+// with FRST_DOT (a line drawn on from the last one does not complement
+// their common dot twice)
 void line(RastPort *rp, int x0, int y0, int x1, int y1)
 {
     Painter p(rp);
-    int dx = abs(x1 - x0), dy = -abs(y1 - y0);
-    int sx = x0 < x1 ? 1 : -1, sy = y0 < y1 ? 1 : -1;
-    int e = dx + dy;
     uint16_t pattern = rp->LinePtrn;
-    int count = rp->linpatcnt & 15;
-    for (;;) {
-        bool on = pattern & (0x8000 >> count);
-        count = (count + 1) & 15;
-        p.dot(x0 + p.ox, y0 + p.oy, on);
-        if (x0 == x1 && y0 == y1)
-            break;
-        int e2 = 2 * e;
-        if (e2 >= dy) {
-            e += dy;
-            x0 += sx;
-        }
-        if (e2 <= dx) {
-            e += dx;
-            y0 += sy;
-        }
-    }
-    rp->linpatcnt = int8_t(count);
+    int count = rp->linpatcnt;
+    bool first = (rp->Flags & FRST_DOT) || !(rp->DrawMode & COMPLEMENT);
+    line_dots(x0, y0, x1, y1, [&](int i, int x, int y) {
+        if (i || first)
+            p.dot(x + p.ox, y + p.oy, pattern >> ((count - i) & 15) & 1);
+    });
+    int dx = abs(x1 - x0), dy = abs(y1 - y0);
+    rp->linpatcnt = int8_t(rp->linpatcnt - (dx > dy ? dx : dy));
+    rp->Flags &= ~FRST_DOT;
 }
 
 // A horizontal span filled with the area pattern
@@ -207,15 +217,32 @@ void span(const Painter &p, int x0, int x1, int y)
             p.dot(bx, by, on);
             continue;
         }
-        // a pattern of colours: a pattern per plane
-        int pen = 0;
+        // a pattern of colours: a pattern per plane, each plane's bit the
+        // pens' (the blitter's minterm, the pens 255 and 0 for the
+        // pattern's own colours); JAM1 leaves the planes where it is 0
         const BitMap *bm = rp->BitMap;
+        if (!p.inside(bx, by))
+            continue;
+        uint8_t bit = uint8_t(0x80 >> (bx & 7));
+        uint32_t at = uint32_t(by) * bm->BytesPerRow + uint32_t(bx >> 3);
         for (int pl = 0; pl < bm->Depth; pl++) {
+            if (!(rp->Mask & (1 << pl)) || !bm->Planes[pl])
+                continue;
             const uint8_t *r = reinterpret_cast<const uint8_t *>(pattern) + 2 * (pl * rows + (by & (rows - 1)));
-            if (uint16_t(r[0] << 8 | r[1]) & (0x8000 >> (bx & 15)))
-                pen |= 1 << pl;
+            bool set = uint16_t(r[0] << 8 | r[1]) & (0x8000 >> (bx & 15));
+            uint8_t &b = bm->Planes[pl][at];
+            if (rp->DrawMode & COMPLEMENT) {
+                if (set)
+                    b ^= bit;
+                continue;
+            }
+            if (!set && !(rp->DrawMode & JAM2))
+                continue;
+            if (((set ? rp->FgPen : rp->BgPen) >> pl) & 1)
+                b |= bit;
+            else
+                b &= uint8_t(~bit);
         }
-        p.put(bx, by, uint32_t(pen), (rp->DrawMode & COMPLEMENT) != 0);
     }
 }
 
@@ -226,56 +253,64 @@ void fill_rect(RastPort *rp, int x0, int y0, int x1, int y1)
         span(p, x0, x1, y);
 }
 
-// A polygon filled (even-odd, as the blitter's area fill)
+// A polygon filled as AreaEnd does it with the blitter (measured on
+// Kickstart 3.1): its edges drawn in their direction, one dot a line, all
+// but the lowest, exclusive-or into a mask; the mask filled inclusively
+// from the right (between pairs of dots, their own included); the edges'
+// dots added; the mask drawn with the area pattern
 void fill_polygon(RastPort *rp, const int *xs, const int *ys, int n)
 {
-    if (n < 3)
+    if (n < 2)
         return;
-    int ymin = ys[0], ymax = ys[0];
+    int x0 = xs[0], x1 = xs[0], y0 = ys[0], y1 = ys[0];
     for (int i = 1; i < n; i++) {
-        if (ys[i] < ymin)
-            ymin = ys[i];
-        if (ys[i] > ymax)
-            ymax = ys[i];
+        x0 = xs[i] < x0 ? xs[i] : x0;
+        x1 = xs[i] > x1 ? xs[i] : x1;
+        y0 = ys[i] < y0 ? ys[i] : y0;
+        y1 = ys[i] > y1 ? ys[i] : y1;
+    }
+    int w = x1 - x0 + 1, h = y1 - y0 + 1;
+    uint8_t *mask = static_cast<uint8_t *>(calloc(size_t(w) * size_t(h), 1));
+    uint8_t *edges = static_cast<uint8_t *>(calloc(size_t(w) * size_t(h), 1));
+    if (!mask || !edges) {
+        free(mask);
+        free(edges);
+        return;
+    }
+    for (int i = 0; i < n; i++) {
+        int ax = xs[i], ay = ys[i], bx = xs[(i + 1) % n], by = ys[(i + 1) % n];
+        int low = ay > by ? ay : by, last_y = INT32_MIN;
+        line_dots(ax, ay, bx, by, [&](int, int x, int y) {
+            edges[(y - y0) * w + (x - x0)] = 1;
+            if (ay == by || y == low || y == last_y)
+                return;
+            last_y = y;
+            mask[(y - y0) * w + (x - x0)] ^= 1;
+        });
+    }
+    for (int y = 0; y < h; y++) {
+        uint8_t *row = mask + y * w;
+        bool carry = false;
+        for (int x = w - 1; x >= 0; x--) {
+            bool in = row[x];
+            row[x] = in || carry || edges[y * w + x];
+            carry ^= in;
+        }
     }
     Painter p(rp);
-    int *cross = static_cast<int *>(malloc(sizeof(int) * size_t(n)));
-    for (int y = ymin; y <= ymax; y++) {
-        int c = 0;
-        for (int i = 0; i < n; i++) {
-            int j = (i + 1) % n;
-            int ya = ys[i], yb = ys[j];
-            if (ya == yb)
+    for (int y = 0; y < h; y++)
+        for (int x = 0; x < w;) {
+            if (!mask[y * w + x]) {
+                x++;
                 continue;
-            int xa = xs[i], xb = xs[j];
-            if (ya > yb) {
-                int t = ya;
-                ya = yb;
-                yb = t;
-                t = xa;
-                xa = xb;
-                xb = t;
             }
-            if (y < ya || y >= yb)
-                continue;
-            cross[c++] = xa + (y - ya) * (xb - xa) / (yb - ya);
+            int from = x;
+            while (x < w && mask[y * w + x])
+                x++;
+            span(p, x0 + from, x0 + x - 1, y0 + y);
         }
-        for (int i = 1; i < c; i++)
-            for (int k = i; k > 0 && cross[k - 1] > cross[k]; k--) {
-                int t = cross[k];
-                cross[k] = cross[k - 1];
-                cross[k - 1] = t;
-            }
-        for (int i = 0; i + 1 < c; i += 2)
-            span(p, cross[i], cross[i + 1], y);
-        // the bottom vertices (the edges stop above them)
-        for (int i = 0; i < n; i++) {
-            int prev = ys[(i + n - 1) % n], next = ys[(i + 1) % n];
-            if (ys[i] == y && prev < y && next < y)
-                span(p, xs[i], xs[i], y);
-        }
-    }
-    free(cross);
+    free(mask);
+    free(edges);
 }
 
 // ---- text ----------------------------------------------------------------------
@@ -299,56 +334,89 @@ Glyph glyph(const TextFont *f, uint8_t c)
     return g;
 }
 
+// Text as graphics.library draws it (measured on Kickstart 3.1): the
+// string's glyphs into rows as wide as its advances, bold ORing each row
+// shifted by the font's smear, underlined the row below the baseline, italic
+// shifting each row right by (baseline - row) / 2 (rounded down: the rows
+// under the baseline go left); the box of all that drawn, its background
+// too in JAM2
 void draw_text(RastPort *rp, const uint8_t *s, uint32_t n)
 {
     const TextFont *f = rp->Font;
-    if (!f)
+    if (!f || !n)
         return;
     Painter p(rp);
-    int x = rp->cp_x, top = rp->cp_y - f->tf_Baseline;
     const uint8_t *data = static_cast<const uint8_t *>(f->tf_CharData);
-    bool bold = rp->AlgoStyle & FSF_BOLD, underlined = rp->AlgoStyle & FSF_UNDERLINED;
-    for (uint32_t i = 0; i < n; i++) {
-        Glyph g = glyph(f, s[i]);
-        int gx = x + g.kern;
-        int advance = g.space + rp->TxSpacing;
-        int cell = advance > g.width ? advance : g.width;
-        for (int row = 0; row < f->tf_YSize; row++) {
-            const uint8_t *bits = data + row * f->tf_Modulo;
-            bool prev = false;
-            for (int col = 0; col < cell; col++) {
-                bool on = false;
-                if (col < g.width) {
-                    int b = g.offset + col;
-                    on = bits[b >> 3] & (0x80 >> (b & 7));
-                }
-                bool shown = on || (bold && prev);
-                prev = on;
-                if (underlined && row == f->tf_Baseline + 1)
-                    shown = true;
-                // JAM2 fills the cell, JAM1 only the glyph
-                if (shown || (rp->DrawMode & (JAM2 | INVERSVID)))
-                    p.dot(gx + col + p.ox, top + row + p.oy, shown);
+    bool bold = rp->AlgoStyle & FSF_BOLD, underlined = rp->AlgoStyle & FSF_UNDERLINED,
+         italic = rp->AlgoStyle & FSF_ITALIC;
+    int smear = bold ? (f->tf_BoldSmear ? f->tf_BoldSmear : 1) : 0;
+    int width = 0;
+    for (uint32_t i = 0; i < n; i++)
+        width += glyph(f, s[i]).space + rp->TxSpacing;
+    int ysize = f->tf_YSize, baseline = f->tf_Baseline;
+    auto shear = [&](int row) { return italic ? (baseline - row) >> 1 : 0; };
+    int left = -shear(ysize - 1) > 0 ? -shear(ysize - 1) : 0, right = shear(0) > 0 ? shear(0) : 0;
+    int cells = width + smear + 16;
+    uint8_t *bits = static_cast<uint8_t *>(calloc(size_t(cells), 1));
+    if (!bits)
+        return;
+    int x0 = rp->cp_x, top = rp->cp_y - baseline;
+    for (int row = 0; row < ysize; row++) {
+        memset(bits, 0, size_t(cells));
+        const uint8_t *line = data + row * f->tf_Modulo;
+        int x = 0;
+        for (uint32_t i = 0; i < n; i++) {
+            Glyph g = glyph(f, s[i]);
+            for (int col = 0; col < g.width; col++) {
+                int b = g.offset + col, at = x + g.kern + col;
+                if (at >= 0 && at < cells && (line[b >> 3] & (0x80 >> (b & 7))))
+                    bits[at] = 1;
             }
+            x += g.space + rp->TxSpacing;
         }
-        x += advance;
+        for (int k = 0; k < smear; k++)
+            for (int at = cells - 1; at > 0; at--)
+                bits[at] |= bits[at - 1];
+        if (underlined && row == baseline + 1)
+            memset(bits, 1, size_t(width + smear));
+        int shift = shear(row);
+        for (int at = -left; at < width + smear + right; at++) {
+            int from = at - shift;
+            bool on = from >= 0 && from < cells && bits[from];
+            // JAM2 fills the box, JAM1 only the glyphs
+            if (on || (rp->DrawMode & (JAM2 | INVERSVID)))
+                p.dot(x0 + at + p.ox, top + row + p.oy, on);
+        }
     }
-    rp->cp_x = int16_t(x);
+    free(bits);
+    rp->cp_x = int16_t(x0 + width);
 }
 
 } // namespace
 
 namespace amos::hal {
 
-void set_a_pen(RastPort *rp, uint32_t pen) { rp->FgPen = int8_t(pen); }
-void set_b_pen(RastPort *rp, uint32_t pen) { rp->BgPen = int8_t(pen); }
+// (SetAPen and SetBPen also start the line pattern again, as Move)
+void set_a_pen(RastPort *rp, uint32_t pen)
+{
+    rp->FgPen = int8_t(pen);
+    rp->linpatcnt = 15;
+    rp->Flags |= FRST_DOT;
+}
+void set_b_pen(RastPort *rp, uint32_t pen)
+{
+    rp->BgPen = int8_t(pen);
+    rp->linpatcnt = 15;
+    rp->Flags |= FRST_DOT;
+}
 void set_draw_mode(RastPort *rp, uint32_t mode) { rp->DrawMode = int8_t(mode); }
 
 void move(RastPort *rp, int32_t x, int32_t y)
 {
     rp->cp_x = int16_t(x);
     rp->cp_y = int16_t(y);
-    rp->linpatcnt = 0;
+    rp->linpatcnt = 15;
+    rp->Flags |= FRST_DOT;
 }
 
 void draw(RastPort *rp, int32_t x, int32_t y)
@@ -410,7 +478,25 @@ void draw_ellipse(RastPort *rp, int32_t cx, int32_t cy, int32_t a, int32_t b)
     }
 }
 
-void rect_fill(RastPort *rp, int32_t x1, int32_t y1, int32_t x2, int32_t y2) { fill_rect(rp, x1, y1, x2, y2); }
+// (with AREAOUTLINE, its border in the outline pen)
+void rect_fill(RastPort *rp, int32_t x1, int32_t y1, int32_t x2, int32_t y2)
+{
+    fill_rect(rp, x1, y1, x2, y2);
+    if (!(rp->Flags & AREAOUTLINE))
+        return;
+    Painter p(rp);
+    int8_t pen = rp->FgPen;
+    rp->FgPen = rp->AOlPen;
+    for (int x = x1; x <= x2; x++) {
+        p.dot(x + p.ox, y1 + p.oy, true);
+        p.dot(x + p.ox, y2 + p.oy, true);
+    }
+    for (int y = y1 + 1; y < y2; y++) {
+        p.dot(x1 + p.ox, y + p.oy, true);
+        p.dot(x2 + p.ox, y + p.oy, true);
+    }
+    rp->FgPen = pen;
+}
 
 void write_pixel(RastPort *rp, int32_t x, int32_t y)
 {
@@ -479,11 +565,14 @@ void area_end(RastPort *rp)
         if (rp->Flags & AREAOUTLINE) {
             int8_t pen = rp->FgPen;
             rp->FgPen = rp->AOlPen;
-            uint16_t pattern = rp->LinePtrn;
+            uint16_t pattern = rp->LinePtrn, flags = rp->Flags;
+            int8_t count = rp->linpatcnt;
             rp->LinePtrn = 0xFFFF;
             for (int i = 0; i < n; i++)
                 line(rp, xs[i], ys[i], xs[(i + 1) % n], ys[(i + 1) % n]);
             rp->LinePtrn = pattern;
+            rp->linpatcnt = count;
+            rp->Flags = flags;
             rp->FgPen = pen;
         }
         free(xs);
@@ -547,12 +636,13 @@ int32_t blit_bitmap(BitMap *from, int32_t x1, int32_t y1, BitMap *to, int32_t x2
         return 0;
     int planes = from->Depth < to->Depth ? from->Depth : to->Depth;
     int n = 0;
-    // overlapping: from the end
-    bool back = from == to && (y2 > y1 || (y2 == y1 && x2 > x1));
     for (int p = 0; p < planes; p++) {
         if (!(mask & (1 << p)) || !from->Planes[p] || !to->Planes[p])
             continue;
         n++;
+        // the same plane (two BitMaps can share them): from the end when
+        // the rectangle moves down or right
+        bool back = from->Planes[p] == to->Planes[p] && (y2 > y1 || (y2 == y1 && x2 > x1));
         for (int j = 0; j < height; j++) {
             int y = back ? height - 1 - j : j;
             int sy = y1 + y, dy = y2 + y;
@@ -566,9 +656,10 @@ int32_t blit_bitmap(BitMap *from, int32_t x1, int32_t y1, BitMap *to, int32_t x2
                 bool b = from->Planes[p][sy * from->BytesPerRow + (sx >> 3)] & (0x80 >> (sx & 7));
                 uint8_t &d = to->Planes[p][dy * to->BytesPerRow + (dx >> 3)];
                 bool c = d & (0x80 >> (dx & 7));
-                // the minterm's ABC: A is all ones (the mask), B the source, C the destination
+                // the minterm's bit ABC: A is all ones (the mask), B the
+                // source, C the destination ($CC: a copy)
                 int index = 4 | (b ? 2 : 0) | (c ? 1 : 0);
-                bool r = (minterm >> 4) & (1 << index);
+                bool r = minterm & (1 << index);
                 if (r)
                     d |= uint8_t(0x80 >> (dx & 7));
                 else
@@ -610,7 +701,8 @@ bool or_rect_region(Region *region, Rectangle *rect)
     RegionRectangle *rr = low_new<RegionRectangle>();
     if (!rr)
         return false;
-    // the region's rectangles relative to its bounds' corner (0, 0 here)
+    // (the rectangles as they are, not relative to the region's bounds as
+    // graphics.library keeps them: only install_clip_region reads them)
     rr->bounds = *rect;
     rr->Next = region->RegionRectangle;
     if (rr->Next)
@@ -674,6 +766,7 @@ Layer *create_upfront_layer(Layer_Info *info, BitMap *bm, int32_t x0, int32_t y0
     rp->AOlPen = -1;
     rp->DrawMode = JAM2;
     rp->LinePtrn = 0xFFFF;
+    rp->linpatcnt = 15;
     rp->Flags = FRST_DOT;
     return l;
 }
@@ -687,11 +780,21 @@ void delete_layer(Layer *layer)
     low_delete(layer);
 }
 
-// The new region; the old one
+// The new region; the old one. The layer's ClipRect becomes the region's
+// part of the layer (the bounds of its rectangles: AMOS's have one), or the
+// whole layer without a region
 Region *install_clip_region(Layer *layer, Region *region)
 {
     Region *old = layer->ClipRegion;
     layer->ClipRegion = region;
+    Rectangle b = layer->bounds;
+    if (region && region->RegionRectangle) {
+        Rectangle r = region->bounds;
+        b = {int16_t(r.MinX + layer->bounds.MinX), int16_t(r.MinY + layer->bounds.MinY),
+             int16_t(r.MaxX + layer->bounds.MinX), int16_t(r.MaxY + layer->bounds.MinY)};
+    }
+    if (layer->ClipRect)
+        layer->ClipRect->bounds = b;
     return old;
 }
 

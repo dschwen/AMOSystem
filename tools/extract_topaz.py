@@ -34,26 +34,26 @@ def load():
 
 
 def fonts(rom):
+    """The TextFonts of the ROM of 8 and 9 lines, characters 32-255, their
+    data and tables in the ROM. (Topaz 8's names "topaz.font"; topaz 9's
+    name field is not set in the ROM, the system sets it.)"""
     base = 0x1000000 - len(rom)
     found = {}
-    name_at = rom.find(b'topaz.font\0')
-    while name_at >= 0:
-        name = base + name_at
-        for at in range(0, len(rom) - 52, 2):
-            if struct.unpack('>I', rom[at + 10:at + 14])[0] != name:
-                continue
-            ysize, style, flags, xsize, baseline, smear = struct.unpack('>HBBHHH', rom[at + 20:at + 30])
-            lo, hi = rom[at + 32], rom[at + 33]
-            data, modulo, loc = struct.unpack('>IHI', rom[at + 34:at + 44])
-            if ysize not in (8, 9) or ysize in found or lo >= hi:
-                continue
-            if not (base <= data < 0x1000000 and base <= loc < 0x1000000):
-                continue
-            chars = hi - lo + 2
-            bitmap = rom[data - base:data - base + modulo * ysize]
-            locs = struct.unpack(f'>{chars}I', rom[loc - base:loc - base + 4 * chars])
-            found[ysize] = (style, flags, xsize, baseline, smear, lo, hi, modulo, bitmap, locs)
-        name_at = rom.find(b'topaz.font\0', name_at + 1)
+    for at in range(0, len(rom) - 52, 2):
+        ysize, style, flags, xsize, baseline, smear = struct.unpack('>HBBHHH', rom[at + 20:at + 30])
+        lo, hi = rom[at + 32], rom[at + 33]
+        data, modulo, loc = struct.unpack('>IHI', rom[at + 34:at + 44])
+        if ysize not in (8, 9) or ysize in found or (lo, hi) != (32, 255) or not 6 <= xsize <= 16:
+            continue
+        if not (base <= data < 0x1000000 and base <= loc < 0x1000000) or modulo < xsize * 12:
+            continue
+        chars = hi - lo + 2
+        bitmap = rom[data - base:data - base + modulo * ysize]
+        locs = struct.unpack(f'>{chars}I', rom[loc - base:loc - base + 4 * chars])
+        # every glyph inside the bitmap's rows
+        if any((v >> 16) + (v & 0xFFFF) > modulo * 8 for v in locs):
+            continue
+        found[ysize] = (style, flags, xsize, baseline, smear, lo, hi, modulo, bitmap, locs)
     return found
 
 

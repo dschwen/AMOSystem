@@ -104,18 +104,22 @@ install-hd: all
 # 64 bits, AMOS's memory below 4GB: the portable C++, src/host (the HAL's
 # backends) and src/tables.
 
-HOST_SRC    := $(filter-out %_amiga.cpp src/amiga/%,$(wildcard src/*/*.cpp)) $(HOST)/topaz.cpp
+HOST_SRC    := $(filter-out %_amiga.cpp src/amiga/%,$(wildcard src/*/*.cpp)) $(HOST)/topaz.cpp $(HOST)/keymap.cpp
 HOST_OBJ    := $(patsubst %.cpp,$(HOST)/obj/%.o,$(HOST_SRC))
 HOST_OPT    ?= -O0 -g
 HOST_FLAGS  := -m64 $(HOST_OPT) -D__use_amiga_stdc_c99 -std=c++20 -fno-exceptions -fno-rtti -fno-threadsafe-statics -fpack-struct=2 \
                -Isrc/host/include -Isrc -idirafter $(AMIGA_PREFIX)/m68k-amigaos/ndk-include -MMD -MP
 
-# topaz, from the user's Kickstart (as the tests' emulator has it)
+# topaz and the usa keymap, from the user's Kickstart (as the tests'
+# emulator has them)
 KICKSTART ?= $(HOME)/Programs/CAMOS/FS-UAE/Kickstarts/amiga-os-310-a1200.rom
 ROMKEY ?= $(HOME)/Programs/CAMOS/Minimal Workbench v3.1/Devs/Kickstarts/rom.key
 $(HOST)/topaz.cpp: tools/extract_topaz.py
 	@mkdir -p $(dir $@)
 	$(PYTHON) tools/extract_topaz.py --out $@ --rom "$(KICKSTART)" --key "$(ROMKEY)"
+$(HOST)/keymap.cpp: tools/extract_keymap.py
+	@mkdir -p $(dir $@)
+	$(PYTHON) tools/extract_keymap.py --out $@ --rom "$(KICKSTART)" --key "$(ROMKEY)"
 
 $(HOST)/obj/%.o: %.cpp
 	@mkdir -p $(dir $@)

@@ -38,5 +38,10 @@ glide 0 127
 wait 0.5
 button 3 up
 wait 25
+# (where the Amiga's second run has the pointer anyway: AMOS.library's
+# data zone is not cleared, the first run's position is still in it)
+glide -3000 -3000
+glide 10 113
+wait 0.3
 click 1
 wait 3
