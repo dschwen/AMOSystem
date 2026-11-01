@@ -11,6 +11,9 @@ extern "C" uint32_t amos_w_base;
 
 namespace amos::host {
 bool window_shown();
+bool drops_pending();
+void disk_event(bool inserted);
+void hint(const char *volume);
 void run_tasks();
 void task_yield();
 bool in_task();
@@ -81,7 +84,8 @@ bool find_entry(const char *dir, const char *name, size_t n, char *to, size_t si
 // none (pr_WindowPtr -1). True to try again (Retry), false: not mounted
 bool insert_volume(const char *volume, size_t n)
 {
-    if (amos::hal::requester_window() == 0xFFFFFFFFu || !amos_w_base || !amos::host::window_shown())
+    if (amos::hal::requester_window() == 0xFFFFFFFFu || !amos_w_base ||
+        !(amos::host::window_shown() || amos::host::drops_pending()))
         return false;
     // (AMOS's requester opens over the current screen)
     const auto *w = reinterpret_cast<const amos::WData *>(amos::ptr<uint8_t>(amos_w_base) - sizeof(amos::WData));
@@ -106,6 +110,11 @@ bool insert_volume(const char *volume, size_t n)
     q->easy.es_TextFormat = reinterpret_cast<UBYTE *>(const_cast<char *>("Please insert volume\n%s\nin any drive"));
     q->easy.es_GadgetFormat = reinterpret_cast<UBYTE *>(const_cast<char *>("Retry|Cancel"));
     amos::poke_l(q->args, amos::address(q->name));
+    // the requester ends by itself when a disk is put in (DISKINSERTED): no disk is in the
+    // drive now, as AMOS.library sees it
+    amos::poke_l(q->idcmp, 0x8000);
+    amos::host::disk_event(false);
+    amos::host::hint(q->name);
     amos::AllRegs r = {};
     r.a[1] = amos::address(&q->easy);
     r.a[2] = amos::address(q->idcmp);
@@ -115,6 +124,7 @@ bool insert_volume(const char *volume, size_t n)
     amos::ctx().a5 = amos::ptr<uint8_t>(amos_w_base);
     w_easy_request(&r);
     amos::ctx() = saved;
+    amos::host::hint(nullptr);
     amos::hal::release(q, sizeof(Request));
     return r.d[0] != 0;
 }

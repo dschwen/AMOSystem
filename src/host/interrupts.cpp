@@ -72,6 +72,7 @@ namespace amos::host {
 void display_save(const char *path);
 void window_start();
 void window_frame();
+void drops_frame();
 void audio_interrupts();
 void audio_frame();
 void run_tasks();
@@ -101,6 +102,7 @@ void poll(bool waiting)
     next_frame += Frame;
     run_vbl();
     audio_frame();
+    drops_frame();
     window_frame();
     // (debugging: AMOS_SHOT_FRAME=n, the frame n into AMOS_SHOT)
     static int frames;

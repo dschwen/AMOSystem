@@ -136,6 +136,14 @@ def environment(hd, tree):
     conf = os.path.join(os.path.dirname(hd), 'amos.conf')
     env['AMOS_CONFIG'] = conf if os.path.exists(conf) else os.devnull
     env['TMPDIR'] = os.path.dirname(hd)
+    # the test's own environment (name.env: KEY=value lines, @FILES@ its disks)
+    envfile = os.path.join(HOST_ONLY, os.path.basename(os.path.dirname(hd)) + '.env')
+    if os.path.exists(envfile):
+        with open(envfile) as f:
+            for line in f.read().splitlines():
+                if '=' in line and not line.startswith('#'):
+                    key, value = line.split('=', 1)
+                    env[key] = value.replace('@FILES@', os.path.join(os.path.dirname(hd), 'files'))
     # the Amiga's tests: a volume Workbench, as the emulator has (its C:
     # without Echo, a command of the shell's), with the host's own ones
     if not os.path.exists(os.path.join(HOST_ONLY, os.path.basename(os.path.dirname(hd)) + '.asc')):
@@ -283,7 +291,7 @@ def compare(name, out):
     """tests/run.py's comparison, the host's variants of the text results"""
     got = run.outputs(out, name)
     problems = []
-    for f in sorted(set(got) | set(run.outputs(run.GOLDEN, name)) | {f for f in run.outputs(HOST_ONLY, name) if not f.endswith(('.asc', '.conf', '.args', '.files'))}):
+    for f in sorted(set(got) | set(run.outputs(run.GOLDEN, name)) | {f for f in run.outputs(HOST_ONLY, name) if not f.endswith(('.asc', '.conf', '.args', '.files', '.env'))}):
         want = golden_of(f)
         if f not in got:
             problems.append(f'{f} missing')

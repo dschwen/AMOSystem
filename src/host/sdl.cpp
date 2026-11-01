@@ -391,6 +391,10 @@ void window_frame()
 
 void input_handler(Interrupt *is) { handler = is; }
 
+// A disk put in a drive or taken out: the input event AMOS.library reads (a requester
+// "Please insert volume" ends by itself when a disk comes)
+void disk_event(bool inserted) { send(inserted ? IECLASS_DISKINSERTED : IECLASS_DISKREMOVED, 0); }
+
 // AMOS in front: the window takes the pointer; behind the Workbench: it gives
 // it back (a click brings AMOS to the front)
 void pointer_capture(bool on)

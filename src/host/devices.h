@@ -38,6 +38,43 @@ bool read_only(const char *path);
 // AssignLock / "assign NAME: dir": the assign, or none (path null) to remove it
 bool assign(const char *name, size_t n, const char *path);
 
+// ---- the disks of the units: put in and taken out while AMOS runs ---------------
+// (each raises the input event DISKINSERTED or DISKREMOVED, which AMOS.library
+// reads: a "Please insert volume" requester ends by itself when the disk comes)
+
+constexpr int Floppies = 4, Hards = 10, Units = Floppies + Hards;
+
+struct UnitInfo {
+    char name[8];       // "DF0", "DH3"
+    bool exists;        // a floppy drive, or a disk in a hard disk unit
+    bool has_disk;
+    bool read_only;
+    bool saved;         // a unit the configuration has (it is written by save_config)
+    char label[64];
+    char path[1024];
+};
+
+// A unit's number from its name ("df0", n characters), or -1
+int unit_of(const char *name, size_t n);
+bool unit_info(int unit, UnitInfo &info);
+
+// A folder as the disk of a unit (what was in it is taken out first), with its
+// label (the folder's name if none). False, and the reason in message, if it cannot
+bool insert(int unit, const char *folder, const char *label, bool read_only, const char *&message);
+// A folder as a hard disk, in the next free DH unit (or the first with no disk): its unit, or -1
+int mount_folder(const char *folder, const char *label, bool read_only, const char *&message);
+// The disk of a unit taken out
+bool eject(int unit);
+bool set_read_only(int unit, bool read_only);
+
+// Write the disks of the units the user set up (and the library, the assigns and the
+// drives the user's file has) to the user's amos.conf, the old one kept as amos.conf.bak
+bool save_config(const char *&message);
+const char *config_path();
+// The library's folders
+int library_count();
+const char *library_path(int n);
+
 // Each name for Dev First$ / the file selector's Devices list: the assigns,
 // the volumes (device true) and the units
 void each(void (*f)(const char *name, bool device, void *data), void *data);

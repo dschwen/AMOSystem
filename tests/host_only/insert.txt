@@ -1,0 +1,7 @@
+asked 0
+read second
+mounted-1-1-1
+df0 -1-1
+empty 0-1 0
+no disk 93
+end

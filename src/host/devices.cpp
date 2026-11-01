@@ -29,16 +29,19 @@
 // -fpack-struct=2 for the Amiga's structures, which changes their layout in our code but not
 // inside libstdc++.so, and a call across would write over the stack.)
 
+namespace amos::host {
+void disk_event(bool inserted);       // sdl.cpp: the input event DISKINSERTED / DISKREMOVED
+}
+
 namespace amos::host::devices {
 
 namespace {
-
-constexpr int Floppies = 4, Hards = 10, Units = Floppies + Hards;
 
 struct Volume {
     std::string name, path;
     bool volume = false;        // a disk (a label), not an assign
     bool read_only = false;
+    bool user = false;          // set up by the user (the configuration, the command line, the panel)
 };
 std::vector<Volume> table;      // (a removed assign keeps its place, its name empty)
 
@@ -52,6 +55,7 @@ struct Entry {
 };
 
 struct Config {
+    int floppy_drives = -1;
     std::string devices_dir;
     std::vector<std::string> library;
     Entry unit[Units];
@@ -63,6 +67,7 @@ std::string config_file, program_path;
 std::vector<std::string> library;
 std::string devices_root;
 std::string ram_path;
+std::vector<std::string> ejected;       // folders the user took out: not mounted again by a scan
 bool initialised;
 
 // ---- names -----------------------------------------------------------------
@@ -214,7 +219,7 @@ bool load(const std::string &file, Config &c)
         } else if (section == "devices" && lower(key) == "directory") {
             c.devices_dir = expand(value, base);
         } else if (section == "devices" && lower(key) == "floppy_drives") {
-            floppy_drives = std::min(Floppies, std::max(0, atoi(value.c_str())));
+            c.floppy_drives = std::min(Floppies, std::max(0, atoi(value.c_str())));
         } else {
             warn(file + ": unknown setting [" + section + "] " + key);
         }
@@ -271,13 +276,14 @@ void apply_option(Config &c, const std::string &name, const std::string &value)
 
 // ---- the table ---------------------------------------------------------------
 
-int add(const std::string &name, const std::string &path, bool volume, bool read_only = false)
+int add(const std::string &name, const std::string &path, bool volume, bool read_only = false, bool user = false)
 {
     Volume v;
     v.name = name;
     v.path = path;
     v.volume = volume;
     v.read_only = read_only;
+    v.user = user;
     table.push_back(v);
     return int(table.size()) - 1;
 }
@@ -291,7 +297,7 @@ int next_hard_unit()
 }
 
 // A folder that is a disk, in a unit (auto: the next free hard disk's)
-void mount(const std::string &label, const std::string &folder, bool read_only, int unit)
+void mount(const std::string &label, const std::string &folder, bool read_only, int unit, bool user = false)
 {
     std::string real = real_path(folder);
     if (!is_directory(real)) {
@@ -302,7 +308,7 @@ void mount(const std::string &label, const std::string &folder, bool read_only, 
         warn((unit >= 0 ? unit_name(unit) + ": " : std::string()) + "the name " + label + ": is already in use");
         return;
     }
-    int i = add(label, real, true, read_only);
+    int i = add(label, real, true, read_only, user);
     if (unit < 0)
         unit = next_hard_unit();
     if (unit >= 0)
@@ -329,6 +335,8 @@ void scan(const std::string &directory)
             find(name.c_str(), name.size(), true) >= 0)
             continue;
         std::string path = directory + "/" + name;
+        if (std::find(ejected.begin(), ejected.end(), real_path(path)) != ejected.end())
+            continue;
         if (is_directory(path))
             mount(name, path, false, -1);
     }
@@ -418,6 +426,8 @@ void init()
     }
     for (const auto &o : options)
         apply_option(c, o.first, o.second);
+    if (c.floppy_drives >= 0)
+        floppy_drives = c.floppy_drives;
 
     // the assigns: AMOS_ASSIGNS="NAME=directory;..."
     const char *env = getenv("AMOS_ASSIGNS");
@@ -454,7 +464,7 @@ void init()
         unit_set[u] = u < Floppies && e.set;
         if (!e.set)
             continue;
-        mount(e.label.empty() ? base_name(e.path) : e.label, e.path, e.read_only, u);
+        mount(e.label.empty() ? base_name(e.path) : e.label, e.path, e.read_only, u, true);
     }
     // the devices directory's, the library, the volatile RAM:
     open_devices(c);
@@ -587,6 +597,182 @@ bool assign(const char *name, size_t n, const char *path)
         i = add(std::string(name, n), "", false);
     }
     table[size_t(i)].path = real_path(path);
+    return true;
+}
+
+int unit_of(const char *name, size_t n) { return parse_unit(name, n); }
+
+bool unit_info(int u, UnitInfo &info)
+{
+    init();
+    if (u < 0 || u >= Units)
+        return false;
+    memset(&info, 0, sizeof info);
+    snprintf(info.name, sizeof info.name, "%s", unit_name(u).c_str());
+    info.exists = unit_exists(u);
+    if (unit_medium[u] >= 0) {
+        const Volume &v = table[size_t(unit_medium[u])];
+        info.has_disk = true;
+        info.read_only = v.read_only;
+        info.saved = v.user;
+        snprintf(info.label, sizeof info.label, "%s", v.name.c_str());
+        snprintf(info.path, sizeof info.path, "%s", v.path.c_str());
+    }
+    return true;
+}
+
+namespace {
+
+// The disk of a unit out (the folder is not mounted again by a scan)
+void take_out(int u)
+{
+    Volume &v = table[size_t(unit_medium[u])];
+    ejected.push_back(v.path);
+    v.name.clear();
+    unit_medium[u] = -1;
+    disk_event(false);
+}
+
+} // namespace
+
+bool insert(int u, const char *folder, const char *label_in, bool read_only, const char *&message)
+{
+    init();
+    message = "";
+    if (u < 0 || u >= Units) {
+        message = "no such unit";
+        return false;
+    }
+    std::string real = real_path(folder);
+    if (!is_directory(real)) {
+        message = "not a folder";
+        return false;
+    }
+    std::string label = label_in && *label_in ? label_in : base_name(real);
+    if (label.empty() || label.size() >= 64 || label.find(':') != std::string::npos || label.find('/') != std::string::npos) {
+        message = "the name cannot be a disk's";
+        return false;
+    }
+    // a name in use by another disk, or by an assign
+    int other = find(label.c_str(), label.size(), true);
+    if (other >= 0 && table[size_t(other)].path != real && other != unit_medium[u]) {
+        message = "the name is already in use";
+        return false;
+    }
+    if (find(label.c_str(), label.size(), false) >= 0 || parse_unit(label.c_str(), label.size()) >= 0) {
+        message = "the name is already in use";
+        return false;
+    }
+    // the same disk in another drive: it moves
+    for (int x = 0; x < Units; x++)
+        if (x != u && unit_medium[x] >= 0 && table[size_t(unit_medium[x])].path == real)
+            take_out(x);
+    if (unit_medium[u] >= 0)
+        take_out(u);
+    ejected.erase(std::remove(ejected.begin(), ejected.end(), real), ejected.end());
+    // (the same label with its folder gone, if it is in the table dead: no)
+    unit_medium[u] = add(label, real, true, read_only, true);
+    if (u < Floppies)
+        unit_set[u] = true;
+    disk_event(true);
+    return true;
+}
+
+int mount_folder(const char *folder, const char *label, bool read_only, const char *&message)
+{
+    init();
+    int u = next_hard_unit();
+    if (u < 0) {
+        message = "all the hard disk units are in use";
+        return -1;
+    }
+    return insert(u, folder, label, read_only, message) ? u : -1;
+}
+
+bool eject(int u)
+{
+    init();
+    if (u < 0 || u >= Units || unit_medium[u] < 0)
+        return false;
+    take_out(u);
+    return true;
+}
+
+bool set_read_only(int u, bool read_only)
+{
+    init();
+    if (u < 0 || u >= Units || unit_medium[u] < 0)
+        return false;
+    table[size_t(unit_medium[u])].read_only = read_only;
+    return true;
+}
+
+const char *config_path()
+{
+    static std::string path;
+    path = config_file.empty() ? user_config() : config_file;
+    return path.c_str();
+}
+
+int library_count()
+{
+    init();
+    return int(library.size());
+}
+
+const char *library_path(int n)
+{
+    init();
+    return n >= 0 && n < int(library.size()) ? library[size_t(n)].c_str() : "";
+}
+
+bool save_config(const char *&message)
+{
+    init();
+    message = "";
+    std::string file = config_path();
+    // the rest of the file (its drives, library, assigns) as it is on disk
+    Config c;
+    load(file, c);
+    std::string text = "# amos.conf: written by AMOS (the Devices panel). Edit it as you like.\n";
+    if (c.floppy_drives >= 0 || !c.devices_dir.empty()) {
+        text += "[devices]\n";
+        if (c.floppy_drives >= 0)
+            text += "floppy_drives = " + std::to_string(c.floppy_drives) + "\n";
+        if (!c.devices_dir.empty())
+            text += "directory = " + c.devices_dir + "\n";
+    }
+    if (!c.library.empty()) {
+        text += "[library]\n";
+        for (const std::string &l : c.library)
+            text += "path = " + l + "\n";
+    }
+    for (int u = 0; u < Units; u++) {
+        if (unit_medium[u] < 0 || !table[size_t(unit_medium[u])].user)
+            continue;
+        const Volume &v = table[size_t(unit_medium[u])];
+        text += "[" + lower(unit_name(u)) + "]\npath = " + v.path + "\n";
+        if (v.name != base_name(v.path))
+            text += "label = " + v.name + "\n";
+        if (v.read_only)
+            text += "readonly = yes\n";
+    }
+    if (!c.assigns.empty()) {
+        text += "[assign]\n";
+        for (const auto &a : c.assigns)
+            text += a.first + " = " + a.second + "\n";
+    }
+    // the folders above the file, the old file kept
+    for (size_t i = file.find('/', 1); i != std::string::npos; i = file.find('/', i + 1))
+        mkdir(file.substr(0, i).c_str(), 0777);
+    rename(file.c_str(), (file + ".bak").c_str());
+    FILE *f = fopen(file.c_str(), "w");
+    if (!f) {
+        message = strerror(errno);
+        return false;
+    }
+    fwrite(text.data(), 1, text.size(), f);
+    fclose(f);
     return true;
 }
 
