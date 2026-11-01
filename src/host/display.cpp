@@ -129,6 +129,8 @@ uint32_t rgb(uint16_t c)
 struct Sprite {
     uint32_t at;                // its list
     int vstart, vstop, hstart;
+    int x;                      // the line's position and attachment (the next control
+    bool attached_line;         // words come after its data)
     bool attached, armed, shown;
     uint16_t data, datb;
 };
@@ -277,6 +279,8 @@ void display_frame(uint32_t *out)
                 s.datb = chip_w(s.at + 2);
                 s.at += 4;
                 s.shown = true;
+                s.x = s.hstart;
+                s.attached_line = s.attached;
                 if (line == s.vstop - 1) {
                     // the next control words: the sprite again further down, or the end
                     uint16_t pos = chip_w(s.at), ctl = chip_w(s.at + 2);
@@ -292,12 +296,12 @@ void display_frame(uint32_t *out)
                 if (!s.shown)
                     continue;
                 bool odd = n & 1;
-                if (odd && s.attached)
+                if (odd && s.attached_line)
                     continue;               // with its even partner
                 for (int i = 0; i < 16; i++) {
                     int bits = (s.data >> (15 - i) & 1) | (s.datb >> (15 - i) & 1) << 1;
                     int colour;
-                    if (!odd && sprites[n + 1].attached && sprites[n + 1].shown) {
+                    if (!odd && sprites[n + 1].attached_line && sprites[n + 1].shown) {
                         const Sprite &o = sprites[n + 1];
                         bits |= (o.data >> (15 - i) & 1) << 2 | (o.datb >> (15 - i) & 1) << 3;
                         if (!bits)
@@ -308,7 +312,7 @@ void display_frame(uint32_t *out)
                             continue;
                         colour = 16 + (n >> 1) * 4 + bits;
                     }
-                    int x = (s.hstart + 1 + i - FirstX) * 2;
+                    int x = (s.x + 1 + i - FirstX) * 2;
                     for (int r = 0; r < 2; r++)
                         if (x + r >= 0 && x + r < FrameWidth && sprite_colour[x + r] < 0) {
                             sprite_colour[x + r] = int16_t(colour);
