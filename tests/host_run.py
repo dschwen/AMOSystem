@@ -38,8 +38,12 @@ def source_of(name):
 
 
 def golden_of(name):
-    p = os.path.join(HOST_ONLY, name + '.txt')
-    return p if os.path.exists(p) else os.path.join(run.GOLDEN, name + '.txt')
+    # the host's own (host_only: its tests; host_only/variants: where it differs from the Amiga's)
+    for d in (HOST_ONLY, os.path.join(HOST_ONLY, 'variants')):
+        p = os.path.join(d, name + '.txt')
+        if os.path.exists(p):
+            return p
+    return os.path.join(run.GOLDEN, name + '.txt')
 
 
 def prepare(name, tables):

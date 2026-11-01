@@ -234,7 +234,11 @@ the sources (copy it from an installed AMOS Pro). Its stack-resetting
 entries (MonitorChr, Step_Out, Tt_Error, QUIT, the evaluator's error
 exits) are `src/host/monitor.cpp` on the host.
 `tests/host_run.py` runs the text tests of `tests/run.py` with it (editor
-and input tests are left out). The environment:
+and input tests are left out: they drive the emulator's keyboard and compare
+its screenshots), and `tests/host_only` (what only the host has: its devices).
+Six tests differ from the Amiga's golden in known lines (the maths libraries'
+last digit, the serial device): `tests/host_only/variants` has the host's own
+result, with the reason of each line (its README). The environment:
 
 | Variable | Use |
 |---|---|
