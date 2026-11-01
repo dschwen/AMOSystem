@@ -10,8 +10,20 @@ make            # build/AMOSPro
 make dist       # build/dist/AMOS: the AMOS tree with the new AMOSPro
 make host       # build/host/amos: AMOS as a program of this computer
 make host-sdl   # the same linked to SDL2 (build/host-sdl/amos)
-make install-host [PREFIX=~/.local]    # install it; make uninstall-host removes it
+make install-host [PREFIX=~/.local]    # install it (amos, amos-player); make uninstall-host removes it
+make game GAME=prog.AMOS [DATA=dir] [NAME=name]   # build/game/NAME: the program with the player
 ```
+
+`amos-player prog.AMOS` (or `amos -r prog.AMOS`, AMOSPro's `-r` on the
+Amiga too) runs a program only: no editor, no direct mode. The program
+starts as the editor's Run starts it (the default screen opened), its
+folder is the current one, and AMOS stops when it does: at its end, or at
+an error, which is told (the message from the editor's configuration) and
+gives the exit status 1. `make game` makes a folder that runs on its own
+wherever it is put: `NAME` (the launcher), `bin/amos-player`,
+`share/amos/AMOS` (APSystem and the interpreter's configuration, 2MB),
+`share/amos/game` (the program and the files of `DATA`). Text files that
+`Line Input #` reads need AMOS's line ends, CR LF, as on the Amiga.
 
 The installed `amos` (`PREFIX/bin/amos`, the AMOS tree in `PREFIX/share/amos/AMOS`)
 runs from any directory: it finds its tree from where the program is
@@ -330,6 +342,11 @@ golden files were recorded.
 A menu's procedure (the `(PR name)` object) was called with no program
 pointer, and the call looked for its parameters in the word at address 0
 (0 on the Amiga, so none). It does not read there now.
+
+AMOSPro's command line has an option of its own, `-r` (run only): the
+program given is run as the editor's Run runs it, and AMOSPro stops when it
+does, an error told, instead of going to the editor (`amos-player` on the
+host). Without it, nothing changes.
 
 AMOSPro starts on a stack of its own (64K, StackSwap in Cold_Start, given
 back in Get_Out): the C++ needs more than the 4K a CLI gives by default,

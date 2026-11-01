@@ -87,5 +87,9 @@ extern const char panic_oomem[], panic_editor[], panic_install[], panic_cantread
     panic_apsystem[];
 // TheEnd: stops all and leaves AMOSPro, with a panic message or none
 [[noreturn]] void the_end(const char *panic);
+// -r on the command line: the program run, and AMOSPro left when it stops
+// (a player: no editor, no direct mode)
+extern bool run_only;
+int exit_status();          // 1 if AMOSPro stopped with a message
 
 } // namespace amos::boot

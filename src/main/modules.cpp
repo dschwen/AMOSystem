@@ -359,12 +359,45 @@ void main_in_close_editor()
 // stopped (e: its error registers, d0-d1/a0-a1). The editor is loaded,
 // with all the memory it takes; if there is not enough for it, a run-only
 // program ends AMOSPro, else the program's banks go if the user agrees.
-[[noreturn]] void main_run_error(uint32_t run_only, Regs *e)
+bool ed_config_load_texts();     // editor/config.cpp
+
+// Run only (-r): the program stopped, AMOSPro stops; an error (not End,
+// not the editor's or direct mode's keys) told, with its message from the
+// editor's configuration if it can be loaded
+[[noreturn]] void run_only_end(uint16_t code)
+{
+    if (!code || code == 10 || code >= 1000)
+        the_end(nullptr);
+    static char text[160];
+    const char *message = "";
+    if (ed_config_load_texts() && idata().Ed_RunMessages)
+        message = boot::message(idata().Ed_RunMessages, code + 1);
+    char *to = text;
+    for (const char *p = "Error "; *p;)
+        *to++ = *p++;
+    char digits[6];
+    int n = 0;
+    do
+        digits[n++] = char('0' + code % 10);
+    while (code /= 10);
+    while (n)
+        *to++ = digits[--n];
+    *to++ = ':';
+    *to++ = ' ';
+    while (*message && to < text + sizeof text - 1)
+        *to++ = *message++;
+    *to = 0;
+    the_end(text);
+}
+
+[[noreturn]] void main_run_error(uint32_t only, Regs *e)
 {
     IData &d = idata();
     uint32_t banks = d.Cur_Banks, dialogs = d.Cur_Dialogs;
     if (uint16_t(e->d[0]) == 1002 || !installed())         // System
         the_end(nullptr);
+    if (run_only)
+        run_only_end(uint16_t(e->d[0]));
     reset_request();
     bool cold = false;
     if (!edit_load()) {
@@ -379,7 +412,7 @@ void main_in_close_editor()
         d.Cur_Banks = banks;
         memory_maximum();
         if (edit_load() || editor_cold(0)) {
-            if (uint16_t(run_only))
+            if (uint16_t(only))
                 the_end(nullptr);
             d.Cur_Dialogs = dialogs;
             d.Cur_Banks = banks;

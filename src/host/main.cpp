@@ -51,12 +51,17 @@ namespace amos::host {
 void display_save(const char *path);
 }
 
-// The way out (AMOS_SHOT: the last frame into that file)
+namespace amos::boot {
+int exit_status();
+}
+
+// The way out (AMOS_SHOT: the last frame into that file); the status 1 if
+// AMOS stopped with a message (an error of a program run only, say)
 extern "C" [[noreturn]] void main_get_out(uint32_t)
 {
     if (const char *shot = getenv("AMOS_SHOT"); shot && !getenv("AMOS_SHOT_FRAME"))
         host::display_save(shot);
-    exit(0);
+    exit(amos::boot::exit_status());
 }
 
 namespace {
@@ -112,6 +117,13 @@ int main(int argc, char **argv)
     // the CLI's command line: the arguments, a newline. A program of the host's file system
     // (prog.AMOS, ../x/prog.AMOS, /home/me/prog.AMOS) is START:prog.AMOS
     char *p = command;
+    // amos-player: AMOSPro's -r, the program run only (no editor, no
+    // direct mode: AMOS stops when it does)
+    std::string self = argv[0];
+    if (self.substr(self.rfind('/') + 1) == "amos-player") {
+        memcpy(p, "-r ", 3);
+        p += 3;
+    }
     for (int i = 1; i < argc; i++) {
         std::string arg = argv[i];
         if (arg[0] != '-' && arg.find(':') == std::string::npos) {

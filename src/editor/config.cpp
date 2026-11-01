@@ -540,6 +540,13 @@ void ed_config_save_default_quiet(AllRegs *) { save_default_quiet(); }
 void ed_config_save_as(AllRegs *) { save_as(); }
 void ed_config_load_default(AllRegs *) { load_default(); }
 void ed_config_load_default_quiet(AllRegs *) { load_default_quiet(); }
+// The default configuration loaded, quietly (its messages, for run only's
+// errors: main/modules.cpp); true if it was
+bool ed_config_load_texts()
+{
+    default_name();
+    return !load();
+}
 void ed_config_load_as(AllRegs *) { load_as(); }
 void ed_config_redraw(AllRegs *) { redraw(); }
 void ed_config_save_changed(AllRegs *) { save_changed(); }

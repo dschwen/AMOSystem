@@ -50,7 +50,7 @@ AMIGA_DIRS   := src/lib src/main src/verif src/interp src/ext src/hal src/w src/
 AMIGA_CXX    := $(sort $(wildcard $(addsuffix /*.cpp,$(AMIGA_DIRS))))
 AMOSPRO_LINK := $(OBJ)/src/amiga/start.o $(OBJ)/src/amiga/native.o $(patsubst %.cpp,$(OBJ)/%.o,$(AMIGA_CXX))
 
-.PHONY: all dist test test-reference install-hd host-check host host-sdl host-release install-host uninstall-host clean
+.PHONY: all dist test test-reference install-hd host-check host host-sdl host-release game install-host uninstall-host clean
 .SECONDARY:
 .DELETE_ON_ERROR:
 
@@ -154,13 +154,14 @@ PREFIX ?= $(HOME)/.local
 install-host: host-release dist
 	install -d $(DESTDIR)$(PREFIX)/bin $(DESTDIR)$(PREFIX)/share/amos
 	install -m 755 $(BUILD)/host-release/amos $(DESTDIR)$(PREFIX)/bin/amos
+	ln -sf amos $(DESTDIR)$(PREFIX)/bin/amos-player
 	rm -rf $(DESTDIR)$(PREFIX)/share/amos/AMOS
 	cp -a $(DIST) $(DESTDIR)$(PREFIX)/share/amos/AMOS
 	@echo "installed $(DESTDIR)$(PREFIX)/bin/amos and $(DESTDIR)$(PREFIX)/share/amos/AMOS"
 
 # (the devices directories, the user's disks, are left: $${XDG_DATA_HOME:-~/.local/share}/amos/devices)
 uninstall-host:
-	rm -f $(DESTDIR)$(PREFIX)/bin/amos
+	rm -f $(DESTDIR)$(PREFIX)/bin/amos $(DESTDIR)$(PREFIX)/bin/amos-player
 	rm -rf $(DESTDIR)$(PREFIX)/share/amos/AMOS
 	-rmdir $(DESTDIR)$(PREFIX)/share/amos
 	@echo "uninstalled; the devices (disks) in $${XDG_DATA_HOME:-~/.local/share}/amos/devices are kept"
@@ -171,3 +172,26 @@ host-check:
 
 clean:
 	rm -rf $(BUILD)
+
+# A game for this computer: make game GAME=prog.AMOS [DATA=directory]
+# [NAME=name] makes build/game/NAME, which runs on its own wherever it is
+# put: NAME (the launcher), bin/amos-player (AMOS run only: no editor, no
+# direct mode, it stops when the program does), share/amos/AMOS (the
+# system files, without the examples and tools), share/amos/game (the
+# program, and the files of DATA it loads: its START: and current folder)
+NAME ?= $(basename $(notdir $(GAME)))
+GAMEDIR := $(BUILD)/game/$(NAME)
+game: host-release dist
+	@test -n "$(GAME)" -a -f "$(GAME)" || { echo "make game GAME=prog.AMOS [DATA=dir] [NAME=name]"; exit 1; }
+	rm -rf $(GAMEDIR)
+	install -d $(GAMEDIR)/bin $(GAMEDIR)/share/amos/AMOS $(GAMEDIR)/share/amos/game
+	install -m 755 $(BUILD)/host-release/amos $(GAMEDIR)/bin/amos-player
+	cp -a $(DIST)/APSystem $(GAMEDIR)/share/amos/AMOS/
+	rm -f $(GAMEDIR)/share/amos/AMOS/APSystem/*.info $(GAMEDIR)/share/amos/AMOS/APSystem/APCmp \
+		$(GAMEDIR)/share/amos/AMOS/APSystem/*Compiler* $(GAMEDIR)/share/amos/AMOS/APSystem/Header_*
+	cp -a $(DIST)/AMOSPro_Interpreter_Config $(GAMEDIR)/share/amos/AMOS/
+	cp "$(GAME)" $(GAMEDIR)/share/amos/game/$(NAME).AMOS
+	$(if $(DATA),cp -a "$(DATA)"/. $(GAMEDIR)/share/amos/game/)
+	printf '#!/bin/sh\n# $(NAME): an AMOS program, run by AMOS'"'"'s player\nhere=$$(dirname "$$(readlink -f "$$0")")\ncd "$$here/share/amos/game" && exec "$$here/bin/amos-player" "$$here/share/amos/game/$(NAME).AMOS" "$$@"\n' > $(GAMEDIR)/$(NAME)
+	chmod 755 $(GAMEDIR)/$(NAME)
+	@echo "made $(GAMEDIR): run $(GAMEDIR)/$(NAME)"

@@ -46,6 +46,7 @@ const char panic_install[] = "Program not installed, start \"Install.AMOS\" firs
 const char panic_apsystem[] = "Cannot find APSystem folder.";
 const char panic_cantread[] = "Cannot read system files: check APSystem folder.";
 const char panic_badext[] = "Cannot load extension: use default interpreter config.";
+bool run_only;
 
 } // namespace amos::boot
 
@@ -53,6 +54,7 @@ namespace {
 
 const char panic_config[] = "Cannot find AMOSPro_Interpreter_Config.";
 const char panic_command[] = "Bad command line.";
+const char panic_noprogram[] = "Run only (-r): no program to run.";
 const char panic_version[] = "I need AMOS.library V2.0 or over!";
 
 // The message shown when AMOSPro stops
@@ -110,6 +112,15 @@ void panic_message(bool from_workbench)
     hal::panic_requester(panic);
 }
 
+} // namespace
+
+namespace amos::boot {
+// (the host's exit status: 1 when AMOSPro stopped with a message)
+int exit_status() { return panic ? 1 : 0; }
+} // namespace amos::boot
+
+namespace {
+
 // Boot_Fatal: an error before the data zone
 [[noreturn]] void fatal(const Start &s, const char *message)
 {
@@ -138,7 +149,8 @@ const char *command_name(const char *p, char *to)
     return p;
 }
 
-// The command line: [-c config] [-w] [program [its command line]]
+// The command line: [-c config] [-w] [-r] [program [its command line]]
+// (-r: run only, a deviation)
 void command_line(Start &s, char *p, uint32_t length)
 {
     if (uint16_t(length) <= 1)
@@ -164,6 +176,8 @@ void command_line(Start &s, char *p, uint32_t length)
             p = const_cast<char *>(command_name(p, s.config));
         else if (c == 'W')
             s.workbench = false;
+        else if (c == 'R')
+            boot::run_only = true;
         else
             fatal(s, panic_command);
     }
@@ -438,6 +452,20 @@ void main_cold_start(char *command, uint32_t length, uint32_t sp)
         hal::current_dir(s.auto_lock);
     copy(name1, *s.auto_name ? s.auto_name : sys_message(5));
     d.WBench = s.workbench;
+    // run only: the program's folder the current one (its files are there)
+    if (run_only && *s.auto_name) {
+        char folder[128];
+        char *to = folder, *end = folder;
+        for (const char *p = s.auto_name; *p && to < folder + sizeof folder - 1; p++) {
+            *to++ = *p;
+            if (*p == '/' || *p == ':')
+                end = to;
+        }
+        *end = 0;
+        if (*folder)
+            if (hal::DirLock l = hal::lock(folder, hal::LockShared))
+                hal::current_dir(l);
+    }
 
     // its command line, for COMMAND LINE$
     if (const char *line = s.command_line) {
@@ -497,11 +525,15 @@ void main_cold_start(char *command, uint32_t length, uint32_t sp)
     call(L_Prg_New, uint32_t(-2));                      // no screen behind
     if (!call(L_Prg_Load, uint32_t(-1))) {
         AllRegs p = context_regs();
-        p.d[0] = uint32_t(-1);
+        // (as an accessory, without the default screen; run only, as the
+        // editor's Run: the default screen opened)
+        p.d[0] = boot::run_only ? 0 : uint32_t(-1);
         p.a[1] = address(main_run_error_run_only);
         p.a[6] = program;
         amos_call_all(&p, lib_address(L_Prg_RunIt));    // back if out of memory
     }
+    if (boot::run_only)
+        the_end(panic_noprogram);
     // no program: the editor
     if (!installed())
         the_end(panic_install);
