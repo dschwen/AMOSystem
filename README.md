@@ -31,6 +31,7 @@ from the original, the tests) are [docs/BUILDING.md](docs/BUILDING.md).
 | `tools/` | the build's and the tests' scripts (tokenizer, ROM extractors, hunk flags...) |
 | `tests/` | the test programs, their golden results, the runners |
 | `amiga/` | the Amiga test environment: the FS-UAE configuration (the emulator's own files are not in the repository, see below) |
+| `data/` | data the builds use: `fonts/topaz8`, AROS's topaz 8 as raw data (its README, the AROS Public License) |
 | `docs/` | BUILDING.md, HISTORY.md |
 | `build/` | everything built (not in the repository) |
 
@@ -67,7 +68,8 @@ from the original, the tests) are [docs/BUILDING.md](docs/BUILDING.md).
 - Optional at build time: an **Amiga Kickstart 3.1 ROM** (and its `rom.key`
   if it is a Cloanto-encrypted one). The topaz fonts and the usa keymap (Alt
   characters, dead keys) are taken from it into `build/`; without one the
-  build uses stand-ins (boxes for the characters, a plain keymap). The ROM is
+  build uses AROS's topaz 8 (`data/fonts/topaz8`, in the repository) and a
+  plain keymap. The ROM is
   looked for in `amiga/kickstarts` (`KICKSTART=`, `ROMKEY=` name others).
 
 ### The tests

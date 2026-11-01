@@ -1,6 +1,7 @@
 // The fonts on another host: topaz, the Amiga's font in ROM, taken from
 // the user's Kickstart when AMOS is built (tools/extract_topaz.py: build/
-// host/topaz.cpp); without it a stand-in of the same size (boxes). The
+// host/topaz.cpp), else AROS's topaz 8 (data/fonts/topaz8); without
+// either, a stand-in of the same size (boxes). The
 // fonts are TextFonts of the host (native fields), their data below 4GB.
 
 #include "hal/system.h"

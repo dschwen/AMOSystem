@@ -120,12 +120,13 @@ HOST_FLAGS  := -m64 $(HOST_OPT) $(HOST_SDLDEF) -D__use_amiga_stdc_c99 -std=c++20
                -Isrc/host/include -Isrc -idirafter $(AMIGA_PREFIX)/m68k-amigaos/ndk-include -MMD -MP
 
 # topaz and the usa keymap, from the user's Kickstart (as the tests'
-# emulator has them; without one the host uses stand-ins)
+# emulator has them); without one, AROS's topaz 8 (data/fonts/topaz8) and a
+# plain keymap
 KICKSTART ?= amiga/kickstarts/amiga-os-310-a1200.rom
 ROMKEY ?= amiga/harddisk/Devs/Kickstarts/rom.key
-$(HOST)/topaz.cpp: tools/extract_topaz.py
+$(HOST)/topaz.cpp: tools/extract_topaz.py $(wildcard data/fonts/topaz8/*.bin)
 	@mkdir -p $(dir $@)
-	$(PYTHON) tools/extract_topaz.py --out $@ --rom "$(KICKSTART)" --key "$(ROMKEY)"
+	$(PYTHON) tools/extract_topaz.py --out $@ --rom "$(KICKSTART)" --key "$(ROMKEY)" --fallback data/fonts/topaz8
 $(HOST)/keymap.cpp: tools/extract_keymap.py
 	@mkdir -p $(dir $@)
 	$(PYTHON) tools/extract_keymap.py --out $@ --rom "$(KICKSTART)" --key "$(ROMKEY)"

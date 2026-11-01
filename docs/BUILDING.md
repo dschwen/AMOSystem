@@ -244,8 +244,9 @@ with `src/host` and no assembler:
 - topaz 8 and 9 and the usa keymap (its Alt characters and dead keys)
   from the user's Kickstart (`tools/extract_topaz.py`,
   `tools/extract_keymap.py`; `KICKSTART=` and `ROMKEY=` for an encrypted
-  one; the results stay in `build/`; without one, boxes replace the
-  characters and a plain table the keymap);
+  one; the results stay in `build/`; without one, AROS's topaz 8
+  (`data/fonts/topaz8`, raw data under the AROS Public License: its README)
+  and a plain table the keymap);
 - graphics.library's drawing as the Kickstart's (measured with probes in
   the emulator): the blitter's lines (their rounding, the pattern's counter,
   the first dot in COMPLEMENT mode), AreaEnd's fill, the multi-coloured
