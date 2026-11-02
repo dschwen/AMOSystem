@@ -10,6 +10,7 @@
 // 12, three bytes each (ASCII, scan code, shifts), ending with -1.
 
 #include "editor/editor.h"
+#include "editor/clipboard.h"
 
 using namespace amos;
 using namespace amos::ed;
@@ -129,6 +130,8 @@ bool key()
         }
         if (!key)
             return false;
+        if (system_clipboard(key))
+            return true;
         if (uint16_t tape = d.EdMa_Tape) {
             // a macro being recorded
             uint8_t *at = ptr<uint8_t>(peek_l(&d.EdMa_List)) + 8 + 4 - 1 + tape;

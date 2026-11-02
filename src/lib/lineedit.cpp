@@ -3,6 +3,11 @@
 // and the editor.
 
 #include "lib/dialog.h"
+#include "hal/clipboard.h"
+#if !defined(__m68k__)
+#include "host/clipboard_text.h"
+#include <string.h>
+#endif
 
 using namespace amos;
 
@@ -44,6 +49,101 @@ void locate(uint32_t x, uint32_t y)
     r.d[2] = y;
     wi_call(wi::Locate, r);
 }
+
+#if !defined(__m68k__)
+// External selection state: do not enlarge the guest LineEdit layout.
+bool clipboard_active;
+LineEdit *selection_owner;
+int selection_anchor = -1;
+bool direct_line(LineEdit *e)
+{
+    return clipboard_active && idata().Direct && e == reinterpret_cast<LineEdit *>(idata().Es_LEd);
+}
+void selection_reset(LineEdit *e)
+{
+    if (selection_owner == e) selection_anchor = -1;
+}
+bool selection(LineEdit *e, unsigned &first, unsigned &last)
+{
+    if (!direct_line(e) || selection_owner != e || selection_anchor < 0) return false;
+    first = unsigned(selection_anchor); last = e->LEd_Cur;
+    if (first > last) { unsigned t = first; first = last; last = t; }
+    return last <= e->LEd_Long && first != last;
+}
+void erase_selection(LineEdit *e, unsigned first, unsigned last)
+{
+    unsigned len = e->LEd_Long;
+    memmove(buffer(e) + first, buffer(e) + last, len - last);
+    e->LEd_Long = len - (last - first); e->LEd_Cur = first;
+    buffer(e)[e->LEd_Long] = 0;
+    selection_reset(e); state(e) |= StateClear;
+}
+bool direct_key(LineEdit *e, uint32_t key)
+{
+    if (!direct_line(e)) return false;
+    if (selection_owner != e) { selection_owner = e; selection_anchor = -1; }
+    unsigned first = 0, last = 0;
+    bool selected = selection(e, first, last);
+    auto command = hal::clipboard_command(key);
+    if (command != hal::ClipboardCommand::None) {
+        using hal::ClipboardCommand;
+        if (command == ClipboardCommand::Ignored) return true;
+        std::string text, utf8;
+        if (command == ClipboardCommand::Copy || command == ClipboardCommand::Cut) {
+            if (!selected) { first = 0; last = e->LEd_Long; }
+            if (first == last) return true;
+            text.assign(reinterpret_cast<char *>(buffer(e) + first), last - first);
+            if (!host::clipboard::encode(text, utf8) || !hal::clipboard_write(utf8.c_str())) {
+                hal::clipboard_message("Clipboard write failed; command unchanged"); return true;
+            }
+            if (command == ClipboardCommand::Cut) erase_selection(e, first, last);
+        } else {
+            char *native;
+            if (!hal::clipboard_read(native)) { hal::clipboard_message("System clipboard has no available text"); return true; }
+            bool valid = host::clipboard::decode(native, text);
+            hal::clipboard_release(native);
+            if (!valid || !host::clipboard::command_line(text)) {
+                hal::clipboard_message("Paste one representable command line; multiline text belongs in the source editor"); return true;
+            }
+            if (text.empty()) return true;
+            if (!selected) first = last = e->LEd_Cur;
+            unsigned len = e->LEd_Long;
+            if (len - (last - first) + text.size() > e->LEd_Max) {
+                hal::clipboard_message("Clipboard: command exceeds the direct-mode line capacity"); return true;
+            }
+            memmove(buffer(e) + first + text.size(), buffer(e) + last, len - last);
+            memcpy(buffer(e) + first, text.data(), text.size());
+            e->LEd_Long = len - (last - first) + text.size();
+            e->LEd_Cur = first + text.size(); buffer(e)[e->LEd_Long] = 0;
+            selection_reset(e); state(e) |= StateClear;
+        }
+        return true;
+    }
+    unsigned scan = (key >> 16) & 255, shifts = key >> 24;
+    if (scan == ScanLeft || scan == ScanRight || scan == 0x70 || scan == 0x71) {
+        unsigned cur = e->LEd_Cur;
+        if (shifts & 3) {
+            if (selection_anchor < 0) selection_anchor = cur;
+            if (scan == ScanLeft) { if (cur) --cur; }
+            else if (scan == ScanRight) { if (cur < e->LEd_Long) ++cur; }
+            else cur = scan == 0x70 ? 0 : unsigned(e->LEd_Long);
+            e->LEd_Cur = cur; state(e) |= StateClear; return true;
+        }
+        selection_reset(e); state(e) |= StateClear;
+        if (scan == 0x70 || scan == 0x71) {
+            e->LEd_Cur = scan == 0x70 ? 0 : unsigned(e->LEd_Long); return true;
+        }
+        return false;
+    }
+    unsigned ascii = key & 255;
+    if (selected && (scan == ScanBackSpace || scan == ScanDelete || (ascii >= 32 && ascii != 127))) {
+        erase_selection(e, first, last);
+        return scan == ScanBackSpace || scan == ScanDelete;
+    }
+    selection_reset(e); state(e) |= StateClear;
+    return false;
+}
+#endif
 
 // LEd_FauCu: the fake cursor, a space drawn in complement mode
 const char fake_cursor[] = "\x1bI1\x1bW2 \x1bW0\x1bI0\x1d";
@@ -102,6 +202,17 @@ void amos::led_print(LineEdit *e)
     Regs r = {};
     r.a[1] = address(buffer(e) + e->LEd_Start);
     r.d[1] = static_cast<uint16_t>(n);
+#if !defined(__m68k__)
+    unsigned first, last;
+    if (selection(e, first, last)) {
+        for (int i = 0; i < n; ++i) {
+            unsigned at = e->LEd_Start + i;
+            print(at >= first && at < last ? "\x1bW2" : "\x1bW0");
+            chr_out(buffer(e)[at]);
+        }
+        print("\x1bW0");
+    } else
+#endif
     wi_call(wi::Print2, r);
     if (state(e) & StateEraseRight) {
         state(e) &= ~StateEraseRight;
@@ -115,6 +226,9 @@ void amos::led_print(LineEdit *e)
 // zero) and show it, cursor at the end
 void amos::led_new(LineEdit *e, const uint8_t *text, uint16_t length)
 {
+#if !defined(__m68k__)
+    selection_reset(e);
+#endif
     uint8_t *to = buffer(e);
     uint16_t room = e->LEd_Max;
     if (length) {
@@ -189,12 +303,23 @@ int16_t amos::led_loop(LineEdit *e, uint32_t *key)
     for (;;) {
         if (options(e) & LEdMulti)
             dia_wait_mul();
+#if !defined(__m68k__) && !defined(__APPLE__)
+        // Test_PaSaut jumps to the interrupt handler; consume direct-mode
+        // copy first. Running programs and other line editors retain Ctrl+C.
+        if (direct_line(e) && (w.Actualise & (1 << BitControl))) {
+            w.Actualise &= ~(1 << BitControl);
+            direct_key(e, 0x08330043); led_print(e); continue;
+        }
+#endif
         if (options(e) & LEdTests) {
             Regs r = {};
             lib_call(L_Test_PaSaut, r);
             uint16_t a = w.Actualise & idata().ActuMask;
             if (a & 1 << BitControl) {
                 w.Actualise = static_cast<uint16_t>(a & ~(1 << BitControl));
+#if !defined(__m68k__) && !defined(__APPLE__)
+                if (direct_line(e)) { direct_key(e, 0x08330043); led_print(e); continue; }
+#endif
                 return done(-1, 0);
             }
         }
@@ -214,6 +339,16 @@ int16_t amos::led_loop(LineEdit *e, uint32_t *key)
                         if (x <= e->LEd_Long) {
                             out = false;
                             if (x != e->LEd_Cur) {
+#if !defined(__m68k__)
+                                if (direct_line(e)) {
+                                    selection_owner = e;
+                                    Regs shift = {}; sy_call(sy::Shifts, shift);
+                                    if (shift.d[1] & 3) {
+                                        if (selection_anchor < 0) selection_anchor = e->LEd_Cur;
+                                    } else selection_reset(e);
+                                    state(e) |= StateClear;
+                                }
+#endif
                                 e->LEd_Cur = x;
                                 led_print(e);
                                 if (options(e) & LEdTests)
@@ -237,6 +372,9 @@ int16_t amos::led_loop(LineEdit *e, uint32_t *key)
                 return done(0, 0);
             continue;
         }
+#if !defined(__m68k__)
+        if (direct_key(e, k)) { led_print(e); continue; }
+#endif
         uint16_t high = static_cast<uint16_t>(k >> 16);      // shifts and scan code
         uint8_t scan = static_cast<uint8_t>(high);
         uint8_t ascii = static_cast<uint8_t>(k);
@@ -355,3 +493,7 @@ extern "C" uint32_t lib_led_new(RegFrame &r)
     led_new(ptr<LineEdit>(r.a[0]), ptr<uint8_t>(r.a[1]), static_cast<uint16_t>(r.d[0]));
     return r.d[0];
 }
+
+#if !defined(__m68k__)
+void amos::hal::clipboard_direct_active(bool active) { clipboard_active = active; }
+#endif

@@ -13,6 +13,7 @@ on:
       - 'tests/windows/**'
       - 'tests/test_package_msi.py'
       - 'tests/test_open_document.py'
+      - 'tests/test_clipboard.py'
       - 'packaging/windows/**'
       - 'Makefile'
       - '.github/workflows/windows-msi.yml'
@@ -28,7 +29,7 @@ jobs:
       - name: Install cross compiler and MSI inspection tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y g++-mingw-w64-x86-64 wixl msitools python3-pil libsdl2-2.0-0
+          sudo apt-get install -y g++-mingw-w64-x86-64 wixl msitools python3-pil libsdl2-2.0-0 xvfb libxtst6
       - name: Fetch pinned SDL2 MinGW SDK
         run: |
           mkdir -p build/sdk
@@ -51,6 +52,7 @@ jobs:
           cp -a AMOS build/dist/AMOS
           python3 tests/host_run.py --text-only --fallback-font
           python3 -m unittest discover -s tests -p test_open_document.py
+          SDL_AUDIODRIVER=dummy python3 -m unittest discover -s tests -p test_clipboard.py
       - name: Upload unsigned installers and manifests
         uses: actions/upload-artifact@v4
         with:

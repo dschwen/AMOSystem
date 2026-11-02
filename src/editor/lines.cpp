@@ -8,6 +8,7 @@
 // closed procedure). The display and the cursor stay with the assembler.
 
 #include "editor/editor.h"
+#include "editor/clipboard.h"
 
 using namespace amos;
 using namespace amos::ed;
@@ -392,6 +393,9 @@ namespace amos::ed {
 // joined
 void undo_change(uint8_t *entry)
 {
+#if !defined(__m68k__)
+    if (entry[0] == 0x89) { clipboard_restore(ptr<uint8_t>(peek_l(entry + 2)), false); return; }
+#endif
     switch (entry[0] & 0x7F) {
     case 1:
         to_place(entry);
@@ -446,6 +450,9 @@ void undo_change(uint8_t *entry)
 
 void redo_change(uint8_t *entry)
 {
+#if !defined(__m68k__)
+    if (entry[0] == 0x89) { clipboard_restore(ptr<uint8_t>(peek_l(entry + 2)), true); return; }
+#endif
     switch (entry[0] & 0x7F) {
     case 1:
         to_place(entry);

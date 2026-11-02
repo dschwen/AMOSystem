@@ -11,6 +11,7 @@
 // not return, it ends in the interpreter or the editor's loop.
 
 #include "editor/editor.h"
+#include "hal/clipboard.h"
 
 using namespace amos;
 using namespace amos::ed;
@@ -567,7 +568,9 @@ void show()
         boot::wait_vbl_multi();
         Regs l;
         l.a[0] = address(line_editor());
+        hal::clipboard_direct_active(true);
         lib_call(L_LEd_Loop, l);
+        hal::clipboard_direct_active(false);
         int16_t code = int16_t(l.d[2]);
         if (code < 0)
             goto again;             // Control-C

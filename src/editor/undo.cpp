@@ -7,6 +7,7 @@
 // on the entry.
 
 #include "editor/editor.h"
+#include "editor/clipboard.h"
 
 using namespace amos;
 using namespace amos::ed;
@@ -21,7 +22,10 @@ void clear(Program &p, uint8_t *entry)
 {
     if (entry[0] & 0x80) {
         if (uint32_t block = peek_l(entry + 2)) {
-            uint16_t size = peek_w(ptr<uint8_t>(block));
+            uint32_t size = peek_w(ptr<uint8_t>(block));
+#if !defined(__m68k__)
+            if (entry[0] == 0x89) size = peek_l(ptr<uint8_t>(block));
+#endif
             p.Prg_TUndo -= size;
             free_memory(block, size);
         }

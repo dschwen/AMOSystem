@@ -291,3 +291,6 @@ configuration does not have: Cancel the requester.)
 MIT, as the original sources (`LICENSE`). AMOS Professional is © François
 Lionet and Europress Software; the copyright notice stays in the sources and
 in the program's start-up screen.
+
+Host system copy/paste is described in [docs/CLIPBOARD.md](docs/CLIPBOARD.md),
+covering system copy/paste in the source editor and direct-mode command line.

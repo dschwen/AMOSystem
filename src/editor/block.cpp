@@ -377,6 +377,11 @@ void hide()
 
 namespace amos::ed {
 
+#if !defined(__m68k__)
+// Preserve interoperability with the original private block paste command.
+bool clipboard_mirror_block() { return copy(&idata().Ed_Block, limits()) == 0; }
+#endif
+
 // Ed_BlocOn: marking starts, or the block is forgotten
 void block_on()
 {

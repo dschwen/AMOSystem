@@ -15,6 +15,7 @@
 // set), the program's text in Ed_MnPrograms, the command line's.
 
 #include "editor/editor.h"
+#include "editor/clipboard.h"
 #include "core/amiga.h"
 #include "lib/menus.h"
 #include "hal/system.h"
@@ -501,6 +502,9 @@ bool menu_init()
         return false;
     }
     uint32_t size = HiddenMax * 8 * 5 + 16 + UserMax * 8 + 8 + peek_l(ptr<uint8_t>(d.EdM_Definition - 4)) + 16;
+#if !defined(__m68k__)
+    size += 4 * 8;
+#endif
     d.EdM_TableSize = size;
     d.EdM_Table = memory(size, true);
     if (!d.EdM_Table) {
@@ -555,6 +559,22 @@ bool menu_init()
             user += 2 + user[-1];
         }
     }
+#if !defined(__m68k__)
+    // Host-only eighth menu. Commands do not enter the legacy function table.
+    const char *labels[] = {"Clipboard", "System Copy", "System Cut", "System Paste"};
+    auto keys = d.EdM_Keys; d.EdM_Keys = 0;
+    for (unsigned i = 0; i < 4; ++i) {
+        uint8_t *b = ptr<uint8_t>(d.Ed_BufT);
+        const uint8_t def[8] = {'1','3','0','1','8',uint8_t(i ? '0' + i : '0'),'0','0'};
+        for (unsigned j = 0; j < 8; ++j) b[j] = def[j];
+        unsigned n = 0; while (labels[i][n]) { b[16 + n] = labels[i][n]; ++n; }
+        b[16 + n] = 0; b[15] = uint8_t(n);
+        uint8_t *entry = table;
+        make_object(b, table, b + 16);
+        entry[6] = uint8_t(i); entry[7] = 0xFF;
+    }
+    d.EdM_Keys = keys;
+#endif
     d.EdM_TableAMOS = address(table);
     branch_amos();
     menu_marks();
@@ -585,8 +605,11 @@ struct Choice {
     uint16_t function;
 };
 
-Choice menu_choice()
+Choice menu_choice(bool clipboard = false)
 {
+#if defined(__m68k__)
+    (void)clipboard;
+#endif
     IData &d = idata();
     editor_menus();
     if (!d.MnBase || hal::available_memory(hal::MemoryPublic) < 40 * 1024)
@@ -606,6 +629,12 @@ Choice menu_choice()
     for (const uint8_t *t = ptr<uint8_t>(d.EdM_Table); peek_l(t); t += 8) {
         if (peek_l(t) != chosen)
             continue;
+#if !defined(__m68k__)
+        if (t[7] == 0xFF) {
+            if (clipboard && t[6]) return {1, t, 0};
+            return {0, nullptr, 0};
+        }
+#endif
         int16_t function = int16_t(t[6]) - 1;
         if (function < 0)
             break;
@@ -1021,7 +1050,14 @@ void ed_save_all(AllRegs *) { save_all(); }
 // Ed_MnGere: d0 1 (d2 the function, from 0; a0 its entry), 0 or -1
 void ed_menu_fn(AllRegs *r)
 {
-    Choice c = menu_choice();
+    Choice c = menu_choice(true);
+#if !defined(__m68k__)
+    if (c.result > 0 && c.entry[7] == 0xFF) {
+        system_clipboard_command(static_cast<hal::ClipboardCommand>(c.entry[6]));
+        r->d[0] = 0;
+        return;
+    }
+#endif
     r->d[0] = uint32_t(c.result);
     if (c.result > 0) {
         r->d[2] = c.function;

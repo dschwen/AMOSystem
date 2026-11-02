@@ -10,6 +10,7 @@
 
 #include "runtime/runtime.h"
 #include "runtime/glue.h"
+#include "hal/clipboard.h"
 
 #include <devices/inputevent.h>
 #include <exec/interrupts.h>
@@ -54,6 +55,9 @@ namespace {
 // ---- SDL, by its functions' addresses ----------------------------------------
 
 struct Sdl {
+    char *(*GetClipboardText)();
+    int (*SetClipboardText)(const char *);
+    int (*HasClipboardText)();
     int (*Init)(uint32_t);
     void *(*CreateWindow)(const char *, int, int, int, int, uint32_t);
     void *(*CreateRenderer)(void *, int, uint32_t);
@@ -80,6 +84,7 @@ uint32_t audio_device;
 
 void *window, *renderer, *texture;
 bool shown;
+unsigned clipboard_latched;
 // The mouse pointer AMOS's (the window has it: relative moves, the system's
 // pointer hidden), unless AMOS is behind the Workbench
 bool captured = true, skip_motion = true;
@@ -104,6 +109,9 @@ template <typename F> bool symbol(void *lib, F &f, const char *name)
 } // namespace amos::host
 // (SDL2's functions, as Sdl's members declare them)
 extern "C" {
+char *SDL_GetClipboardText();
+int SDL_SetClipboardText(const char *);
+int SDL_HasClipboardText();
 int SDL_Init(uint32_t);
 void *SDL_CreateWindow(const char *, int, int, int, int, uint32_t);
 void *SDL_CreateRenderer(void *, int, uint32_t);
@@ -130,6 +138,9 @@ namespace {
 
 bool load()
 {
+    sdl.GetClipboardText = SDL_GetClipboardText;
+    sdl.SetClipboardText = SDL_SetClipboardText;
+    sdl.HasClipboardText = SDL_HasClipboardText;
     sdl.Init = SDL_Init;
     sdl.CreateWindow = SDL_CreateWindow;
     sdl.CreateRenderer = SDL_CreateRenderer;
@@ -170,6 +181,9 @@ bool load()
 #endif
     if (!lib)
         return false;
+    symbol(lib, sdl.GetClipboardText, "SDL_GetClipboardText");
+    symbol(lib, sdl.SetClipboardText, "SDL_SetClipboardText");
+    symbol(lib, sdl.HasClipboardText, "SDL_HasClipboardText");
     return symbol(lib, sdl.Init, "SDL_Init") && symbol(lib, sdl.CreateWindow, "SDL_CreateWindow") &&
            symbol(lib, sdl.CreateRenderer, "SDL_CreateRenderer") &&
            symbol(lib, sdl.CreateTexture, "SDL_CreateTexture") &&
@@ -250,6 +264,8 @@ uint8_t raw_key(int scancode)
         return pad[scancode - 89];
     }
     switch (scancode) {
+    case 74: return 0x70;       // host Home (direct-mode editor)
+    case 77: return 0x71;       // host End
     case 40: return 0x44;       // return
     case 41: return 0x45;       // escape
     case 42: return 0x41;       // backspace
@@ -315,11 +331,16 @@ void events()
     while (sdl.PollEvent(e)) {
         uint32_t type;
         memcpy(&type, e, 4);
+        if (type == 0x200 && e[12] == 13) clipboard_latched = 0; // focus lost
         if (type == 0x100) {                // SDL_QUIT
             exit(0);
         } else if (type == 0x300 || type == 0x301) {    // SDL_KEYDOWN, SDL_KEYUP
             int32_t scancode;
             memcpy(&scancode, e + 16, 4);
+            if (type == 0x301) {
+                uint8_t released = raw_key(scancode);
+                if (released >= 0x32 && released <= 0x34) clipboard_latched &= ~(1u << (released - 0x32));
+            }
             if (type == 0x300 && scancode == 69 && !e[13]) {    // F12: the Devices panel
                 overlay::toggle();
                 apply_pointer();
@@ -528,3 +549,40 @@ void audio_queue(const int16_t *samples, int count)
 }
 
 } // namespace amos::host
+
+namespace amos::host { void message(const char *); }
+namespace amos::hal {
+bool clipboard_read(char *&text)
+{
+    text = nullptr;
+    if (!host::shown || !host::sdl.GetClipboardText || !host::sdl.HasClipboardText ||
+        !host::sdl.HasClipboardText()) return false;
+    text = host::sdl.GetClipboardText();
+    if (text && *text) return true;
+    if (text) host::sdl.Free(text);
+    text = nullptr;
+    return false;
+}
+bool clipboard_write(const char *text)
+{
+    return host::shown && host::sdl.SetClipboardText && host::sdl.SetClipboardText(text) == 0;
+}
+void clipboard_release(char *text) { if (text) host::sdl.Free(text); }
+void clipboard_message(const char *text) { host::message(text); }
+ClipboardCommand clipboard_command(uint32_t key)
+{
+    const unsigned shifts = (key >> 24) & 0xFB;
+#if defined(__APPLE__)
+    const bool modifier = (shifts & 0xC0) && !(shifts & ~0xC0u);
+#else
+    const bool modifier = shifts == 8;
+#endif
+    if (!modifier) return ClipboardCommand::None;
+    unsigned scan = (key >> 16) & 255;
+    if (scan < 0x32 || scan > 0x34) return ClipboardCommand::None;
+    unsigned bit = 1u << (scan - 0x32);
+    if (host::clipboard_latched & bit) return ClipboardCommand::Ignored;
+    host::clipboard_latched |= bit;
+    return scan == 0x33 ? ClipboardCommand::Copy : scan == 0x32 ? ClipboardCommand::Cut : ClipboardCommand::Paste;
+}
+}
