@@ -14,7 +14,9 @@
 #include <devices/inputevent.h>
 #include <exec/interrupts.h>
 
+#if !defined(AMOS_SDL_LINKED)
 #include <dlfcn.h>
+#endif
 #include <stdio.h>
 #include <string.h>
 
@@ -28,6 +30,11 @@ using namespace amos;
 namespace amos::host {
 
 constexpr int FrameWidth = 768, FrameHeight = 288;
+#if defined(_WIN32)
+constexpr int DefaultScale = 1;
+#else
+constexpr int DefaultScale = 2;
+#endif
 void display_frame(uint32_t *out);
 void mouse_buttons(bool left, bool right);
 void pointer_capture(bool on);
@@ -82,13 +89,15 @@ uint32_t frame[FrameWidth * FrameHeight];
 uint32_t held[FrameWidth * FrameHeight];
 bool holding, held_uploaded;
 uint32_t composed[FrameWidth * FrameHeight];     // the frame with the host's overlay on it
-int scale = 2;                                   // the window's magnification
+int scale = DefaultScale;                        // the window's magnification
 
+#if !defined(AMOS_SDL_LINKED)
 template <typename F> bool symbol(void *lib, F &f, const char *name)
 {
     f = reinterpret_cast<F>(dlsym(lib, name));
     return f != nullptr;
 }
+#endif
 
 #if defined(AMOS_SDL_LINKED)
 } // namespace
@@ -401,17 +410,17 @@ void window_start()
     if ((want && !strcmp(want, "none")) || !load())
         return;
     audio_start();
-#if !defined(__APPLE__)
+#if !defined(__APPLE__) && !defined(_WIN32)
     if (!getenv("DISPLAY"))
         return;
 #endif
     if (sdl.Init(0x20) < 0)   // SDL_INIT_VIDEO
         return;
-    // magnified (AMOS_SCALE, 2 by default): a hires pixel to scale by scale,
+    // magnified (AMOS_SCALE, 1 on Windows, 2 elsewhere): a hires pixel to scale by scale,
     // a line to twice that (the frame's lines are PAL's 288)
-    scale = 2;
+    scale = DefaultScale;
     if (const char *s = getenv("AMOS_SCALE"))
-        scale = s[0] >= '1' && s[0] <= '9' ? s[0] - '0' : 2;
+        scale = s[0] >= '1' && s[0] <= '9' ? s[0] - '0' : DefaultScale;
     window = sdl.CreateWindow("AMOS Professional", 0x2FFF0000, 0x2FFF0000, FrameWidth * scale, FrameHeight * 2 * scale,
                               0x20);
     if (!window)

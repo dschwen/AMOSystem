@@ -18,7 +18,9 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+#if !defined(_WIN32)
 #include <ftw.h>
+#endif
 
 #include <algorithm>
 #include <string>
@@ -29,11 +31,18 @@
 // -fpack-struct=2 for the Amiga's structures, which changes their layout in our code but not
 // inside libstdc++.so, and a call across would write over the stack.)
 
+#if defined(_WIN32)
+#include "host/windows_platform.h"
+#define realpath(path, ignored) amos::host::windows::canonical_path(path)
+#define mkdir(path, mode) amos::host::windows::make_directory(path)
+#endif
+
 namespace amos::host {
 void disk_event(bool inserted);       // sdl.cpp: the input event DISKINSERTED / DISKREMOVED
 }
 
 namespace amos::host::devices {
+
 
 namespace {
 
@@ -156,6 +165,10 @@ std::string expand(const std::string &value, const std::string &base)
         const char *home = getenv("HOME");
         return std::string(home ? home : ".") + value.substr(1);
     }
+#if defined(_WIN32)
+    if (value.size() > 2 && value[1] == ':' && (value[2] == '/' || value[2] == '\\'))
+        return value;
+#endif
     if (value[0] == '/' || base.empty())
         return value;
     return base + "/" + value;
@@ -350,6 +363,10 @@ void open_devices(const Config &c)
     char path[1024];
     const char *env = getenv("AMOS_DEVICES"), *start = getenv("AMOS_START_DIR");
     const char *home = getenv("HOME"), *data = getenv("XDG_DATA_HOME");
+#if defined(_WIN32)
+    if (!home) home = getenv("USERPROFILE");
+    if (!data) data = getenv("LOCALAPPDATA");
+#endif
     bool fresh = false;
     if (env && *env) {
         snprintf(path, sizeof path, "%s", env);
@@ -384,17 +401,29 @@ void open_devices(const Config &c)
 }
 
 // RAM: is empty at every start: a folder of its own, removed at the end
+#if !defined(_WIN32)
 int remove_entry(const char *path, const struct stat *, int, struct FTW *) { return remove(path); }
+#endif
 
 void remove_ram()
 {
     // (only a folder this run made: its name has the mark)
     if (ram_path.size() > 10 && ram_path.find("/amos-ram-") != std::string::npos)
+#if defined(_WIN32)
+        windows::remove_tree(ram_path.c_str());
+#else
         nftw(ram_path.c_str(), remove_entry, 16, FTW_DEPTH | FTW_PHYS);
+#endif
 }
 
 void make_ram()
 {
+#if defined(_WIN32)
+    char *created = windows::temporary_directory();
+    if (!created) return;
+    ram_path = created;
+    free(created);
+#else
     const char *tmp = getenv("TMPDIR");
     std::string pattern = std::string(tmp && *tmp ? tmp : "/tmp") + "/amos-ram-XXXXXX";
     std::vector<char> text(pattern.begin(), pattern.end());
@@ -402,6 +431,7 @@ void make_ram()
     if (!mkdtemp(text.data()))
         return;
     ram_path = text.data();
+#endif
     atexit(remove_ram);
     add("RAM", real_path(ram_path), true);
 }
@@ -444,6 +474,9 @@ void init()
     // the start directory a volume (AMOSPRO:, unless an assign is it), so
     // that the paths stay as short as an Amiga's
     if (char *cwd = getcwd(nullptr, 0)) {
+#if defined(_WIN32)
+        for (char *p = cwd; *p; p++) if (*p == '\\') *p = '/';
+#endif
         bool covered = false;
         for (const Volume &v : table)
             covered |= v.path == cwd;

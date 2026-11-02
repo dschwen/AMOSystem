@@ -103,6 +103,28 @@ executable in `build/host-release/amos`. Use `make host` or `host-release`
 on macOS; `host-sdl` currently uses Linux-specific library link flags.
 Native Apple Silicon builds are not yet supported.
 
+### The Windows build (experimental)
+
+Cross-compile on Linux with **x86_64-w64-mingw32-g++** (C++20), make,
+python3, and the **x86-64 MinGW SDL2 SDK**:
+
+```sh
+make host-windows SDL2_WINDOWS=/path/to/SDL2/x86_64-w64-mingw32
+make windows-dist SDL2_WINDOWS=/path/to/SDL2/x86_64-w64-mingw32
+```
+
+The default SDK path is `~/Downloads/SDL2-2.32.8/x86_64-w64-mingw32`.
+The executable is `build/windows/amos.exe`; the portable bundle is
+`build/windows-portable.zip`. Extract the entire bundle into a writable
+folder on Windows 10/11 and run `amos.exe`, keeping `SDL2.dll` and the
+`AMOS` resource directory beside it. The bundle includes a `smoke.ps1`
+PowerShell runner for five headless regression tests.
+
+The address/context probe has passed on Windows; full interpreter and GUI
+runtime validation is still pending. Start with an ASCII installation path.
+See [docs/WINDOWS.md](docs/WINDOWS.md) for the implementation status, test
+commands, and remaining work.
+
 ### The tests
 
 - For both: python3 with **Pillow**, **Xvfb**, **scrot**, libX11 and libXtst

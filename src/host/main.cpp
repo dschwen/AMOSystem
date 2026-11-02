@@ -12,7 +12,11 @@
 #include "hal/system.h"
 
 #include <errno.h>
+#if !defined(_WIN32)
 #include <pthread.h>
+#else
+#include "host/windows_platform.h"
+#endif
 #include <signal.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -23,6 +27,11 @@
 #include <sys/stat.h>
 #if defined(__APPLE__)
 #include <ucontext.h>
+#endif
+
+#if defined(_WIN32)
+#define setenv amos::host::windows::environment_set
+#define realpath(path, ignored) amos::host::windows::canonical_path(path)
 #endif
 
 using namespace amos;
@@ -48,7 +57,7 @@ void start(uint32_t base)
     main_init_fin();
 }
 
-#if defined(__APPLE__)
+#if defined(__APPLE__) || defined(_WIN32)
 void amos_main_context()
 {
     host::base_run(start);
@@ -95,12 +104,20 @@ std::string find_home()
     if (const char *home = getenv("AMOS_HOME"); home && *home)
         return home;
     char exe[4096];
+#if defined(_WIN32)
+    char *resolved = host::windows::executable_path();
+    ssize_t n = resolved ? ssize_t(strlen(resolved)) : -1;
+    if (n >= ssize_t(sizeof exe)) n = -1;
+    if (n > 0) memcpy(exe, resolved, size_t(n));
+    free(resolved);
+#else
     ssize_t n = readlink("/proc/self/exe", exe, sizeof exe - 1);
+#endif
     if (n > 0) {
         exe[n] = 0;
         std::string dir = exe;
         dir.erase(dir.rfind('/'));
-        for (const char *relative : {"/../share/amos/AMOS", "/../dist/AMOS", "/AMOS"}) {
+        for (const char *relative : {"/../share/amos/AMOS", "/../dist/AMOS", "/AMOS", "/../../AMOS"}) {
             std::string path = dir + relative;
             if (is_directory(path + "/APSystem"))
                 return path;
@@ -111,11 +128,24 @@ std::string find_home()
 
 } // namespace
 
+#if defined(_WIN32)
+extern "C" int SDL_main(int argc, char **argv)
+#else
 int main(int argc, char **argv)
+#endif
 {
+#if defined(_WIN32)
+    if (!host::windows::image_below_4gb()) {
+        fprintf(stderr, "amos: Windows executable exceeds 32-bit address range\n");
+        return 1;
+    }
+#endif
     // where AMOS was started: the volume START:, for the programs named on the command line (the
     // devices directory too, if it has one there); AMOS itself runs in its tree
     char *start = getcwd(nullptr, 0);
+#if defined(_WIN32)
+    if (start) for (char *p = start; *p; p++) if (*p == '\\') *p = '/';
+#endif
     std::string home = find_home();
     if (home.empty()) {
         fprintf(stderr, "amos: no AMOS tree (APSystem...): install it, or set AMOS_HOME\n");
@@ -135,6 +165,10 @@ int main(int argc, char **argv)
     // amos-player: AMOSPro's -r, the program run only (no editor, no
     // direct mode: AMOS stops when it does)
     std::string self = argv[0];
+#if defined(_WIN32)
+    for (char &c : self) if (c == '\\') c = '/';
+    if (self.size() > 4 && self.substr(self.size() - 4) == ".exe") self.resize(self.size() - 4);
+#endif
     if (self.substr(self.rfind('/') + 1) == "amos-player") {
         memcpy(p, "-r ", 3);
         p += 3;
@@ -142,6 +176,9 @@ int main(int argc, char **argv)
     bool first = true;
     for (int i = 1; i < argc; i++) {
         std::string arg = argv[i];
+#if defined(_WIN32)
+        for (char &c : arg) if (c == '\\') c = '/';
+#endif
         // the host's own options: --df0 path[=label][,ro], --dh1..., --assign NAME=path,
         // --library path, --devices path, --config file (docs/DEVICES.md)
         if (arg.compare(0, 2, "--") == 0) {
@@ -159,8 +196,12 @@ int main(int argc, char **argv)
             }
             continue;
         }
-        if (arg[0] != '-' && arg.find(':') == std::string::npos) {
-            std::string absolute = arg[0] == '/' ? arg : start_dir + "/" + arg;
+        bool absolute_host = arg[0] == '/';
+#if defined(_WIN32)
+        absolute_host = absolute_host || (arg.size() > 2 && arg[1] == ':' && arg[2] == '/');
+#endif
+        if (arg[0] != '-' && (arg.find(':') == std::string::npos || absolute_host)) {
+            std::string absolute = absolute_host ? arg : start_dir + "/" + arg;
             struct stat st;
             if (stat(absolute.c_str(), &st) == 0 && S_ISREG(st.st_mode)) {
                 size_t slash = absolute.rfind('/');
@@ -171,7 +212,7 @@ int main(int argc, char **argv)
                     host::devices::set_program(program.c_str());
                     setenv("AMOS_PROGRAM_DIR", program.substr(0, program.rfind('/')).c_str(), 1);
                 }
-                if (arg[0] == '/') {
+                if (absolute_host) {
                     start_dir = absolute.substr(0, slash ? slash : 1);
                     arg = absolute.substr(slash + 1);
                 }
@@ -197,6 +238,12 @@ int main(int argc, char **argv)
     host::put(amos_low_page + 4, 4, hal::exec_base());
 
     // AMOS's stack, below 4GB
+#if defined(_WIN32)
+    if (!host::windows::run_main(amos_main_context)) {
+        fprintf(stderr, "amos: could not start Windows interpreter fiber\n");
+        return 1;
+    }
+#else
     constexpr size_t StackSize = 8 * 1024 * 1024;
     void *stack = hal::allocate(StackSize, 0);
     if (!stack) {
@@ -235,6 +282,7 @@ int main(int argc, char **argv)
         pthread_kill(thread, SIGTRAP);
     }
     pthread_join(thread, nullptr);
+#endif
 #endif
     return 0;
 }

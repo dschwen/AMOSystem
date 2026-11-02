@@ -26,10 +26,18 @@ bool in_task();
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
+#if !defined(_WIN32)
 #include <sys/statvfs.h>
+#endif
 #include <unistd.h>
 
 #include <dos/dos.h>
+
+#if defined(_WIN32)
+#include "host/windows_platform.h"
+#define realpath(path, ignored) amos::host::windows::canonical_path(path)
+#define mkdir(path, mode) amos::host::windows::make_directory(path)
+#endif
 
 namespace {
 
@@ -148,7 +156,11 @@ const char *host_name(const char *name)
         size_t n = size_t(colon - name);
         // NIL:, the device that takes everything and gives nothing
         if (n == 3 && !strncasecmp(name, "NIL", 3))
+#if defined(_WIN32)
+            return "NUL";
+#else
             return "/dev/null";
+#endif
         amos::host::devices::Status status;
         if (const char *path = amos::host::devices::resolve(name, n, status)) {
             snprintf(buffer, sizeof buffer, "%s", path);
@@ -252,8 +264,13 @@ void read_entries(Lock &l)
             list = static_cast<Entry *>(realloc(list, sizeof(Entry) * size_t(room)));
         }
         Entry &x = list[n++];
-        x = {strdup(e->d_name), 0, 0, e->d_ino};
-#if defined(__APPLE__)
+        x = {strdup(e->d_name), 0, 0, uint64_t(e->d_ino)};
+#if defined(_WIN32)
+        char path[1200];
+        snprintf(path, sizeof path, "%s/%s", l.name, e->d_name);
+        uint64_t device;
+        amos::host::windows::file_details(path, &device, &x.inode, &x.sec, &x.nsec);
+#elif defined(__APPLE__)
         struct stat st;
         if (fstatat(dirfd(d), e->d_name, &st, AT_SYMLINK_NOFOLLOW) == 0) {
             const auto &t = st.st_birthtimespec;
@@ -296,8 +313,7 @@ void files_start(void *) {}
 // The files open, as AmigaDOS locks them: a new file exclusively, an old
 // one shared
 struct Open {
-    dev_t dev;
-    ino_t ino;
+    uint64_t dev, ino;
     bool exclusive, used;
 };
 Open opened[1024];
@@ -310,14 +326,27 @@ File open(const char *name, int32_t mode)
         return 0;
     }
     struct stat st;
-    if (stat(h, &st) == 0) {
+#if defined(_WIN32)
+    const bool track_identity = strcasecmp(h, "NUL") != 0;
+#else
+    constexpr bool track_identity = true;
+#endif
+    if (track_identity && stat(h, &st) == 0) {
         if (S_ISDIR(st.st_mode)) {
             // (a directory is not a file: "object wrong type")
             last_error = ERROR_OBJECT_WRONG_TYPE;
             return 0;
         }
+        uint64_t device = st.st_dev, inode = st.st_ino;
+#if defined(_WIN32)
+        int64_t sec, nsec;
+        if (!host::windows::file_details(h, &device, &inode, &sec, &nsec)) {
+            last_error = dos_error(errno);
+            return 0;
+        }
+#endif
         for (const Open &o : opened)
-            if (o.used && o.dev == st.st_dev && o.ino == st.st_ino && (o.exclusive || mode == ModeNewFile)) {
+            if (o.used && o.dev == device && o.ino == inode && (o.exclusive || mode == ModeNewFile)) {
                 last_error = ERROR_OBJECT_IN_USE;
                 return 0;
             }
@@ -329,15 +358,31 @@ File open(const char *name, int32_t mode)
         return 0;
     }
     int flags = mode == ModeNewFile ? O_RDWR | O_CREAT | O_TRUNC : mode == ModeReadWrite ? O_RDWR | O_CREAT : O_RDWR;
-    int fd = protect ? ::open(h, O_RDONLY) : ::open(h, flags, 0644);
+#if defined(_WIN32)
+    constexpr int Binary = O_BINARY;
+#else
+    constexpr int Binary = 0;
+#endif
+    flags |= Binary;
+    int fd = protect ? ::open(h, O_RDONLY | Binary) : ::open(h, flags, 0644);
     if (fd < 0 && mode == ModeOldFile && (errno == EACCES || errno == EROFS))
-        fd = ::open(h, O_RDONLY);
+        fd = ::open(h, O_RDONLY | Binary);
     if (fd < 0) {
         last_error = dos_error(errno);
         return 0;
     }
-    if (fd < 1024 && fstat(fd, &st) == 0)
-        opened[fd] = {st.st_dev, st.st_ino, mode == ModeNewFile, true};
+    if (track_identity && fd < 1024 && fstat(fd, &st) == 0) {
+        uint64_t device = st.st_dev, inode = st.st_ino;
+#if defined(_WIN32)
+        int64_t sec, nsec;
+        if (!host::windows::file_details(h, &device, &inode, &sec, &nsec)) {
+            ::close(fd);
+            last_error = dos_error(errno);
+            return 0;
+        }
+#endif
+        opened[fd] = {device, inode, mode == ModeNewFile, true};
+    }
     last_error = 0;
     return File(fd + 1);
 }
@@ -427,8 +472,17 @@ bool builtin_command(const char *name)
 
 DirLock lock(const char *name, int32_t)
 {
-    if (builtin_command(name))
+    if (builtin_command(name)) {
+#if defined(_WIN32)
+        char *exe = host::windows::executable_path();
+        if (!exe) return 0;
+        DirLock result = lock_path(exe);
+        free(exe);
+        return result;
+#else
         return lock_path("/proc/self/exe");
+#endif
+    }
     const char *h = host_name(name);
     if (name_error) {
         last_error = name_error;
@@ -506,7 +560,11 @@ bool examine_next(DirLock l, void *fib)
         char path[1200];
         snprintf(path, sizeof path, "%s/%s", k.name, entry);
         struct stat st;
+#if defined(_WIN32)
+        if (stat(path, &st) < 0)
+#else
         if (lstat(path, &st) < 0)
+#endif
             continue;           // (gone since)
         fill(static_cast<FileInfoBlock *>(fib), path, entry);
         return true;
@@ -546,15 +604,27 @@ bool info(DirLock l, void *info_data)
 {
     if (!l || l >= 256 || !locks[l].name)
         return false;
+#if defined(_WIN32)
+    uint64_t bytes, available;
+    if (!host::windows::disk_space(locks[l].name, &bytes, &available)) {
+        last_error = dos_error(errno);
+        return false;
+    }
+#else
     struct statvfs fs;
     if (statvfs(locks[l].name, &fs) < 0) {
         last_error = dos_error(errno);
         return false;
     }
+#endif
     InfoData *id = static_cast<InfoData *>(info_data);
     memset(id, 0, sizeof *id);
     uint64_t block = 512;
+#if defined(_WIN32)
+    uint64_t total = bytes / block, avail = available / block;
+#else
     uint64_t total = uint64_t(fs.f_blocks) * fs.f_frsize / block, avail = uint64_t(fs.f_bavail) * fs.f_frsize / block;
+#endif
     // (at most 2GB free, the bytes that AMOS's 32 bits count)
     if (total > 0x7FFFFFFF)
         total = 0x7FFFFFFF;

@@ -111,6 +111,9 @@ install-hd: all
 HOST_SRC    := $(filter-out %_amiga.cpp src/amiga/%,$(wildcard src/*/*.cpp)) $(HOST)/topaz.cpp $(HOST)/keymap.cpp
 HOST_OBJ    := $(patsubst %.cpp,$(HOST)/obj/%.o,$(HOST_SRC))
 HOST_OPT    ?= -O0 -g
+HOST_CXX    ?= g++
+HOST_EXE    ?= amos
+HOST_CPPFLAGS ?=
 # AMOS stores program and arena addresses in 32 bits. Darwin otherwise
 # reserves the first 4GB and places the executable above them.
 ifeq ($(shell uname -s),Darwin)
@@ -128,7 +131,7 @@ HOST_SDLLIB := $(if $(filter link,$(HOST_SDL)),-l:libSDL2-2.0.so.0)
 NDK_TOOLCHAIN := $(AMIGA_PREFIX)/m68k-amigaos/ndk-include
 NDK_INCLUDE   ?= $(if $(wildcard $(NDK_TOOLCHAIN)/exec/types.h),$(NDK_TOOLCHAIN),$(BUILD)/ndk/Include_H)
 HOST_FLAGS  := -m64 $(HOST_OPT) $(HOST_SDLDEF) -D__use_amiga_stdc_c99 -std=c++20 -fno-exceptions -fno-rtti -fno-threadsafe-statics -fpack-struct=2 \
-               -Isrc/host/include -Isrc -idirafter $(NDK_INCLUDE) -MMD -MP
+               $(HOST_CPPFLAGS) -Isrc/host/include -Isrc -idirafter $(NDK_INCLUDE) -MMD -MP
 
 # topaz and the usa keymap, from the user's Kickstart (as the tests'
 # emulator has them); without one, AROS's topaz 8 (data/fonts/topaz8) and a
@@ -150,17 +153,48 @@ ndk: $(BUILD)/ndk/Include_H/exec/types.h
 
 $(HOST)/obj/%.o: %.cpp $(if $(filter $(BUILD)/ndk/Include_H,$(NDK_INCLUDE)),$(BUILD)/ndk/Include_H/exec/types.h)
 	@mkdir -p $(dir $@)
-	g++ $(HOST_FLAGS) -c -o $@ $<
+	$(HOST_CXX) $(HOST_FLAGS) -c -o $@ $<
 
 -include $(HOST_OBJ:%.o=%.d)
 
+# Windows API types must retain their native layout across DLL boundaries.
+$(HOST)/obj/src/host/windows_memory.o: src/host/windows_memory.cpp src/host/windows_memory.h
+	@mkdir -p $(dir $@)
+	$(HOST_CXX) $(filter-out -fpack-struct=2,$(HOST_FLAGS)) -c -o $@ $<
+
+$(HOST)/obj/src/host/windows_platform.o: src/host/windows_platform.cpp src/host/windows_platform.h
+	@mkdir -p $(dir $@)
+	$(HOST_CXX) $(filter-out -fpack-struct=2,$(HOST_FLAGS)) -c -o $@ $<
+
 host: $(HOST_OBJ)
-	g++ -m64 $(HOST_LDFLAGS) -o $(HOST)/amos $(HOST_OBJ) $(HOST_SDLLIB) > $(HOST)/link.txt 2>&1 || \
-		{ grep -v "undefined reference" $(HOST)/link.txt | grep -i "error\|multiple" ; true; }
+	$(HOST_CXX) -m64 $(HOST_LDFLAGS) -o $(HOST)/$(HOST_EXE) $(HOST_OBJ) $(HOST_SDLLIB) > $(HOST)/link.txt 2>&1 || \
+		{ cat $(HOST)/link.txt; exit 1; }
 	grep -o "undefined reference to .*" $(HOST)/link.txt | sort -u \
 		| tee $(HOST)/missing.txt | wc -l | sed 's/$$/ symbols missing (build\/host\/missing.txt)/'
 
 # Linked to SDL2 instead of loading it, in build/host-sdl
+.PHONY: host-windows windows-probe windows-dist
+WINDOWS_CXX ?= x86_64-w64-mingw32-g++
+WINDOWS_LDFLAGS ?= -Wl,--image-base,0x400000,--disable-dynamicbase,--disable-high-entropy-va -static-libgcc -static-libstdc++
+SDL2_WINDOWS ?= $(HOME)/Downloads/SDL2-2.32.8/x86_64-w64-mingw32
+host-windows:
+	$(MAKE) host HOST=$(BUILD)/windows HOST_CXX=$(WINDOWS_CXX) HOST_EXE=amos.exe \
+		HOST_SDL=link HOST_CPPFLAGS='-I$(SDL2_WINDOWS)/include' \
+		HOST_LDFLAGS='$(WINDOWS_LDFLAGS)' \
+		HOST_SDLLIB='-L$(SDL2_WINDOWS)/lib -lmingw32 -lSDL2main -lSDL2 -mwindows'
+
+windows-probe: $(BUILD)/windows/windows-probe.exe
+
+WINDOWS_PROBE_SRC := tests/windows/platform_probe.cpp tests/windows/native_probe.cpp tests/windows/backend_probe.cpp \
+                     src/host/windows_memory.cpp src/host/windows_platform.cpp
+$(BUILD)/windows/windows-probe.exe: $(WINDOWS_PROBE_SRC) src/host/windows_memory.h src/host/windows_platform.h
+	@mkdir -p $(dir $@)
+	$(WINDOWS_CXX) -std=c++20 -O2 -g -Wall -Wextra -Werror -Isrc $(WINDOWS_LDFLAGS) \
+		-static-libgcc -static-libstdc++ -o $@ $(WINDOWS_PROBE_SRC)
+
+windows-dist: host-windows windows-probe
+	$(PYTHON) tools/package_windows.py --build $(BUILD)/windows --sdk '$(SDL2_WINDOWS)' --out $(BUILD)/windows-portable
+
 host-sdl:
 	$(MAKE) host HOST=$(BUILD)/host-sdl HOST_SDL=link
 

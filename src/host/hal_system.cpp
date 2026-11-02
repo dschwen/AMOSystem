@@ -9,7 +9,11 @@
 #include <string.h>
 #include <strings.h>
 #include <unistd.h>
+#if defined(_WIN32)
+#include "host/windows_memory.h"
+#else
 #include <sys/mman.h>
+#endif
 
 extern "C" char *getenv(const char *name) noexcept;    // (stdlib.h clashes with dos/dosextens.h)
 
@@ -125,8 +129,16 @@ void pool_start(Pool &pool, uint8_t *start, uint64_t size)
 {
     pool.start = start;
     pool.size = size;
+#if defined(_WIN32)
+    pool.ranges = static_cast<Range *>(host::windows::memory_allocate(sizeof(Range) * MaxRanges, false));
+    if (!pool.ranges) {
+        fprintf(stderr, "amos: no memory for allocation ranges (Windows error %u)\n", host::windows::memory_error());
+        __builtin_trap();
+    }
+#else
     pool.ranges = static_cast<Range *>(mmap(nullptr, sizeof(Range) * MaxRanges, PROT_READ | PROT_WRITE,
                                             MAP_PRIVATE | MAP_ANONYMOUS | MAP_NORESERVE, -1, 0));
+#endif
     pool.ranges[0] = {start, size};
     pool.range_count = 1;
 }
@@ -135,25 +147,36 @@ void arena_start()
 {
     if (arena)
         return;
+#if defined(_WIN32)
+    void *m = host::windows::memory_allocate(ArenaSize, true);
+    if (!m) {
+#else
     void *m = mmap(nullptr, ArenaSize, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS | MAP_32BIT | MAP_NORESERVE,
                    -1, 0);
     if (m == MAP_FAILED) {
+#endif
         fprintf(stderr, "amos: no memory below 4GB\n");
         __builtin_trap();
     }
     arena = static_cast<uint8_t *>(m);
+#if defined(_WIN32)
+    void *chip = host::windows::memory_allocate(ChipSize, true, reinterpret_cast<void *>(ChipAt));
+#else
     int chip_flags = MAP_PRIVATE | MAP_ANONYMOUS | MAP_NORESERVE;
 #if defined(__linux__)
     chip_flags |= MAP_FIXED_NOREPLACE;
 #endif
     void *chip = mmap(reinterpret_cast<void *>(ChipAt), ChipSize, PROT_READ | PROT_WRITE,
                       chip_flags, -1, 0);
+#endif
     if (chip == reinterpret_cast<void *>(ChipAt)) {
         pool_start(chip_pool, static_cast<uint8_t *>(chip), ChipSize);
         pool_start(fast_pool, arena, ArenaSize);
     } else {
+#if !defined(_WIN32)
         if (chip != MAP_FAILED)
             munmap(chip, ChipSize);
+#endif
         // (taken: the chip memory at the start of the arena)
         pool_start(chip_pool, arena, ChipSize);
         pool_start(fast_pool, arena + ChipSize, ArenaSize - ChipSize);
@@ -189,9 +212,18 @@ int block_index(uint8_t *at)   // the first block at or after at
 
 void block_add(uint8_t *at, uint64_t size)
 {
-    if (!blocks)
+    if (!blocks) {
+#if defined(_WIN32)
+        blocks = static_cast<Block *>(host::windows::memory_allocate(sizeof(Block) * MaxBlocks, false));
+        if (!blocks) {
+            fprintf(stderr, "amos: no memory for allocation tracking (Windows error %u)\n", host::windows::memory_error());
+            __builtin_trap();
+        }
+#else
         blocks = static_cast<Block *>(mmap(nullptr, sizeof(Block) * MaxBlocks, PROT_READ | PROT_WRITE,
                                            MAP_PRIVATE | MAP_ANONYMOUS, -1, 0));
+#endif
+    }
     int i = block_index(at);
     memmove(blocks + i + 1, blocks + i, sizeof(Block) * size_t(block_count - i));
     blocks[i] = {at, size};

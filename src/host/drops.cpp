@@ -17,6 +17,10 @@
 #include <string>
 #include <vector>
 
+#if defined(_WIN32)
+#include "host/windows_platform.h"
+#endif
+
 namespace amos::host {
 
 void message(const char *text);     // overlay.cpp
@@ -34,9 +38,13 @@ double started = -1;
 
 double clock_seconds()
 {
+#if defined(_WIN32)
+    return double(amos::host::windows::monotonic_microseconds()) / 1e6;
+#else
     struct timespec t;
     clock_gettime(CLOCK_MONOTONIC, &t);
     return double(t.tv_sec) + double(t.tv_nsec) / 1e9;
+#endif
 }
 
 void parse()

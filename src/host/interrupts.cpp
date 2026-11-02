@@ -18,6 +18,10 @@
 #include <time.h>
 #include <unistd.h>
 
+#if defined(_WIN32)
+#include "host/windows_platform.h"
+#endif
+
 using namespace amos;
 
 extern "C" void w_vbl(uint8_t *data);
@@ -35,9 +39,13 @@ constexpr uint64_t Frame = 20000;
 
 uint64_t now()
 {
+#if defined(_WIN32)
+    return amos::host::windows::monotonic_microseconds();
+#else
     struct timespec t;
     clock_gettime(CLOCK_MONOTONIC, &t);
     return uint64_t(t.tv_sec) * 1000000 + uint64_t(t.tv_nsec) / 1000;
+#endif
 }
 
 void run_vbl()

@@ -12,6 +12,10 @@
 #include <string.h>
 #include <time.h>
 
+#if defined(_WIN32)
+#include "host/windows_platform.h"
+#endif
+
 namespace amos::host {
 void audio_dma(uint16_t before, uint16_t after);
 }
@@ -166,9 +170,13 @@ void blit(uint16_t size)
 // The beam: the line and the position in it
 uint32_t beam()
 {
+#if defined(_WIN32)
+    uint64_t us = amos::host::windows::monotonic_microseconds();
+#else
     struct timespec t;
     clock_gettime(CLOCK_MONOTONIC, &t);
     uint64_t us = uint64_t(t.tv_sec) * 1000000 + uint64_t(t.tv_nsec) / 1000;
+#endif
     uint32_t in_frame = uint32_t(us % 20000);
     uint32_t line = in_frame * 312 / 20000;
     uint32_t h = (in_frame * 312 % 20000) * 227 / 20000;

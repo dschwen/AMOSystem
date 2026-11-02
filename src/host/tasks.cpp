@@ -15,7 +15,11 @@
 
 #include <exec/tasks.h>
 
+#if defined(_WIN32)
+#include "host/windows_platform.h"
+#else
 #include <ucontext.h>
+#endif
 
 using namespace amos;
 
@@ -24,7 +28,11 @@ namespace amos::host {
 namespace {
 
 struct HostTask {
+#if defined(_WIN32)
+    void *context, *caller;
+#else
     ucontext_t context, caller;
+#endif
     Ctx registers;              // the task's interpreter registers
     void (*entry)();
     bool done;
@@ -40,7 +48,11 @@ void trampoline()
 {
     running->entry();
     running->done = true;
+#if defined(_WIN32)
+    windows::fiber_switch(running->caller);
+#else
     swapcontext(&running->context, &running->caller);
+#endif
 }
 
 } // namespace
@@ -57,7 +69,16 @@ void run_tasks()
         Ctx saved = ctx();
         ctx() = t.registers;
         running = &t;
+#if defined(_WIN32)
+        t.caller = windows::fiber_current();
+        windows::fiber_switch(t.context);
+        if (t.done) {
+            windows::fiber_delete(t.context);
+            t.context = nullptr;
+        }
+#else
         swapcontext(&t.caller, &t.context);
+#endif
         running = nullptr;
         t.registers = ctx();
         ctx() = saved;
@@ -67,8 +88,13 @@ void run_tasks()
 // A task waits: the program goes on
 void task_yield()
 {
-    if (running)
+    if (running) {
+#if defined(_WIN32)
+        windows::fiber_switch(running->caller);
+#else
         swapcontext(&running->context, &running->caller);
+#endif
+    }
 }
 
 bool in_task() { return running != nullptr; }
@@ -87,6 +113,11 @@ void add_task(Task *, void *entry, void *)
     t = {};
     t.entry = reinterpret_cast<void (*)()>(entry);
     t.registers = {};
+#if defined(_WIN32)
+    t.context = host::windows::fiber_create(host::StackSize, host::trampoline);
+    if (!t.context)
+        return;
+#else
     void *stack = hal::allocate(host::StackSize, 0);
     if (!stack)
         return;
@@ -95,6 +126,7 @@ void add_task(Task *, void *entry, void *)
     t.context.uc_stack.ss_size = host::StackSize;
     t.context.uc_link = nullptr;
     makecontext(&t.context, host::trampoline, 0);
+#endif
     host::task_count++;
 }
 

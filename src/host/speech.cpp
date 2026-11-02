@@ -6,7 +6,11 @@
 
 #include "runtime/runtime.h"
 
+#if defined(_WIN32)
+#include "host/windows_platform.h"
+#else
 #include <dlfcn.h>
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -49,13 +53,22 @@ bool load()
     if (tried)
         return ready;
     tried = true;
+#if defined(_WIN32)
+    void *lib = windows::library_open("libespeak-ng.dll");
+    if (!lib) lib = windows::library_open("espeak-ng.dll");
+#else
     void *lib = dlopen("libespeak-ng.so.1", RTLD_NOW);
     if (!lib)
         lib = dlopen("libespeak.so.1", RTLD_NOW);
+#endif
     if (!lib)
         return false;
     auto get = [&](auto &f, const char *name) {
+#if defined(_WIN32)
+        f = reinterpret_cast<std::remove_reference_t<decltype(f)>>(windows::library_symbol(lib, name));
+#else
         f = reinterpret_cast<std::remove_reference_t<decltype(f)>>(dlsym(lib, name));
+#endif
         return f != nullptr;
     };
     if (!(get(es.Initialize, "espeak_Initialize") && get(es.SetSynthCallback, "espeak_SetSynthCallback") &&

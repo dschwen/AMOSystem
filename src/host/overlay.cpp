@@ -22,10 +22,17 @@
 #include <string>
 #include <vector>
 
+#if defined(_WIN32)
+#include "host/windows_platform.h"
+#define realpath(path, ignored) amos::host::windows::canonical_path(path)
+#define mkdir(path, mode) amos::host::windows::make_directory(path)
+#endif
+
 namespace amos::host {
 
 void drop(const char *spec);       // drops.cpp
 void message(const char *text);
+
 
 namespace {
 
@@ -63,9 +70,13 @@ uint32_t *fb;
 
 double clock_seconds()
 {
+#if defined(_WIN32)
+    return double(amos::host::windows::monotonic_microseconds()) / 1e6;
+#else
     struct timespec t;
     clock_gettime(CLOCK_MONOTONIC, &t);
     return double(t.tv_sec) + double(t.tv_nsec) / 1e9;
+#endif
 }
 
 // ---- drawing ---------------------------------------------------------------

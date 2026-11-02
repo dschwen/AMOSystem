@@ -10,7 +10,11 @@ namespace amos::host {
 
 // A point of the stack to come back to: Run its target there (the stack
 // above it given up), or Return the registers to the code that made it
+#if defined(_WIN32)
+struct alignas(16) Mark {
+#else
 struct Mark {
+#endif
     jmp_buf jb;
     const void *target;         // the entry to run, then
     const void *then;           // the entry run after it (its return)
@@ -18,6 +22,10 @@ struct Mark {
     void (*regs_fn)(AllRegs &); // or this C++, with all the registers
     AllRegs regs;
 };
+
+#if defined(_WIN32)
+static_assert(alignof(Mark) >= 16 && offsetof(Mark, jb) == 0);
+#endif
 
 enum { MarkRun = 1, MarkReturn = 2 };
 
