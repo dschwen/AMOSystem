@@ -90,6 +90,9 @@ extern const char panic_oomem[], panic_editor[], panic_install[], panic_cantread
 // -r on the command line: the program run, and AMOSPro left when it stops
 // (a player: no editor, no direct mode)
 extern bool run_only;
+// Native document activation: load into the editor without executing it.
+// Null for normal command-line/Amiga startup.
+extern const char *open_document_name;
 int exit_status();          // 1 if AMOSPro stopped with a message
 
 } // namespace amos::boot

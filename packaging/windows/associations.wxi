@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Include xmlns="http://schemas.microsoft.com/wix/2006/wi">
+  <RegistryValue Root="HKLM" Key="Software\Classes\AMOSystem.Program" Type="string" Value="AMOS BASIC program"/>
+  <RegistryValue Root="HKLM" Key="Software\Classes\AMOSystem.Program\DefaultIcon" Type="string" Value="&quot;[INSTALLDIR]amos.exe&quot;,0"/>
+  <RegistryValue Root="HKLM" Key="Software\Classes\AMOSystem.Program\shell\open\command" Type="string" Value="&quot;[INSTALLDIR]amos.exe&quot; --open-document &quot;%1&quot;"/>
+  <RegistryValue Root="HKLM" Key="Software\Classes\.amos\OpenWithProgids" Name="AMOSystem.Program" Type="string" Value=""/>
+  <RegistryValue Root="HKLM" Key="Software\Classes\Applications\amos.exe" Name="FriendlyAppName" Type="string" Value="AMOS Professional"/>
+  <RegistryValue Root="HKLM" Key="Software\Classes\Applications\amos.exe\SupportedTypes" Name=".amos" Type="string" Value=""/>
+  <RegistryValue Root="HKLM" Key="Software\Classes\Applications\amos.exe\shell\open\command" Type="string" Value="&quot;[INSTALLDIR]amos.exe&quot; --open-document &quot;%1&quot;"/>
+  <RegistryValue Root="HKLM" Key="Software\AMOSystem\Capabilities" Name="ApplicationName" Type="string" Value="AMOS Professional"/>
+  <RegistryValue Root="HKLM" Key="Software\AMOSystem\Capabilities" Name="ApplicationDescription" Type="string" Value="AMOS BASIC editor and runtime"/>
+  <RegistryValue Root="HKLM" Key="Software\AMOSystem\Capabilities\FileAssociations" Name=".amos" Type="string" Value="AMOSystem.Program"/>
+  <RegistryValue Root="HKLM" Key="Software\RegisteredApplications" Name="AMOS Professional" Type="string" Value="Software\AMOSystem\Capabilities"/>
+  <RegistryValue Root="HKLM" Key="Software\AMOSystem\Installer" Name="Version" Type="string" Value="[ProductVersion]" KeyPath="yes"/>
+</Include>

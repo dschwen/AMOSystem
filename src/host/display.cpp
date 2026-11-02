@@ -17,6 +17,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "host/windows_crt.h"
+
 using namespace amos;
 
 namespace amos::host {

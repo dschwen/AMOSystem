@@ -11,6 +11,7 @@ backend probe tests still need Windows runtime validation.
 make -j4 host-windows
 make windows-probe
 make windows-dist
+make package-msi VERSION=0.1.0
 # Override the SDK directory if needed:
 make windows-dist SDL2_WINDOWS=/path/to/SDL2/x86_64-w64-mingw32
 ```
@@ -20,6 +21,8 @@ Outputs:
 - `build/windows/amos.exe`: full host executable.
 - `build/windows/windows-probe.exe`: standalone address, context, dispatch,
   filesystem, and production-wrapper checks (no SDL required).
+- `build/packages/amos-VERSION-windows-x64.msi`: unsigned installed-mode package;
+  see [MSI build and VM tests](../packaging/windows/README.md).
 - `build/windows-portable.zip`: executable, SDL2.dll, AMOS resources, probe,
   and five headless regression tests with golden-file SHA256 checks.
 
@@ -57,9 +60,9 @@ Known remaining validation/portability work:
 - Run the updated probe and smoke suite on Windows; then test editor input,
   the file-selector task, video, audio, mouse capture, and drag/drop.
 - Audit each real glue signature beyond the passing word-call probe.
-- Several filesystem operations still use MinGW narrow CRT APIs. Use an
-  ASCII installation path initially; full Unicode and long-path support
-  remain work, despite wide APIs in the new native wrappers.
+- File/stream/directory adapters now use wide Windows APIs for UTF-8 native
+  paths. Test Unicode profiles/documents on Windows; AMOS guest strings and
+  fixed path/name lengths remain compatibility limits.
 - Validate resource discovery and case/root behavior on UNC paths and
   multiple drives. The Unix AMOS_TRAP debug option is not ported.
 - Package tests include only initial headless coverage, not the X11 GUI
@@ -165,9 +168,11 @@ characters on a Windows installation without developer tools.
 
 ## 6. MSI packaging and document associations
 
-The portable ZIP remains the development artifact. The production plan is an
-x64 MSI using a pinned WiX toolset on a Windows packaging/test runner, consuming
-the Linux MinGW payload. See [RELEASES.md sections 2–4](RELEASES.md) for the
+The portable ZIP and unsigned MSI are now development artifacts. The production plan is an
+x64 MSI using Linux-native wixl/msitools, consuming the Linux MinGW payload
+and tested on a Windows VM. First verify required authoring/upgrade features;
+fall back to full WiX on Windows if necessary. The implementation/status plan is [MSI.md](MSI.md); actual commands and
+remaining VM checks are in [the installer README](../packaging/windows/README.md). See [RELEASES.md sections 2–4](RELEASES.md) for the
 shared resource model, document-open contract, and precise registry outline.
 
 Implementation order:

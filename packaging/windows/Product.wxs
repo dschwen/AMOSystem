@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+  <Product Id="@PRODUCT_CODE@" Name="AMOS Professional" Language="1033" Version="@VERSION@"
+           Manufacturer="AMOSystem contributors" UpgradeCode="{55EAC1AD-89BD-4A4C-92EB-78047FD0BD53}">
+    <Package InstallerVersion="500" Compressed="yes" InstallScope="perMachine"/>
+    <Media Id="1" Cabinet="amos.cab" EmbedCab="yes"/>
+    <MajorUpgrade DowngradeErrorMessage="A newer AMOS Professional version is already installed."/>
+    <InstallExecuteSequence><RemoveExistingProducts After="InstallInitialize"/></InstallExecuteSequence>
+    <Property Id="WINDOWSBUILD">
+      <RegistrySearch Id="WindowsBuildSearch" Root="HKLM" Key="SOFTWARE\Microsoft\Windows NT\CurrentVersion" Name="CurrentBuildNumber" Type="raw" Win64="yes"/>
+    </Property>
+    <Condition Message="AMOS Professional requires 64-bit Windows 10 or later.">Installed OR (VersionNT64 AND WINDOWSBUILD &gt;= 10240)</Condition>
+    <Property Id="ARPNOMODIFY" Value="1"/>
+    <Property Id="ARPURLINFOABOUT" Value="https://github.com/dschwen/AMOSystem"/>
+    <Property Id="ARPPRODUCTICON" Value="AMOSIcon"/>
+    <Icon Id="AMOSIcon" SourceFile="@ICON@"/>
+    <Directory Id="TARGETDIR" Name="SourceDir">
+      <Directory Id="ProgramFiles64Folder"><Directory Id="INSTALLDIR" Name="AMOSystem"/></Directory>
+      <Directory Id="ProgramMenuFolder"><Directory Id="ApplicationProgramsFolder" Name="AMOS Professional"/></Directory>
+    </Directory>
+    <Feature Id="MainFeature" Title="AMOS Professional" Level="1"/>
+  </Product>
+</Wix>

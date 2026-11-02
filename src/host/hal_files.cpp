@@ -33,6 +33,8 @@ bool in_task();
 
 #include <dos/dos.h>
 
+#include "host/windows_crt.h"
+
 #if defined(_WIN32)
 #include "host/windows_platform.h"
 #define realpath(path, ignored) amos::host::windows::canonical_path(path)
@@ -364,9 +366,17 @@ File open(const char *name, int32_t mode)
     constexpr int Binary = 0;
 #endif
     flags |= Binary;
+#if defined(_WIN32)
+    int fd = protect ? host::windows::path_open(h, O_RDONLY) : host::windows::path_open(h, flags, 0644);
+#else
     int fd = protect ? ::open(h, O_RDONLY | Binary) : ::open(h, flags, 0644);
+#endif
     if (fd < 0 && mode == ModeOldFile && (errno == EACCES || errno == EROFS))
+#if defined(_WIN32)
+        fd = host::windows::path_open(h, O_RDONLY);
+#else
         fd = ::open(h, O_RDONLY | Binary);
+#endif
     if (fd < 0) {
         last_error = dos_error(errno);
         return 0;
@@ -732,7 +742,11 @@ bool rename(const char *from, const char *to)
         last_error = ERROR_WRITE_PROTECTED;
         return false;
     }
+#if defined(_WIN32)
+    if (host::windows::path_rename(f, t) == 0)
+#else
     if (::rename(f, t) == 0)
+#endif
         return true;
     last_error = dos_error(errno);
     return false;

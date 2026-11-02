@@ -47,6 +47,7 @@ const char panic_apsystem[] = "Cannot find APSystem folder.";
 const char panic_cantread[] = "Cannot read system files: check APSystem folder.";
 const char panic_badext[] = "Cannot load extension: use default interpreter config.";
 bool run_only;
+const char *open_document_name;
 
 } // namespace amos::boot
 
@@ -450,7 +451,7 @@ void main_cold_start(char *command, uint32_t length, uint32_t sp)
     poke_w(name1, 0);
     if (s.auto_lock)
         hal::current_dir(s.auto_lock);
-    copy(name1, *s.auto_name ? s.auto_name : sys_message(5));
+    copy(name1, open_document_name ? open_document_name : *s.auto_name ? s.auto_name : sys_message(5));
     d.WBench = s.workbench;
     // run only: the program's folder the current one (its files are there)
     if (run_only && *s.auto_name) {
@@ -523,7 +524,10 @@ void main_cold_start(char *command, uint32_t length, uint32_t sp)
         return p.d[0];
     };
     call(L_Prg_New, uint32_t(-2));                      // no screen behind
-    if (!call(L_Prg_Load, uint32_t(-1))) {
+    bool loaded = !call(L_Prg_Load, uint32_t(-1));
+    if (open_document_name && !loaded)
+        the_end("Cannot open the requested AMOS document.");
+    if (loaded && !open_document_name) {
         AllRegs p = context_regs();
         // (as an accessory, without the default screen; run only, as the
         // editor's Run: the default screen opened)
@@ -539,7 +543,8 @@ void main_cold_start(char *command, uint32_t length, uint32_t sp)
         the_end(panic_install);
     if (edit_load())
         the_end(panic_editor);
-    call(L_Prg_New, uint32_t(-1));
+    if (!open_document_name)
+        call(L_Prg_New, uint32_t(-1));
     Regs c;
     c.d[0] = uint32_t(-1);                              // the title
     lib_call(L_Ed_Cold, c);

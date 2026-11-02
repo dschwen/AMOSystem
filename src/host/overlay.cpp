@@ -22,6 +22,8 @@
 #include <string>
 #include <vector>
 
+#include "host/windows_crt.h"
+
 #if defined(_WIN32)
 #include "host/windows_platform.h"
 #define realpath(path, ignored) amos::host::windows::canonical_path(path)

@@ -10,6 +10,7 @@
 #include "runtime/runtime.h"
 #include "runtime/glue.h"
 #include "hal/system.h"
+#include "main/main.h"
 
 #include <errno.h>
 #if !defined(_WIN32)
@@ -28,6 +29,8 @@
 #if defined(__APPLE__)
 #include <ucontext.h>
 #endif
+
+#include "host/windows_crt.h"
 
 #if defined(_WIN32)
 #define setenv amos::host::windows::environment_set
@@ -117,7 +120,12 @@ std::string find_home()
         exe[n] = 0;
         std::string dir = exe;
         dir.erase(dir.rfind('/'));
-        for (const char *relative : {"/../share/amos/AMOS", "/../dist/AMOS", "/AMOS", "/../../AMOS"}) {
+#if defined(_WIN32)
+        const char *locations[] = {"/AMOS", "/../share/amos/AMOS", "/../dist/AMOS", "/../../AMOS"};
+#else
+        const char *locations[] = {"/../share/amos/AMOS", "/../dist/AMOS", "/AMOS", "/../../AMOS"};
+#endif
+        for (const char *relative : locations) {
             std::string path = dir + relative;
             if (is_directory(path + "/APSystem"))
                 return path;
@@ -147,6 +155,18 @@ int main(int argc, char **argv)
     if (start) for (char *p = start; *p; p++) if (*p == '\\') *p = '/';
 #endif
     std::string home = find_home();
+#if defined(_WIN32)
+    if (!home.empty()) {
+        char *working = host::windows::prepare_installed_state(home.c_str());
+        if (!working) {
+            fprintf(stderr, "amos: could not prepare per-user configuration\n");
+            free(start);
+            return 1;
+        }
+        home = working;
+        free(working);
+    }
+#endif
     if (home.empty()) {
         fprintf(stderr, "amos: no AMOS tree (APSystem...): install it, or set AMOS_HOME\n");
         return 1;
@@ -166,19 +186,51 @@ int main(int argc, char **argv)
     // direct mode: AMOS stops when it does)
     std::string self = argv[0];
 #if defined(_WIN32)
-    for (char &c : self) if (c == '\\') c = '/';
+    for (char &c : self) {
+        if (c == '\\') c = '/';
+        if (c >= 'A' && c <= 'Z') c = char(c + ('a' - 'A'));
+    }
     if (self.size() > 4 && self.substr(self.size() - 4) == ".exe") self.resize(self.size() - 4);
 #endif
     if (self.substr(self.rfind('/') + 1) == "amos-player") {
         memcpy(p, "-r ", 3);
         p += 3;
     }
+    std::string open_document;
     bool first = true;
     for (int i = 1; i < argc; i++) {
         std::string arg = argv[i];
 #if defined(_WIN32)
         for (char &c : arg) if (c == '\\') c = '/';
 #endif
+        if (arg == "--open-document") {
+            if (!open_document.empty() || i + 1 >= argc) {
+                fprintf(stderr, "amos: --open-document requires exactly one file\n");
+                return 1;
+            }
+            std::string requested = argv[++i];
+#if defined(_WIN32)
+            for (char &c : requested) if (c == '\\') c = '/';
+#endif
+            bool absolute = !requested.empty() && requested[0] == '/';
+#if defined(_WIN32)
+            absolute = absolute || (requested.size() > 2 && requested[1] == ':' && requested[2] == '/');
+#endif
+            if (!absolute) requested = start_dir + "/" + requested;
+            char *path = realpath(requested.c_str(), nullptr);
+            if (!path) { perror("amos: open document"); return 1; }
+            std::string native = path;
+            free(path);
+            const size_t slash = native.rfind('/');
+            if (slash == std::string::npos || native.size() - slash - 1 > sizeof(Program::Prg_NamePrg) - sizeof("DOCUMENT:")) {
+                fprintf(stderr, "amos: document filename exceeds AMOS's 128-byte program-name layout\n");
+                return 1;
+            }
+            host::devices::option("assign", ("DOCUMENT=" + native.substr(0, slash + 1)).c_str());
+            host::devices::set_program(native.c_str());
+            open_document = "DOCUMENT:" + native.substr(slash + 1);
+            continue;
+        }
         // the host's own options: --df0 path[=label][,ro], --dh1..., --assign NAME=path,
         // --library path, --devices path, --config file (docs/DEVICES.md)
         if (arg.compare(0, 2, "--") == 0) {
@@ -227,6 +279,13 @@ int main(int argc, char **argv)
         first = false;
         memcpy(p, arg.data(), n);
         p += n;
+    }
+    if (!open_document.empty()) {
+        if (!first || self.substr(self.rfind('/') + 1) == "amos-player") {
+            fprintf(stderr, "amos: --open-document cannot be combined with program execution\n");
+            return 1;
+        }
+        boot::open_document_name = open_document.c_str();
     }
     setenv("AMOS_START_DIR", start_dir.c_str(), 1);
     *p++ = '\n';

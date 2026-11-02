@@ -24,6 +24,8 @@ uint16_t host_chip_read(uint32_t offset);
 void host_chip_write(uint32_t offset, uint16_t v);
 }
 
+#include "host/windows_crt.h"
+
 using namespace amos;
 
 namespace amos::host {

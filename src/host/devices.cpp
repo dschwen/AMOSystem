@@ -31,6 +31,8 @@
 // -fpack-struct=2 for the Amiga's structures, which changes their layout in our code but not
 // inside libstdc++.so, and a call across would write over the stack.)
 
+#include "host/windows_crt.h"
+
 #if defined(_WIN32)
 #include "host/windows_platform.h"
 #define realpath(path, ignored) amos::host::windows::canonical_path(path)
@@ -245,10 +247,17 @@ std::string user_config()
 {
     if (const char *env = getenv("AMOS_CONFIG"); env && *env)
         return env;
+#if defined(_WIN32)
+    char *path = windows::user_config_path();
+    std::string result = path ? path : "amos.conf";
+    free(path);
+    return result;
+#else
     const char *xdg = getenv("XDG_CONFIG_HOME"), *home = getenv("HOME");
     if (xdg && *xdg)
         return std::string(xdg) + "/amos/amos.conf";
     return std::string(home ? home : ".") + "/.config/amos/amos.conf";
+#endif
 }
 
 // "path[=label][,ro]": a disk of the command line
@@ -377,10 +386,17 @@ void open_devices(const Config &c)
     } else if (start && (snprintf(path, sizeof path, "%s/devices", start), is_directory(path))) {
         fresh = false;
     } else {
+#if defined(_WIN32)
+        char *user = windows::user_data_directory();
+        if (!user) return;
+        snprintf(path, sizeof path, "%s", user);
+        free(user);
+#else
         if (data && *data)
             snprintf(path, sizeof path, "%s/amos", data);
         else
             snprintf(path, sizeof path, "%s/.local/share/amos", home ? home : ".");
+#endif
         for (char *s = path + 1; *s; s++)
             if (*s == '/') {
                 *s = 0;

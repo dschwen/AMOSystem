@@ -25,6 +25,7 @@ CC      := m68k-amigaos-gcc
 CXX     := m68k-amigaos-g++
 PYTHON  := python3
 BUILD   := build
+VERSION ?= 0.1.0
 OBJ     := $(BUILD)/obj
 DIST    := $(BUILD)/dist/AMOS
 HOST    := $(BUILD)/host
@@ -112,6 +113,7 @@ HOST_SRC    := $(filter-out %_amiga.cpp src/amiga/%,$(wildcard src/*/*.cpp)) $(H
 HOST_OBJ    := $(patsubst %.cpp,$(HOST)/obj/%.o,$(HOST_SRC))
 HOST_OPT    ?= -O0 -g
 HOST_CXX    ?= g++
+HOST_EXTRA_OBJ ?=
 HOST_EXE    ?= amos
 HOST_CPPFLAGS ?=
 # AMOS stores program and arena addresses in 32 bits. Darwin otherwise
@@ -166,31 +168,55 @@ $(HOST)/obj/src/host/windows_platform.o: src/host/windows_platform.cpp src/host/
 	@mkdir -p $(dir $@)
 	$(HOST_CXX) $(filter-out -fpack-struct=2,$(HOST_FLAGS)) -c -o $@ $<
 
-host: $(HOST_OBJ)
-	$(HOST_CXX) -m64 $(HOST_LDFLAGS) -o $(HOST)/$(HOST_EXE) $(HOST_OBJ) $(HOST_SDLLIB) > $(HOST)/link.txt 2>&1 || \
+host: $(HOST_OBJ) $(HOST_EXTRA_OBJ)
+	$(HOST_CXX) -m64 $(HOST_LDFLAGS) -o $(HOST)/$(HOST_EXE) $(HOST_OBJ) $(HOST_EXTRA_OBJ) $(HOST_SDLLIB) > $(HOST)/link.txt 2>&1 || \
 		{ cat $(HOST)/link.txt; exit 1; }
 	grep -o "undefined reference to .*" $(HOST)/link.txt | sort -u \
 		| tee $(HOST)/missing.txt | wc -l | sed 's/$$/ symbols missing (build\/host\/missing.txt)/'
 
 # Linked to SDL2 instead of loading it, in build/host-sdl
-.PHONY: host-windows windows-probe windows-dist
+.PHONY: host-windows windows-probe windows-dist windows-release package-msi msi-probe msi-tools windows-version
 WINDOWS_CXX ?= x86_64-w64-mingw32-g++
+WINDOWS_WINDRES ?= x86_64-w64-mingw32-windres
+WINDOWS_BUILD ?= $(BUILD)/windows
 WINDOWS_LDFLAGS ?= -Wl,--image-base,0x400000,--disable-dynamicbase,--disable-high-entropy-va -static-libgcc -static-libstdc++
 SDL2_WINDOWS ?= $(HOME)/Downloads/SDL2-2.32.8/x86_64-w64-mingw32
 host-windows:
-	$(MAKE) host HOST=$(BUILD)/windows HOST_CXX=$(WINDOWS_CXX) HOST_EXE=amos.exe \
+	$(MAKE) host HOST=$(WINDOWS_BUILD) HOST_CXX=$(WINDOWS_CXX) HOST_EXE=amos.exe \
+		HOST_EXTRA_OBJ='$(WINDOWS_BUILD)/version.o' \
 		HOST_SDL=link HOST_CPPFLAGS='-I$(SDL2_WINDOWS)/include' \
 		HOST_LDFLAGS='$(WINDOWS_LDFLAGS)' \
-		HOST_SDLLIB='-L$(SDL2_WINDOWS)/lib -lmingw32 -lSDL2main -lSDL2 -mwindows'
+		HOST_SDLLIB='-L$(SDL2_WINDOWS)/lib -lmingw32 -lSDL2main -lSDL2 -lole32 -luuid -mwindows'
+
+$(HOST)/version.rc: windows-version tools/windows_resources.py
+	$(PYTHON) tools/windows_resources.py --version '$(VERSION)' --out $@
+
+$(HOST)/version.o: $(HOST)/version.rc
+	$(WINDOWS_WINDRES) -i $< -o $@
+
+windows-release:
+	@mkdir -p $(BUILD)/windows-release
+	$(PYTHON) tools/extract_topaz.py --out $(BUILD)/windows-release/topaz.cpp --fallback data/fonts/topaz8
+	$(PYTHON) tools/extract_keymap.py --out $(BUILD)/windows-release/keymap.cpp
+	$(MAKE) host-windows WINDOWS_BUILD=$(BUILD)/windows-release HOST_OPT='-O2' KICKSTART= ROMKEY=
+
+msi-tools:
+	$(PYTHON) tools/bootstrap_msitools.py
+
+msi-probe:
+	$(PYTHON) tools/package_msi.py --feature-probe --version '$(VERSION)'
+
+package-msi: windows-release
+	$(PYTHON) tools/package_msi.py --version '$(VERSION)' --build $(BUILD)/windows-release --sdk '$(SDL2_WINDOWS)'
 
 windows-probe: $(BUILD)/windows/windows-probe.exe
 
 WINDOWS_PROBE_SRC := tests/windows/platform_probe.cpp tests/windows/native_probe.cpp tests/windows/backend_probe.cpp \
                      src/host/windows_memory.cpp src/host/windows_platform.cpp
-$(BUILD)/windows/windows-probe.exe: $(WINDOWS_PROBE_SRC) src/host/windows_memory.h src/host/windows_platform.h
+$(BUILD)/windows/windows-probe.exe: $(WINDOWS_PROBE_SRC) src/host/windows_memory.h src/host/windows_platform.h src/host/windows_crt.h
 	@mkdir -p $(dir $@)
 	$(WINDOWS_CXX) -std=c++20 -O2 -g -Wall -Wextra -Werror -Isrc $(WINDOWS_LDFLAGS) \
-		-static-libgcc -static-libstdc++ -o $@ $(WINDOWS_PROBE_SRC)
+		-static-libgcc -static-libstdc++ -o $@ $(WINDOWS_PROBE_SRC) -lshell32 -lole32 -luuid
 
 windows-dist: host-windows windows-probe
 	$(PYTHON) tools/package_windows.py --build $(BUILD)/windows --sdk '$(SDL2_WINDOWS)' --out $(BUILD)/windows-portable

@@ -21,6 +21,8 @@
 #include "host/windows_platform.h"
 #endif
 
+#include "host/windows_crt.h"
+
 namespace amos::host {
 
 void message(const char *text);     // overlay.cpp

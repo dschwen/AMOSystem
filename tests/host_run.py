@@ -290,7 +290,7 @@ def compare_files(name, out):
     return problems
 
 
-def compare(name, out):
+def compare(name, out, fallback_font=False):
     """tests/run.py's comparison, the host's variants of the text results"""
     got = run.outputs(out, name)
     problems = []
@@ -303,6 +303,10 @@ def compare(name, out):
         elif f.endswith('.png'):
             if not run.same_image(got[f], want, run.extra_masks(name)):
                 problems.append(f'{f} differs')
+        elif fallback_font and f.endswith('.iff'):
+            # ROM-free Topaz glyphs differ from the ROM-based image goldens.
+            # Still require every image to exist and compare all other output.
+            continue
         elif open(got[f], 'rb').read() != open(want, 'rb').read():
             problems.append(f'{f} differs')
     if not got:
@@ -315,9 +319,12 @@ def main():
     ap.add_argument('tests', nargs='*')
     ap.add_argument('--timeout', type=int, default=30)
     ap.add_argument('--text-only', action='store_true', help='leave out the editor and input tests')
+    ap.add_argument('--fallback-font', action='store_true', help='require --text-only; check IFF presence but skip ROM-font image byte comparisons')
     ap.add_argument('-j', '--jobs', type=int, default=4)
     ap.add_argument('--build', help='the host build to test (default build/host; build/host-sdl: make host-sdl)')
     args = ap.parse_args()
+    if args.fallback_font and not args.text_only:
+        ap.error("--fallback-font requires --text-only")
     global AMOS
     if args.build:
         AMOS = os.path.join(os.path.abspath(args.build), 'amos')
@@ -337,14 +344,14 @@ def main():
         hd, out = prepare(name, tables)
         if not window:
             note = run_text(name, hd, args.timeout)
-            problems = compare(name, out)
+            problems = compare(name, out, args.fallback_font)
             return [f'{p} ({note})' for p in problems[:1]] + problems[1:]
         finished, shots = run_window(name, hd, out, tree, max(args.timeout, 60))
         if not finished:
             return [f'timeout, see {os.path.relpath(os.path.dirname(hd), ROOT)}/timeout.png']
         if shots:
             return compare_editor(name, shots) + compare_files(name, out)
-        return compare(name, out)
+        return compare(name, out, args.fallback_font)
 
     if not args.text_only:
         tree = display_tree()
@@ -362,7 +369,8 @@ def main():
                 passed += 1
                 print(f'{name}: ok')
     print(f'{passed} passed, {failed} failed' + (f', {skipped} skipped' if skipped else ''))
+    return bool(failed)
 
 
 if __name__ == '__main__':
-    main()
+    sys.exit(main())

@@ -5,6 +5,10 @@
 
 namespace amos::host::windows {
 char *canonical_path(const char *path); // malloc'ed; exists; '/' separators
+char *prepare_installed_state(const char *resources); // malloc; portable mode leaves path unchanged
+bool refresh_user_resources(const char *resources, const char *target);
+char *user_data_directory(); // malloc; Known Folder based
+char *user_config_path(); // malloc; Known Folder based
 char *executable_path();               // malloc'ed
 bool image_below_4gb();
 int make_directory(const char *path);

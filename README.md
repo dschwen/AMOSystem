@@ -111,6 +111,7 @@ python3, and the **x86-64 MinGW SDL2 SDK**:
 ```sh
 make host-windows SDL2_WINDOWS=/path/to/SDL2/x86_64-w64-mingw32
 make windows-dist SDL2_WINDOWS=/path/to/SDL2/x86_64-w64-mingw32
+make package-msi VERSION=0.1.0 SDL2_WINDOWS=/path/to/SDL2/x86_64-w64-mingw32
 ```
 
 The default SDK path is `~/Downloads/SDL2-2.32.8/x86_64-w64-mingw32`.
@@ -119,6 +120,16 @@ The executable is `build/windows/amos.exe`; the portable bundle is
 folder on Windows 10/11 and run `amos.exe`, keeping `SDL2.dll` and the
 `AMOS` resource directory beside it. The bundle includes a `smoke.ps1`
 PowerShell runner for five headless regression tests.
+
+The unsigned MSI in `build/packages` installs under Program Files and prepares
+per-user working resources/settings in Local AppData. `make msi-tools` can
+extract Debian/Ubuntu installer tools locally without sudo. See
+[the MSI README](packaging/windows/README.md) for build/inspection and Windows
+lifecycle test commands. Installation/upgrade/signing qualification is pending.
+
+`amos --open-document path` opens one document in the editor without running
+it; normal CLI program execution is unchanged. The MSI advertises this handler
+for `.amos`; choosing the default remains a Windows user action.
 
 The address/context probe has passed on Windows; full interpreter and GUI
 runtime validation is still pending. Start with an ASCII installation path.

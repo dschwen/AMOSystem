@@ -17,6 +17,8 @@
 #include <type_traits>
 #include <vector>
 
+#include "host/windows_crt.h"
+
 namespace amos::host {
 
 void audio_play(const int16_t *samples, int count);

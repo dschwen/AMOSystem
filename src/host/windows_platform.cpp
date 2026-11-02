@@ -6,6 +6,7 @@
 #define WIN32_LEAN_AND_MEAN
 #define NOMINMAX
 #include <windows.h>
+#include <shlobj.h>
 #include <errno.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -13,6 +14,10 @@
 #include <string>
 #include <vector>
 #include "host/windows_platform.h"
+#define AMOS_WINDOWS_CRT_IMPL
+#include "host/windows_crt.h"
+#include <fcntl.h>
+#include <direct.h>
 
 namespace amos::host::windows {
 namespace {
@@ -95,6 +100,105 @@ VOID WINAPI fiber_entry(void *argument)
     fprintf(stderr, "amos: unexpected return from Windows fiber\n");
     exit(70);
 }
+}
+namespace {
+std::wstring state_root()
+{
+    PWSTR folder = nullptr;
+    if (FAILED(SHGetKnownFolderPath(FOLDERID_LocalAppData, KF_FLAG_CREATE, nullptr, &folder))) {
+        errno = EIO; return {};
+    }
+    std::wstring root = std::wstring(folder) + L"\\AMOSystem";
+    CoTaskMemFree(folder);
+    if (!CreateDirectoryW(root.c_str(), nullptr) && GetLastError() != ERROR_ALREADY_EXISTS) {
+        error(); return {};
+    }
+    return root;
+}
+bool user_owned(const std::wstring &relative)
+{
+    // Shipped BASIC scripts may have been edited by the user, too.
+    return (relative.size() >= 5 && !_wcsicmp(relative.c_str() + relative.size() - 5, L".AMOS")) ||
+           !_wcsicmp(relative.c_str(), L"AMOSPro_Interpreter_Config") ||
+           !_wcsicmp(relative.c_str(), L"APSystem\\AMOSPro_Editor_Config") ||
+           !_wcsicmp(relative.c_str(), L"APSystem\\AMOSPro_Editor_Macros");
+}
+bool seed(const std::wstring &source, const std::wstring &dest, const std::wstring &relative = L"")
+{
+    if (!CreateDirectoryW(dest.c_str(), nullptr) && GetLastError() != ERROR_ALREADY_EXISTS) {
+        error(); return false;
+    }
+    WIN32_FIND_DATAW data;
+    HANDLE find = FindFirstFileW((source + L"\\*").c_str(), &data);
+    if (find == INVALID_HANDLE_VALUE) { error(); return false; }
+    bool ok = true;
+    do {
+        if (!wcscmp(data.cFileName, L".") || !wcscmp(data.cFileName, L"..")) continue;
+        std::wstring from = source + L"\\" + data.cFileName;
+        std::wstring to = dest + L"\\" + data.cFileName;
+        std::wstring rel = relative.empty() ? data.cFileName : relative + L"\\" + data.cFileName;
+        if (data.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) { errno = EINVAL; ok = false; break; }
+        if (data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
+            if (!seed(from, to, rel)) { ok = false; break; }
+        } else {
+            WIN32_FILE_ATTRIBUTE_DATA existing;
+            bool exists = GetFileAttributesExW(to.c_str(), GetFileExInfoStandard, &existing) != 0;
+            if (exists && user_owned(rel)) continue;
+            if (exists && existing.nFileSizeLow == data.nFileSizeLow && existing.nFileSizeHigh == data.nFileSizeHigh &&
+                !CompareFileTime(&existing.ftLastWriteTime, &data.ftLastWriteTime)) continue;
+            std::wstring temporary = to + L".seed-" + std::to_wstring(GetCurrentProcessId());
+            if (!CopyFileW(from.c_str(), temporary.c_str(), FALSE) ||
+                !MoveFileExW(temporary.c_str(), to.c_str(), MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH)) {
+                error(); DeleteFileW(temporary.c_str()); ok = false; break;
+            }
+        }
+    } while (FindNextFileW(find, &data));
+    if (ok && GetLastError() != ERROR_NO_MORE_FILES) { error(); ok = false; }
+    FindClose(find);
+    return ok;
+}
+}
+char *user_config_path()
+{
+    auto root = state_root();
+    return root.empty() ? nullptr : utf8((root + L"\\amos.conf").c_str());
+}
+char *user_data_directory()
+{
+    auto root = state_root();
+    return root.empty() ? nullptr : utf8(root.c_str());
+}
+bool refresh_user_resources(const char *resources, const char *target)
+{
+    auto from = wide(resources), to = wide(target);
+    return !from.empty() && !to.empty() && seed(from, to);
+}
+char *prepare_installed_state(const char *resources)
+{
+    if (getenv("AMOS_HOME")) return _strdup(resources);
+    char *exe = executable_path();
+    if (!exe) return nullptr;
+    std::string marker = exe; free(exe);
+    marker.resize(marker.find_last_of('/') + 1);
+    marker += "installed.ini";
+    auto installed = wide(marker.c_str());
+    if (GetFileAttributesW(installed.c_str()) == INVALID_FILE_ATTRIBUTES) return _strdup(resources);
+    auto root = state_root();
+    if (root.empty()) return nullptr;
+    // Serialize seeding for independent document-opening processes of this user.
+    uint64_t hash = 14695981039346656037ull;
+    for (wchar_t c : root) { hash ^= uint16_t(c); hash *= 1099511628211ull; }
+    std::wstring name = L"Local\\AMOSystem.Seed." + std::to_wstring(hash);
+    HANDLE mutex = CreateMutexW(nullptr, FALSE, name.c_str());
+    if (!mutex) { error(); return nullptr; }
+    DWORD wait = WaitForSingleObject(mutex, 30000);
+    if (wait != WAIT_OBJECT_0 && wait != WAIT_ABANDONED) { CloseHandle(mutex); errno = EBUSY; return nullptr; }
+    auto runtime = root + L"\\runtime";
+    char *target = utf8(runtime.c_str());
+    bool ok = target && refresh_user_resources(resources, target);
+    free(target);
+    ReleaseMutex(mutex); CloseHandle(mutex);
+    return ok ? utf8(runtime.c_str()) : nullptr;
 }
 char *canonical_path(const char *path)
 {
@@ -241,5 +345,64 @@ bool run_main(void (*entry)())
     ConvertFiberToThread();
     return false;
 }
+FILE *stream_open(const char *path, const char *mode)
+{
+    auto w = wide(path), m = wide(mode);
+    return w.empty() || m.empty() ? nullptr : _wfopen(w.c_str(), m.c_str());
+}
+int path_open(const char *path, int flags, int mode)
+{
+    auto w = wide(path);
+    return w.empty() ? -1 : _wopen(w.c_str(), flags | _O_BINARY, mode);
+}
+int path_stat(const char *path, struct stat *st)
+{
+    auto w = wide(path);
+    struct _stat64 native;
+    if (w.empty() || _wstat64(w.c_str(), &native)) return -1;
+    memset(st, 0, sizeof *st);
+    st->st_dev = native.st_dev; st->st_ino = native.st_ino;
+    st->st_mode = native.st_mode; st->st_nlink = native.st_nlink;
+    st->st_uid = native.st_uid; st->st_gid = native.st_gid;
+    st->st_rdev = native.st_rdev; st->st_size = native.st_size;
+    st->st_atime = native.st_atime; st->st_mtime = native.st_mtime; st->st_ctime = native.st_ctime;
+    return 0;
+}
+int path_unlink(const char *path) { auto w = wide(path); return w.empty() ? -1 : _wunlink(w.c_str()); }
+int path_rmdir(const char *path) { auto w = wide(path); return w.empty() ? -1 : _wrmdir(w.c_str()); }
+int path_rename(const char *from, const char *to)
+{
+    auto f = wide(from), t = wide(to);
+    return f.empty() || t.empty() ? -1 : _wrename(f.c_str(), t.c_str());
+}
+int path_chdir(const char *path) { auto w = wide(path); return w.empty() ? -1 : _wchdir(w.c_str()); }
+char *path_getcwd(char *buffer, int size)
+{
+    wchar_t *cwd = _wgetcwd(nullptr, 0);
+    if (!cwd) return nullptr;
+    char *result = utf8(cwd); free(cwd);
+    if (!result || !buffer) return result;
+    if (size < 0 || strlen(result) >= size_t(size)) { free(result); errno = ERANGE; return nullptr; }
+    strcpy(buffer, result); free(result); return buffer;
+}
+DIR *directory_open(const char *path)
+{
+    auto w = wide(path);
+    return w.empty() ? nullptr : reinterpret_cast<DIR *>(_wopendir(w.c_str()));
+}
+struct dirent *directory_read(DIR *dir)
+{
+    static struct dirent entry;
+    auto *found = _wreaddir(reinterpret_cast<_WDIR *>(dir));
+    if (!found) return nullptr;
+    char *name = utf8(found->d_name);
+    if (!name) return nullptr;
+    if (strlen(name) >= sizeof entry.d_name) { free(name); errno = ENAMETOOLONG; return nullptr; }
+    memset(&entry, 0, sizeof entry);
+    strcpy(entry.d_name, name); entry.d_namlen = strlen(name);
+    free(name); return &entry;
+}
+int directory_close(DIR *dir) { return _wclosedir(reinterpret_cast<_WDIR *>(dir)); }
+
 }
 #endif

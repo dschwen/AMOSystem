@@ -1,0 +1,85 @@
+name: Windows MSI
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Numeric MSI version (major.minor.patch)
+        default: 0.1.0
+        required: true
+  pull_request:
+    paths:
+      - 'src/**'
+      - 'tools/**'
+      - 'tests/windows/**'
+      - 'tests/test_package_msi.py'
+      - 'tests/test_open_document.py'
+      - 'packaging/windows/**'
+      - 'Makefile'
+      - '.github/workflows/windows-msi.yml'
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    env:
+      VERSION: ${{ inputs.version || '0.1.0' }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install cross compiler and MSI inspection tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y g++-mingw-w64-x86-64 wixl msitools python3-pil libsdl2-2.0-0
+      - name: Fetch pinned SDL2 MinGW SDK
+        run: |
+          mkdir -p build/sdk
+          curl --fail --location --retry 3 https://github.com/libsdl-org/SDL/releases/download/release-2.32.8/SDL2-devel-2.32.8-mingw.tar.gz -o build/sdk/SDL2.tar.gz
+          echo 'f590b3707689562483ded05bf15eaf0f5d33eb97f49d0fd3b894225fe17cc52b  build/sdk/SDL2.tar.gz' | sha256sum -c -
+          tar -xzf build/sdk/SDL2.tar.gz -C build/sdk
+      - name: Build, extract and inspect MSI
+        shell: bash
+        run: |
+          [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]
+          make -j2 package-msi VERSION="$VERSION" WINDOWS_CXX=x86_64-w64-mingw32-g++-win32 SDL2_WINDOWS="$PWD/build/sdk/SDL2-2.32.8/x86_64-w64-mingw32"
+          make msi-probe VERSION=0.1.0
+          make msi-probe VERSION=0.1.1
+          make msi-probe VERSION=0.1.2
+          python3 -m unittest discover -s tests -p test_package_msi.py
+      - name: Linux host regression check
+        run: |
+          make -j2 host KICKSTART= ROMKEY=
+          mkdir -p build/dist
+          cp -a AMOS build/dist/AMOS
+          python3 tests/host_run.py --text-only --fallback-font
+          python3 -m unittest discover -s tests -p test_open_document.py
+      - name: Upload unsigned installers and manifests
+        uses: actions/upload-artifact@v4
+        with:
+          name: unsigned-msi
+          path: |
+            build/packages/*.msi
+            build/packages/*.json
+            build/packages/*.ps1
+            build/packages/*.AMOS
+          if-no-files-found: error
+  installer-tests:
+    needs: build
+    runs-on: windows-2022
+    env:
+      VERSION: ${{ inputs.version || '0.1.0' }}
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: unsigned-msi
+          path: packages
+      - name: Installer repair, upgrade, downgrade and rollback checks
+        shell: powershell
+        run: |
+          & .\packages\test_msi.ps1 -Mode Probe -Packages .\packages -Artifacts .\logs
+          & .\packages\test_msi.ps1 -Mode Install -Packages .\packages -Version $env:VERSION -Artifacts .\logs
+          & .\packages\test_msi.ps1 -Mode Uninstall -Packages .\packages -Version $env:VERSION -Artifacts .\logs
+      - name: Preserve Windows Installer logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-installer-logs
+          path: logs

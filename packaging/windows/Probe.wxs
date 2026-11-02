@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+ <Product Id="@PRODUCT_CODE@" Name="AMOS MSI feature probe" Version="@VERSION@" Language="1033"
+          Manufacturer="AMOSystem contributors" UpgradeCode="{33F3A04F-8897-4FBD-B019-9D56A7E4782C}">
+  <Package InstallerVersion="500" Compressed="yes" InstallScope="perMachine"/>
+  <Media Id="1" Cabinet="probe.cab" EmbedCab="yes"/>
+  <MajorUpgrade DowngradeErrorMessage="A newer AMOS MSI feature probe is installed."/>
+  <Binary Id="ProbeFailureDll" SourceFile="@PROBE_DLL@"/>
+  <CustomAction Id="IntentionalProbeFailure" BinaryKey="ProbeFailureDll" DllEntry="FailProbe" Execute="deferred" Return="check" Impersonate="no"/>
+  <InstallExecuteSequence>
+   <RemoveExistingProducts After="InstallInitialize"/>
+   <Custom Action="IntentionalProbeFailure" After="InstallFiles">MSI_PROBE_FAIL=1</Custom>
+  </InstallExecuteSequence>
+  <Directory Id="TARGETDIR" Name="SourceDir">
+   <Directory Id="ProgramFiles64Folder"><Directory Id="INSTALLDIR" Name="AMOS MSI Probe"/></Directory>
+   <Directory Id="ProgramMenuFolder"><Directory Id="ApplicationProgramsFolder" Name="AMOS MSI Probe"/></Directory>
+  </Directory>
+  <Feature Id="MainFeature" Title="AMOS MSI feature probe" Level="1"/>
+ </Product>
+</Wix>

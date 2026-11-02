@@ -9,6 +9,7 @@
 #include <setjmp.h>
 #include <string>
 #include "host/windows_platform.h"
+#include "host/windows_crt.h"
 
 namespace {
 using namespace amos::host::windows;
@@ -58,9 +59,9 @@ int backend_probe(void *main_fiber)
     char *temp = temporary_directory();
     check(temp != nullptr, "create private RAM directory");
     if (temp) {
-        std::string folder = std::string(temp) + "/nested folder";
+        std::string folder = std::string(temp) + "/nested földer";
         check(make_directory(folder.c_str()) == 0, "create directory with space");
-        std::string one = folder + "/one.bin", two = folder + "/two.bin";
+        std::string one = folder + "/one-é.bin", two = folder + "/two.bin";
         const unsigned char data[] = {0, 10, 13, 26, 255};
         for (const auto &path : {one, two}) {
             FILE *f = fopen(path.c_str(), "wb");
@@ -87,6 +88,29 @@ int backend_probe(void *main_fiber)
         uint64_t total, avail;
         check(disk_space(one.c_str(), &total, &avail) && total > 0 && avail <= total,
               "disk space from regular file path");
+        std::string source = std::string(temp) + "/resources", target = std::string(temp) + "/user runtime";
+        check(make_directory(source.c_str()) == 0, "create immutable-resource fixture");
+        check(make_directory((source+"/APSystem").c_str()) == 0, "create APSystem fixture");
+        auto write = [](const std::string &p, const char *value) {
+            FILE *f = fopen(p.c_str(), "wb");
+            if (!f) return false;
+            bool ok = fwrite(value, 1, strlen(value), f) == strlen(value);
+            return fclose(f) == 0 && ok;
+        };
+        check(write(source+"/APSystem/AMOSPro_Editor_Config", "default"), "write default configuration");
+        check(write(source+"/APSystem/resource.bin", "version-one"), "write initial resource");
+        check(refresh_user_resources(source.c_str(), target.c_str()), "seed first-run user state");
+        check(write(target+"/APSystem/AMOSPro_Editor_Config", "user preferences"), "modify user preference");
+        check(write(source+"/APSystem/resource.bin", "version-two-longer"), "update installed resource");
+        check(refresh_user_resources(source.c_str(), target.c_str()), "refresh upgraded resource tree");
+        auto equals = [](const std::string &p, const char *value) {
+            FILE *f = fopen(p.c_str(), "rb");
+            if (!f) return false;
+            char buf[64] = {}; size_t n = fread(buf, 1, sizeof buf, f); fclose(f);
+            return n == strlen(value) && !memcmp(buf, value, n);
+        };
+        check(equals(target+"/APSystem/AMOSPro_Editor_Config", "user preferences"), "upgrade preserves user preferences");
+        check(equals(target+"/APSystem/resource.bin", "version-two-longer"), "upgrade refreshes resource data");
         check(remove_tree(temp), "recursive private RAM cleanup");
         real = canonical_path(temp);
         check(real == nullptr, "RAM directory removed");

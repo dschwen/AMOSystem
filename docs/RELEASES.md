@@ -1,9 +1,11 @@
 # Packaging and distribution plan
 
-Status: planned, except for the experimental Windows portable ZIP and smoke
-runner (`make windows-dist`). Linux, Intel macOS and Windows x86-64 host code
-now builds; native Apple Silicon remains a separate port. MSI, DMG, DEB and
-RPM production targets and OS document integration are not implemented yet.
+Status: mostly planned. Experimental Windows portable ZIP/smoke packaging
+(`make windows-dist`) and a Linux-built unsigned MSI (`make package-msi`) now
+exist; MSI installation/lifecycle tests and signing are pending. Linux, Intel macOS and Windows x86-64 host code
+now builds; native Apple Silicon remains a separate port. DMG, DEB and RPM production targets remain planned. Windows document
+registration/editor activation is implemented but needs installed-payload VM
+validation; the other OS document integrations remain planned.
 See [Windows](WINDOWS.md), [Apple Silicon](APPLE-SILICON.md), and
 [addressing constraints](ADDRESSING.md) for runtime prerequisites.
 
@@ -11,7 +13,7 @@ See [Windows](WINDOWS.md), [Apple Silicon](APPLE-SILICON.md), and
 
 | Platform | Primary download | Build/package tools | Additional download |
 |---|---|---|---|
-| Windows x64 | `amos-VERSION-windows-x64.msi` | Linux MinGW-w64 compilation; pinned WiX toolset on a Windows packaging/test runner | Portable ZIP |
+| Windows x64 | `amos-VERSION-windows-x64.msi` | Linux MinGW-w64 + wixl/msitools; Windows VM installation tests | Portable ZIP |
 | Intel macOS | `amos-VERSION-macos-x86_64.dmg` containing `AMOS Professional.app` | Apple Clang/SDK, `hdiutil`, `codesign`, `notarytool`, `stapler` | ZIP for automation |
 | Native Apple Silicon | arm64 DMG, or universal DMG after both slices pass | Same Apple tools, native arm64 validation, optionally `lipo` | No native support claim until the address/ABI/context gates pass |
 | Debian/Ubuntu x86-64 | `amos_VERSION-REVISION_amd64.deb` | debhelper and `dpkg-buildpackage` in the supported distribution build environment | Portable tarball |
@@ -103,8 +105,11 @@ unclaimed `.amos` type and one explicitly assigned to another application.
 
 ### Installer
 
-Start with a single-scope, per-machine x64 MSI built with a pinned WiX toolset
-on a Windows runner. MinGW still builds the application on Linux. Install
+Start with a single-scope, per-machine x64 MSI built on Linux with
+`wixl`/msitools, after a feature/upgrade probe establishes that its supported
+authoring subset is sufficient. Use full WiX on a Windows runner if a required
+feature is missing. See [the detailed MSI plan](MSI.md). MinGW builds the
+application on Linux in either case. Install
 under `ProgramFiles64Folder/AMOSystem`, with `amos.exe`, `amos-player.exe`,
 `SDL2.dll`, immutable resources, icons and notices. Add Start Menu shortcuts
 and an ARP entry. Do not change PATH by default. Per-user installation can be
@@ -339,7 +344,8 @@ Sources: [MIME Apps specification](https://specifications.freedesktop.org/mime-a
    run behavior. Add icons and canonical type identifiers.
 3. Package DEB/RPM metadata and verify MIME/default selection in fresh GNOME
    and KDE sessions. Test installation with `apt`/`dnf`, updates and removal.
-4. Package/sign the x64 MSI on Windows, testing standard-user operation,
+4. Build the x64 MSI on Linux (or the WiX fallback runner), sign through the
+   selected signing workflow, and test on Windows: standard-user operation,
    Settings/Open With selection, repair, major upgrade and uninstall.
 5. Build the Intel `.app`/DMG, integrate cold/warm Cocoa document events, then
    sign/notarize and test installation from quarantine. Extend to native arm64
