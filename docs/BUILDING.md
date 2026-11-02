@@ -4,6 +4,12 @@ How the C++ is organised, how the programs are linked, what the host does,
 what differs from the original, and how the tests work. The
 [README](../README.md) has the requirements and the quick start.
 
+[Addressing constraints](ADDRESSING.md) explains why AMOS-visible native
+addresses must fit below 4 GiB, why virtual memory placement can fail, and
+what a host-pointer-independent implementation would require. The
+[Windows](WINDOWS.md) and [Apple Silicon](APPLE-SILICON.md) notes cover the
+platform-specific work.
+
 Requirements: the Amiga cross toolchain from
 https://github.com/AmigaPorts/m68k-amigaos-gcc (installed in `/opt/amiga`, or
 pass `AMIGA_PREFIX=...`), GNU make and python3. AMOS Pro is C++ now: there is
