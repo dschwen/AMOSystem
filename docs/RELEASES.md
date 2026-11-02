@@ -1,234 +1,367 @@
-# Plan: binary releases for Linux, macOS and Windows
+# Packaging and distribution plan
 
-Status: a plan, nothing of it is built yet. Today the host (`amos`,
-`amos-player`) builds and runs on x86-64 Linux only.
+Status: planned, except for the experimental Windows portable ZIP and smoke
+runner (`make windows-dist`). Linux, Intel macOS and Windows x86-64 host code
+now builds; native Apple Silicon remains a separate port. MSI, DMG, DEB and
+RPM production targets and OS document integration are not implemented yet.
+See [Windows](WINDOWS.md), [Apple Silicon](APPLE-SILICON.md), and
+[addressing constraints](ADDRESSING.md) for runtime prerequisites.
 
-## 1. What a release is
+## 1. Deliverables and build ownership
 
-One archive for each platform, made by a tag on the repository (GitHub
-Releases of `dschwen/AMOSystem`):
+| Platform | Primary download | Build/package tools | Additional download |
+|---|---|---|---|
+| Windows x64 | `amos-VERSION-windows-x64.msi` | Linux MinGW-w64 compilation; pinned WiX toolset on a Windows packaging/test runner | Portable ZIP |
+| Intel macOS | `amos-VERSION-macos-x86_64.dmg` containing `AMOS Professional.app` | Apple Clang/SDK, `hdiutil`, `codesign`, `notarytool`, `stapler` | ZIP for automation |
+| Native Apple Silicon | arm64 DMG, or universal DMG after both slices pass | Same Apple tools, native arm64 validation, optionally `lipo` | No native support claim until the address/ABI/context gates pass |
+| Debian/Ubuntu x86-64 | `amos_VERSION-REVISION_amd64.deb` | debhelper and `dpkg-buildpackage` in the supported distribution build environment | Portable tarball |
+| Fedora/RHEL-family x86-64 | `amos-VERSION-RELEASE.DIST.x86_64.rpm` | RPM spec and `rpmbuild`, preferably clean `mock` builds for each supported distribution | Source RPM |
+| Amiga | optional `AMOS-amiga-VERSION.zip` | Existing cross compiler and `make dist` | Keep separate from host installers |
 
-| Archive | Contents |
-|---|---|
-| `amos-VERSION-linux-x86_64.tar.gz` (and `aarch64` if a runner is there) | `bin/amos`, `bin/amos-player` (a link), `share/amos/AMOS` (the AMOS tree), `LICENSE`, `NOTICE` |
-| `amos-VERSION-macos-universal.zip` | `AMOS Professional.app` (x86-64 and arm64 in one binary, the tree in `Contents/Resources`), `amos-player` inside |
-| `amos-VERSION-windows-x64.zip` | `amos.exe`, `amos-player.exe`, `SDL2.dll`, `AMOS\` (the tree), licences; an installer (Inno Setup) later |
-| `AMOS-amiga-VERSION.zip` (optional, from the Linux job) | `build/dist/AMOS`: AMOSPro for the Amiga with the tree |
+Do not label Linux arm64 or macOS universal artifacts as supported just because
+a compiler accepts the architecture. Package only validated slices. Keep the
+current GNU Make host build; introducing a packaging backend does not require
+migrating the Amiga build to CMake.
 
-The tree is the host's own: `AMOSPro_Interpreter_Config`, `APSystem`
-(only the data files the host reads: the default and editor resources, the
-editor's configuration and macros), `Accessories`, and the examples. No
-Kickstart-derived data goes into a release: the fonts are AROS's topaz 8
-(`data/fonts/topaz8`) and the keymap is the plain one.
+Introduce separate staging/package targets, provisionally `dist-host`,
+`package-msi`, `package-dmg`, `package-deb`, and `package-rpm`. These names are
+planned, not current commands. Have each consume a versioned payload manifest
+and reject missing runtime resources, licenses, or a wrong-architecture library.
 
-What a release lacks because it has no Kickstart, and should say so in its
-notes: topaz 9 (drawn with topaz 8's characters), the Alt characters and
-dead keys of the keymap, and the monitor (`AMOSPro_Monitor_Resource.Abk` is
-not in the sources). Both of the first two can be fixed later with data of
-our own (a hand-written usa keymap table: step 6 of section 3).
+## 2. Shared release prerequisites
 
-Not bundled: espeak-ng (GPL; `Say` stays optional, the user installs it),
-and no SDL2 *headers* are needed anywhere, only the library.
+### Immutable payload and writable user state
 
-## 2. What stands in the way
+The present host changes into the AMOS resource tree and can write configuration
+there. A writable portable directory does not establish that a Program Files,
+Applications, or `/usr/share` installation works. Fix this before production
+installers:
 
-The host is written for the one machine it runs on. Everything below is in
-`src/host` (4900 lines) and `src/runtime`; the shared code (95% of the
-repository) does not change.
+- Keep binaries, bundled libraries, default configurations, and resources
+  immutable. Find them relative to the executable or application bundle.
+- Separate user configurations, devices, RAM/temp directories, caches, and
+  documents. Seed user defaults once, with explicit migration on upgrades.
+- Windows: use the user's Known Folder APIs for Local/Roaming AppData as
+  appropriate, under `AMOSystem`; never write user data under Program Files.
+- macOS: use Application Support, Caches and temporary-directory APIs under
+  the app identifier; never mutate a signed `.app` or require a writable DMG.
+- Linux: use XDG_CONFIG_HOME, XDG_DATA_HOME and XDG_CACHE_HOME, with their
+  standard user-directory fallbacks. Package-owned files stay under `/usr`.
+- Preserve AMOS assigns and relative program asset behavior through explicit
+  resource/data roots rather than making the system installation writable.
+  User overrides such as AMOS_HOME remain available for development.
 
-| Area | Today (Linux) | Needed |
-|---|---|---|
-| **AMOS's 32-bit addresses** | AMOS keeps pointers in 32 bits, so everything it can see is below 4GB: the program is linked non-PIE at 0x400000, the memory is `mmap(MAP_32BIT)` in a 512MB arena (chip memory fixed at 1MB), the stack is allocated in the arena | see 2.1: the one real risk |
-| **Coroutines** (the file selector's task, `host/tasks.cpp`) and the **stack** AMOS runs on (`pthread_attr_setstack`) | `ucontext`, pthreads | Windows has neither: Fibers cannot take a stack of our own. macOS has `ucontext` (deprecated) |
-| **Files** (`hal_files.cpp`) | POSIX: `opendir`, `realpath`, `statx` (Linux only, for the creation time), `/proc/self/exe`, XDG directories | an `os` layer: macOS `stat`'s birth time and `_NSGetExecutablePath`, `~/Library/Application Support`; Windows `FindFirstFile`, `GetModuleFileName`, `%APPDATA%`, drive letters and case-insensitive names |
-| **Libraries** (`sdl.cpp`, `speech.cpp`) | `dlopen("libSDL2-2.0.so.0")` | the library's name for each system, `LoadLibrary`/`GetProcAddress` on Windows; or link SDL2 (`make host-sdl` already does) and ship it |
-| **Time and sleep** | `clock_gettime`, `usleep` | `std::chrono`, `std::this_thread` |
-| **Maths** (`host/math.cpp`) | glibc's `sin`, `exp`... (the results of `Sin`, `Log`... come from the host's libm) | the last digit differs between glibc, Apple's libm and the Windows CRT: the tests would differ by platform. See 2.2 |
-| **Build** | `Makefile` with `g++ -m64 -no-pie`, the NDK headers from the Amiga cross toolchain (`/opt/amiga`) | a build that needs neither the cross compiler nor a Linux shell: see 2.3 |
-| **Tests** | Xvfb, scrot and XTest drive the window tests; the goldens are Amiga/Kickstart results | text tests (82) everywhere; window tests only on Linux; goldens made without a ROM: see 4 |
+Uninstall removes package-owned files and registrations, not user programs,
+mounted device folders, or preferences. Upgrades preserve user state and
+existing default-app choices; reinstall/repair must not reset them.
 
-### 2.1 The address space
+### Resource provenance and reproducibility
 
-The cheapest way (A) keeps pointers as they are and puts everything below
-4GB:
+Release font/keymap generation must explicitly use redistributable fallback
+data, even if the builder has a Kickstart ROM installed. The current Windows
+package is a development/test bundle, not evidence of a ROM-free release build.
+Inventory every resource copied from AMOS, include applicable notices, and
+exclude downloaded NDK headers, personal configs, developer paths and private
+signing material. Optional espeak remains a separately installed dependency
+unless a deliberate redistribution decision is made.
 
-- **Linux**: done.
-- **Windows x64**: link with a base below 4GB (`-Wl,--image-base=0x400000
-  -Wl,--disable-dynamicbase`, MinGW-w64) and take the memory and the stack
-  with `VirtualAlloc` at fixed addresses (it has no `MAP_32BIT`, but a hint
-  address works if the range is free). Memory is reserved at once and
-  committed as the allocator grows.
-- **macOS x86-64**: `-Wl,-pagezero_size,0x1000 -Wl,-image_base,...` and
-  `mmap` at fixed low addresses.
-- **macOS arm64**: **unknown**. Apple Silicon wants a 4GB `__PAGEZERO` in
-  64-bit programs, which takes the very range we need. A one-day spike
-  decides it: a small program with the pagezero reduced, mapping memory at
-  0x10000000, run natively. If it works, A is the plan. If not, either ship
-  the x86-64 build to Apple Silicon (it runs under Rosetta 2, if the spike
-  shows that mapping works there) or do B.
+Build Linux native packages against supported distro runtimes; generate shared
+library dependencies instead of assuming that static libstdc++ makes glibc
+portable. Bundle the selected SDL runtime on Windows/macOS; use distribution
+SDL packages for DEB/RPM. Pin dependency versions and publish checksums, build
+provenance, source/version identifiers, and third-party notices.
 
-B removes the whole problem: AMOS's 32-bit addresses become offsets in the
-arena (`ptr<T>(a)` is `base + a`, `address(p)` is `p - base`). Everything AMOS
-can see then has to be in the arena: the host's structures (already
-allocated there), the glue tables' data (copied to it once at start), and the
-stack. `address()` would check that its argument is in the arena, so a
-missed object fails at once instead of being cut to 32 bits. It is the
-cleaner design, it makes PIE and hardened binaries possible, and it is a
-medium-sized change (`ptr`/`address` are in one header, the work is in what
-the check finds). Recommended only if the spike fails.
+## 3. Opening .amos documents: common behavior
 
-### 2.2 The maths
+Proposed stable application ID: `io.github.dschwen.amosystem`.
+Proposed document MIME type: `application/x-amos-program`.
+Proposed macOS UTI: `io.github.dschwen.amosystem.program`.
+Confirm these identifiers against existing registrations before implementation;
+reuse an established type if one is discovered. Never claim generic
+`application/octet-stream`, every `.bas` file, or all Amiga bank files.
 
-Replace the host's use of libm in `host/math.cpp` by our own implementations
-(port fdlibm, the same code on every platform), so the results are the
-same everywhere, and the maths golden does not need a variant per system.
-Until then, keep the platform's variants for the few tests concerned
-(`maths`, `floats`, `floats2`, `expr2`).
+**The association's Open action should load the program in the AMOS editor.**
+Keep running it a distinct action/CLI choice. The existing CLI normally runs a
+named program before returning to the editor, so pointing shell registration
+at it unchanged is not the complete document-opening implementation.
 
-### 2.3 The build
+Add a native document-open entry point, provisionally
+`amos --open-document <path>`, parsed before device options. Preserve arguments
+as paths, including spaces, quotes and Unicode; do not concatenate them into
+an unescaped AMOS command line. Implement the editor-load operation and any
+unsaved-document prompt. Existing CLI execution and `amos-player` keep their
+behavior. Define multiple-document handling and repeated opens while the
+application is already running; process-one-file-per-launch is an acceptable
+first Windows/Linux policy, with macOS document events queued in the live app.
+All three shell routes below must reach the same editor-load operation.
 
-- A target `make dist-host` that makes the tree without the Amiga binary
-  (today `make dist` needs the cross compiler to build `AMOSPro`; the host
-  does not read it). Not done yet.
-- The NDK headers: the host build includes 46 of them (428KB). **Done**:
-  they are Hyperion's NDK 3.2, with no stated licence (the toolchain's
-  `COPYING-THIRD-PARTY.md`: "unknown license"), so they are not bundled.
-  `make host` uses the toolchain's copy if there is one, else
-  `tools/fetch_ndk.py` downloads `NDK3.2.lha` from Aminet (the sha256 the
-  toolchain pins), checks it and extracts `Include_H` with `tools/lha.py`
-  (a Python LHA extractor: 687 headers in 1.4 seconds, CRC-checked), with no
-  toolchain and no LHA tool, on any system with python3. The host compiles
-  and passes its suite against these unpatched headers (the toolchain only
-  adds `__stdargs` to the `clib` prototypes and regenerates `proto/`).
-  Each CI job caches `build/download`.
-- Compilers: MinGW-w64 g++ (UCRT) on Windows, Apple clang on macOS, g++ on
-  Linux. The code uses `-fpack-struct=2` and GCC's `__builtin_longjmp`; both
-  clang and MinGW g++ have them. A first step is to see that clang++ compiles
-  the host (`make host CXX=clang++`) with no changes or only small ones.
-- Move from the hand-written `Makefile` rules for the host to CMake (one
-  `CMakeLists.txt` for the host: the Amiga build stays in the `Makefile`),
-  or keep GNU make and use it on all three (MSYS2 has it). CMake is the
-  more usual in CI and gives the universal macOS binary and the Windows
-  resources (icon, version) cleanly. Recommended.
+Registering a supported document type makes AMOS available in Open With. It
+is not a promise to overwrite the user's default. Test both a previously
+unclaimed `.amos` type and one explicitly assigned to another application.
 
-## 3. Steps
+## 4. Windows MSI and Explorer associations
 
-Each step ends with the Linux suite passing as it does now (Amiga 134/134,
-host 135/135).
+### Installer
 
-1. **Linux release** (small). `make dist-host`; a release build that runs on
-   older systems (build in the oldest supported Ubuntu, link libstdc++ and
-   libgcc statically); `make release-linux` makes the tarball and checks it
-   (unpack in an empty directory, `amos-player` a program, exit status).
-   `NOTICE` with the AROS font's attribution and the SDL2 notice.
-2. **The `os` layer** (medium, no change in behaviour on Linux). One small
-   interface in `src/host/os.h`, with `os_posix.cpp` (Linux and macOS) and
-   `os_win32.cpp` (later): the arena (reserve, commit, fixed low addresses),
-   the coroutine (with the stack AMOS runs on), the executable's path, the
-   user's data directory, the directory listing with creation times, sleep
-   and the clock, loading a library. `hal_files.cpp`, `tasks.cpp`, `main.cpp`,
-   `hal_system.cpp`, `sdl.cpp` and `speech.cpp` stop calling the system
-   directly. One piece needs a decision: the coroutine. `ucontext` is
-   enough for Linux and macOS; for Windows either a context switch of our own
-   (a few instructions of inline assembler for each of x86-64 and arm64,
-   which sits badly with "no assembler" but is 30 lines) or threads that pass
-   control to each other (portable C++, but pthreads with a stack of our own
-   have to exist on Windows: to be tried first).
-3. **The spike for macOS arm64** (small, do it at the start, in parallel with
-   1): decides A or B in 2.1.
-4. **macOS** (medium). Build for x86-64 and arm64 with clang, join them
-   with `lipo`, make the `.app` (Info.plist, icon from the AMOS logo, the
-   tree in `Resources`), `SDL2.framework` or `libSDL2.dylib` inside
-   (`@rpath`), `make host-sdl` style link or `dlopen` of the bundled copy.
-   Sign (see 5). Text tests on arm64 and on x86-64 (Rosetta).
-5. **Windows** (medium to large; the most code). `os_win32.cpp`, MinGW-w64
-   build (static libstdc++), `SDL2.dll` beside the executable, console and
-   window subsystem (`amos.exe` a window program that also prints to the
-   console when started from one), the file layer's `START:`, devices
-   directory and drive letters (a `devices` folder in `%APPDATA%\AMOS`, as
-   the other systems), long and case-insensitive names. Text tests, then the
-   window tests by hand.
-6. **Smaller improvements that make the releases better**: our own usa keymap
-   table (Alt characters, dead keys) instead of the Kickstart's; a topaz 9
-   of our own (drawn, public domain); our own maths (2.2).
-7. **CI and release automation** (small to medium, can start with step 1):
-   one GitHub Actions workflow with a job for each platform:
-   build, text tests, package, and on a tag `v*` upload to a GitHub Release
-   with checksums and generated notes. The Linux job also builds the Amiga
-   binary (it only has to compile; the Amiga suite needs a Kickstart, which
-   cannot be in CI, so it stays a local step: `docs/BUILDING.md`).
+Start with a single-scope, per-machine x64 MSI built with a pinned WiX toolset
+on a Windows runner. MinGW still builds the application on Linux. Install
+under `ProgramFiles64Folder/AMOSystem`, with `amos.exe`, `amos-player.exe`,
+`SDL2.dll`, immutable resources, icons and notices. Add Start Menu shortcuts
+and an ARP entry. Do not change PATH by default. Per-user installation can be
+a later separate package/scope; avoid mixing HKCU and HKLM ownership in one
+unpredictable installer.
 
-## 4. Testing a release without a Kickstart
+Use a stable UpgradeCode, well-defined product/version rules, stable component
+identities, and MSI-managed files/registry entries. Test major upgrade, repair,
+rollback, uninstall and a standard user's launch after an elevated install.
+No custom action should recursively copy files into each user's profile or
+run AMOS with elevated privileges. Keep the portable ZIP independent of MSI
+registration. Sign the final executables and MSI in CI and verify signatures.
 
-The goldens of `tests/golden` were made with the original binaries on an
-emulator with the Kickstart's fonts. A build with AROS's topaz 8 draws
-text differently, so every picture with text would fail. For CI:
+### Registration specification
 
-- Make a second set of goldens, **`tests/golden-rom-free`**, from the Linux
-  host built without a ROM (the Amiga's are already proof that the Linux
-  build is right with the ROM; this set only tells us that the other
-  platforms produce the same as Linux). A platform that differs byte for
-  byte is a bug in the port.
-- The text tests (82) run on all platforms; the editor and input tests (53)
-  run in a window on Linux only (XTest has no Mac or Windows counterpart
-  worth the trouble); on the other systems a short smoke test: start the
-  window, run a program that draws, save a screenshot with `AMOS_SHOT`,
-  compare with Linux's.
-- Packaging tests: unpack the archive in an empty directory, run
-  `amos-player` on a program from a different directory, check the output
-  file and the exit status; run `amos` with `AMOS_DISPLAY=none`.
+Author these as installer-owned entries in the 64-bit registry view. This is
+an outline, not a `.reg` file to run:
 
-## 5. Signing and distribution
+```text
+HKLM\Software\Classes\AMOSystem.Program
+  (Default) = AMOS BASIC program
+  DefaultIcon\(Default) = "<installed>\amos.exe",<document-icon-index>
+  shell\open\command\(Default) = "<installed>\amos.exe" --open-document "%1"
+HKLM\Software\Classes\.amos\OpenWithProgids
+  AMOSystem.Program = <empty REG_NONE>
+HKLM\Software\Classes\Applications\amos.exe
+  FriendlyAppName = AMOS Professional
+  SupportedTypes\.amos = <empty string>
+  shell\open\command\(Default) = "<installed>\amos.exe" --open-document "%1"
+HKLM\Software\AMOSystem\Capabilities
+  ApplicationName = AMOS Professional
+  ApplicationDescription = AMOS BASIC editor and runtime
+  FileAssociations\.amos = AMOSystem.Program
+HKLM\Software\RegisteredApplications
+  AMOS Professional = Software\AMOSystem\Capabilities
+```
 
-- **macOS**: an unsigned application is stopped by Gatekeeper (right click >
-  Open, or `xattr -d com.apple.quarantine`). Signing and notarising needs
-  an Apple Developer ID (99 USD a year) and the certificate as a repository
-  secret. Without it, say how to open it in the notes.
-- **Windows**: an unsigned program triggers SmartScreen's warning for the
-  first downloads. Signing costs a certificate (or Azure Trusted Signing).
-  Without it, say so in the notes.
-- **Linux**: no signing; a checksum file, and later an AppImage (a single
-  file that runs anywhere) if wanted.
-- Versions: `v0.1.0`... from the tag, shown by `amos --version` and in the
-  window's title.
+Provide the actual icon resource before referencing its index. Quote both the
+executable and document placeholder. Notify the shell of changed associations
+through the installer/shell integration mechanism. MSI Extension/ProgId/Verb
+metadata or equivalent explicit registry components must have the same result;
+validate WiX's emitted MSI tables rather than assuming an Extension entry alone
+establishes a modern per-user default.
 
-## 6. Licences of what is in an archive
+On Windows 10/11, installation registers eligibility. It cannot silently set
+itself as the user's default handler through the old Default Programs APIs.
+Offer an optional, non-elevated Finish/application action that opens Windows
+**Settings > Apps > Default apps**, where the user selects `.amos` and AMOS
+Professional. Explorer's **Open with > Choose another app > Always** is another
+supported route. Do not write, delete or fabricate the protected `UserChoice`
+registry entry or use hash bypass utilities. Silent MSI installation must not
+launch a settings window. Managed deployments can supply administrator-owned
+association policy separately from the MSI.
 
-MIT for AMOS and this conversion (`LICENSE`); the AROS Public License for
-topaz 8 (`LICENSE.AROS`, in the archive with its notice); zlib for SDL2 (its
-text in the archive). The AMOS example programs and the resources are
-François Lionet's, under the repository's MIT licence. No Commodore,
-Cloanto or other ROM data, so no tool of ours reads the user's Kickstart in
-a release build (the extractors stay for builds from source).
+Uninstall removes only this product's ProgID, capabilities, Open With values,
+shortcuts and files; it must not remove the entire `.amos` key or another
+application's entries. Let Windows handle a now-unavailable user selection.
 
-## 7. Order and size
+Sources: [Microsoft association model](https://learn.microsoft.com/en-us/windows/compatibility/file-type-and-protocol-associations-model),
+[Open With registration](https://learn.microsoft.com/en-us/windows/win32/shell/how-to-include-an-application-on-the-open-with-dialog-box),
+[application registration](https://learn.microsoft.com/en-us/windows/win32/shell/app-registration),
+[WiX Extension schema](https://docs.firegiant.com/wix/schema/wxs/extension/).
 
-| Step | Size (days of work, a guess) | Needs |
-|---|---|---|
-| 1 Linux release | 1-2 | |
-| 3 macOS arm64 spike | 1 | a Mac to run it, or a runner |
-| 2 the `os` layer | 3-4 | |
-| 7 CI | 2 | step 1 |
-| 4 macOS | 3-5 | 2, 3 (and B if 3 fails: +4-6) |
-| 5 Windows | 4-6 | 2 |
-| 6 own keymap, topaz 9, maths | 3-5 | any time after 1 |
+## 5. macOS application bundle and DMG
 
-A first public Linux release after step 1 and 7 (Linux job); macOS and
-Windows follow as steps 4 and 5 finish.
+Package `AMOS Professional.app` with `Contents/MacOS/amos`, bundled SDL under
+`Contents/Frameworks`, icons and defaults under `Contents/Resources`, and a
+complete Info.plist. Use bundle-relative SDL lookup and install names/rpaths;
+a release must not need `/Library/Frameworks/SDL2.framework` or Homebrew.
+Use executable/bundle discovery rather than `/proc/self/exe` or a Finder
+launch's current directory. Copying the `.app` to `/Applications` or the user's
+Applications folder should be sufficient; a drag-to-Applications DMG needs no
+privileged installer script. The DMG is a transport image, not a writable
+resource/configuration directory.
 
-## 8. Decisions needed
+Sign nested code and then the bundle, verify the chosen signing/runtime
+settings with the low-address and context tests, notarize/staple the app, and
+create the final compressed DMG with `hdiutil`. Sign/notarize/staple the DMG
+as appropriate for the pinned release workflow and validate both tickets.
+Test a downloaded/quarantined artifact on a clean Mac, including offline
+staple validation. Do not make quarantine removal the normal installation
+procedure. Publish an Intel DMG first if necessary; a universal DMG requires
+native testing of both slices, including the arm64 address-model gate.
 
-1. **NDK headers**: decided, see 2.3 (downloaded, not bundled).
-2. **Windows toolchain**: MinGW-w64 (recommended: the same g++, the same flags
-   as Linux) or MSVC/clang-cl (needs more changes: `-fpack-struct`, GNU
-   builtins).
-3. **macOS signing**: sign and notarise (Developer ID) or ship unsigned with
-   instructions.
-4. **If the arm64 spike fails**: ship x86-64 for Apple Silicon under Rosetta
-   2, or do B (a translated address space).
-5. **Coroutines on Windows**: a small inline-assembler context switch, or the
-   threads way (to be tried first).
-6. **Build system for the host**: CMake (recommended) or stay with GNU make.
-7. **The Amiga archive** (`AMOS-amiga`) as a fourth download: yes or no.
-8. **Where**: GitHub Releases of `dschwen/AMOSystem`, and the first version
-   number.
+### Launch Services document declarations
+
+In Info.plist declare:
+
+```text
+CFBundleIdentifier = io.github.dschwen.amosystem
+UTExportedTypeDeclarations = [{
+  UTTypeIdentifier = io.github.dschwen.amosystem.program
+  UTTypeDescription = AMOS BASIC program
+  UTTypeConformsTo = [public.data]
+  UTTypeTagSpecification = {
+    public.filename-extension = [amos]
+    public.mime-type = application/x-amos-program
+  }
+}]
+CFBundleDocumentTypes = [{
+  CFBundleTypeName = AMOS BASIC program
+  CFBundleTypeRole = Editor
+  LSItemContentTypes = [io.github.dschwen.amosystem.program]
+  LSHandlerRank = Owner
+  CFBundleTypeIconFile = AMOSDocument.icns
+}]
+```
+
+Use imported rather than exported type declarations if the type already has a
+canonical owner. Verify uppercase `.AMOS` files too. `Owner` is a ranking
+hint, not an override of an explicit user selection. Installing/discovering
+the bundle registers its capabilities with Launch Services; a DMG script must
+not reset the user's Launch Services database.
+
+Finder launches and **Open With** can deliver documents as application-open
+Apple events rather than argv. Route cold and warm document-open events into
+the common editor-load queue. SDL2's Cocoa backend converts file opens to drop
+events; the current host uses SDL_DROPFILE to mount folders/files as devices.
+Distinguish `.amos` document opens from that existing mount behavior, retain
+events arriving before the editor is ready, and avoid replacing SDL's Cocoa
+delegate without a tested integration. Test Finder double-click, `open -a`,
+Dock drops, multiple opens and the unsaved-buffer case.
+
+If AMOS is not selected by default, document Finder **Get Info > Open with >
+AMOS Professional > Change All**. Registering the UTI/editor role alone cannot
+guarantee the default when other candidates or user preferences exist.
+
+Sources: [Apple document-type keys](https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html),
+[SDL2 Cocoa open events](https://github.com/libsdl-org/SDL/blob/SDL2/src/video/cocoa/SDL_cocoaevents.m),
+[Apple default-app instructions](https://support.apple.com/guide/mac-help/choose-an-app-to-open-a-file-mh35597/mac),
+[notarization workflow](https://developer.apple.com/documentation/security/customizing-the-notarization-workflow).
+
+## 6. Linux DEB/RPM packages and desktop integration
+
+Both packages install the same logical payload:
+
+```text
+/usr/bin/amos
+/usr/bin/amos-player
+/usr/share/amos/AMOS/                  immutable defaults/resources
+/usr/share/applications/io.github.dschwen.amosystem.desktop
+/usr/share/mime/packages/amos.xml
+/usr/share/icons/hicolor/.../apps/io.github.dschwen.amosystem.{png,svg}
+/usr/share/icons/hicolor/.../mimetypes/application-x-amos-program.{png,svg}
+```
+
+Use standard package documentation/license locations for each distro. Build
+DEB with `debian/control`, rules/install files and debhelper; use generated
+`${shlibs:Depends}`/`${misc:Depends}` dependencies and shared-mime-info /
+desktop integration as needed. `debian/amos.sharedmimeinfo` can be installed
+by `dh_installmime`. Build RPM with an `amos.spec`, proper ownership and
+automatic library dependencies. Use target-distro cache triggers/macros for
+MIME, desktop and icon updates; inspect their ownership before adding any
+manual scriptlets, and avoid duplicate or historical unconditional refreshes.
+Validate desktop metadata with `desktop-file-validate`; lint DEB/RPM with the
+chosen distro tools. Keep debug symbols in separate debug packages.
+
+Use `apt install ./amos_...deb` for dependency-resolving local installation;
+`dpkg -i` alone does not fetch missing dependencies. Use `dnf install
+./amos-...rpm` for RPM systems. Provide signed APT/RPM repository metadata
+if hosting update repositories; direct-download checksums do not replace
+repository signature validation. Keep removal, purge and upgrade semantics
+explicit and preserve user-owned projects/preferences.
+
+### MIME registration
+
+Proposed `/usr/share/mime/packages/amos.xml`:
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<mime-info xmlns="http://www.freedesktop.org/standards/shared-mime-info">
+  <mime-type type="application/x-amos-program">
+    <comment>AMOS BASIC program</comment>
+    <glob pattern="*.amos"/>
+    <glob pattern="*.AMOS"/>
+  </mime-type>
+</mime-info>
+```
+
+Add content magic only after checking supported tokenized AMOS/AMOS Pro
+headers against fixtures; one version's header must not misclassify other
+versions. Proposed desktop entry:
+
+```ini
+[Desktop Entry]
+Type=Application
+Name=AMOS Professional
+Comment=Edit AMOS BASIC programs
+Exec=amos --open-document %f
+TryExec=amos
+Icon=io.github.dschwen.amosystem
+Terminal=false
+Categories=Development;IDE;
+MimeType=application/x-amos-program;
+```
+
+`%f` delivers one local file per launch and must be passed directly, without
+`sh -c` or hand-built shell quoting. Do not use `%u` until remote/file URL
+handling exists. Match the identifier to the actual installed `.desktop`
+filename and handle filenames containing spaces. Registering MIME/desktop
+metadata refreshes available handlers; it does not itself establish a default.
+
+For an explicit user choice, run in that user's graphical session:
+
+```sh
+xdg-mime default io.github.dschwen.amosystem.desktop application/x-amos-program
+xdg-mime query default application/x-amos-program
+xdg-mime query filetype example.AMOS
+xdg-open example.AMOS
+```
+
+This changes the user's MIME preference (`mimeapps.list`), not a package-owned
+file. Do not run it as root from DEB/RPM maintainer scripts or rewrite every
+user's home directory. Offer a user-invoked action or desktop settings
+instructions. System administrators may set a system default via the standard
+MIME Apps policy files; existing user preferences retain their specified
+precedence. Uninstall removes our files and refreshes caches using distro
+mechanisms without deleting other handlers or rewriting user preferences.
+
+Sources: [MIME Apps specification](https://specifications.freedesktop.org/mime-apps/latest/),
+[desktop entry specification](https://specifications.freedesktop.org/desktop-entry-spec/latest/),
+[Debian MIME integration](https://wiki.debian.org/MimeTypesSupport),
+[dh_installmime](https://manpages.debian.org/testing/debhelper/dh_installmime.1.en.html),
+[RPM file triggers](https://rpm.org/docs/6.0.x/manual/file_triggers.html).
+
+## 7. Implementation sequence and release gates
+
+1. Separate immutable resources from per-user writable state. Add ROM-free
+   release staging and a dependency/resource manifest.
+2. Implement the common editor-load request, Unicode/space-safe native paths,
+   repeated document opens and unsaved-document handling. Retain normal CLI
+   run behavior. Add icons and canonical type identifiers.
+3. Package DEB/RPM metadata and verify MIME/default selection in fresh GNOME
+   and KDE sessions. Test installation with `apt`/`dnf`, updates and removal.
+4. Package/sign the x64 MSI on Windows, testing standard-user operation,
+   Settings/Open With selection, repair, major upgrade and uninstall.
+5. Build the Intel `.app`/DMG, integrate cold/warm Cocoa document events, then
+   sign/notarize and test installation from quarantine. Extend to native arm64
+   or universal only after the architecture gates pass.
+6. Tag-based CI builds and tests payloads, stages installers, signs only the
+   final inputs, verifies signatures/artifacts, and uploads release files,
+   checksums and provenance to GitHub Releases. Use signing secrets only in
+   trusted release jobs. Linux and Amiga regression checks remain mandatory.
+
+Every installer must pass the following on a clean supported OS without
+compilers, SDKs, global SDL installations, or an AMOS_HOME override:
+
+- Launch from Start/Finder/application menu and open a document by association.
+- Exercise cold and already-running opens, spaces/Unicode, uppercase suffixes,
+  paths on another drive/volume, and a different launch working directory.
+- Verify editor-load versus explicit-run behavior and an unsaved-document prompt.
+- Preserve another app's default on install, allow an explicit AMOS default
+  choice, keep that choice through upgrade, and cleanly remove owned metadata.
+- Run the address/context probes and text/GUI smoke tests from the installed
+  payload, including the signed macOS configuration and Windows fiber checks.
+- Update, repair where applicable, rollback failed installation, and uninstall
+  without destroying user data or changing unrelated associations.
+
+These are release acceptance criteria, not claims that the present development
+bundles already satisfy them.

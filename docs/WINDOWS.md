@@ -2,8 +2,8 @@
 
 Status: the full Windows x86-64 host now cross-compiles and links with GCC
 13-win32 and SDL2 2.32.8. The original address/context probe passed on the
-user's Windows machine. Full AMOS startup, GUI behavior, and the new backend
-probe tests still need Windows runtime validation.
+user's Windows machine. The user has opened the Windows GUI; full regression coverage and the new
+backend probe tests still need Windows runtime validation.
 
 ## Build and test the experimental port
 
@@ -109,14 +109,14 @@ an i686 target would need its own dispatch and layout audit.
 Introduce HOST_CXX, target-platform selection independent of `uname`,
 platform-specific source selection, linker options, and `.exe` output.
 Use a separate build/windows directory. Keep font/keymap generators running
-with Linux Python. Make linker failures return a nonzero status and retain
-full diagnostics (the current recipe masks errors and understands GNU ELF
-undefined-symbol wording only).
+with Linux Python. The current host link recipe now propagates failure and retains full
+diagnostics. Keep target-specific platform selection separate from build-host
+`uname` when generalizing beyond the existing Windows wrapper.
 
-Initial interface (currently stops at the compilation blockers above):
+Implemented interface (the compiler override belongs to the outer Windows target):
 
 ```sh
-make host-windows HOST_CXX=x86_64-w64-mingw32-g++
+make host-windows WINDOWS_CXX=x86_64-w64-mingw32-g++
 ```
 
 ## 3. Port platform services
@@ -162,6 +162,37 @@ resource tree, and notices. Discover resources relative to the executable;
 do not require AMOS_HOME. Replace Unix shell launchers with Windows launchers.
 Verify DLL dependencies and run from a path containing spaces and non-ASCII
 characters on a Windows installation without developer tools.
+
+## 6. MSI packaging and document associations
+
+The portable ZIP remains the development artifact. The production plan is an
+x64 MSI using a pinned WiX toolset on a Windows packaging/test runner, consuming
+the Linux MinGW payload. See [RELEASES.md sections 2–4](RELEASES.md) for the
+shared resource model, document-open contract, and precise registry outline.
+
+Implementation order:
+
+1. Separate installed resources from per-user configuration/device folders.
+   Test a standard user under Program Files before declaring MSI readiness.
+2. Add the common `--open-document` editor-load route and native Unicode/space
+   handling. The existing command-line run behavior is not the association's
+   Open action. Add executable/document icons and version resources.
+3. Author a per-machine MSI with stable upgrade/component identities, Start
+   Menu shortcuts and installer-owned ProgID/OpenWithProgids/Capabilities
+   registrations. Candidate ProgID: `AMOSystem.Program`; quote `%1` and the
+   installed executable independently.
+4. Register AMOS as an available `.amos` handler and offer an optional link to
+   the user's Default apps UI. Windows 10/11 defaults require user selection;
+   neither an MSI checkbox nor writing the protected UserChoice key is a
+   supported substitute. Keep silent installs noninteractive.
+5. Sign and test fresh installation, repair, major upgrade, failed-install
+   rollback and uninstall. Preserve user data and other handlers; remove only
+   this MSI's registrations. Test cold/repeated Explorer opens, a pre-existing
+   other default, spaces/Unicode, and the upgraded installed payload's probes.
+
+Retain a portable ZIP with no automatic registration. Publish MSI/ZIP with
+checksums, notices and build provenance; validate runtime dependencies on a
+clean Windows machine without MinGW or an SDL SDK.
 
 ## References
 

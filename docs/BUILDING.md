@@ -8,7 +8,8 @@ what differs from the original, and how the tests work. The
 addresses must fit below 4 GiB, why virtual memory placement can fail, and
 what a host-pointer-independent implementation would require. The
 [Windows](WINDOWS.md) and [Apple Silicon](APPLE-SILICON.md) notes cover the
-platform-specific work.
+platform-specific work. [Release packaging](RELEASES.md) covers MSI, DMG,
+DEB/RPM installation, writable user state, and `.amos` file associations.
 
 Requirements: the Amiga cross toolchain from
 https://github.com/AmigaPorts/m68k-amigaos-gcc (installed in `/opt/amiga`, or

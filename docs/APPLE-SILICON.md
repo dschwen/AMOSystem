@@ -145,6 +145,38 @@ First milestone: a native arm64 probe report deciding whether direct host
 addresses are viable, followed by either minimal platform work or the explicit
 guest-address refactor. No support claim before hardware runtime validation.
 
+## 7. DMG distribution and Finder document opening
+
+The packaging design is shared with the Intel Mac port; native arm64 and a
+universal DMG remain conditional on the address/context/ABI gates above.
+[RELEASES.md sections 2, 3 and 5](RELEASES.md) specify the common state split,
+editor-load operation, Info.plist metadata and release checks.
+
+1. Stage `AMOS Professional.app`, bundling the matching SDL framework/dylib
+   under Contents/Frameworks and immutable resources under Contents/Resources.
+   Resolve bundle-relative paths and put writable state in Application
+   Support/Caches/temp. No global SDL installation or writable app is needed.
+2. Declare the proposed UTI `io.github.dschwen.amosystem.program`, extension
+   `.amos`, and Editor document role in Info.plist, with a document icon.
+   Owner rank advertises capability; it does not override a user's choice.
+3. Integrate Finder's cold/warm document-open events into the common editor-load
+   queue. SDL2 delivers Cocoa file opens as drop events, which the current
+   host treats as device mounts; distinguish document opens and preserve the
+   existing folder-mount behavior. Test queued startup events and unsaved work.
+4. Sign nested code and the completed app, validate the actual signed runtime's
+   address/context behavior, notarize/staple, and create a drag-to-Applications
+   DMG using hdiutil. Complete and validate the final image's signing/notary
+   workflow; test a downloaded artifact with normal Gatekeeper settings.
+5. Document Finder Get Info > Open with > AMOS Professional > Change All for
+   users who want AMOS as their `.amos` default. Test competing handlers,
+   reinstall/upgrade, installation in both Applications locations, and cleanup
+   without resetting Launch Services or deleting user preferences.
+
+Offer a universal DMG only after both architectures pass native tests; use
+lipo on matching-version slices and bundle universal/matching dependencies.
+The first Intel DMG need not wait for the native arm64 port. A DMG is a delivery
+container, not a substitute for an application bundle or document event handling.
+
 ## References
 
 - Apple architectural differences: https://developer.apple.com/documentation/apple-silicon/addressing-architectural-differences-in-your-macos-code
