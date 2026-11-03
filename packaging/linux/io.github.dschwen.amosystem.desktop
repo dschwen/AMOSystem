@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=AMOS Professional
+Comment=Edit AMOS BASIC programs
+Exec=amos --open-document %f
+TryExec=amos
+Icon=io.github.dschwen.amosystem
+Terminal=false
+Categories=Development;IDE;
+MimeType=application/x-amos-program;

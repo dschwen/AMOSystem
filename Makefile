@@ -160,6 +160,11 @@ $(HOST)/obj/%.o: %.cpp $(if $(filter $(BUILD)/ndk/Include_H,$(NDK_INCLUDE)),$(BU
 -include $(HOST_OBJ:%.o=%.d)
 
 # Windows API types must retain their native layout across DLL boundaries.
+# std::filesystem uses the native C++ library ABI, never guest packing.
+$(HOST)/obj/src/host/installed_state.o: src/host/installed_state.cpp src/host/installed_state.h
+	@mkdir -p $(dir $@)
+	$(HOST_CXX) $(filter-out -fpack-struct=2,$(HOST_FLAGS)) -c -o $@ $<
+
 $(HOST)/obj/src/host/windows_memory.o: src/host/windows_memory.cpp src/host/windows_memory.h
 	@mkdir -p $(dir $@)
 	$(HOST_CXX) $(filter-out -fpack-struct=2,$(HOST_FLAGS)) -c -o $@ $<
@@ -188,10 +193,10 @@ host-windows:
 		HOST_LDFLAGS='$(WINDOWS_LDFLAGS)' \
 		HOST_SDLLIB='-L$(SDL2_WINDOWS)/lib -lmingw32 -lSDL2main -lSDL2 -lole32 -luuid -mwindows'
 
-$(HOST)/version.rc: windows-version tools/windows_resources.py
+$(HOST)/version.rc: windows-version tools/windows_resources.py data/icons/amos.ico
 	$(PYTHON) tools/windows_resources.py --version '$(VERSION)' --out $@
 
-$(HOST)/version.o: $(HOST)/version.rc
+$(HOST)/version.o: $(HOST)/version.rc data/icons/amos.ico
 	$(WINDOWS_WINDRES) -i $< -o $@
 
 windows-release:
@@ -233,16 +238,28 @@ host-release:
 # the default is a user's own directory.
 PREFIX ?= $(HOME)/.local
 
+# Icon assets are checked in; Pillow is only needed when regenerating them.
+.PHONY: icons macos-icons
+icons:
+	$(PYTHON) tools/generate_icons.py
+
+# Run on the completed bundle before codesigning and creating its DMG.
+macos-icons:
+	@test -n "$(APP_BUNDLE)" || { echo 'set APP_BUNDLE to an existing .app'; exit 1; }
+	$(PYTHON) tools/install_icons.py macos --app "$(APP_BUNDLE)"
+
 install-host: host-release dist
 	install -d $(DESTDIR)$(PREFIX)/bin $(DESTDIR)$(PREFIX)/share/amos
 	install -m 755 $(BUILD)/host-release/amos $(DESTDIR)$(PREFIX)/bin/amos
 	ln -sf amos $(DESTDIR)$(PREFIX)/bin/amos-player
 	rm -rf $(DESTDIR)$(PREFIX)/share/amos/AMOS
 	cp -a $(DIST) $(DESTDIR)$(PREFIX)/share/amos/AMOS
+	$(PYTHON) tools/install_icons.py linux --prefix "$(DESTDIR)$(PREFIX)" $(if $(DESTDIR),,--refresh)
 	@echo "installed $(DESTDIR)$(PREFIX)/bin/amos and $(DESTDIR)$(PREFIX)/share/amos/AMOS"
 
 # (the devices directories, the user's disks, are left: $${XDG_DATA_HOME:-~/.local/share}/amos/devices)
 uninstall-host:
+	$(PYTHON) tools/install_icons.py linux --prefix "$(DESTDIR)$(PREFIX)" --uninstall $(if $(DESTDIR),,--refresh)
 	rm -f $(DESTDIR)$(PREFIX)/bin/amos $(DESTDIR)$(PREFIX)/bin/amos-player
 	rm -rf $(DESTDIR)$(PREFIX)/share/amos/AMOS
 	-rmdir $(DESTDIR)$(PREFIX)/share/amos
@@ -277,3 +294,20 @@ game: host-release dist
 	printf '#!/bin/sh\n# $(NAME): an AMOS program, run by AMOS'"'"'s player\nhere=$$(dirname "$$(readlink -f "$$0")")\ncd "$$here/share/amos/game" && exec "$$here/bin/amos-player" "$$here/share/amos/game/$(NAME).AMOS" "$$@"\n' > $(GAMEDIR)/$(NAME)
 	chmod 755 $(GAMEDIR)/$(NAME)
 	@echo "made $(GAMEDIR): run $(GAMEDIR)/$(NAME)"
+
+# macOS distribution: build on macOS with Command Line Tools and SDL2.framework.
+MACOS_CXX ?= clang++ -arch x86_64
+MACOS_SDL_FRAMEWORK ?= /Library/Frameworks/SDL2.framework
+MACOS_SIGN_IDENTITY ?= -
+.PHONY: macos-release package-dmg dmg
+macos-release:
+	@test "$$(uname -s)" = Darwin || { echo 'DMG builds require macOS (run make package-dmg on the Mac)'; exit 1; }
+	@mkdir -p $(BUILD)/macos-release
+	$(PYTHON) tools/extract_topaz.py --out $(BUILD)/macos-release/topaz.cpp --fallback data/fonts/topaz8
+	$(PYTHON) tools/extract_keymap.py --out $(BUILD)/macos-release/keymap.cpp
+	MACOSX_DEPLOYMENT_TARGET=11.0 $(MAKE) host HOST=$(BUILD)/macos-release HOST_CXX='$(MACOS_CXX)' HOST_OPT=-O2 KICKSTART= ROMKEY=
+
+package-dmg: macos-release
+	$(PYTHON) tools/package_macos.py --version '$(VERSION)' --build $(BUILD)/macos-release --framework '$(MACOS_SDL_FRAMEWORK)' --sign-identity '$(MACOS_SIGN_IDENTITY)'
+
+dmg: package-dmg

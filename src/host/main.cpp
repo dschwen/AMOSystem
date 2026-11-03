@@ -28,6 +28,8 @@
 #include <sys/stat.h>
 #if defined(__APPLE__)
 #include <ucontext.h>
+#include <mach-o/dyld.h>
+#include "host/installed_state.h"
 #endif
 
 #include "host/windows_crt.h"
@@ -113,6 +115,9 @@ std::string find_home()
     if (n >= ssize_t(sizeof exe)) n = -1;
     if (n > 0) memcpy(exe, resolved, size_t(n));
     free(resolved);
+#elif defined(__APPLE__)
+    uint32_t size = sizeof exe;
+    ssize_t n = _NSGetExecutablePath(exe, &size) == 0 ? ssize_t(strlen(exe)) : -1;
 #else
     ssize_t n = readlink("/proc/self/exe", exe, sizeof exe - 1);
 #endif
@@ -120,7 +125,9 @@ std::string find_home()
         exe[n] = 0;
         std::string dir = exe;
         dir.erase(dir.rfind('/'));
-#if defined(_WIN32)
+#if defined(__APPLE__)
+        const char *locations[] = {"/../Resources/AMOS", "/../share/amos/AMOS", "/../dist/AMOS", "/AMOS", "/../../AMOS"};
+#elif defined(_WIN32)
         const char *locations[] = {"/AMOS", "/../share/amos/AMOS", "/../dist/AMOS", "/../../AMOS"};
 #else
         const char *locations[] = {"/../share/amos/AMOS", "/../dist/AMOS", "/AMOS", "/../../AMOS"};
@@ -165,6 +172,15 @@ int main(int argc, char **argv)
         }
         home = working;
         free(working);
+    }
+#endif
+#if defined(__APPLE__)
+    // Bundled defaults remain immutable, including when launched from a DMG.
+    if (!(getenv("AMOS_HOME") && *getenv("AMOS_HOME")) &&
+        home.ends_with("/Resources/AMOS")) {
+        char *working = host::prepare_macos_state(home.c_str());
+        if (!working) { fprintf(stderr, "amos: could not prepare per-user macOS resources\n"); free(start); return 1; }
+        home = working; free(working);
     }
 #endif
     if (home.empty()) {

@@ -20,6 +20,9 @@
 #endif
 #include <stdio.h>
 #include <string.h>
+#if defined(__APPLE__)
+#include <mach-o/dyld.h>
+#endif
 
 // (stdlib.h's struct timeval clashes with devices/timer.h's)
 extern "C" char *getenv(const char *name) noexcept;
@@ -168,10 +171,19 @@ bool load()
 {
 #if defined(__APPLE__)
     void *lib = nullptr;
+    char executable[4096], bundled[8192]; uint32_t length = sizeof executable;
+    if (_NSGetExecutablePath(executable, &length) == 0) {
+        if (char *slash = strrchr(executable, '/')) {
+            *slash = 0;
+            snprintf(bundled, sizeof bundled, "%s/../Frameworks/SDL2.framework/SDL2", executable);
+            lib = dlopen(bundled, RTLD_NOW);
+        }
+    }
     const char *paths[] = {"libSDL2.dylib", "/usr/local/lib/libSDL2.dylib",
                            "/opt/homebrew/lib/libSDL2.dylib",
                            "/Library/Frameworks/SDL2.framework/SDL2"};
     for (const char *path : paths) {
+        if (lib) break;
         lib = dlopen(path, RTLD_NOW);
         if (lib)
             break;

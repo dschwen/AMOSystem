@@ -12,6 +12,9 @@ on:
       - 'tools/**'
       - 'tests/windows/**'
       - 'tests/test_package_msi.py'
+      - 'tests/test_icons.py'
+      - 'tests/test_package_macos.py'
+      - 'data/icons/**'
       - 'tests/test_open_document.py'
       - 'tests/test_clipboard.py'
       - 'packaging/windows/**'
@@ -45,6 +48,8 @@ jobs:
           make msi-probe VERSION=0.1.1
           make msi-probe VERSION=0.1.2
           python3 -m unittest discover -s tests -p test_package_msi.py
+          python3 -m unittest discover -s tests -p test_icons.py
+          python3 -m unittest discover -s tests -p test_package_macos.py
       - name: Linux host regression check
         run: |
           make -j2 host KICKSTART= ROMKEY=

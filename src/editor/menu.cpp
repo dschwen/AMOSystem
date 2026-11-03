@@ -560,20 +560,26 @@ bool menu_init()
         }
     }
 #if !defined(__m68k__)
-    // Host-only eighth menu. Commands do not enter the legacy function table.
-    const char *labels[] = {"Clipboard", "System Copy", "System Cut", "System Paste"};
-    auto keys = d.EdM_Keys; d.EdM_Keys = 0;
-    for (unsigned i = 0; i < 4; ++i) {
-        uint8_t *b = ptr<uint8_t>(d.Ed_BufT);
-        const uint8_t def[8] = {'1','3','0','1','8',uint8_t(i ? '0' + i : '0'),'0','0'};
-        for (unsigned j = 0; j < 8; ++j) b[j] = def[j];
-        unsigned n = 0; while (labels[i][n]) { b[16 + n] = labels[i][n]; ++n; }
-        b[16 + n] = 0; b[15] = uint8_t(n);
-        uint8_t *entry = table;
-        make_object(b, table, b + 16);
-        entry[6] = uint8_t(i); entry[7] = 0xFF;
+    // Configurations already use slot 8 for Help. Pick a free root slot;
+    // otherwise labels replace Help objects while selection finds Help IDs.
+    // Terminate the static table while determining its occupied coordinates.
+    poke_l(table, 0);
+    const uint8_t root = clipboard_menu_slot(ptr<uint8_t>(d.EdM_Table));
+    if (root) {
+        const char *labels[] = {"Clipboard", "System Copy", "System Cut", "System Paste"};
+        auto keys = d.EdM_Keys; d.EdM_Keys = 0;
+        for (unsigned i = 0; i < 4; ++i) {
+            uint8_t *b = ptr<uint8_t>(d.Ed_BufT);
+            const uint8_t def[8] = {'1','3','0','1',uint8_t('0' + root),uint8_t(i ? '0' + i : '0'),'0','0'};
+            for (unsigned j = 0; j < 8; ++j) b[j] = def[j];
+            unsigned n = 0; while (labels[i][n]) { b[16 + n] = labels[i][n]; ++n; }
+            b[16 + n] = 0; b[15] = uint8_t(n);
+            uint8_t *entry = table;
+            make_object(b, table, b + 16);
+            entry[6] = uint8_t(i); entry[7] = 0xFF;
+        }
+        d.EdM_Keys = keys;
     }
-    d.EdM_Keys = keys;
 #endif
     d.EdM_TableAMOS = address(table);
     branch_amos();

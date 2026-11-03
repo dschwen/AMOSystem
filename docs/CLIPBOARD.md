@@ -13,6 +13,7 @@ it only after the OS clipboard write succeeds. Paste inserts at the cursor or
 replaces the selection. Successful system copy/cut also updates the private
 block for legacy block-paste commands. The host editor's **Clipboard** menu
 provides System Copy/Cut/Paste without adding legacy function-table entries.
+It uses a free top-level menu slot rather than replacing the configured Help menu.
 
 In direct mode, copy/cut uses the selected range, or the entire command when
 nothing is selected. Shift+Left/Right/Home/End and Shift+mouse placement select;
@@ -73,7 +74,8 @@ make
 
 The clipboard test requires Xvfb, SDL2, X11/XTest and Pillow. It creates an
 isolated X11 clipboard owned by a separate SDL window, so it never accesses the
-user's desktop clipboard. Tests cover actual source copy/paste/cut/undo/redo,
+user's desktop clipboard. Tests cover actual mouse selection of System Copy/Cut/Paste as well as source
+copy/paste/cut/undo/redo,
 blank lines, invalid/unrepresentable and overlong paste, direct-mode Unicode,
 selection replacement, capacity and multiline rejection, held keys, BASIC INPUT
 interruption, and explicit Return before executing a marker command. Pure C++

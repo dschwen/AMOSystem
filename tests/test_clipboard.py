@@ -23,9 +23,16 @@ class TextTests(unittest.TestCase):
     def test_conversion_and_limits(self):
         code = r'''
 #include "host/clipboard_text.h"
+#include "editor/clipboard.h"
 #include <assert.h>
 using namespace amos::host::clipboard;
 int main() {
+    // Default menus include Help at root 8; Clipboard must not alias it.
+    uint8_t menus[9 * 8] = {};
+    for (unsigned i = 0; i < 8; ++i) menus[i*8] = i + 1;
+    assert(amos::ed::clipboard_menu_slot(menus) == 9);
+    menus[7*8] = 10;
+    assert(amos::ed::clipboard_menu_slot(menus) == 8);
     std::string s, u;
     assert(decode("caf\xc3\xa9\r\n\t\r", s));
     assert(s == "caf\xe9\n \n");
@@ -98,14 +105,25 @@ class EditorClipboardTests(unittest.TestCase):
                     process = subprocess.Popen([str(Path(os.environ.get('AMOS_CLIPBOARD_TEST_BINARY', ROOT / 'build/host/amos'))), '--open-document', str(doc)],
                                                cwd=folder, env=env, stdout=log, stderr=log)
                     pump(3)
+                    key('ctrl+shift+Up')  # Dismiss startup information.
+                    def menu(command):
+                        # Default configuration: Clipboard is after Help (root 9).
+                        # Exercise real hit-testing/selection, not command IDs.
+                        keyboard.move_by(-3000,-3000); pump()
+                        keyboard.button(3,True); pump()
+                        keyboard.move_by(480,0); pump()
+                        keyboard.move_by(0,24 + (command-1)*16); pump()
+                        if os.environ.get('AMOS_CLIPBOARD_MENU_SHOT'):
+                            subprocess.run(['scrot','-o',str(ROOT/'build/clipboard-menu.png')],check=True)
+                        keyboard.button(3,False); pump()
                     key('ctrl+shift+Up')
                     key('ctrl+b')
                     for _ in range(3): key('Right')
-                    key('ctrl+c')
+                    menu(1)
                     self.assertEqual(read().lower(), 'rem')
                     # Replace selection; one undo restores the original selection/text.
                     write('Print 1\nRem')
-                    key('ctrl+v')
+                    menu(3)
                     def source_contents():
                         # REM detokenization can add a trailing display space.
                         return read().replace(' \n', '\n')
@@ -124,7 +142,7 @@ class EditorClipboardTests(unittest.TestCase):
                     self.assertEqual(source_contents().lower(), 'print 1\nrem original\nrem second\n')
                     write('emoji \U0001f600'); key('ctrl+v'); key('ctrl+c')
                     self.assertEqual(source_contents().lower(), 'print 1\nrem original\nrem second\n')
-                    key('ctrl+x')
+                    menu(2)
                     write('Rem cut replacement\n\nRem tail\n'); key('ctrl+v')
                     self.assertEqual(source_text().lower(), 'rem cut replacement\n\nrem tail\n')
                     key('ctrl+u'); key('ctrl+u'); key('ctrl+c')

@@ -214,7 +214,7 @@ CFBundleDocumentTypes = [{
   CFBundleTypeRole = Editor
   LSItemContentTypes = [io.github.dschwen.amosystem.program]
   LSHandlerRank = Owner
-  CFBundleTypeIconFile = AMOSDocument.icns
+  CFBundleTypeIconFile = amos.icns
 }]
 ```
 
@@ -371,3 +371,20 @@ compilers, SDKs, global SDL installations, or an AMOS_HOME override:
 
 These are release acceptance criteria, not claims that the present development
 bundles already satisfy them.
+
+## Logo-derived installer icons
+
+The source logo and generated Windows ICO, macOS ICNS and Linux hicolor PNGs
+are checked in under `data/icons`. See [the icon integration notes](../data/icons/README.md).
+Windows executable resources and the MSI now use this logo. Linux `install-host`
+installs application/MIME icons and desktop metadata; DEB/RPM staging should use
+the same `tools/install_icons.py linux` hook. For the planned macOS bundle/DMG,
+run `make macos-icons APP_BUNDLE="path/to/AMOS Professional.app"` before signing.
+This copies the ICNS and sets application/document icon keys in the existing
+bundle's Info.plist. DEB/RPM builders remain future work; the DMG target is documented below.
+
+The macOS app/DMG build target is now implemented as `make package-dmg`
+(alias `make dmg`), with bundled SDL, logo, user-state seeding, signing and
+mounted-image verification. See [macOS packaging](../packaging/macos/README.md).
+Actual Mac runtime/Gatekeeper qualification, notarization and Finder document
+event handling remain outstanding.

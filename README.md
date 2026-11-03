@@ -103,6 +103,11 @@ executable in `build/host-release/amos`. Use `make host` or `host-release`
 on macOS; `host-sdl` currently uses Linux-specific library link flags.
 Native Apple Silicon builds are not yet supported.
 
+To distribute an Intel app with SDL2 and the AMOS icon included, run
+`make package-dmg VERSION=0.1.3` on the Mac. The DMG and manifest appear under
+`build/packages`. See [macOS packaging](packaging/macos/README.md) for signing,
+user-state handling and the remaining runtime/notarization checks.
+
 ### The Windows build (experimental)
 
 Cross-compile on Linux with **x86_64-w64-mingw32-g++** (C++20), make,

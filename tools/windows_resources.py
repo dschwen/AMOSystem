@@ -1,33 +1,12 @@
 #!/usr/bin/env python3
-"""Generate deterministic native icon and version resources (no image dependencies)."""
+"""Embed the AMOS logo icon and generate Windows version resources."""
 import argparse
 from pathlib import Path
 import re
-import struct
 
 
 def icon():
-    glyph = ('0011100', '0110110', '1100011', '1100011', '1111111', '1100011', '1100011')
-    images = []
-    for size in (16, 32, 48, 256):
-        pixels = bytearray()
-        scale = max(1, size // 10)
-        origin = (size - 7 * scale) // 2
-        for y in reversed(range(size)):
-            for x in range(size):
-                gx, gy = (x-origin)//scale, (y-origin)//scale
-                lit = 0 <= gx < 7 and 0 <= gy < 7 and glyph[gy][gx] == '1'
-                r,g,b = (255,204,51) if lit else (11,27,77)
-                pixels.extend((b,g,r,255))
-        mask = bytes(((size + 31)//32)*4*size)
-        header = struct.pack('<IiiHHIIiiII',40,size,size*2,1,32,0,len(pixels)+len(mask),0,0,0,0)
-        images.append((size,header+pixels+mask))
-    offset = 6 + 16*len(images)
-    result = bytearray(struct.pack('<HHH',0,1,len(images)))
-    for size,data in images:
-        result.extend(struct.pack('<BBBBHHII',size%256,size%256,0,0,1,32,len(data),offset))
-        offset += len(data)
-    return bytes(result)+b''.join(data for _,data in images)
+    return (Path(__file__).resolve().parents[1]/'data/icons/amos.ico').read_bytes()
 
 
 def write_if_changed(path, data):
