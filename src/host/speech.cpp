@@ -14,11 +14,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <type_traits>
-#include <vector>
+#include "host/cxx.h"
 
 #include "host/windows_crt.h"
 
+// Private host objects containing native C++ library members.
+#pragma pack(push, 16)
 namespace amos::host {
 
 void audio_play(const int16_t *samples, int count);
@@ -137,3 +138,5 @@ void speech_stop()
 }
 
 } // namespace amos::host
+
+#pragma pack(pop)

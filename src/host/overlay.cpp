@@ -18,9 +18,7 @@
 #include <time.h>
 #include <unistd.h>
 
-#include <algorithm>
-#include <string>
-#include <vector>
+#include "host/cxx.h"
 
 #include "host/windows_crt.h"
 
@@ -30,6 +28,8 @@
 #define mkdir(path, mode) amos::host::windows::make_directory(path)
 #endif
 
+// Private host objects containing native C++ library members.
+#pragma pack(push, 16)
 namespace amos::host {
 
 void drop(const char *spec);       // drops.cpp
@@ -490,3 +490,5 @@ void draw(uint32_t *frame)
 } // namespace overlay
 
 } // namespace amos::host
+
+#pragma pack(pop)

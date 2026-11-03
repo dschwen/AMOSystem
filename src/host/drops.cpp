@@ -14,8 +14,7 @@
 #include <sys/stat.h>
 #include <time.h>
 
-#include <string>
-#include <vector>
+#include "host/cxx.h"
 
 #if defined(_WIN32)
 #include "host/windows_platform.h"
@@ -23,6 +22,8 @@
 
 #include "host/windows_crt.h"
 
+// Private host objects containing native C++ library members.
+#pragma pack(push, 16)
 namespace amos::host {
 
 void message(const char *text);     // overlay.cpp
@@ -137,3 +138,5 @@ bool drops_pending()
 }
 
 } // namespace amos::host
+
+#pragma pack(pop)

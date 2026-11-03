@@ -1,6 +1,6 @@
 // Pure text conversion at the host boundary; no guest pointers or SDL calls.
 #pragma once
-#include <string>
+#include "host/cxx.h"
 #include <stdint.h>
 
 namespace amos::host::clipboard {

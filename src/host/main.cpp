@@ -23,7 +23,7 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <string.h>
-#include <string>
+#include "host/cxx.h"
 #include "host/devices.h"
 #include <sys/stat.h>
 #if defined(__APPLE__)

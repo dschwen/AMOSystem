@@ -24,7 +24,10 @@ needs Rosetta for runtime testing; this is not native arm64 support.
 
 The framework defaults to `/Library/Frameworks/SDL2.framework`; override with
 `MACOS_SDL_FRAMEWORK=/path/to/SDL2.framework`. `MACOS_CXX` defaults to
-`clang++ -arch x86_64`. Framework symlinks are preserved and must stay within
+`/usr/bin/clang++ -arch x86_64`, selecting Apple Command Line Tools even when
+a Conda/Miniforge compiler is on PATH. Override `MACOS_BUILD` to use another
+object directory when switching toolchains (for example
+`MACOS_BUILD=build/macos-apple`). Framework symlinks are preserved and must stay within
 the framework. `lipo` and `otool` checks reject wrong architectures and
 unbundled non-system dependencies. Sources/default resources are staged from
 Git HEAD, excluding developer settings, untracked files and Amiga binaries.
@@ -100,3 +103,11 @@ and context validation. Do not enable PIE merely to satisfy a signing check.
 Repeat without the global SDL framework and without AMOS_HOME. Run the
 address/context probes under the final signing configuration. Test notarized
 release artifacts from quarantine before publishing.
+
+## C++ library packing
+
+The guest build uses `-fpack-struct=2` for AMOS/NDK data. Native C++ headers and
+private host structs containing library objects are explicitly restored to
+native alignment; the include boundary then restores guest packing. This
+avoids newer libc++ format-layout assertions such as `14 == 16`. Do not remove
+the guest packing flag globally or disable those library assertions.

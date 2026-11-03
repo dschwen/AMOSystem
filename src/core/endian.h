@@ -19,7 +19,10 @@ using be_i32 = int32_t;
 #else
 
 } // namespace amos
+// Standard-library types retain native alignment under the host pack flag.
+#pragma pack(push, 16)
 #include <type_traits>
+#pragma pack(pop)
 namespace amos {
 
 template <typename T> struct BigEndian {

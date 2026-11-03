@@ -296,18 +296,19 @@ game: host-release dist
 	@echo "made $(GAMEDIR): run $(GAMEDIR)/$(NAME)"
 
 # macOS distribution: build on macOS with Command Line Tools and SDL2.framework.
-MACOS_CXX ?= clang++ -arch x86_64
+MACOS_CXX ?= /usr/bin/clang++ -arch x86_64
+MACOS_BUILD ?= $(BUILD)/macos-release
 MACOS_SDL_FRAMEWORK ?= /Library/Frameworks/SDL2.framework
 MACOS_SIGN_IDENTITY ?= -
 .PHONY: macos-release package-dmg dmg
 macos-release:
 	@test "$$(uname -s)" = Darwin || { echo 'DMG builds require macOS (run make package-dmg on the Mac)'; exit 1; }
-	@mkdir -p $(BUILD)/macos-release
-	$(PYTHON) tools/extract_topaz.py --out $(BUILD)/macos-release/topaz.cpp --fallback data/fonts/topaz8
-	$(PYTHON) tools/extract_keymap.py --out $(BUILD)/macos-release/keymap.cpp
-	MACOSX_DEPLOYMENT_TARGET=11.0 $(MAKE) host HOST=$(BUILD)/macos-release HOST_CXX='$(MACOS_CXX)' HOST_OPT=-O2 KICKSTART= ROMKEY=
+	@mkdir -p $(MACOS_BUILD)
+	$(PYTHON) tools/extract_topaz.py --out $(MACOS_BUILD)/topaz.cpp --fallback data/fonts/topaz8
+	$(PYTHON) tools/extract_keymap.py --out $(MACOS_BUILD)/keymap.cpp
+	MACOSX_DEPLOYMENT_TARGET=11.0 $(MAKE) host HOST=$(MACOS_BUILD) HOST_CXX='$(MACOS_CXX)' HOST_OPT=-O2 KICKSTART= ROMKEY=
 
 package-dmg: macos-release
-	$(PYTHON) tools/package_macos.py --version '$(VERSION)' --build $(BUILD)/macos-release --framework '$(MACOS_SDL_FRAMEWORK)' --sign-identity '$(MACOS_SIGN_IDENTITY)'
+	$(PYTHON) tools/package_macos.py --version '$(VERSION)' --build $(MACOS_BUILD) --framework '$(MACOS_SDL_FRAMEWORK)' --sign-identity '$(MACOS_SIGN_IDENTITY)'
 
 dmg: package-dmg

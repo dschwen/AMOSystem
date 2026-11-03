@@ -4,15 +4,16 @@
 #include "editor/editor.h"
 #include "editor/clipboard.h"
 #include "host/clipboard_text.h"
-#include <string>
-#include <vector>
+#include "host/cxx.h"
 #include <string.h>
 
 using namespace amos;
 using namespace amos::ed;
 namespace {
 constexpr unsigned Header = 60;
+#pragma pack(push, 16)
 struct Line { std::string text; const uint8_t *tokens; uint32_t bytes; bool editable; };
+#pragma pack(pop)
 void tell(const char *s) { hal::clipboard_message(s); }
 void snapshot(uint8_t *to, const uint8_t *tokens, uint32_t size, uint16_t count,
               uint16_t y, uint16_t x)

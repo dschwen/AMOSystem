@@ -22,14 +22,10 @@
 #include <ftw.h>
 #endif
 
-#include <algorithm>
-#include <string>
-#include <utility>
-#include <vector>
+#include "host/cxx.h"
 
-// (No std::filesystem and no std::error_code here, or anywhere in the host: the host is built with
-// -fpack-struct=2 for the Amiga's structures, which changes their layout in our code but not
-// inside libstdc++.so, and a call across would write over the stack.)
+// Native filesystem/error-code work stays in normally compiled platform wrappers;
+// this file still uses guest packing for imported AMOS/NDK definitions.
 
 #include "host/windows_crt.h"
 
@@ -39,6 +35,8 @@
 #define mkdir(path, mode) amos::host::windows::make_directory(path)
 #endif
 
+// Private host objects containing native C++ library members.
+#pragma pack(push, 16)
 namespace amos::host {
 void disk_event(bool inserted);       // sdl.cpp: the input event DISKINSERTED / DISKREMOVED
 }
@@ -846,3 +844,5 @@ void each(void (*f)(const char *name, bool device, void *data), void *data)
 }
 
 } // namespace amos::host::devices
+
+#pragma pack(pop)
