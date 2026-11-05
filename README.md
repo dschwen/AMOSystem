@@ -101,8 +101,10 @@ AMOS_HOME="$PWD/AMOS" ./build/host/amos
 current installation layout. `make host-release` builds the optimised
 executable in `build/host-release/amos`. Use `make host` or `host-release`
 on macOS; `host-sdl` currently uses Linux-specific library link flags.
-Native Apple Silicon builds are not yet supported. The proposed Docker/OSXCross
-arm64 build route is described in [docs/MACOS-CROSS.md](docs/MACOS-CROSS.md).
+Native Apple Silicon builds are not yet supported. The
+[type-safe guest address translation plan](docs/GUEST-ADDRESSING.md) describes
+the required runtime refactor. The experimental Docker/OSXCross
+arm64 cross-build and remaining runtime gates are described in [docs/MACOS-CROSS.md](docs/MACOS-CROSS.md).
 
 To distribute an Intel app with SDL2 and the AMOS icon included, run
 `make package-dmg VERSION=0.1.3` on the Mac. The DMG and manifest appear under

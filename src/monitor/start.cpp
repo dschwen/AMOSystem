@@ -257,3 +257,7 @@ void mon_cold_start(AllRegs *r)
 
 void mon_free(AllRegs *) { free_all(); }
 }
+
+#if !defined(__mc68000__)
+#include "runtime/bindings/monitor_start.inc"
+#endif

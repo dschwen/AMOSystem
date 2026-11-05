@@ -480,3 +480,7 @@ void ed_status_free(AllRegs *) { status_free(); }
 void ed_status_name(AllRegs *) { status_name(); }
 void ed_name_to_buffer(AllRegs *r) { r->a[0] = address(name_into(ptr<uint8_t>(r->a[0]), program())); }
 }
+
+#if !defined(__mc68000__)
+#include "runtime/bindings/editor_status.inc"
+#endif

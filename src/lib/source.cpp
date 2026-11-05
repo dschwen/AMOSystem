@@ -49,3 +49,7 @@ uint32_t lib_tk_find_address(RegFrame *r)
     return n.number;
 }
 }
+
+#if !defined(__mc68000__)
+#include "runtime/bindings/lib_source.inc"
+#endif

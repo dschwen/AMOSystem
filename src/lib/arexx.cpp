@@ -183,3 +183,7 @@ extern "C" void lib_in_arexx_answer2(uint32_t code, const uint8_t *text)
 }
 
 extern "C" void lib_in_arexx_answer1(uint32_t code) { lib_in_arexx_answer2(code, ptr<uint8_t>(idata().ChVide)); }
+
+#if !defined(__mc68000__)
+#include "runtime/bindings/lib_arexx.inc"
+#endif

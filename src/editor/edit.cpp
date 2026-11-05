@@ -299,3 +299,7 @@ void ed_return_fn(AllRegs *)
     return_key();
 }
 }
+
+#if !defined(__mc68000__)
+#include "runtime/bindings/editor_edit.inc"
+#endif

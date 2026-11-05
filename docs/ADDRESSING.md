@@ -163,3 +163,7 @@ and layout audit plus regression tests, with the Amiga implementation retaining
 its native ABI. The [Windows](WINDOWS.md) and [Apple Silicon](APPLE-SILICON.md)
 plans distinguish this longer-term design from the current placement-based
 host ports.
+
+The measured Apple Silicon probe failure and a staged, compiler-enforced
+guest/native pointer migration are documented in
+[GUEST-ADDRESSING.md](GUEST-ADDRESSING.md).

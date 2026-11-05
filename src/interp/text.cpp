@@ -219,3 +219,7 @@ void interp_fn_resource(EvalOut *o)
     *o = {0, 0, TString, str_from_cstr(text), 0, 0};
 }
 }
+
+#if !defined(__mc68000__)
+#include "runtime/bindings/interp_text.inc"
+#endif

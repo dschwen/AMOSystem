@@ -1459,3 +1459,7 @@ void ed_update_split(AllRegs *r) { update_split(ptr<EditWindow>(r->a[0]), uint16
 void ed_follow_scroll(AllRegs *) { follow_scroll(); }
 void ed_link_cursor(AllRegs *) { link_cursor(); }
 }
+
+#if !defined(__mc68000__)
+#include "runtime/bindings/editor_windows.inc"
+#endif

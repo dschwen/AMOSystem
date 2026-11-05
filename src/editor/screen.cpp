@@ -261,3 +261,7 @@ void ed_memory_draw_title(AllRegs *r) { memory_draw(int16_t(r->d[1]), int16_t(r-
 void ed_unpack_fn(AllRegs *r) { unpack(uint16_t(r->d[0]), int16_t(r->d[1]), int16_t(r->d[2]), false); }
 void ed_unpack_title(AllRegs *r) { unpack(uint16_t(r->d[0]), int16_t(r->d[1]), int16_t(r->d[2]), true); }
 }
+
+#if !defined(__mc68000__)
+#include "runtime/bindings/editor_screen.inc"
+#endif

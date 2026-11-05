@@ -691,3 +691,7 @@ void mon_choose(AllRegs *r)
     }
 }
 }
+
+#if !defined(__mc68000__)
+#include "runtime/bindings/monitor_listing.inc"
+#endif

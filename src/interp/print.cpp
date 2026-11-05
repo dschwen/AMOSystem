@@ -287,3 +287,7 @@ void interp_in_print_h()
     print();
 }
 }
+
+#if !defined(__mc68000__)
+#include "runtime/bindings/interp_print.inc"
+#endif

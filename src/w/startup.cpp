@@ -367,3 +367,7 @@ void w_sy_end_all(AllRegs *r)
     r->d[0] = 0;
 }
 }
+
+#if !defined(__mc68000__)
+#include "runtime/bindings/w_startup.inc"
+#endif

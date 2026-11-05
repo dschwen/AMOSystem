@@ -1,9 +1,19 @@
 # Linux-to-macOS arm64 cross-compilation plan
 
-Status: proposed, researched 2026-11-05. No container, cross-build or native arm64
-support is implemented by this document. The current working Mac target is
-Intel; `package-dmg` explicitly builds and validates x86-64. This plan complements
-[the native Apple Silicon port plan](APPLE-SILICON.md).
+Status: prototype implemented and cross-built on Linux, 2026-11-05. The pinned
+Docker toolchain produces Intel and guarded arm64 AMOS Mach-O executables and
+standalone probes. ARM text/data begin above 4 GiB; native runtime support
+still requires the address-model work. See [actual commands and validation
+status](../packaging/macos-cross/README.md). The current release Mac target
+remains Intel; `package-dmg` is deliberately not changed to accept an ARM release.
+
+The plan below records the full port and its remaining gates, complementing
+[the native Apple Silicon plan](APPLE-SILICON.md).
+
+Native Apple Silicon results now confirm the address-model failure: code,
+globals and stack exceed 4 GiB, ordinary hints remain high and MAP_32BIT returns
+ENOMEM. Layout/C++/jump/basic-context probes pass. Continue with the
+[type-safe guest-address plan](GUEST-ADDRESSING.md).
 
 ## Recommended toolchain
 
@@ -110,7 +120,7 @@ unless changed. Introduce explicit target OS, CPU, architecture flags and
 linker selection, with defaults preserving existing Linux and Amiga targets.
 Architecture decisions must follow the compiler target, not container uname.
 
-Proposed targets, **not commands available today**:
+Implemented prototype targets:
 
 ```sh
 make macos-cross-toolchain
@@ -193,8 +203,9 @@ Docker cross-compile CI job and a separate Apple Silicon runtime job. A Linux
 container building ARM ELF or a Rosetta test of the Intel binary does not meet
 these arm64 acceptance criteria.
 
-Recommended first implementation: the pinned toolchain and standalone probes,
-plus an Intel cross-build control. The address-model decision determines the
+The initial implementation provides the pinned toolchain and standalone probes,
+plus linked Intel/ARM controls. Native probe execution confirms that guest
+address translation is required. That refactor determines the
 scope of the full native arm64 port; do not promise a ready-to-run AMOS binary
 from the Dockerfile alone.
 

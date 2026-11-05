@@ -678,3 +678,7 @@ void ed_get_error(AllRegs *r)
     r->d[0] = (uint32_t(int32_t(int16_t(r->d[0]))) & 0xFFFF0000) | uint16_t(e.code);
 }
 }
+
+#if !defined(__mc68000__)
+#include "runtime/bindings/editor_direct.inc"
+#endif

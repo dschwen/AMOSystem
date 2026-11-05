@@ -186,3 +186,7 @@ void interp_in_set_menu()
     }
 }
 }
+
+#if !defined(__mc68000__)
+#include "runtime/bindings/interp_menus.inc"
+#endif

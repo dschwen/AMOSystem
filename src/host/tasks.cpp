@@ -18,7 +18,9 @@
 #if defined(_WIN32)
 #include "host/windows_platform.h"
 #else
+#pragma pack(push,16)
 #include <ucontext.h>
+#pragma pack(pop)
 #endif
 
 using namespace amos;
@@ -27,7 +29,8 @@ namespace amos::host {
 
 namespace {
 
-struct HostTask {
+#pragma pack(push,16)
+struct alignas(16) HostTask {
 #if defined(_WIN32)
     void *context, *caller;
 #else
@@ -37,6 +40,7 @@ struct HostTask {
     void (*entry)();
     bool done;
 };
+#pragma pack(pop)
 
 constexpr int MaxTasks = 8;
 constexpr uint32_t StackSize = 256 * 1024;
@@ -98,6 +102,8 @@ void task_yield()
 }
 
 bool in_task() { return running != nullptr; }
+// Stable coroutine identity, not an address; zero denotes the main task.
+uint32_t recovery_task_id() { return running ? uint32_t(running - tasks) + 1 : 0; }
 
 } // namespace amos::host
 

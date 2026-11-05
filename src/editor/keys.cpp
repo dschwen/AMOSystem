@@ -193,3 +193,7 @@ void ed_function_keys(AllRegs *r)
         r->a[0] = address(keys);
 }
 }
+
+#if !defined(__mc68000__)
+#include "runtime/bindings/editor_keys.inc"
+#endif

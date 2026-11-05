@@ -150,3 +150,7 @@ extern "C" uint32_t lib_fn_scan2(uint32_t code, uint32_t shifts)
 }
 
 extern "C" uint32_t lib_fn_scan1(uint32_t code) { return lib_fn_scan2(code, 0); }
+
+#if !defined(__mc68000__)
+#include "runtime/bindings/lib_keyboard.inc"
+#endif

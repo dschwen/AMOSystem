@@ -104,3 +104,7 @@ void w_ec_autoback4(AllRegs *r)
     }
 }
 }
+
+#if !defined(__mc68000__)
+#include "runtime/bindings/w_autoback.inc"
+#endif

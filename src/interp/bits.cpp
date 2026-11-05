@@ -109,3 +109,7 @@ void interp_in_rol_b() { rotation(8, false); }
 void interp_in_rol_w() { rotation(16, false); }
 void interp_in_rol_l() { rotation(32, false); }
 }
+
+#if !defined(__mc68000__)
+#include "runtime/bindings/interp_bits.inc"
+#endif

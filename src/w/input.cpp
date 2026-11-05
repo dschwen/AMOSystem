@@ -283,3 +283,7 @@ void w_sy_test_cyclic(AllRegs *)
     d.Inhibit = 0;
 }
 }
+
+#if !defined(__mc68000__)
+#include "runtime/bindings/w_input.inc"
+#endif

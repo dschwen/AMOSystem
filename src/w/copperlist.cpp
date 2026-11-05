@@ -765,3 +765,7 @@ extern "C" {
 void w_ec_copper_make(AllRegs *r) { w_ec_copper(r, false); }
 void w_ec_copper_force(AllRegs *r) { w_ec_copper(r, true); }
 }
+
+#if !defined(__mc68000__)
+#include "runtime/bindings/w_copperlist.inc"
+#endif

@@ -321,3 +321,7 @@ void w_sy_wait_vbl(AllRegs *r)
     r->d[0] = 0;
 }
 }
+
+#if !defined(__mc68000__)
+#include "runtime/bindings/w_vbl.inc"
+#endif

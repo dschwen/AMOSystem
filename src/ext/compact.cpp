@@ -335,3 +335,7 @@ uint32_t ext_compact_cold(RegFrame &r) { return cold_start(r, ExtNb, 0x0110, nul
 uint32_t ext_compact_custom(RegFrame &r) { interp_error(r.d[0], 0, ExtNb, address(ErrMes)); }
 uint32_t ext_compact_custom2(RegFrame &r) { interp_error(r.d[0], 0, ExtNb, r.a[0]); }
 }
+
+#if !defined(__mc68000__)
+#include "runtime/bindings/ext_compact.inc"
+#endif

@@ -838,3 +838,7 @@ void w_ec_ntsc(AllRegs *r)
     r->d[1] = hal::vblank_frequency() == 50 ? 0 : 0xFFFFFFFF;
 }
 }
+
+#if !defined(__mc68000__)
+#include "runtime/bindings/w_screens.inc"
+#endif

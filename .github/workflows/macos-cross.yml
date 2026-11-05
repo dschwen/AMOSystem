@@ -1,0 +1,39 @@
+name: Experimental macOS cross-build
+on:
+  workflow_dispatch:
+    inputs:
+      architecture:
+        description: Darwin target architecture (runtime validation is separate)
+        type: choice
+        options: [arm64, x86_64]
+        default: arm64
+permissions:
+  contents: read
+jobs:
+  cross-build:
+    runs-on: ubuntu-24.04
+    env:
+      MACOS_ARCH: ${{ inputs.architecture }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Test binary validation and jump backends
+        run: |
+          python3 -m unittest discover -s tests -p test_macos_cross.py
+          python3 -m unittest discover -s tests -p test_macos_probe_runner.py
+      - name: Build pinned toolchain image
+        run: make macos-cross-toolchain
+      - name: Cross-build probes and experimental application
+        run: |
+          make macos-cross-probes
+          make host-macos-cross
+      - name: Preserve binaries and diagnostics (no native Mac execution here)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: experimental-darwin-${{ inputs.architecture }}
+          path: |
+            build/macos-cross/${{ inputs.architecture }}/amos
+            build/macos-cross/${{ inputs.architecture }}/*.json
+            build/macos-cross/${{ inputs.architecture }}/*.log
+            build/macos-cross/${{ inputs.architecture }}/link.txt
+            build/macos-cross/${{ inputs.architecture }}/probes/

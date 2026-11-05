@@ -1993,3 +1993,7 @@ extern "C" uint32_t lib_gfx_func(RegFrame &r)
         r.a[i] = a.a[i];
     return r.d[0];
 }
+
+#if !defined(__mc68000__)
+#include "runtime/bindings/lib_screens.inc"
+#endif

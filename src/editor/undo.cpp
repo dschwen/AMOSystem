@@ -224,3 +224,7 @@ void ed_redo(AllRegs *)
     q.Prg_PUndo = address(next(q, ptr<uint8_t>(q.Prg_PUndo)));
 }
 }
+
+#if !defined(__mc68000__)
+#include "runtime/bindings/editor_undo.inc"
+#endif

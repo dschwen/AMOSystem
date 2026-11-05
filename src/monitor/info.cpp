@@ -550,3 +550,7 @@ void mon_alert(AllRegs *r) { alert(ptr<uint8_t>(r->a[0])); }
 void mon_alert_delete(AllRegs *) { alert_delete(); }
 void mon_delete_show(AllRegs *r) { delete_show(uint16_t(r->d[0])); }
 }
+
+#if !defined(__mc68000__)
+#include "runtime/bindings/monitor_info.inc"
+#endif

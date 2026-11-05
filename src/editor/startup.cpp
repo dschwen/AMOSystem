@@ -487,3 +487,7 @@ void ed_draw_top_fn(AllRegs *) { draw_top(); }
 void ed_tokens_init(AllRegs *r) { r->d[0] = tokens_init() ? 0 : 1; }
 void ed_tokens_end(AllRegs *) { tokens_end(); }
 }
+
+#if !defined(__mc68000__)
+#include "runtime/bindings/editor_startup.inc"
+#endif

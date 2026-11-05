@@ -87,7 +87,7 @@ AllRegs kept()
     }
     banks(mon_banks_program_entry, r);
     program_screen();
-    mark_jump_regs(d.BasSp, resume, kept());
+    mark_jump_regs(d.BasSp.load(), resume, kept());
 }
 
 // The monitor stopped on an instruction: its display, its loop
@@ -192,7 +192,7 @@ void monitor_chr(AllRegs &r)
     AllRegs t = r;
     t.a[4] = d.Mon_Base;
     t.a[3] = m.Tt_Program;
-    mark_jump_regs(d.BasSp, stopped, t);
+    mark_jump_regs(d.BasSp.load(), stopped, t);
 }
 
 // Tt_GetTheMessage: the message of error d0 (a0 if given); d2 the error
@@ -293,7 +293,7 @@ void host_In_Program(AllRegs &r)
 
 void host_MonitorChr(AllRegs &r) { monitor_chr(r); }
 
-void host_mon_error(AllRegs &r) { mark_jump_regs(idata().BasSp, error_stop, r); }
+void host_mon_error(AllRegs &r) { mark_jump_regs(idata().BasSp.load(), error_stop, r); }
 
 // Tt_Tst1, Tt_Tst3: nothing
 void host_mon_test_nothing(AllRegs &) {}
@@ -313,7 +313,7 @@ void host_mon_evaluate(AllRegs &r)
     AllRegs out;
     for (;;) {
         Mark mark;
-        m.Tt_EvPile = address(&mark);
+        m.Tt_EvPile.store(mark_token(mark));
         evaluation = EvOk;
         out = mark_run(mark, [&] {
             AllRegs e = r;
@@ -351,7 +351,7 @@ void host_mon_evaluate(AllRegs &r)
 void host_mon_ev_error(AllRegs &r)
 {
     evaluation = EvError;
-    mark_return(mon().Tt_EvPile, r);
+    mark_return(mon().Tt_EvPile.load(), r);
 }
 
 // Tt_Menage: the strings' space cleaned, the expression again from its
@@ -361,7 +361,7 @@ void host_mon_menage(AllRegs &r)
     if (!mon().Tt_EvDebut)
         error(11);
     evaluation = EvAgain;
-    mark_return(mon().Tt_EvPile, r);
+    mark_return(mon().Tt_EvPile.load(), r);
 }
 
 } // namespace amos::host
@@ -389,7 +389,7 @@ extern "C" {
         r.d[7] = s[8];
         w::release(data, MonData::Tt_DzLong);
         program_screen();
-        mark_jump_regs(d.BasSp, resume, r);
+        mark_jump_regs(d.BasSp.load(), resume, r);
     }
     w::release(data, MonData::Tt_DzLong);
     d.Prg_Runned = 0;
@@ -405,3 +405,7 @@ extern "C" {
 }
 
 } // extern "C"
+
+#if !defined(__mc68000__)
+#include "runtime/bindings/runtime_monitor.inc"
+#endif

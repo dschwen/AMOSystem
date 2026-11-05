@@ -16,8 +16,8 @@ void relocate_src_monitor_start_glue_s()
 }
 
 const GlueEntry entries_src_monitor_start_glue_s[] = {
-    {host_obj_src_monitor_start_glue_s + 0, GlueKind::w, reinterpret_cast<const void *>(&mon_cold_start), nullptr, 0, 4, "mon_cold_start_entry"},
-    {host_obj_src_monitor_start_glue_s + 4, GlueKind::w, reinterpret_cast<const void *>(&mon_free), nullptr, 0, 4, "mon_free_entry"},
+    {host_obj_src_monitor_start_glue_s + 0, GlueKind::w, AMOS_BIND_W(mon_cold_start), nullptr, 0, 4, "mon_cold_start_entry"},
+    {host_obj_src_monitor_start_glue_s + 4, GlueKind::w, AMOS_BIND_W(mon_free), nullptr, 0, 4, "mon_free_entry"},
     {nullptr, GlueKind::missing, nullptr, nullptr, 0, 0, nullptr},
 };
 

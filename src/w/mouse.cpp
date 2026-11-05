@@ -648,3 +648,7 @@ void w_sy_hardcol_get(AllRegs *r)
     r->d[0] = 0;
 }
 }
+
+#if !defined(__mc68000__)
+#include "runtime/bindings/w_mouse.inc"
+#endif

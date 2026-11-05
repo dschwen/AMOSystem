@@ -250,3 +250,7 @@ int32_t w_collision_get(uint8_t *data, int32_t n)
     return 0;
 }
 }
+
+#if !defined(__mc68000__)
+#include "runtime/bindings/w_collision.inc"
+#endif

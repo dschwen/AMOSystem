@@ -586,3 +586,7 @@ void interp_fn_min(EvalOut *o)
     *o = {0, 0, v.type, v.v1, v.v2, 0};
 }
 }
+
+#if !defined(__mc68000__)
+#include "runtime/bindings/interp_eval.inc"
+#endif

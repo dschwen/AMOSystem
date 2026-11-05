@@ -839,3 +839,7 @@ extern "C" uint32_t lib_fn_command_line()
         return str_empty();
     return str_from(from + 6, len);
 }
+
+#if !defined(__mc68000__)
+#include "runtime/bindings/lib_iff.inc"
+#endif

@@ -249,3 +249,7 @@ void interp_in_polyline() { polyline(); }
 void interp_in_polygon() { polygon(); }
 void interp_in_channel() { channel(); }
 }
+
+#if !defined(__mc68000__)
+#include "runtime/bindings/interp_graphics.inc"
+#endif

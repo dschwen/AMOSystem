@@ -145,3 +145,7 @@ void ed_marks_to_numbers(AllRegs *)
     }
 }
 }
+
+#if !defined(__mc68000__)
+#include "runtime/bindings/editor_marks.inc"
+#endif

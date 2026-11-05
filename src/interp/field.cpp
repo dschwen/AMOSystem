@@ -80,3 +80,7 @@ extern "C" void interp_in_field()
     hal::seek(file, 0, OFFSET_END);
     poke_l(record + 4, uint32_t(hal::seek(file, 0, OFFSET_BEGINNING)));
 }
+
+#if !defined(__mc68000__)
+#include "runtime/bindings/interp_field.inc"
+#endif

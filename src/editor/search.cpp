@@ -424,3 +424,7 @@ void ed_replace_next(AllRegs *) { replace_next(false); }
 void ed_replace_previous(AllRegs *) { replace_next(true); }
 void ed_search_dialogue(AllRegs *r) { r->d[0] = (r->d[0] & 0xFFFF0000) | uint16_t(search_dialogue(uint16_t(r->d[0]))); }
 }
+
+#if !defined(__mc68000__)
+#include "runtime/bindings/editor_search.inc"
+#endif

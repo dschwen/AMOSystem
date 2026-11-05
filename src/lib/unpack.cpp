@@ -161,3 +161,7 @@ extern "C" uint32_t lib_sc_copy(RegFrame &r)
     lib_sco0(copy);
     return r.d[0];
 }
+
+#if !defined(__mc68000__)
+#include "runtime/bindings/lib_unpack.inc"
+#endif

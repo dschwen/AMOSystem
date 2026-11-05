@@ -1792,3 +1792,7 @@ void w_amal_init_c(AllRegs *r)
     w_sy_amal_clr(r);
 }
 }
+
+#if !defined(__mc68000__)
+#include "runtime/bindings/w_amal.inc"
+#endif

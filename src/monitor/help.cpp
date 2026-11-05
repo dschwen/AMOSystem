@@ -355,3 +355,7 @@ void help_free() { free_map(); }
 extern "C" {
 void mon_free_map(AllRegs *) { free_map(); }
 }
+
+#if !defined(__mc68000__)
+#include "runtime/bindings/monitor_help.inc"
+#endif

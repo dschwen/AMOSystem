@@ -506,3 +506,7 @@ extern "C" uint32_t ext_ioports_cold(RegFrame &r)
     poke_w(data_zone + Special, 0x84);
     return cold_start(r, ExtNb, 0x0200, nullptr);
 }
+
+#if !defined(__mc68000__)
+#include "runtime/bindings/ext_ioports.inc"
+#endif

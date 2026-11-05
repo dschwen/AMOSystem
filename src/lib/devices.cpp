@@ -454,3 +454,7 @@ extern "C" uint32_t lib_fn_lib_call(uint32_t channel, uint32_t f)
         error(169);
     return library_call(base, f);
 }
+
+#if !defined(__mc68000__)
+#include "runtime/bindings/lib_devices.inc"
+#endif

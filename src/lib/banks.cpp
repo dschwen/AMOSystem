@@ -887,3 +887,7 @@ extern "C" uint32_t lib_fn_length(uint32_t n)
 // =CHIP FREE, =FAST FREE
 extern "C" uint32_t lib_fn_chip_free() { return hal::available_memory(hal::MemoryChip); }
 extern "C" uint32_t lib_fn_fast_free() { return hal::available_memory(hal::MemoryFast); }
+
+#if !defined(__mc68000__)
+#include "runtime/bindings/lib_banks.inc"
+#endif

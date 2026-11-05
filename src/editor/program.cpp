@@ -253,3 +253,7 @@ void ed_open_load(AllRegs *r)
     r->a[6] = address(ctx().a6);
 }
 }
+
+#if !defined(__mc68000__)
+#include "runtime/bindings/editor_program.inc"
+#endif

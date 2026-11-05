@@ -54,3 +54,7 @@ extern "C" uint32_t ext_request_cold(RegFrame &r)
     idata().ExtAdr[ExtNb * 4 + 1] = address(ext_request_warm_entry);
     return cold_start(r, ExtNb, 0x0200, nullptr);
 }
+
+#if !defined(__mc68000__)
+#include "runtime/bindings/ext_request.inc"
+#endif

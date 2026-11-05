@@ -643,3 +643,7 @@ void ver_prg_save(AllRegs *r)
 }
 
 }
+
+#if !defined(__mc68000__)
+#include "runtime/bindings/verif_program.inc"
+#endif

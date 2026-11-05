@@ -124,3 +124,7 @@ void w_sy_request_on_off(AllRegs *r)
     wdata().ReqFlag = uint16_t(r->d[0]);
 }
 }
+
+#if !defined(__mc68000__)
+#include "runtime/bindings/w_system.inc"
+#endif

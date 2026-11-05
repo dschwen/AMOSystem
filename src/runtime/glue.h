@@ -5,6 +5,7 @@
 #pragma once
 
 #include "core/amos.h"
+#include "runtime/native_binding.h"
 
 // The data of a section of chip memory (the Amiga's)
 #if defined(__mc68000__)
@@ -36,14 +37,24 @@ enum class GlueKind : uint8_t {
     hand,           // assembler done by src/host: host_<name>(AllRegs &)
     missing,        // assembler with no C++ here
 };
+#if !defined(__mc68000__)
+#pragma pack(push,8)
+#endif
 struct GlueEntry {
     const uint8_t *at;
     GlueKind kind;
+#if defined(__mc68000__)
     const void *fn;
+#else
+    NativeBinding binding;
+#endif
     const void *target;
     int32_t a1, a2;
     const char *name;
 };
+#if !defined(__mc68000__)
+#pragma pack(pop)
+#endif
 
 // The tables of src/tables: the lists of entries (each ends with an entry
 // with no address), and the relocation of their data

@@ -745,3 +745,7 @@ void w_sy_sprite_buffer(AllRegs *r)
     r->d[0] = 1;
 }
 }
+
+#if !defined(__mc68000__)
+#include "runtime/bindings/w_sprites.inc"
+#endif

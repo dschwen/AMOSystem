@@ -487,3 +487,7 @@ void ed_cursor_on(AllRegs *) { print(ed_cursor_on_text); }
 
 void ed_cursor_off(AllRegs *) { cursor_off(); }
 }
+
+#if !defined(__mc68000__)
+#include "runtime/bindings/editor_display.inc"
+#endif

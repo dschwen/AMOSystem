@@ -64,7 +64,7 @@ template <typename T> inline T *ptr(uint32_t address)
 template <typename T> inline uint32_t address(T *p) { return uint32_t(reinterpret_cast<uintptr_t>(p)); }
 
 // The interpreter registers, as saved by the glue
-struct Ctx {
+struct alignas(void*) Ctx {
     uint32_t d6, d7;
     uint8_t *a3, *a4, *a5, *a6;
 };
@@ -90,22 +90,27 @@ Ctx &ctx();
 
 // The registers of a call into the assembler: d0-d7/a0-a2. d6/d7 start as
 // the interpreter's (Demande, for one, depends on d7); a3-a6 always are.
-struct Regs {
+struct alignas(uint32_t) Regs {
     uint32_t d[8] = {0, 0, 0, 0, 0, 0, ctx().d6, ctx().d7};
     uint32_t a[3] = {0, 0, 0};
 };
 
 // The registers of a RegRoutine (src/glue.i), changed in place
-struct RegFrame {
+struct alignas(uint32_t) RegFrame {
     uint32_t d[8];      // d0-d7
     uint32_t a[3];      // a0-a2
 };
 
 // All the registers, for calls into code that wants its own a3-a6
-struct AllRegs {
+struct alignas(uint32_t) AllRegs {
     uint32_t d[8];
     uint32_t a[7];
 };
+
+// These native boundary records keep their ABI in both packed and normally
+// compiled units. The Amiga's natural alignments remain two bytes.
+static_assert(offsetof(Ctx, a3) == 8 && sizeof(Ctx) == 8 + 4 * sizeof(void*));
+static_assert(sizeof(Regs) == 44 && sizeof(RegFrame) == 44 && sizeof(AllRegs) == 60);
 
 extern "C" {
 void amos_call(Regs *r, const void *fn);

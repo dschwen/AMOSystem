@@ -196,3 +196,7 @@ void w_ec_cop_base(AllRegs *r)
     r->d[0] = 0;
 }
 }
+
+#if !defined(__mc68000__)
+#include "runtime/bindings/w_copper.inc"
+#endif

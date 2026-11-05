@@ -22,9 +22,9 @@ using namespace amos;
 using namespace amos::interp;
 
 extern "C" {
-[[noreturn]] void interp_continue(uint32_t sp, uint32_t ret);
+[[noreturn]] void interp_continue(amos::host::MarkHandle sp, uint32_t ret);
 [[noreturn]] void interp_jump(const Regs *r, const void *fn);
-[[noreturn]] void interp_menu_return(uint32_t pile);
+[[noreturn]] void interp_menu_return(amos::host::MarkHandle pile);
 // control_glue.s: the record of OMnEff for ClearVar
 
 // Next with floats (NextF): 1 stay in the loop
@@ -88,7 +88,7 @@ bool finished(uint16_t t) { return !t || t == tk::DP || t == tk::Then || t == tk
 [[noreturn]] void go_on()
 {
     IData &d = data();
-    interp_continue(d.BasSp, d.Prg_InsRet);
+    interp_continue(d.BasSp.load(), d.Prg_InsRet);
 }
 
 } // namespace
@@ -966,7 +966,7 @@ void interp_in_end_proc()
     uint32_t back = pop_procedure(a3(), false);
     pc() = ptr<uint8_t>(back);
     if (!back)
-        interp_menu_return(d.MnPile);
+        interp_menu_return(d.MnPile.load());
 }
 
 void interp_in_pop_proc()
@@ -1170,3 +1170,7 @@ void interp_omn_eff()
     lib_call(L_OMnEff, r);
 }
 }
+
+#if !defined(__mc68000__)
+#include "runtime/bindings/interp_control.inc"
+#endif

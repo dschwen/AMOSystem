@@ -189,3 +189,7 @@ void interp_fn_struc_d(EvalOut *o)
     *o = {0, 0, TString, s, 0, 0};
 }
 }
+
+#if !defined(__mc68000__)
+#include "runtime/bindings/interp_system.inc"
+#endif

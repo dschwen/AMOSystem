@@ -147,3 +147,7 @@ uint32_t lib_ad_bob(RegFrame &r) { return image(r, lib_bnk_ad_bob); }
 uint32_t lib_ad_icon(RegFrame &r) { return image(r, lib_bnk_ad_icon); }
 
 } // extern "C"
+
+#if !defined(__mc68000__)
+#include "runtime/bindings/lib_stubs.inc"
+#endif

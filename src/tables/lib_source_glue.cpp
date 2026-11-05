@@ -16,11 +16,11 @@ void relocate_src_lib_source_glue_s()
 }
 
 const GlueEntry entries_src_lib_source_glue_s[] = {
-    {host_obj_src_lib_source_glue_s + 0, GlueKind::reg, reinterpret_cast<const void *>(&lib_tk_find_line), nullptr, 0, 0, "tk_find_line"},
-    {host_obj_src_lib_source_glue_s + 4, GlueKind::reg, reinterpret_cast<const void *>(&lib_tk_find_first), nullptr, 0, 0, "tk_find_first"},
-    {host_obj_src_lib_source_glue_s + 8, GlueKind::reg, reinterpret_cast<const void *>(&lib_tk_size_line), nullptr, 0, 0, "tk_size_line"},
-    {host_obj_src_lib_source_glue_s + 12, GlueKind::reg, reinterpret_cast<const void *>(&lib_tk_editable), nullptr, 0, 0, "tk_editable"},
-    {host_obj_src_lib_source_glue_s + 16, GlueKind::reg, reinterpret_cast<const void *>(&lib_tk_find_address), nullptr, 0, 0, "tk_find_address"},
+    {host_obj_src_lib_source_glue_s + 0, GlueKind::reg, AMOS_BIND_REG(lib_tk_find_line), nullptr, 0, 0, "tk_find_line"},
+    {host_obj_src_lib_source_glue_s + 4, GlueKind::reg, AMOS_BIND_REG(lib_tk_find_first), nullptr, 0, 0, "tk_find_first"},
+    {host_obj_src_lib_source_glue_s + 8, GlueKind::reg, AMOS_BIND_REG(lib_tk_size_line), nullptr, 0, 0, "tk_size_line"},
+    {host_obj_src_lib_source_glue_s + 12, GlueKind::reg, AMOS_BIND_REG(lib_tk_editable), nullptr, 0, 0, "tk_editable"},
+    {host_obj_src_lib_source_glue_s + 16, GlueKind::reg, AMOS_BIND_REG(lib_tk_find_address), nullptr, 0, 0, "tk_find_address"},
     {nullptr, GlueKind::missing, nullptr, nullptr, 0, 0, nullptr},
 };
 

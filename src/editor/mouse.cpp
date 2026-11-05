@@ -188,3 +188,7 @@ extern "C" {
 // Ed_Mouse: d0 -1 if the mouse did something, 0 if not
 void ed_mouse(AllRegs *r) { r->d[0] = mouse() ? 0xFFFFFFFF : 0; }
 }
+
+#if !defined(__mc68000__)
+#include "runtime/bindings/editor_mouse.inc"
+#endif

@@ -1581,8 +1581,8 @@ void relocate__B_s()
 
 const GlueEntry entries__B_s[] = {
     {host_obj__B_s + 0, GlueKind::alias, nullptr, reinterpret_cast<const void *>(host_obj__B_s + 616), 0, 0, "Hunk_1"},
-    {host_obj__B_s + 6, GlueKind::hand, reinterpret_cast<const void *>(&host_Init_Fin), nullptr, 0, 0, "Init_Fin"},
-    {host_obj__B_s + 10, GlueKind::hand, reinterpret_cast<const void *>(&host_TheEnd), nullptr, 0, 0, "TheEnd"},
+    {host_obj__B_s + 6, GlueKind::hand, AMOS_BIND_HAND(host_Init_Fin), nullptr, 0, 0, "Init_Fin"},
+    {host_obj__B_s + 10, GlueKind::hand, AMOS_BIND_HAND(host_TheEnd), nullptr, 0, 0, "TheEnd"},
     {host_obj__B_s + 14, GlueKind::missing, nullptr, nullptr, 0, 0, "main_get_out"},
     {host_obj__B_s + 18, GlueKind::missing, nullptr, nullptr, 0, 0, "Get_Out"},
     {host_obj__B_s + 182, GlueKind::missing, nullptr, nullptr, 0, 0, "PreBug"},
@@ -1599,7 +1599,7 @@ const GlueEntry entries__B_s[] = {
     {host_obj__B_s + 244, GlueKind::alias, nullptr, reinterpret_cast<const void *>(host_obj_src_verif_buffers_glue_s + 20), 0, 0, "ResVNom"},
     {host_obj__B_s + 250, GlueKind::alias, nullptr, reinterpret_cast<const void *>(host_obj_src_verif_buffers_glue_s + 24), 0, 0, "Includes_Clear"},
     {host_obj__B_s + 256, GlueKind::alias, nullptr, reinterpret_cast<const void *>(host_obj_src_verif_buffers_glue_s + 28), 0, 0, "Includes_Adr"},
-    {host_obj__B_s + 270, GlueKind::hand, reinterpret_cast<const void *>(&host_Prg_RunIt), nullptr, 0, 0, "Prg_RunIt"},
+    {host_obj__B_s + 270, GlueKind::hand, AMOS_BIND_HAND(host_Prg_RunIt), nullptr, 0, 0, "Prg_RunIt"},
     {host_obj__B_s + 274, GlueKind::lib_jump, nullptr, nullptr, 134, 0, "Prg_RunIt.Go"},
     {host_obj__B_s + 278, GlueKind::alias, nullptr, reinterpret_cast<const void *>(host_obj_src_verif_program_glue_s + 4), 0, 0, "Prg_TestIt"},
     {host_obj__B_s + 284, GlueKind::alias, nullptr, reinterpret_cast<const void *>(host_obj_src_verif_program_glue_s + 68), 0, 0, "Prg_DejaRunned"},

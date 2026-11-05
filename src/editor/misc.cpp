@@ -186,3 +186,7 @@ void ed_workbench(AllRegs *)
     ec_call(ec::AMOS_WB, r);
 }
 }
+
+#if !defined(__mc68000__)
+#include "runtime/bindings/editor_misc.inc"
+#endif

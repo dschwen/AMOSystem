@@ -409,3 +409,7 @@ void ed_warm_start(AllRegs *r)
     r->a[6] = address(ctx().a6);
 }
 }
+
+#if !defined(__mc68000__)
+#include "runtime/bindings/editor_session.inc"
+#endif

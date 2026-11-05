@@ -330,3 +330,7 @@ void ed_block_limits_2(AllRegs *r)
     r->d[3] = (r->d[3] & 0xFFFF0000) | y2;
 }
 }
+
+#if !defined(__mc68000__)
+#include "runtime/bindings/editor_blocksave.inc"
+#endif

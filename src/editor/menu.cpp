@@ -1071,3 +1071,7 @@ void ed_menu_fn(AllRegs *r)
     }
 }
 }
+
+#if !defined(__mc68000__)
+#include "runtime/bindings/editor_menu.inc"
+#endif

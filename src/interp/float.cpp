@@ -521,3 +521,7 @@ uint32_t interp_float2ascii_d(RegFrame &r)
     return 0;
 }
 }
+
+#if !defined(__mc68000__)
+#include "runtime/bindings/interp_float.inc"
+#endif

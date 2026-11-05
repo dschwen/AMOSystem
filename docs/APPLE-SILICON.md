@@ -1,6 +1,8 @@
 # Apple Silicon host port plan
 
-Status: proposed; native arm64 compilation and execution have not been tested.
+Status: native arm64 execution remains unsupported. Linux/Docker cross-compilation
+now produces a guarded arm64 executable and native probes. Hardware probe
+execution confirms that the current direct-pointer address model fails.
 The existing macOS port targets x86-64. This plan covers native arm64 execution,
 not running the Intel executable through Rosetta.
 
@@ -21,6 +23,11 @@ cross-compilation plan for the container and implementation sequence.
 Use explicit `-arch arm64` compilation and linking with a separate
 build/host-arm64 directory. Target ordinary arm64, not arm64e. Choose and
 document the minimum supported macOS/SDK versions after the probes below.
+
+The hardware probes have now failed the direct-pointer address gate while
+passing layout, native C++, nested jumps and basic context switching. The next
+implementation is planned in [GUEST-ADDRESSING.md](GUEST-ADDRESSING.md), with
+compiler-enforced guest/native pointer separation.
 
 ## 1. Resolve the address model before porting the full program
 

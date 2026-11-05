@@ -341,3 +341,7 @@ void w_ec_rain_hide(AllRegs *r)
     }
 }
 }
+
+#if !defined(__mc68000__)
+#include "runtime/bindings/w_rainbow.inc"
+#endif

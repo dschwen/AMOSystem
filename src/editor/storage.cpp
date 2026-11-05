@@ -218,3 +218,7 @@ void ed_next_line(AllRegs *r)
     r->d[0] = (r->d[0] & 0xFFFF0000) | peek_w(line);
 }
 }
+
+#if !defined(__mc68000__)
+#include "runtime/bindings/editor_storage.inc"
+#endif

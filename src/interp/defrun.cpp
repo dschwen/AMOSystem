@@ -205,3 +205,7 @@ uint32_t interp_defrun_extensions(RegFrame &)
     return 0;
 }
 }
+
+#if !defined(__mc68000__)
+#include "runtime/bindings/interp_defrun.inc"
+#endif

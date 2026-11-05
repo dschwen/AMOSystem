@@ -89,3 +89,7 @@ void host_Prg_RunIt(AllRegs &r)
 }
 
 } // namespace amos::host
+
+#if !defined(__mc68000__)
+#include "runtime/bindings/runtime_hand.inc"
+#endif

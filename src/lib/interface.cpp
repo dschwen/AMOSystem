@@ -442,3 +442,7 @@ extern "C" void lib_in_read_text3(uint32_t title, uint32_t text, uint32_t length
     str_alloc(256);
     read_text(title, text, length);
 }
+
+#if !defined(__mc68000__)
+#include "runtime/bindings/lib_interface.inc"
+#endif

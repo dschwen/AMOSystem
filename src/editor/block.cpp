@@ -511,3 +511,7 @@ void ed_block_copy(AllRegs *r)
 void ed_block_insert(AllRegs *r) { r->d[0] = insert(ptr<be_u32>(r->a[0])) ? 0xFFFFFFFF : 0; }
 void ed_block_delete(AllRegs *r) { r->d[0] = remove(ptr<be_u32>(r->a[0])) ? 0xFFFFFFFF : 0; }
 }
+
+#if !defined(__mc68000__)
+#include "runtime/bindings/editor_block.inc"
+#endif

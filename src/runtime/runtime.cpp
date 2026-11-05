@@ -1,13 +1,14 @@
 // The machine parts of the interpreter on another host: what the
 // assembler did with the stack pointer (the interpreter's stack at BasSp,
 // PRUN's, the editor driven by a program, a menu's procedure) is done with
-// marks set with setjmp; the stack pointers AMOS keeps (BasSp, MnPile) are
-// their addresses. Also the entries of the assembler the interpreter calls
+// marks set with setjmp; BasSp and MnPile carry opaque recovery tokens on
+// hosts, retaining native stack semantics on the Amiga. Also the entries of the assembler the interpreter calls
 // (chrget_glue.s, control_glue.s, run_glue.s...).
 
 #include "runtime/runtime.h"
 #include "runtime/glue.h"
 #include "runtime/marks.h"
+#include "runtime/context_handle.h"
 #include "interp/interp.h"
 #include "hal/chips.h"
 
@@ -37,9 +38,13 @@ void run_at(Mark &m)
     m.regs = r;
 }
 
-[[noreturn]] void mark_jump(uint32_t mark, const void *target, const AllRegs &r, const void *then)
+[[noreturn]] void mark_jump(MarkHandle mark, const void *target, const AllRegs &r, const void *then)
 {
-    Mark &m = *ptr<Mark>(mark);
+#if defined(__mc68000__)
+    Mark &m = *ptr<Mark>(encode_mark(mark));
+#else
+    Mark &m = mark_unwind(mark);
+#endif
     m.target = target;
     m.then = then;
     m.fn = nullptr;
@@ -48,9 +53,13 @@ void run_at(Mark &m)
     longjmp(m.jb, MarkRun);
 }
 
-[[noreturn]] void mark_jump_regs(uint32_t mark, void (*fn)(AllRegs &), const AllRegs &r)
+[[noreturn]] void mark_jump_regs(MarkHandle mark, void (*fn)(AllRegs &), const AllRegs &r)
 {
-    Mark &m = *ptr<Mark>(mark);
+#if defined(__mc68000__)
+    Mark &m = *ptr<Mark>(encode_mark(mark));
+#else
+    Mark &m = mark_unwind(mark);
+#endif
     m.target = m.then = nullptr;
     m.fn = nullptr;
     m.regs_fn = fn;
@@ -58,9 +67,13 @@ void run_at(Mark &m)
     longjmp(m.jb, MarkRun);
 }
 
-[[noreturn]] void mark_jump_cpp(uint32_t mark, void (*fn)(), const AllRegs &r)
+[[noreturn]] void mark_jump_cpp(MarkHandle mark, void (*fn)(), const AllRegs &r)
 {
-    Mark &m = *ptr<Mark>(mark);
+#if defined(__mc68000__)
+    Mark &m = *ptr<Mark>(encode_mark(mark));
+#else
+    Mark &m = mark_unwind(mark);
+#endif
     m.target = m.then = nullptr;
     m.fn = fn;
     m.regs_fn = nullptr;
@@ -68,9 +81,13 @@ void run_at(Mark &m)
     longjmp(m.jb, MarkRun);
 }
 
-[[noreturn]] void mark_return(uint32_t mark, const AllRegs &r)
+[[noreturn]] void mark_return(MarkHandle mark, const AllRegs &r)
 {
-    Mark &m = *ptr<Mark>(mark);
+#if defined(__mc68000__)
+    Mark &m = *ptr<Mark>(encode_mark(mark));
+#else
+    Mark &m = mark_unwind(mark);
+#endif
     m.regs = r;
     longjmp(m.jb, MarkReturn);
 }
@@ -79,7 +96,7 @@ void run_at(Mark &m)
 [[noreturn]] void base_run(void (*start)(uint32_t base))
 {
     static Mark base;
-    mark_run(base, [&] { start(address(&base)); });
+    mark_run(base, [&] { start(mark_word(base)); });
     missing("return to the base stack from", base.target);
 }
 
@@ -106,7 +123,7 @@ void new_chrget()
 
 namespace amos::host {
 
-void host_New_ChrGet(AllRegs &r) { mark_jump_cpp(idata().BasSp, new_chrget, r); }
+void host_New_ChrGet(AllRegs &r) { mark_jump_cpp(idata().BasSp.load(), new_chrget, r); }
 
 // Prg_InsRet: back into the ChrGet loop at a6
 void host_interp_iret(AllRegs &r)
@@ -116,7 +133,7 @@ void host_interp_iret(AllRegs &r)
 }
 
 // PRun_Errors: the errors of a program run by PRUN come back to it
-void host_interp_prun_errors(AllRegs &r) { mark_return(idata().BasSp, r); }
+void host_interp_prun_errors(AllRegs &r) { mark_return(idata().BasSp.load(), r); }
 
 } // namespace amos::host
 
@@ -149,7 +166,7 @@ void interp_exec_value(const void *routine, uint32_t d0, uint32_t d1, const inte
 void interp_step_instruction(uint32_t t) { interp_run_instruction(t); }
 
 // The interpreter goes on at ret, the stack at sp (the instruction given up)
-[[noreturn]] void interp_continue(uint32_t sp, uint32_t ret) { mark_jump(sp, ptr<void>(ret), context_regs()); }
+[[noreturn]] void interp_continue(MarkHandle sp, uint32_t ret) { mark_jump(sp, ptr<void>(ret), context_regs()); }
 
 // To fn with d0-d5/a0-a2 from r and the interpreter registers of the
 // context, on the stack as it is
@@ -166,13 +183,13 @@ void interp_step_instruction(uint32_t t) { interp_run_instruction(t); }
 
 // An instruction started again: the stack at sp, its routine (r->a[0])
 // with all of r, then ret
-[[noreturn]] void interp_restart(uint32_t sp, uint32_t ret, const AllRegs *r)
+[[noreturn]] void interp_restart(MarkHandle sp, uint32_t ret, const AllRegs *r)
 {
     mark_jump(sp, ptr<void>(r->a[0]), *r, ptr<void>(ret));
 }
 
 // End Proc of a procedure a menu called: back to the call, d0 = 0
-[[noreturn]] void interp_menu_return(uint32_t pile)
+[[noreturn]] void interp_menu_return(MarkHandle pile)
 {
     AllRegs r = context_regs();
     r.d[0] = 0;
@@ -185,9 +202,9 @@ uint32_t interp_prun_run(uint32_t program, const void *run_it)
 {
     IData &d = idata();
     Ctx saved = ctx();
-    uint32_t bas_sp = d.BasSp;
+    MarkHandle bas_sp = d.BasSp.load();
     Mark m;
-    d.BasSp = address(&m);
+    d.BasSp.store(mark_token(m));
     AllRegs r = context_regs();
     r.a[6] = program;
     r.d[0] = uint32_t(-1);
@@ -198,7 +215,7 @@ uint32_t interp_prun_run(uint32_t program, const void *run_it)
         m.regs = r;
         m.regs.d[0] = uint32_t(-1);
     });
-    idata().BasSp = bas_sp;
+    idata().BasSp.store(bas_sp);
     ctx() = saved;
     return out.d[0];
 }
@@ -209,9 +226,9 @@ void interp_zap_in(Regs *r, const void *zap_in)
 {
     IData &d = idata();
     Ctx saved = ctx();
-    uint32_t bas_sp = d.BasSp;
+    MarkHandle bas_sp = d.BasSp.load();
     Mark m;
-    d.BasSp = address(&m);
+    d.BasSp.store(mark_token(m));
     AllRegs a = context_regs();
     a.d[0] = r->d[0];
     a.d[1] = r->d[1];
@@ -219,7 +236,7 @@ void interp_zap_in(Regs *r, const void *zap_in)
         glue_call(zap_in, a);
         m.regs = a;
     });
-    idata().BasSp = bas_sp;
+    idata().BasSp.store(bas_sp);
     ctx() = saved;
     r->d[0] = out.d[0];
     r->a[0] = out.a[0];
@@ -227,10 +244,11 @@ void interp_zap_in(Regs *r, const void *zap_in)
 
 // MnOCall: L_MenuProcedure (fn) for the procedure name with the
 // interpreter registers regs; End Proc comes back through *pile
-uint32_t mn_call_procedure(const void *fn, const Ctx *regs, be_u32 *pile, const uint8_t *name)
+uint32_t mn_call_procedure(const void *fn, ContextHandle context, wire::MarkField *pile, const uint8_t *name)
 {
+    const Ctx* regs = &saved_context(context);
     Mark m;
-    *pile = address(&m);
+    pile->store(mark_token(m));
     AllRegs r = {};
     r.d[6] = regs->d6;
     r.d[7] = regs->d7;
@@ -281,7 +299,7 @@ void zap_go(AllRegs &r)
 [[noreturn]] void zap_back(AllRegs &r)
 {
     glue_call(ed_zap_result_entry, r);
-    mark_return(idata().BasSp, r);
+    mark_return(idata().BasSp.load(), r);
 }
 
 } // namespace
@@ -292,7 +310,7 @@ void host_Ed_ZapIn(AllRegs &r)
     uint16_t w = uint16_t(r.d[0] - 1);
     r.d[0] = (r.d[0] & 0xFFFF0000) | w;
     if (int16_t(w) < 0)
-        mark_jump_regs(idata().BasSp, zap_go, r);
+        mark_jump_regs(idata().BasSp.load(), zap_go, r);
     if (!w)
         glue_call(ed_zap_out_entry, r);
     zap_back(r);
@@ -305,3 +323,7 @@ void host_ed_zap_out(AllRegs &r)
 }
 
 } // namespace amos::host
+
+#if !defined(__mc68000__)
+#include "runtime/bindings/runtime_runtime.inc"
+#endif

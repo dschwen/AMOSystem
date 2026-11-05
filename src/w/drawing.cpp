@@ -811,3 +811,7 @@ void w_ec_slider_set(AllRegs *r) { slider_set(r); }
 void w_ec_slider_knob(AllRegs *r) { slider_knob(r); }
 void w_ec_screen_copy(AllRegs *r) { r->d[7] = screen_copy(r); }
 }
+
+#if !defined(__mc68000__)
+#include "runtime/bindings/w_drawing.inc"
+#endif

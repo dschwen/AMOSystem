@@ -260,3 +260,7 @@ extern "C" void lib_in_load2(const uint8_t *name, int32_t n)
         fon_call();
     load(name, n);
 }
+
+#if !defined(__mc68000__)
+#include "runtime/bindings/lib_bankfiles.inc"
+#endif

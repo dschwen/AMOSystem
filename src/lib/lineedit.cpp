@@ -497,3 +497,7 @@ extern "C" uint32_t lib_led_new(RegFrame &r)
 #if !defined(__m68k__)
 void amos::hal::clipboard_direct_active(bool active) { clipboard_active = active; }
 #endif
+
+#if !defined(__mc68000__)
+#include "runtime/bindings/lib_lineedit.inc"
+#endif

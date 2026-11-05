@@ -116,3 +116,7 @@ void ed_clear_error_proc(AllRegs *)
         p.Prg_AdEProc = 0;
 }
 }
+
+#if !defined(__mc68000__)
+#include "runtime/bindings/editor_procs.inc"
+#endif

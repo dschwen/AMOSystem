@@ -223,3 +223,7 @@ void lib_in_amplay4(uint32_t speed, uint32_t direction, int32_t first, uint32_t 
 }
 void lib_in_amplay2(uint32_t speed, uint32_t direction) { lib_in_amplay4(speed, direction, 0, 63); }
 }
+
+#if !defined(__mc68000__)
+#include "runtime/bindings/lib_amal.inc"
+#endif

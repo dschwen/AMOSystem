@@ -538,3 +538,7 @@ void mon_view_inter()
     }
 }
 }
+
+#if !defined(__mc68000__)
+#include "runtime/bindings/monitor_view.inc"
+#endif

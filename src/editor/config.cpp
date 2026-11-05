@@ -561,3 +561,7 @@ void ed_text_change(AllRegs *r)
 void ed_text_count(AllRegs *r) { r->d[0] = text_count(ptr<uint8_t>(r->a[0])); }
 void ed_text_free(AllRegs *r) { r->d[0] = text_free(ptr<uint8_t>(r->a[0])); }
 }
+
+#if !defined(__mc68000__)
+#include "runtime/bindings/editor_config.inc"
+#endif

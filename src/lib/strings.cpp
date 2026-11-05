@@ -322,3 +322,7 @@ extern "C" uint32_t lib_fn_free()
     lib_call(L_Menage, r);
     return idata().TabBas - idata().HiChaine;
 }
+
+#if !defined(__mc68000__)
+#include "runtime/bindings/lib_strings.inc"
+#endif

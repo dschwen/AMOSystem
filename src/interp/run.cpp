@@ -284,3 +284,7 @@ void interp_in_call_editor2(uint32_t function, uint32_t parameter) { interp_in_c
 void interp_in_call_editor1(uint32_t function) { interp_in_call_editor3(function, EntNul, EntNul); }
 
 } // extern "C"
+
+#if !defined(__mc68000__)
+#include "runtime/bindings/interp_run.inc"
+#endif

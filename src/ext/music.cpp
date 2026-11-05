@@ -1449,3 +1449,7 @@ static uint32_t cold_start(RegFrame &r, uint32_t number, uint16_t version, void 
 }
 
 extern "C" uint32_t ext_music_cold(RegFrame &r) { return cold_start(r, ExtNb, 0x0110, ext_music_init); }
+
+#if !defined(__mc68000__)
+#include "runtime/bindings/ext_music.inc"
+#endif

@@ -16,7 +16,7 @@ void relocate_src_monitor_help_glue_s()
 }
 
 const GlueEntry entries_src_monitor_help_glue_s[] = {
-    {host_obj_src_monitor_help_glue_s + 0, GlueKind::w, reinterpret_cast<const void *>(&mon_free_map), nullptr, 0, 4, "mon_free_map_entry"},
+    {host_obj_src_monitor_help_glue_s + 0, GlueKind::w, AMOS_BIND_W(mon_free_map), nullptr, 0, 4, "mon_free_map_entry"},
     {nullptr, GlueKind::missing, nullptr, nullptr, 0, 0, nullptr},
 };
 

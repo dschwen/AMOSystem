@@ -431,3 +431,7 @@ void ver_free_tables(AllRegs *) { free_tables(); }
 }
 
 extern "C" void ver_tables_run(AllRegs *) { tables_swap(false); }
+
+#if !defined(__mc68000__)
+#include "runtime/bindings/verif_main.inc"
+#endif

@@ -568,3 +568,7 @@ void ed_macro_record(AllRegs *) { record(); }
 void ed_macro_stop_fn(AllRegs *) { stop(); }
 void ed_macros_free(AllRegs *) { list_delete_all(macros()); }
 }
+
+#if !defined(__mc68000__)
+#include "runtime/bindings/editor_macros.inc"
+#endif

@@ -1431,3 +1431,7 @@ void w_ec_cblocks_delete(AllRegs *r)
     r->d[0] = 0;
 }
 }
+
+#if !defined(__mc68000__)
+#include "runtime/bindings/w_bobs.inc"
+#endif

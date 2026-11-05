@@ -490,3 +490,7 @@ void w_easy_request(AllRegs *r)
     r->d[0] = amos_requester(t);
 }
 }
+
+#if !defined(__mc68000__)
+#include "runtime/bindings/w_requester.inc"
+#endif

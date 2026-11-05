@@ -212,3 +212,7 @@ void mon_step_show(AllRegs *r)
     r->d[0] = step_show(uint16_t(r->d[0]), r->d[1], uint16_t(r->d[2]), r->a[2]);
 }
 }
+
+#if !defined(__mc68000__)
+#include "runtime/bindings/monitor_step.inc"
+#endif

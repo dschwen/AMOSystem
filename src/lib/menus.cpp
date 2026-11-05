@@ -12,6 +12,7 @@
 // the int16_t casts keep its word arithmetic.
 
 #include "core/amiga.h"
+#include "runtime/context_handle.h"
 #include "lib/banks.h"
 #include "lib/dos.h"
 #include "lib/menus.h"
@@ -38,7 +39,7 @@ using EcScreen = amos::Screen;
 
 // menus_glue.s
 
-extern "C" uint32_t mn_call_procedure(const void *fn, const Ctx *regs, be_u32 *pile, const uint8_t *name);
+extern "C" uint32_t mn_call_procedure(const void *fn, host::ContextHandle context, wire::MarkField *pile, const uint8_t *name);
 
 namespace {
 
@@ -276,7 +277,7 @@ void call_procedure(const uint8_t *name, int16_t bx, int16_t by, int16_t &x, int
     // The procedure runs with the interpreter registers of MnGere / Menu
     // Calc (MnRA3); its End Proc comes back here through MnPile
     Ctx keep = ctx();
-    uint32_t failed = mn_call_procedure(lib_address(L_MenuProcedure), ptr<Ctx>(d.MnRA3), &d.MnPile, name);
+    uint32_t failed = mn_call_procedure(lib_address(L_MenuProcedure), d.MnRA3.load(), &d.MnPile, name);
     ctx() = keep;
     if (!failed) {
         x = static_cast<int16_t>(d.CallReg[0] - bx);
@@ -883,7 +884,8 @@ extern "C" uint32_t lib_mn_gere(RegFrame &frame)
     IData &d = idata();
     // The registers for the procedures of (PR) objects
     Ctx regs = ctx();
-    d.MnRA3 = address(&regs);
+    const auto context = host::save_context(regs);
+    d.MnRA3.store(context);
     d.MnError = 0;
     start();
     monitor_patch(0);
@@ -915,6 +917,7 @@ extern "C" uint32_t lib_mn_gere(RegFrame &frame)
             end();
             wdata().Actualise &= ~BitJump;
             d.MnChoice = 0;
+            host::release_context(context);
             return frame.d[0] = d.MnError;
         }
         // Redraw the items with Menu Called
@@ -1012,6 +1015,7 @@ exit:
     }
     end();
     monitor_patch(4);
+    host::release_context(context);
     return frame.d[0] = 0;
 }
 
@@ -1793,9 +1797,15 @@ extern "C" void lib_in_menu_calc()
     start();
     // The assembler ran (PR) objects with the registers of the last MnGere
     Ctx regs = ctx();
-    d.MnRA3 = address(&regs);
+    const auto context = host::save_context(regs);
+    d.MnRA3.store(context);
     d.MnProc = -1;
     ec_fn(ec::MnStart);
     calc();
     end1();
+    host::release_context(context);
 }
+
+#if !defined(__mc68000__)
+#include "runtime/bindings/lib_menus.inc"
+#endif

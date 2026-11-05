@@ -116,10 +116,17 @@ HOST_CXX    ?= g++
 HOST_EXTRA_OBJ ?=
 HOST_EXE    ?= amos
 HOST_CPPFLAGS ?=
+HOST_TARGET_OS ?= $(shell uname -s)
+HOST_TARGET_ARCH ?= x86_64
+HOST_ARCHFLAGS ?= -m64
 # AMOS stores program and arena addresses in 32 bits. Darwin otherwise
 # reserves the first 4GB and places the executable above them.
-ifeq ($(shell uname -s),Darwin)
+ifeq ($(HOST_TARGET_OS),Darwin)
+ifeq ($(HOST_TARGET_ARCH),arm64)
+HOST_LDFLAGS ?= -Wl,-pie
+else
 HOST_LDFLAGS ?= -Wl,-no_pie,-pagezero_size,0x1000
+endif
 else
 HOST_LDFLAGS ?= -no-pie
 endif
@@ -132,7 +139,7 @@ HOST_SDLLIB := $(if $(filter link,$(HOST_SDL)),-l:libSDL2-2.0.so.0)
 # Aminet (tools/fetch_ndk.py: build/ndk, no licence to bundle them: see it)
 NDK_TOOLCHAIN := $(AMIGA_PREFIX)/m68k-amigaos/ndk-include
 NDK_INCLUDE   ?= $(if $(wildcard $(NDK_TOOLCHAIN)/exec/types.h),$(NDK_TOOLCHAIN),$(BUILD)/ndk/Include_H)
-HOST_FLAGS  := -m64 $(HOST_OPT) $(HOST_SDLDEF) -D__use_amiga_stdc_c99 -std=c++20 -fno-exceptions -fno-rtti -fno-threadsafe-statics -fpack-struct=2 \
+HOST_FLAGS  := $(HOST_ARCHFLAGS) $(HOST_OPT) $(HOST_SDLDEF) -D__use_amiga_stdc_c99 -std=c++20 -fno-exceptions -fno-rtti -fno-threadsafe-statics -fpack-struct=2 \
                $(HOST_CPPFLAGS) -Isrc/host/include -Isrc -idirafter $(NDK_INCLUDE) -MMD -MP
 
 # topaz and the usa keymap, from the user's Kickstart (as the tests'
@@ -173,8 +180,18 @@ $(HOST)/obj/src/host/windows_platform.o: src/host/windows_platform.cpp src/host/
 	@mkdir -p $(dir $@)
 	$(HOST_CXX) $(filter-out -fpack-struct=2,$(HOST_FLAGS)) -c -o $@ $<
 
+# Translated memory owns native VM APIs; their ABI must not use guest packing.
+$(HOST)/obj/src/host/guest_memory.o: src/host/guest_memory.cpp src/memory/guest_memory.h src/core/guest_types.h
+	@mkdir -p $(dir $@)
+	$(HOST_CXX) $(filter-out -fpack-struct=2,$(HOST_FLAGS)) -c -o $@ $<
+
+.PHONY: test-guest-addressing
+test-guest-addressing:
+	CXX='$(HOST_CXX)' $(PYTHON) -m unittest discover -s tests -p 'test_guest*.py' -v
+	CXX='$(HOST_CXX)' $(PYTHON) -m unittest discover -s tests -p 'test_runtime*.py' -v
+
 host: $(HOST_OBJ) $(HOST_EXTRA_OBJ)
-	$(HOST_CXX) -m64 $(HOST_LDFLAGS) -o $(HOST)/$(HOST_EXE) $(HOST_OBJ) $(HOST_EXTRA_OBJ) $(HOST_SDLLIB) > $(HOST)/link.txt 2>&1 || \
+	$(HOST_CXX) $(HOST_ARCHFLAGS) $(HOST_LDFLAGS) -o $(HOST)/$(HOST_EXE) $(HOST_OBJ) $(HOST_EXTRA_OBJ) $(HOST_SDLLIB) > $(HOST)/link.txt 2>&1 || \
 		{ cat $(HOST)/link.txt; exit 1; }
 	grep -o "undefined reference to .*" $(HOST)/link.txt | sort -u \
 		| tee $(HOST)/missing.txt | wc -l | sed 's/$$/ symbols missing (build\/host\/missing.txt)/'
@@ -312,3 +329,14 @@ package-dmg: macos-release
 	$(PYTHON) tools/package_macos.py --version '$(VERSION)' --build $(MACOS_BUILD) --framework '$(MACOS_SDL_FRAMEWORK)' --sign-identity '$(MACOS_SIGN_IDENTITY)'
 
 dmg: package-dmg
+
+# Docker executes native Linux build tools and emits macOS Mach-O binaries.
+MACOS_ARCH ?= arm64
+MACOS_CROSS_IMAGE ?= amos-macos-cross:14.5
+.PHONY: macos-cross-toolchain macos-cross-probes host-macos-cross
+macos-cross-toolchain:
+	$(PYTHON) tools/macos_cross.py toolchain --image '$(MACOS_CROSS_IMAGE)'
+macos-cross-probes:
+	$(PYTHON) tools/macos_cross.py probes --arch '$(MACOS_ARCH)' --image '$(MACOS_CROSS_IMAGE)'
+host-macos-cross:
+	$(PYTHON) tools/macos_cross.py host --arch '$(MACOS_ARCH)' --image '$(MACOS_CROSS_IMAGE)'

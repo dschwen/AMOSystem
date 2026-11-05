@@ -112,3 +112,7 @@ void lib_fn_ln(FloatOut *o)
     *o = routine(L_Math_Fonction, SPLog, o->d3, o->d4);
 }
 }
+
+#if !defined(__mc68000__)
+#include "runtime/bindings/lib_maths.inc"
+#endif

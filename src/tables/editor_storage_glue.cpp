@@ -16,13 +16,13 @@ void relocate_src_editor_storage_glue_s()
 }
 
 const GlueEntry entries_src_editor_storage_glue_s[] = {
-    {host_obj_src_editor_storage_glue_s + 0, GlueKind::w, reinterpret_cast<const void *>(&ed_store), nullptr, 0, 4, "ed_store_entry"},
-    {host_obj_src_editor_storage_glue_s + 4, GlueKind::w, reinterpret_cast<const void *>(&ed_store_block), nullptr, 0, 4, "ed_store_block_entry"},
-    {host_obj_src_editor_storage_glue_s + 8, GlueKind::w, reinterpret_cast<const void *>(&ed_delete_line), nullptr, 0, 4, "ed_delete_line_entry"},
-    {host_obj_src_editor_storage_glue_s + 12, GlueKind::w, reinterpret_cast<const void *>(&ed_delete_chunk_at), nullptr, 0, 4, "ed_delete_chunk_at_entry"},
-    {host_obj_src_editor_storage_glue_s + 16, GlueKind::w, reinterpret_cast<const void *>(&ed_delete_chunk), nullptr, 0, 4, "ed_delete_chunk_entry"},
-    {host_obj_src_editor_storage_glue_s + 20, GlueKind::w, reinterpret_cast<const void *>(&ed_find_line), nullptr, 0, 2, "ed_find_line_entry"},
-    {host_obj_src_editor_storage_glue_s + 24, GlueKind::w, reinterpret_cast<const void *>(&ed_next_line), nullptr, 0, 2, "ed_next_line_entry"},
+    {host_obj_src_editor_storage_glue_s + 0, GlueKind::w, AMOS_BIND_W(ed_store), nullptr, 0, 4, "ed_store_entry"},
+    {host_obj_src_editor_storage_glue_s + 4, GlueKind::w, AMOS_BIND_W(ed_store_block), nullptr, 0, 4, "ed_store_block_entry"},
+    {host_obj_src_editor_storage_glue_s + 8, GlueKind::w, AMOS_BIND_W(ed_delete_line), nullptr, 0, 4, "ed_delete_line_entry"},
+    {host_obj_src_editor_storage_glue_s + 12, GlueKind::w, AMOS_BIND_W(ed_delete_chunk_at), nullptr, 0, 4, "ed_delete_chunk_at_entry"},
+    {host_obj_src_editor_storage_glue_s + 16, GlueKind::w, AMOS_BIND_W(ed_delete_chunk), nullptr, 0, 4, "ed_delete_chunk_entry"},
+    {host_obj_src_editor_storage_glue_s + 20, GlueKind::w, AMOS_BIND_W(ed_find_line), nullptr, 0, 2, "ed_find_line_entry"},
+    {host_obj_src_editor_storage_glue_s + 24, GlueKind::w, AMOS_BIND_W(ed_next_line), nullptr, 0, 2, "ed_next_line_entry"},
     {nullptr, GlueKind::missing, nullptr, nullptr, 0, 0, nullptr},
 };
 

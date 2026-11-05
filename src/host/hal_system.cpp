@@ -3,6 +3,8 @@
 
 #include "hal/system.h"
 #include "core/ioreq.h"
+#include "memory/guest_allocator.h"
+#include "abi/guest_address_codec.h"
 #include "runtime/runtime.h"
 
 #include <stdio.h>
@@ -109,38 +111,25 @@ void permit() {}
 // what is freed keeps its contents (exec only writes the first 8 bytes of
 // it, and AMOS relies on the rest of a header it frees and takes again).
 // Fast memory, when there is none left, comes from the chip arena.
-struct Range {
-    uint8_t *at;
-    uint64_t size;
-};
-constexpr int MaxRanges = 1 << 20;
-struct Pool {
-    uint8_t *start;
-    uint64_t size;
-    Range *ranges;
-    int range_count;
-    bool has(const uint8_t *at) const { return at >= start && at < start + size; }
+struct alignas(8) Pool {
+    guest::RangeAllocator free;
+    bool has(const uint8_t* at) const {
+        return free.contains(guest::abi::AddressCodec::decode<const guest::Byte>(address(at)));
+    }
 };
 Pool chip_pool, fast_pool;
 uint8_t *arena;
 constexpr uint64_t ChipAt = 1ull << 20, ChipSize = 3ull << 20, ArenaSize = 512ull << 20;
 
-void pool_start(Pool &pool, uint8_t *start, uint64_t size)
+void pool_start(Pool& pool, uint8_t* start, uint64_t size)
 {
-    pool.start = start;
-    pool.size = size;
-#if defined(_WIN32)
-    pool.ranges = static_cast<Range *>(host::windows::memory_allocate(sizeof(Range) * MaxRanges, false));
-    if (!pool.ranges) {
-        fprintf(stderr, "amos: no memory for allocation ranges (Windows error %u)\n", host::windows::memory_error());
+    // Temporary legacy backing boundary: logical and native addresses still
+    // coincide until raw-pointer interpreter callers have migrated.
+    auto at = guest::abi::AddressCodec::decode<guest::Byte>(address(start));
+    if (pool.free.initialize(guest::GuestSpan<guest::Byte>(at, size)) != guest::Fault::none) {
+        fprintf(stderr, "amos: could not initialize guest allocation ranges\n");
         __builtin_trap();
     }
-#else
-    pool.ranges = static_cast<Range *>(mmap(nullptr, sizeof(Range) * MaxRanges, PROT_READ | PROT_WRITE,
-                                            MAP_PRIVATE | MAP_ANONYMOUS | MAP_NORESERVE, -1, 0));
-#endif
-    pool.ranges[0] = {start, size};
-    pool.range_count = 1;
 }
 
 void arena_start()
@@ -231,24 +220,10 @@ void block_add(uint8_t *at, uint64_t size)
 }
 
 // The first free block of n bytes in a pool
-uint8_t *take(Pool &pool, uint64_t n)
+uint8_t* take(Pool& pool, uint32_t size)
 {
-    Range *ranges = pool.ranges;
-    int &range_count = pool.range_count;
-    for (int i = 0; i < range_count; i++) {
-        if (ranges[i].size < n)
-            continue;
-        uint8_t *found = ranges[i].at;
-        if (ranges[i].size == n) {
-            memmove(ranges + i, ranges + i + 1, sizeof(Range) * size_t(range_count - i - 1));
-            range_count--;
-        } else {
-            ranges[i].at += n;
-            ranges[i].size -= n;
-        }
-        return found;
-    }
-    return nullptr;
+    auto result = pool.free.allocate(size);
+    return result ? ptr<uint8_t>(guest::abi::AddressCodec::encode(result.value.data().address())) : nullptr;
 }
 
 void *allocate(uint32_t size, uint32_t flags)
@@ -257,9 +232,9 @@ void *allocate(uint32_t size, uint32_t flags)
         return nullptr;
     arena_start();
     uint64_t n = rounded(size);
-    uint8_t *found = flags & MemoryChip ? take(chip_pool, n) : take(fast_pool, n);
+    uint8_t *found = flags & MemoryChip ? take(chip_pool, size) : take(fast_pool, size);
     if (!found && !(flags & (MemoryChip | MemoryFast)))
-        found = take(chip_pool, n);
+        found = take(chip_pool, size);
     if (!found)
         return nullptr;
     if (flags & 0x10000)
@@ -291,27 +266,10 @@ void release(void *memory, uint32_t size)
         if (at + n < b.at + b.size)
             block_add(at + n, uint64_t(b.at + b.size - (at + n)));
     }
-    // into the table, merged with the ranges before and after
-    Range *ranges = pool_of(at).ranges;
-    int &range_count = pool_of(at).range_count;
-    int i = 0;
-    while (i < range_count && ranges[i].at < at)
-        i++;
-    bool before = i > 0 && ranges[i - 1].at + ranges[i - 1].size == at;
-    bool after = i < range_count && at + n == ranges[i].at;
-    if (before && after) {
-        ranges[i - 1].size += n + ranges[i].size;
-        memmove(ranges + i, ranges + i + 1, sizeof(Range) * size_t(range_count - i - 1));
-        range_count--;
-    } else if (before) {
-        ranges[i - 1].size += n;
-    } else if (after) {
-        ranges[i].at = at;
-        ranges[i].size += n;
-    } else {
-        memmove(ranges + i + 1, ranges + i, sizeof(Range) * size_t(range_count - i));
-        ranges[i] = {at, n};
-        range_count++;
+    const auto guest_address = guest::abi::AddressCodec::decode<guest::Byte>(address(at));
+    if (pool_of(at).free.release(guest_address, size) != guest::Fault::none) {
+        fprintf(stderr, "amos: invalid guest allocation release %p+%u\n", memory, size);
+        __builtin_trap();
     }
 }
 
@@ -323,31 +281,11 @@ void *allocate_at(uint32_t size, void *where)
     arena_start();
     uint8_t *at = static_cast<uint8_t *>(where);
     uint64_t n = rounded(size);
-    Range *ranges = pool_of(at).ranges;
-    int &range_count = pool_of(at).range_count;
-    for (int i = 0; i < range_count; i++) {
-        uint8_t *start = ranges[i].at;
-        if (at < start || at + n > start + ranges[i].size)
-            continue;
-        uint64_t before = uint64_t(at - start), after = ranges[i].size - before - n;
-        if (before && after) {
-            memmove(ranges + i + 1, ranges + i, sizeof(Range) * size_t(range_count - i));
-            range_count++;
-            ranges[i].size = before;
-            ranges[i + 1] = {at + n, after};
-        } else if (before) {
-            ranges[i].size = before;
-        } else if (after) {
-            ranges[i] = {at + n, after};
-        } else {
-            memmove(ranges + i, ranges + i + 1, sizeof(Range) * size_t(range_count - i - 1));
-            range_count--;
-        }
-        if (memcheck())
-            block_add(at, n);
-        return where;
-    }
-    return nullptr;
+    auto guest_address = guest::abi::AddressCodec::decode<guest::Byte>(address(at));
+    const auto result = pool_of(at).free.allocate_at(size, guest_address);
+    if (!result) return nullptr;
+    if (memcheck()) block_add(at, n);
+    return where;
 }
 
 Task *find_task(const char *name) { return name ? nullptr : &the_process.pr_Task; }

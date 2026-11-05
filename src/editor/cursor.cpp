@@ -489,3 +489,7 @@ void ed_label_next(AllRegs *)
     to_label(uint16_t(l.after));
 }
 }
+
+#if !defined(__mc68000__)
+#include "runtime/bindings/editor_cursor.inc"
+#endif

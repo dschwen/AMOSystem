@@ -566,3 +566,7 @@ void ver_loop_alone_c(AllRegs *) { fail(ELoopDo); }
 void ver_else_alone_c(AllRegs *) { fail(EElseIf); }
 void ver_end_if_alone_c(AllRegs *) { fail(EEndIf); }
 }
+
+#if !defined(__mc68000__)
+#include "runtime/bindings/verif_loops.inc"
+#endif

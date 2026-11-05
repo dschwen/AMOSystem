@@ -16,7 +16,7 @@ void relocate_src_editor_indent_glue_s()
 }
 
 const GlueEntry entries_src_editor_indent_glue_s[] = {
-    {host_obj_src_editor_indent_glue_s + 0, GlueKind::w, reinterpret_cast<const void *>(&ed_indent), nullptr, 0, 4, "ed_indent_entry"},
+    {host_obj_src_editor_indent_glue_s + 0, GlueKind::w, AMOS_BIND_W(ed_indent), nullptr, 0, 4, "ed_indent_entry"},
     {nullptr, GlueKind::missing, nullptr, nullptr, 0, 0, nullptr},
 };
 

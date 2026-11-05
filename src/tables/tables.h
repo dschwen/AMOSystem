@@ -4,9 +4,14 @@
 #pragma once
 
 #include "runtime/glue.h"
+#if !defined(__mc68000__)
+#include "runtime/native_bindings.h"
+#endif
 
 extern "C" {
 extern uint8_t *amos_bridge;
+#if defined(__mc68000__)
+// Native collector addresses only; hosts use the checked thunk declarations.
 void ed_about();
 void ed_about_extensions();
 void ed_activate();
@@ -1938,6 +1943,7 @@ void w_sy_zone_mouse();
 void w_sy_zone_reset();
 void w_sy_zone_set();
 void w_sy_zones_reserve();
+#endif
 extern uint8_t host_obj__B_s[8018];
 extern uint8_t host_obj__W_s[5019];
 extern uint8_t host_obj__W_s_chip[1824];

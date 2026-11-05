@@ -134,3 +134,7 @@ extern "C" {
 void interp_in_sort() { sort(); }
 void interp_fn_match(EvalOut *o) { *o = {0, 0, TInt, uint32_t(match()), 0, 0}; }
 }
+
+#if !defined(__mc68000__)
+#include "runtime/bindings/interp_sort.inc"
+#endif

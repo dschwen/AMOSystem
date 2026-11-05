@@ -233,3 +233,7 @@ uint32_t lib_prt_print(RegFrame &r)
 }
 void lib_prt_close_fn() { prt_close(); }
 }
+
+#if !defined(__mc68000__)
+#include "runtime/bindings/lib_textout.inc"
+#endif

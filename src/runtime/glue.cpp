@@ -2,11 +2,21 @@
 // macro does, in C++.
 
 #include "runtime/glue.h"
+#include "runtime/mark_handle.h"
 #include "runtime/runtime.h"
 #include "interp/interp.h"
 #include "hal/system.h"
+#if !defined(__mc68000__)
+#include <stdlib.h>
+#endif
 
 using namespace amos;
+
+#if defined(__mc68000__)
+#define AMOS_NATIVE_CALL(legacy, typed) legacy
+#else
+#define AMOS_NATIVE_CALL(legacy, typed) typed
+#endif
 
 namespace amos::host {
 
@@ -53,6 +63,7 @@ void from_context(AllRegs &r)
 
 // A C function of n 32-bit parameters (passed as machine words: on another
 // host the pointers among them are read whole); its result as a word
+#if defined(__mc68000__)
 using U = uintptr_t;
 U call_c(const void *address, int n, const U *p)
 {
@@ -76,6 +87,8 @@ U call_c(const void *address, int n, const U *p)
                                                                           p[7], p[8], p[9]);
     }
 }
+
+#endif
 
 // The condition codes of tst.size
 int32_t tested(uint32_t v, int size)
@@ -102,7 +115,13 @@ void glue_start()
     for (const GlueEntry *const *t = glue_entry_tables; *t; t++)
         for (const GlueEntry *e = *t; e->at; e++)
             count++;
+#if defined(__mc68000__)
     sorted = static_cast<const GlueEntry **>(hal::allocate(uint32_t(sizeof(GlueEntry *) * count), 0));
+#else
+    // This index contains native metadata pointers and is not guest RAM.
+    sorted = static_cast<const GlueEntry **>(malloc(sizeof(GlueEntry*) * size_t(count)));
+    if (!sorted) missing("native dispatch index allocation", nullptr);
+#endif
     for (const GlueEntry *const *t = glue_entry_tables; *t; t++)
         for (const GlueEntry *e = *t; e->at; e++)
             sorted[sorted_count++] = e;
@@ -146,7 +165,6 @@ const GlueEntry *glue_entry(const void *at)
 }
 
 void poll(bool waiting = false);
-[[noreturn]] void mark_jump(uint32_t mark, const void *target, const AllRegs &r, const void *then = nullptr);
 int32_t native_call(const void *at, AllRegs &r);
 
 int32_t glue_call(const void *at, AllRegs &r)
@@ -160,8 +178,9 @@ int32_t glue_call(const void *at, AllRegs &r)
         return native_call(at, r);
     switch (e->kind) {
     case GlueKind::libcall: {
-        U p[10];
+        uint32_t p[10];
         int n = e->a1;
+        if (n < 0 || n > 10) missing("invalid library arity", at);
         if (n) {
             p[n - 1] = r.d[3];
             for (int i = n - 2; i >= 0; i--) {
@@ -177,8 +196,11 @@ int32_t glue_call(const void *at, AllRegs &r)
             v = reinterpret_cast<uint64_t (*)(U, U, U, U, U, U, U, U, U, U)>(const_cast<void *>(e->fn))(p[0], p[1], p[2], p[3], p[4],
                                                                                    p[5], p[6], p[7], p[8], p[9]);
         else
-#endif
             v = call_c(e->fn, n, p);
+#else
+        if (!e->binding.library) missing("unbound library entry", at);
+        v = e->binding.library(p);
+#endif
         from_context(r);
         switch (e->a2) {
         case 0:     // Int
@@ -210,7 +232,7 @@ int32_t glue_call(const void *at, AllRegs &r)
         for (int i = 0; i < 3; i++)
             f.a[i] = r.a[i];
         to_context(r);
-        uint32_t v = reinterpret_cast<uint32_t (*)(RegFrame &)>(const_cast<void *>(e->fn))(f);
+        uint32_t v = AMOS_NATIVE_CALL((reinterpret_cast<uint32_t (*)(RegFrame &)>(const_cast<void *>(e->fn))(f)), (e->binding.reg(f)));
         from_context(r);
         for (int i = 0; i < 8; i++)
             r.d[i] = f.d[i];
@@ -220,14 +242,14 @@ int32_t glue_call(const void *at, AllRegs &r)
     }
     case GlueKind::call:
         to_context(r);
-        reinterpret_cast<void (*)()>(const_cast<void *>(e->fn))();
+        AMOS_NATIVE_CALL((reinterpret_cast<void (*)()>(const_cast<void *>(e->fn))()), (e->binding.call()));
         from_context(r);
         return int32_t(r.d[0]);
     case GlueKind::test:
     case GlueKind::record: {
         uint32_t d6 = r.d[6], d7 = r.d[7];
         to_context(r);
-        reinterpret_cast<void (*)()>(const_cast<void *>(e->fn))();
+        AMOS_NATIVE_CALL((reinterpret_cast<void (*)()>(const_cast<void *>(e->fn))()), (e->binding.call()));
         from_context(r);
         r.d[6] = d6;
         r.d[7] = d7;
@@ -239,7 +261,7 @@ int32_t glue_call(const void *at, AllRegs &r)
         if (e->kind == GlueKind::eval_d3)
             o.d3 = r.d[3];
         to_context(r);
-        reinterpret_cast<void (*)(interp::EvalOut *)>(const_cast<void *>(e->fn))(&o);
+        AMOS_NATIVE_CALL((reinterpret_cast<void (*)(interp::EvalOut *)>(const_cast<void *>(e->fn))(&o)), (e->binding.eval(&o)));
         from_context(r);
         r.d[0] = o.d0;
         r.d[1] = o.d1;
@@ -252,7 +274,7 @@ int32_t glue_call(const void *at, AllRegs &r)
     case GlueKind::float_: {
         uint32_t o[3] = {0, r.d[3], r.d[4]};
         to_context(r);
-        reinterpret_cast<void (*)(uint32_t *)>(const_cast<void *>(e->fn))(o);
+        AMOS_NATIVE_CALL((reinterpret_cast<void (*)(uint32_t *)>(const_cast<void *>(e->fn))(o)), (e->binding.float_call(o)));
         from_context(r);
         r.d[2] = o[0];
         r.d[3] = o[1];
@@ -260,14 +282,14 @@ int32_t glue_call(const void *at, AllRegs &r)
         return int32_t(r.d[0]);
     }
     case GlueKind::w:
-        w_go(r, [&] { reinterpret_cast<void (*)(AllRegs *)>(const_cast<void *>(e->fn))(&r); });
+        w_go(r, [&] { AMOS_NATIVE_CALL((reinterpret_cast<void (*)(AllRegs *)>(const_cast<void *>(e->fn))(&r)), (e->binding.w(&r))); });
         return tested(r.d[0], e->a2);
     case GlueKind::w_a0:
-        w_go(r, [&] { reinterpret_cast<void (*)(AllRegs *)>(const_cast<void *>(e->fn))(&r); });
+        w_go(r, [&] { AMOS_NATIVE_CALL((reinterpret_cast<void (*)(AllRegs *)>(const_cast<void *>(e->fn))(&r)), (e->binding.w(&r))); });
         return r.a[0] ? 1 : 0;
     case GlueKind::w_f: {
         uint32_t v = 0;
-        w_go(r, [&] { v = reinterpret_cast<uint32_t (*)(AllRegs *)>(const_cast<void *>(e->fn))(&r); });
+        w_go(r, [&] { v = AMOS_NATIVE_CALL((reinterpret_cast<uint32_t (*)(AllRegs *)>(const_cast<void *>(e->fn))(&r)), (e->binding.w_result(&r))); });
         return int32_t(v);
     }
     case GlueKind::window:
@@ -276,11 +298,11 @@ int32_t glue_call(const void *at, AllRegs &r)
     case GlueKind::alias:
         return glue_call(e->target, r);
     case GlueKind::stack:
-        mark_jump(idata().BasSp, e->target, r);
+        mark_jump(idata().BasSp.load(), e->target, r);
     case GlueKind::lib_jump:
         return glue_call(lib_address(e->a1), r);
     case GlueKind::hand:
-        reinterpret_cast<void (*)(AllRegs &)>(const_cast<void *>(e->fn))(r);
+        AMOS_NATIVE_CALL((reinterpret_cast<void (*)(AllRegs &)>(const_cast<void *>(e->fn))(r)), (e->binding.hand(r)));
         return int32_t(r.d[0]);
     case GlueKind::c_routine:
     case GlueKind::missing:
@@ -305,7 +327,11 @@ WFunction wentry_function(const void *entry)
             entry = e->target;
             continue;
         }
+        #if defined(__mc68000__)
         return e->kind == host::GlueKind::w ? reinterpret_cast<WFunction>(const_cast<void *>(e->fn)) : nullptr;
+#else
+        return e->kind == host::GlueKind::w ? e->binding.w : nullptr;
+#endif
     }
     return nullptr;
 }

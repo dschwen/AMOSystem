@@ -7,6 +7,8 @@
 #include <stdint.h>
 
 #include "core/endian.h"
+#include "core/mark_token.h"
+#include "core/context_token.h"
 
 namespace amos {
 
@@ -890,7 +892,7 @@ struct IData {
     be_u32 Fs_SaveList;
     uint8_t Test_Flags;
     uint8_t FillFSorted;
-    be_u32 BasSp;
+    wire::MarkField BasSp;
     be_u16 Fs_PosStore;
     be_u16 ColBack;
     be_u16 DefFlag;
@@ -1035,9 +1037,9 @@ struct IData {
     uint8_t MnDFlags[8];
     be_u32 MnDAd;
     be_u16 MnProc;
-    be_u32 MnRA3;
+    wire::ContextField MnRA3;
     be_u32 MnRA4;
-    be_u32 MnPile;
+    wire::MarkField MnPile;
     be_u32 OMnBase;
     be_u16 OMnNb;
     be_u16 OMnType;
@@ -2057,7 +2059,7 @@ struct MonData {
     be_u16 Tt_YNext;
     be_u32 Tt_PLine;
     be_u32 Tt_ALine;
-    be_u32 Tt_EvPile;
+    wire::MarkField Tt_EvPile;
     be_u32 Tt_EvDebut;
     be_u16 Tt_InfOn;
     be_u32 Tt_DCurLine;

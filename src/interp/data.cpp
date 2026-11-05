@@ -96,3 +96,7 @@ extern "C" {
 void interp_in_data() { data(); }
 void interp_in_read() { read(); }
 }
+
+#if !defined(__mc68000__)
+#include "runtime/bindings/interp_data.inc"
+#endif

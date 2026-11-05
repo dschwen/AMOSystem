@@ -16,10 +16,10 @@ void relocate_src_w_startup_glue_s()
 }
 
 const GlueEntry entries_src_w_startup_glue_s[] = {
-    {host_obj_src_w_startup_glue_s + 0, GlueKind::w, reinterpret_cast<const void *>(&w_sy_ice_start), nullptr, 0, 4, "w_ice_start"},
-    {host_obj_src_w_startup_glue_s + 4, GlueKind::w, reinterpret_cast<const void *>(&w_sy_ice_end), nullptr, 0, 4, "w_ice_end"},
-    {host_obj_src_w_startup_glue_s + 8, GlueKind::w, reinterpret_cast<const void *>(&w_sy_start_all), nullptr, 0, 4, "w_start_all"},
-    {host_obj_src_w_startup_glue_s + 12, GlueKind::w, reinterpret_cast<const void *>(&w_sy_end_all), nullptr, 0, 4, "w_end_all"},
+    {host_obj_src_w_startup_glue_s + 0, GlueKind::w, AMOS_BIND_W(w_sy_ice_start), nullptr, 0, 4, "w_ice_start"},
+    {host_obj_src_w_startup_glue_s + 4, GlueKind::w, AMOS_BIND_W(w_sy_ice_end), nullptr, 0, 4, "w_ice_end"},
+    {host_obj_src_w_startup_glue_s + 8, GlueKind::w, AMOS_BIND_W(w_sy_start_all), nullptr, 0, 4, "w_start_all"},
+    {host_obj_src_w_startup_glue_s + 12, GlueKind::w, AMOS_BIND_W(w_sy_end_all), nullptr, 0, 4, "w_end_all"},
     {nullptr, GlueKind::missing, nullptr, nullptr, 0, 0, nullptr},
 };
 

@@ -742,3 +742,7 @@ void ed_error_run_hidden(AllRegs *r) { error_run_hidden(r->d[0], ptr<uint8_t>(r-
 void ed_error_direct_run(AllRegs *r) { error_direct_run(r->d[0], r->a[0]); }
 void ed_procedure_machine_code(AllRegs *) { procedure_machine_code(); }
 }
+
+#if !defined(__mc68000__)
+#include "runtime/bindings/editor_run.inc"
+#endif

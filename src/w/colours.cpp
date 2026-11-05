@@ -349,3 +349,7 @@ void w_ec_fade(AllRegs *r) { fade(r); }
 void w_ec_fade_off(AllRegs *r) { fade_off(r); }
 void w_ec_fade_stop(AllRegs *r) { fade_stop(r); }
 }
+
+#if !defined(__mc68000__)
+#include "runtime/bindings/w_colours.inc"
+#endif

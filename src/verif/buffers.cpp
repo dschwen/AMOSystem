@@ -192,7 +192,7 @@ void clear_variables()
     d.CallReg[7] = d.DosBase;
     d.CallReg[6] = w.GfxBase;
     d.CallReg[5] = w.IntBase;
-    d.CallReg[4] = d.BasSp;
+    d.CallReg[4] = host::encode_mark(d.BasSp.load());
     d.CallReg[3] = address(&d.Ed_Config);
     Regs c;
     c.a[1] = address(&d.Sys_ClearRoutines);
@@ -219,3 +219,7 @@ void ver_direct_variables(AllRegs *) { direct_variables(); }
 void ver_resize_variables(AllRegs *r) { resize_variables(r->d[1]); }
 void ver_resize_names(AllRegs *r) { resize_names(r->d[1]); }
 }
+
+#if !defined(__mc68000__)
+#include "runtime/bindings/verif_buffers.inc"
+#endif

@@ -738,3 +738,7 @@ extern "C" void lib_in_bsave(const uint8_t *name, int32_t start, uint32_t end)
         disk_error();
     file_close();
 }
+
+#if !defined(__mc68000__)
+#include "runtime/bindings/lib_files.inc"
+#endif

@@ -14,7 +14,9 @@
 
 #include <errno.h>
 #if !defined(_WIN32)
+#pragma pack(push,16)
 #include <pthread.h>
+#pragma pack(pop)
 #else
 #include "host/windows_platform.h"
 #endif
@@ -27,7 +29,9 @@
 #include "host/devices.h"
 #include <sys/stat.h>
 #if defined(__APPLE__)
+#pragma pack(push,16)
 #include <ucontext.h>
+#pragma pack(pop)
 #include <mach-o/dyld.h>
 #include "host/installed_state.h"
 #endif
@@ -149,6 +153,15 @@ extern "C" int SDL_main(int argc, char **argv)
 int main(int argc, char **argv)
 #endif
 {
+#if defined(__APPLE__) && (defined(__aarch64__) || defined(__arm64__))
+    // Cross-linking is useful before the guest-address port, but never allow
+    // an ordinary arm64 image to truncate its function/table pointers and crash.
+    if (reinterpret_cast<uintptr_t>(&find_home) > UINT32_MAX ||
+        reinterpret_cast<uintptr_t>(command) > UINT32_MAX) {
+        fprintf(stderr, "amos: experimental arm64 image exceeds the 32-bit address range; native execution requires the guest-address port. Run the standalone macOS probes first.\n");
+        return 1;
+    }
+#endif
 #if defined(_WIN32)
     if (!host::windows::image_below_4gb()) {
         fprintf(stderr, "amos: Windows executable exceeds 32-bit address range\n");

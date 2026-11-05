@@ -193,3 +193,7 @@ void w_ec_close_font(AllRegs *) { close_font(); }
 void w_ec_menu_start(AllRegs *) { menu_start(); }
 void w_ec_menu_stop(AllRegs *) { menu_stop(); }
 }
+
+#if !defined(__mc68000__)
+#include "runtime/bindings/w_fonts.inc"
+#endif

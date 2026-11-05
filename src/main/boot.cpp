@@ -476,7 +476,7 @@ void main_cold_start(char *command, uint32_t length, uint32_t sp)
         poke_w(to + 4, uint16_t(end - (reinterpret_cast<char *>(to + 6))));
     }
 
-    d.BasSp = sp;
+    d.BasSp.store(host::decode_mark(sp));
 
     // the memory there is
     if (!d.WB2_0) {

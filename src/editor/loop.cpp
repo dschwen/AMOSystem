@@ -509,3 +509,7 @@ void ed_zap_new_line_tok(AllRegs *)
     tokenise_current_line();
 }
 }
+
+#if !defined(__mc68000__)
+#include "runtime/bindings/editor_loop.inc"
+#endif

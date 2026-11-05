@@ -703,3 +703,7 @@ extern "C" uint32_t lib_fn_icon_base(int32_t n)
     uint8_t *entry = image_entry(n < 0 ? -n : n, true);
     return peek_l(entry + (n < 0 ? 4 : 0));
 }
+
+#if !defined(__mc68000__)
+#include "runtime/bindings/lib_sprites.inc"
+#endif

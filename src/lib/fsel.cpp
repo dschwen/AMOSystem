@@ -11,6 +11,7 @@
 
 #include "core/amiga.h"
 #include "lib/dialog.h"
+#include "core/local_jump.h"
 #include "lib/dos.h"
 #include "lib/strings.h"
 
@@ -114,7 +115,7 @@ Puzzle puzzle()
 // ---- leaving ---------------------------------------------------------------------
 
 // The selector's frame: Fs_Close and Fs_Error come back to it (Fs_Sp)
-void **frame;
+local_jump::Buffer *frame;
 enum Action { NoAction, Close, DiskError } action;
 uint32_t result;
 
@@ -122,7 +123,7 @@ uint32_t result;
 {
     action = Close;
     result = length;
-    __builtin_longjmp(frame, 1);
+    local_jump::restore(frame);
 }
 
 // Fs_Cancel: no file
@@ -1117,11 +1118,11 @@ uint32_t file_selector(const be_u32 *params)
         return 0;
     }
     d.Fs_Base = m.a[0];
-    void *buf[5];
-    frame = buf;
+    local_jump::Buffer buf;
+    frame = &buf;
     action = NoAction;
     for (;;) {
-        if (!__builtin_setjmp(buf)) {
+        if (!AMOS_LOCAL_SETJMP(buf)) {
             if (action == NoAction)
                 selector(params);
             events();
@@ -1143,7 +1144,7 @@ uint32_t file_selector(const be_u32 *params)
 extern "C" void lib_fs_error()
 {
     action = DiskError;
-    __builtin_longjmp(frame, 1);
+    local_jump::restore(frame);
 }
 
 // The flush and end records (low memory / the end of AMOS): forget the
@@ -1216,3 +1217,7 @@ extern "C" uint32_t lib_fn_file_selector4(uint32_t path, uint32_t name, uint32_t
 extern "C" uint32_t lib_fn_file_selector3(uint32_t p, uint32_t n, uint32_t t) { return lib_fn_file_selector4(p, n, t, idata().ChVide); }
 extern "C" uint32_t lib_fn_file_selector2(uint32_t p, uint32_t n) { return lib_fn_file_selector4(p, n, idata().ChVide, idata().ChVide); }
 extern "C" uint32_t lib_fn_file_selector1(uint32_t p) { return lib_fn_file_selector2(p, idata().ChVide); }
+
+#if !defined(__mc68000__)
+#include "runtime/bindings/lib_fsel.inc"
+#endif

@@ -70,3 +70,7 @@ extern "C" {
 // Indent: a0 the program, d0 the tab
 void ed_indent(AllRegs *r) { indent(ptr<uint8_t>(r->a[0]), uint16_t(r->d[0])); }
 }
+
+#if !defined(__mc68000__)
+#include "runtime/bindings/editor_indent.inc"
+#endif

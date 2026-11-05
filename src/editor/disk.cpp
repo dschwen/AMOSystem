@@ -430,3 +430,7 @@ void ed_save_program2(AllRegs *r) { r->d[0] = save_program2() ? 0 : 0xFFFFFFFF; 
 void ed_make_bak(AllRegs *r) { r->d[0] = make_bak() ? 0 : 0xFFFFFFFF; }
 void ed_save_icon(AllRegs *) { save_icon(); }
 }
+
+#if !defined(__mc68000__)
+#include "runtime/bindings/editor_disk.inc"
+#endif

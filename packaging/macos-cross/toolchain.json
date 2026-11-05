@@ -1,0 +1,7 @@
+{
+  "osxcross_image": "ghcr.io/crazy-max/osxcross:14.5-r0-ubuntu@sha256:d9f2e0694b9420a0bd3e89272c1266ac7cc3b3d287c43297d6f049f2d30de3d8",
+  "base_image": "ubuntu:24.04@sha256:fe81560990fae86dc4743202b2cb4d3df98d0bcf949173cecef15ce1127ef852",
+  "sdk": "14.5",
+  "deployment_target": "11.0",
+  "notes": "Image inputs pinned; apt package versions are recorded at build time. SDK comes from upstream image, not the source repository."
+}

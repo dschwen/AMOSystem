@@ -306,3 +306,7 @@ int32_t mon_dispatch(const void *routine, uint32_t d0, uint32_t d1)
 void mon_nothing(AllRegs *r) { r->d[0] = 1; }
 
 } // extern "C"
+
+#if !defined(__mc68000__)
+#include "runtime/bindings/monitor_shell.inc"
+#endif

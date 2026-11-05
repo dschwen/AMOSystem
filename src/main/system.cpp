@@ -415,3 +415,7 @@ extern "C" uint32_t main_math_close(RegFrame &)
     math_close();
     return 0;
 }
+
+#if !defined(__mc68000__)
+#include "runtime/bindings/main_system.inc"
+#endif

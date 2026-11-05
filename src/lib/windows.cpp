@@ -276,3 +276,7 @@ extern "C" void lib_in_set_tab(uint32_t n)
         w_fon_call();
     escape('T', static_cast<char>(n + 48));
 }
+
+#if !defined(__mc68000__)
+#include "runtime/bindings/lib_windows.inc"
+#endif

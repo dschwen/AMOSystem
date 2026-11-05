@@ -249,3 +249,7 @@ uint32_t interp_val_rout(RegFrame &r)
     return 0;
 }
 }
+
+#if !defined(__mc68000__)
+#include "runtime/bindings/interp_number.inc"
+#endif

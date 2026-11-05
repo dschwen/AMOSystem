@@ -541,3 +541,7 @@ void ed_delete_word_left(AllRegs *) { delete_word_left(); }
 void ed_tab(AllRegs *) { tab(); }
 void ed_untab(AllRegs *) { untab(); }
 }
+
+#if !defined(__mc68000__)
+#include "runtime/bindings/editor_lines.inc"
+#endif

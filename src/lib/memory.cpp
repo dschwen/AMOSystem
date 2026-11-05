@@ -170,3 +170,7 @@ extern "C" uint32_t lib_fn_peek_string3(uint32_t a, uint32_t len, const uint8_t 
 {
     return peek_string(ptr<uint8_t>(a), len, str_len(stop) ? str_chars(stop)[0] : -1);
 }
+
+#if !defined(__mc68000__)
+#include "runtime/bindings/lib_memory.inc"
+#endif

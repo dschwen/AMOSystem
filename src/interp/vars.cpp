@@ -421,3 +421,7 @@ uint32_t interp_get_tablo_reg(RegFrame &r)
     return r.d[0];
 }
 }
+
+#if !defined(__mc68000__)
+#include "runtime/bindings/interp_vars.inc"
+#endif

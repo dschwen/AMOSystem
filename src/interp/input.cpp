@@ -218,3 +218,7 @@ void interp_in_line_input() { input(0, false); }
 void interp_in_input_h() { input_file(','); }
 void interp_in_line_input_h() { input_file(0); }
 }
+
+#if !defined(__mc68000__)
+#include "runtime/bindings/interp_input.inc"
+#endif

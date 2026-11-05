@@ -7,6 +7,9 @@
 
 #include "interp/interp.h"
 #include "verif/verif.h"
+#if !defined(__mc68000__)
+#include "runtime/glue.h"
+#endif
 
 using namespace amos;
 
@@ -43,7 +46,11 @@ constexpr uint8_t LCNone = 3, LCDouble = 4;
 
 struct Native {
     const void *routine;    // the table's entry it was found for
-    void *fn;               // the C function, or 0: the routine is called
+#if defined(__mc68000__)
+    void *fn;               // Native Amiga ABI is unchanged.
+#else
+    host::LibraryCall fn;   // Exact typed thunk; never a serialized native address.
+#endif
     uint8_t params, result;
 };
 Native instructions[Tokens / 2], functions[Tokens / 2];
@@ -67,7 +74,14 @@ Native find_native(const uint8_t *a4, uint16_t t, const void *routine, bool func
     n.result = uint8_t(peek_w(body - 10));
     if (function == (n.result == LCNone))
         return n;
+#if defined(__mc68000__)
     n.fn = ptr<void>(peek_l(body - 16));
+#else
+    auto* binding = host::glue_entry(routine);
+    if (!binding || binding->kind != host::GlueKind::libcall || binding->a1 != params)
+        return n;
+    n.fn = binding->binding.library;
+#endif
     n.params = params;
     return n;
 }
@@ -80,8 +94,9 @@ uint64_t call_native(const Native &n)
 #if defined(__mc68000__)
     uint32_t p[10];
 #else
-    uint64_t p[10];     // (64 bits: the pointers among them are read whole)
+    uint32_t p[10];     // Architectural words; the typed thunk decodes each argument.
 #endif
+    if (n.params > 10) amos::fon_call();
     for (int i = 0; i < n.params; i++) {
         if (i)
             interp::pc() += 2;
@@ -90,11 +105,10 @@ uint64_t call_native(const Native &n)
             v = interp::to_integer(v);
         p[i] = v.v1;
     }
-#if defined(__mc68000__)
-    using U = uint32_t;
+#if !defined(__mc68000__)
+    return n.fn(p);
 #else
-    using U = uint64_t;
-#endif
+    using U = uint32_t;
     using R = uint64_t;
     switch (n.params) {
     case 0:
@@ -120,6 +134,7 @@ uint64_t call_native(const Native &n)
     default:
         return reinterpret_cast<R (*)(U, U, U, U, U, U, U, U, U, U)>(n.fn)(p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7], p[8], p[9]);
     }
+#endif
 }
 
 // The native entry of token t (its routine r), or 0
@@ -277,3 +292,7 @@ bool native_function(uint16_t t, const void *r, Value &v)
 }
 
 } // namespace amos::interp
+
+#if !defined(__mc68000__)
+#include "runtime/bindings/interp_chrget.inc"
+#endif

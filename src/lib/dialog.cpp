@@ -13,11 +13,12 @@
 // Errors of the program stop the innermost interpreter loop (Dia_Quit);
 // the loops above it stop at their next instruction. This follows the
 // assembler, which reset the stack to the loop's (Dia_Sp): here each loop
-// is a __builtin_setjmp target, so no C++ object with a destructor may
+// is a local setjmp target, so no C++ object with a destructor may
 // live in this code.
 
 #include "core/amiga.h"
 #include "lib/dialog.h"
+#include "core/local_jump.h"
 
 #include <graphics/gfx.h>
 #include <graphics/rastport.h>
@@ -75,7 +76,7 @@ struct Run {
     Dialog *d;
     const uint8_t *pc;      // a6
     be_u32 *sp;           // a3: the value stack
-    void **quit;            // the innermost loop
+    local_jump::Buffer *quit;            // the innermost loop
 };
 
 uint8_t *entry_at(uint32_t a) { return ptr<uint8_t>(a); }
@@ -98,7 +99,7 @@ const uint8_t *programs(Dialog *d) { return ptr<uint8_t>(d->Dia_Programs); }
 // The zone the program in brackets belongs to (Dia_Vars-3*4)
 uint8_t *current_zone(Dialog *d) { return entry_at(static_cast<uint32_t>(dia_vars(d)[-3])); }
 
-[[noreturn]] void quit(Run &r) { __builtin_longjmp(r.quit, 1); }
+[[noreturn]] void quit(Run &r) { local_jump::restore(r.quit); }
 
 // Dia_Er: stop with an error at the current position
 [[noreturn]] void fail(Run &r, uint16_t error)
@@ -1591,12 +1592,12 @@ void user_instruction(Run &r, uint16_t name)
 uint16_t loop(Run &r)
 {
     Dialog *d = r.d;
-    void *buf[5];
-    void **outer = r.quit;
+    local_jump::Buffer buf;
+    local_jump::Buffer *outer = r.quit;
     const uint8_t *pc = r.pc;
     be_u32 *sp = r.sp;
-    r.quit = buf;
-    if (!__builtin_setjmp(buf)) {
+    r.quit = &buf;
+    if (!AMOS_LOCAL_SETJMP(buf)) {
         for (;;) {
             if (d->Dia_Error)
                 break;
@@ -2825,10 +2826,10 @@ void close_channel(Dialog *d)
 // assembler went back to a stale stack pointer there)
 template <typename F> void guarded(Run &r, F fn)
 {
-    void *buf[5];
-    void **outer = r.quit;
-    r.quit = buf;
-    if (!__builtin_setjmp(buf))
+    local_jump::Buffer buf;
+    local_jump::Buffer *outer = r.quit;
+    r.quit = &buf;
+    if (!AMOS_LOCAL_SETJMP(buf))
         fn();
     r.quit = outer;
 }
@@ -2837,14 +2838,14 @@ template <typename F> void guarded(Run &r, F fn)
 
 struct Check {
     const uint8_t *pc;
-    void **quit;
+    local_jump::Buffer *quit;
     uint16_t error;
 };
 
 [[noreturn]] void check_fail(Check &c, uint16_t error)
 {
     c.error = error;
-    __builtin_longjmp(c.quit, 1);
+    local_jump::restore(c.quit);
 }
 
 // .Evalue: skip an expression. Returns the separator after it.
@@ -3090,14 +3091,21 @@ DiaOpen amos::dia_open(uint32_t number, const uint8_t *program, const uint8_t *p
     d->Dia_Pile = address(labels + buffer);
     poke_l(labels, -1u);
     Check c = {programs(d), nullptr, 0};
-    void *buf[5];
-    c.quit = buf;
-    if (__builtin_setjmp(buf)) {
+    // Keep mutable validation state in this caller, outside setjmp's function.
+    // Standard longjmp makes modified nonvolatile capture-frame locals indeterminate.
+    auto validate = [](Check &state, Dialog *dialog, uint8_t *&table) {
+        local_jump::Buffer buf;
+        state.quit = &buf;
+        if (AMOS_LOCAL_SETJMP(buf)) { state.quit = nullptr; return false; }
+        check_program(state, dialog, table);
+        state.quit = nullptr;
+        return true;
+    };
+    if (!validate(c, d, labels)) {
         uint32_t position = static_cast<uint32_t>(c.pc - programs(d));
         close_channel(d);
         return {c.error, position, nullptr};
     }
-    check_program(c, d, labels);
     poke_l(labels, -1u);
     labels += 4;
     d->Dia_Buffer = d->Dia_PBuffer = address(labels);
@@ -3629,3 +3637,7 @@ extern "C" uint32_t lib_dia_wait_mul(RegFrame &r)
 
 // The routine records of Dia_ClearVar (dialog_glue.s)
 extern "C" void lib_dia_close_all() { dia_close_all(); }
+
+#if !defined(__mc68000__)
+#include "runtime/bindings/lib_dialog.inc"
+#endif

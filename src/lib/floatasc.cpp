@@ -410,3 +410,7 @@ uint32_t lib_asc_to_float(const char *s)
     return negative ? result | 0x80 : result;
 }
 }
+
+#if !defined(__mc68000__)
+#include "runtime/bindings/lib_floatasc.inc"
+#endif

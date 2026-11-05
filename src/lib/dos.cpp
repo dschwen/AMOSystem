@@ -217,3 +217,7 @@ extern "C" uint32_t lib_disk_err(RegFrame &r) { disk_err(r.d[0]); }
 
 // The code of the close records
 extern "C" void lib_close_current() { file_close(); }
+
+#if !defined(__mc68000__)
+#include "runtime/bindings/lib_dos.inc"
+#endif

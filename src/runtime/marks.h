@@ -3,14 +3,22 @@
 #pragma once
 
 #include "runtime/glue.h"
+#include "runtime/mark_handle.h"
 
+#if !defined(__mc68000__)
+#pragma pack(push,16)
+#endif
 #include <setjmp.h>
+#if !defined(__mc68000__)
+#pragma pack(pop)
+#endif
 
 namespace amos::host {
 
 // A point of the stack to come back to: Run its target there (the stack
 // above it given up), or Return the registers to the code that made it
-#if defined(_WIN32)
+#if !defined(__mc68000__)
+#pragma pack(push,16)
 struct alignas(16) Mark {
 #else
 struct Mark {
@@ -21,10 +29,16 @@ struct Mark {
     void (*fn)();               // or this C++ (the context its registers)
     void (*regs_fn)(AllRegs &); // or this C++, with all the registers
     AllRegs regs;
+#if !defined(__mc68000__)
+    uint64_t context_watermark;
+    uint32_t recovery_token = 0; // Native-only registry metadata, never an address.
+#endif
 };
 
-#if defined(_WIN32)
+#if !defined(__mc68000__)
+#pragma pack(pop)
 static_assert(alignof(Mark) >= 16 && offsetof(Mark, jb) == 0);
+static_assert(offsetof(Mark, context_watermark) % alignof(uint64_t) == 0);
 #endif
 
 enum { MarkRun = 1, MarkReturn = 2 };
@@ -61,21 +75,25 @@ void run_at(Mark &m);
 // there; a return (or the end of what ran) gives the registers back
 template <typename F> AllRegs mark_run(Mark &m, F first)
 {
+#if !defined(__mc68000__)
+    mark_enter(m);
+#endif
     switch (setjmp(m.jb)) {
     case 0:
         first();
-        return m.regs;
+        break;
     case MarkRun:
         run_at(m);
-        return m.regs;
+        break;
     default:
-        return m.regs;
+        break;
     }
+    const AllRegs result = m.regs;
+#if !defined(__mc68000__)
+    mark_leave(m);
+#endif
+    return result;
 }
 
-[[noreturn]] void mark_jump(uint32_t mark, const void *target, const AllRegs &r, const void *then = nullptr);
-[[noreturn]] void mark_jump_regs(uint32_t mark, void (*fn)(AllRegs &), const AllRegs &r);
-[[noreturn]] void mark_jump_cpp(uint32_t mark, void (*fn)(), const AllRegs &r);
-[[noreturn]] void mark_return(uint32_t mark, const AllRegs &r);
 
 } // namespace amos::host

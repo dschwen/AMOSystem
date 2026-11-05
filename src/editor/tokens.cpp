@@ -857,3 +857,7 @@ void ed_skip_token(AllRegs *r)
         r->d[1] = 1;
 }
 }
+
+#if !defined(__mc68000__)
+#include "runtime/bindings/editor_tokens.inc"
+#endif

@@ -959,3 +959,7 @@ extern "C" void lib_in_assign(const uint8_t *name, const uint8_t *path)
     else
         assign_command(name, path);
 }
+
+#if !defined(__mc68000__)
+#include "runtime/bindings/lib_dirs.inc"
+#endif

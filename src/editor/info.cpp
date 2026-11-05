@@ -140,3 +140,7 @@ void ed_about_extensions(AllRegs *) { about_extensions(); }
 void ed_information(AllRegs *) { information(); }
 void ed_quit_options(AllRegs *) { quit_options(); }
 }
+
+#if !defined(__mc68000__)
+#include "runtime/bindings/editor_info.inc"
+#endif

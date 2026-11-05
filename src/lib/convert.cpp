@@ -119,3 +119,7 @@ extern "C" uint32_t lib_long_to_bin_reg(amos::RegFrame &r)
     r.a[0] = r.d[0] = amos::address(amos::long_to_bin(amos::ptr<char>(r.a[0]), r.d[0], int32_t(r.d[3])));
     return r.d[0];
 }
+
+#if !defined(__mc68000__)
+#include "runtime/bindings/lib_convert.inc"
+#endif

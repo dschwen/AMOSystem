@@ -309,3 +309,7 @@ void ver_includes_clear(AllRegs *) { includes_clear(); }
 void ver_includes_address(AllRegs *r) { r->a[0] = includes_address(r->a[0]); }
 void ver_equ_free(AllRegs *) { equates_free(); }
 }
+
+#if !defined(__mc68000__)
+#include "runtime/bindings/verif_includes.inc"
+#endif

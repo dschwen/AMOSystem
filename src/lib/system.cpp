@@ -207,3 +207,7 @@ extern "C" void lib_in_key_speed(int32_t delay, int32_t speed)
 // =PARAM$, =PARAM: what the last procedure returned
 extern "C" uint32_t lib_fn_param_string() { return idata().ParamC; }
 extern "C" uint32_t lib_fn_param_int() { return idata().ParamE; }
+
+#if !defined(__mc68000__)
+#include "runtime/bindings/lib_system.inc"
+#endif

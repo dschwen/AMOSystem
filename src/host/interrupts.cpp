@@ -191,3 +191,7 @@ void wait_frame()
 }
 
 } // namespace amos::hal
+
+#if !defined(__mc68000__)
+#include "runtime/bindings/host_interrupts.inc"
+#endif
