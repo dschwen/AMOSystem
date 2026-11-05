@@ -4,14 +4,19 @@ Status: proposed; native arm64 compilation and execution have not been tested.
 The existing macOS port targets x86-64. This plan covers native arm64 execution,
 not running the Intel executable through Rosetta.
 
+The Linux/Docker build route is now planned in
+[MACOS-CROSS.md](MACOS-CROSS.md), including OSXCross setup, compiler blockers,
+address-model gates and Mac-side runtime/signing validation.
+
 ## Toolchain and target
 
 Use Apple Clang with C++20, the macOS SDK and linker from Xcode/Command Line
 Tools, GNU-compatible make, and host Python 3. Start with a native build on
 an Apple Silicon Mac. Intel Macs with the appropriate SDK can compile an
 arm64 executable, but execution tests require Apple Silicon. Linux-hosted
-Mach-O cross-compilation would add SDK/toolchain management without solving
-runtime validation, so it is not the recommended first route.
+Mach-O cross-compilation with Docker/OSXCross is the proposed repeatable build
+route; native Apple Silicon remains necessary for runtime validation. See the
+cross-compilation plan for the container and implementation sequence.
 
 Use explicit `-arch arm64` compilation and linking with a separate
 build/host-arm64 directory. Target ordinary arm64, not arm64e. Choose and
