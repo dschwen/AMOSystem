@@ -1,0 +1,64 @@
+name: Linux release
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Version (major.minor.patch)
+        default: 0.1.0
+        required: true
+  push:
+    tags:
+      - 'v*'
+  pull_request:
+    paths:
+      - 'src/**'
+      - 'tools/package_linux.py'
+      - 'tools/install_icons.py'
+      - 'packaging/linux/**'
+      - 'data/icons/**'
+      - 'Makefile'
+      - '.github/workflows/linux-release.yml'
+permissions:
+  contents: read
+jobs:
+  package:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    env:
+      VERSION: ${{ inputs.version || '0.1.0' }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Version from the tag
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: echo "VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_ENV"
+      - name: Install build and inspection tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y g++ python3 python3-pil fakeroot dpkg-dev libsdl2-2.0-0 xvfb libxtst6
+      - name: Build the ROM-free packages
+        run: |
+          [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]
+          make -j2 package-linux VERSION="$VERSION"
+          cd build/packages && sha256sum -c amos-"$VERSION"-linux.sha256
+      - name: Install the .deb and run a program from it
+        run: |
+          sudo apt-get install -y ./build/packages/amos_"$VERSION"_amd64.deb
+          python3 - <<'PY'
+          import sys; sys.path.insert(0, 'tools'); import amostok
+          t = amostok.Tables(['AMOS/APSystem'])
+          amostok.tokenize_program('Open Out 1,"out.txt"\nPrint #1,"installed"\nClose 1\nSystem\n', t).save('/tmp/hi.AMOS')
+          PY
+          cd /tmp && AMOS_DISPLAY=none amos-player hi.AMOS && grep -q installed out.txt
+          test -f /usr/share/applications/io.github.dschwen.amosystem.desktop
+          sudo apt-get remove -y amos
+          test ! -e /usr/bin/amos
+      - uses: actions/upload-artifact@v4
+        with:
+          name: amos-${{ env.VERSION }}-linux
+          path: build/packages/amos*
+      - name: Publish a release
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "$GITHUB_REF_NAME" build/packages/amos* --clobber || gh release create "$GITHUB_REF_NAME" build/packages/amos* --generate-notes

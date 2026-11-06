@@ -53,7 +53,7 @@ AMIGA_DIRS   := src/lib src/main src/verif src/interp src/ext src/hal src/w src/
 AMIGA_CXX    := $(sort $(wildcard $(addsuffix /*.cpp,$(AMIGA_DIRS))))
 AMOSPRO_LINK := $(OBJ)/src/amiga/start.o $(OBJ)/src/amiga/native.o $(patsubst %.cpp,$(OBJ)/%.o,$(AMIGA_CXX))
 
-.PHONY: all dist test test-reference install-hd host-check host host-sdl host-release game ndk install-host uninstall-host clean
+.PHONY: linux-release package-linux dist-host all dist test test-reference install-hd host-check host host-sdl host-release game ndk install-host uninstall-host clean
 .SECONDARY:
 .DELETE_ON_ERROR:
 
@@ -273,6 +273,20 @@ install-host: host-release dist
 	cp -a $(DIST) $(DESTDIR)$(PREFIX)/share/amos/AMOS
 	$(PYTHON) tools/install_icons.py linux --prefix "$(DESTDIR)$(PREFIX)" $(if $(DESTDIR),,--refresh)
 	@echo "installed $(DESTDIR)$(PREFIX)/bin/amos and $(DESTDIR)$(PREFIX)/share/amos/AMOS"
+
+# The Linux release: ROM-free (AROS's topaz and a plain keymap, whatever Kickstart is around),
+# optimised, as a portable tarball and a .deb in build/packages (docs/RELEASES.md). Needs git
+# (the tree is staged from HEAD), and dpkg-deb and fakeroot for the .deb.
+linux-release:
+	@mkdir -p $(BUILD)/linux-release
+	$(PYTHON) tools/extract_topaz.py --out $(BUILD)/linux-release/topaz.cpp --fallback data/fonts/topaz8
+	$(PYTHON) tools/extract_keymap.py --out $(BUILD)/linux-release/keymap.cpp
+	$(MAKE) host HOST=$(BUILD)/linux-release HOST_OPT='-O2' KICKSTART= ROMKEY=
+
+package-linux: linux-release
+	$(PYTHON) tools/package_linux.py --version '$(VERSION)' --build $(BUILD)/linux-release
+
+dist-host: package-linux
 
 # (the devices directories, the user's disks, are left: $${XDG_DATA_HOME:-~/.local/share}/amos/devices)
 uninstall-host:

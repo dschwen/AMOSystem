@@ -33,6 +33,8 @@
 #include <ucontext.h>
 #pragma pack(pop)
 #include <mach-o/dyld.h>
+#endif
+#if !defined(_WIN32)
 #include "host/installed_state.h"
 #endif
 
@@ -193,6 +195,15 @@ int main(int argc, char **argv)
         home.ends_with("/Resources/AMOS")) {
         char *working = host::prepare_macos_state(home.c_str());
         if (!working) { fprintf(stderr, "amos: could not prepare per-user macOS resources\n"); free(start); return 1; }
+        home = working; free(working);
+    }
+#endif
+#if !defined(_WIN32) && !defined(__APPLE__)
+    // An installed package (/usr/share/amos/AMOS) is read-only: run in a per-user copy of it.
+    // A tree that can be written to (a build, ~/.local, AMOS_HOME) runs where it is.
+    if (!home.empty() && !(getenv("AMOS_HOME") && *getenv("AMOS_HOME")) && access(home.c_str(), W_OK) != 0) {
+        char *working = host::prepare_linux_state(home.c_str());
+        if (!working) { fprintf(stderr, "amos: could not prepare the per-user AMOS tree\n"); free(start); return 1; }
         home = working; free(working);
     }
 #endif

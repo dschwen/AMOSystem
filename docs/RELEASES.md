@@ -3,7 +3,8 @@
 Status: mostly planned. Experimental Windows portable ZIP/smoke packaging
 (`make windows-dist`) and a Linux-built unsigned MSI (`make package-msi`) now
 exist; MSI installation/lifecycle tests and signing are pending. Linux, Intel macOS and Windows x86-64 host code
-now builds; native Apple Silicon remains a separate port. DMG, DEB and RPM production targets remain planned. Windows document
+now builds; native Apple Silicon remains a separate port. `make package-linux` builds the Linux portable tarball and a
+`.deb` (see [Linux packages](#linux-packages-implemented)); the RPM remains planned. Windows document
 registration/editor activation is implemented but needs installed-payload VM
 validation; the other OS document integrations remain planned.
 See [Windows](WINDOWS.md), [Apple Silicon](APPLE-SILICON.md), and
@@ -388,3 +389,30 @@ The macOS app/DMG build target is now implemented as `make package-dmg`
 mounted-image verification. See [macOS packaging](../packaging/macos/README.md).
 Actual Mac runtime/Gatekeeper qualification, notarization and Finder document
 event handling remain outstanding.
+
+## Linux packages (implemented)
+
+`make package-linux VERSION=0.1.0` (alias `make dist-host`) builds an optimised, ROM-free
+`build/linux-release/amos` (AROS's Topaz and the plain keymap, whatever Kickstart is on the
+builder) and `tools/package_linux.py` packs, into `build/packages`:
+
+- `amos-VERSION-linux-x86_64.tar.xz`, a portable tree (`bin/amos`, `bin/amos-player`,
+  `share/amos/AMOS`, desktop entry, MIME type, icons, licences). It runs from where it is
+  extracted: the host finds `../share/amos/AMOS` from the executable.
+- `amos_VERSION_amd64.deb` (needs `dpkg-deb` and `fakeroot`): the same under `/usr`, depending
+  on `libsdl2-2.0-0` (SDL is loaded at run time) and recommending `libespeak-ng1`; the
+  post-install/removal scripts only refresh the MIME, desktop and icon caches.
+- a SHA-256 list and a JSON manifest (version, source revision, dirty flag).
+
+The system tree is staged from git HEAD (`AMOS`, the examples, the blue editor palette), so
+developer settings and untracked files stay out. A tree that cannot be written to
+(`/usr/share/amos/AMOS`) is not used in place: the host keeps a copy in
+`$XDG_DATA_HOME/amos/runtime` (default `~/.local/share/amos/runtime`), refreshed on each
+start under a lock; the editor and interpreter configuration, macros and `.AMOS` files of the
+copy are the user's and are not overwritten. `AMOS_HOME` and writable trees (a build,
+`make install-host` into `~/.local`) run in place as before.
+
+`.github/workflows/linux-release.yml` builds it, installs the `.deb` on the runner, runs a
+program with `amos-player` and removes it again; for a `v*` tag it attaches the files to the
+GitHub release. Not done: the RPM, a signed APT/RPM repository, fresh GNOME/KDE default-app checks, and lintian cleanliness (the executable is not position independent
+until the guest-address migration is finished).

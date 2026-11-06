@@ -160,6 +160,7 @@ make host-release     # build/host-release/amos: optimised
 make host-sdl         # build/host-sdl/amos: linked to SDL2
 make install-host [PREFIX=~/.local]    # bin/amos, bin/amos-player, share/amos/AMOS
 make uninstall-host [PREFIX=~/.local]
+make package-linux VERSION=0.1.0     # build/packages: tar.xz and .deb (ROM-free), see docs/RELEASES.md
 make game GAME=prog.AMOS [DATA=folder] [NAME=name]  # build/game/NAME
 make clean
 ```

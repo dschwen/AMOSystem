@@ -39,12 +39,16 @@ bool seed(const fs::path &from, const fs::path &to, const fs::path &relative)
             if (ec && ec != std::errc::no_such_file_or_directory) return false;
             ec.clear();
             if (fs::is_symlink(dest_status) || fs::is_directory(dest_status)) return false;
-            if (!fs::exists(dest_status) || !retained(rel)) {
+            std::error_code same;
+            const bool current = fs::exists(dest_status) && fs::file_size(target, same) == fs::file_size(source, same) &&
+                                 fs::last_write_time(target, same) == fs::last_write_time(source, same) && !same;
+            if (!current && (!fs::exists(dest_status) || !retained(rel))) {
                 // Copy/rename atomically under the per-user lock. Do not follow
                 // a pre-existing temporary symlink or touch unowned user files.
                 auto temp = target; temp += ".amos-update-" + std::to_string(getpid());
                 fs::remove(temp, ec); if (ec) return false;
                 fs::copy_file(source, temp, fs::copy_options::none, ec); if (ec) return false;
+                fs::last_write_time(temp, fs::last_write_time(source, ec), ec); ec.clear();
                 fs::rename(temp, target, ec); if (ec) { std::error_code ignored; fs::remove(temp, ignored); return false; }
             }
         } else return false;
@@ -57,11 +61,10 @@ bool refresh_posix_resources(const char *resources, const char *destination)
 {
     return seed(fs::path(resources), fs::path(destination), {});
 }
-char *prepare_macos_state(const char *resources)
+namespace {
+// Seed `resources` into root/runtime under root's lock; the path of the copy
+char *prepare_state(const char *resources, const fs::path &root)
 {
-    const char *home = getenv("HOME");
-    if (!home || !*home) return nullptr;
-    auto root = fs::path(home) / "Library/Application Support/AMOSystem";
     std::error_code ec; fs::create_directories(root, ec); if (ec) return nullptr;
     int fd = open((root / "runtime.lock").c_str(), O_CREAT | O_RDWR | O_NOFOLLOW, 0600);
     if (fd < 0) return nullptr;
@@ -69,8 +72,24 @@ char *prepare_macos_state(const char *resources)
     auto runtime = root / "runtime";
     bool ok = refresh_posix_resources(resources, runtime.c_str());
     flock(fd, LOCK_UN); close(fd);
-    if (!ok) { fprintf(stderr, "amos: could not prepare writable macOS resources\n"); return nullptr; }
+    if (!ok) { fprintf(stderr, "amos: could not prepare writable resources in %s\n", runtime.c_str()); return nullptr; }
     return strdup(runtime.c_str());
+}
+}
+char *prepare_macos_state(const char *resources)
+{
+    const char *home = getenv("HOME");
+    if (!home || !*home) return nullptr;
+    return prepare_state(resources, fs::path(home) / "Library/Application Support/AMOSystem");
+}
+char *prepare_linux_state(const char *resources)
+{
+    const char *data = getenv("XDG_DATA_HOME"), *home = getenv("HOME");
+    fs::path base;
+    if (data && *data == '/') base = data;
+    else if (home && *home) base = fs::path(home) / ".local/share";
+    else return nullptr;
+    return prepare_state(resources, base / "amos");
 }
 }
 #endif
