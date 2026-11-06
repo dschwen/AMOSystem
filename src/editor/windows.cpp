@@ -383,7 +383,7 @@ void draw_windows()
             b[i].Bt_Image = picture;
             b[i].Bt_Sx = 24;
             b[i].Bt_Sy = EtatSy;
-            b[i].Bt_Routines = address(ed_button_routines);
+            b[i].Bt_Routines.store(AMOS_ROUTINE(ed_button_routines));
             b[i].Bt_RDraw = 6;
             b[i].Bt_RChange = uint8_t(i + 1);
         }

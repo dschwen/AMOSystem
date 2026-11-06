@@ -200,6 +200,30 @@ including byte serialization; native field/view load/store operations are covere
 by the Amiga machine-code comparison. Production IData/MonData access still uses
 legacy identity records pending the context/data-view migration.
 
+### Remaining ordinary hooks and guest snapshots
+
+All six GoTest_* slots, Patch_ScCopy/ScFront/Menage and Button::Bt_Routines now
+use RoutineField, bringing the current code-cell total to 22. Patch-table offset
+selection stays explicit at the architectural code boundary. Slider::Sl_Routines
+is deliberately still unconverted: dialog sliders store the native address of
+an anonymous zero array there as a built-in dispatch marker. That mixed marker/
+code-table representation needs an explicit replacement; treating the marker as
+a real guest entry would preserve a native-address escape.
+
+Hosted saved register snapshots now use GuestContext, a native-owned 24-byte
+value with guest a3-a6 pointers and scalar d6/d7. The context registry accepts
+only this type and retains generation/task/lifetime checks. GuestContext is not
+constructible from the live legacy Ctx, and its pointers cannot implicitly become
+native pointers or code addresses. Both menu capture sites use the private checked
+capture adapter, which rejects high native cursors rather than truncating them.
+This is snapshot migration, not conversion of the live interpreter context.
+
+On Amiga GuestContext aliases the existing Ctx, and capture returns the original
+context by reference. No temporary snapshot copy is introduced before the native
+save-context token is made. Machine-code fixtures cover capture and saved a3
+loads; hosted tests cover high logical addresses, task ownership, normal/nonlocal
+cleanup and rejection of high native cursors in each register.
+
 ## Remaining work checklist
 
 Completed compiler-enforced boundaries:
@@ -208,14 +232,16 @@ Completed compiler-enforced boundaries:
 - [x] Native signature-specific callbacks, guest dispatch keys and static image relocation.
 - [x] Typed interpreter/collector code arguments and guest token-table parameters.
 - [x] Hosted call APIs reject raw/native/data pointers; static code arguments use symbols.
-- [x] Twelve continuation/error/extension code cells and their mapped record views.
+- [x] Twenty-two continuation/error/extension/test/patch/button code cells and mapped views.
+- [x] Guest-only saved context values and checked legacy capture; live Ctx remains pending.
 
 Required next conversions and release gates:
 
-- [ ] Classify and type remaining code cells: GoTest_*, Patch_ScCopy/ScFront/Menage,
-  dialog/slider/button routine tables and OS interrupt/callback registrations.
+- [ ] Replace the mixed native marker/code-table representation in Sl_Routines,
+  then migrate slider tables and OS interrupt/callback registrations.
 - [ ] Migrate Ctx a3-a6, program/token cursors and register façades to guest data
-  addresses; remove the checked native-cursor and native-token-table adapters.
+  addresses; remove the checked native-context capture, native-cursor and
+  native-token-table adapters.
 - [ ] Replace idata/wdata/native record overlays with mapped schema views, starting
   with the interpreter's token/continuation vertical slice. Install high Memory
   behind those readers; remove IdentityDataMemory and LegacyCodeReader.
@@ -348,13 +374,17 @@ SDL platform code or VM page-size handling as part of address cleanup.
 - Clang: the same contract/runtime suites pass; the container skips the Amiga
   machine-code comparison because its m68k compiler is not installed. That gate
   passes separately on this machine with the actual Amiga toolchain.
-- Linux: 85 text tests pass, zero fail, 54 are skipped; four editor fixtures pass.
+- Linux: 85 text tests pass, zero fail, 54 are skipped; four editor fixtures and
+  the menus2 procedure/saved-register fixture pass.
 - Windows and Amiga: builds pass. Amiga code-field and mapped-view operations
-  add no instructions relative to their native load/store baselines.
+  add no instructions relative to their native load/store baselines. Saved-context
+  capture and a3 access also match the native instruction baselines.
 - macOS arm64: cross-links with the startup guard retained; native interpreter
   execution remains unqualified.
 - ASan/UBSan: the high-backed metadata/16-bit access/code-field view fixture passes,
-  including permission checks and prevention of partial writes.
+  including permission checks and prevention of partial writes. The snapshot/mark
+  registry fixture also passes with task ownership, nonlocal cleanup, saved guest
+  pointer values and rejection of high native cursors.
 
 These checks cover the migrated boundaries. They do not qualify legacy native
 data pointers, guest record overlays, platform mirrors or a complete high-address

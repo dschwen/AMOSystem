@@ -255,16 +255,16 @@ void interp_zap_in(Regs *r, RoutineArg zap_in)
 // interpreter registers regs; End Proc comes back through *pile
 uint32_t mn_call_procedure(RoutineArg fn, ContextHandle context, wire::MarkField *pile, const uint8_t *name)
 {
-    const Ctx* regs = &saved_context(context);
+    const GuestContext* regs = &saved_context(context);
     Mark m;
     pile->store(mark_token(m));
     AllRegs r = {};
     r.d[6] = regs->d6;
     r.d[7] = regs->d7;
-    r.a[3] = address(regs->a3);
-    r.a[4] = address(regs->a4);
-    r.a[5] = address(regs->a5);
-    r.a[6] = address(regs->a6);
+    r.a[3] = context_address(regs->a3);
+    r.a[4] = context_address(regs->a4);
+    r.a[5] = context_address(regs->a5);
+    r.a[6] = context_address(regs->a6);
     r.a[0] = address(name);
     AllRegs out = mark_run(m, [&] {
         glue_call(fn, r);

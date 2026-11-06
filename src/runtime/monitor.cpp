@@ -309,7 +309,7 @@ void host_mon_evaluate(AllRegs &r)
     AllRegs entry = r;
     m.Tt_EvDebut = r.a[6];
     d.Patch_Errors.store(AMOS_ROUTINE(mon_ev_error));
-    d.Patch_Menage = address(mon_menage);
+    d.Patch_Menage.store(AMOS_ROUTINE(mon_menage));
     banks(AMOS_ROUTINE(mon_banks_program_entry), r);
     AllRegs out;
     for (;;) {
@@ -338,7 +338,7 @@ void host_mon_evaluate(AllRegs &r)
     r.a[6] = a6;
     banks(AMOS_ROUTINE(mon_banks_monitor_entry), r);
     d.Patch_Errors.store({});
-    d.Patch_Menage = 0;
+    d.Patch_Menage.store({});
     if (evaluation == EvError) {
         r.d[3] = 0;
         r.d[2] = 0;

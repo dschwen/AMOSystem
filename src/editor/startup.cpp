@@ -434,7 +434,7 @@ void draw_top()
         b->Bt_Y = YTop;
         b->Bt_Image = picture;
         b->Bt_Zone = zone;
-        b->Bt_Routines = address(ed_button_routines);
+        b->Bt_Routines.store(AMOS_ROUTINE(ed_button_routines));
         b->Bt_RDraw = 6;
         b->Bt_RPos = 0;
         b->Bt_RChange = 0;

@@ -1,5 +1,6 @@
 #include "runtime/marks.h"
 #include "runtime/context_handle.h"
+#include "runtime/detail/legacy_context.h"
 #include "core/guest_types.h"
 #include <assert.h>
 #include <stdint.h>
@@ -20,7 +21,7 @@ void run_at(Mark& mark) { ++ran; mark.regs.d[0] = 91; }
     Mark inner{};
     abandoned = decode_mark(mark_word(inner));
     mark_run(inner, [&] {
-        Ctx snapshot{}; snapshot.d6 = 93;
+        GuestContext snapshot{}; snapshot.d6 = 93;
         abandoned_context = save_context(snapshot);
         assert(context_valid(abandoned_context));
         return_to(outer, 73);
@@ -28,9 +29,25 @@ void run_at(Mark& mark) { ++ran; mark.regs.d[0] = 91; }
     assert(false);
 }
 int main(int argc, char**) {
-    Ctx source{}; source.d6 = 11;
+    Ctx legacy{};
+    legacy.d6 = 31; legacy.d7 = 37;
+    legacy.a3 = reinterpret_cast<uint8_t*>(uintptr_t(0xf0000010));
+    auto captured = detail::try_capture_context(legacy);
+    assert(captured && captured.value.d6 == 31 && captured.value.d7 == 37);
+    assert(context_address(captured.value.a3) == 0xf0000010);
+    uint8_t* Ctx::* registers[] = {&Ctx::a3,&Ctx::a4,&Ctx::a5,&Ctx::a6};
+    assert(reinterpret_cast<uintptr_t>(&legacy) > UINT32_MAX);
+    for (auto reg : registers) {
+        Ctx invalid{};
+        invalid.*reg = reinterpret_cast<uint8_t*>(&legacy);
+        assert(detail::try_capture_context(invalid).fault == guest::Fault::overflow);
+    }
+    GuestContext source{}; source.d6 = 11;
+    source.a3 = guest::abi::AddressCodec::decode<guest::Byte>(0xf0000010);
     const auto retained = save_context(source);
     source.d6 = 22;
+    source.a3 = {};
+    assert(context_address(saved_context(retained).a3) == 0xf0000010);
     assert(saved_context(retained).d6 == 11); // Registry owns a value copy.
     Mark outer{};
     assert(reinterpret_cast<uintptr_t>(&outer) > UINT32_MAX);
@@ -68,7 +85,7 @@ int main(int argc, char**) {
         assert(fresh != outer_token && fresh != abandoned);
         ContextHandle transient{};
         auto out = mark_run(again, [&] {
-            Ctx value{}; value.d7 = i;
+            GuestContext value{}; value.d7 = i;
             transient = save_context(value);
             assert(transient != retained);
             again.regs.d[0] = saved_context(transient).d7;

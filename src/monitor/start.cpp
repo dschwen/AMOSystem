@@ -86,10 +86,10 @@ void free_all()
     d.ExtTests[1].store({});
     wdata().Actualise &= ~BitStep;
     d.ActuMask &= ~BitStep;
-    d.Patch_Menage = 0;
+    d.Patch_Menage.store({});
     d.Patch_Errors.store({});
-    d.Patch_ScFront = 0;
-    d.Patch_ScCopy = 0;
+    d.Patch_ScFront.store({});
+    d.Patch_ScCopy.store({});
     // (the assembler also did this when it had failed to start, before
     // keeping the error routine: the program's errors then jumped to 0)
     if (m.Tt_JError.load())
@@ -217,8 +217,8 @@ bool cold_start(uint32_t program)
 
     // The patches
     d.ExtTests[1].store(AMOS_ROUTINE(mon_tests_patch_entry));
-    d.Patch_ScFront = address(mon_screen_front);
-    d.Patch_ScCopy = address(mon_screen_copy_entry);
+    d.Patch_ScFront.store(AMOS_ROUTINE(mon_screen_front));
+    d.Patch_ScCopy.store(AMOS_ROUTINE(mon_screen_copy_entry));
     Regs c;
     c.d[0] = L_Mon_MonitorChr;
     lib_call(L_SetChrPatch, c);

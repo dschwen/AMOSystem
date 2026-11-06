@@ -268,9 +268,9 @@ void data_new()
     d.Prg_Includes = 0;
     d.Prg_FullSource = 0;
     d.Patch_Errors.store({});
-    d.Patch_Menage = 0;
-    d.Patch_ScFront = 0;
-    d.Patch_ScCopy = 0;
+    d.Patch_Menage.store({});
+    d.Patch_ScFront.store({});
+    d.Patch_ScCopy.store({});
     d.ActuMask &= ~2;
     Regs c;
     c.d[0] = 0;

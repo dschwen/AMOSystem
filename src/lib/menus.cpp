@@ -14,6 +14,7 @@
 #include "runtime/interpreter_bridge.h"
 #include "core/amiga.h"
 #include "runtime/context_handle.h"
+#include "runtime/detail/legacy_context.h"
 #include "lib/banks.h"
 #include "lib/dos.h"
 #include "lib/menus.h"
@@ -129,9 +130,9 @@ uint32_t mouse_key()
 // (offset 0) and back (offset 4)
 void monitor_patch(int offset)
 {
-    if (uint32_t patch = idata().Patch_ScFront) {
+    if (host::RoutineArg patch = idata().Patch_ScFront.load()) {
         Regs r = {};
-        amos_call(&r, host::decode_routine(patch + uint32_t(offset)));
+        amos_call(&r, host::decode_routine(host::encode_routine(patch) + uint32_t(offset)));
     }
 }
 
@@ -884,7 +885,7 @@ extern "C" uint32_t lib_mn_gere(RegFrame &frame)
     IData &d = idata();
     // The registers for the procedures of (PR) objects
     Ctx regs = ctx();
-    const auto context = host::save_context(regs);
+    const auto context = host::save_context(host::detail::capture_context(regs));
     d.MnRA3.store(context);
     d.MnError = 0;
     start();
@@ -1247,8 +1248,8 @@ static void menu_clear_var()
     add_routine(lib_menu_on_clear, address(&d.Sys_ClearRoutines));
     add_routine(lib_menu_on_default, address(&d.Sys_DefaultRoutines));
     add_routine(lib_menu_on_error, address(&d.Sys_ErrorRoutines));
-    d.GoTest_Menus = address(lib_address(L_MnGere));
-    d.GoTest_MenuKey = address(lib_address(L_MenuKeyExplore));
+    d.GoTest_Menus.store(lib_entry(L_MnGere));
+    d.GoTest_MenuKey.store(lib_entry(L_MenuKeyExplore));
 }
 
 extern "C" uint32_t lib_mn_clear_var(RegFrame &)
@@ -1797,7 +1798,7 @@ extern "C" void lib_in_menu_calc()
     start();
     // The assembler ran (PR) objects with the registers of the last MnGere
     Ctx regs = ctx();
-    const auto context = host::save_context(regs);
+    const auto context = host::save_context(host::detail::capture_context(regs));
     d.MnRA3.store(context);
     d.MnProc = -1;
     ec_fn(ec::MnStart);

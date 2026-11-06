@@ -26,6 +26,7 @@ class RecoveryTests(unittest.TestCase):
         compiler = shlex.split(os.environ.get('CXX', 'c++'))
         code = '''
 #include "runtime/mark_handle.h"
+#include "runtime/context_handle.h"
 #include "core/guest_types.h"
 using namespace amos;
 using namespace amos::host;
@@ -42,7 +43,13 @@ int main() { consume(decode_mark(1)); REJECT }
                       'wire::MarkField f; uint32_t word = f.load(); (void)word;',
                       'wire::MarkField f; f.store(decode_context(1));',
                       'wire::ContextField f; f.store(decode_mark(1));',
-                      'consume(decode_context(1));']
+                      'consume(decode_context(1));',
+                      'save_context(Ctx{});',
+                      'GuestContext c{}; c.a3 = HostPtr<Byte>{};',
+                      'GuestContext c{}; c.a3 = (uint8_t*)0;',
+                      'GuestContext c{}; c.a6 = decode_routine(16);',
+                      'GuestContext c{}; uint8_t* p = c.a3; (void)p;',
+                      'GuestContext c{}; address(c.a3);']
         with tempfile.TemporaryDirectory() as temp:
             source = Path(temp)/'types.cpp'
             command = [*compiler, '-std=c++20', '-Isrc', '-fsyntax-only', str(source)]

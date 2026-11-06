@@ -8,6 +8,8 @@ inline void* operator new(size_t, void* storage) noexcept { return storage; }
 #include "abi/guest_address_codec.h"
 #include "abi/guest_entry_codec.h"
 #include "runtime/detail/legacy_code_reader.h"
+#include "runtime/detail/legacy_context.h"
+#include "runtime/context_handle.h"
 #include "core/mark_token.h"
 #include "core/context_token.h"
 #include "core/routine_field.h"
@@ -298,6 +300,21 @@ extern "C" void store_code_view(uint32_t cell, uint32_t value) {
     Memory{}.ref(AddressCodec::decode<amos::wire::RoutineField>(cell)).value.store(amos::host::decode_routine(value));
 #else
     *reinterpret_cast<uint32_t*>(cell) = value;
+#endif
+}
+
+extern "C" uint32_t capture_snapshot(const void* context) {
+#if defined(AMOS_TEST_WRAPPED)
+    return amos::host::encode_context(amos::host::save_context(amos::host::detail::capture_context(*static_cast<const amos::Ctx*>(context))));
+#else
+    return uint32_t(context);
+#endif
+}
+extern "C" uint32_t load_snapshot_a3(const void* context) {
+#if defined(AMOS_TEST_WRAPPED)
+    return amos::host::context_address(static_cast<const amos::host::GuestContext*>(context)->a3);
+#else
+    return *reinterpret_cast<const uint32_t*>(static_cast<const uint8_t*>(context)+8);
 #endif
 }
 

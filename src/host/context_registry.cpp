@@ -8,7 +8,7 @@ struct ContextRegistry {
     static constexpr unsigned count = 256, tasks = 9;
     static constexpr uint32_t last_generation = UINT32_MAX >> 8;
     struct Slot {
-        Ctx value{};
+        GuestContext value{};
         uint64_t sequence = 0;
         uint32_t generation = 1, owner = 0;
         bool occupied = false;
@@ -30,7 +30,7 @@ struct ContextRegistry {
         auto& slot = slots[index];
         return slot.occupied && slot.generation == handle.word_ >> 8 && slot.owner == owner() ? &slot : nullptr;
     }
-    ContextHandle save(const Ctx& value) {
+    ContextHandle save(const GuestContext& value) {
         const auto task = owner();
         if (sequences[task] == UINT64_MAX) invalid();
         for (unsigned n = 0; n < count - 1; ++n) {
@@ -53,8 +53,8 @@ struct ContextRegistry {
     }
 };
 namespace { ContextRegistry registry; }
-ContextHandle save_context(const Ctx& value) { return registry.save(value); }
-const Ctx& saved_context(ContextHandle handle) {
+ContextHandle save_context(const GuestContext& value) { return registry.save(value); }
+const GuestContext& saved_context(ContextHandle handle) {
     auto* slot = registry.find(handle);
     if (!slot) ContextRegistry::invalid();
     return slot->value;

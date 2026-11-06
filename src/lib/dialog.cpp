@@ -1657,9 +1657,9 @@ void mem_free(uint32_t address, uint32_t length)
 // The monitor's hook to bring its screen to the front, while RUn waits
 void screen_front()
 {
-    if (uint32_t patch = idata().Patch_ScFront) {
+    if (host::RoutineArg patch = idata().Patch_ScFront.load()) {
         Regs r = {};
-        amos_call(&r, host::decode_routine(patch));
+        amos_call(&r, patch);
     }
 }
 
@@ -2219,9 +2219,9 @@ void button_call(Button *b, uint8_t n)
         return;
     Regs c = {};
     c.d[0] = static_cast<uint32_t>(static_cast<int8_t>(n)) << 2;
-    c.a[0] = b->Bt_Routines;
+    c.a[0] = host::encode_routine(b->Bt_Routines.load());
     c.a[2] = address(b);
-    amos_call(&c, host::decode_routine(uint32_t(b->Bt_Routines) + uint32_t(int32_t(int16_t(c.d[0]))) - 4));
+    amos_call(&c, host::decode_routine(host::encode_routine(b->Bt_Routines.load()) + uint32_t(int32_t(int16_t(c.d[0]))) - 4));
 }
 
 void button_init(Button *b, bool draw)
@@ -3003,9 +3003,9 @@ void amos::dia_wait_mul() { hal::wait_frame(); }
 
 void amos::dia_patch()
 {
-    if (uint32_t patch = idata().Patch_ScCopy) {
+    if (host::RoutineArg patch = idata().Patch_ScCopy.load()) {
         Regs r = {};
-        amos_call(&r, host::decode_routine(patch));
+        amos_call(&r, patch);
     }
 }
 
@@ -3059,7 +3059,7 @@ DiaOpen amos::dia_open(uint32_t number, const uint8_t *program, const uint8_t *p
     IData &id = idata();
     add_routine(lib_dia_on_clear, address(&id.Sys_ClearRoutines));
     add_routine(lib_dia_on_default, address(&id.Sys_DefaultRoutines));
-    id.GoTest_Dialog = address(lib_address(L_Dia_AutoTest));
+    id.GoTest_Dialog.store(lib_entry(L_Dia_AutoTest));
     Screen *s = ptr<Screen>(wdata().EcCourant);
     d->Dia_Screen = address(s);
     d->Dia_ScreenNb = s->EcNumber;

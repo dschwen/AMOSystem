@@ -260,10 +260,10 @@ uint32_t demande(uint32_t length)
         collect();
         if (!fits(length))
             break;
-        if (d.Patch_Menage) {
+        if (d.Patch_Menage.load()) {
             Regs r;
             r.d[3] = length;
-            interp_jump(&r, host::decode_routine(d.Patch_Menage));
+            interp_jump(&r, d.Patch_Menage.load());
         }
         int32_t at = int32_t(c.d7);
         if (at < 0)
