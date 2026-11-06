@@ -8,6 +8,8 @@
 
 #include "host/devices.h"
 
+#include "host/adf.h"
+
 #include <ctype.h>
 #include <dirent.h>
 #include <errno.h>
@@ -51,6 +53,7 @@ struct Volume {
     bool volume = false;        // a disk (a label), not an assign
     bool read_only = false;
     bool user = false;          // set up by the user (the configuration, the command line, the panel)
+    std::string image, disk_label;  // a floppy image: its file (path is the folder it is unpacked into) and the disk's label
 };
 std::vector<Volume> table;      // (a removed assign keeps its place, its name empty)
 
@@ -75,7 +78,8 @@ std::vector<std::pair<std::string, std::string>> options;     // the command lin
 std::string config_file, program_path;
 std::vector<std::string> library;
 std::string devices_root;
-std::string ram_path;
+std::string ram_path, adf_root;
+int adf_count;
 std::vector<std::string> ejected;       // folders the user took out: not mounted again by a scan
 bool initialised;
 
@@ -316,10 +320,26 @@ int next_hard_unit()
     return -1;
 }
 
+bool is_image(const std::string &path);
+std::string unpack_image(const std::string &image, std::string &label, const char *&message);
+
 // A folder that is a disk, in a unit (auto: the next free hard disk's)
-void mount(const std::string &label, const std::string &folder, bool read_only, int unit, bool user = false)
+void mount(const std::string &label_in, const std::string &folder, bool read_only, int unit, bool user = false)
 {
-    std::string real = real_path(folder);
+    std::string real = real_path(folder), label = label_in, image, disk_label;
+    if (is_image(real)) {
+        // a floppy image: its files unpacked, write-protected (the image is not changed)
+        const char *why = "";
+        image = real;
+        real = unpack_image(image, disk_label, why);
+        if (real.empty()) {
+            warn((unit >= 0 ? unit_name(unit) + ": " : "") + folder + ": " + why);
+            return;
+        }
+        if (label.empty())
+            label = disk_label;
+        read_only = true;
+    }
     if (!is_directory(real)) {
         warn((unit >= 0 ? unit_name(unit) + ": " : "") + folder + " is not a folder");
         return;
@@ -329,6 +349,8 @@ void mount(const std::string &label, const std::string &folder, bool read_only, 
         return;
     }
     int i = add(label, real, true, read_only, user);
+    table[size_t(i)].image = image;
+    table[size_t(i)].disk_label = disk_label;
     if (unit < 0)
         unit = next_hard_unit();
     if (unit >= 0)
@@ -419,35 +441,89 @@ void open_devices(const Config &c)
 int remove_entry(const char *path, const struct stat *, int, struct FTW *) { return remove(path); }
 #endif
 
-void remove_ram()
+// A folder this run made (its name has the mark) with all that is in it
+void remove_tree(const std::string &path)
 {
-    // (only a folder this run made: its name has the mark)
-    if (ram_path.size() > 10 && ram_path.find("/amos-ram-") != std::string::npos)
+    if (path.size() > 10 && path.find("/amos-") != std::string::npos)
 #if defined(_WIN32)
-        windows::remove_tree(ram_path.c_str());
+        windows::remove_tree(path.c_str());
 #else
-        nftw(ram_path.c_str(), remove_entry, 16, FTW_DEPTH | FTW_PHYS);
+        nftw(path.c_str(), remove_entry, 16, FTW_DEPTH | FTW_PHYS);
+#endif
+}
+
+void remove_ram() { remove_tree(ram_path); remove_tree(adf_root); }
+
+// A new temporary folder: its mark is the part of its name after "amos-"
+std::string make_temp(const char *mark)
+{
+#if defined(_WIN32)
+    (void)mark;
+    char *created = windows::temporary_directory();
+    if (!created)
+        return "";
+    std::string path = created;
+    free(created);
+    for (char &c : path)
+        if (c == '\\')
+            c = '/';
+    return path;
+#else
+    const char *tmp = getenv("TMPDIR");
+    std::string pattern = std::string(tmp && *tmp ? tmp : "/tmp") + "/amos-" + mark + "-XXXXXX";
+    std::vector<char> text(pattern.begin(), pattern.end());
+    text.push_back(0);
+    return mkdtemp(text.data()) ? text.data() : "";
 #endif
 }
 
 void make_ram()
 {
-#if defined(_WIN32)
-    char *created = windows::temporary_directory();
-    if (!created) return;
-    ram_path = created;
-    free(created);
-#else
-    const char *tmp = getenv("TMPDIR");
-    std::string pattern = std::string(tmp && *tmp ? tmp : "/tmp") + "/amos-ram-XXXXXX";
-    std::vector<char> text(pattern.begin(), pattern.end());
-    text.push_back(0);
-    if (!mkdtemp(text.data()))
+    ram_path = make_temp("ram");
+    if (ram_path.empty())
         return;
-    ram_path = text.data();
-#endif
-    atexit(remove_ram);
+    static bool registered;
+    if (!registered)
+        registered = !atexit(remove_ram);
     add("RAM", real_path(ram_path), true);
+}
+
+// ---- floppy images ----------------------------------------------------------------
+
+bool is_image(const std::string &path)
+{
+    struct stat st;
+    if (stat(path.c_str(), &st) != 0 || !S_ISREG(st.st_mode))
+        return false;
+    return path.size() > 4 && strcasecmp(path.c_str() + path.size() - 4, ".adf") == 0;
+}
+
+// An image's files into a new folder (of the cache: the disk's files are not
+// the image's, it is not changed): its path, the disk's label; empty, and the
+// reason in message, if it is not a disk
+std::string unpack_image(const std::string &image, std::string &label, const char *&message)
+{
+    if (adf_root.empty()) {
+        adf_root = make_temp("adf");
+        if (adf_root.empty()) {
+            message = "cannot make a folder for the disk";
+            return "";
+        }
+        static bool registered;
+        if (!registered)
+            registered = !atexit(remove_ram);
+    }
+    std::string folder = adf_root + "/" + std::to_string(++adf_count);
+    char text[64];
+    int bad = 0;
+    if (!adf::unpack(image.c_str(), folder.c_str(), text, sizeof text, bad, message)) {
+        remove_tree(folder);
+        return "";
+    }
+    if (bad)
+        warn(image + ": " + std::to_string(bad) + " entries of the disk could not be read");
+    label = text;
+    return real_path(folder);
 }
 
 void init()
@@ -511,7 +587,7 @@ void init()
         unit_set[u] = u < Floppies && e.set;
         if (!e.set)
             continue;
-        mount(e.label.empty() ? base_name(e.path) : e.label, e.path, e.read_only, u, true);
+        mount(e.label.empty() && !is_image(real_path(e.path)) ? base_name(e.path) : e.label, e.path, e.read_only, u, true);
     }
     // the devices directory's, the library, the volatile RAM:
     open_devices(c);
@@ -548,6 +624,32 @@ const char *from_library(const char *name, size_t n)
         mount(found, dir + "/" + found, false, -1);
         int i = find(found.c_str(), found.size(), true);
         return i >= 0 ? table[size_t(i)].path.c_str() : nullptr;
+    }
+    // the images: a file of the name (with .adf), or whose disk has the label
+    for (const std::string &dir : library) {
+        DIR *d = opendir(dir.c_str());
+        if (!d)
+            continue;
+        std::vector<std::string> images;
+        while (struct dirent *e = readdir(d)) {
+            size_t length = strlen(e->d_name);
+            if (length > 4 && !strcasecmp(e->d_name + length - 4, ".adf"))
+                images.push_back(e->d_name);
+        }
+        closedir(d);
+        std::sort(images.begin(), images.end());
+        for (const std::string &file : images) {
+            char label[64];
+            bool by_name = file.size() - 4 == n && !strncasecmp(file.c_str(), name, n);
+            if (!by_name && !(adf::label_of((dir + "/" + file).c_str(), label, sizeof label) && strlen(label) == n &&
+                              !strncasecmp(label, name, n)))
+                continue;
+            mount("", dir + "/" + file, true, -1);
+            // (by the file's name or the label: whatever the disk is called is the volume)
+            for (size_t i = table.size(); i-- > 0;)
+                if (table[i].volume && !table[i].name.empty() && table[i].image == real_path(dir + "/" + file))
+                    return table[i].path.c_str();
+        }
     }
     return nullptr;
 }
@@ -663,7 +765,7 @@ bool unit_info(int u, UnitInfo &info)
         info.read_only = v.read_only;
         info.saved = v.user;
         snprintf(info.label, sizeof info.label, "%s", v.name.c_str());
-        snprintf(info.path, sizeof info.path, "%s", v.path.c_str());
+        snprintf(info.path, sizeof info.path, "%s", (v.image.empty() ? v.path : v.image).c_str());
     }
     return true;
 }
@@ -675,6 +777,10 @@ void take_out(int u)
 {
     Volume &v = table[size_t(unit_medium[u])];
     ejected.push_back(v.path);
+    if (!v.image.empty()) {
+        remove_tree(v.path);    // (the unpacked files)
+        v.image.clear();
+    }
     v.name.clear();
     unit_medium[u] = -1;
     disk_event(false);
@@ -690,12 +796,26 @@ bool insert(int u, const char *folder, const char *label_in, bool read_only, con
         message = "no such unit";
         return false;
     }
-    std::string real = real_path(folder);
+    std::string real = real_path(folder), image, disk_label;
+    // a floppy image: the same image in another drive moves; else its files are unpacked
+    // (write-protected: the image is not changed)
+    if (is_image(real)) {
+        for (int x = 0; x < Units; x++)
+            if (x != u && unit_medium[x] >= 0 && table[size_t(unit_medium[x])].image == real)
+                take_out(x);
+        if (unit_medium[u] >= 0 && table[size_t(unit_medium[u])].image == real)
+            take_out(u);
+        image = real;
+        real = unpack_image(image, disk_label, message);
+        if (real.empty())
+            return false;
+        read_only = true;
+    }
     if (!is_directory(real)) {
         message = "not a folder";
         return false;
     }
-    std::string label = label_in && *label_in ? label_in : base_name(real);
+    std::string label = label_in && *label_in ? label_in : image.empty() ? base_name(real) : disk_label;
     if (label.empty() || label.size() >= 64 || label.find(':') != std::string::npos || label.find('/') != std::string::npos) {
         message = "the name cannot be a disk's";
         return false;
@@ -719,6 +839,8 @@ bool insert(int u, const char *folder, const char *label_in, bool read_only, con
     ejected.erase(std::remove(ejected.begin(), ejected.end(), real), ejected.end());
     // (the same label with its folder gone, if it is in the table dead: no)
     unit_medium[u] = add(label, real, true, read_only, true);
+    table[size_t(unit_medium[u])].image = image;
+    table[size_t(unit_medium[u])].disk_label = disk_label;
     if (u < Floppies)
         unit_set[u] = true;
     disk_event(true);
@@ -798,8 +920,8 @@ bool save_config(const char *&message)
         if (unit_medium[u] < 0 || !table[size_t(unit_medium[u])].user)
             continue;
         const Volume &v = table[size_t(unit_medium[u])];
-        text += "[" + lower(unit_name(u)) + "]\npath = " + v.path + "\n";
-        if (v.name != base_name(v.path))
+        text += "[" + lower(unit_name(u)) + "]\npath = " + (v.image.empty() ? v.path : v.image) + "\n";
+        if (v.name != (v.image.empty() ? base_name(v.path) : v.disk_label))
             text += "label = " + v.name + "\n";
         if (v.read_only)
             text += "readonly = yes\n";

@@ -5,7 +5,8 @@ Status: decided (section 9). **D1, D2 and D3 are built**: the model,
 volatile `RAM:` (D1); disks put in and taken out while AMOS runs, the
 requester that ends by itself (D2); drag and drop, the F12 Devices panel with
 its folder browser, the hint line, saving the setup (D3), as described in
-docs/BUILDING.md's host list and the README. D4 (ADF images) onward are not.
+docs/BUILDING.md's host list and the README. **D4 is built too** (ADF images, read-only: see
+section 6, "What D4 does"). D5 onward are not.
 Not done of D3: a dropped `.AMOS` program does not run (the message says so),
 and the file association belongs to D6. Section 1 is how it worked before D1.
 
@@ -190,6 +191,32 @@ leave half a disk. A tool `tools/adf.py` (list, extract, pack) makes the
 test images and is useful by itself. Hard disk images (`.hdf`, with RDB or
 without) are not in this plan: a folder is the hard disk.
 
+### What D4 does
+
+The reader is `host/adf.cpp` (OFS and FFS, international or not, 880 KiB and 1760 KiB
+images; the checksums and the hash chains are checked, a damaged file is written as far as
+it can be read and counted). **It unpacks the disk when it is put in** (the second column
+of the table above) instead of being a live file system under `hal_files.cpp`: that file
+works on host paths throughout (`stat`, `opendir`, `realpath`), so a driver of our own
+would have been a second implementation of every call of it, for the writing of D5 (where
+the plan below stays: a writer of our own, then the image rebuilt from the folder). The
+differences from a live driver:
+
+- an image is **always write-protected** (a program that saves gets "disk is write
+  protected"); the files are in a folder of the host's temporary area, removed when the
+  disk is taken out and at exit; the image is never changed;
+- the directory order is the disk's (hash order) for a program that reads it with `ExNext`
+  (`.amos-order` in each unpacked folder; AMOS's own `Dir First$` sorts anyway);
+  file dates are the disk's; protection bits and comments are not kept (D6: `.uaem`);
+- `Dfree` and `Disc Info$` are those of the folder it is on.
+
+Where an image can be named: a drop on the window (`DF0:`; `AMOS_DROP="1:df1=disk.adf"`
+to fake it), the panel's browser (Enter on a `.adf` puts it in the unit), `--df0 disk.adf`,
+`[df0] path = disk.adf` in `amos.conf` (saved as the image, not the unpacked folder), and
+the library: a program that asks for `Utility:` gets `Utility.adf` or the image whose label
+is `Utility`. The label is the disk's own. `tools/adf.py` (`list`, `extract`, `pack`,
+`info`) makes images from folders; the packed ones read correctly with amitools' xdftool.
+
 ## 7. Names on the host's systems
 
 - **Characters**: an Amiga label or file can have `: ? * " < > | \` and
@@ -216,7 +243,7 @@ without) are not in this plan: a folder is the hard disk.
 | D1 | The model: units, media, labels, library; `df0:`...`dh9:` resolve; `Dev First$`, `Drive`, `Disc Info$`; a volatile `RAM:`; the command line and `amos.conf`; the launch folder mounted | 4-5 |
 | D2 | Disk changes: insert/eject while running (`DISKINSERTED`/`REMOVED`), the requester finishes by itself when the disk comes, the library finds a label that was asked for | 2-3 |
 | D3 | The window: drag and drop, the F12 panel with its file browser, the "insert disk X" hint, saving the configuration | 5-7 |
-| D4 | ADF, read-only (the driver, the label, the library's ADFs, `tools/adf.py`, tests with images made by it) | 4-5 |
+| D4 | ADF, read-only (**built**: `host/adf.cpp` reads the disk and unpacks it when it is put in, the label, the library's ADFs, `tools/adf.py`, tests with images made by it) | 4-5 |
 | D5 | ADF, writing and formatting (the FFS writer, write-protect, safe write-back) | 5-7 |
 | D6 | Windows and macOS: default places, name escaping, file associations, first-run folders (together with the releases, `docs/RELEASES.md`) | 3-4 |
 | D7 | Later: `.adz`, HDF, native file dialogs | |

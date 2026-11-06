@@ -1,0 +1,15 @@
+game-1-1
+hello from the disk
+echo started
+deep
+big 100000
+sum 12735472
+[*Libs                                 ]
+[*S                                    ]
+[ Big.bin                      100000  ]
+[ Readme                       21      ]
+write 90
+old file system
+a utility
+out 0-1 0
+end

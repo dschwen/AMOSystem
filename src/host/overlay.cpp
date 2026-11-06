@@ -58,7 +58,7 @@ struct Browser {
     bool mount;                     // a hard disk (else a disk for unit)
     int unit;
     std::string dir;
-    std::vector<std::string> folders;
+    std::vector<std::string> folders, images;     // (the images only for a floppy)
     int cursor = 0, top = 0;
 } browser;
 std::string last_dir;
@@ -205,7 +205,7 @@ void draw_panel()
         buttons.push_back({x, y, int(strlen(a.label)), 1, a.key});
         x += int(strlen(a.label)) + 1;
     }
-    text(PCol + 2, PRow + PRows - 4, "Drop a folder on the window to mount it as a hard disk.", Dim);
+    text(PCol + 2, PRow + PRows - 4, "Drop a folder to mount it as a hard disk, a .adf image to put it in DF0:", Dim);
     std::string library = "Library: ";
     for (int i = 0; i < devices::library_count(); i++)
         library += (i ? ", " : "") + std::string(devices::library_path(i));
@@ -220,18 +220,24 @@ void draw_panel()
 void list_folders()
 {
     browser.folders.clear();
+    browser.images.clear();
     if (DIR *d = opendir(browser.dir.c_str())) {
         while (struct dirent *e = readdir(d)) {
             if (e->d_name[0] == '.')
                 continue;
             std::string path = browser.dir + "/" + e->d_name;
             struct stat st;
+            size_t length = strlen(e->d_name);
             if (stat(path.c_str(), &st) == 0 && S_ISDIR(st.st_mode))
                 browser.folders.push_back(e->d_name);
+            else if (!browser.mount && length > 4 && !strcasecmp(e->d_name + length - 4, ".adf") && S_ISREG(st.st_mode))
+                browser.images.push_back(e->d_name);
         }
         closedir(d);
     }
     std::sort(browser.folders.begin(), browser.folders.end(),
+              [](const std::string &a, const std::string &b) { return strcasecmp(a.c_str(), b.c_str()) < 0; });
+    std::sort(browser.images.begin(), browser.images.end(),
               [](const std::string &a, const std::string &b) { return strcasecmp(a.c_str(), b.c_str()) < 0; });
     browser.cursor = browser.top = 0;
 }
@@ -245,18 +251,18 @@ void browse(const std::string &where)
 }
 
 // The items: "use this folder", the parent (but at the top), the folders
-int browser_items() { return 1 + (browser.dir != "/" ? 1 : 0) + int(browser.folders.size()); }
+int browser_items() { return 1 + (browser.dir != "/" ? 1 : 0) + int(browser.folders.size() + browser.images.size()); }
 
 std::string browser_item(int i)
 {
     if (i == 0)
         return "[ Use this folder ]";
-    if (browser.dir != "/") {
-        if (i == 1)
-            return "..";
-        return browser.folders[size_t(i - 2)] + "/";
-    }
-    return browser.folders[size_t(i - 1)] + "/";
+    int k = i - (browser.dir != "/" ? 2 : 1);
+    if (browser.dir != "/" && i == 1)
+        return "..";
+    if (size_t(k) < browser.folders.size())
+        return browser.folders[size_t(k)] + "/";
+    return browser.images[size_t(k) - browser.folders.size()];
 }
 
 void start_browser(bool mount, int unit)
@@ -300,7 +306,7 @@ void draw_browser()
             fill(PCol + 1, y, PCols - 2, 1, Select);
         text(PCol + 2, y, head(browser_item(i), size_t(PCols - 4)), on ? SelectFg : i == 0 ? Select : Fg, on ? Select : None);
     }
-    text(PCol + 2, PRow + PRows - 2, "Up/Down, PageUp/PageDown: choose   Enter: open or use   Backspace: up   Esc: back", Dim);
+    text(PCol + 2, PRow + PRows - 2, "Up/Down, PageUp/PageDown: choose   Enter: open or use (a disk image too)   Backspace: up   Esc: back", Dim);
 }
 
 void choose()
@@ -323,7 +329,19 @@ void activate(int i)
     } else if (browser.dir != "/" && i == 1) {
         browse(browser.dir.substr(0, browser.dir.rfind('/') == 0 ? 1 : browser.dir.rfind('/')));
     } else {
-        std::string name = browser.folders[size_t(i - (browser.dir != "/" ? 2 : 1))];
+        size_t k = size_t(i - (browser.dir != "/" ? 2 : 1));
+        if (k >= browser.folders.size()) {
+            // a floppy image: into the unit at once
+            last_dir = browser.dir;
+            devices::UnitInfo info;
+            devices::unit_info(browser.unit, info);
+            std::string spec = std::string(info.name) + "=" + browser.dir + (browser.dir == "/" ? "" : "/") +
+                               browser.images[k - browser.folders.size()];
+            mode = Mode::panel;
+            drop(spec.c_str());
+            return;
+        }
+        std::string name = browser.folders[k];
         browse(browser.dir == "/" ? "/" + name : browser.dir + "/" + name);
     }
 }

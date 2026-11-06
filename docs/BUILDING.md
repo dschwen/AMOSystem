@@ -226,7 +226,8 @@ with `src/host` and no assembler:
   given out as exec does; AMOS's data (programs, banks, token tables)
   stay big-endian (`core/endian.h`);
 - files: POSIX, with AmigaDOS's names; the current directory is
-  `AMOSPRO:`. The disks (`host/devices.cpp`, docs/DEVICES.md): folders that
+  `AMOSPRO:`. The disks (`host/devices.cpp`, docs/DEVICES.md; floppy images, `.adf`, are
+  unpacked write-protected when put in, `host/adf.cpp`): folders that
   are volumes, named by their label, with **units** that name some of
   them: `DF0:`...`DF3:` (floppies; `DF0:` and `DF1:` always exist, empty
   until a folder is put in; `floppy_drives` in `[devices]` changes how

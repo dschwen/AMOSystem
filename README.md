@@ -204,14 +204,15 @@ FONTS = ~/amiga/Fonts
 
 The folders of the devices directory (`AMOS_DEVICES`, else `./devices`, else
 `~/.local/share/amos/devices`, made with `Work`) are disks too, and `RAM:` is
-empty at every start. **In the window**: drop a folder on it to mount it as a
-hard disk, and press **F12** for the Devices panel: the drives and their
+empty at every start. **Disk images**: a `.adf` file (`--df0 disk.adf`, `path =` in
+`amos.conf`, dropped on the window, or in the library) is a floppy, write-protected, with the
+disk's own label; `tools/adf.py` lists, extracts and packs them. **In the window**: drop a
+folder on it to mount it as a hard disk (a `.adf` goes into `DF0:`), and press **F12** for the Devices panel: the drives and their
 disks, put a folder in or take it out, write-protect, mount a hard disk, save
 the setup to `amos.conf`. When a program asks for a disk that is not there
 ("Please insert volume Disk2"), AMOS's requester stays and the window says
 what to do; put the disk in and the program goes on by itself. The window is magnified twice (`AMOS_SCALE`).
-docs/DEVICES.md has the plan for the rest (disk images, a window to set them
-up); docs/BUILDING.md lists the other environment variables and what the host
+docs/DEVICES.md has the plan for the rest (writing to images, Windows and macOS places); docs/BUILDING.md lists the other environment variables and what the host
 does not do as the Amiga does.
 
 `make game GAME=prog.AMOS DATA=folder NAME=mygame` makes `build/game/mygame`,

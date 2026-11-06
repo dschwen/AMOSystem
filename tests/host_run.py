@@ -93,6 +93,15 @@ def prepare(name, tables):
     files = os.path.join(HOST_ONLY, name + '.files')
     if os.path.isdir(files):
         shutil.copytree(files, os.path.join(os.path.dirname(hd), 'files'))
+        # a folder NAME.adfdir is a floppy image NAME.adf made by tools/adf.py (the label NAME)
+        import adf
+        for here, dirs, names in os.walk(os.path.join(os.path.dirname(hd), 'files')):
+            for d in [d for d in dirs if d.endswith('.adfdir')]:
+                folder = os.path.join(here, d)
+                with open(folder[:-len('.adfdir')] + '.adf', 'wb') as image:
+                    image.write(adf.pack(folder, d[:-len('.adfdir')], ffs=not d.startswith('Ofs')))
+                shutil.rmtree(folder)
+            dirs[:] = [d for d in dirs if not d.endswith('.adfdir')]
     conf = os.path.join(HOST_ONLY, name + '.conf')
     if os.path.exists(conf):
         with open(conf) as f:

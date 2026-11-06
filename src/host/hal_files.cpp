@@ -259,7 +259,7 @@ void read_entries(Lock &l)
     Entry *list = nullptr;
     int n = 0, room = 0;
     while (struct dirent *e = readdir(d)) {
-        if (!strcmp(e->d_name, ".") || !strcmp(e->d_name, ".."))
+        if (!strcmp(e->d_name, ".") || !strcmp(e->d_name, "..") || !strcmp(e->d_name, ".amos-order"))
             continue;
         if (n == room) {
             room = room ? 2 * room : 32;
@@ -299,6 +299,24 @@ void read_entries(Lock &l)
             return x.inode > y.inode ? -1 : 1;
         return strcmp(x.name, y.name);
     });
+    // an unpacked disk image's folder has the disk's own order (host/adf.cpp)
+    char order_path[1100];
+    snprintf(order_path, sizeof order_path, "%s/.amos-order", l.name);
+    if (FILE *order = fopen(order_path, "rb")) {
+        int placed = 0;
+        char line[256];
+        while (fgets(line, sizeof line, order)) {
+            line[strcspn(line, "\r\n")] = 0;
+            for (int i = placed; i < n; i++)
+                if (!strcmp(list[i].name, line)) {
+                    Entry t = list[i];
+                    list[i] = list[placed];
+                    list[placed++] = t;
+                    break;
+                }
+        }
+        fclose(order);
+    }
     l.entries = static_cast<char **>(malloc(sizeof(char *) * size_t(n ? n : 1)));
     for (int i = 0; i < n; i++)
         l.entries[i] = list[i].name;

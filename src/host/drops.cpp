@@ -93,10 +93,17 @@ void drop(const char *spec)
         snprintf(note, sizeof note, "%s: not found", text.c_str());
     } else if (!S_ISDIR(st.st_mode)) {
         size_t n = text.size();
-        if (n > 4 && !strcasecmp(text.c_str() + n - 4, ".adf"))
-            snprintf(note, sizeof note, "Disk images (.adf) are not supported yet: %s", text.c_str());
-        else
-            snprintf(note, sizeof note, "Only folders can be disks: %s", text.c_str());
+        if (n > 4 && !strcasecmp(text.c_str() + n - 4, ".adf")) {
+            // a floppy image: into the unit (DF0: if none is named), write-protected
+            int u = unit >= 0 ? unit : 0;
+            devices::UnitInfo info;
+            if (devices::insert(u, text.c_str(), nullptr, true, reason) && devices::unit_info(u, info))
+                snprintf(note, sizeof note, "%s: %s", info.name, info.label);
+            else
+                snprintf(note, sizeof note, "%s: %s", text.c_str(), reason);
+        } else {
+            snprintf(note, sizeof note, "Only folders and disk images (.adf) can be disks: %s", text.c_str());
+        }
     } else {
         int u = unit >= 0 ? (devices::insert(unit, text.c_str(), nullptr, false, reason) ? unit : -1)
                           : devices::mount_folder(text.c_str(), nullptr, false, reason);
