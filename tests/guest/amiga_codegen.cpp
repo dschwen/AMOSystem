@@ -1,11 +1,13 @@
 // Compile twice with identical C entry signatures. The wrapper build must have
-// identical .text bytes and relocations to the raw-pointer baseline.
+// identical native instructions and relocations to the raw-pointer baseline
+// (commuted additions/base-index registers are checked explicitly).
 #include <stdint.h>
 #include <stddef.h>
 inline void* operator new(size_t, void* storage) noexcept { return storage; }
 #if defined(AMOS_TEST_WRAPPED)
 #include "abi/guest_address_codec.h"
 #include "abi/guest_entry_codec.h"
+#include "runtime/detail/legacy_code_reader.h"
 #include "core/mark_token.h"
 #include "core/context_token.h"
 #include "memory/guest_view.h"
@@ -58,6 +60,20 @@ bool host_nonnull(uint32_t base) {
     return bool(HostPtr<Byte>(reinterpret_cast<Byte*>(base)));
 #else
     return reinterpret_cast<uint8_t*>(base) != nullptr;
+#endif
+}
+uint16_t load_word(uint32_t base) {
+#if defined(AMOS_TEST_WRAPPED)
+    return Memory{}.load_be16(AddressCodec::decode<Byte>(base)).value;
+#else
+    return *reinterpret_cast<const uint16_t*>(base);
+#endif
+}
+void store_word(uint32_t base, uint16_t value) {
+#if defined(AMOS_TEST_WRAPPED)
+    Memory{}.store_be16(AddressCodec::decode<Byte>(base), value);
+#else
+    *reinterpret_cast<uint16_t*>(base) = value;
 #endif
 }
 uint32_t load_long(uint32_t base) {
@@ -238,6 +254,21 @@ extern "C" uint32_t routine_word(const void* routine) {
     return uint32_t(routine);
 }
 #endif
+
+extern "C" uint16_t token_word(uint32_t base, int32_t offset) {
+#if defined(AMOS_TEST_WRAPPED)
+    return amos::host::detail::require_guest(amos::host::detail::IdentityDataMemory{}.load_be16(AddressCodec::decode<const Byte>(base) + offset));
+#else
+    return *reinterpret_cast<const uint16_t*>(reinterpret_cast<const uint8_t*>(base) + offset);
+#endif
+}
+extern "C" uint16_t metadata_word(uint32_t entry, int32_t offset) {
+#if defined(AMOS_TEST_WRAPPED)
+    return amos::host::detail::LegacyCodeReader(amos::host::decode_routine(entry)).word_at(offset);
+#else
+    return *reinterpret_cast<const uint16_t*>(reinterpret_cast<const uint8_t*>(entry) + offset);
+#endif
+}
 
 extern "C" uint32_t sum_bytes(uint32_t base, uint32_t count) {
     uint32_t sum = 0;

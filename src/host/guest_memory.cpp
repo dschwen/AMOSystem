@@ -116,6 +116,19 @@ Fault Memory::store_byte(GuestPtr<Byte> address, Byte value) {
     if (f == Fault::none) base_[address.bits_] = value;
     return f;
 }
+Result<uint16_t> Memory::load_be16(GuestPtr<const Byte> address) const {
+    const auto f = check(address.bits_, 2, false);
+    if (f != Fault::none) return {{}, f};
+    const Byte* p = base_ + address.bits_;
+    return {uint16_t((uint16_t(p[0]) << 8) | p[1]), f};
+}
+Fault Memory::store_be16(GuestPtr<Byte> address, uint16_t value) {
+    const auto f = check(address.bits_, 2, true);
+    if (f != Fault::none) return f;
+    Byte* p = base_ + address.bits_;
+    p[0] = Byte(value >> 8); p[1] = Byte(value);
+    return Fault::none;
+}
 Result<uint32_t> Memory::load_be32(GuestPtr<const Byte> address) const {
     const auto f = check(address.bits_, 4, false);
     if (f != Fault::none) return {{}, f};

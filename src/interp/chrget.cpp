@@ -5,7 +5,8 @@
 // context. Prg_InsRet, where instructions that jump go back to, is
 // interp_iret: it enters the loop again at a6.
 
-#include "runtime/detail/legacy_dispatch.h"
+#include "runtime/interpreter_bridge.h"
+#include "runtime/detail/legacy_code_reader.h"
 #include "interp/interp.h"
 #include "verif/verif.h"
 #if !defined(__mc68000__)
@@ -13,11 +14,11 @@
 #endif
 
 using namespace amos;
+using host::detail::IdentityDataMemory;
+using host::detail::require_guest;
 
 extern "C" {
 // chrget_glue.s
-void interp_exec(const void *routine, uint32_t d0, uint32_t d1);
-void interp_exec_value(const void *routine, uint32_t d0, uint32_t d1, const amos::interp::Value *v);
 
 // float.cpp
 void interp_open_math_libraries();
@@ -31,10 +32,10 @@ constexpr uint32_t NbEnd = 10;
 
 // The routine of token t: the instruction's, or the routine the monitor
 // put in its place (SetChrPatch)
-const void *routine(const uint8_t *a4, uint16_t t, uint16_t patch)
+host::RoutineArg routine(interp::TokenTable a4, uint16_t t, uint16_t patch)
 {
-    int32_t entry = patch ? -int32_t(patch) * 4 - 4 : int16_t(peek_w(a4 + int16_t(t)));
-    return ptr<void>(peek_l(a4 - LB_Size + entry));
+    int32_t entry = patch ? -int32_t(patch) * 4 - 4 : int16_t(require_guest(IdentityDataMemory{}.load_be16(a4 + int16_t(t))));
+    return host::decode_routine(require_guest(IdentityDataMemory{}.load_be32(a4 - LB_Size + entry)));
 }
 
 // The instructions and functions called here directly: a LibCall entry
@@ -46,7 +47,7 @@ constexpr int Tokens = 0x4000;              // the token offsets cached
 constexpr uint8_t LCNone = 3, LCDouble = 4;
 
 struct Native {
-    const void *routine;    // the table's entry it was found for
+    host::RoutineArg routine;    // the table's entry it was found for
 #if defined(__mc68000__)
     void *fn;               // Native Amiga ABI is unchanged.
 #else
@@ -56,29 +57,29 @@ struct Native {
 };
 Native instructions[Tokens / 2], functions[Tokens / 2];
 
-Native find_native(const uint8_t *a4, uint16_t t, const void *routine, bool function)
+Native find_native(interp::TokenTable a4, uint16_t t, host::RoutineArg routine, bool function)
 {
     Native n = {routine, nullptr, 0, 0};
-    const uint8_t *body = static_cast<const uint8_t *>(routine);
+    host::detail::LegacyCodeReader body(routine);
     uint8_t params = 0;
     // integer parameters: collectors 1 to 5 (Ent_1 to Ent_4, Ent_N)
     int k = interp::collector_of(routine);
     if (k >= 0) {
         if (k < 1 || k > 5)
             return n;
-        params = k < 5 ? uint8_t(k) : uint8_t(peek_w(a4 + int16_t(t) + 2));
-    } else if (peek_l(body - 4) != GetP) {
+        params = k < 5 ? uint8_t(k) : uint8_t(require_guest(IdentityDataMemory{}.load_be16(a4 + int16_t(t) + 2)));
+    } else if (body.long_at(-4) != GetP) {
         return n;
     }
-    if (peek_l(body - 8) != Tag || peek_w(body - 12) != params)
+    if (body.long_at(-8) != Tag || body.word_at(-12) != params)
         return n;
-    n.result = uint8_t(peek_w(body - 10));
+    n.result = uint8_t(body.word_at(-10));
     if (function == (n.result == LCNone))
         return n;
 #if defined(__mc68000__)
-    n.fn = ptr<void>(peek_l(body - 16));
+    n.fn = ptr<void>(body.long_at(-16));
 #else
-    auto* binding = host::legacy_glue_entry(routine);
+    auto* binding = host::glue_entry(routine);
     if (!binding || binding->kind != host::GlueKind::libcall || binding->a1 != params)
         return n;
     n.fn = binding->binding.library;
@@ -139,9 +140,9 @@ uint64_t call_native(const Native &n)
 }
 
 // The native entry of token t (its routine r), or 0
-const Native *native(IData &d, const uint8_t *a4, uint16_t t, const void *r, bool function)
+const Native *native(IData &d, interp::TokenTable a4, uint16_t t, host::RoutineArg r, bool function)
 {
-    if (t >= Tokens || a4 != ptr<uint8_t>(d.AdTokens[0]))
+    if (t >= Tokens || a4 != guest::abi::AddressCodec::decode<const guest::Byte>(d.AdTokens[0]))
         return nullptr;
     Native &n = (function ? functions : instructions)[t >> 1];
     if (n.routine != r)
@@ -153,17 +154,18 @@ const Native *native(IData &d, const uint8_t *a4, uint16_t t, const void *r, boo
 void instruction(IData &d, Ctx &c, uint16_t t, bool patched = true)
 {
     uint16_t patch = patched ? uint16_t(d.Cur_ChrJump >> 16) : 0;
-    const void *r = routine(c.a4, t, patch);
+    const interp::TokenTable table = host::detail::legacy_table_address(c.a4);
+    host::RoutineArg r = routine(table, t, patch);
     if (patch) {
         interp_exec(r, t, peek_w(c.a4 + int16_t(t)));
         return;
     }
-    if (const Native *n = native(d, c.a4, t, r, false)) {
+    if (const Native *n = native(d, table, t, r, false)) {
         call_native(*n);
         return;
     }
     // its parameters collected here, then its body
-    interp::Collected p = interp::collect(c.a4, t, r, false);
+    interp::Collected p = interp::collect(table, t, r, false);
     if (p.has_value)
         interp_exec_value(p.body, t, peek_w(c.a4 + int16_t(t)), &p.last);
     else
@@ -260,9 +262,9 @@ uint32_t interp_set_chr_patch(RegFrame &r)
 namespace amos::interp {
 
 // Function t (its routine r) called here if it can be (eval.cpp)
-bool native_function(uint16_t t, const void *r, Value &v)
+bool native_function(uint16_t t, host::RoutineArg r, Value &v)
 {
-    const Native *n = native(idata(), ctx().a4, t, r, true);
+    const Native *n = native(idata(), host::detail::legacy_table_address(ctx().a4), t, r, true);
     if (!n)
         return false;
     // a function with parameters: past its opening parenthesis

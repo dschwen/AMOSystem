@@ -3,6 +3,7 @@
 // that close and kill the editor or call the monitor, and the return to an
 // editor that is not there any more after a program stops.
 
+#include "runtime/interpreter_bridge.h"
 #include "main/main.h"
 
 #include "core/amiga.h"
@@ -19,13 +20,6 @@
 using namespace amos;
 using namespace amos::boot;
 
-extern "C" {
-// main_glue.s: where a program's error goes without the editor
-
-// The entry tables of the editor and the monitor (+Edit.s, +Monitor.s)
-
-[[noreturn]] void interp_jump(const Regs *r, const void *fn);
-}
 
 namespace {
 
@@ -457,7 +451,7 @@ bool ed_config_load_texts();     // editor/config.cpp
     w_option();
     d.Cur_Dialogs = dialogs;
     d.Cur_Banks = banks;
-    interp_jump(e, lib_address(L_Ed_ErrRun));
+    interp_jump(e, lib_entry(L_Ed_ErrRun));
 }
 
 uint32_t main_run_error_run_only_reg(RegFrame &r) { main_run_error(uint32_t(-1), reinterpret_cast<Regs *>(&r)); }

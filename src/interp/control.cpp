@@ -14,6 +14,7 @@
 // with a new instruction: interp_continue resets the stack to BasSp and
 // returns into the ChrGet loop with the registers of the context.
 
+#include "runtime/interpreter_bridge.h"
 #include "core/source.h"
 #include "interp/interp.h"
 #include "hal/chips.h"
@@ -23,7 +24,6 @@ using namespace amos::interp;
 
 extern "C" {
 [[noreturn]] void interp_continue(amos::host::MarkHandle sp, uint32_t ret);
-[[noreturn]] void interp_jump(const Regs *r, const void *fn);
 [[noreturn]] void interp_menu_return(amos::host::MarkHandle pile);
 // control_glue.s: the record of OMnEff for ClearVar
 
@@ -1066,7 +1066,7 @@ void interp_menu_procedure(EvalOut *o)
     pc() = nullptr;
     call_procedure(ptr<uint8_t>(proc), 0, 0);
     Regs r;
-    interp_jump(&r, ptr<void>(d.Prg_InsRet));
+    interp_jump(&r, host::decode_routine(d.Prg_InsRet));
 }
 
 uint32_t interp_menu_procedure_reg(RegFrame &r)
@@ -1102,7 +1102,7 @@ uint32_t interp_menu_procedure_reg(RegFrame &r)
         r.d[1] = first;
         r.d[2] = extension;
         r.a[0] = messages;
-        interp_jump(&r, ptr<void>(d.Patch_Errors));
+        interp_jump(&r, host::decode_routine(d.Patch_Errors));
     }
     d.PrintPos = 0;
     d.InputFlg = 0;
@@ -1156,7 +1156,7 @@ uint32_t interp_menu_procedure_reg(RegFrame &r)
         r.d[1] = n;
     }
     r.d[2] = extension;
-    interp_jump(&r, ptr<void>(handler));
+    interp_jump(&r, host::decode_routine(handler));
 }
 
 // L_Error: error d0 of AMOSPro; L_ErrorExt: d1 the first one On Error can

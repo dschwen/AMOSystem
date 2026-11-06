@@ -5,6 +5,7 @@
 // hosts, retaining native stack semantics on the Amiga. Also the entries of the assembler the interpreter calls
 // (chrget_glue.s, control_glue.s, run_glue.s...).
 
+#include "runtime/interpreter_bridge.h"
 #include "runtime/static_symbols.h"
 #include "runtime/runtime.h"
 #include "runtime/glue.h"
@@ -147,17 +148,17 @@ extern "C" {
 
 // An instruction: its routine with d0 (the token), d1 (its entry) and the
 // interpreter registers of the context, which get them back
-void interp_exec(const void *routine, uint32_t d0, uint32_t d1)
+void interp_exec(RoutineArg routine, uint32_t d0, uint32_t d1)
 {
     AllRegs r = context_regs();
     r.d[0] = d0;
     r.d[1] = d1;
-    legacy_glue_call(routine, r);
+    glue_call(routine, r);
     to_context(r);
 }
 
 // The same with d2-d4 from v (its last parameter)
-void interp_exec_value(const void *routine, uint32_t d0, uint32_t d1, const interp::Value *v)
+void interp_exec_value(RoutineArg routine, uint32_t d0, uint32_t d1, const interp::Value *v)
 {
     AllRegs r = context_regs();
     r.d[0] = d0;
@@ -165,7 +166,7 @@ void interp_exec_value(const void *routine, uint32_t d0, uint32_t d1, const inte
     r.d[2] = v->type;
     r.d[3] = v->v1;
     r.d[4] = v->v2;
-    legacy_glue_call(routine, r);
+    glue_call(routine, r);
     to_context(r);
 }
 
@@ -182,14 +183,14 @@ void interp_step_instruction(uint32_t t) { interp_run_instruction(t); }
 
 // To fn with d0-d5/a0-a2 from r and the interpreter registers of the
 // context, on the stack as it is
-[[noreturn]] void interp_jump(const Regs *r, const void *fn)
+[[noreturn]] void interp_jump(const Regs *r, RoutineArg fn)
 {
     AllRegs a = context_regs();
     for (int i = 0; i < 6; i++)
         a.d[i] = r->d[i];
     for (int i = 0; i < 3; i++)
         a.a[i] = r->a[i];
-    legacy_glue_call(fn, a);
+    glue_call(fn, a);
     missing("return from a jump to", fn);
 }
 
@@ -215,7 +216,7 @@ void interp_step_instruction(uint32_t t) { interp_run_instruction(t); }
 
 // PRUN: the program run on top of this one; its error (d0), or -1 if
 // Prg_RunIt came back (out of memory)
-uint32_t interp_prun_run(uint32_t program, const void *run_it)
+uint32_t interp_prun_run(uint32_t program, RoutineArg run_it)
 {
     IData &d = idata();
     Ctx saved = ctx();
@@ -228,7 +229,7 @@ uint32_t interp_prun_run(uint32_t program, const void *run_it)
     r.a[1] = address(interp_prun_errors);
     r.a[2] = 0;
     AllRegs out = mark_run(m, [&] {
-        legacy_glue_call(run_it, r);
+        glue_call(run_it, r);
         m.regs = r;
         m.regs.d[0] = uint32_t(-1);
     });
@@ -239,7 +240,7 @@ uint32_t interp_prun_run(uint32_t program, const void *run_it)
 
 // The editor driven by a program (Ed_ZapIn): it comes back through
 // Ed_ZapOut to this mark; d0 and a0 its answer
-void interp_zap_in(Regs *r, const void *zap_in)
+void interp_zap_in(Regs *r, RoutineArg zap_in)
 {
     IData &d = idata();
     Ctx saved = ctx();
@@ -250,7 +251,7 @@ void interp_zap_in(Regs *r, const void *zap_in)
     a.d[0] = r->d[0];
     a.d[1] = r->d[1];
     AllRegs out = mark_run(m, [&] {
-        legacy_glue_call(zap_in, a);
+        glue_call(zap_in, a);
         m.regs = a;
     });
     idata().BasSp.store(bas_sp);
@@ -261,7 +262,7 @@ void interp_zap_in(Regs *r, const void *zap_in)
 
 // MnOCall: L_MenuProcedure (fn) for the procedure name with the
 // interpreter registers regs; End Proc comes back through *pile
-uint32_t mn_call_procedure(const void *fn, ContextHandle context, wire::MarkField *pile, const uint8_t *name)
+uint32_t mn_call_procedure(RoutineArg fn, ContextHandle context, wire::MarkField *pile, const uint8_t *name)
 {
     const Ctx* regs = &saved_context(context);
     Mark m;
@@ -275,7 +276,7 @@ uint32_t mn_call_procedure(const void *fn, ContextHandle context, wire::MarkFiel
     r.a[6] = address(regs->a6);
     r.a[0] = address(name);
     AllRegs out = mark_run(m, [&] {
-        legacy_glue_call(fn, r);
+        glue_call(fn, r);
         m.regs = r;
     });
     return out.d[0];

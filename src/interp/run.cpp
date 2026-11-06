@@ -3,18 +3,12 @@
 // EDITOR drives, run nested on the stack: the frames that save the
 // interpreter's registers around them are in run_glue.s.
 
+#include "runtime/interpreter_bridge.h"
 #include "interp/interp.h"
 
 using namespace amos;
 using namespace amos::interp;
 
-extern "C" {
-[[noreturn]] void interp_jump(const Regs *r, const void *fn);
-// run_glue.s: Prg_RunIt for PRUN, nested (back with the error that
-// stopped it, out of memory 36); Ed_ZapIn nested (d0, a0 its answer)
-uint32_t interp_prun_run(uint32_t program, const void *run_it);
-void interp_zap_in(Regs *r, const void *zap_in);
-}
 
 namespace {
 
@@ -27,7 +21,7 @@ constexpr uint32_t EntNul = 0x80000000u;
     r.d[0] = 17;
     r.d[1] = 19;
     r.d[2] = uint32_t(-1);
-    interp_jump(&r, lib_address(L_ErrorExt));
+    interp_jump(&r, lib_entry(L_ErrorExt));
 }
 
 // The name of a program (an AMOS string) into Name1
@@ -161,7 +155,7 @@ void interp_in_run0()
     Regs e;
     e.d[0] = failure;
     e.a[0] = 0;
-    interp_jump(&e, ptr<void>(d.Prg_JError));
+    interp_jump(&e, host::decode_routine(d.Prg_JError));
 }
 
 // RUN "program"
@@ -213,7 +207,7 @@ void interp_in_prun(uint32_t name)
         program_call(L_Prg_SetBanks, d.Prg_Runned, 0);
     }
     {
-        uint32_t e = interp_prun_run(program, lib_address(L_Prg_RunIt));
+        uint32_t e = interp_prun_run(program, lib_entry(L_Prg_RunIt));
         if (e != 0xFFFFFFFFu) {
             // stopped (PRun_Errors): the error, if it is one
             d.ErrorSave[0] = ctx().d6;
@@ -277,7 +271,7 @@ void interp_in_call_editor3(uint32_t function, uint32_t parameter, uint32_t text
     r.d[1] = parameter;
     r.a[0] = d.Name1;
     r.a[1] = d.Name2;
-    interp_zap_in(&r, lib_address(L_Ed_ZapIn));
+    interp_zap_in(&r, lib_entry(L_Ed_ZapIn));
     zap_return(r.d[0], r.a[0]);
 }
 void interp_in_call_editor2(uint32_t function, uint32_t parameter) { interp_in_call_editor3(function, parameter, EntNul); }

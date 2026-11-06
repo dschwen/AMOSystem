@@ -27,6 +27,8 @@ public:
     Fault copy_to_host(HostSpan<Byte> destination, GuestSpan<const Byte> source) const;
     Result<Byte> load_byte(GuestPtr<const Byte>) const;
     Fault store_byte(GuestPtr<Byte>, Byte);
+    Result<uint16_t> load_be16(GuestPtr<const Byte>) const;
+    Fault store_be16(GuestPtr<Byte>, uint16_t);
     Result<uint32_t> load_be32(GuestPtr<const Byte>) const;
     Fault store_be32(GuestPtr<Byte>, uint32_t);
     template<class T> requires Sized<T>

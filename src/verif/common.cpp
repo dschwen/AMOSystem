@@ -1,5 +1,6 @@
 // What the C++ parts of the verifier share (see verif/verif.h).
 
+#include "runtime/interpreter_bridge.h"
 #include "runtime/static_symbols.h"
 #include "verif/verif.h"
 
@@ -9,7 +10,6 @@ extern "C" {
 // the glue of the verifier's parts (verif/*_glue.s)
 
 uint32_t lib_d_close(RegFrame &);
-[[noreturn]] void interp_jump(const Regs *r, const void *fn);
 }
 
 namespace amos::verif {
@@ -38,7 +38,7 @@ void fail(uint16_t n)
     e.d[0] = uint32_t(-int32_t(n));
     e.a[0] = 0;
     e.a[2] = handler;
-    interp_jump(&e, ptr<void>(handler));
+    interp_jump(&e, host::decode_routine(handler));
 }
 
 bool finished(uint16_t token) { return !token || token == tk::DP || token == tk::Then || token == tk::Else; }

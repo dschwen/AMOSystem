@@ -6,7 +6,6 @@
 // here those are marks (host/runtime.h).
 
 #include "runtime/static_symbols.h"
-#include "runtime/detail/legacy_dispatch.h"
 #include "runtime/runtime.h"
 #include "runtime/marks.h"
 
@@ -27,11 +26,11 @@ constexpr uint16_t TkDP = 0x54, TkEndP = 0x390;
 MonData &mon() { return *ptr<MonData>(idata().Mon_Base); }
 
 // The program's banks, the monitor's (Tt_PrgBanks, Tt_TtBanks)
-void banks(uint8_t *entry, const AllRegs &r)
+void banks(RoutineArg entry, const AllRegs &r)
 {
     AllRegs b = r;
     b.a[4] = idata().Mon_Base;
-    legacy_glue_call(entry, b);
+    glue_call(entry, b);
 }
 
 // Tt_Message: message n of the monitor
@@ -60,7 +59,7 @@ void resume(AllRegs &r)
     to_context(r);
     interp_run_instruction(r.d[0]);
     r = context_regs();
-    legacy_glue_call(ptr<void>(idata().Prg_InsRet), r);
+    glue_call(decode_routine(idata().Prg_InsRet), r);
     missing("return from Prg_InsRet", nullptr);
 }
 
@@ -87,7 +86,7 @@ AllRegs kept()
         wdata().Actualise = uint16_t(wdata().Actualise | 2);
         d.ActuMask = uint16_t(d.ActuMask | 2);
     }
-    banks(mon_banks_program_entry, r);
+    banks(AMOS_ROUTINE(mon_banks_program_entry), r);
     program_screen();
     mark_jump_regs(d.BasSp.load(), resume, kept());
 }
@@ -249,7 +248,7 @@ void error_stop(AllRegs &r)
             monitor_chr(r);
         }
     }
-    legacy_glue_call(ptr<void>(d.Prg_InsRet), r);
+    glue_call(decode_routine(d.Prg_InsRet), r);
     missing("return from Prg_InsRet", nullptr);
 }
 
@@ -311,7 +310,7 @@ void host_mon_evaluate(AllRegs &r)
     m.Tt_EvDebut = r.a[6];
     d.Patch_Errors = address(mon_ev_error);
     d.Patch_Menage = address(mon_menage);
-    banks(mon_banks_program_entry, r);
+    banks(AMOS_ROUTINE(mon_banks_program_entry), r);
     AllRegs out;
     for (;;) {
         Mark mark;
@@ -337,7 +336,7 @@ void host_mon_evaluate(AllRegs &r)
     for (int i = 0; i < 6; i++)
         r.a[i] = entry.a[i];
     r.a[6] = a6;
-    banks(mon_banks_monitor_entry, r);
+    banks(AMOS_ROUTINE(mon_banks_monitor_entry), r);
     d.Patch_Errors = 0;
     d.Patch_Menage = 0;
     if (evaluation == EvError) {
@@ -402,7 +401,7 @@ extern "C" {
     AllRegs e = context_regs();
     e.d[0] = 1000;
     e.a[0] = 0;
-    legacy_glue_call(ptr<void>(d.Prg_JError), e);
+    glue_call(decode_routine(d.Prg_JError), e);
     missing("return from Prg_JError", nullptr);
 }
 

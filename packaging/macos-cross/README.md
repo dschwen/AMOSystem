@@ -111,7 +111,7 @@ nested recovery are tested at O0/O2; existing Linux dialog/file-selector GUI
 fixtures remain regression gates. Runtime marks also receive ARM alignment.
 
 `guest-memory-probe` checks high native backing, typed interior pointers and
-wire access. `static-image-probe` loads all 101 static segments and applies 2,206
+wire access, plus typed code metadata and 16-bit endian access. `static-image-probe` loads all 101 static segments and applies 2,206
 relocations at independent logical addresses, without encoding their native
 source pointers. Both use PIE on Intel and ARM. Passing these probes qualifies
 the translation substrate; it does not qualify the full interpreter.

@@ -15,7 +15,7 @@ using namespace amos::interp;
 
 namespace {
 
-Value run(const void *routine, Regs &r)
+Value run(host::RoutineArg routine, Regs &r)
 {
     amos_eval(&r, routine);
     return {r.d[2], r.d[3], r.d[4]};
@@ -36,7 +36,7 @@ Value call(bool function)
         r.d[1] = uint16_t(jump);
         r.d[2] = peek_w(table + token + 2);
         r.a[0] = peek_l(table + jump - LB_Size - (function ? 4 : 0));
-        Collected p = collect(table, token, ptr<void>(r.a[0]), function);
+        Collected p = collect(guest::abi::AddressCodec::decode<const guest::Byte>(d.AdTokens[number]), token, host::decode_routine(r.a[0]), function);
         if (p.has_value) {
             r.d[2] = p.last.type;
             r.d[3] = p.last.v1;
@@ -45,7 +45,7 @@ Value call(bool function)
         return run(p.body, r);
     }
     uint16_t token = next_token();
-    const void *routine = table + int16_t(peek_w(table + token + (function ? 2 : 0)));
+    host::RoutineArg routine = host::decode_routine(uint32_t(d.AdTokens[number]) + int32_t(int16_t(peek_w(table + token + (function ? 2 : 0)))));
     Value v = {};
     for (int8_t i = 0; i < n; i++) {
         v = function ? evaluate_after() : evaluate();
@@ -66,7 +66,7 @@ Value call(bool function)
     r.d[4] = v.v2;
     r.d[0] = uint16_t(n);
     r.d[1] = number * 4u;
-    r.a[0] = address(routine);
+    r.a[0] = host::encode_routine(routine);
     Value x = run(routine, r);
     c.d6 = d.ErrorSave[0];
     c.d7 = d.ErrorSave[1];

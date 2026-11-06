@@ -13,6 +13,7 @@
 // string, bit 6 an array), then the value; a word $FFFF ends a chunk and
 // is followed by the next chunk (a procedure's caller's), 0 at the end.
 
+#include "runtime/interpreter_bridge.h"
 #include "interp/interp.h"
 
 using namespace amos;
@@ -20,7 +21,6 @@ using namespace amos;
 extern "C" {
 // control_glue.s: an instruction run again from its beginning
 [[noreturn]] void interp_restart(amos::host::MarkHandle sp, uint32_t ret, const AllRegs *r);
-[[noreturn]] void interp_jump(const Regs *r, const void *fn);
 }
 
 namespace {
@@ -264,7 +264,7 @@ uint32_t demande(uint32_t length)
         if (d.Patch_Menage) {
             Regs r;
             r.d[3] = length;
-            interp_jump(&r, ptr<void>(d.Patch_Menage));
+            interp_jump(&r, host::decode_routine(d.Patch_Menage));
         }
         int32_t at = int32_t(c.d7);
         if (at < 0)

@@ -13,6 +13,7 @@
 // assembler's evaluator kept it.
 
 #include "interp/interp.h"
+#include "runtime/detail/identity_data_memory.h"
 
 using namespace amos;
 
@@ -343,15 +344,15 @@ Value function(uint16_t t)
 {
     uint8_t *tokens = ctx().a4;
     int16_t offset = int16_t(peek_w(tokens + t));
-    const void *routine = ptr<void>(peek_l(tokens + offset - LB_Size - 4));
+    host::RoutineArg routine = host::decode_routine(peek_l(tokens + offset - LB_Size - 4));
     Value v;
     if (native_function(t, routine, v))
         return v;
-    Collected p = collect(tokens, t, routine, true);
+    Collected p = collect(host::detail::legacy_table_address(tokens), t, routine, true);
     Regs r;
     r.d[0] = t;
     r.d[1] = uint16_t(offset);
-    r.a[0] = address(routine);
+    r.a[0] = host::encode_routine(routine);
     if (p.has_value) {
         r.d[2] = p.last.type;
         r.d[3] = p.last.v1;

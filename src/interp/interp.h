@@ -37,12 +37,13 @@ inline uint16_t next_token()
 // to call (past the collector's call; a maths function's float routine)
 // gets the last one in d2/d3/d4 (if has_value).
 struct Collected {
-    const void *body;
+    host::RoutineArg body;
     Value last;
     bool has_value;
 };
-Collected collect(const uint8_t *table, uint16_t t, const void *routine, bool function);
-int collector_of(const void *routine);      // its number (0-39), or -1
+using TokenTable = guest::GuestPtr<const guest::Byte>;
+Collected collect(TokenTable table, uint16_t t, host::RoutineArg routine, bool function);
+int collector_of(host::RoutineArg routine);      // its number (0-39), or -1
 
 // New_Evalue: the expression at pc; pc at the token after it (past a
 // closing parenthesis). *end gets that token.
@@ -93,7 +94,7 @@ MenuDim menu_dim();
 
 // interp/chrget.cpp: function t (its routine r) called directly, if it is
 // a C++ one; v its value
-bool native_function(uint16_t t, const void *r, Value &v);
+bool native_function(uint16_t t, host::RoutineArg r, Value &v);
 
 // What C++ hands back to the assembler that called it (eval_glue.s):
 // d0-d4, a0

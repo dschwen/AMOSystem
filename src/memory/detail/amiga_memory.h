@@ -14,6 +14,13 @@ public:
         *reinterpret_cast<Byte*>(address.bits_) = value;
         return Fault::none;
     }
+    Result<uint16_t> load_be16(GuestPtr<const Byte> address) const {
+        return {*reinterpret_cast<const uint16_t*>(address.bits_), Fault::none};
+    }
+    Fault store_be16(GuestPtr<Byte> address, uint16_t value) {
+        *reinterpret_cast<uint16_t*>(address.bits_) = value;
+        return Fault::none;
+    }
     Result<uint32_t> load_be32(GuestPtr<const Byte> address) const {
         return {*reinterpret_cast<const uint32_t*>(address.bits_), Fault::none};
     }

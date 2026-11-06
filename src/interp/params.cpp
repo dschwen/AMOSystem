@@ -7,8 +7,11 @@
 // routine.
 
 #include "interp/interp.h"
+#include "runtime/detail/legacy_code_reader.h"
 
 using namespace amos;
+using host::detail::IdentityDataMemory;
+using host::detail::require_guest;
 
 namespace amos::interp {
 
@@ -34,10 +37,10 @@ constexpr Collector collectors[20] = {
 } // namespace
 
 // The collector of a routine (its number), or -1
-int collector_of(const void *routine)
+int collector_of(host::RoutineArg routine)
 {
-    const uint8_t *r = static_cast<const uint8_t *>(routine);
-    return peek_w(r - 4) == ParamsMark ? int(peek_w(r - 2)) : -1;
+    host::detail::LegacyCodeReader r(routine);
+    return r.word_at(-4) == ParamsMark ? int(r.word_at(-2)) : -1;
 }
 
 namespace {
@@ -61,14 +64,14 @@ void push(uint32_t value)
 
 } // namespace
 
-Collected collect(const uint8_t *table, uint16_t t, const void *routine, bool function)
+Collected collect(TokenTable table, uint16_t t, host::RoutineArg routine, bool function)
 {
     Collected c = {routine, {}, false};
     int k = collector_of(routine);
     if (k < 0)
         return c;
     Collector co = collectors[k % 20];
-    int count = co.count >= 0 ? co.count : peek_w(table + t + 2);
+    int count = co.count >= 0 ? co.count : require_guest(IdentityDataMemory{}.load_be16(table + t + 2));
     Value v = {};
     switch (co.kind) {
     case Integers:
@@ -113,8 +116,8 @@ Collected collect(const uint8_t *table, uint16_t t, const void *routine, bool fu
         pc() += 2;
         v = evaluate();
         if (interp::kind(v) != TInt) {
-            int16_t offset = int16_t(peek_w(table + t));
-            c.body = ptr<void>(peek_l(table + offset - LB_Size - 8));
+            int16_t offset = int16_t(require_guest(IdentityDataMemory{}.load_be16(table + t)));
+            c.body = host::decode_routine(require_guest(IdentityDataMemory{}.load_be32(table + offset - LB_Size - 8)));
         }
         c.has_value = true;
         break;

@@ -11,6 +11,7 @@
 // The engine works in 16-bit screen coordinates, as the assembler did;
 // the int16_t casts keep its word arithmetic.
 
+#include "runtime/interpreter_bridge.h"
 #include "core/amiga.h"
 #include "runtime/context_handle.h"
 #include "lib/banks.h"
@@ -39,7 +40,6 @@ using EcScreen = amos::Screen;
 
 // menus_glue.s
 
-extern "C" uint32_t mn_call_procedure(const void *fn, host::ContextHandle context, wire::MarkField *pile, const uint8_t *name);
 
 namespace {
 
@@ -277,7 +277,7 @@ void call_procedure(const uint8_t *name, int16_t bx, int16_t by, int16_t &x, int
     // The procedure runs with the interpreter registers of MnGere / Menu
     // Calc (MnRA3); its End Proc comes back here through MnPile
     Ctx keep = ctx();
-    uint32_t failed = mn_call_procedure(lib_address(L_MenuProcedure), d.MnRA3.load(), &d.MnPile, name);
+    uint32_t failed = mn_call_procedure(lib_entry(L_MenuProcedure), d.MnRA3.load(), &d.MnPile, name);
     ctx() = keep;
     if (!failed) {
         x = static_cast<int16_t>(d.CallReg[0] - bx);

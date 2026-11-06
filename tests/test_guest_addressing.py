@@ -126,6 +126,19 @@ class GuestAddressTests(unittest.TestCase):
                         self.assertEqual(sorted(re.findall(r'sp@\((\d+)\)', body)), ['12', '4'])
                     outputs = [re.sub(slice_pattern, '<slice: equivalent native addition>\n', output, flags=re.S)
                                for output in outputs]
+                    # The inlined metadata reader may commute base/index
+                    # registers. Require identical loads/access/return and
+                    # instruction count; only the two input registers differ.
+                    metadata_pattern = r'(?m)^[0-9a-f]+ <_metadata_word>:\n(.*?)(?=\n[0-9a-f]+ <|\Z)'
+                    metadata = [re.search(metadata_pattern, output, re.S).group(1) for output in outputs]
+                    for body in metadata:
+                        self.assertEqual(len(re.findall(r'(?m)^\s*[0-9a-f]+:\s+[0-9a-f]{4}', body)), 4)
+                        self.assertEqual(re.findall(r'\t(moveal|movew|rts)\b', body), ['moveal','moveal','movew','rts'])
+                        self.assertEqual(sorted(re.findall(r'sp@\((\d+)\)', body)), ['4','8'])
+                        self.assertEqual(sorted(re.findall(r'moveal sp@\(\d+\),(a[01])', body)), ['a0','a1'])
+                        self.assertIn('movew a1@(0,a0:l),d0', body)
+                    outputs = [re.sub(metadata_pattern, '<metadata: equivalent native indexed word load>\n', output, flags=re.S)
+                               for output in outputs]
                     if optimization == '-Os':
                         self.assertMultiLineEqual(outputs[0], outputs[1])
                     else:
@@ -168,6 +181,7 @@ class GuestAddressTests(unittest.TestCase):
                     self.assertTrue(result['guest_translation'])
                     self.assertTrue(result['native_backing_above_4gb'])
                     self.assertTrue(result['bank_plus_ten'])
+                    self.assertTrue(result['code_metadata'])
 
     def test_packing_restoration_and_amiga_headers(self):
         code = '''

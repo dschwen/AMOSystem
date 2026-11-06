@@ -134,6 +134,34 @@ are explicit test stubs; production callback behavior is covered separately by
 the Linux interpreter/editor regressions. This is not a full translated-runtime
 execution test.
 
+### Interpreter entry and token-table stage
+
+`runtime/interpreter_bridge.h` owns the declarations for instruction execution,
+value execution, nonlocal jumps, PRUN, editor entry and menu procedure calls.
+Their hosted routine arguments, Collected body values, parameter collectors,
+extension calls and native-call cache keys now carry GuestEntry. Monitor bank
+switches and saved continuation words also use typed entries. These ordinary
+interpreter paths no longer use legacy_glue_call/legacy_glue_entry. RoutineArg
+is the original raw pointer type on Amiga, preserving its bridge ABI.
+
+TokenTable is GuestPtr<const Byte>. Collector/table lookup parameters and cache
+comparisons use guest data pointers, with scalar reads through the private
+IdentityDataMemory backend. The remaining native-context table conversion is
+explicit and rejects high/unrepresentable pointers; removing it requires the
+context/register data migration. This backend performs identity reads and does
+not yet provide the mapped-region checks of high GuestMemory.
+
+`memory/guest_code.h` provides a memory-bound CodeReader for typed code metadata.
+It exposes scalar results and faults, never a native pointer. Hosted production
+uses this same reader with the temporary identity backend; tests and the Mac
+memory probe use high GuestMemory. Memory now supports endian-safe 16-bit loads
+and stores, validating the complete access before mutation. Tests cover code
+headers, arithmetic faults, unmapped/permission boundaries and partial-write
+prevention. Wrong-domain interpreter, collector and metadata arguments must fail
+compilation. On Amiga the production metadata reader retains its original direct
+loads; machine-code fixtures verify identical token loads and no added metadata
+instructions (GCC may commute base/index registers).
+
 ### Still required before a high-address runtime
 
 1. Switch remaining exported-label consumers, raw C ABI/mixed interrupt callers
@@ -265,3 +293,10 @@ the Amiga code-generation comparison. Linux reports 85 text tests passed (54
 skipped) and four editor fixtures passed. Windows and Amiga build successfully;
 macOS arm64 cross-links with its startup guard retained. Ordinary data-pointer
 migration and native Apple Silicon execution remain unfinished.
+
+Interpreter-entry validation: Linux passes 85 text tests (54 skipped) and four
+editor fixtures. GCC/Clang contract tests include high-backed code metadata,
+wrong-domain interpreter arguments and Amiga code-generation checks. Windows and
+Amiga builds pass. Code-reader/16-bit memory tests pass ASan/UBSan. Apple Silicon
+cross-build/probe results remain substrate checks; the application startup guard
+and ordinary-data migration requirements still apply.
