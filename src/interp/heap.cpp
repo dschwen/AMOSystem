@@ -287,7 +287,7 @@ uint32_t demande(uint32_t length)
         a.a[0] = peek_l(c.a4 + offset - LB_Size);
         a.a[3] = address(c.a3);
         a.a[4] = address(c.a4);
-        a.a[5] = address(c.a5);
+        a.a[5] = encode_data_zone(c.a5);
         a.a[6] = address(c.a6);
         interp_restart(d.BasSp.load(), d.Prg_InsRet.load(), &a);
     }

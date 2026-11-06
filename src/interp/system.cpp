@@ -74,7 +74,7 @@ void interp_in_call()
         r.a[i] = d.CallReg[8 + i];
     r.a[3] = address(c.a3);
     r.a[4] = routine;
-    r.a[5] = address(c.a5);
+    r.a[5] = encode_data_zone(c.a5);
     r.a[6] = address(d.CallReg);
     amos_call_all(&r, host::decode_routine(routine));
     for (int i = 0; i < 8; i++)

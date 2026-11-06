@@ -62,7 +62,7 @@ void run_switching(host::RoutineArg routine, AllRegs &r)
     Ctx &c = ctx();
     r.a[3] = address(c.a3);
     r.a[4] = address(c.a4);
-    r.a[5] = address(c.a5);
+    r.a[5] = encode_data_zone(c.a5);
     r.a[6] = address(c.a6);
     r.d[6] = c.d6;
     r.d[7] = c.d7;

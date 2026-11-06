@@ -265,7 +265,7 @@ void create_task()
         ml->ml_ME[1].me_Length = stack;
         hal::add_head(&t->tc_MemEntry, &ml->ml_Node);
     }
-    lib_fs_task_a5 = address(ctx().a5);
+    lib_fs_task_a5 = encode_data_zone(ctx().a5);
     hal::add_task(t, reinterpret_cast<APTR>(lib_fs_task_entry), nullptr);
 }
 

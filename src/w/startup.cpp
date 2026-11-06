@@ -45,7 +45,7 @@ constexpr int16_t LVOLoadView = -222, LVOAutoRequest = -0x15C, LVOEasyRequest = 
 char task_name[] = " AMOS";
 
 uint16_t version() { return peek_w(&wdata().WVersion); }
-uint32_t data_zone() { return address(&wdata()) + sizeof(WData); }
+uint32_t data_zone() { return encode_data_zone(ctx().a5); }
 
 // Send_Switcher: the signal to the AMOS Switcher, if it runs
 void signal_switcher(int signal)

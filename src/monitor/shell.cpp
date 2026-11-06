@@ -297,7 +297,7 @@ int32_t mon_dispatch(host::RoutineArg routine, uint32_t d0, uint32_t d1)
     r.d[7] = c.d7;
     r.a[3] = mon().Tt_Program;
     r.a[4] = idata().Mon_Base;
-    r.a[5] = address(c.a5);
+    r.a[5] = encode_data_zone(c.a5);
     r.a[6] = address(c.a6);
     amos_call_all(&r, routine);
     return r.d[0] != 0;

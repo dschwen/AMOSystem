@@ -26,7 +26,7 @@ extern "C" void amiga_w_go(AllRegs *r, void (*fn)(AllRegs *))
     c.d7 = r->d[7];
     c.a3 = ptr<uint8_t>(r->a[3]);
     c.a4 = ptr<uint8_t>(r->a[4]);
-    c.a5 = ptr<uint8_t>(r->a[5]);
+    c.a5 = decode_data_zone(r->a[5]);
     c.a6 = ptr<uint8_t>(r->a[6]);
     fn(r);
     ctx() = saved;
@@ -48,7 +48,7 @@ extern "C" void lib_fs_task_entry()
 {
     Ctx &c = ctx();
     c = Ctx{};
-    c.a5 = ptr<uint8_t>(lib_fs_task_a5);
+    c.a5 = decode_data_zone(lib_fs_task_a5);
     lib_fs_task();
 }
 

@@ -344,7 +344,7 @@ void test(Program &p, uint32_t hooks)
     r.a[2] = hooks;
     r.a[3] = address(ctx().a3);
     r.a[4] = address(ctx().a4);
-    r.a[5] = address(ctx().a5);
+    r.a[5] = encode_data_zone(ctx().a5);
     r.a[6] = address(&p);
     r.d[6] = ctx().d6;
     r.d[7] = ctx().d7;

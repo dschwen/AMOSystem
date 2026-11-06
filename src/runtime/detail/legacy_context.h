@@ -7,13 +7,13 @@ namespace amos::host::detail {
 inline const GuestContext& capture_context(const Ctx& context) { return context; }
 #else
 inline guest::Result<GuestContext> try_capture_context(const Ctx& context) {
-    const uint8_t* native[] = {context.a3,context.a4,context.a5,context.a6};
+    const uint8_t* native[] = {context.a3,context.a4,context.a6};
     for (auto pointer : native)
         if (reinterpret_cast<uintptr_t>(pointer) > UINT32_MAX) return {{},guest::Fault::overflow};
     return {{context.d6, context.d7,
              guest::abi::AddressCodec::decode<guest::Byte>(uint32_t(reinterpret_cast<uintptr_t>(context.a3))),
              guest::abi::AddressCodec::decode<guest::Byte>(uint32_t(reinterpret_cast<uintptr_t>(context.a4))),
-             guest::abi::AddressCodec::decode<guest::Byte>(uint32_t(reinterpret_cast<uintptr_t>(context.a5))),
+             context.a5,
              guest::abi::AddressCodec::decode<guest::Byte>(uint32_t(reinterpret_cast<uintptr_t>(context.a6)))},guest::Fault::none};
 }
 inline GuestContext capture_context(const Ctx& context) {

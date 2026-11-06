@@ -86,7 +86,7 @@ AllRegs context_regs()
     r.d[7] = c.d7;
     r.a[3] = address(c.a3);
     r.a[4] = address(c.a4);
-    r.a[5] = address(c.a5);
+    r.a[5] = encode_data_zone(c.a5);
     r.a[6] = address(c.a6);
     return r;
 }
@@ -310,14 +310,15 @@ void auto_assigns()
 
 // The data zone: the work buffers, the AMOS.library's data, the
 // interpreter's. Returns a5.
-uint8_t *data_zone(uint32_t w_data)
+DataZoneAddress data_zone(uint32_t w_data)
 {
     uint32_t size = LDataWork + w_data + IData::DataLong;
     uint8_t *zone = static_cast<uint8_t *>(hal::allocate(size, MemPublic | MemClear));
     if (!zone)
-        return nullptr;
+        return {};
     uint8_t *a5 = zone + LDataWork + w_data;
-    ctx().a5 = a5;
+    const DataZoneAddress logical_a5 = host::detail::capture_data_zone(a5);
+    ctx().a5 = logical_a5;
     IData &d = idata();
     d.Sys_AData = address(zone);
     d.Sys_LData = size;
@@ -342,7 +343,7 @@ uint8_t *data_zone(uint32_t w_data)
     buffer(&d.Buffer, TBuffer);
     if (d.Buffer & 3)
         halt();
-    return a5;
+    return logical_a5;
 }
 
 } // namespace
@@ -439,7 +440,7 @@ void main_cold_start(char *command, uint32_t length, uint32_t sp)
     r.d[0] = 0;
     r.d[1] = d.PI_DefAmigA;
     r.a[4] = w;
-    r.a[5] = address(ctx().a5);
+    r.a[5] = encode_data_zone(ctx().a5);
     r.a[6] = d.Sys_WAd;
     amos_call_all(&r, host::decode_routine(d.Sys_WAd));
     if (r.d[0])

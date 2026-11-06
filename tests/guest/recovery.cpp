@@ -31,11 +31,13 @@ void run_at(Mark& mark) { ++ran; mark.regs.d[0] = 91; }
 int main(int argc, char**) {
     Ctx legacy{};
     legacy.d6 = 31; legacy.d7 = 37;
+    legacy.a5 = decode_data_zone(0xe0000010);
     legacy.a3 = reinterpret_cast<uint8_t*>(uintptr_t(0xf0000010));
     auto captured = detail::try_capture_context(legacy);
     assert(captured && captured.value.d6 == 31 && captured.value.d7 == 37);
     assert(context_address(captured.value.a3) == 0xf0000010);
-    uint8_t* Ctx::* registers[] = {&Ctx::a3,&Ctx::a4,&Ctx::a5,&Ctx::a6};
+    assert(context_address(captured.value.a5) == 0xe0000010);
+    uint8_t* Ctx::* registers[] = {&Ctx::a3,&Ctx::a4,&Ctx::a6};
     assert(reinterpret_cast<uintptr_t>(&legacy) > UINT32_MAX);
     for (auto reg : registers) {
         Ctx invalid{};

@@ -131,7 +131,7 @@ bool insert_volume(const char *volume, size_t n)
     r.a[3] = amos::address(q->args);
     // (AMOS.library's context: a5 its data)
     amos::Ctx saved = amos::ctx();
-    amos::ctx().a5 = amos::ptr<uint8_t>(amos_w_base);
+    amos::ctx().a5 = amos::decode_data_zone(amos_w_base);
     w_easy_request(&r);
     amos::ctx() = saved;
     amos::host::hint(nullptr);

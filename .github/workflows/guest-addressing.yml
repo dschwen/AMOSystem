@@ -1,9 +1,9 @@
 name: Guest address type contract
 on:
   push:
-    paths: ['src/core/guest*.h', 'src/core/*token.h', 'src/core/routine_field.h', 'src/abi/guest*.h', 'src/memory/**', 'src/host/guest_memory.cpp', 'src/host/guest_allocator.cpp', 'src/host/guest_segments.cpp', 'src/host/static_symbols.cpp', 'src/host/mark_registry.cpp', 'src/host/context_registry.cpp', 'src/runtime/**', 'src/tables/**', 'tools/sync_runtime_bindings.py', 'tools/sync_static_segments.py', 'tests/guest/**', 'tests/test_guest*.py', 'tests/test_runtime*.py', '.github/workflows/guest-addressing.yml', 'Makefile']
+    paths: ['src/core/guest*.h', 'src/core/*token.h', 'src/core/routine_field.h', 'src/core/context_data.h', 'src/abi/guest*.h', 'src/memory/**', 'src/host/guest_memory.cpp', 'src/host/guest_allocator.cpp', 'src/host/guest_segments.cpp', 'src/host/static_symbols.cpp', 'src/host/mark_registry.cpp', 'src/host/context_registry.cpp', 'src/runtime/**', 'src/tables/**', 'tools/sync_runtime_bindings.py', 'tools/sync_static_segments.py', 'tests/guest/**', 'tests/test_guest*.py', 'tests/test_runtime*.py', '.github/workflows/guest-addressing.yml', 'Makefile']
   pull_request:
-    paths: ['src/core/guest*.h', 'src/core/*token.h', 'src/core/routine_field.h', 'src/abi/guest*.h', 'src/memory/**', 'src/host/guest_memory.cpp', 'src/host/guest_allocator.cpp', 'src/host/guest_segments.cpp', 'src/host/static_symbols.cpp', 'src/host/mark_registry.cpp', 'src/host/context_registry.cpp', 'src/runtime/**', 'src/tables/**', 'tools/sync_runtime_bindings.py', 'tools/sync_static_segments.py', 'tests/guest/**', 'tests/test_guest*.py', 'tests/test_runtime*.py', '.github/workflows/guest-addressing.yml', 'Makefile']
+    paths: ['src/core/guest*.h', 'src/core/*token.h', 'src/core/routine_field.h', 'src/core/context_data.h', 'src/abi/guest*.h', 'src/memory/**', 'src/host/guest_memory.cpp', 'src/host/guest_allocator.cpp', 'src/host/guest_segments.cpp', 'src/host/static_symbols.cpp', 'src/host/mark_registry.cpp', 'src/host/context_registry.cpp', 'src/runtime/**', 'src/tables/**', 'tools/sync_runtime_bindings.py', 'tools/sync_static_segments.py', 'tests/guest/**', 'tests/test_guest*.py', 'tests/test_runtime*.py', '.github/workflows/guest-addressing.yml', 'Makefile']
 permissions:
   contents: read
 jobs:

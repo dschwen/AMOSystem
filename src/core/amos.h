@@ -21,6 +21,8 @@
 #pragma once
 
 #include "tables/labels.h"
+#include "core/context_data.h"
+#include "runtime/detail/identity_record.h"
 #include "runtime/routine_entry.h"
 #include "abi/guest_entry_codec.h"
 
@@ -65,11 +67,20 @@ template <typename T> inline T *ptr(uint32_t address)
 #endif
 template <typename T> inline uint32_t address(T *p) { return uint32_t(reinterpret_cast<uintptr_t>(p)); }
 
-// The interpreter registers, as saved by the glue
+// The interpreter registers, as saved by the glue. Native pointer alignment
+// remains stable while guest-width fields are introduced between them.
+#if !defined(__mc68000__)
+#pragma pack(push, 8)
+#endif
 struct alignas(void*) Ctx {
     uint32_t d6, d7;
-    uint8_t *a3, *a4, *a5, *a6;
+    uint8_t *a3, *a4;
+    DataZoneAddress a5;
+    uint8_t *a6;
 };
+#if !defined(__mc68000__)
+#pragma pack(pop)
+#endif
 
 // The block of the contexts (core/call.s): the main task, its context, the
 // context of any other task. AMOSPro's, shared with the programs it loads.
@@ -133,9 +144,15 @@ int32_t amos_call_cc(Regs*, host::RoutineEntry);
 constexpr int LB_Size = 36;
 
 // The interpreter data, above a5
+#if defined(__mc68000__)
 inline IData &idata() { return *reinterpret_cast<IData *>(ctx().a5); }
-// The AMOS.library data, below a5
 inline WData &wdata() { return *reinterpret_cast<WData *>(ctx().a5 - sizeof(WData)); }
+#else
+inline IData &idata() { return host::detail::identity_record<IData>(ctx().a5); }
+// The AMOS.library data, below the logical a5 address.
+inline WData &wdata() { return host::detail::identity_record<WData>(ctx().a5 - sizeof(WData)); }
+static_assert(offsetof(Ctx,a5) == 24 && offsetof(Ctx,a6) == 32);
+#endif
 
 // Address of a routine of AMOSPro.Lib, as JJsr finds it
 inline const void *lib_address(int routine)
@@ -216,7 +233,7 @@ template <typename F> inline void w_direct_call(F f, Regs &r)
         a.a[i] = r.a[i];
     a.a[3] = address(c.a3);
     a.a[4] = address(c.a4);
-    a.a[5] = address(c.a5);
+    a.a[5] = encode_data_zone(c.a5);
     a.a[6] = address(c.a6);
     Ctx saved = c;
     c.d6 = r.d[6];

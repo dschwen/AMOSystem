@@ -57,7 +57,7 @@ inline AllRegs context_regs()
     r.d[7] = c.d7;
     r.a[3] = address(c.a3);
     r.a[4] = address(c.a4);
-    r.a[5] = address(c.a5);
+    r.a[5] = encode_data_zone(c.a5);
     r.a[6] = address(c.a6);
     return r;
 }
@@ -69,7 +69,7 @@ inline void to_context(const AllRegs &r)
     c.d7 = r.d[7];
     c.a3 = ptr<uint8_t>(r.a[3]);
     c.a4 = ptr<uint8_t>(r.a[4]);
-    c.a5 = ptr<uint8_t>(r.a[5]);
+    c.a5 = decode_data_zone(r.a[5]);
     c.a6 = ptr<uint8_t>(r.a[6]);
 }
 

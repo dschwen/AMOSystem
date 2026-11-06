@@ -147,7 +147,7 @@ void lib_fs_task_entry()
 {
     Ctx &c = ctx();
     c = Ctx{};
-    c.a5 = ptr<uint8_t>(lib_fs_task_a5);
+    c.a5 = decode_data_zone(lib_fs_task_a5);
     lib_fs_task();
 }
 }

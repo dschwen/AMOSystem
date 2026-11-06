@@ -1010,7 +1010,7 @@ void interp_in_apml()
         r.a[i] = d.CallReg[8 + i];
     r.a[3] = address(a3());
     r.a[4] = address(d.CallReg);
-    r.a[5] = address(ctx().a5);
+    r.a[5] = encode_data_zone(ctx().a5);
     r.a[6] = address(pc());
     amos_call_all(&r, host::detail::legacy_routine_entry(pc()));
     for (int i = 0; i < 8; i++)

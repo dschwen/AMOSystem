@@ -226,7 +226,7 @@ bool cold_start(uint32_t program)
     patches(true);
     for (be_u32 *v = d.VblRout;; v++)
         if (!*v) {
-            view_data_zone = address(ctx().a5);
+            view_data_zone = encode_data_zone(ctx().a5);
             *v = address(mon_view_inter);
             break;
         }

@@ -222,7 +222,32 @@ On Amiga GuestContext aliases the existing Ctx, and capture returns the original
 context by reference. No temporary snapshot copy is introduced before the native
 save-context token is made. Machine-code fixtures cover capture and saved a3
 loads; hosted tests cover high logical addresses, task ownership, normal/nonlocal
-cleanup and rejection of high native cursors in each register.
+cleanup and rejection of high native cursors (a3/a4/a6 after the a5 migration).
+
+### Live a5 data-zone cursor
+
+Hosted Ctx::a5 is now DataZoneAddress (GuestPtr<Byte>), with explicit architectural
+encode/decode at every register, task, requester and file-selector handoff. It
+cannot accept native pointers, HostPtr, integers or code entries implicitly. The
+boot allocator returns a typed address and crosses one checked capture_data_zone
+adapter; high native
+allocations are rejected, not truncated. Saved GuestContext snapshots now copy
+the typed a5 value directly, and the legacy capture adapter checks only the
+remaining native a3/a4/a6 cursors. Task setup exports the logical a5 word directly
+without re-encoding a native wdata() record reference.
+
+Ctx retains its native size and a3/a4/a5/a6 offsets across packed/unpacked hosted
+translation units, including the original padding after the guest-width a5.
+Amiga retains its original native pointer field and ABI. Machine-code fixtures
+cover data-zone capture and live a5 loads/stores against native baselines.
+
+idata()/wdata() still return legacy native record overlays. On hosts those
+references now originate only in the private identity_record adapter, with null
+and 4 GiB endpoint checks; this is not a mapped-memory implementation. Tests
+exercise high logical a5 register values, a5-plus-ten arithmetic, context capture,
+packing consistency, native-pointer rejection and a low-backed identity overlay.
+The other live context cursors and mapped record conversion remain mandatory
+before production can use high backing.
 
 ## Remaining work checklist
 
@@ -233,18 +258,19 @@ Completed compiler-enforced boundaries:
 - [x] Typed interpreter/collector code arguments and guest token-table parameters.
 - [x] Hosted call APIs reject raw/native/data pointers; static code arguments use symbols.
 - [x] Twenty-two continuation/error/extension/test/patch/button code cells and mapped views.
-- [x] Guest-only saved context values and checked legacy capture; live Ctx remains pending.
+- [x] Guest-only saved context values and checked legacy capture.
+- [x] Live hosted a5 guest address and explicit register/task/requester transfers.
 
 Required next conversions and release gates:
 
 - [ ] Replace the mixed native marker/code-table representation in Sl_Routines,
   then migrate slider tables and OS interrupt/callback registrations.
-- [ ] Migrate Ctx a3-a6, program/token cursors and register façades to guest data
-  addresses; remove the checked native-context capture, native-cursor and
+- [ ] Migrate the remaining live Ctx a3/a4/a6, program/token cursors and register
+  façades to guest data addresses; remove the checked native-context capture, native-cursor and
   native-token-table adapters.
 - [ ] Replace idata/wdata/native record overlays with mapped schema views, starting
   with the interpreter's token/continuation vertical slice. Install high Memory
-  behind those readers; remove IdentityDataMemory and LegacyCodeReader.
+  behind those readers; remove identity_record, IdentityDataMemory and LegacyCodeReader.
 - [ ] Convert bank/list/string/file APIs end to end, including interior cursors,
   allocation/free/AllocAbs and argument/result codecs. Remove legacy_call_codec.
 - [ ] Convert remaining static data-label/source-array consumers, then install the
@@ -325,7 +351,7 @@ legacy uses remain outside the compiler-enforced guarantee.
 
 | Boundary | Representation / audit needed | Migration gate |
 |---|---|---|
-| `core/amos.h`: `ptr`, `address`, `Ctx`, `idata/wdata` | Raw host pointers mixed with architectural words | Typed contexts, wire views and explicit register codecs throughout callers |
+| `core/amos.h`: `ptr`, `address`, `Ctx`, `idata/wdata` | a5 typed; a3/a4/a6 and identity record overlays remain | Typed remaining cursors, mapped record views and removal of identity_record |
 | `core/layout.h`, `core/ioreq.h` | Recovery/context tokens and twelve code cells typed; most data/other callable fields remain | Byte-identical mapped schemas; guest fields never hold HostPtr |
 | `tables/labels.*`, `tables/*.cpp` | Static catalog/relocation and code-label callers migrated; raw data-label consumers remain | Finish data consumers, then install the translated static image |
 | `runtime/glue.cpp`, `interp/chrget.cpp` | Typed dispatch, collectors and thunks integrated; native context/data readers remain | Remove identity data/cursor adapters and qualify high-backed execution |
@@ -368,7 +394,7 @@ SDL platform code or VM page-size handling as part of address cleanup.
 
 ## Current validation
 
-- GCC: all 13 guest-contract tests and five native-runtime tests pass. This
+- GCC: all 15 guest-contract tests and five native-runtime tests pass. This
   includes real static-image/dispatch relocation, high-backed code fields,
   compiler rejection checks, packed layouts and m68000 machine-code comparisons.
 - Clang: the same contract/runtime suites pass; the container skips the Amiga
@@ -378,13 +404,15 @@ SDL platform code or VM page-size handling as part of address cleanup.
   the menus2 procedure/saved-register fixture pass.
 - Windows and Amiga: builds pass. Amiga code-field and mapped-view operations
   add no instructions relative to their native load/store baselines. Saved-context
-  capture and a3 access also match the native instruction baselines.
+  capture and a3 access also match the native instruction baselines; live a5
+  capture/load/store operations also add no instructions.
 - macOS arm64: cross-links with the startup guard retained; native interpreter
   execution remains unqualified.
 - ASan/UBSan: the high-backed metadata/16-bit access/code-field view fixture passes,
   including permission checks and prevention of partial writes. The snapshot/mark
   registry fixture also passes with task ownership, nonlocal cleanup, saved guest
-  pointer values and rejection of high native cursors.
+  pointer values and rejection of high native cursors. Live-a5 register transfers,
+  packing and low-backed record overlays pass the sanitizer fixture as well.
 
 These checks cover the migrated boundaries. They do not qualify legacy native
 data pointers, guest record overlays, platform mirrors or a complete high-address

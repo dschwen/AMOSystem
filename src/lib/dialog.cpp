@@ -1308,7 +1308,7 @@ void instruction(Run &r, int i, const int32_t *p)
             a.d[2 + k] = static_cast<uint32_t>(p[k]);
         a.a[3] = address(r.sp);
         a.a[4] = address(d);
-        a.a[5] = address(ctx().a5);
+        a.a[5] = encode_data_zone(ctx().a5);
         a.a[6] = address(r.pc);
         amos_call_all(&a, host::decode_routine(static_cast<uint32_t>(p[0])));
         break;
@@ -1841,7 +1841,7 @@ void list_line(Run &r, uint8_t *e, uint16_t n)
         c.a[2] = address(e);
         c.a[3] = address(r.sp);
         c.a[4] = address(d);
-        c.a[5] = address(ctx().a5);
+        c.a[5] = encode_data_zone(ctx().a5);
         c.a[6] = address(r.pc);
         amos_call_all(&c, host::decode_routine(peek_l(ptr<uint8_t>(a) + 8)));
         chars = ptr<uint8_t>(c.a[1]);

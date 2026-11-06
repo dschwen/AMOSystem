@@ -318,6 +318,28 @@ extern "C" uint32_t load_snapshot_a3(const void* context) {
 #endif
 }
 
+extern "C" uint32_t capture_data_zone(uint8_t* native) {
+#if defined(AMOS_TEST_WRAPPED)
+    return amos::encode_data_zone(amos::host::detail::capture_data_zone(native));
+#else
+    return uint32_t(native);
+#endif
+}
+extern "C" uint32_t load_context_a5(const void* context) {
+#if defined(AMOS_TEST_WRAPPED)
+    return amos::encode_data_zone(static_cast<const amos::Ctx*>(context)->a5);
+#else
+    return *reinterpret_cast<const uint32_t*>(static_cast<const uint8_t*>(context)+16);
+#endif
+}
+extern "C" void store_context_a5(void* context, uint32_t word) {
+#if defined(AMOS_TEST_WRAPPED)
+    static_cast<amos::Ctx*>(context)->a5 = amos::decode_data_zone(word);
+#else
+    *reinterpret_cast<uint32_t*>(static_cast<uint8_t*>(context)+16) = word;
+#endif
+}
+
 extern "C" uint32_t sum_bytes(uint32_t base, uint32_t count) {
     uint32_t sum = 0;
 #if defined(AMOS_TEST_WRAPPED)

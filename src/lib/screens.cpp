@@ -211,7 +211,7 @@ AllRegs all_regs(const Regs &r)
         a.a[i] = r.a[i];
     a.a[3] = address(ctx().a3);
     a.a[4] = address(ctx().a4);
-    a.a[5] = address(ctx().a5);
+    a.a[5] = encode_data_zone(ctx().a5);
     a.a[6] = wdata().GfxBase;
     return a;
 }
