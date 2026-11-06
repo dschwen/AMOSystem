@@ -6,7 +6,7 @@ clipboard and has no SDL dependency.
 
 ## Usage
 
-Use **Ctrl+C/X/V** on Linux/Windows and **Command+C/X/V** on macOS. In the source
+Use **Ctrl+Shift+C/X/V** on Linux/Windows (plain Ctrl+C/X/V stay the AMOS block commands) and **Command+C/X/V** on macOS. In the source
 editor, select with the existing block marker (Ctrl+B in the default setup),
 then move the cursor to the other end. Copy exports plain BASIC text; cut removes
 it only after the OS clipboard write succeeds. Paste inserts at the cursor or
@@ -20,7 +20,7 @@ nothing is selected. Shift+Left/Right/Home/End and Shift+mouse placement select;
 Home/End move to the command boundaries. Paste inserts at the cursor or replaces
 the selection. **Paste never executes a command:** press Return explicitly.
 A single final newline is accepted and removed; multiline commands are rejected.
-Running BASIC and BASIC INPUT retain their Ctrl+C interrupt behavior. The Devices
+Running BASIC and BASIC INPUT retain their Ctrl+C interrupt behavior (Ctrl+Shift+C does not interrupt). The Devices
 overlay and other dialog line editors do not edit the underlying source.
 
 ## Limits and implementation
@@ -129,7 +129,7 @@ this buffer, not the editor's source selection or rendered screen pixels.
 | Source editor | Selected source as plain text | Copy selection, then delete after successful system write | Insert system text at cursor, replacing an active selection |
 | Direct mode | Selection, or the entire editable command when no selection exists | Selection, or the entire command, after successful system write | Insert at cursor or replace selection; never submit the command |
 
-Use Ctrl+C/X/V on Linux and Windows, Command+C/X/V on macOS. Add explicit
+Use Ctrl+Shift+C/X/V on Linux and Windows (plain Ctrl+C/X/V are the AMOS block copy/cut/paste), Command+C/X/V on macOS. Add explicit
 System Copy/Cut/Paste editor menu commands so the feature is discoverable and
 legacy block commands remain available. Keep existing private block clipboard
 commands intact. Mirror successful system copy/cut into the private block where

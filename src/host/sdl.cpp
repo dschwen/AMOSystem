@@ -588,7 +588,8 @@ ClipboardCommand clipboard_command(uint32_t key)
 #if defined(__APPLE__)
     const bool modifier = (shifts & 0xC0) && !(shifts & ~0xC0u);
 #else
-    const bool modifier = shifts == 8;
+    // Ctrl+Shift: plain Ctrl+C/X/V stay the editor's block copy, cut and paste
+    const bool modifier = (shifts & ~3u) == 8 && (shifts & 3);
 #endif
     if (!modifier) return ClipboardCommand::None;
     unsigned scan = (key >> 16) & 255;

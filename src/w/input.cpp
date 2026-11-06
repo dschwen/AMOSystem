@@ -118,7 +118,12 @@ bool key_event(WData &d, struct InputEvent *e, bool here)
             return true;
         }
         if (here) {
+#if defined(__m68k__)
             if (shifts & 0x08 && (ascii == 'C' || ascii == 'c'))
+#else
+            // On the host Ctrl+Shift+C is the system clipboard's Copy, not the break
+            if (shifts & 0x08 && !(shifts & 0x03) && (ascii == 'C' || ascii == 'c'))
+#endif
                 d.Actualise |= BitControl;
             else
                 store(d, uint8_t(code), ascii, shifts);

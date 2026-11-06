@@ -1,5 +1,6 @@
 timeout 200
 wait 12
+mask 464 0 548 22
 key ctrl+y
 key ctrl+y
 key ctrl+y
