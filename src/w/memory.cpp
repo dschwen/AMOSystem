@@ -33,7 +33,7 @@ void call_routines(be_u32 *list)
         r.a[4] = address(ctx().a4);
         r.a[5] = address(ctx().a5);
         r.a[6] = address(ctx().a6);
-        amos_call_all(&r, routine + 4);
+        amos_call_all(&r, host::decode_routine(r.a[0] + 4));
     }
 }
 

@@ -3,6 +3,7 @@
 // text, to the labels; the window scrolled with it. And the lines of the
 // window detokenised from the program (Ed_Untok, Ed_BufUntok).
 
+#include "runtime/static_symbols.h"
 #include "editor/editor.h"
 #include "core/source.h"
 
@@ -21,7 +22,7 @@ constexpr uint8_t SlDelai = 10;
 // (80) and not the edit window's width
 constexpr uint16_t RightEdge = 80 - 10;
 
-void run(uint8_t *routine)
+void run(host::RoutineArg routine)
 {
     Regs r;
     call(routine, r);
@@ -33,7 +34,7 @@ void sound()
 {
     Regs r;
     r.d[0] = 'F';
-    call(ed_sam_play, r);
+    call(AMOS_ROUTINE(ed_sam_play), r);
 }
 
 void wi_chr_out(uint8_t c)
@@ -169,7 +170,7 @@ void line_up()
         return;
     }
     if (!w.Edt_YPos) {
-        run(ed_top_of_text);
+        run(AMOS_ROUTINE(ed_top_of_text));
         return;
     }
     w.Edt_YPos--;
@@ -181,7 +182,7 @@ void line_down()
     EditWindow &w = window();
     w.Edt_EtatAff |= EtAY;
     if (uint16_t(w.Edt_YPos + w.Edt_YCu) >= program().Prg_NLigne) {
-        run(ed_bottom_of_text);
+        run(AMOS_ROUTINE(ed_bottom_of_text));
         return;
     }
     if (w.Edt_YCu < uint16_t(w.Edt_WindTy - 1)) {
@@ -256,7 +257,7 @@ void to_top()
     w.Edt_XCu = 0;
     w.Edt_ASlY = SlDelai;
     new_buffer();
-    run(ed_top_of_text);
+    run(AMOS_ROUTINE(ed_top_of_text));
 }
 
 void to_bottom()
@@ -271,7 +272,7 @@ void to_bottom()
     w.Edt_XCu = 0;
     w.Edt_ASlY = SlDelai;
     new_buffer();
-    run(ed_bottom_of_text);
+    run(AMOS_ROUTINE(ed_bottom_of_text));
 }
 
 void page_up()

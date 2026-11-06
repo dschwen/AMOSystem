@@ -173,12 +173,8 @@ void interp_exec_value(RoutineArg routine, uint32_t d0, uint32_t d1, const inter
 void interp_step_instruction(uint32_t t) { interp_run_instruction(t); }
 
 // The interpreter goes on at ret, the stack at sp (the instruction given up)
-[[noreturn]] void interp_continue(MarkHandle sp, uint32_t ret) {
-#if defined(__mc68000__)
-    mark_jump(sp, ptr<void>(ret), context_regs());
-#else
-    mark_jump(sp, guest::abi::EntryCodec::decode<RoutineSignature>(ret), context_regs());
-#endif
+[[noreturn]] void interp_continue(MarkHandle sp, RoutineArg ret) {
+    mark_jump(sp, ret, context_regs());
 }
 
 // To fn with d0-d5/a0-a2 from r and the interpreter registers of the
@@ -196,14 +192,9 @@ void interp_step_instruction(uint32_t t) { interp_run_instruction(t); }
 
 // An instruction started again: the stack at sp, its routine (r->a[0])
 // with all of r, then ret
-[[noreturn]] void interp_restart(MarkHandle sp, uint32_t ret, const AllRegs *r)
+[[noreturn]] void interp_restart(MarkHandle sp, RoutineArg ret, const AllRegs *r)
 {
-#if defined(__mc68000__)
-    mark_jump(sp, ptr<void>(r->a[0]), *r, ptr<void>(ret));
-#else
-    mark_jump(sp, guest::abi::EntryCodec::decode<RoutineSignature>(r->a[0]), *r,
-              guest::abi::EntryCodec::decode<RoutineSignature>(ret));
-#endif
+    mark_jump(sp, decode_routine(r->a[0]), *r, ret);
 }
 
 // End Proc of a procedure a menu called: back to the call, d0 = 0

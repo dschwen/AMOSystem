@@ -174,7 +174,7 @@ extern "C" uint32_t lib_fn_dialog_run4(int32_t c, int32_t label, uint32_t x, uin
         fon_call();
     positive(c);
     // Not with the monitor
-    if (idata().Patch_Errors)
+    if (idata().Patch_Errors.load())
         fon_call();
     idata().IDia_Error = 0;
     DiaResult r = dia_run(static_cast<uint32_t>(c), label, x, y);
@@ -241,7 +241,7 @@ extern "C" uint32_t lib_fn_zdialog(uint32_t c, uint32_t x, uint32_t y)
 // =DIALOG BOX(program[,v[,v$]][,x,y]): open, run and close a dialog
 extern "C" uint32_t lib_fn_dialog_box5(uint32_t prog, uint32_t v, uint32_t vs, uint32_t x, uint32_t y)
 {
-    if (idata().Patch_Errors)
+    if (idata().Patch_Errors.load())
         fon_call();
     Regs s = {};
     lib_call(L_SaveRegs, s);

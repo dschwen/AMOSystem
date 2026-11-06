@@ -14,6 +14,7 @@
 // BbAct and the coordinates, which update() takes. BbAct is a byte in
 // the high half of its word, as the assembler writes it.
 
+#include "runtime/static_symbols.h"
 #include "core/amiga.h"
 #include "w/w.h"
 
@@ -72,7 +73,7 @@ void own()
     hal::wait_blit();
 }
 
-void call_a0(uint8_t *routine, uint32_t a0)
+void call_a0(host::RoutineArg routine, uint32_t a0)
 {
     Regs r;
     r.a[0] = a0;
@@ -611,7 +612,7 @@ void delete_bob(amos::Bob *b)
         if (d->LBuf)
             free_mm(d->ABuf, uint32_t(d->LBuf) << 1);
     }
-    call_a0(w_dad_amal, address(&b->BbAct));
+    call_a0(AMOS_ROUTINE(w_dad_amal), address(&b->BbAct));
     amos::Bob *next = ptr<amos::Bob>(b->BbNext), *prev = ptr<amos::Bob>(b->BbPrev);
     if (prev)
         prev->BbNext = address(next);
@@ -981,11 +982,11 @@ void paste(const AllRegs *r)
         draw_now(b);
         return;
     }
-    call(w_tabk1);
+    call(AMOS_ROUTINE(w_tabk1));
     draw_now(b);
-    call(w_tabk2);
+    call(AMOS_ROUTINE(w_tabk2));
     draw_now(b);
-    call(w_tabk3);
+    call(AMOS_ROUTINE(w_tabk3));
 }
 
 // ---- blocks ------------------------------------------------------------------------

@@ -7,6 +7,7 @@
 //     their size long, the lines; then the start of the last line: its
 //     length word, the text
 
+#include "runtime/static_symbols.h"
 #include "editor/editor.h"
 #include "core/source.h"
 
@@ -20,7 +21,7 @@ namespace {
 
 constexpr uint32_t OneLine = 1 << 30, ClosedFirst = 1u << 31;
 
-void run(uint8_t *routine)
+void run(host::RoutineArg routine)
 {
     Regs r;
     call(routine, r);
@@ -30,7 +31,7 @@ void alert(uint16_t n)
 {
     Regs r;
     r.d[0] = n;
-    call(ed_pro_alert, r);
+    call(AMOS_ROUTINE(ed_pro_alert), r);
 }
 
 void set_cursor_shape(uint8_t *shape)
@@ -81,7 +82,7 @@ Limits limits()
 {
     EditWindow &w = window();
     if (int16_t(w.Edt_YBloc) < 0)
-        run(ed_block_what);
+        run(AMOS_ROUTINE(ed_block_what));
     uint16_t y1 = w.Edt_YBloc, y2 = program_line(), x1 = w.Edt_XBloc, x2 = w.Edt_XCu;
     if (!(y2 > y1 || (y2 == y1 && x2 >= x1))) {
         uint16_t t = y1;
@@ -143,7 +144,7 @@ int32_t copy(be_u32 *cell, Limits l)
     if (closed) {
         // a closed procedure: from its start, more than one line
         if (x1 || l.y2 <= l.y1)
-            run(ed_not_edit);
+            run(AMOS_ROUTINE(ed_not_edit));
         flags |= ClosedFirst;
         *a3++ = 0;
     } else {
@@ -176,7 +177,7 @@ int32_t copy(be_u32 *cell, Limits l)
     text = line_text(l.y2, closed, none);
     if (closed) {
         if (uint16_t(flags))
-            run(ed_not_edit);
+            run(AMOS_ROUTINE(ed_not_edit));
     } else if (!none) {
         uint16_t length = peek_w(text);
         text += 2;
@@ -270,7 +271,7 @@ bool insert(be_u32 *cell)
     const uint8_t *a2 = block + 10;
     const uint8_t *line = buffer_line(w.Edt_YCu);
     if (line[255] && peek_w(a2))
-        run(ed_not_edit);
+        run(AMOS_ROUTINE(ed_not_edit));
     if (w.Edt_XCu > peek_w(line))
         w.Edt_XCu = peek_w(line);
     uint16_t y = program_line();
@@ -288,7 +289,7 @@ bool insert(be_u32 *cell)
         a2 = even(const_cast<uint8_t *>(a2) + 2 + peek_w(a2));
         if (uint16_t lines = peek_w(a2)) {
             if (store_block(a2 + 6, peek_l(a2 + 2), y).error)
-                run(ed_oof_buf);
+                run(AMOS_ROUTINE(ed_oof_buf));
             marks_change(y, int16_t(lines));
             y += lines;
         }
@@ -447,9 +448,9 @@ void ed_block_store(AllRegs *)
 {
     int32_t r = copy(&idata().Ed_Block, limits());
     if (r < 0)
-        run(ed_out_of_memory);
+        run(AMOS_ROUTINE(ed_out_of_memory));
     if (r > 0)
-        run(ed_block_what);
+        run(AMOS_ROUTINE(ed_block_what));
     hide();
     alert(7);
 }
@@ -458,9 +459,9 @@ void ed_block_cut(AllRegs *)
 {
     int32_t r = copy(&idata().Ed_Block, limits());
     if (r < 0)
-        run(ed_out_of_memory);
+        run(AMOS_ROUTINE(ed_out_of_memory));
     if (r > 0)
-        run(ed_block_what);
+        run(AMOS_ROUTINE(ed_block_what));
     hide();
     remove(&idata().Ed_Block);
     undo_reset();
@@ -471,7 +472,7 @@ void ed_block_cut(AllRegs *)
 void ed_block_forget(AllRegs *)
 {
     if (!idata().Ed_Block)
-        run(ed_block_what);
+        run(AMOS_ROUTINE(ed_block_what));
     release(&idata().Ed_Block);
     alert(8);
 }
@@ -479,7 +480,7 @@ void ed_block_forget(AllRegs *)
 void ed_block_paste(AllRegs *)
 {
     if (!idata().Ed_Block)
-        run(ed_block_what);
+        run(AMOS_ROUTINE(ed_block_what));
     insert(&idata().Ed_Block);
     undo_reset();
 }

@@ -9,6 +9,7 @@
 // A macro: a list element (next, ..., the key long at 8), its keys from
 // 12, three bytes each (ASCII, scan code, shifts), ending with -1.
 
+#include "runtime/static_symbols.h"
 #include "editor/editor.h"
 #include "editor/clipboard.h"
 
@@ -101,7 +102,7 @@ void sound(uint8_t c)
 {
     Regs r;
     r.d[0] = c;
-    call(ed_sam_play, r);
+    call(AMOS_ROUTINE(ed_sam_play), r);
 }
 
 // Ed_Key: the next key acted on; false if there was none
@@ -152,7 +153,7 @@ bool key()
     if (function >= 0) {
         Regs r;
         r.d[2] = uint32_t(function);
-        call(ed_function_call, r);
+        call(AMOS_ROUTINE(ed_function_call), r);
         return true;
     }
     type_key(uint8_t(key), d.Ed_Insert, nullptr);

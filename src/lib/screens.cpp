@@ -159,7 +159,7 @@ void tmp_ras_get()
 
 // GfxF0: call fn with registers r (a6 = graphics.library), in both buffers
 // of a screen with Autoback; fn null: the graphics.library function lvo
-void gfx_autoback(const void *fn, int16_t lvo, AllRegs &r)
+void gfx_autoback(host::RoutineArg fn, int16_t lvo, AllRegs &r)
 {
     auto call = [&](AllRegs &c) {
         if (fn)
@@ -223,7 +223,7 @@ void gfx(int16_t lvo, Regs &r)
     r.d[5] = static_cast<uint16_t>(lvo);
     r.a[1] = wdata().RastPort;
     AllRegs a = all_regs(r);
-    gfx_autoback(nullptr, lvo, a);
+    gfx_autoback({}, lvo, a);
 }
 
 // AdrEc: a screen by number, or null
@@ -1171,7 +1171,7 @@ extern "C" void lib_in_paint3(uint32_t x, uint32_t y, uint32_t mode)
     // GfxPnt: AMOS.library's paint, with Autoback (a6 left as it is)
     AllRegs a = all_regs(r);
     a.a[6] = address(ctx().a6);
-    gfx_autoback(ptr<uint8_t>(wdata().EcVect) + 4 * ec::SuPaint, 0, a);
+    gfx_autoback(host::decode_routine(uint32_t(wdata().EcVect) + 4 * ec::SuPaint), 0, a);
     tmp_ras_free();
 }
 
@@ -1986,7 +1986,7 @@ extern "C" uint32_t lib_gfx_func(RegFrame &r)
     for (int i = 0; i < 3; i++)
         g.a[i] = r.a[i];
     AllRegs a = all_regs(g);
-    gfx_autoback(nullptr, static_cast<int16_t>(r.d[5]), a);
+    gfx_autoback({}, static_cast<int16_t>(r.d[5]), a);
     for (int i = 0; i < 6; i++)
         r.d[i] = a.d[i];
     for (int i = 0; i < 3; i++)

@@ -450,7 +450,7 @@ BPTR form_channel(uint32_t n)
 
 void check_no_monitor()
 {
-    if (idata().Patch_Errors)
+    if (idata().Patch_Errors.load())
         fon_call();
 }
 

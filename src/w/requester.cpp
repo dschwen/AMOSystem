@@ -408,7 +408,7 @@ uint32_t system_requester(AllRegs *r, uint32_t function)
     if (here)
         ec_d1(ec::AMOS_WB, 0);
     AllRegs a = *r;
-    amos_call_all(&a, ptr<uint8_t>(function));
+    amos_call_all(&a, host::decode_routine(function));
     d.Req_Pos = a.d[0];
     if (d.ReqOld)
         ec_d1(ec::AMOS_WB, 1);

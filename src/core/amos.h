@@ -114,6 +114,7 @@ struct alignas(uint32_t) AllRegs {
 static_assert(offsetof(Ctx, a3) == 8 && sizeof(Ctx) == 8 + 4 * sizeof(void*));
 static_assert(sizeof(Regs) == 44 && sizeof(RegFrame) == 44 && sizeof(AllRegs) == 60);
 
+#if defined(__mc68000__)
 extern "C" {
 void amos_call(Regs *r, const void *fn);
 void amos_call_all(AllRegs *r, const void *fn);
@@ -121,8 +122,7 @@ void amos_eval(Regs *r, const void *fn);
 int32_t amos_call_cc(Regs *r, const void *fn);
 [[noreturn]] void amos_goto(const void *fn, uint32_t d0);
 }
-
-#if !defined(__mc68000__)
+#else
 void amos_call(Regs*, host::RoutineEntry);
 void amos_call_all(AllRegs*, host::RoutineEntry);
 void amos_eval(Regs*, host::RoutineEntry);
@@ -158,7 +158,9 @@ inline void entry_call(host::RoutineEntry entry, Regs& r);
 using RegFunction = uint32_t (*)(RegFrame &);
 
 // Calls the assembler at entry with registers r (below)
+#if defined(__mc68000__)
 inline void entry_call(const void *entry, Regs &r);
+#endif
 
 // JJsr: call a routine of AMOSPro.Lib (the entry of its jump table)
 inline void lib_call(int routine, Regs &r) { entry_call(lib_entry(routine), r); }
@@ -227,6 +229,7 @@ template <typename F> inline void w_direct_call(F f, Regs &r)
         r.a[i] = a.a[i];
 }
 // The function of a WEntry glue, found by its entry's address (runtime/glue.cpp), or null
+#if defined(__mc68000__)
 WFunction wentry_function(const void *entry);
 
 // Calls the assembler at entry with registers r; directly the C++ of a
@@ -238,7 +241,7 @@ inline void entry_call(const void *entry, Regs &r)
     amos_call(&r, entry);
 }
 
-#if !defined(__mc68000__)
+#else
 WFunction wentry_function(host::RoutineEntry entry);
 inline void entry_call(host::RoutineEntry entry, Regs& r) {
     if (WFunction f = wentry_function(entry)) return w_direct_call(f, r);
@@ -259,14 +262,22 @@ inline void sy_vector_call(int function, Regs &r)
     if (wdata().SyVect == address(::w_sy_in))
         if (WFunction f = sy_direct[function])
             return w_direct_call(f, r);
+#if defined(__mc68000__)
     amos_call(&r, reinterpret_cast<const uint8_t *>(uintptr_t(uint32_t(wdata().SyVect))) + 4 * function);
+#else
+    amos_call(&r, host::decode_routine(uint32_t(wdata().SyVect) + uint32_t(4 * function)));
+#endif
 }
 inline void ec_vector_call(int function, Regs &r)
 {
     if (wdata().EcVect == address(::w_ec_in))
         if (WFunction f = ec_direct[function])
             return w_direct_call(f, r);
+#if defined(__mc68000__)
     amos_call(&r, reinterpret_cast<const uint8_t *>(uintptr_t(uint32_t(wdata().EcVect))) + 4 * function);
+#else
+    amos_call(&r, host::decode_routine(uint32_t(wdata().EcVect) + uint32_t(4 * function)));
+#endif
 }
 inline void sy_call(int function, Regs &r)
 {
@@ -287,7 +298,11 @@ inline void wi_call(int function, Regs &r)
 {
     if (wdata().WiVect == address(::w_wi_in))
         return w_direct_call([function](AllRegs *a) { ::w_window(uint32_t(function), a); }, r);
+#if defined(__mc68000__)
     amos_call(&r, reinterpret_cast<const uint8_t *>(uintptr_t(uint32_t(wdata().WiVect))) + 4 * function);
+#else
+    amos_call(&r, host::decode_routine(uint32_t(wdata().WiVect) + uint32_t(4 * function)));
+#endif
 }
 
 // The memory of AMOS.library (w/memory.cpp): SyCall MemReserve (size, the

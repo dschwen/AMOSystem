@@ -619,7 +619,7 @@ Detokenised detokenise(const uint8_t *a6, uint8_t *a1, const uint8_t *at, bool m
             r.a[6] = address(a6);
             r.d[6] = c.d6;
             r.d[7] = c.d7;
-            amos_call_all(&r, ptr<uint8_t>(-int32_t(address(at))));
+            amos_call_all(&r, host::decode_routine(0u - address(at)));
         }
         uint16_t t = peek_w(a6);
         a6 += 2;

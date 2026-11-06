@@ -2,7 +2,6 @@
 // amos_call...): a "call into the assembler" is what the glue at that
 // address does (runtime/glue.cpp).
 
-#include "runtime/detail/legacy_dispatch.h"
 #include "runtime/runtime.h"
 #include "runtime/glue.h"
 
@@ -145,14 +144,5 @@ int32_t amos_call_cc(Regs *r, host::RoutineEntry fn)
 }
 
 } // namespace amos
-
-// Only existing C ABI callers still cross this identity-model boundary.
-extern "C" {
-void amos_call(Regs* r, const void* fn) { amos::amos_call(r, host::detail::legacy_routine_entry(fn)); }
-void amos_call_all(AllRegs* r, const void* fn) { amos::amos_call_all(r, host::detail::legacy_routine_entry(fn)); }
-void amos_eval(Regs* r, const void* fn) { amos::amos_eval(r, host::detail::legacy_routine_entry(fn)); }
-int32_t amos_call_cc(Regs* r, const void* fn) { return amos::amos_call_cc(r, host::detail::legacy_routine_entry(fn)); }
-[[noreturn]] void amos_goto(const void* fn, uint32_t d0) { amos::amos_goto(host::detail::legacy_routine_entry(fn), d0); }
-}
 
 #endif

@@ -131,7 +131,7 @@ void monitor_patch(int offset)
 {
     if (uint32_t patch = idata().Patch_ScFront) {
         Regs r = {};
-        amos_call(&r, ptr<uint8_t>(patch) + offset);
+        amos_call(&r, host::decode_routine(patch + uint32_t(offset)));
     }
 }
 

@@ -11,7 +11,7 @@ inline MonData &mon() { return *ptr<MonData>(idata().Mon_Base); }
 inline Program &program() { return *ptr<Program>(mon().Tt_Program); }
 
 // Calls a routine of +Monitor.s with registers r; returns its d0
-inline uint32_t call(const void *routine, Regs &r)
+inline uint32_t call(host::RoutineArg routine, Regs &r)
 {
     entry_call(routine, r);
     return r.d[0];
@@ -19,7 +19,7 @@ inline uint32_t call(const void *routine, Regs &r)
 
 // The same with a4 the monitor's data and a6 given (+Monitor.s routines
 // that read the program at a6)
-inline uint32_t call_a6(const void *routine, AllRegs &r, uint32_t a6)
+inline uint32_t call_a6(host::RoutineArg routine, AllRegs &r, uint32_t a6)
 {
     Ctx &c = ctx();
     r.a[3] = address(c.a3);

@@ -10,6 +10,7 @@
 // routines the tester calls (Ed_TestMessage). They do not come back,
 // unless the program could not be started.
 
+#include "runtime/static_symbols.h"
 #include "editor/editor.h"
 #include "core/source.h"
 
@@ -32,33 +33,33 @@ constexpr uint32_t EntNul = 0x80000000;
 constexpr uint16_t TBuffer = 1024;
 constexpr uint16_t EdDLigne = 59;
 
-void run(uint8_t *routine)
+void run(host::RoutineArg routine)
 {
     Regs r;
     call(routine, r);
 }
 
-void run_d0(uint8_t *routine, uint32_t d0)
+void run_d0(host::RoutineArg routine, uint32_t d0)
 {
     Regs r;
     r.d[0] = d0;
     call(routine, r);
 }
 
-[[noreturn]] void jump(uint8_t *routine)
+[[noreturn]] void jump(host::RoutineArg routine)
 {
     run(routine);
     __builtin_unreachable();
 }
 
-[[noreturn]] void jump_d0(uint8_t *routine, uint32_t d0)
+[[noreturn]] void jump_d0(host::RoutineArg routine, uint32_t d0)
 {
     run_d0(routine, d0);
     __builtin_unreachable();
 }
 
 // A return routine of a program, with its registers
-[[noreturn]] void jump_error(uint8_t *routine, uint32_t d0, uint32_t a0)
+[[noreturn]] void jump_error(host::RoutineArg routine, uint32_t d0, uint32_t a0)
 {
     Regs r;
     r.d[0] = d0;
@@ -72,7 +73,7 @@ void run_d0(uint8_t *routine, uint32_t d0)
     Regs r;
     r.a[0] = address(text);
     r.d[0] = time;
-    call(ed_alert_entry, r);
+    call(AMOS_ROUTINE(ed_alert_entry), r);
     __builtin_unreachable();
 }
 
@@ -109,17 +110,17 @@ uint16_t position_in(const uint8_t *line, uint32_t at)
     r.a[0] = address(line);
     r.a[1] = idata().Buffer;
     r.d[0] = at;
-    call(ed_detok_entry, r);
+    call(AMOS_ROUTINE(ed_detok_entry), r);
     return uint16_t(r.d[0]);
 }
 
 // Get the program ready for running: room, no undo, the program's menus
 void prepare()
 {
-    run(ed_block_free_entry);
-    run(ed_undo_reset_all_entry);
-    run(ed_menus_end_entry);
-    run(ed_menu_program);
+    run(AMOS_ROUTINE(ed_block_free_entry));
+    run(AMOS_ROUTINE(ed_undo_reset_all_entry));
+    run(AMOS_ROUTINE(ed_menus_end_entry));
+    run(AMOS_ROUTINE(ed_menu_program));
 }
 
 // Prg_RunIt: mode 0 a program, 1 an accessory; 0 out of memory, -1
@@ -144,7 +145,7 @@ void run_program()
     d.Edt_Runned = address(&window());
     run_it(ed_err_run, ed_test_message, 0);
     d.Edt_Runned = 0;
-    jump(ed_out_of_memory);
+    jump(AMOS_ROUTINE(ed_out_of_memory));
 }
 
 // Ed_RunHide: the program of window w, as an accessory
@@ -160,8 +161,8 @@ void run_program()
     // (the assembler tested the flags of clearing Edt_Runned, and always
     // said "out of memory")
     if (!result)
-        jump(ed_out_of_memory);
-    jump(ed_already_runned);
+        jump(AMOS_ROUTINE(ed_out_of_memory));
+    jump(AMOS_ROUTINE(ed_already_runned));
 }
 
 // Ed_RunHidden: hidden program n
@@ -170,7 +171,7 @@ void run_hidden(uint16_t n)
     tokenise_current_line();
     EditWindow *w = hidden(n);
     if (!w)
-        jump(ed_not_done);
+        jump(AMOS_ROUTINE(ed_not_done));
     poke_l(command_line(), 0);
     run_hidden_window(w);
 }
@@ -185,9 +186,9 @@ void run_direct()
     d.Edt_Runned = d.Edt_Current;
     run_it(ed_err_direct_run, ed_direct_test_message, 0);
     d.Edt_Runned = 0;
-    run(ed_escape_hide_entry);
-    run(ed_appear);
-    jump(ed_out_of_memory);
+    run(AMOS_ROUTINE(ed_escape_hide_entry));
+    run(AMOS_ROUTINE(ed_appear));
+    jump(AMOS_ROUTINE(ed_out_of_memory));
 }
 
 // Edt_AccAdr: the window of the program of Name1 (its name without the
@@ -198,7 +199,7 @@ const uint8_t *name_part(const uint8_t *name)
 {
     Regs r;
     r.a[0] = address(name);
-    call(ed_name_part_entry, r);
+    call(AMOS_ROUTINE(ed_name_part_entry), r);
     return ptr<uint8_t>(r.a[0]);
 }
 
@@ -256,8 +257,8 @@ void program_command(const uint8_t *def)
             d.Ed_WindowToDel = 0;
             w = &window();
             if (def[0] & 4) {
-                run(ed_branch_amos);
-                run(ed_menu_program);
+                run(AMOS_ROUTINE(ed_branch_amos));
+                run(AMOS_ROUTINE(ed_menu_program));
             } else {
                 w->Edt_PrgDelete = 0xFF;
             }
@@ -265,7 +266,7 @@ void program_command(const uint8_t *def)
         run_hidden_window(w);
     }
     // in the current window
-    run(ed_saved);
+    run(AMOS_ROUTINE(ed_saved));
     uint8_t *back = ed_err_run;
     if (!(def[0] & 4)) {
         // the program kept, to be loaded back after
@@ -274,7 +275,7 @@ void program_command(const uint8_t *def)
         uint32_t size = (EditWindow::Edt_EReload - EditWindow::Edt_SReload) + 4 + 4 * 10 + 128;
         uint8_t *k = memory_reserve(&d.Ed_Prg2ReLoad, size);
         if (!k)
-            jump(ed_out_of_memory);
+            jump(AMOS_ROUTINE(ed_out_of_memory));
         poke_l(k, p.Prg_StTTexte);
         k += 4;
         for (int i = 0; i < 10; i++, k += 4)
@@ -291,23 +292,23 @@ void program_command(const uint8_t *def)
     uint8_t *name1 = ptr<uint8_t>(d.Name1);
     while ((*name1++ = *name++))
         ;
-    run(ed_new2);
+    run(AMOS_ROUTINE(ed_new2));
     Regs w;
     w.d[0] = 155;
     w.a[0] = d.Name1;
-    call(ed_av_name, w);
+    call(AMOS_ROUTINE(ed_av_name), w);
     Regs l;
     l.d[0] = 0xFFFFFFFF;                        // the buffer made to fit
     lib_call(L_Prg_Load, l);
     if (l.d[0])
-        jump_d0(ed_prg_load_err, l.d[0]);
+        jump_d0(AMOS_ROUTINE(ed_prg_load_err), l.d[0]);
     warning_end();
     poke_l(ptr<uint8_t>(d.Ed_BufT) + 256, 0);   // no Ed_RAlert
     prepare();
     d.Edt_Runned = address(&window());
     run_it(back, ed_test_message, 0);
     d.Edt_Runned = 0;
-    jump(ed_out_of_memory);
+    jump(AMOS_ROUTINE(ed_out_of_memory));
 }
 
 // Ed_PrgReLoad: the program kept before running a menu option's back
@@ -316,7 +317,7 @@ void program_reload()
     IData &d = idata();
     EditWindow &w = window();
     Program &p = program();
-    run(ed_new2);
+    run(AMOS_ROUTINE(ed_new2));
     auto free_kept = [&] {
         memory_release(&d.Ed_Prg2ReLoad);
         update_split(&w, 2);
@@ -329,9 +330,9 @@ void program_reload()
         Regs s;
         s.d[0] = 1024;
         lib_call(L_Prg_ChgTTexte, s);
-        run(ed_window_new_entry);
+        run(AMOS_ROUTINE(ed_window_new_entry));
         free_kept();
-        jump(ed_out_of_memory);
+        jump(AMOS_ROUTINE(ed_out_of_memory));
     }
     k += 4;
     for (int i = 0; i < 10; i++, k += 4)
@@ -345,7 +346,7 @@ void program_reload()
         Regs a;
         a.d[0] = 155;
         a.a[0] = d.Name1;
-            call(ed_av_name, a);
+            call(AMOS_ROUTINE(ed_av_name), a);
         Regs l;
         l.d[0] = 1;                             // back if too small
         lib_call(L_Prg_Load, l);
@@ -357,8 +358,8 @@ void program_reload()
     }
     warning_end();
     free_kept();
-    run(ed_recall_alert_entry);
-    jump(ed_loop);
+    run(AMOS_ROUTINE(ed_recall_alert_entry));
+    jump(AMOS_ROUTINE(ed_loop));
 }
 
 // Ed_VaTester: the program tested if it changed (an error goes to
@@ -374,7 +375,7 @@ void test_program()
     r.a[2] = address(ed_test_message);
     lib_call(L_Prg_TestIt, r);
     if (r.d[0])
-        jump(ed_already_runned);
+        jump(AMOS_ROUTINE(ed_already_runned));
 }
 
 // Ed_Test: tested; a warning if single and double precision constants
@@ -385,7 +386,7 @@ void test()
     tokenise_current_line();
     test_program();
     uint8_t mixed = d.MathFlags & 0x80 ? d.Ver_SPConst : d.Ver_DPConst;
-    jump_d0(ed_alert_100, mixed ? 221 : 197);
+    jump_d0(AMOS_ROUTINE(ed_alert_100), mixed ? 221 : 197);
 }
 
 // Ed_Check1.3
@@ -434,8 +435,8 @@ void test_end()
 
 void test_run()
 {
-    run(ed_menus_end_entry);
-    run(ed_hide);
+    run(AMOS_ROUTINE(ed_menus_end_entry));
+    run(AMOS_ROUTINE(ed_hide));
 }
 
 // Ed_GoMonitor: the program run in the monitor
@@ -443,9 +444,9 @@ void go_monitor()
 {
     IData &d = idata();
     tokenise_current_line();
-    run(ed_clear_var);
-    run(ed_hide);
-    run(ed_close_editor);
+    run(AMOS_ROUTINE(ed_clear_var));
+    run(AMOS_ROUTINE(ed_hide));
+    run(AMOS_ROUTINE(ed_close_editor));
     set_banks_program();
     Regs m;
     lib_call(L_Mon_Load, m);
@@ -455,14 +456,14 @@ void go_monitor()
             message = 222;
     } else {
         d.Edt_Runned = address(&window());
-        d.Prg_JError = address(ed_err_run);
+        d.Prg_JError.store(AMOS_ROUTINE(ed_err_run));
         Regs i;
         lib_call(L_Mon_In_Editor, i);
         d.Edt_Runned = 0;
     }
-    run(ed_open_editor);
-    run(ed_appear);
-    jump_d0(ed_alert_100, message);
+    run(AMOS_ROUTINE(ed_open_editor));
+    run(AMOS_ROUTINE(ed_appear));
+    jump_d0(AMOS_ROUTINE(ed_alert_100), message);
 }
 
 // Ed_Ligne: the error's line in the window below the program, Editor or
@@ -471,7 +472,7 @@ uint16_t error_line(uint32_t code, const uint8_t *message)
 {
     IData &d = idata();
     Error e = get_error(int16_t(code), message);
-    run(ed_open_editor);
+    run(AMOS_ROUTINE(ed_open_editor));
     be_u32 *v = ptr<be_u32>(d.Ed_VDialogues);
     v[0] = address(dialogue_string(e.message));
     source::Number n = source::find_address(ptr<uint8_t>(program().Prg_StBas), ptr<uint8_t>(d.VerPos));
@@ -495,14 +496,14 @@ uint16_t error_line(uint32_t code, const uint8_t *message)
     Regs s;
     s.d[1] = 0xFFFFFFFF;
     sy_call(sy::Show, s);
-    run(ed_escape_max_mouse_entry);
+    run(AMOS_ROUTINE(ed_escape_max_mouse_entry));
     Regs m;
     m.d[1] = uint16_t(d.Ed_Wx + 1);
     m.d[2] = uint16_t(d.Es_Y1 + 1);
     sy_call(sy::SetM, m);
     uint16_t answer = uint16_t(run_dialogue(EdDLigne));
     ec_fn(ec::EHide, EcEdit, 0xFFFFFFFF);
-    run(ed_recop);
+    run(AMOS_ROUTINE(ed_recop));
     return answer;
 }
 
@@ -512,11 +513,11 @@ uint16_t error_line(uint32_t code, const uint8_t *message)
     IData &d = idata();
     bool test = int16_t(code) < 0;
     Error e = get_error(int16_t(code), message);
-    run(ed_open_editor);
-    run(ed_escape_hide_entry);
-    run(ed_appear);
+    run(AMOS_ROUTINE(ed_open_editor));
+    run(AMOS_ROUTINE(ed_escape_hide_entry));
+    run(AMOS_ROUTINE(ed_appear));
     if (!test && (e.code == 10 || e.code == 1000))
-        jump(ed_loop);
+        jump(AMOS_ROUTINE(ed_loop));
     Program &p = program();
     source::Number n = source::find_address(ptr<uint8_t>(p.Prg_StBas), ptr<uint8_t>(d.VerPos));
     const uint8_t *line = n.line;
@@ -546,11 +547,11 @@ uint16_t error_line(uint32_t code, const uint8_t *message)
     if (int32_t(code) < 0 || uint16_t(code) == 1000)
         error_edit(code, ptr<uint8_t>(message));
     if (uint16_t(code) == 1001)
-        jump_error(ed_err_direct, code, message);
+        jump_error(AMOS_ROUTINE(ed_err_direct), code, message);
     if (uint16_t(code) == 1002)
-        jump(ed_system);
+        jump(AMOS_ROUTINE(ed_system));
     if (error_line(code, ptr<uint8_t>(message)) == 1)
-        jump_error(ed_err_direct, code, message);
+        jump_error(AMOS_ROUTINE(ed_err_direct), code, message);
     error_edit(code, ptr<uint8_t>(message));
 }
 
@@ -564,18 +565,18 @@ uint16_t error_line(uint32_t code, const uint8_t *message)
     bool test = int16_t(code) < 0;
     Error e = get_error(int16_t(code), message);
     if (d.EdC_Modified) {
-        run(ed_config_redraw_entry);
+        run(AMOS_ROUTINE(ed_config_redraw_entry));
     } else if (d.Prg_Accessory) {
-        run(ed_redraw_entry);
+        run(AMOS_ROUTINE(ed_redraw_entry));
     } else {
-        run(ed_open_editor);
-        run(ed_escape_hide_entry);
-        run(ed_appear);
+        run(AMOS_ROUTINE(ed_open_editor));
+        run(AMOS_ROUTINE(ed_escape_hide_entry));
+        run(AMOS_ROUTINE(ed_appear));
     }
-    run(ed_clear_var);
+    run(AMOS_ROUTINE(ed_clear_var));
     if (window().Edt_PrgDelete) {
-        run(ed_delete_window_entry);
-        run(ed_branch_amos);
+        run(AMOS_ROUTINE(ed_delete_window_entry));
+        run(AMOS_ROUTINE(ed_branch_amos));
     }
     use(ptr<EditWindow>(d.Edt_Current));
     set_banks_program();
@@ -583,9 +584,9 @@ uint16_t error_line(uint32_t code, const uint8_t *message)
     set_banks();
     if (!test) {
         if (e.code == 10 || e.code == 1000)
-            jump(ed_loop);
+            jump(AMOS_ROUTINE(ed_loop));
         if (e.code == 1002)
-            jump(ed_system);
+            jump(AMOS_ROUTINE(ed_system));
     }
     // "Error in hidden program: ..."
     uint8_t *to = ptr<uint8_t>(d.Ed_BufT);
@@ -626,7 +627,7 @@ uint16_t error_line(uint32_t code, const uint8_t *message)
 [[noreturn]] void error_direct_run(uint32_t code, uint32_t message)
 {
     if (idata().Direct)
-        jump_error(ed_err_direct, code, message);
+        jump_error(AMOS_ROUTINE(ed_err_direct), code, message);
     error_run(code, message);
 }
 
@@ -639,28 +640,28 @@ void procedure_machine_code()
     tokenise_current_line();
     Regs f;
     f.d[0] = 178;
-    if (!uint16_t(call(ed_file_selector, f)))
-        jump(ed_not_done);
+    if (!uint16_t(call(AMOS_ROUTINE(ed_file_selector), f)))
+        jump(AMOS_ROUTINE(ed_not_done));
     path_it();
     uint8_t *procedure;
     for (;;) {
         find_line(uint16_t(w.Edt_YPos + w.Edt_YCu));
         procedure = ptr<uint8_t>(w.Edt_DebProc);
         if (!procedure)
-            jump(ed_fo_e);
+            jump(AMOS_ROUTINE(ed_fo_e));
         if (procedure[10] & 0x80)
             break;
-        run(ed_proc_open_entry);
+        run(AMOS_ROUTINE(ed_proc_open_entry));
     }
     // the code hunk of the file
     BPTR file = hal::open(ptr<char>(d.Name1), MODE_OLDFILE);
     d.Handle = uint32_t(file);
     if (!file)
-        jump(ed_d_error);
+        jump(AMOS_ROUTINE(ed_d_error));
     uint8_t *buffer = ptr<uint8_t>(d.Buffer);
     auto get = [&]() -> uint32_t {
         if (hal::read(file, buffer, 4) != 4)
-            jump(ed_d_error);
+            jump(AMOS_ROUTINE(ed_d_error));
         return peek_l(buffer);
     };
     if (get() != 0x3F3)
@@ -688,7 +689,7 @@ void procedure_machine_code()
     poke_w(a1, uint16_t(offset));
     a1 += 2;
     if (hal::read(file, a1, int32_t(size)) != int32_t(size))
-        jump(ed_d_error);
+        jump(AMOS_ROUTINE(ed_d_error));
     d.Handle = 0;
     hal::close(file);
     a1 += size;

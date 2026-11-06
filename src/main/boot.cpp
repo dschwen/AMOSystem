@@ -386,7 +386,7 @@ void main_cold_start(char *command, uint32_t length, uint32_t sp)
     Regs v;
     v.d[0] = 0x56322E30;        // "V2.0"
     v.d[1] = 0x0200;
-    amos_call(&v, ptr<void>(w + 12));
+    amos_call(&v, host::decode_routine(w + 12));
     if (v.d[0] != 0x57322E30)   // "W2.0"
         the_end(panic_version);
 
@@ -441,7 +441,7 @@ void main_cold_start(char *command, uint32_t length, uint32_t sp)
     r.a[4] = w;
     r.a[5] = address(ctx().a5);
     r.a[6] = d.Sys_WAd;
-    amos_call_all(&r, ptr<void>(d.Sys_WAd));
+    amos_call_all(&r, host::decode_routine(d.Sys_WAd));
     if (r.d[0])
         the_end(nullptr);
     d.Sys_WStarted = 0xFF;
@@ -607,7 +607,7 @@ namespace amos::boot {
     sys_close();
     if (d.Sys_WStarted) {
         Regs r;
-        amos_call(&r, ptr<void>(d.Sys_WAd + 4));
+        amos_call(&r, host::decode_routine(d.Sys_WAd + 4));
     }
     a5_free(d.Sys_Messages);
     a5_free(d.PathAct);
@@ -622,7 +622,7 @@ namespace amos::boot {
     libraries_free();
     // the AMOS.library out
     Regs r;
-    amos_call(&r, ptr<void>(d.Sys_WAd + 16));
+    amos_call(&r, host::decode_routine(d.Sys_WAd + 16));
     dos_base = ptr<Library>(d.DosBase);
     intuition_base = ptr<Library>(wdata().IntBase);
     panic_message(d.Sys_Message);

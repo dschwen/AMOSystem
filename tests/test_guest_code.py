@@ -23,6 +23,7 @@ class CodeTests(unittest.TestCase):
     def test_interpreter_and_metadata_reject_wrong_pointer_domains(self):
         prelude='''
 #include "memory/guest_code.h"
+#include "memory/guest_view.h"
 #include "runtime/interpreter_bridge.h"
 #include "interp/interp.h"
 using namespace amos;
@@ -30,6 +31,23 @@ using namespace amos::guest;
 int main() { Memory m; Regs r{}; REJECT }
 '''
         statements=['interp_exec((void*)0, 0, 0);',
+                    'amos_call(&r, (void*)0);',
+                    'amos_call(&r, GuestPtr<Byte>{});',
+                    'amos_call_all((AllRegs*)0, HostPtr<Byte>{});',
+                    'amos_eval(&r, (void*)0);',
+                    'amos_call_cc(&r, (void*)0);',
+                    'amos_goto((void*)0, 0);',
+                    'entry_call((void*)0, r);',
+                    'wentry_function((void*)0);',
+                    'wire::RoutineField f; f.store((void*)0);',
+                    'wire::RoutineField f; f.store(GuestPtr<Byte>{});',
+                    'wire::RoutineField f; f.store(HostPtr<Byte>{});',
+                    'wire::RoutineField f; f.store(uint32_t(16));',
+                    'wire::RoutineField f{}; GuestPtr<Byte> p = f.load();',
+                    'GuestRef<wire::RoutineField> f; f.store(GuestPtr<Byte>{});',
+                    'GuestRef<wire::RoutineField> f; f.store(HostPtr<Byte>{});',
+                    'GuestRef<const wire::RoutineField> f; f.store(host::decode_routine(16));',
+                    'interp_continue(host::decode_mark(1), uint32_t(16));',
                     'interp_exec(GuestPtr<Byte>{}, 0, 0);',
                     'interp_jump(&r, HostPtr<Byte>{});',
                     'interp_prun_run(0, (void*)0);',

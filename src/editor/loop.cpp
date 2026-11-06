@@ -9,6 +9,7 @@
 // 2 not in a closed procedure, 5 allowed in a macro, 6 with a command line
 // (a program driving the editor gives it), 7 allowed to a program.
 
+#include "runtime/static_symbols.h"
 #include "editor/editor.h"
 
 using namespace amos;
@@ -25,13 +26,13 @@ constexpr uint8_t EtABAll = 0x7F;
 constexpr uint16_t XScrollG = 20, XScrollD = 10, YScrollH = 4, YScrollB = 4;
 constexpr uint16_t EdDMacro3 = 15;
 
-void run(uint8_t *routine)
+void run(host::RoutineArg routine)
 {
     Regs r;
     call(routine, r);
 }
 
-[[noreturn]] void jump(uint8_t *routine)
+[[noreturn]] void jump(host::RoutineArg routine)
 {
     run(routine);
     __builtin_unreachable();
@@ -63,21 +64,21 @@ void function_call(uint16_t n)
 {
     IData &d = idata();
     EditWindow &w = window();
-    run(ed_clear_error_proc_entry);
-    run(ed_menu_program);
-    run(ed_cursor_off_entry);
+    run(AMOS_ROUTINE(ed_clear_error_proc_entry));
+    run(AMOS_ROUTINE(ed_menu_program));
+    run(AMOS_ROUTINE(ed_cursor_off_entry));
     uint8_t flags = ed_function_flags[n];
     if (d.EdMa_Tape && !(flags & 1 << 5)) {
         // not allowed in a macro
         d.EdMa_Tape -= 3;
         dialogue(EdDMacro3);
-        jump(ed_loop);
+        jump(AMOS_ROUTINE(ed_loop));
     }
     d.Ed_SCallFlags = flags;
     if (flags & 1 << 2) {
         uint8_t *line = ptr<uint8_t>(w.Edt_BufE) + int16_t(uint16_t(w.Edt_YCu << 8));
         if (line[255])
-            jump(ed_not_edit);
+            jump(AMOS_ROUTINE(ed_not_edit));
     }
     w.Edt_YOldBloc = uint16_t(w.Edt_YCu + w.Edt_YPos);
     uint32_t d1 = n;
@@ -91,11 +92,11 @@ void function_call(uint16_t n)
         if (d.EdMa_Tape) {
             d.EdMa_Tape -= 3;
             dialogue(EdDMacro3);
-            jump(ed_loop);
+            jump(AMOS_ROUTINE(ed_loop));
         }
         Regs p;
         p.a[0] = address(d.Ed_AutoLoad + 3 * n);
-        call(ed_program_command_entry, p);
+        call(AMOS_ROUTINE(ed_program_command_entry), p);
         return;
     }
     wdata().Actualise = 0;
@@ -103,7 +104,7 @@ void function_call(uint16_t n)
     r.d[0] = 0;
     r.d[1] = d1;
     r.d[2] = uint32_t(n) << 2;
-    call(ptr<uint8_t>(peek_l(ed_function_table + 4 * n)), r);
+    call(host::decode_routine(peek_l(ed_function_table + 4 * n)), r);
 }
 
 } // namespace amos::ed
@@ -123,17 +124,17 @@ namespace {
             d.Ed_WindowToDel = 0;
             use(w);
             if (w->Edt_Hidden) {
-                run(ed_delete_window_entry);
-                run(ed_branch_amos);
+                run(AMOS_ROUTINE(ed_delete_window_entry));
+                run(AMOS_ROUTINE(ed_branch_amos));
             } else {
-                run(ed_close_window_entry);
+                run(AMOS_ROUTINE(ed_close_window_entry));
             }
             continue;
         }
         all_warnings_end();
         // the program before an option's program, back
         if (d.Ed_Prg2ReLoad)
-            jump(ed_program_reload_entry);
+            jump(AMOS_ROUTINE(ed_program_reload_entry));
         EditWindow *w = current();
         use(w);
         d.MathFlags = program().Prg_MathFlags;
@@ -142,8 +143,8 @@ namespace {
         // the linked windows, the cursor and the block
         update_split(w, d.Ed_SCallFlags);
         d.Ed_SCallFlags = 0;
-        run(ed_follow_scroll_entry);
-        run(ed_block_show_entry);
+        run(AMOS_ROUTINE(ed_follow_scroll_entry));
+        run(AMOS_ROUTINE(ed_block_show_entry));
         // the status lines and sliders of the windows shown
         for (EditWindow *e = ptr<EditWindow>(d.Edt_List); e; e = ptr<EditWindow>(e->Edt_Next)) {
             if (e->Edt_Hidden)
@@ -152,7 +153,7 @@ namespace {
             e->Edt_EtatAff |= d.Ed_EtatAff;
             if (e->Edt_EtMess && !--e->Edt_EtMess)
                 e->Edt_EtatAff = EtABAll;
-            run(ed_status_line_d0_entry);
+            run(AMOS_ROUTINE(ed_status_line_d0_entry));
             if (e->Edt_ASlY && !--e->Edt_ASlY)
                 show_slider();
         }
@@ -167,17 +168,17 @@ namespace {
                     lib_call(L_Mon_Free, m);
                     Regs c;
                     lib_call(L_Math_Close, c);
-                    run(ed_undo_reset_all_entry);
+                    run(AMOS_ROUTINE(ed_undo_reset_all_entry));
                     Regs f;
                     sy_call(sy::MemFlush, f);
                 }
                 Regs a;
                 a.d[0] = 125;
                 a.a[0] = address(message(186));
-                call(ed_alert_rts_entry, a);
+                call(AMOS_ROUTINE(ed_alert_rts_entry), a);
                 d.Ed_Sounds = 0;
-                run(ed_sounds_changed_entry);
-                run(ed_menu_program);
+                run(AMOS_ROUTINE(ed_sounds_changed_entry));
+                run(AMOS_ROUTINE(ed_menu_program));
                 use(current());
                 Regs b;
                 lib_call(L_Prg_SetBanks, b);
@@ -198,18 +199,18 @@ namespace {
         wi_call(wi::QWindow, q);
         if (!d.Ed_CuFlag) {
             d.Ed_CuFlag = 1;
-            run(ed_cursor_on_entry);
+            run(AMOS_ROUTINE(ed_cursor_on_entry));
         }
         // scrolled to keep the cursor away from the sides
         uint16_t x = w->Edt_XPos, column = uint16_t(w->Edt_XCu - x);
         if (column < XScrollG && x) {
-            run(ed_cursor_off_entry);
-            run(ed_cgo_entry);
+            run(AMOS_ROUTINE(ed_cursor_off_entry));
+            run(AMOS_ROUTINE(ed_cgo_entry));
             continue;
         }
         if (uint16_t(w->Edt_WindTx - w->Edt_XCu + x) < XScrollD && x < 200) {
-            run(ed_cursor_off_entry);
-            run(ed_cdr_entry);
+            run(AMOS_ROUTINE(ed_cursor_off_entry));
+            run(AMOS_ROUTINE(ed_cdr_entry));
             continue;
         }
         uint16_t lines = w->Edt_WindTy;
@@ -224,16 +225,16 @@ namespace {
                 }
             }
             if (top > w->Edt_YCu && w->Edt_YPos) {
-                run(ed_cursor_off_entry);
-                run(ed_shaut2_entry);
+                run(AMOS_ROUTINE(ed_cursor_off_entry));
+                run(AMOS_ROUTINE(ed_shaut2_entry));
                 w->Edt_YCu++;
                 place_cursor();
                 continue;
             }
             if (bottom >= uint16_t(w->Edt_WindTy - w->Edt_YCu) &&
                 uint16_t(w->Edt_YPos + w->Edt_YCu) < program().Prg_NLigne) {
-                run(ed_cursor_off_entry);
-                run(ed_sbas2_entry);
+                run(AMOS_ROUTINE(ed_cursor_off_entry));
+                run(AMOS_ROUTINE(ed_sbas2_entry));
                 w->Edt_YCu--;
                 place_cursor();
                 continue;
@@ -244,14 +245,14 @@ namespace {
             if (++d.Ed_ZapCounter < 5)
                 continue;
             d.Ed_ZapCounter = 0;
-            jump(ed_zap_out);
+            jump(AMOS_ROUTINE(ed_zap_out));
         }
         // the keys, the mouse
         Regs k;
-        if (uint32_t(call(ed_key_entry, k)))
+        if (uint32_t(call(AMOS_ROUTINE(ed_key_entry), k)))
             continue;
         Regs m;
-        if (uint32_t(call(ed_mouse_entry, m)))
+        if (uint32_t(call(AMOS_ROUTINE(ed_mouse_entry), m)))
             continue;
         // the memory gauges, now and then
         if (!(wdata().VblCount & 63)) {
@@ -265,7 +266,7 @@ namespace {
                 d.Ed_AutoSaveRef = now;
             if (now - d.Ed_AutoSaveRef >= every && !current()->Edt_LEdited) {
                 d.Ed_AutoSaveRef = 0xFFFFFFFF;
-                run(ed_save_all_entry);
+                run(AMOS_ROUTINE(ed_save_all_entry));
                 continue;
             }
         }
@@ -328,7 +329,7 @@ void zap_prepare()
 void zap_out()
 {
     IData &d = idata();
-    run(ed_menu_program);
+    run(AMOS_ROUTINE(ed_menu_program));
     use(ptr<EditWindow>(d.Edt_Runned));
     Regs l;
     l.a[0] = address(&program().Prg_ZapData);
@@ -392,7 +393,7 @@ Answer zap_function(uint32_t n, uint32_t param)
                 t.a[0] = address(l);
                 t.a[1] = address(buffer);
                 t.d[0] = 0;
-                call(ed_detok_entry, t);
+                call(AMOS_ROUTINE(ed_detok_entry), t);
             }
         }
         c.a4 = a4;
@@ -434,7 +435,7 @@ void zap_new_config()
         be_u32 *texts = list ? &d.Ed_Systeme + (list - 1) : &d.Sys_Messages;
         uint32_t n = peek_l(ptr<uint8_t>(d.Name1));
         if (n <= text_count(ptr<uint8_t>(*texts)) && !text_change(texts, ptr<uint8_t>(d.Name1 + 4), uint16_t(n)))
-            jump(ed_out_of_memory);
+            jump(AMOS_ROUTINE(ed_out_of_memory));
     }
     d.EdC_Modified = 1;
     d.EdC_Changed = 1;

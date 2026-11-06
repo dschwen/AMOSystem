@@ -5,6 +5,7 @@
 // parts that reset the stack (stepping back into the program, the return
 // to the editor or the program) stay in +Monitor.s.
 
+#include "runtime/static_symbols.h"
 #include "monitor/monitor.h"
 
 using namespace amos;
@@ -17,7 +18,7 @@ extern "C" {
 
 // A routine of the monitor called with its registers (a3 the program, a4
 // the monitor's data); true if it answered "not equal"
-int32_t mon_dispatch(const void *routine, uint32_t d0, uint32_t d1);
+int32_t mon_dispatch(host::RoutineArg routine, uint32_t d0, uint32_t d1);
 // The way back into the program, one instruction or more (Step_Out,
 // Step_Out2: refreshing the screens or not); the end of QUIT (the data
 // freed, to the program or the editor)
@@ -45,7 +46,7 @@ uint32_t zone()
     return z.d[1];
 }
 
-void routine(const void *entry)
+void routine(host::RoutineArg entry)
 {
     Regs r;
     call(entry, r);
@@ -72,7 +73,7 @@ void dialogue_zones()
     if (!n || n > 4)
         return;
     activate_text();
-    mon_dispatch(ptr<void>(peek_l(mon_text_zones + 4 * (3 + n - 1))), g.d[0], (g.d[1] & 0xFFFF0000u) | uint16_t(n << 2));
+    mon_dispatch(host::decode_routine(peek_l(mon_text_zones + 4 * (3 + n - 1))), g.d[0], (g.d[1] & 0xFFFF0000u) | uint16_t(n << 2));
 }
 
 } // namespace
@@ -119,7 +120,7 @@ extern "C" {
                 // the text screen's zones
                 if (n && n <= 7) {
                     activate_text();
-                    mon_dispatch(ptr<void>(peek_l(mon_text_zones + 4 * (n - 1))), 0, uint32_t(n - 1) << 2);
+                    mon_dispatch(host::decode_routine(peek_l(mon_text_zones + 4 * (n - 1))), 0, uint32_t(n - 1) << 2);
                 }
                 break;
             }
@@ -136,7 +137,7 @@ extern "C" {
                 button_set(n, true);
                 d1 = 1;
             }
-            if (n > 16 || mon_dispatch(ptr<void>(peek_l(mon_keys + 4 * (n - 1))), uint32_t(n) << 2, d1))
+            if (n > 16 || mon_dispatch(host::decode_routine(peek_l(mon_keys + 4 * (n - 1))), uint32_t(n) << 2, d1))
                 break;
         }
     }
@@ -152,7 +153,7 @@ void step_key(AllRegs *r, uint16_t mode)
     MonData &m = mon();
     wait_release();
     if (int16_t(m.Tt_Init) <= 0) {
-        routine(mon_no_init_entry);
+        routine(AMOS_ROUTINE(mon_no_init_entry));
         r->d[0] = 1;
         return;
     }
@@ -199,7 +200,7 @@ void mon_reinit(AllRegs *r)
     p.d[0] = 0;
     p.a[1] = address(mon_error);
     p.a[2] = address(mon_testing);
-    call_a6(lib_address(L_Prg_RunIt), p, m.Tt_Program);
+    call_a6(lib_entry(L_Prg_RunIt), p, m.Tt_Program);
     // back: out of memory
     alert_message(17);
     r->d[0] = 1;
@@ -214,7 +215,7 @@ void mon_quit(AllRegs *r)
         r->d[0] = 1;
         return;
     }
-    routine(mon_free_entry);
+    routine(AMOS_ROUTINE(mon_free_entry));
     screens_refresh();
     mon_quit_back(address(&m));
 }
@@ -286,7 +287,7 @@ void mon_split_token(AllRegs *r)
 }
 
 // _mon_dispatch
-int32_t mon_dispatch(const void *routine, uint32_t d0, uint32_t d1)
+int32_t mon_dispatch(host::RoutineArg routine, uint32_t d0, uint32_t d1)
 {
     const Ctx &c = ctx();
     AllRegs r = {};

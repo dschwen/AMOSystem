@@ -120,8 +120,9 @@ continue decode architectural words directly. Host library-vector arithmetic
 now wraps in a 32-bit guest word before decoding, rather than forming an oversized
 native pointer and relying on truncation.
 
-Raw C ABI callers and mixed native/guest interrupt handlers still use the named
-adapters in runtime/detail/legacy_dispatch.h. These adapters reject unrepresentable
+At this stage raw C ABI callers and mixed native/guest interrupt handlers used
+the named adapters in runtime/detail/legacy_dispatch.h; the hosted raw call
+overloads are removed by the call-bridge stage below. These adapters reject unrepresentable
 native addresses; they do not enable translated data access. Amiga retains raw
 literal metadata, its original interpreter bridge and direct calls, without an
 index or translation overhead added to those paths. The code-generation fixture
@@ -162,10 +163,79 @@ compilation. On Amiga the production metadata reader retains its original direct
 loads; machine-code fixtures verify identical token loads and no added metadata
 instructions (GCC may commute base/index registers).
 
+### Hosted call bridge stage
+
+The hosted amos_call/amos_call_all/amos_eval/amos_call_cc/amos_goto, entry_call and
+wentry_function APIs now accept only typed code entries. Their raw-pointer
+prototypes/forwarders have been removed on hosts. Amiga retains its original C
+ABI implementations and literal vector addresses. Over 400 static code arguments
+in editor, monitor, verifier and graphics helpers now resolve through the typed
+entry catalog. Helpers that used to accept uint8_t*/void* routine arguments now
+carry RoutineArg, with native pointer ABI on Amiga.
+
+Dynamic editor function tables, monitor dispatch tables, dialog/slider/button
+hooks, graphics vectors, patch hooks and routine-list code addresses decode
+architectural words directly. Offset arithmetic happens in the guest word before
+code decoding. The CALL path's native program cursor still crosses one explicit
+checked identity adapter; native callback/interrupt dispatch still has separate
+legacy adapters. Neither is a public implicit pointer conversion.
+
+Compiler rejection tests cover the removed raw bridge overloads. Linux behavior,
+Windows/Amiga builds, GCC/Clang contracts and arm64 cross-linking pass; see the
+current validation summary below.
+
+### Typed code-address wire fields
+
+Prg_InsRet, Prg_JError, Patch_Errors, all eight ExtTests cells and the monitor's
+Tt_JError now use RoutineField: exactly four big-endian bytes, with explicit
+typed load/store and no integer, native pointer or guest data-pointer conversion.
+All existing IData/MonData size and offset assertions remain gates. Continuation
+and restart APIs carry typed entries rather than re-encoding the field as an
+integer between calls.
+
+GuestRef supports RoutineField in schema-selected mapped record views. Loads
+retain code-address types, const views cannot store, and read-only mappings reject
+writes without modifying bytes. These paths are tested in high GuestMemory,
+including byte serialization; native field/view load/store operations are covered
+by the Amiga machine-code comparison. Production IData/MonData access still uses
+legacy identity records pending the context/data-view migration.
+
+## Remaining work checklist
+
+Completed compiler-enforced boundaries:
+
+- [x] Distinct guest/host pointer types and checked hosted pointer arithmetic.
+- [x] Native signature-specific callbacks, guest dispatch keys and static image relocation.
+- [x] Typed interpreter/collector code arguments and guest token-table parameters.
+- [x] Hosted call APIs reject raw/native/data pointers; static code arguments use symbols.
+- [x] Twelve continuation/error/extension code cells and their mapped record views.
+
+Required next conversions and release gates:
+
+- [ ] Classify and type remaining code cells: GoTest_*, Patch_ScCopy/ScFront/Menage,
+  dialog/slider/button routine tables and OS interrupt/callback registrations.
+- [ ] Migrate Ctx a3-a6, program/token cursors and register façades to guest data
+  addresses; remove the checked native-cursor and native-token-table adapters.
+- [ ] Replace idata/wdata/native record overlays with mapped schema views, starting
+  with the interpreter's token/continuation vertical slice. Install high Memory
+  behind those readers; remove IdentityDataMemory and LegacyCodeReader.
+- [ ] Convert bank/list/string/file APIs end to end, including interior cursors,
+  allocation/free/AllocAbs and argument/result codecs. Remove legacy_call_codec.
+- [ ] Convert remaining static data-label/source-array consumers, then install the
+  translated static image and high RAM as production backing.
+- [ ] Replace native local/static addresses escaping to guest words with guest
+  scratch storage or typed native handles and explicit normal/nonlocal cleanup.
+- [ ] Split file/lock/task/library/graphics/font/input/audio objects into native
+  objects and guest mirrors, preserving asynchronous buffer lifetimes.
+- [ ] Enforce whole-program pointer-boundary checks; run high-image/ASLR behavior,
+  task/error cleanup and native Mac tests. Qualify the actual arm64 interpreter.
+- [ ] Remove obsolete identity adapters, low-memory/image/stack flags and ARM
+  startup guard only after the corresponding gates below pass; then build a DMG.
+
 ### Still required before a high-address runtime
 
-1. Switch remaining exported-label consumers, raw C ABI/mixed interrupt callers
-   and data-slot lookup to the typed static symbol/image catalog; finish replacing native source-array references
+1. Switch remaining exported-label data consumers, mixed interrupt/native
+   callback callers and data-slot lookup to the typed static symbol/image catalog; finish replacing native source-array references
    before installing the translated image as production backing.
 2. Migrate ordinary guest data pointers/cursors, register façades, guest records,
    array/field access and bank/string/file public APIs; remove the finite raw-data
@@ -207,7 +277,7 @@ relocations against raw-pointer implementations at production `-Os` and `-O2`.
 It covers arithmetic, distances, comparisons, loads/stores, record fields, wire
 pointers, spans, memcpy, argument/return ABI, external typed calls and a byte
 cursor loop. At -Os the tested instructions match exactly except commutative
-operand order in slicing. At -O2 the hot loop is identical and its setup is
+operand order in slicing and base/index allocation in metadata reads. At -O2 the hot loop is identical and its setup is
 smaller; other operations retain the same native code. No added helpers or
 calls are permitted. `make test-guest-addressing` runs this gate when the Amiga
 toolchain is installed, and runs the domain rejection tests with that compiler.
@@ -218,7 +288,8 @@ return through an integer-return veneer can inhibit GCC sibling-call elimination
 even when the physical return registers match. Keep internal pointer APIs typed
 end-to-end and test each actual C/assembly boundary before migration; do not
 accept additional bridging instructions as an unavoidable wrapper cost.
-The existing production Amiga engine is still unchanged by this substrate.
+Converted Amiga call sites retain the native ABI and identity operations; carry
+these machine-code checks forward as additional hot paths are migrated.
 
 ## Classification ledger and next conversion boundaries
 
@@ -229,13 +300,13 @@ legacy uses remain outside the compiler-enforced guarantee.
 | Boundary | Representation / audit needed | Migration gate |
 |---|---|---|
 | `core/amos.h`: `ptr`, `address`, `Ctx`, `idata/wdata` | Raw host pointers mixed with architectural words | Typed contexts, wire views and explicit register codecs throughout callers |
-| `core/layout.h`, `core/ioreq.h` | Distinguish addresses, sizes, offsets, opaque tokens and callable fields | Byte-identical schema layouts; guest fields never hold HostPtr |
-| `tables/labels.*`, `tables/*.cpp` | Guest data labels versus native entries; relocations and metadata preceding entries | Registered guest segments and typed relocations, no native function pointer truncation |
-| `runtime/glue.cpp`, `interp/chrget.cpp` | Erased signatures and arity-based native function casts | Signature-specific thunks, argument/result codecs and negative binding tests |
+| `core/layout.h`, `core/ioreq.h` | Recovery/context tokens and twelve code cells typed; most data/other callable fields remain | Byte-identical mapped schemas; guest fields never hold HostPtr |
+| `tables/labels.*`, `tables/*.cpp` | Static catalog/relocation and code-label callers migrated; raw data-label consumers remain | Finish data consumers, then install the translated static image |
+| `runtime/glue.cpp`, `interp/chrget.cpp` | Typed dispatch, collectors and thunks integrated; native context/data readers remain | Remove identity data/cursor adapters and qualify high-backed execution |
 | `host/hal_system.cpp`, `hal/system.h` | Guest RAM allocations versus native OS objects, chip addressing, partial free | Guest allocator, AllocAbs/free/shrink and bus semantics preserved |
 | `core/source.cpp`, `lib/banks.cpp`, bank/string entry points | Interior guest cursors and numeric BASIC addresses | End-to-end bank/string/file vertical slice on identity and translated memory |
 | `hal/files.h`, `host/hal_files.cpp` | File/lock tokens versus buffers and native objects | Tagged resource handles and directional span adapters |
-| `runtime/marks.h`, `runtime/runtime.cpp`, `runtime/monitor.cpp` | Marks stored as 32-bit addresses; classify opaque versus arithmetic uses | Tagged mark registry, task/lifetime checks and cleanup watermarks |
+| `runtime/marks.h`, `runtime/runtime.cpp`, `runtime/monitor.cpp` | Mark/context tokens and typed native continuations integrated | Preserve task/lifetime cleanup while migrating remaining guest registers/records |
 | Editor status/screen temporaries, SDL InputEvent records | Native local addresses escaping to guest words | Guest scratch frames or native handles with explicit lifetimes |
 | `host/tasks.cpp`, `host/context.cpp` | Native task contexts versus guest stacks/state | No native stack address in guest records; recovery/context validation |
 | Native fonts/screens/IO requests/task/library structures | Mixed SDK and guest-visible layouts | Guest mirrors, native handles and typed platform boundaries |
@@ -269,34 +340,23 @@ SDK native packing and validated local-jump/context fixes. Translation does not
 make those constraints redundant. Do not remove standard/native jump handling,
 SDL platform code or VM page-size handling as part of address cleanup.
 
-## Validation of this change
+## Current validation
 
-GCC and Clang pass positive/negative compilation checks and the standalone
-high-address tests at O0/O2. MinGW passes the type contract and builds AMOS;
-Amiga passes the packed header checks and its existing build. Linux AMOS reports
-85 passed, zero failed, 54 skipped in the host text regression suite. The translated memory
-and field-view testbed also passes AddressSanitizer/UndefinedBehaviorSanitizer.
-Apple Silicon AMOS and the new memory probe cross-link; native execution of the
-new probe remains pending. CI runs the isolated contract with GCC and Clang.
+- GCC: all 13 guest-contract tests and five native-runtime tests pass. This
+  includes real static-image/dispatch relocation, high-backed code fields,
+  compiler rejection checks, packed layouts and m68000 machine-code comparisons.
+- Clang: the same contract/runtime suites pass; the container skips the Amiga
+  machine-code comparison because its m68k compiler is not installed. That gate
+  passes separately on this machine with the actual Amiga toolchain.
+- Linux: 85 text tests pass, zero fail, 54 are skipped; four editor fixtures pass.
+- Windows and Amiga: builds pass. Amiga code-field and mapped-view operations
+  add no instructions relative to their native load/store baselines.
+- macOS arm64: cross-links with the startup guard retained; native interpreter
+  execution remains unqualified.
+- ASan/UBSan: the high-backed metadata/16-bit access/code-field view fixture passes,
+  including permission checks and prevention of partial writes.
 
-Latest integrated validation: 85 host text tests passed (54 skipped), and five
-menu/editor GUI fixtures passed. GCC/Clang contract/runtime tests pass; Amiga
-code-generation checks show no extra wrapper instructions at production -Os.
-Windows and Amiga builds pass, and the arm64 executable cross-links with its
-startup guard retained. Recovery/snapshot cleanup and allocator model tests pass
-AddressSanitizer/UndefinedBehaviorSanitizer. These results do not qualify the
-remaining legacy data-pointer paths or establish native arm64 runtime support.
-
-Dispatch-stage validation: GCC/Clang guest and native-runtime contract suites pass,
-including all real relocated dispatch descriptors, compiler rejection checks and
-the Amiga code-generation comparison. Linux reports 85 text tests passed (54
-skipped) and four editor fixtures passed. Windows and Amiga build successfully;
-macOS arm64 cross-links with its startup guard retained. Ordinary data-pointer
-migration and native Apple Silicon execution remain unfinished.
-
-Interpreter-entry validation: Linux passes 85 text tests (54 skipped) and four
-editor fixtures. GCC/Clang contract tests include high-backed code metadata,
-wrong-domain interpreter arguments and Amiga code-generation checks. Windows and
-Amiga builds pass. Code-reader/16-bit memory tests pass ASan/UBSan. Apple Silicon
-cross-build/probe results remain substrate checks; the application startup guard
-and ordinary-data migration requirements still apply.
+These checks cover the migrated boundaries. They do not qualify legacy native
+data pointers, guest record overlays, platform mirrors or a complete high-address
+interpreter. The remaining-work and workaround-removal checklists above are still
+release gates; no usable native arm64 AMOS DMG is implied by cross-link success.

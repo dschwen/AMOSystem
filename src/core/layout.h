@@ -9,6 +9,7 @@
 #include "core/endian.h"
 #include "core/mark_token.h"
 #include "core/context_token.h"
+#include "core/routine_field.h"
 
 namespace amos {
 
@@ -843,7 +844,7 @@ struct IData {
     be_u32 AdTokens[27];
     be_u32 AdTTokens[27];
     be_u32 ExtAdr[104];
-    be_u32 ExtTests[8];
+    wire::RoutineField ExtTests[8];
     be_u32 DosBase;
     be_u32 DFloatBase;
     be_u32 DMathBase;
@@ -974,7 +975,7 @@ struct IData {
     be_u32 Prg_Includes;
     be_u32 Prg_Run;
     be_u32 Prg_Test;
-    be_u32 Prg_JError;
+    wire::RoutineField Prg_JError;
     be_u32 Prg_ChrGet;
     be_u16 Passe;
     be_u32 VarBuf;
@@ -1065,7 +1066,7 @@ struct IData {
     be_u32 IDia_Error;
     be_u32 Patch_ScCopy;
     be_u32 Patch_ScFront;
-    be_u32 Patch_Errors;
+    wire::RoutineField Patch_Errors;
     be_u32 Patch_Menage;
     uint8_t Ver_TableVerif;
     uint8_t Ver_NoReloc;
@@ -1131,7 +1132,7 @@ struct IData {
     be_u16 FakeEvent_Cpt;
     be_u32 Fs_ErrPatch;
     be_u32 Sys_EndRoutines[2];
-    be_u32 Prg_InsRet;
+    wire::RoutineField Prg_InsRet;
     be_u32 PI_ParaTrap;
     be_u32 PI_AdMouse;
     uint8_t _pad7[2];
@@ -2038,7 +2039,7 @@ struct MonData {
     be_u32 Tt_Variables;
     be_u32 Tt_Resource;
     be_u32 Tt_Program;
-    be_u32 Tt_JError;
+    wire::RoutineField Tt_JError;
     be_u32 Tt_PrgHelp;
     be_u16 Tt_Init;
     be_u16 Tt_View;

@@ -3,7 +3,6 @@
 // them here). Each says what its assembler does.
 
 #include "runtime/static_symbols.h"
-#include "runtime/detail/legacy_dispatch.h"
 #include "runtime/runtime.h"
 #include "runtime/glue.h"
 

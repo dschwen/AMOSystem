@@ -191,7 +191,7 @@ void bank_changed()
         if (uint32_t routine = idata().ExtAdr[i * 4 + 3]) {
             Regs r = {};
             r.a[0] = *bank_list();
-            amos_call(&r, ptr<void>(routine));
+            amos_call(&r, host::decode_routine(routine));
         }
     }
     // the sprite bank: bank 1, whatever it holds (as the assembler did)

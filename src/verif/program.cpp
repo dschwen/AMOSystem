@@ -7,6 +7,7 @@
 // The assembler hands the program's structure in a6 (WEntry: all the
 // registers in an AllRegs).
 
+#include "runtime/static_symbols.h"
 #include "verif/verif.h"
 
 #include "core/amiga.h"
@@ -266,7 +267,7 @@ void data_new()
     d.OMnBase = 0;
     d.Prg_Includes = 0;
     d.Prg_FullSource = 0;
-    d.Patch_Errors = 0;
+    d.Patch_Errors.store({});
     d.Patch_Menage = 0;
     d.Patch_ScFront = 0;
     d.Patch_ScCopy = 0;
@@ -329,7 +330,7 @@ void hook(uint32_t hooks, int which)
         return;
     Regs r;
     r.a[2] = hooks;
-    amos_call(&r, ptr<uint8_t>(hooks + which));
+    amos_call(&r, host::decode_routine(hooks + which));
 }
 
 // PTest on program p (pass 1 and 2; an error goes to Prg_JError)
@@ -347,7 +348,7 @@ void test(Program &p, uint32_t hooks)
     r.a[6] = address(&p);
     r.d[6] = ctx().d6;
     r.d[7] = ctx().d7;
-    amos_call_all(&r, ver_program_test_entry);
+    amos_call_all(&r, AMOS_ROUTINE(ver_program_test_entry));
     p.Prg_StModif = 0;
     p.Prg_Not1_3 = d.VerNot1_3;
     p.Prg_MathFlags = d.MathFlags;
@@ -548,7 +549,7 @@ void ver_prg_run_it(AllRegs *r)
         r->d[0] = 0;
         return;
     }
-    d.Prg_JError = r->a[1];
+    d.Prg_JError.store(host::decode_routine(r->a[1]));
     set_banks(p);
     bank_changed();
     test(p, hooks);
@@ -582,7 +583,7 @@ void ver_prg_test_it(AllRegs *r)
         r->d[0] = 0;
         return;
     }
-    idata().Prg_JError = r->a[1];
+    idata().Prg_JError.store(host::decode_routine(r->a[1]));
     set_banks(p);
     test(p, r->a[2]);
     pull();

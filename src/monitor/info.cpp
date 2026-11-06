@@ -9,6 +9,7 @@
 // 3 an expression (a long, BasA3 when it was made, then its tokens), 4 a
 // separation shown after a 3, 5 the next instruction and its parameters.
 
+#include "runtime/static_symbols.h"
 #include "monitor/monitor.h"
 
 using namespace amos;
@@ -424,7 +425,7 @@ void delete_show(uint16_t kind)
 Value evaluate(uint32_t tokens)
 {
     AllRegs r = {};
-    call_a6(mon_evaluate, r, tokens);
+    call_a6(AMOS_ROUTINE(mon_evaluate), r, tokens);
     return {r.d[0] != 0, uint8_t(r.d[2]), r.d[3], r.a[6]};
 }
 

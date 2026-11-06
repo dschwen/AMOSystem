@@ -14,6 +14,7 @@
 // Ed_AutoLoad: 3 bytes for each function: its flags (bit 7 a program is
 // set), the program's text in Ed_MnPrograms, the command line's.
 
+#include "runtime/static_symbols.h"
 #include "editor/editor.h"
 #include "editor/clipboard.h"
 #include "core/amiga.h"
@@ -75,7 +76,7 @@ const KeyName key_names[] = {
     {0x56, "F7 "}, {0x57, "F8 "}, {0x58, "F9 "}, {0x59, "F10"},
 };
 
-void run(uint8_t *routine)
+void run(host::RoutineArg routine)
 {
     Regs r;
     call(routine, r);
@@ -83,13 +84,13 @@ void run(uint8_t *routine)
 
 [[noreturn]] void not_done()
 {
-    run(ed_not_done);
+    run(AMOS_ROUTINE(ed_not_done));
     __builtin_unreachable();
 }
 
 [[noreturn]] void out_of_memory()
 {
-    run(ed_out_of_memory);
+    run(AMOS_ROUTINE(ed_out_of_memory));
     __builtin_unreachable();
 }
 
@@ -598,7 +599,7 @@ void menu_error()
     Regs r;
     r.d[0] = 1;
     r.a[0] = address(message(185));
-    call(ed_alert_rts_entry, r);
+    call(AMOS_ROUTINE(ed_alert_rts_entry), r);
     Regs n;
     lib_call(L_Dia_NoMKey, n);
 }
@@ -758,7 +759,7 @@ void program_to_menu()
     }
     Regs f;
     f.d[0] = 100;
-    if (!uint16_t(call(ed_file_selector, f)))
+    if (!uint16_t(call(AMOS_ROUTINE(ed_file_selector), f)))
         not_done();
     path_it();
     be_u32 *v = dialogue_variables();
@@ -888,7 +889,7 @@ void delete_user()
     if (o.function < UserCommands - 1 || o.function >= UserCommands - 1 + UserMax) {
         dialogue(EdDMnUsE);
         Regs l;
-        call(ed_loop, l);
+        call(AMOS_ROUTINE(ed_loop), l);
         __builtin_unreachable();
     }
     d.EdC_Changed = 1;
@@ -952,7 +953,7 @@ void save_all()
         first = false;
         c.a4 = reinterpret_cast<uint8_t *>(e);
         c.a6 = ptr<uint8_t>(e->Edt_Prg);
-        run(ed_saved);
+        run(AMOS_ROUTINE(ed_saved));
     }
     c.a4 = a4;
     c.a6 = a6;
@@ -968,7 +969,7 @@ void insert_button()
     r.d[0] = uint16_t(b->Bt_Image + b->Bt_Pos);
     r.d[1] = b->Bt_X;
     r.d[2] = b->Bt_Y;
-    call(ed_unpack, r);
+    call(AMOS_ROUTINE(ed_unpack), r);
 }
 
 // Ed_Ins / Ed_SamOn / Ed_ShowKey
@@ -988,7 +989,7 @@ void flip_sounds()
     menu_marks();
     d.EdC_Changed = 1;
     Regs r;
-    call(ed_sounds_changed_entry, r);
+    call(AMOS_ROUTINE(ed_sounds_changed_entry), r);
 }
 
 void flip_keys()

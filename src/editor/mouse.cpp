@@ -4,6 +4,7 @@
 // screen: the general buttons, the separations and buttons of the
 // windows, the text, the slider.
 
+#include "runtime/static_symbols.h"
 #include "editor/editor.h"
 
 using namespace amos;
@@ -32,10 +33,10 @@ void function_call(uint16_t function, uint32_t d1 = 0)
     Regs r;
     r.d[1] = d1;
     r.d[2] = function;
-    call(ed_function_call, r);
+    call(AMOS_ROUTINE(ed_function_call), r);
 }
 
-void call_a0(uint8_t *routine, uint32_t a0)
+void call_a0(host::RoutineArg routine, uint32_t a0)
 {
     Regs r;
     r.a[0] = a0;
@@ -79,16 +80,16 @@ bool mouse()
         return false;
     if (d.EdMa_Tape) {
         Regs r;
-        call(ed_macro_stop, r);
+        call(AMOS_ROUTINE(ed_macro_stop), r);
     }
     d.EdMa_Play = 0;
     // The menu
     if (pressed & 2) {
         Regs m;
-        int32_t chosen = int32_t(call(ed_menu, m));
+        int32_t chosen = int32_t(call(AMOS_ROUTINE(ed_menu), m));
         if (chosen < 0) {
             Regs e;
-            call(ed_menu_error, e);
+            call(AMOS_ROUTINE(ed_menu_error), e);
         } else if (chosen) {
             function_call(uint16_t(m.d[2]));
         }
@@ -109,7 +110,7 @@ bool mouse()
             uint16_t n = peek_w(ptr<uint8_t>(b.d[0]));
             Regs s;
             s.d[0] = 13;
-            call(ed_get_systeme, s);
+            call(AMOS_ROUTINE(ed_get_systeme), s);
             function_call(uint16_t(ptr<uint8_t>(s.a[0])[n - 1] - 1));
         }
         return done();
@@ -118,7 +119,7 @@ bool mouse()
     // a separation of the windows moved
     if (part == 1 || part == 2) {
         tokenise_current_line();
-        call_a0(part == 1 ? ed_separation_top : ed_separation_bottom, address(window_of(window_number)));
+        call_a0(part == 1 ? AMOS_ROUTINE(ed_separation_top) : AMOS_ROUTINE(ed_separation_bottom), address(window_of(window_number)));
         return done();
     }
     // a button of a window

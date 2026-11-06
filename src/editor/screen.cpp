@@ -5,6 +5,7 @@
 //
 // The flags of EcFlags and EcAW/EcAWT/EcAV are in their high bytes.
 
+#include "runtime/static_symbols.h"
 #include "editor/editor.h"
 #include "core/amiga.h"
 
@@ -168,7 +169,7 @@ void editor_hide()
         recop();
         ec_fn(ec::Active, EcEdit);
         Regs e;
-        call(ed_erase_windows_entry, e);
+        call(AMOS_ROUTINE(ed_erase_windows_entry), e);
         ec_fn(ec::SColB, d.ColBack);
         ec_fn(ec::RainHide, 0);
         be_u16 *limits = &w.MouXMin;
@@ -184,7 +185,7 @@ void editor_hide()
     sy_fn(sy::ClearKey);
     sy_fn(sy::AMALUFrz);
     Regs m;
-    call(ed_menu_program, m);
+    call(AMOS_ROUTINE(ed_menu_program), m);
 }
 
 // Ed_Appear: the editor's screen back over the program's
@@ -210,7 +211,7 @@ void editor_appear()
         ec_fn(ec::SColB, d.Ed_ColB);
         ec_fn(ec::Active, EcEdit);
         Regs t;
-        call(ed_draw_top, t);
+        call(AMOS_ROUTINE(ed_draw_top), t);
         Ctx &c = ctx();
         uint8_t *a4 = c.a4, *a6 = c.a6;
         EditWindow *current = ptr<EditWindow>(d.Edt_Current);
@@ -231,7 +232,7 @@ void editor_appear()
         limit_mouse();
         w.Actualise &= ~BitControl;
         Regs m;
-        call(ed_menus_editor_entry, m);
+        call(AMOS_ROUTINE(ed_menus_editor_entry), m);
         d.Ed_NewAppear = 2;
     }
     sy_fn(sy::ClearKey);

@@ -1310,7 +1310,7 @@ void instruction(Run &r, int i, const int32_t *p)
         a.a[4] = address(d);
         a.a[5] = address(ctx().a5);
         a.a[6] = address(r.pc);
-        amos_call_all(&a, ptr<void>(static_cast<uint32_t>(p[0])));
+        amos_call_all(&a, host::decode_routine(static_cast<uint32_t>(p[0])));
         break;
     }
     case IScreenMove: {
@@ -1659,7 +1659,7 @@ void screen_front()
 {
     if (uint32_t patch = idata().Patch_ScFront) {
         Regs r = {};
-        amos_call(&r, ptr<void>(patch));
+        amos_call(&r, host::decode_routine(patch));
     }
 }
 
@@ -1843,7 +1843,7 @@ void list_line(Run &r, uint8_t *e, uint16_t n)
         c.a[4] = address(d);
         c.a[5] = address(ctx().a5);
         c.a[6] = address(r.pc);
-        amos_call_all(&c, ptr<void>(peek_l(ptr<uint8_t>(a) + 8)));
+        amos_call_all(&c, host::decode_routine(peek_l(ptr<uint8_t>(a) + 8)));
         chars = ptr<uint8_t>(c.a[1]);
         length = static_cast<uint16_t>(c.d[1]);
     } else {
@@ -2098,7 +2098,7 @@ void slider_call(Slider *s, uint16_t offset, Run *r)
     c.d[0] = offset;
     c.a[0] = s->Sl_Routines;
     c.a[2] = address(s);
-    amos_call(&c, ptr<uint8_t>(s->Sl_Routines) + offset);
+    amos_call(&c, host::decode_routine(uint32_t(s->Sl_Routines) + uint32_t(offset)));
 }
 
 // Sl_XYMouEc: the mouse along the slider
@@ -2221,7 +2221,7 @@ void button_call(Button *b, uint8_t n)
     c.d[0] = static_cast<uint32_t>(static_cast<int8_t>(n)) << 2;
     c.a[0] = b->Bt_Routines;
     c.a[2] = address(b);
-    amos_call(&c, ptr<uint8_t>(b->Bt_Routines) + static_cast<int16_t>(c.d[0]) - 4);
+    amos_call(&c, host::decode_routine(uint32_t(b->Bt_Routines) + uint32_t(int32_t(int16_t(c.d[0]))) - 4));
 }
 
 void button_init(Button *b, bool draw)
@@ -3005,7 +3005,7 @@ void amos::dia_patch()
 {
     if (uint32_t patch = idata().Patch_ScCopy) {
         Regs r = {};
-        amos_call(&r, ptr<void>(patch));
+        amos_call(&r, host::decode_routine(patch));
     }
 }
 

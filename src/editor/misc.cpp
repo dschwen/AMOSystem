@@ -5,6 +5,7 @@
 // (Bt_EdDraw, Bt_EsCDraw), the disk errors (Ed_DError, Ed_PrgLoadErr,
 // Ed_PErr), Workbench (Ed_Wb), the system file closed (Ed_Close).
 
+#include "runtime/static_symbols.h"
 #include "editor/editor.h"
 
 #include <dos/dos.h>
@@ -25,7 +26,7 @@ constexpr uint16_t EcEdit = 9;
 constexpr uint16_t EdDSetTab = 38, EdDDiskErr = 58;
 constexpr uint16_t DEBase = 45 + 35 - 1;         // the disk errors' messages
 
-[[noreturn]] void jump(uint8_t *routine)
+[[noreturn]] void jump(host::RoutineArg routine)
 {
     Regs r;
     call(routine, r);
@@ -73,7 +74,7 @@ void close_name()
 {
     for (;;) {
         Regs a;
-        call(ed_window_of_name_entry, a);
+        call(AMOS_ROUTINE(ed_window_of_name_entry), a);
         if (!a.d[0])
             return;
         EditWindow *w = ptr<EditWindow>(a.d[0]);
@@ -84,7 +85,7 @@ void close_name()
         if (r.d[0])
             return;
         Regs c;
-        call(ed_close_window_entry, c);
+        call(AMOS_ROUTINE(ed_close_window_entry), c);
     }
 }
 
@@ -120,14 +121,14 @@ void button_draw(const Button *b, bool title)
         Regs z;
         z.a[0] = address(text);
         z.d[0] = length;
-        call(ed_zap_alert_entry, z);
+        call(AMOS_ROUTINE(ed_zap_alert_entry), z);
     }
     ptr<be_u32>(d.Ed_VDialogues)[0] = address(text);
     Regs c;
-    call(ed_alert_clean_entry, c);
+    call(AMOS_ROUTINE(ed_alert_clean_entry), c);
     sound_play('G');
     dialogue(EdDDiskErr);
-    jump(ed_loop);
+    jump(AMOS_ROUTINE(ed_loop));
 }
 
 // Ed_DError: the message of the last DOS error
@@ -148,9 +149,9 @@ void button_draw(const Button *b, bool title)
 [[noreturn]] void load_error(int16_t error)
 {
     if (error == -2)
-        jump(ed_out_of_memory);
+        jump(AMOS_ROUTINE(ed_out_of_memory));
     if (error == -3)
-        jump(ed_not_amos);
+        jump(AMOS_ROUTINE(ed_not_amos));
     editor_disk_error();
 }
 

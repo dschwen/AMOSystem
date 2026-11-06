@@ -3,10 +3,14 @@
 #include "runtime/glue.h"
 #include "abi/guest_entry_codec.h"
 namespace amos::host::detail {
-inline RoutineEntry legacy_routine_entry(const void* at) {
+inline RoutineArg legacy_routine_entry(const void* at) {
+#if defined(__mc68000__)
+    return at;
+#else
     const auto word = reinterpret_cast<uintptr_t>(at);
     if (word > UINT32_MAX) guest::pointer_fault(guest::Fault::overflow);
     return guest::abi::EntryCodec::decode<RoutineSignature>(uint32_t(word));
+#endif
 }
 }
 

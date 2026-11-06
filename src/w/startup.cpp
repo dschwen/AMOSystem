@@ -7,6 +7,7 @@
 // +W.s IceStart sets W_Base and the C++ contexts before anything here
 // runs.
 
+#include "runtime/static_symbols.h"
 #include "core/amiga.h"
 #include "core/ioreq.h"
 #include "w/w.h"
@@ -245,7 +246,7 @@ bool start(AllRegs *r)
     if (!sprites_init(uint16_t(peek_l(config + 16))) || !bobs_init(peek_w(config + 8)) ||
         !copper_init(peek_l(config + 12)) || !screens_init())
         return false;
-    call(w_amal_init);
+    call(AMOS_ROUTINE(w_amal_init));
     vbl_init();
     d.WiVect = address(w_wi_in);
     // With LoadView, AMOS's LoadView keeps the system's view from showing
@@ -294,8 +295,8 @@ void end()
         // (the original left console.device open)
         close_console();
     }
-    call(w_free_fonts);
-    call(w_amal_end);
+    call(AMOS_ROUTINE(w_free_fonts));
+    call(AMOS_ROUTINE(w_amal_end));
     screens_end();
     bobs_end();
     sprites_end();

@@ -3,6 +3,7 @@
 // one), bit 6 locks it so. Closing tests the program first. The marks are
 // kept as addresses meanwhile, as the line numbers change.
 
+#include "runtime/static_symbols.h"
 #include "editor/editor.h"
 #include "core/source.h"
 
@@ -14,7 +15,7 @@ using namespace amos::ed;
 
 namespace {
 
-void run(uint8_t *routine)
+void run(host::RoutineArg routine)
 {
     Regs r;
     call(routine, r);
@@ -25,7 +26,7 @@ void test_program()
 {
     Regs r;
     r.d[0] = 0xFFFFFFFF;
-    call(ed_va_tester, r);
+    call(AMOS_ROUTINE(ed_va_tester), r);
 }
 
 void count_lines()
@@ -45,7 +46,7 @@ void all(bool close)
     tokenise_current_line();
     if (close)
         test_program();
-    run(ed_marks_to_addresses_entry);
+    run(AMOS_ROUTINE(ed_marks_to_addresses_entry));
     EditWindow &w = window();
     uint8_t *here = find_line(w.Edt_YPos + w.Edt_YCu);
     for (uint8_t *line = find_line(0); peek_w(line); line = next_line()) {
@@ -56,7 +57,7 @@ void all(bool close)
             line[10] |= 0x80;
     }
     count_lines();
-    run(ed_marks_to_numbers_entry);
+    run(AMOS_ROUTINE(ed_marks_to_numbers_entry));
     set_y(number_of(here));
     new_buffer();
 }
@@ -70,13 +71,13 @@ void flip()
     find_line(w.Edt_YPos + w.Edt_YCu);
     uint8_t *proc = ptr<uint8_t>(w.Edt_DebProc);
     if (!proc)
-        run(ed_fo_e);
+        run(AMOS_ROUTINE(ed_fo_e));
     if (!(proc[10] & 0x40)) {
         if (!(proc[10] & 0x80))
             test_program();
-        run(ed_marks_to_addresses_entry);
+        run(AMOS_ROUTINE(ed_marks_to_addresses_entry));
         proc[10] ^= 0x80;
-        run(ed_marks_to_numbers_entry);
+        run(AMOS_ROUTINE(ed_marks_to_numbers_entry));
         count_lines();
         const uint8_t *at = proc;
         bool place = true;
@@ -85,7 +86,7 @@ void flip()
             if (!p.Prg_AdEProc) {
                 place = false;
             } else {
-                run(ed_r_alert);
+                run(AMOS_ROUTINE(ed_r_alert));
                 set_x(p.Prg_XEProc);
                 at = ptr<uint8_t>(p.Prg_AdEProc & 0x7FFFFFFF);
             }

@@ -7,6 +7,7 @@
 // word, the characters, byte 255 set if the line cannot be edited (a
 // closed procedure). The display and the cursor stay with the assembler.
 
+#include "runtime/static_symbols.h"
 #include "editor/editor.h"
 #include "editor/clipboard.h"
 
@@ -18,13 +19,13 @@ using namespace amos::ed;
 
 namespace {
 
-void run(uint8_t *routine)
+void run(host::RoutineArg routine)
 {
     Regs r;
     call(routine, r);
 }
 
-void run_d0(uint8_t *routine, uint32_t d0)
+void run_d0(host::RoutineArg routine, uint32_t d0)
 {
     Regs r;
     r.d[0] = d0;
@@ -32,7 +33,7 @@ void run_d0(uint8_t *routine, uint32_t d0)
 }
 
 // Ed_SamPlay: the editor's sound for a key
-void sound(uint8_t c) { run_d0(ed_sam_play, c); }
+void sound(uint8_t c) { run_d0(AMOS_ROUTINE(ed_sam_play), c); }
 
 // Ed_LCourant: the line under the cursor
 struct Line {
@@ -145,7 +146,7 @@ void type_key(uint8_t c, bool insert, uint8_t *redone)
     if (c >= 32) {
         Line l = current();
         if (l.locked) {
-            run(ed_not_edit);
+            run(AMOS_ROUTINE(ed_not_edit));
             return;
         }
         if (l.x > l.length) {
@@ -174,7 +175,7 @@ void type_key(uint8_t c, bool insert, uint8_t *redone)
             }
         } else {
             if (l.length >= 250) {
-                run(ed_l_to_long);
+                run(AMOS_ROUTINE(ed_l_to_long));
                 return;
             }
             if (l.length != l.x) {
@@ -303,7 +304,7 @@ void tab()
     uint16_t tab = idata().Ed_Tabs;
     uint16_t length = l.length + tab;
     if (length >= 250) {
-        run(ed_l_to_long);
+        run(AMOS_ROUTINE(ed_l_to_long));
         return;
     }
     l.set_length(length);

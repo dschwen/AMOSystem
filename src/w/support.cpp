@@ -13,7 +13,7 @@ uint32_t chip_mm(uint32_t size) { return reserve(size, MemClear | MemPublic | Me
 uint32_t chip_mm2(uint32_t size) { return reserve(size, MemPublic | MemChip); }
 void free_mm(uint32_t address, uint32_t size) { release(address, size); }
 
-uint32_t call(uint8_t *routine)
+uint32_t call(host::RoutineArg routine)
 {
     Regs r;
     amos_call(&r, routine);

@@ -10,6 +10,7 @@ inline void* operator new(size_t, void* storage) noexcept { return storage; }
 #include "runtime/detail/legacy_code_reader.h"
 #include "core/mark_token.h"
 #include "core/context_token.h"
+#include "core/routine_field.h"
 #include "memory/guest_view.h"
 using namespace amos::guest;
 using abi::AddressCodec;
@@ -267,6 +268,36 @@ extern "C" uint16_t metadata_word(uint32_t entry, int32_t offset) {
     return amos::host::detail::LegacyCodeReader(amos::host::decode_routine(entry)).word_at(offset);
 #else
     return *reinterpret_cast<const uint16_t*>(reinterpret_cast<const uint8_t*>(entry) + offset);
+#endif
+}
+
+extern "C" uint32_t load_code_field(const void* cell) {
+#if defined(AMOS_TEST_WRAPPED)
+    return amos::host::encode_routine(static_cast<const amos::wire::RoutineField*>(cell)->load());
+#else
+    return *static_cast<const uint32_t*>(cell);
+#endif
+}
+extern "C" void store_code_field(void* cell, uint32_t value) {
+#if defined(AMOS_TEST_WRAPPED)
+    static_cast<amos::wire::RoutineField*>(cell)->store(amos::host::decode_routine(value));
+#else
+    *static_cast<uint32_t*>(cell) = value;
+#endif
+}
+
+extern "C" uint32_t load_code_view(uint32_t cell) {
+#if defined(AMOS_TEST_WRAPPED)
+    return amos::host::encode_routine(Memory{}.ref(AddressCodec::decode<const amos::wire::RoutineField>(cell)).value.load().value);
+#else
+    return *reinterpret_cast<const uint32_t*>(cell);
+#endif
+}
+extern "C" void store_code_view(uint32_t cell, uint32_t value) {
+#if defined(AMOS_TEST_WRAPPED)
+    Memory{}.ref(AddressCodec::decode<amos::wire::RoutineField>(cell)).value.store(amos::host::decode_routine(value));
+#else
+    *reinterpret_cast<uint32_t*>(cell) = value;
 #endif
 }
 

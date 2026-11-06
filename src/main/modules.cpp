@@ -8,10 +8,7 @@
 
 #include "core/amiga.h"
 #include "abi/guest_address_codec.h"
-#if !defined(__mc68000__)
 #include "runtime/static_symbols.h"
-#include "tables/guest_labels.h"
-#endif
 
 #include <dos/dos.h>
 
@@ -92,7 +89,7 @@ void reset_request()
 {
     if (uint32_t routine = idata().ExtAdr[2 * 4 + 1]) {
         Regs r;
-        amos_call(&r, ptr<void>(routine));
+        amos_call(&r, host::decode_routine(routine));
     }
 }
 
@@ -351,7 +348,7 @@ void main_in_kill_editor()
             lib(L_Ed_KillEditor);
             edit_free();
             mon_free();
-            d.Prg_JError = address(main_run_error_no_editor);
+            d.Prg_JError.store(AMOS_ROUTINE(main_run_error_no_editor));
             wdata().AMOState = 0;           // run-only
         }
     }

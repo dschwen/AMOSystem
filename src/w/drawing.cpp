@@ -3,6 +3,7 @@
 // the drawing state of the current screen saved and restored around
 // menus and sliders.
 
+#include "runtime/static_symbols.h"
 #include "core/amiga.h"
 #include "w/w.h"
 
@@ -83,11 +84,11 @@ void cls(AllRegs *r)
         cls_blit(s, colour, x1, y1, x2, y2 - y1);
         return;
     }
-    call(w_tabk1);
+    call(AMOS_ROUTINE(w_tabk1));
     cls_blit(s, colour, x1, y1, x2, y2 - y1);
-    call(w_tabk2);
+    call(AMOS_ROUTINE(w_tabk2));
     cls_blit(s, colour, x1, y1, x2, y2 - y1);
-    call(w_tabk3);
+    call(AMOS_ROUTINE(w_tabk3));
 }
 
 // ---- CLIP ---------------------------------------------------------------------

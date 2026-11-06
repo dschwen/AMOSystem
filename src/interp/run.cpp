@@ -143,7 +143,7 @@ void interp_in_run0()
         AllRegs r = {};
         Ctx &c = ctx();
         r.d[0] = uint32_t(-1);                      // half a graphic init
-        r.a[1] = d.Prg_JError;
+        r.a[1] = host::encode_routine(d.Prg_JError.load());
         r.d[6] = c.d6;
         r.d[7] = c.d7;
         r.a[3] = address(c.a3);
@@ -155,7 +155,7 @@ void interp_in_run0()
     Regs e;
     e.d[0] = failure;
     e.a[0] = 0;
-    interp_jump(&e, host::decode_routine(d.Prg_JError));
+    interp_jump(&e, d.Prg_JError.load());
 }
 
 // RUN "program"

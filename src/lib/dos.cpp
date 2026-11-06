@@ -128,7 +128,7 @@ void disk_err(int32_t code)
         if (known[i] == static_cast<int16_t>(code)) {
             uint32_t n = DEBase + i;
             if (uint32_t patch = idata().Fs_ErrPatch)
-                amos_goto(ptr<void>(patch), n);
+                amos_goto(host::decode_routine(patch), n);
             error(n);
         }
     }

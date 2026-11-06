@@ -6,6 +6,7 @@
 // Undo and Redo call the kind's routine of +Edit.s (JUndo, JRedo) with a2
 // on the entry.
 
+#include "runtime/static_symbols.h"
 #include "editor/editor.h"
 #include "editor/clipboard.h"
 
@@ -203,7 +204,7 @@ void ed_undo(AllRegs *)
     uint8_t *entry = previous(p, ptr<uint8_t>(p.Prg_PUndo));
     if (!entry[0]) {
         Regs r;
-        call(ed_no_undo, r);
+        call(AMOS_ROUTINE(ed_no_undo), r);
         return;
     }
     p.Prg_PUndo = address(entry);
@@ -216,7 +217,7 @@ void ed_redo(AllRegs *)
     uint8_t *entry = ptr<uint8_t>(p.Prg_PUndo);
     if (!entry[0]) {
         Regs r;
-        call(ed_no_redo, r);
+        call(AMOS_ROUTINE(ed_no_redo), r);
         return;
     }
     act(redo_change, entry);

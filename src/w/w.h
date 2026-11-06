@@ -52,7 +52,7 @@ void release(uint32_t address, uint32_t size);
 void call_routines(be_u32 *list);
 
 // Calls a +W.s routine with no parameters (TAbk1-4...). Returns its d0.
-uint32_t call(uint8_t *routine);
+uint32_t call(host::RoutineArg routine);
 
 void copy(void *to, const void *from, uint32_t n);
 

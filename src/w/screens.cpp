@@ -9,6 +9,7 @@
 // change flags are set with byte operations in the assembler, so their
 // bits are in the high byte.
 
+#include "runtime/static_symbols.h"
 #include "core/amiga.h"
 #include "w/w.h"
 
@@ -56,7 +57,7 @@ uint8_t &high(be_u16 &w) { return reinterpret_cast<uint8_t *>(&w)[0]; }
 be_u32 *slot(uint16_t n) { return &wdata().EcAdr[0] + int16_t(n << 2) / 4; }
 Screen *screen(uint16_t n) { return ptr<Screen>(*slot(n)); }
 
-void call_a0(uint8_t *routine, uint32_t a0)
+void call_a0(host::RoutineArg routine, uint32_t a0)
 {
     Regs r;
     r.a[0] = a0;
@@ -224,21 +225,21 @@ void free_screen(Screen *s)
     WData &d = wdata();
     if (s->EcAZones)
         free_mm(s->EcAZones, uint32_t(s->EcNZones) * 8);
-    call_a0(w_dad_amal, address(&s->EcAW));
-    call_a0(w_dad_amal, address(&s->EcAWT));
-    call_a0(w_dad_amal, address(&s->EcAV));
-    call_a0(w_bb_ec_off, address(s));
+    call_a0(AMOS_ROUTINE(w_dad_amal), address(&s->EcAW));
+    call_a0(AMOS_ROUTINE(w_dad_amal), address(&s->EcAWT));
+    call_a0(AMOS_ROUTINE(w_dad_amal), address(&s->EcAV));
+    call_a0(AMOS_ROUTINE(w_bb_ec_off), address(s));
     Screen *current = ptr<Screen>(d.EcCourant);
     activate(s);
-    call(w_widela);
-    call(w_flash_off);
-    call(w_shift_off);
-    call(w_fade_stop);
+    call(AMOS_ROUTINE(w_widela));
+    call(AMOS_ROUTINE(w_flash_off));
+    call(AMOS_ROUTINE(w_shift_off));
+    call(AMOS_ROUTINE(w_fade_stop));
     // (The assembler cleared the pattern through a null RastPort when the
     // screen failed to open, writing to address 8)
     if (d.RastPort)
         clear_pattern();
-    call(w_close_font);
+    call(AMOS_ROUTINE(w_close_font));
 
     // The current screen: the first not cloned one of number < 8, else
     // the first not cloned one
@@ -332,7 +333,7 @@ uint32_t close(uint16_t n, uint32_t *current)
     // The copper list without it
     wait_vbl();
     s->EcFlags |= Hide;
-    call(w_ec_force_cop);
+    call(AMOS_ROUTINE(w_ec_force_cop));
     wait_vbl();
     free_screen(s);
     *current = d.EcCourant;
@@ -435,7 +436,7 @@ uint32_t open(const AllRegs *r, uint32_t *result)
     wo.d[6] = 1;
     wo.d[7] = 0;
     wo.a[1] = 0;
-    amos_call(&wo, w_wopen);
+    amos_call(&wo, AMOS_ROUTINE(w_wopen));
     if (wo.d[0]) {
         close(n, &dummy);
         return ErrMemory;
@@ -522,9 +523,9 @@ uint32_t double_buffer()
     }
     s->EcFlags |= DoubleBuffer;
     s->EcAuto = 2;
-    call(w_tabk1);
-    call(w_tabk2);
-    call(w_tabk3);
+    call(AMOS_ROUTINE(w_tabk1));
+    call(AMOS_ROUTINE(w_tabk2));
+    call(AMOS_ROUTINE(w_tabk3));
     return 0;
 }
 
@@ -685,7 +686,7 @@ bool screens_init()
     if (hal::vblank_frequency() != 50)
         d.EcYMax = 261 + EcYBase;               // NTSC
     screens_reset();
-    call(w_copper_make);
+    call(AMOS_ROUTINE(w_copper_make));
     if (d.AMOSHere >> 8) {
         chips().copjmp1 = 0;
         chips().dmacon = 0x82A0;
@@ -701,12 +702,12 @@ void screens_end()
     Regs r;
     r.d[1] = 0;
     r.d[2] = EcMax - 1;
-    amos_call(&r, w_sc_close_range);
-    call(w_cblocks_delete);
-    call(w_blocks_delete);
+    amos_call(&r, AMOS_ROUTINE(w_sc_close_range));
+    call(AMOS_ROUTINE(w_cblocks_delete));
+    call(AMOS_ROUTINE(w_blocks_delete));
     Regs t;
     t.d[1] = 0xFFFFFFFF;
-    amos_call(&t, w_rain_del);
+    amos_call(&t, AMOS_ROUTINE(w_rain_del));
     if (d.ChipBuf)
         free_mm(d.ChipBuf, 256);
     if (d.EcCop)

@@ -20,7 +20,6 @@ using namespace amos;
 
 extern "C" {
 // control_glue.s: an instruction run again from its beginning
-[[noreturn]] void interp_restart(amos::host::MarkHandle sp, uint32_t ret, const AllRegs *r);
 }
 
 namespace {
@@ -290,7 +289,7 @@ uint32_t demande(uint32_t length)
         a.a[4] = address(c.a4);
         a.a[5] = address(c.a5);
         a.a[6] = address(c.a6);
-        interp_restart(d.BasSp.load(), d.Prg_InsRet, &a);
+        interp_restart(d.BasSp.load(), d.Prg_InsRet.load(), &a);
     }
     if (int32_t(c.d7) <= 0)
         c.d7 = d.MenA4;

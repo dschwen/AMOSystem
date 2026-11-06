@@ -1103,7 +1103,7 @@ void close_selector()
 uint32_t file_selector(const be_u32 *params)
 {
     IData &d = idata();
-    if (d.Patch_Errors)
+    if (d.Patch_Errors.load())
         fon_call();
     Regs fl = {};
     fl.a[1] = address(lib_fs_flush_record);

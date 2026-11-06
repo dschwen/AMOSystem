@@ -10,6 +10,7 @@
 // makes a window current for the C++ (and the assembler it calls), and the
 // entries give it back in the registers.
 
+#include "runtime/static_symbols.h"
 #include "editor/editor.h"
 
 using namespace amos;
@@ -41,13 +42,13 @@ void use(EditWindow *w)
 
 EditWindow *current() { return ptr<EditWindow>(idata().Edt_Current); }
 
-void run(uint8_t *routine)
+void run(host::RoutineArg routine)
 {
     Regs r;
     call(routine, r);
 }
 
-void run_d0(uint8_t *routine, uint32_t d0)
+void run_d0(host::RoutineArg routine, uint32_t d0)
 {
     Regs r;
     r.d[0] = d0;
@@ -56,7 +57,7 @@ void run_d0(uint8_t *routine, uint32_t d0)
 
 // A routine of +Edit.s that may change the current window: a4/a6 taken
 // back from it
-void run_switching(uint8_t *routine, AllRegs &r)
+void run_switching(host::RoutineArg routine, AllRegs &r)
 {
     Ctx &c = ctx();
     r.a[3] = address(c.a3);
@@ -70,7 +71,7 @@ void run_switching(uint8_t *routine, AllRegs &r)
     c.a6 = ptr<uint8_t>(r.a[6]);
 }
 
-void run_switching(uint8_t *routine)
+void run_switching(host::RoutineArg routine)
 {
     AllRegs r = {};
     run_switching(routine, r);
@@ -276,7 +277,7 @@ void enlarge(uint16_t from, uint16_t to)
     Regs r;
     r.d[0] = from;
     r.d[1] = to;
-    call(ed_enlarge, r);
+    call(AMOS_ROUTINE(ed_enlarge), r);
 }
 
 // WindOp: a text window
@@ -298,7 +299,7 @@ const uint8_t *system_text(uint16_t n)
 {
     Regs r;
     r.d[0] = n;
-    call(ed_get_systeme, r);
+    call(AMOS_ROUTINE(ed_get_systeme), r);
     return ptr<uint8_t>(r.a[0]);
 }
 
@@ -312,7 +313,7 @@ void draw_windows()
     IData &d = idata();
     EditWindow *const was = &window();
     cursor_off();
-    run(ed_all_aver_fin);
+    run(AMOS_ROUTINE(ed_all_aver_fin));
     erase_windows();
     order();
     first_last();
@@ -398,7 +399,7 @@ void draw_windows()
         top = y;
         // the status line
         window_open(w->Edt_WindEtat, w->Edt_WindEX, w->Edt_WindEY, w->Edt_WindESx >> 3, 1, 0);
-        run(ed_status_print);
+        run(AMOS_ROUTINE(ed_status_print));
         set_zone(w->Edt_ZEtat, w->Edt_WindEX, w->Edt_WindEY, w->Edt_WindEX + w->Edt_WindESx, w->Edt_WindEY + EtatSy);
         set_zone(w->Edt_ZBas, 0, w->Edt_BasY, d.Ed_Sx, w->Edt_BasY + BasSy);
         // the text
@@ -412,7 +413,7 @@ void draw_windows()
             wi_call(wi::SCurWi, sh);
             set_zone(w->Edt_Zones, w->Edt_WindX, w->Edt_WindY, w->Edt_WindX + w->Edt_WindSx,
                      w->Edt_WindY + w->Edt_WindSy);
-            run(ed_sl_update_y);
+            run(AMOS_ROUTINE(ed_sl_update_y));
             Regs sl;
             sl.a[0] = address(s);
             lib_call(L_Sl_Init, sl);
@@ -738,7 +739,7 @@ bool activate(EditWindow *w)
     idata().Edt_Current = address(w);
     window().Edt_ASlY = 0;
     show_slider();
-    run(ed_status_print);
+    run(AMOS_ROUTINE(ed_status_print));
     use(w);
     new_buffer_all();
     return true;
@@ -785,7 +786,7 @@ int32_t open_window(bool shown, int32_t size)
         shrink_all(1);
         w->Edt_WindTy = uint16_t(max_size(w, -1).lines);
     }
-    run(ed_new_window);
+    run(AMOS_ROUTINE(ed_new_window));
     return 0;
 }
 
@@ -798,7 +799,7 @@ void delete_window()
     if (Program *p = program_of(w)) {
         ctx().a6 = reinterpret_cast<uint8_t *>(p);
         if (!--p->Prg_Edited) {
-            run(ed_menu_program);
+            run(AMOS_ROUTINE(ed_menu_program));
             Regs r;
             lib_call(L_Prg_DelStructure, r);
             undo_free();
@@ -840,9 +841,9 @@ void open_shown_window()
     tokenise_current_line();
     int32_t r = open_window(true, int32_t(idata().PI_DefSize));
     if (r < 0)
-        run(ed_out_of_memory);
+        run(AMOS_ROUTINE(ed_out_of_memory));
     if (r > 0)
-        run(ed_too_many_windows);
+        run(AMOS_ROUTINE(ed_too_many_windows));
     draw_windows();
 }
 
@@ -856,13 +857,13 @@ void close_window(bool quit)
     tokenise_current_line();
     EditWindow *w = &window();
     if (!w->Edt_LinkPrev && !w->Edt_LinkNext)
-        run_switching(ed_new);
+        run_switching(AMOS_ROUTINE(ed_new));
     w = &window();
     if (w->Edt_First && w->Edt_Last) {
         if (!quit)
             return;
         if (!(d.Ed_QuitFlags & 1) || int16_t(dialogue(EdDWQuit)) == 1)
-            run_switching(ed_do_quit);
+            run_switching(AMOS_ROUTINE(ed_do_quit));
         return;
     }
     erase_windows();
@@ -887,14 +888,14 @@ void hide_window()
     }
     EditWindow *w = &window();
     if (alone(w))
-        run(ed_no_hide);
+        run(AMOS_ROUTINE(ed_no_hide));
     unlink_scroll(w);
     w->Edt_Hidden = 1;
     if (!another(w, 1))
         another(&window(), 0);
     window().Edt_WindTy = uint16_t(max_size(&window(), -1).lines);
     draw_windows();
-    run_switching(ed_branch_amos);
+    run_switching(AMOS_ROUTINE(ed_branch_amos));
 }
 
 } // namespace
@@ -1011,9 +1012,9 @@ void split()
     EditWindow *w = &window();
     int32_t r = open_window(true, -1);
     if (r < 0)
-        run(ed_out_of_memory);
+        run(AMOS_ROUTINE(ed_out_of_memory));
     if (r > 0)
-        run(ed_too_many_windows);
+        run(AMOS_ROUTINE(ed_too_many_windows));
     EditWindow *n = &window();
     n->Edt_LinkPrev = address(w);
     n->Edt_LinkNext = w->Edt_LinkNext;
@@ -1127,7 +1128,7 @@ namespace {
 void link_cursor()
 {
     tokenise_current_line();
-    run_d0(ed_warn, 1);
+    run_d0(AMOS_ROUTINE(ed_warn), 1);
     EditWindow &w = window();
     w.Edt_LinkScroll = 0;
     for (;;) {
@@ -1140,14 +1141,14 @@ void link_cursor()
     Regs z;
     sy_call(sy::GetZone, z);
     if (uint16_t(z.d[1]) != EcEdit || uint16_t(z.d[1] >> 16) == w.Edt_Window)
-        run(ed_not_done);
+        run(AMOS_ROUTINE(ed_not_done));
     EditWindow *other = window_number(uint16_t(z.d[1] >> 16));
     if (!other)
-        run(ed_not_done);
+        run(AMOS_ROUTINE(ed_not_done));
     unlink_scroll(other);
     w.Edt_LinkScroll = address(other);
     w.Edt_LinkYOld = w.Edt_YPos + w.Edt_YCu;
-    run(ed_aver_fin);
+    run(AMOS_ROUTINE(ed_aver_fin));
     Regs r;
     lib_call(L_Dia_NoMKey, r);
 }
@@ -1380,11 +1381,11 @@ void ed_new_hidden(AllRegs *r)
     tokenise_current_line();
     EditWindow *w = hidden(uint16_t(r->d[1]));
     if (!w)
-        run(ed_not_done);
+        run(AMOS_ROUTINE(ed_not_done));
     use(w);
-    run(ed_saved);
+    run(AMOS_ROUTINE(ed_saved));
     delete_window();
-    run_switching(ed_branch_amos);
+    run_switching(AMOS_ROUTINE(ed_branch_amos));
     keep_current(r);
 }
 
@@ -1392,14 +1393,14 @@ void ed_new_all_hidden(AllRegs *r)
 {
     tokenise_current_line();
     if (int16_t(dialogue(EdDNAll)) != 1)
-        run(ed_loop);
+        run(AMOS_ROUTINE(ed_loop));
 
     while (EditWindow *w = hidden(0)) {
         use(w);
-        run(ed_saved);
+        run(AMOS_ROUTINE(ed_saved));
         delete_window();
     }
-    run_switching(ed_branch_amos);
+    run_switching(AMOS_ROUTINE(ed_branch_amos));
     keep_current(r);
 }
 
@@ -1408,17 +1409,17 @@ void ed_edit_hidden(AllRegs *r)
     tokenise_current_line();
     EditWindow *w = hidden(uint16_t(r->d[1]));
     if (!w)
-        run(ed_not_done);
+        run(AMOS_ROUTINE(ed_not_done));
     if (count_shown(nullptr) >= idata().Ed_WMax)
-        run(ed_too_many_windows);
+        run(AMOS_ROUTINE(ed_too_many_windows));
     idata().Edt_Current = address(w);
     use(w);
     w->Edt_Hidden = 0;
     shrink_all(1);
     w->Edt_WindTy = uint16_t(max_size(w, -1).lines);
-    run(ed_undo_create_entry);
+    run(AMOS_ROUTINE(ed_undo_create_entry));
     draw_windows();
-    run_switching(ed_branch_amos);
+    run_switching(AMOS_ROUTINE(ed_branch_amos));
     keep_current(r);
 }
 

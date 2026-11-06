@@ -5,6 +5,7 @@
 // The alerts (Ed_NotEdit, Ed_LToLong, Ed_OofBuf...) do not come back: they
 // go to the editor's loop, which resets the stack and turns undo back on.
 
+#include "runtime/static_symbols.h"
 #include "editor/editor.h"
 
 using namespace amos;
@@ -17,7 +18,7 @@ namespace {
 
 constexpr uint8_t SlDelai = 10;
 
-void run(uint8_t *routine)
+void run(host::RoutineArg routine)
 {
     Regs r;
     call(routine, r);
@@ -42,13 +43,13 @@ void store_line(uint16_t extra)
     uint8_t *buffer = ptr<uint8_t>(d.Ed_BufT);
     int32_t result = tokenise_line(text, buffer);
     if (result < 0) {
-        run(ed_l_to_long);
+        run(AMOS_ROUTINE(ed_l_to_long));
         return;
     }
     extra += uint16_t(result);
     Stored s = store(buffer, program_line(), false);
     if (s.error) {
-        run(ed_oof_buf);
+        run(AMOS_ROUTINE(ed_oof_buf));
         return;
     }
     extra += uint16_t(s.added);
@@ -112,7 +113,7 @@ void insert_line()
     buffer[128] = 0;
     tokenise_line(buffer + 128, buffer);
     if (store(buffer, program_line(), true).error) {
-        run(ed_oof_buf);
+        run(AMOS_ROUTINE(ed_oof_buf));
         return;
     }
     if (uint8_t *entry = undo_start())
@@ -130,7 +131,7 @@ int32_t delete_current_line()
     uint16_t n = program_line();
     uint8_t *text = cursor_line();
     if (buffer_line(w.Edt_YCu)[255]) {
-        run(ed_not_edit);
+        run(AMOS_ROUTINE(ed_not_edit));
         return -1;
     }
     uint16_t x = w.Edt_XCu;
@@ -183,7 +184,7 @@ void return_key()
     poke_w(kept + 2, 0);
     kept += 2;
     if (kept >= ptr<uint8_t>(p.Prg_StBas) - 256) {
-        run(ed_oof_buf);
+        run(AMOS_ROUTINE(ed_oof_buf));
         return;
     }
     if (buffer_line(w.Edt_YCu)[255]) {
@@ -233,13 +234,13 @@ void join()
     uint16_t length = cursor_length();
     uint8_t *above = text - 256;
     if (length && above[253]) {
-        run(ed_not_edit);
+        run(AMOS_ROUTINE(ed_not_edit));
         return;
     }
     uint16_t above_length = peek_w(above - 2);
     uint16_t total = length + above_length;
     if (total >= 250) {
-        run(ed_l_to_long);
+        run(AMOS_ROUTINE(ed_l_to_long));
         return;
     }
     poke_w(text - 2, 0);
@@ -295,7 +296,7 @@ void ed_return_fn(AllRegs *)
 {
     Regs r;
     r.d[0] = 'D';
-    call(ed_sam_play, r);
+    call(AMOS_ROUTINE(ed_sam_play), r);
     return_key();
 }
 }

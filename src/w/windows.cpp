@@ -13,6 +13,7 @@
 // holds the scroll/cursor/inverse flags, its low byte the planes that are
 // not written to (bit NPlan-p for plane p).
 
+#include "runtime/static_symbols.h"
 #include "core/amiga.h"
 #include "w/w.h"
 
@@ -81,7 +82,7 @@ const uint8_t frames[8][8] = {
 const uint8_t default_cursor[8] = {0, 0, 0, 0, 0, 0, 0xFF, 0xFF};
 
 // TAbk1-4: the autoback steps around a print. Returns their d0.
-uint32_t autoback(uint8_t *step) { return call(step); }
+uint32_t autoback(host::RoutineArg step) { return call(step); }
 
 // Compte: the number of characters a string prints (an escape sequence
 // is three bytes, none printed), and the end, after its zero
@@ -730,7 +731,7 @@ struct Win {
         r.d[3] = uint16_t(w->WiZoDy * w->WiTyCar + w->WiDyI);
         r.d[4] = uint16_t((column() << 3) + 7 + left_edge);
         r.d[5] = uint16_t((w->WiY + 1) * w->WiTyCar + w->WiDyI);
-        amos_call(&r, w_sy_set_z);
+        amos_call(&r, AMOS_ROUTINE(w_sy_set_z));
         right();
         return r.d[0];
     }
@@ -1306,8 +1307,8 @@ using Routine = uint32_t (*)(Win &, const AllRegs &, uint32_t d0);
 uint32_t autoback_print(Win &t, Routine routine, const AllRegs &r)
 {
     if (!(t.s->EcFlags & DoubleBuffer)) {
-        uint32_t d0 = routine(t, r, autoback(w_tabk1));
-        autoback(w_tabk4);
+        uint32_t d0 = routine(t, r, autoback(AMOS_ROUTINE(w_tabk1)));
+        autoback(AMOS_ROUTINE(w_tabk4));
         return d0;
     }
     // (The assembler kept the cursor background from the window structure,
@@ -1316,11 +1317,11 @@ uint32_t autoback_print(Win &t, Routine routine, const AllRegs &r)
     uint8_t window[offsetof(Window, WiTitH)];
     copy(cursor, t.s->EcCurS, sizeof cursor);
     copy(window, t.w, sizeof window);
-    routine(t, r, autoback(w_tabk1));
+    routine(t, r, autoback(AMOS_ROUTINE(w_tabk1)));
     copy(t.s->EcCurS, cursor, sizeof cursor);
     copy(t.w, window, sizeof window);
-    uint32_t d0 = routine(t, r, autoback(w_tabk2));
-    autoback(w_tabk3);
+    uint32_t d0 = routine(t, r, autoback(AMOS_ROUTINE(w_tabk2)));
+    autoback(AMOS_ROUTINE(w_tabk3));
     return d0;
 }
 

@@ -1,6 +1,7 @@
 // The editor's information dialogues (+Edit.s Ed_About, Ed_AboutExt,
 // Ed_Infos) and the quit options (Ed_QuitOptions).
 
+#include "runtime/static_symbols.h"
 #include "editor/editor.h"
 #include "core/amiga.h"
 #include "hal/system.h"
@@ -94,7 +95,7 @@ void information()
 {
     tokenise_current_line();
     Regs t;
-    call(ed_test_program, t);
+    call(AMOS_ROUTINE(ed_test_program), t);
     Program &p = program();
     be_u32 *v = dialogue_variables();
     v[0] = hal::available_memory(hal::MemoryChip);

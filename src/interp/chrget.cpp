@@ -5,6 +5,7 @@
 // context. Prg_InsRet, where instructions that jump go back to, is
 // interp_iret: it enters the loop again at a6.
 
+#include "runtime/static_symbols.h"
 #include "runtime/interpreter_bridge.h"
 #include "runtime/detail/legacy_code_reader.h"
 #include "interp/interp.h"
@@ -222,7 +223,7 @@ extern "C" {
 {
     IData &d = idata();
     Ctx &c = ctx();
-    d.Prg_InsRet = address(interp_iret);
+    d.Prg_InsRet.store(AMOS_ROUTINE(interp_iret));
     // the loops' buffer
     verif::stack_reserve();
     c.a3 = ptr<uint8_t>(d.HoLoop);

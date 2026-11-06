@@ -9,6 +9,7 @@
 // then a 0; the lists of the offsets of the instructions starting with
 // the letter (from the extension's tokens), each ending with 0.
 
+#include "runtime/static_symbols.h"
 #include "editor/editor.h"
 #include "core/amiga.h"
 #include "hal/system.h"
@@ -31,13 +32,13 @@ constexpr uint8_t BtFlagOnOf = 1 << 2;
 constexpr uint32_t BufTSize = 512 + 256;        // EdBTT
 constexpr int Extensions = 26;
 
-uint32_t run(uint8_t *routine)
+uint32_t run(host::RoutineArg routine)
 {
     Regs r;
     return call(routine, r);
 }
 
-uint32_t run_d0(uint8_t *routine, uint32_t d0)
+uint32_t run_d0(host::RoutineArg routine, uint32_t d0)
 {
     Regs r;
     r.d[0] = d0;
@@ -68,7 +69,7 @@ uint32_t system_text(uint16_t n)
 {
     Regs m;
     m.d[0] = n;
-    call(ed_get_systeme, m);
+    call(AMOS_ROUTINE(ed_get_systeme), m);
     return m.a[0];
 }
 
@@ -176,13 +177,13 @@ void close_it()
 {
     IData &d = idata();
     set_banks();
-    run(ed_undo_free_all_entry);
-    run(ed_escape_forget_all_entry);
+    run(AMOS_ROUTINE(ed_undo_free_all_entry));
+    run(AMOS_ROUTINE(ed_escape_forget_all_entry));
     all_warnings_end();
-    run(ed_block_free_entry);
-    run(ed_menus_end_entry);
-    run(ed_dialogues_close_entry);
-    run(ed_delete_all_zones_entry);
+    run(AMOS_ROUTINE(ed_block_free_entry));
+    run(AMOS_ROUTINE(ed_menus_end_entry));
+    run(AMOS_ROUTINE(ed_dialogues_close_entry));
+    run(AMOS_ROUTINE(ed_delete_all_zones_entry));
     ec_fn(ec::Del, EcEdit);
     ec_fn(ec::Del, EcFonc);
     tokens_end();
@@ -215,15 +216,15 @@ bool open_it()
 {
     IData &d = idata();
     set_banks();
-    run(ed_menus_editor_entry);
+    run(AMOS_ROUTINE(ed_menus_editor_entry));
     // a new configuration: the windows made to fit
     if (d.EdC_Modified) {
         d.EdC_Modified = 0;
         if (EditWindow *w = ptr<EditWindow>(d.Edt_Current)) {
             ctx().a4 = reinterpret_cast<uint8_t *>(w);
-            if (uint16_t(run_d0(ed_max_size_entry, 0xFFFFFFFF)) != w->Edt_WindTy) {
-                run_d0(ed_shrink_all_entry, 0);
-                uint16_t lines = uint16_t(run_d0(ed_max_size_entry, 0xFFFFFFFF));
+            if (uint16_t(run_d0(AMOS_ROUTINE(ed_max_size_entry), 0xFFFFFFFF)) != w->Edt_WindTy) {
+                run_d0(AMOS_ROUTINE(ed_shrink_all_entry), 0);
+                uint16_t lines = uint16_t(run_d0(AMOS_ROUTINE(ed_max_size_entry), 0xFFFFFFFF));
                 w->Edt_WindTy = lines;
                 if (int16_t(lines) <= 0) {
                     // the smallest windows, the screen made as high
@@ -245,7 +246,7 @@ bool open_it()
             }
         }
     }
-    run(ed_config_set_palette_entry);
+    run(AMOS_ROUTINE(ed_config_set_palette_entry));
     // the screen of the buttons
     Screen *s = open_screen(EcFonc, d.Ed_Sx, TitleSy, 0, 0);
     if (!s)
@@ -266,14 +267,14 @@ bool open_it()
     s->EcFlags |= Hide;
     s->EcAWX = d.Ed_Wx;
     s->EcAWY = d.Ed_Wy;
-    run_d0(ed_status_text_entry, 10);
+    run_d0(AMOS_ROUTINE(ed_status_text_entry), 10);
     d.Ed_BufE = memory(uint32_t(d.Ed_Ty) * 256, false);
     if (!d.Ed_BufE)
         return false;
     d.Ed_WMax = uint16_t(uint16_t(d.Ed_Ty - 6) / 3);
-    if (!tokens_init() || run(ed_dialogues_open_entry) || !menu_init())
+    if (!tokens_init() || run(AMOS_ROUTINE(ed_dialogues_open_entry)) || !menu_init())
         return false;
-    run(ed_undo_create_all_entry);
+    run(AMOS_ROUTINE(ed_undo_create_all_entry));
     d.EdC_Modified = 0;
     return true;
 }
@@ -293,7 +294,7 @@ bool open_editor()
         close_it();
         if (attempt == 2)
             break;
-        run(ed_menu_program);
+        run(AMOS_ROUTINE(ed_menu_program));
         use(ptr<EditWindow>(d.Edt_Current));
         Regs b;
         lib_call(L_Prg_SetBanks, b);
@@ -301,7 +302,7 @@ bool open_editor()
         lib_call(attempt ? L_MemDelBanks : L_MemMaximum, m);
         if (attempt) {
             if (!m.d[0])
-                run(ed_system);         // not allowed: the end
+                run(AMOS_ROUTINE(ed_system));         // not allowed: the end
             bank_erase_all();
             bank_changed();
         }
@@ -327,25 +328,25 @@ uint32_t load_all_config()
     m.d[0] = 7;
     m.a[0] = address(boot::sys_message(m.d[0]));
     add_path(m.a[0]);
-    if (uint32_t e = run(ed_config_load_entry))
+    if (uint32_t e = run(AMOS_ROUTINE(ed_config_load_entry)))
         return e;
     add_path(system_text(45));
-    if (uint32_t e = run(ed_resource_load_entry))
+    if (uint32_t e = run(AMOS_ROUTINE(ed_resource_load_entry)))
         return e;
     add_path(system_text(46));
-    if (uint32_t e = run(ed_macro_load_entry))
+    if (uint32_t e = run(AMOS_ROUTINE(ed_macro_load_entry)))
         return e;
-    run(ed_sounds_changed_entry);
+    run(AMOS_ROUTINE(ed_sounds_changed_entry));
     return 0;
 }
 
 // Ed_FreeAllConfig
 void free_all_config()
 {
-    run(ed_sounds_end_entry);
-    run(ed_macros_free_entry);
-    run(ed_config_free_entry);
-    run(ed_resource_free_entry);
+    run(AMOS_ROUTINE(ed_sounds_end_entry));
+    run(AMOS_ROUTINE(ed_macros_free_entry));
+    run(AMOS_ROUTINE(ed_config_free_entry));
+    run(AMOS_ROUTINE(ed_resource_free_entry));
 }
 
 // Ed_Computee: a window for each program not edited yet; false if out of
@@ -403,7 +404,7 @@ void end()
 {
     IData &d = idata();
     if (d.Ed_Ok)
-        run(ed_delete_windows_entry);
+        run(AMOS_ROUTINE(ed_delete_windows_entry));
     memory_release(&d.Ed_Prg2ReLoad);
     close_editor();
     free_all_config();
@@ -467,10 +468,10 @@ void ed_cold(AllRegs *r) { r->d[0] = cold(); }
 // Ed_Title: the editor shown, the last session, the title
 void ed_title(AllRegs *)
 {
-    run(ed_appear);
-    run(ed_warm_start_entry);
+    run(AMOS_ROUTINE(ed_appear));
+    run(AMOS_ROUTINE(ed_warm_start_entry));
     sound_play('A');
-    run(ed_about_entry);
+    run(AMOS_ROUTINE(ed_about_entry));
     place_cursor();
 }
 

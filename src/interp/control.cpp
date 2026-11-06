@@ -14,6 +14,7 @@
 // with a new instruction: interp_continue resets the stack to BasSp and
 // returns into the ChrGet loop with the registers of the context.
 
+#include "runtime/detail/legacy_dispatch.h"
 #include "runtime/interpreter_bridge.h"
 #include "core/source.h"
 #include "interp/interp.h"
@@ -23,7 +24,6 @@ using namespace amos;
 using namespace amos::interp;
 
 extern "C" {
-[[noreturn]] void interp_continue(amos::host::MarkHandle sp, uint32_t ret);
 [[noreturn]] void interp_menu_return(amos::host::MarkHandle pile);
 // control_glue.s: the record of OMnEff for ClearVar
 
@@ -88,7 +88,7 @@ bool finished(uint16_t t) { return !t || t == tk::DP || t == tk::Then || t == tk
 [[noreturn]] void go_on()
 {
     IData &d = data();
-    interp_continue(d.BasSp.load(), d.Prg_InsRet);
+    interp_continue(d.BasSp.load(), d.Prg_InsRet.load());
 }
 
 } // namespace
@@ -439,10 +439,10 @@ void test_force()
         uint8_t bits = uint8_t(actualise) >> 1;
         actualise &= 0xFF00;
         for (int i = 1; bits; i++, bits >>= 1) {
-            if ((bits & 1) && d.ExtTests[i]) {
+            if ((bits & 1) && d.ExtTests[i].load()) {
                 Regs r;
                 r.a[1] = address(&d.ExtTests[i]);
-                amos_call(&r, ptr<void>(d.ExtTests[i]));
+                amos_call(&r, d.ExtTests[i].load());
             }
         }
         if (actualise & (1 << BitEcrans)) {
@@ -1012,7 +1012,7 @@ void interp_in_apml()
     r.a[4] = address(d.CallReg);
     r.a[5] = address(ctx().a5);
     r.a[6] = address(pc());
-    amos_call_all(&r, pc());
+    amos_call_all(&r, host::detail::legacy_routine_entry(pc()));
     for (int i = 0; i < 8; i++)
         d.CallReg[i] = r.d[i];
     for (int i = 0; i < 3; i++)
@@ -1066,7 +1066,7 @@ void interp_menu_procedure(EvalOut *o)
     pc() = nullptr;
     call_procedure(ptr<uint8_t>(proc), 0, 0);
     Regs r;
-    interp_jump(&r, host::decode_routine(d.Prg_InsRet));
+    interp_jump(&r, d.Prg_InsRet.load());
 }
 
 uint32_t interp_menu_procedure_reg(RegFrame &r)
@@ -1096,13 +1096,13 @@ uint32_t interp_menu_procedure_reg(RegFrame &r)
     Regs routines;
     routines.a[1] = address(&d.Sys_ErrorRoutines);
     w::call_routines(ptr<be_u32>(routines.a[1]));
-    if (d.Patch_Errors) {
+    if (d.Patch_Errors.load()) {
         Regs r;
         r.d[0] = n;
         r.d[1] = first;
         r.d[2] = extension;
         r.a[0] = messages;
-        interp_jump(&r, host::decode_routine(d.Patch_Errors));
+        interp_jump(&r, d.Patch_Errors.load());
     }
     d.PrintPos = 0;
     d.InputFlg = 0;
@@ -1138,7 +1138,7 @@ uint32_t interp_menu_procedure_reg(RegFrame &r)
     d.VerPos = a.a[0];
     Regs i;
     lib_call(L_Includes_Clear, i);
-    uint32_t handler = d.Prg_JError;
+    host::RoutineArg handler = d.Prg_JError.load();
     Regs p;
     lib_call(L_Prg_Pull, p);
     Regs r;
@@ -1156,7 +1156,7 @@ uint32_t interp_menu_procedure_reg(RegFrame &r)
         r.d[1] = n;
     }
     r.d[2] = extension;
-    interp_jump(&r, host::decode_routine(handler));
+    interp_jump(&r, handler);
 }
 
 // L_Error: error d0 of AMOSPro; L_ErrorExt: d1 the first one On Error can

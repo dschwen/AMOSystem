@@ -59,7 +59,7 @@ void resume(AllRegs &r)
     to_context(r);
     interp_run_instruction(r.d[0]);
     r = context_regs();
-    glue_call(decode_routine(idata().Prg_InsRet), r);
+    glue_call(idata().Prg_InsRet.load(), r);
     missing("return from Prg_InsRet", nullptr);
 }
 
@@ -248,7 +248,7 @@ void error_stop(AllRegs &r)
             monitor_chr(r);
         }
     }
-    glue_call(decode_routine(d.Prg_InsRet), r);
+    glue_call(d.Prg_InsRet.load(), r);
     missing("return from Prg_InsRet", nullptr);
 }
 
@@ -289,7 +289,7 @@ void host_In_Program(AllRegs &r)
         return;
     mon().Tt_Init = 1;
     mon().Tt_Run = 1;
-    d.Prg_JError = address(mon_error);
+    d.Prg_JError.store(AMOS_ROUTINE(mon_error));
 }
 
 void host_MonitorChr(AllRegs &r) { monitor_chr(r); }
@@ -308,7 +308,7 @@ void host_mon_evaluate(AllRegs &r)
     MonData &m = mon();
     AllRegs entry = r;
     m.Tt_EvDebut = r.a[6];
-    d.Patch_Errors = address(mon_ev_error);
+    d.Patch_Errors.store(AMOS_ROUTINE(mon_ev_error));
     d.Patch_Menage = address(mon_menage);
     banks(AMOS_ROUTINE(mon_banks_program_entry), r);
     AllRegs out;
@@ -337,7 +337,7 @@ void host_mon_evaluate(AllRegs &r)
         r.a[i] = entry.a[i];
     r.a[6] = a6;
     banks(AMOS_ROUTINE(mon_banks_monitor_entry), r);
-    d.Patch_Errors = 0;
+    d.Patch_Errors.store({});
     d.Patch_Menage = 0;
     if (evaluation == EvError) {
         r.d[3] = 0;
@@ -401,7 +401,7 @@ extern "C" {
     AllRegs e = context_regs();
     e.d[0] = 1000;
     e.a[0] = 0;
-    glue_call(decode_routine(d.Prg_JError), e);
+    glue_call(d.Prg_JError.load(), e);
     missing("return from Prg_JError", nullptr);
 }
 

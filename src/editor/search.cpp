@@ -7,6 +7,7 @@
 // everywhere (2 and 3: replace all at once). Bit 15 of the flags of a
 // search: replace what is found.
 
+#include "runtime/static_symbols.h"
 #include "editor/editor.h"
 
 using namespace amos;
@@ -199,13 +200,13 @@ namespace {
 constexpr uint16_t EdDSearch = 4, EdDReplace = 6, EdDWBlock = 8, EdDWText = 9, EdDChanges = 10, EdDGotoL = 35;
 constexpr uint8_t EtABAll = 0x7F, SlDelai = 10;
 
-void run(uint8_t *routine)
+void run(host::RoutineArg routine)
 {
     Regs r;
     call(routine, r);
 }
 
-[[noreturn]] void alert(uint8_t *routine)
+[[noreturn]] void alert(host::RoutineArg routine)
 {
     run(routine);
     __builtin_unreachable();
@@ -233,11 +234,11 @@ void goto_line()
         n = int32_t(d.Ed_ZapParam);
     } else {
         if (int16_t(dialogue(EdDGotoL)) != 1)
-            alert(ed_not_done);
+            alert(AMOS_ROUTINE(ed_not_done));
         n = int32_t(dialogue_value(3, 0xFFFFFFFF));
     }
     if (--n < 0)
-        alert(ed_not_done);
+        alert(AMOS_ROUTINE(ed_not_done));
     uint16_t y = uint16_t(n);
     if (y >= program().Prg_NLigne)
         y = program().Prg_NLigne;
@@ -294,14 +295,14 @@ void search_replace(uint16_t flags)
     Search s = {int16_t(w.Edt_YPos + w.Edt_YCu), int16_t(w.Edt_XCu), flags, 32000, 32000};
     warn_message(36);
     if (!(flags & 2 ? search_back(s) : search_front(s)))
-        alert(ed_no_found);
+        alert(AMOS_ROUTINE(ed_no_found));
     auto_mark();
     goto_y(uint16_t(s.y));
     goto_x(uint16_t(s.x));
     if (flags & 0x8000) {
         uint8_t *line = ptr<uint8_t>(w.Edt_BufE) + int16_t(uint16_t(w.Edt_YCu << 8)) + 2;
         if (!replace_text(line, uint16_t(s.x)))
-            alert(ed_l_to_long);
+            alert(AMOS_ROUTINE(ed_l_to_long));
         w.Edt_LEdited++;
         tokenise_current_line();
         goto_x(uint16_t(s.x + idata().Ed_RepLong));
@@ -315,7 +316,7 @@ void search_new()
 {
     tokenise_current_line();
     if (search_dialogue(EdDSearch) != 1)
-        alert(ed_not_done);
+        alert(AMOS_ROUTINE(ed_not_done));
     search_replace(idata().Ed_SchMode & 3);
 }
 
@@ -355,12 +356,12 @@ void replace_new()
         while ((*to++ = *from++))
             ;
         if (answer != 1)
-            alert(ed_loop);
+            alert(AMOS_ROUTINE(ed_loop));
         uint16_t mode = d.Ed_SchMode;
         if (!(mode & 0x0C))
             return replace_next(mode & 2);
         if (int16_t(dialogue(mode & 4 ? EdDWBlock : EdDWText)) != 1)
-            alert(ed_not_done);
+            alert(AMOS_ROUTINE(ed_not_done));
         if (d.Ed_SchBuf[0] && d.Ed_RepBuf[0])
             break;
     }
@@ -388,16 +389,16 @@ void replace_new()
         if (!search_front(s))
             break;
         if (!replace_text(line, uint16_t(s.x)))
-            alert(ed_l_to_long);
+            alert(AMOS_ROUTINE(ed_l_to_long));
         s.x = int16_t(s.x + d.Ed_RepLong);
         // (an empty line too is "line too long")
         if (!tokenise_line(line, buffer)) {
             new_buffer_all();
-            alert(ed_l_to_long);
+            alert(AMOS_ROUTINE(ed_l_to_long));
         }
         if (store(buffer, uint16_t(s.y), false).error) {
             new_buffer_all();
-            alert(ed_oof_buf);
+            alert(AMOS_ROUTINE(ed_oof_buf));
         }
         changes++;
     }
@@ -407,7 +408,7 @@ void replace_new()
     w.Edt_EtatAff = EtABAll;
     w.Edt_ASlY = SlDelai;
     if (!changes)
-        alert(ed_no_found);
+        alert(AMOS_ROUTINE(ed_no_found));
     dialogue_variables()[0] = changes;
     dialogue(EdDChanges);
 }

@@ -31,14 +31,14 @@ void fail(uint16_t n)
     Regs tables;
     entry_call(AMOS_ROUTINE(ver_free_tables_entry), tables);
     d.VerCheck1_3 = 0;
-    uint32_t handler = d.Prg_JError;
+    host::RoutineArg handler = d.Prg_JError.load();
     Regs pull;
     entry_call(AMOS_ROUTINE(ver_prg_pull_entry), pull);
     Regs e;
     e.d[0] = uint32_t(-int32_t(n));
     e.a[0] = 0;
-    e.a[2] = handler;
-    interp_jump(&e, host::decode_routine(handler));
+    e.a[2] = host::encode_routine(handler);
+    interp_jump(&e, handler);
 }
 
 bool finished(uint16_t token) { return !token || token == tk::DP || token == tk::Then || token == tk::Else; }
@@ -51,7 +51,7 @@ void not_13()
         fail(47);
 }
 
-void call(const void *routine, AllRegs &r)
+void call(host::RoutineArg routine, AllRegs &r)
 {
     Ctx &c = ctx();
     r.a[3] = address(c.a3);

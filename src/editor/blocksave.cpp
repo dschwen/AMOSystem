@@ -4,6 +4,7 @@
 //
 // Files go through Handle(a5), as the editor's Ed_Open... do.
 
+#include "runtime/static_symbols.h"
 #include "editor/editor.h"
 #include "core/source.h"
 
@@ -24,13 +25,13 @@ namespace {
 constexpr uint16_t BitControl = 1 << 8;
 constexpr int EdDPBloc = 60, EdDPProg = 61;
 
-void run(uint8_t *routine)
+void run(host::RoutineArg routine)
 {
     Regs r;
     call(routine, r);
 }
 
-void run_d0(uint8_t *routine, uint32_t d0)
+void run_d0(host::RoutineArg routine, uint32_t d0)
 {
     Regs r;
     r.d[0] = d0;
@@ -43,7 +44,7 @@ bool select_file(uint16_t message)
 {
     Regs r;
     r.d[0] = message;
-    call(ed_file_selector, r);
+    call(AMOS_ROUTINE(ed_file_selector), r);
     if (!uint16_t(r.d[0]))
         return false;
     path_it();
@@ -56,10 +57,10 @@ void open(const uint8_t *name, int32_t mode)
     BPTR f = hal::open(reinterpret_cast<CONST_STRPTR>(name), mode);
     idata().Handle = uint32_t(f);
     if (!f)
-        run(ed_d_error);
+        run(AMOS_ROUTINE(ed_d_error));
 }
 
-void write(const void *data, int32_t length, uint8_t *error = ed_d_error)
+void write(const void *data, int32_t length, host::RoutineArg error = AMOS_ROUTINE(ed_d_error))
 {
     if (hal::write(BPTR(idata().Handle), const_cast<void *>(data), length) != length)
         run(error);
@@ -86,7 +87,7 @@ bool control_c()
 void the_end()
 {
     close();
-    run(ed_aver_fin);
+    run(AMOS_ROUTINE(ed_aver_fin));
     Regs k;
     sy_call(sy::ClearKey, k);
 }
@@ -155,15 +156,15 @@ void save_ascii()
     IData &d = idata();
     tokenise_current_line();
     if (!d.Ed_Block)
-        run(ed_block_what);
+        run(AMOS_ROUTINE(ed_block_what));
     if (!select_file(82))
-        run(ed_not_done);
-    run(ed_save_over);
+        run(AMOS_ROUTINE(ed_not_done));
+    run(AMOS_ROUTINE(ed_save_over));
     open(name1(), MODE_NEWFILE);
     Regs w;
     w.d[0] = 156;
     w.a[0] = d.Name1;
-    call(ed_av_name, w);
+    call(AMOS_ROUTINE(ed_av_name), w);
     BlockText t(ptr<uint8_t>(d.Ed_Block));
     while (t.next()) {
         uint8_t *end = const_cast<uint8_t *>(t.text) + t.length;
@@ -171,7 +172,7 @@ void save_ascii()
         write(t.text, int32_t(t.length + 1));
     }
     close();
-    run(ed_aver_fin);
+    run(AMOS_ROUTINE(ed_aver_fin));
 }
 
 // Ed_BlocSave: the block as a program (empty banks after it)
@@ -180,14 +181,14 @@ void save_program()
     IData &d = idata();
     tokenise_current_line();
     if (!d.Ed_Block)
-        run(ed_block_what);
+        run(AMOS_ROUTINE(ed_block_what));
     if (!select_file(90))
-        run(ed_not_done);
-    run(ed_save_over);
+        run(AMOS_ROUTINE(ed_not_done));
+    run(AMOS_ROUTINE(ed_save_over));
     Regs w;
     w.d[0] = 154;
     w.a[0] = d.Name1;
-    call(ed_av_name, w);
+    call(AMOS_ROUTINE(ed_av_name), w);
     open(name1(), MODE_NEWFILE);
     // the header (of the editor's own version), the length to come
     ed_header[11] = 'v';
@@ -221,7 +222,7 @@ void save_program()
     poke_l(buffer, size);
     write(buffer, 4);
     close();
-    run(ed_aver_fin);
+    run(AMOS_ROUTINE(ed_aver_fin));
 }
 
 // Ed_PRTOpen: the printer (PRT:)
@@ -233,7 +234,7 @@ void printer_open()
     BPTR f = hal::open(ptr<char>(m.a[0]), MODE_OLDFILE);
     idata().Handle = uint32_t(f);
     if (!f)
-        run(ed_print_error);
+        run(AMOS_ROUTINE(ed_print_error));
 }
 
 // Ed_PRTPrint: a line to the printer; CR LF as just LF unless set so (the
@@ -250,7 +251,7 @@ void printer_print(uint8_t *text)
         if (c == 13 && !idata().PI_PrtRet && *a0 == 10)
             a1[-1] = *a0++;
     }
-    write(text, int32_t(a0 - text - 1), ed_print_error);
+    write(text, int32_t(a0 - text - 1), AMOS_ROUTINE(ed_print_error));
 }
 
 // Ed_PrgPrint
@@ -258,8 +259,8 @@ void print_program()
 {
     tokenise_current_line();
     if (int16_t(dialogue(EdDPProg)) != 1)
-        run(ed_not_done);
-    run_d0(ed_warn, 217);
+        run(AMOS_ROUTINE(ed_not_done));
+    run_d0(AMOS_ROUTINE(ed_warn), 217);
     printer_open();
     uint8_t *buffer = ptr<uint8_t>(idata().Ed_BufT);
     for (uint8_t *line = find_line(0); peek_w(line); line = next_line()) {
@@ -281,10 +282,10 @@ void print_block()
     IData &d = idata();
     tokenise_current_line();
     if (!d.Ed_Block)
-        run(ed_block_what);
+        run(AMOS_ROUTINE(ed_block_what));
     if (int16_t(dialogue(EdDPBloc)) != 1)
-        run(ed_not_done);
-    run_d0(ed_warn, 157);
+        run(AMOS_ROUTINE(ed_not_done));
+    run_d0(AMOS_ROUTINE(ed_warn), 157);
     printer_open();
     BlockText t(ptr<uint8_t>(d.Ed_Block));
     while (t.next()) {
@@ -314,7 +315,7 @@ void ed_block_limits_2(AllRegs *r)
 {
     EditWindow &w = window();
     if (int16_t(w.Edt_YBloc) < 0)
-        run(ed_block_what);
+        run(AMOS_ROUTINE(ed_block_what));
     uint16_t y1 = w.Edt_YBloc, x1 = w.Edt_XBloc, y2 = w.Edt_YPos + w.Edt_YCu, x2 = w.Edt_XCu;
     if (!(y2 > y1 || (y2 == y1 && x2 >= x1))) {
         uint16_t t = y1;

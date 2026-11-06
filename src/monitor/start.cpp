@@ -3,6 +3,7 @@
 // text screen's background, the patches on the interpreter and
 // AMOS.library, the view's interrupt.
 
+#include "runtime/static_symbols.h"
 #include "monitor/monitor.h"
 #include "core/amiga.h"
 
@@ -82,16 +83,16 @@ void free_all()
     Regs c;
     c.d[0] = 0;
     lib_call(L_SetChrPatch, c);
-    d.ExtTests[1] = 0;
+    d.ExtTests[1].store({});
     wdata().Actualise &= ~BitStep;
     d.ActuMask &= ~BitStep;
     d.Patch_Menage = 0;
-    d.Patch_Errors = 0;
+    d.Patch_Errors.store({});
     d.Patch_ScFront = 0;
     d.Patch_ScCopy = 0;
     // (the assembler also did this when it had failed to start, before
     // keeping the error routine: the program's errors then jumped to 0)
-    if (m.Tt_JError)
+    if (m.Tt_JError.load())
         d.Prg_JError = m.Tt_JError;
     for (be_u32 &v : d.VblRout)
         if (v == address(mon_view_inter)) {
@@ -215,7 +216,7 @@ bool cold_start(uint32_t program)
     info_end();
 
     // The patches
-    d.ExtTests[1] = address(mon_tests_patch_entry);
+    d.ExtTests[1].store(AMOS_ROUTINE(mon_tests_patch_entry));
     d.Patch_ScFront = address(mon_screen_front);
     d.Patch_ScCopy = address(mon_screen_copy_entry);
     Regs c;

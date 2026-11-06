@@ -74,7 +74,7 @@ void defrun_extensions()
             r.d[0] = uint32_t(25 - i);
             r.a[0] = address(&d.ExtAdr[4 * i]);
             r.a[1] = routine;
-            amos_call(&r, ptr<void>(routine));
+            amos_call(&r, host::decode_routine(routine));
         }
     }
 }

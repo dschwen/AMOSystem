@@ -41,7 +41,7 @@ void not_13();
 // assembler keeps state in registers through the verification (a3/a4 for
 // New_Reloc): what it changes goes to the context, and from there back
 // to the assembler that called C++ (enter / leave in each entry).
-void call(const void *routine, AllRegs &r);
+void call(host::RoutineArg routine, AllRegs &r);
 void enter(AllRegs *r);
 void leave(AllRegs *r);
 

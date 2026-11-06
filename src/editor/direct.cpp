@@ -10,6 +10,7 @@
 // Esc_Loop resets the stack (+Edit.s) and comes here: escape_loop() does
 // not return, it ends in the interpreter or the editor's loop.
 
+#include "runtime/static_symbols.h"
 #include "editor/editor.h"
 #include "hal/clipboard.h"
 
@@ -32,13 +33,13 @@ constexpr uint8_t BtFlagOnOf = 1 << 2;
 // LEd_FMulti, FTests, FKeys, FMouse, FCursor, FMouCur
 constexpr uint32_t LineFlags = 1 << 6 | 1 << 5 | 1 << 0 | 1 << 4 | 1 << 2 | 1 << 7;
 
-void run(uint8_t *routine)
+void run(host::RoutineArg routine)
 {
     Regs r;
     call(routine, r);
 }
 
-[[noreturn]] void jump(uint8_t *routine)
+[[noreturn]] void jump(host::RoutineArg routine)
 {
     run(routine);
     __builtin_unreachable();
@@ -190,7 +191,7 @@ void appear()
     Regs e;
     e.d[0] = uint32_t(int32_t(y));
     e.d[1] = uint32_t(int32_t(y + 8));
-    call(ed_enlarge, e);
+    call(AMOS_ROUTINE(ed_enlarge), e);
     Regs w;
     w.d[1] = 1;
     w.d[2] = 0;
@@ -315,8 +316,8 @@ namespace {
     sound_play('E');
     hide();
     window().Edt_EtMess = 0;
-    run(ed_appear);
-    jump(ed_loop);
+    run(AMOS_ROUTINE(ed_appear));
+    jump(AMOS_ROUTINE(ed_loop));
 }
 
 // Esc_R: the line run (an empty one, nothing)
@@ -325,7 +326,7 @@ namespace {
     IData &d = idata();
     uint8_t *text = ptr<uint8_t>(d.Buffer);
     if (!*text)
-        jump(ed_esc_loop);
+        jump(AMOS_ROUTINE(ed_esc_loop));
     forget_oldest(d.Esc_KMemMax);
     uint32_t length = 0;
     while (text[length])
@@ -346,9 +347,9 @@ namespace {
     Regs t;
     t.a[0] = d.Buffer;
     t.a[1] = d.Ed_BufT;
-    call(ed_tokenise_entry, t);
+    call(AMOS_ROUTINE(ed_tokenise_entry), t);
     if (!uint16_t(t.d[0]))
-        jump(ed_esc_loop);
+        jump(AMOS_ROUTINE(ed_esc_loop));
     // the interpreter, on the current program's banks
     EditWindow *current = ptr<EditWindow>(d.Edt_Current);
     ctx().a4 = reinterpret_cast<uint8_t *>(current);
@@ -357,7 +358,7 @@ namespace {
     lib_call(L_Prg_SetBanks, b);
     d.Edt_Runned = 0;
     d.Prg_Runned = 0;
-    d.Prg_JError = address(ed_err_direct);
+    d.Prg_JError.store(AMOS_ROUTINE(ed_err_direct));
     Regs v;
     lib_call(L_VerDirect, v);
     if (d.ScOn)
@@ -501,7 +502,7 @@ void button(Button *b, uint16_t keys)
     case 1:
         leave();
     case 2:
-        run(ed_wb);
+        run(AMOS_ROUTINE(ed_wb));
         return;
     case 3:
         d.Esc_Output = uint8_t(b->Bt_Pos);
@@ -543,7 +544,7 @@ void show()
 {
     IData &d = idata();
     wdata().AMOState = 1;
-    d.Prg_JError = address(ed_err_direct);
+    d.Prg_JError.store(AMOS_ROUTINE(ed_err_direct));
     ec_fn(ec::Active, EcFonc);
     memory_show();
     ec_fn(ec::Active, EcEdit);
@@ -619,7 +620,7 @@ void show()
     ctx().a4 = reinterpret_cast<uint8_t *>(current);
     ctx().a6 = ptr<uint8_t>(current->Edt_Prg);
     Error e = get_error(code, message);
-    run(ed_open_editor);
+    run(AMOS_ROUTINE(ed_open_editor));
     d.Edt_Runned = 0;
     d.ActuMask |= 0x1100;
     ec_fn(ec::CopOnOff, 0xFFFFFFFF);
@@ -627,15 +628,15 @@ void show()
     ec_fn(ec::First, EcFonc);
     ec_fn(ec::Active, EcEdit);
     recop();
-    run(ed_hide);
+    run(AMOS_ROUTINE(ed_hide));
     appear();
     if (e.code == 1002)
-        jump(ed_system);
+        jump(AMOS_ROUTINE(ed_system));
     if (e.code == 1000)
         leave();
     if (uint16_t(e.code) < 1000 && e.code != 10)
         print(e.message);
-    jump(ed_esc_loop);
+    jump(AMOS_ROUTINE(ed_esc_loop));
 }
 
 // Ed_Escape: to direct mode
@@ -643,9 +644,9 @@ void show()
 {
     sound_play('E');
     tokenise_current_line();
-    run(ed_hide);
+    run(AMOS_ROUTINE(ed_hide));
     appear();
-    jump(ed_esc_loop);
+    jump(AMOS_ROUTINE(ed_esc_loop));
 }
 
 } // namespace

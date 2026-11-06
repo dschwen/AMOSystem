@@ -3,6 +3,7 @@
 // Cop Swap, Cop Reset, Cop Wait, Cop Move, Cop Movel, Cop Logic. They work
 // while AMOS's own copper lists are off.
 
+#include "runtime/static_symbols.h"
 #include "w/w.h"
 
 using namespace amos;
@@ -151,7 +152,7 @@ void w_ec_copper_on_off(AllRegs *r)
         if (!d.CopON)
             return;
         d.CopON = 0;
-        call(w_ec_force_cop);
+        call(AMOS_ROUTINE(w_ec_force_cop));
         d.HsChange = 0;
         d.MouShow = 0xFFFF;
         d.CopPos = d.CopLogic;
@@ -169,9 +170,9 @@ void w_ec_copper_on_off(AllRegs *r)
     swap_lists();
     wait_vbl();
     d.CopON = 0xFFFF;
-    call(w_sprites_show);
+    call(AMOS_ROUTINE(w_sprites_show));
     d.MouShow = 0;
-    call(w_ec_force_cop);
+    call(AMOS_ROUTINE(w_ec_force_cop));
     wait_vbl();
 }
 

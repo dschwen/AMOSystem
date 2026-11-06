@@ -3,6 +3,7 @@
 // of the old file and an icon if set so). Name1 holds the file's name
 // after the file selector.
 
+#include "runtime/static_symbols.h"
 #include "editor/editor.h"
 
 #include <dos/dos.h>
@@ -23,13 +24,13 @@ namespace {
 constexpr uint16_t BitControl = 1 << 8;
 constexpr uint8_t EtANom = 1 << 4;
 
-void run(uint8_t *routine)
+void run(host::RoutineArg routine)
 {
     Regs r;
     call(routine, r);
 }
 
-void run_d0(uint8_t *routine, uint32_t d0)
+void run_d0(host::RoutineArg routine, uint32_t d0)
 {
     Regs r;
     r.d[0] = d0;
@@ -43,7 +44,7 @@ bool select_file(uint16_t message)
 {
     Regs r;
     r.d[0] = message;
-    call(ed_file_selector, r);
+    call(AMOS_ROUTINE(ed_file_selector), r);
     if (!uint16_t(r.d[0]))
         return false;
     path_it();
@@ -53,7 +54,7 @@ bool select_file(uint16_t message)
 void select_or_not_done(uint16_t message)
 {
     if (!select_file(message))
-        run(ed_not_done);
+        run(AMOS_ROUTINE(ed_not_done));
 }
 
 // Ed_AvName: message n followed by a name, as a warning
@@ -62,7 +63,7 @@ void warn_name(uint16_t message, const uint8_t *name)
     Regs r;
     r.d[0] = message;
     r.a[0] = address(name);
-    call(ed_av_name, r);
+    call(AMOS_ROUTINE(ed_av_name), r);
 }
 
 void count_lines()
@@ -97,13 +98,13 @@ void load_hidden()
 {
     warn_name(155, name1());
     if (open_window(false, 0))
-        run(ed_out_of_memory);
+        run(AMOS_ROUTINE(ed_out_of_memory));
     idata().Ed_WindowToDel = address(&window());
     Regs r = load(-1);
     if (r.d[0])
-        run_d0(ed_prg_load_err, r.d[0]);
+        run_d0(AMOS_ROUTINE(ed_prg_load_err), r.d[0]);
     program().Prg_StModif = 1;
-    run(ed_aver_fin);
+    run(AMOS_ROUTINE(ed_aver_fin));
 }
 
 } // namespace amos::ed
@@ -120,12 +121,12 @@ void reload()
         if (!r.d[0])
             break;
         if (int32_t(r.d[0]) < 0)
-            run_d0(ed_prg_load_err, r.d[0]);
-        run_d0(ed_get_place, r.d[1]);
-        run(ed_aver_fin);
+            run_d0(AMOS_ROUTINE(ed_prg_load_err), r.d[0]);
+        run_d0(AMOS_ROUTINE(ed_get_place), r.d[1]);
+        run(AMOS_ROUTINE(ed_aver_fin));
     }
     program().Prg_StModif = 1;
-    run(ed_aver_fin);
+    run(AMOS_ROUTINE(ed_aver_fin));
     new_buffer_all();
 }
 
@@ -135,8 +136,8 @@ void merge()
     IData &d = idata();
     tokenise_current_line();
     select_or_not_done(78);
-    run(ed_clear_var);
-    run(ed_block_free_entry);
+    run(AMOS_ROUTINE(ed_clear_var));
+    run(AMOS_ROUTINE(ed_block_free_entry));
     undo_reset();
     load_hidden();
     Program &hidden = program();
@@ -149,7 +150,7 @@ void merge()
         ctx().a6 = ptr<uint8_t>(c->Edt_Prg);
         uint16_t at = c->Edt_YPos + c->Edt_YCu;
         if (store_block(from, uint32_t(length), at).error)
-            run(ed_oof_buf);
+            run(AMOS_ROUTINE(ed_oof_buf));
         marks_change(at, int16_t(lines));
     }
     // (the hidden window is deleted on the way back to the loop)
@@ -168,16 +169,16 @@ void merge_ascii()
     BPTR file = hal::open(reinterpret_cast<CONST_STRPTR>(name1()), MODE_OLDFILE);
     d.Handle = uint32_t(file);
     if (!file)
-        run(ed_d_error);
+        run(AMOS_ROUTINE(ed_d_error));
     hal::seek(file, 0, OFFSET_END);
     int32_t length = hal::seek(file, 0, OFFSET_BEGINNING);
     Regs t;
     t.d[0] = uint32_t(length + 4);
     t.a[0] = boot::temp_buffer(t.d[0]);
     if (!t.a[0])
-        run(ed_out_of_memory);
+        run(AMOS_ROUTINE(ed_out_of_memory));
     if (hal::read(file, ptr<void>(t.a[0]), length) != length)
-        run(ed_d_error);
+        run(AMOS_ROUTINE(ed_d_error));
     d.Handle = 0;
     hal::close(file);
     EditWindow &w = window();
@@ -189,7 +190,7 @@ void merge_ascii()
         Regs f;
         f.d[0] = 0;
         f.a[0] = boot::temp_buffer(f.d[0]);
-        run(ed_aver_fin);
+        run(AMOS_ROUTINE(ed_aver_fin));
         count_lines();
         new_buffer_all();
         Regs k;
@@ -217,23 +218,23 @@ void merge_ascii()
             }
             if (c != 9) {
                 finish();
-                run(ed_l_to_long);
+                run(AMOS_ROUTINE(ed_l_to_long));
             }
             *a2 = ' ';
         }
         if (a2 - a3 >= 250) {
             finish();
-            run(ed_l_to_long);
+            run(AMOS_ROUTINE(ed_l_to_long));
         }
         uint8_t *line = a3;
         a3 = a2 + 1;
         if (tokenise_line(line, buffer) < 0) {
             finish();
-            run(ed_l_to_long);
+            run(AMOS_ROUTINE(ed_l_to_long));
         }
         if (store(buffer, at, true).error) {
             finish();
-            run(ed_oof_buf);
+            run(AMOS_ROUTINE(ed_oof_buf));
         }
         at++;
         program().Prg_NLigne++;
@@ -261,7 +262,7 @@ bool make_bak()
         }
     Regs r;
     r.d[0] = 21;
-    call(ed_get_systeme, r);
+    call(AMOS_ROUTINE(ed_get_systeme), r);
     copy_name(dot, ptr<uint8_t>(r.a[0]));
     for (;;) {
         if (hal::rename(reinterpret_cast<CONST_STRPTR>(name1()), reinterpret_cast<CONST_STRPTR>(name2)))
@@ -287,7 +288,7 @@ void save_icon()
 // Ed_SavePrg2: the program saved as Name1; false on an error
 bool save_program2()
 {
-    run(ed_clear_var);
+    run(AMOS_ROUTINE(ed_clear_var));
     count_lines();
     Regs r;
     lib_call(L_Prg_Save, r);
@@ -311,8 +312,8 @@ void save_as_name1()
 {
     warn_name(154, name1());
     if (!save_program())
-        run(ed_d_error);
-    run(ed_aver_fin);
+        run(AMOS_ROUTINE(ed_d_error));
+    run(AMOS_ROUTINE(ed_aver_fin));
     window().Edt_EtatAff |= EtANom;
 }
 
@@ -351,16 +352,16 @@ void ed_load_hidden_key(AllRegs *)
     select_or_not_done(66);
     load_hidden();
     idata().Ed_WindowToDel = 0;
-    run(ed_branch_amos);
+    run(AMOS_ROUTINE(ed_branch_amos));
 }
 
 // Ed_Load: a program into the current window
 void ed_load(AllRegs *)
 {
     tokenise_current_line();
-    run(ed_saved);
+    run(AMOS_ROUTINE(ed_saved));
     select_or_not_done(70);
-    run(ed_new2);
+    run(AMOS_ROUTINE(ed_new2));
     reload();
 }
 
@@ -407,7 +408,7 @@ void ed_save_as_name(AllRegs *)
     bool ok = save_program2();
     copy_name(program().Prg_NamePrg, kept);
     if (!ok)
-        run(ed_d_error);
+        run(AMOS_ROUTINE(ed_d_error));
 }
 
 void ed_save_as(AllRegs *)

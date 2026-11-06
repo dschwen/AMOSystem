@@ -494,7 +494,7 @@ int library_init(uint32_t n)
     r.a[1] = lb_long(tokens, LB_Command);
     r.d[1] = 0x41506578;        // "APex"
     r.d[2] = 0x200;             // VerNumber
-    amos_call(&r, ptr<void>(lb_jump(tokens, 0)));
+    amos_call(&r, host::decode_routine(lb_jump(tokens, 0)));
     // (the number is a byte)
     if (int16_t(r.d[0]) < 0 || int8_t(r.d[0]) != int16_t(n - 1))
         return 2;
@@ -601,7 +601,7 @@ void libraries_stop()
             Regs r;
             r.d[2] = uint32_t(i);
             r.a[2] = address(&d.ExtAdr[4 * i]);
-            amos_call(&r, ptr<void>(end));
+            amos_call(&r, host::decode_routine(end));
         }
     }
 }

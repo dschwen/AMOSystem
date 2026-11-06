@@ -1,6 +1,7 @@
 // Typed live views: field selection preserves address domains and constness.
 #pragma once
 #include "memory/guest_memory.h"
+#include "core/routine_field.h"
 #pragma pack(push, 8)
 namespace amos::guest {
 template<class Owner, class Value, uint32_t Offset> struct Field {
@@ -69,6 +70,24 @@ public:
 #else
         if (!memory_) return Fault::unmapped;
         return memory_->store_pointer(address_, value);
+#endif
+    }
+    Result<host::RoutineArg> load() const requires same_type<UnconstT<T>, wire::RoutineField> {
+#if defined(__mc68000__)
+        auto word = Memory{}.load_be32(GuestPtr<const Byte>(address_.bits_));
+#else
+        if (!memory_) return {{}, Fault::unmapped};
+        auto word = memory_->load_be32(GuestPtr<const Byte>(address_.bits_));
+#endif
+        if (!word) return {{}, word.fault};
+        return {host::decode_routine(word.value), Fault::none};
+    }
+    Fault store(host::RoutineArg entry) const requires same_type<T, wire::RoutineField> {
+#if defined(__mc68000__)
+        return Memory{}.store_be32(GuestPtr<Byte>(address_.bits_), host::encode_routine(entry));
+#else
+        if (!memory_) return Fault::unmapped;
+        return memory_->store_be32(GuestPtr<Byte>(address_.bits_), host::encode_routine(entry));
 #endif
     }
     Result<uint32_t> load() const requires same_type<UnconstT<T>, uint32_t> {

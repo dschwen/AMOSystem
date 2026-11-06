@@ -7,6 +7,7 @@
 // corner; Edt_XCu/Edt_YCu: the cursor in the window (Edt_XCu counts from
 // the start of the line).
 
+#include "runtime/static_symbols.h"
 #include "editor/editor.h"
 #include "core/source.h"
 
@@ -21,7 +22,7 @@ namespace {
 constexpr uint8_t EtAX = 1 << 2, EtAY = 1 << 3, EtABAll = 0x7F;
 constexpr uint8_t SlDelai = 10;
 
-void run(uint8_t *routine)
+void run(host::RoutineArg routine)
 {
     Regs r;
     call(routine, r);
@@ -54,7 +55,7 @@ const uint8_t *system_text(uint16_t n)
 {
     Regs r;
     r.d[0] = n;
-    call(ed_get_systeme, r);
+    call(AMOS_ROUTINE(ed_get_systeme), r);
     return ptr<uint8_t>(r.a[0]);
 }
 
@@ -212,7 +213,7 @@ End:
 // Ed_AffBuf: all the lines of the window
 void show_all()
 {
-    run(ed_all_aver_fin);
+    run(AMOS_ROUTINE(ed_all_aver_fin));
     for (uint16_t y = 0; y < window().Edt_WindTy; y++)
         show_line(y, true);
     place_cursor();
@@ -377,7 +378,7 @@ void show_slider()
     if (!w.Edt_WindTy)
         return;
     Regs u;
-    call(ed_sl_update_y, u);
+    call(AMOS_ROUTINE(ed_sl_update_y), u);
     Regs r;
     r.a[0] = address(w.Edt_SlV);
     r.d[0] = 0;
@@ -467,7 +468,7 @@ void ed_set_xy(AllRegs *r)
     set_y(uint16_t(n.number));
     set_x(x);
     Regs a;
-    call(ed_aver_fin, a);
+    call(AMOS_ROUTINE(ed_aver_fin), a);
     new_buffer();
 }
 

@@ -367,9 +367,6 @@ namespace amos {
 // The function of a WEntry glue (found by the address of its entry, or of
 // an alias of it), for the C++ that calls it directly
 #if !defined(__mc68000__)
-WFunction wentry_function(const void* entry) {
-    return wentry_function(host::detail::legacy_routine_entry(entry));
-}
 WFunction wentry_function(host::RoutineEntry code)
 #else
 WFunction wentry_function(const void *entry)

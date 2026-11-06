@@ -157,7 +157,7 @@ void pass_two()
             AllRegs a = {};
             a.a[0] = e;
             ctx().a4 = ptr<uint8_t>(e);
-            call(ptr<uint8_t>(jump), a);
+            call(host::decode_routine(jump), a);
         }
     }
     reloc_free();

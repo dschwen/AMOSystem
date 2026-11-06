@@ -10,6 +10,7 @@
 // While a macro is recorded, the first element of EdMa_List is a buffer
 // of 1024 bytes, EdMa_Tape one more than the bytes recorded.
 
+#include "runtime/static_symbols.h"
 #include "editor/editor.h"
 #include "core/amiga.h"
 
@@ -35,13 +36,13 @@ constexpr uint16_t DiaImages = 66;              // Ed_DiaImages
 constexpr uint16_t EdDMacro1 = 13, EdDMacro2 = 14, EdDMacroD = 18, EdDMacroNA = 19, EdDMacroAll = 20,
                    EdDMacroEra = 21, EdDMacroNo = 22, EdDMacroPas = 23;
 
-void run(uint8_t *routine)
+void run(host::RoutineArg routine)
 {
     Regs r;
     call(routine, r);
 }
 
-void run_d0(uint8_t *routine, uint32_t d0)
+void run_d0(host::RoutineArg routine, uint32_t d0)
 {
     Regs r;
     r.d[0] = d0;
@@ -50,7 +51,7 @@ void run_d0(uint8_t *routine, uint32_t d0)
 
 [[noreturn]] void not_done()
 {
-    run(ed_not_done);
+    run(AMOS_ROUTINE(ed_not_done));
     __builtin_unreachable();
 }
 
@@ -87,7 +88,7 @@ void system_file(uint16_t n)
 {
     Regs m;
     m.d[0] = n;
-    call(ed_get_systeme, m);
+    call(AMOS_ROUTINE(ed_get_systeme), m);
     Regs p;
     p.a[0] = m.a[0];
     boot::sys_add_path(ptr<char>(p.a[0]));
@@ -191,7 +192,7 @@ int32_t run_dialogue(uint16_t n)
 {
     IData &d = idata();
     Regs b;
-    call(ed_set_banks, b);
+    call(AMOS_ROUTINE(ed_set_banks), b);
     Regs r;
     r.d[0] = 1;
     r.d[1] = n;
@@ -228,7 +229,7 @@ uint32_t dialogues_open()
 {
     IData &d = idata();
     Regs b;
-    call(ed_set_banks, b);
+    call(AMOS_ROUTINE(ed_set_banks), b);
     const uint8_t *resource = ptr<uint8_t>(d.Ed_Resource);
     const uint8_t *programs = resource + peek_l(resource + 2 + 8);
     Regs r;
@@ -253,7 +254,7 @@ uint32_t dialogues_open()
 void dialogues_close()
 {
     Regs b;
-    call(ed_set_banks, b);
+    call(AMOS_ROUTINE(ed_set_banks), b);
     Regs r;
     r.d[0] = 1;
     lib_call(L_Dia_CloseChannel, r);
@@ -304,7 +305,7 @@ bool save()
 {
     IData &d = idata();
     if (!open(MODE_NEWFILE))
-        run(ed_d_error);
+        run(AMOS_ROUTINE(ed_d_error));
     uint8_t *buffer = ptr<uint8_t>(d.Buffer);
     poke_l(buffer, MacroHead);
     bool ok = write(buffer, 4);
@@ -324,15 +325,15 @@ void load_it()
 {
     if (*macros() && int16_t(dialogue(EdDMacroEra)) != 1)
         not_done();
-    run_d0(ed_warn, 62);
+    run_d0(AMOS_ROUTINE(ed_warn), 62);
     int32_t result = load();
-    run(ed_aver_fin);
+    run(AMOS_ROUTINE(ed_aver_fin));
     if (!result)
         return;
     if (result < 0)
-        run(ed_out_of_memory);
+        run(AMOS_ROUTINE(ed_out_of_memory));
     if (result == 1)
-        run(ed_d_error);
+        run(AMOS_ROUTINE(ed_d_error));
     dialogue(EdDMacroPas);
     place_cursor();
 }
@@ -340,11 +341,11 @@ void load_it()
 // EdMa_SaveIt
 void save_it()
 {
-    run_d0(ed_warn, 61);
+    run_d0(AMOS_ROUTINE(ed_warn), 61);
     bool ok = save();
-    run(ed_aver_fin);
+    run(AMOS_ROUTINE(ed_aver_fin));
     if (!ok)
-        run(ed_d_error);
+        run(AMOS_ROUTINE(ed_d_error));
     idata().EdMa_Changed = 0;
 }
 
@@ -352,7 +353,7 @@ bool select_file(uint16_t message)
 {
     Regs r;
     r.d[0] = message;
-    if (!uint16_t(call(ed_file_selector, r)))
+    if (!uint16_t(call(AMOS_ROUTINE(ed_file_selector), r)))
         return false;
     path_it();
     return true;
@@ -384,7 +385,7 @@ void save_as()
 {
     if (!select_file(51))
         not_done();
-    run(ed_save_over);
+    run(AMOS_ROUTINE(ed_save_over));
     save_it();
 }
 
@@ -446,11 +447,11 @@ void record()
     uint8_t *buffer = list_new(macros(), 1024);
     // (the assembler went on with no memory, and wrote at address 8)
     if (!buffer)
-        run(ed_out_of_memory);
+        run(AMOS_ROUTINE(ed_out_of_memory));
     d.EdMa_Tape = 1;
     poke_l(buffer + 8, key);
     poke_l(buffer + 8 + 1024 - 4, 0xFFFFFFFF);
-    run(ed_aver_fin);
+    run(AMOS_ROUTINE(ed_aver_fin));
     place_cursor();
 }
 
@@ -472,14 +473,14 @@ void stop()
     // (the assembler went on with no memory, and wrote at address 8)
     if (!m) {
         list_delete(macros(), buffer);
-        run(ed_out_of_memory);
+        run(AMOS_ROUTINE(ed_out_of_memory));
     }
     poke_l(m + 8, peek_l(buffer + 8));
     for (uint16_t i = 0; i < recorded; i++)
         m[12 + i] = buffer[12 + i];
     m[12 + recorded] = 0xFF;
     list_delete(macros(), buffer);
-    run_d0(ed_alert_100, 45);
+    run_d0(AMOS_ROUTINE(ed_alert_100), 45);
 }
 
 } // namespace

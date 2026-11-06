@@ -11,6 +11,7 @@
 // T_HsTAct: per sprite, a flag byte (bit 3 changed, negative off), x, y
 // and image, which Sprite and AMAL set and update() takes.
 
+#include "runtime/static_symbols.h"
 #include "core/amiga.h"
 #include "w/w.h"
 #include "hal/system.h"
@@ -60,7 +61,7 @@ struct Image {
     uint8_t *data() { return reinterpret_cast<uint8_t *>(this) + 10; }
 };
 
-void call_d1(uint8_t *routine, uint32_t d1)
+void call_d1(host::RoutineArg routine, uint32_t d1)
 {
     Regs r;
     r.d[1] = d1;
@@ -517,7 +518,7 @@ void off(uint16_t n)
     poke_w(a + 6, 0);
     Regs r;
     r.a[0] = address(a);
-    amos_call(&r, w_dad_amal);
+    amos_call(&r, AMOS_ROUTINE(w_dad_amal));
     unset(n);
 }
 
@@ -718,7 +719,7 @@ void w_sy_sprite_buffer(AllRegs *r)
         return;
     d.MouShow = 0xFFFF;
     w_sy_sprites_off(r);
-    call_d1(w_mouse_hide, 0xFFFFFFFF);
+    call_d1(AMOS_ROUTINE(w_mouse_hide), 0xFFFFFFFF);
     // The sprite registers to an empty sprite, from the next VBL
     d.HsTCol = 0;
     uint8_t *empty = ptr<uint8_t>(d.CopLogic + d.CopLong) - 4;
@@ -730,7 +731,7 @@ void w_sy_sprite_buffer(AllRegs *r)
     sprite_buffers_free();
     r->d[0] = 0;
     if (sprite_buffers(lines)) {
-        call_d1(w_mouse_show, 0xFFFFFFFF);
+        call_d1(AMOS_ROUTINE(w_mouse_show), 0xFFFFFFFF);
         return;
     }
     // At least 16 lines, else 2
@@ -741,7 +742,7 @@ void w_sy_sprite_buffer(AllRegs *r)
     }
     d.MouDes = d.MouBank;
     d.MouSpr = 0;
-    call_d1(w_mouse_show, 0xFFFFFFFF);
+    call_d1(AMOS_ROUTINE(w_mouse_show), 0xFFFFFFFF);
     r->d[0] = 1;
 }
 }

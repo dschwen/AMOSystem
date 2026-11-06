@@ -2,6 +2,7 @@
 // with Autoback 1 (draw in the physical bitmap too) or 2 (the bobs taken
 // off, drawn in both buffers, and put back).
 
+#include "runtime/static_symbols.h"
 #include "w/w.h"
 
 #include <graphics/gfx.h>
@@ -31,9 +32,9 @@ void draw_into(Screen *s, const be_u32 *planes)
 // taken off
 void swap_with_bobs()
 {
-    call(w_bob_update);
-    call(w_bob_show);
-    call(w_sc_swap_all);
+    call(AMOS_ROUTINE(w_bob_update));
+    call(AMOS_ROUTINE(w_bob_show));
+    call(AMOS_ROUTINE(w_sc_swap_all));
     wait_vbl();
 }
 
@@ -50,7 +51,7 @@ void w_ec_autoback1(AllRegs *r)
     r->d[0] = mode(s, r->d[0]);
     if (int16_t(r->d[0]) > 0) {
         wait_vbl();
-        call(w_bob_erase);
+        call(AMOS_ROUTINE(w_bob_erase));
         r->d[0] = 0;
     }
 }
@@ -70,7 +71,7 @@ void w_ec_autoback2(AllRegs *r)
         return;
     }
     swap_with_bobs();
-    call(w_bob_erase);
+    call(AMOS_ROUTINE(w_bob_erase));
     r->d[0] = 0;
 }
 
@@ -98,8 +99,8 @@ void w_ec_autoback4(AllRegs *r)
     Screen *s = current_screen();
     r->d[0] = mode(s, r->d[0]);
     if (int16_t(r->d[0]) > 0) {
-        call(w_bob_update);
-        call(w_bob_show);
+        call(AMOS_ROUTINE(w_bob_update));
+        call(AMOS_ROUTINE(w_bob_show));
         r->d[0] = 0;
     }
 }

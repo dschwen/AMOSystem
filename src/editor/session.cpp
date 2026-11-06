@@ -9,6 +9,7 @@
 // are saved first (a program without a name as New_Project_<n>.AMOS,
 // loaded back and deleted).
 
+#include "runtime/static_symbols.h"
 #include "editor/editor.h"
 
 #include <dos/dos.h>
@@ -28,13 +29,13 @@ namespace {
 constexpr uint32_t QuitHead = 0x41704C43;       // "ApLC"
 constexpr uint16_t EdDQuit = 2, EdDNoWarm = 51, EdDWarmErr = 52, EdDWarmDel = 53;
 
-void run(uint8_t *routine)
+void run(host::RoutineArg routine)
 {
     Regs r;
     call(routine, r);
 }
 
-[[noreturn]] void jump(uint8_t *routine)
+[[noreturn]] void jump(host::RoutineArg routine)
 {
     run(routine);
     __builtin_unreachable();
@@ -51,7 +52,7 @@ uint8_t *system_text(uint16_t n)
 {
     Regs m;
     m.d[0] = n;
-    call(ed_get_systeme, m);
+    call(AMOS_ROUTINE(ed_get_systeme), m);
     return ptr<uint8_t>(m.a[0]);
 }
 
@@ -181,22 +182,22 @@ void do_quit()
 {
     IData &d = idata();
     tokenise_current_line();
-    run(ed_clear_var);
+    run(AMOS_ROUTINE(ed_clear_var));
     sound_play('B');
     if (d.Ed_QuitFlags & 2 && d.EdC_Changed)
-        run(ed_config_save_default_quiet_entry);
+        run(AMOS_ROUTINE(ed_config_save_default_quiet_entry));
     if (d.Ed_QuitFlags & 4 && d.EdMa_Changed)
-        run(ed_macro_save_default_entry);
+        run(AMOS_ROUTINE(ed_macro_save_default_entry));
     if (!(d.Ed_QuitFlags & 8)) {
         // the programs not saved, each one asked about
         for (EditWindow *w = ptr<EditWindow>(d.Edt_List); w; w = ptr<EditWindow>(w->Edt_Next)) {
             use(w, ptr<Program>(w->Edt_Prg));
-            run(ed_saved);
+            run(AMOS_ROUTINE(ed_saved));
         }
-        jump(ed_system);
+        jump(AMOS_ROUTINE(ed_system));
     }
     if (save_session())
-        jump(ed_system);
+        jump(AMOS_ROUTINE(ed_system));
     close();
     all_warnings_end();
     dialogue(EdDNoWarm);
@@ -208,7 +209,7 @@ void quit()
 {
     tokenise_current_line();
     if (idata().Ed_QuitFlags & 1 && int16_t(dialogue(EdDQuit)) != 1)
-        jump(ed_loop);
+        jump(AMOS_ROUTINE(ed_loop));
     do_quit();
 }
 
@@ -237,7 +238,7 @@ void delete_file()
     while (!hal::delete_file(ptr<char>(idata().Name1))) {
         if (int16_t(dialogue(EdDWarmDel)) != 1) {
             warm_error();
-            jump(ed_system);
+            jump(AMOS_ROUTINE(ed_system));
         }
         close();
         system_file(47);
@@ -253,7 +254,7 @@ void restart_empty()
     d.Edt_Current = 0;
     ctx().a4 = nullptr;
     open_window(true, int32_t(d.PI_DefSize));
-    run(ed_branch_amos);
+    run(AMOS_ROUTINE(ed_branch_amos));
     draw_windows();
     dialogue(EdDWarmErr);
 }
@@ -388,8 +389,8 @@ void warm_start()
         }
     }
     delete_file();
-    run(ed_undo_create_all_entry);
-    run(ed_branch_amos);
+    run(AMOS_ROUTINE(ed_undo_create_all_entry));
+    run(AMOS_ROUTINE(ed_branch_amos));
     // (the assembler went on with a4 on a window record of the freed
     // buffer)
     EditWindow *current = ptr<EditWindow>(d.Edt_Current);

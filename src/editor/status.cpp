@@ -7,6 +7,7 @@
 //     away (Ed_Avert counts them; each is a block of the screen)
 //   Ed_EtPrint: the status line of a window: what Edt_EtatAff asks for
 
+#include "runtime/static_symbols.h"
 #include "editor/editor.h"
 
 using namespace amos;
@@ -47,7 +48,7 @@ void locate(int16_t x, int16_t y)
 void close_file()
 {
     Regs r;
-    call(ed_close, r);
+    call(AMOS_ROUTINE(ed_close), r);
 }
 
 } // namespace
@@ -76,7 +77,7 @@ uint8_t *name_into(uint8_t *to, const Program &program)
     if (*name) {
         Regs r;
         r.a[0] = address(name);
-        call(ed_name_part_entry, r);
+        call(AMOS_ROUTINE(ed_name_part_entry), r);
         name = ptr<uint8_t>(r.a[0]);
     } else {
         name = system_message(7);
@@ -122,7 +123,7 @@ void warn(const uint8_t *text)
 {
     IData &d = idata();
     Regs b;
-    call(ed_set_banks, b);
+    call(AMOS_ROUTINE(ed_set_banks), b);
     d.Ed_Avert++;
     const uint8_t *resource = ptr<uint8_t>(d.Ed_Resource);
     const uint8_t *programs = resource + peek_l(resource + 2 + 8);
@@ -315,7 +316,7 @@ void alert_clean()
     } else {
         Regs s;
         s.d[0] = 'G';
-        call(ed_sam_play, s);
+        call(AMOS_ROUTINE(ed_sam_play), s);
         // kept for Ed_RAlert
         uint8_t *kept = ptr<uint8_t>(d.Ed_BufT) + 256;
         poke_l(kept, AlertMark);
@@ -325,7 +326,7 @@ void alert_clean()
         alert_clean();
     }
     Regs l;
-    call(ed_loop, l);
+    call(AMOS_ROUTINE(ed_loop), l);
     __builtin_unreachable();
 }
 
@@ -418,7 +419,7 @@ void ed_zap_alert(AllRegs *r)
     d.Ed_ZapError = 0xFFFF;
     alert_clean();
     Regs l;
-    call(ed_loop, l);
+    call(AMOS_ROUTINE(ed_loop), l);
 }
 
 void ed_alert_clean(AllRegs *) { alert_clean(); }

@@ -8,6 +8,7 @@
 // before it, a zero, then for each text its length, the text and a zero;
 // a length with bit 7 set ends it.
 
+#include "runtime/static_symbols.h"
 #include "editor/editor.h"
 
 #include <stddef.h>
@@ -29,13 +30,13 @@ constexpr uint32_t ConfigSize = offsetof(IData, Ed_Code) + 4 - offsetof(IData, E
 constexpr uint16_t EdDSvConf = 45, EdDCSaved = 46;
 constexpr uint16_t BankSamples = 5, BankResource = 6;
 
-void run(uint8_t *routine)
+void run(host::RoutineArg routine)
 {
     Regs r;
     call(routine, r);
 }
 
-void run_d0(uint8_t *routine, uint32_t d0)
+void run_d0(host::RoutineArg routine, uint32_t d0)
 {
     Regs r;
     r.d[0] = d0;
@@ -44,7 +45,7 @@ void run_d0(uint8_t *routine, uint32_t d0)
 
 [[noreturn]] void not_done()
 {
-    run(ed_not_done);
+    run(AMOS_ROUTINE(ed_not_done));
     __builtin_unreachable();
 }
 
@@ -148,7 +149,7 @@ void sound_play(uint8_t c)
         r.d[3] = peek_w(s + 8);
         r.a[1] = address(s + 14);
         r.d[0] = r.a[0] = music;
-        call(ptr<uint8_t>(music - 4), r);
+        call(host::decode_routine(music - 4), r);
         return;
     }
 }
@@ -297,7 +298,7 @@ void sounds_changed()
         return;
     Regs m;
     m.d[0] = 48;
-    call(ed_get_systeme, m);
+    call(AMOS_ROUTINE(ed_get_systeme), m);
     add_path(m.a[0]);
     if (!open(MODE_OLDFILE))
         return;
@@ -398,7 +399,7 @@ bool select_file(uint16_t message)
 {
     Regs r;
     r.d[0] = message;
-    if (!uint16_t(call(ed_file_selector, r)))
+    if (!uint16_t(call(AMOS_ROUTINE(ed_file_selector), r)))
         return false;
     path_it();
     return true;
@@ -416,10 +417,10 @@ void default_name()
 // EdC_SaveIt
 void save_it()
 {
-    run_d0(ed_warn, 152);
+    run_d0(AMOS_ROUTINE(ed_warn), 152);
     if (save())
-        run_d0(ed_alert_100, 139);
-    run(ed_aver_fin);
+        run_d0(AMOS_ROUTINE(ed_alert_100), 139);
+    run(AMOS_ROUTINE(ed_aver_fin));
     idata().EdC_Changed = 0;
 }
 
@@ -428,7 +429,7 @@ void save_as()
     tokenise_current_line();
     if (!select_file(130))
         not_done();
-    run(ed_save_over);
+    run(AMOS_ROUTINE(ed_save_over));
     save_it();
 }
 
@@ -450,11 +451,11 @@ void save_default()
 void redraw()
 {
     sounds_changed();
-    run(ed_hide);
-    run(ed_close_editor);
+    run(AMOS_ROUTINE(ed_hide));
+    run(AMOS_ROUTINE(ed_close_editor));
     idata().EdC_Modified = 1;
-    run(ed_open_editor);
-    run(ed_appear);
+    run(AMOS_ROUTINE(ed_open_editor));
+    run(AMOS_ROUTINE(ed_appear));
 }
 
 // Ed_TiWait: until a key, a button or n frames
@@ -476,11 +477,11 @@ void wait_input(uint16_t n)
 // EdC_LoadIt
 void load_it()
 {
-    run_d0(ed_warn, 153);
+    run_d0(AMOS_ROUTINE(ed_warn), 153);
     if (load())
-        run_d0(ed_alert_100, 139);
-    run(ed_aver_fin);
-    run_d0(ed_warn, 218);
+        run_d0(AMOS_ROUTINE(ed_alert_100), 139);
+    run(AMOS_ROUTINE(ed_aver_fin));
+    run_d0(AMOS_ROUTINE(ed_warn), 218);
     wait_input(75);
     redraw();
 }

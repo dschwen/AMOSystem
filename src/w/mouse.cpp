@@ -5,6 +5,7 @@
 // AMAL may test, keep their own copy of the screen to hardware
 // conversion (w/collision.cpp).
 
+#include "runtime/static_symbols.h"
 #include "w/w.h"
 #include "hal/system.h"
 
@@ -35,7 +36,7 @@ void show_sprites_3()
     for (int i = 0; i < 3; i++) {
         while (*static_cast<volatile be_u32 *>(&wdata().HsChange))
             hal::idle();
-        call(w_sprites_show);
+        call(AMOS_ROUTINE(w_sprites_show));
     }
 }
 
@@ -49,7 +50,7 @@ void mouse_on()
     r.d[2] = d.XMouse;
     r.d[3] = d.YMouse;
     r.a[1] = d.MouDes;
-    amos_call(&r, w_sprite_set);
+    amos_call(&r, AMOS_ROUTINE(w_sprite_set));
     show_sprites_3();
     mouse_shown() = 0;
 }
@@ -59,7 +60,7 @@ void mouse_off()
 {
     Regs r;
     r.d[1] = 0;
-    amos_call(&r, w_sprite_unset);
+    amos_call(&r, AMOS_ROUTINE(w_sprite_unset));
     show_sprites_3();
 }
 

@@ -3,6 +3,7 @@
 // Ed_GetPlace), saving it when it changed (Ed_Saved), overwriting a file
 // (Ed_SaveOver), the file selector (Ed_File_Selector), Ed_OpenLoad.
 
+#include "runtime/static_symbols.h"
 #include "editor/editor.h"
 
 using namespace amos;
@@ -16,13 +17,13 @@ namespace {
 constexpr uint16_t EcEdit = 9;
 constexpr uint16_t EdDSaved = 11, EdDSetBuf = 36, EdDTooSmall = 37, EdDAExist = 47;
 
-void run(uint8_t *routine)
+void run(host::RoutineArg routine)
 {
     Regs r;
     call(routine, r);
 }
 
-[[noreturn]] void alert(uint8_t *routine)
+[[noreturn]] void alert(host::RoutineArg routine)
 {
     run(routine);
     __builtin_unreachable();
@@ -61,8 +62,8 @@ void window_new()
         p[i] = 0;
     w.Edt_YBloc = 0xFFFF;
     w.Edt_YOldBloc = 0xFFFF;
-    run(ed_undo_create_entry);
-    run(ed_marks_clear_entry);
+    run(AMOS_ROUTINE(ed_undo_create_entry));
+    run(AMOS_ROUTINE(ed_marks_clear_entry));
     idata().MathFlags = 0;
 }
 
@@ -70,7 +71,7 @@ void window_new()
 // banks)
 void program_new()
 {
-    run(ed_menu_program);
+    run(AMOS_ROUTINE(ed_menu_program));
     Regs n;
     n.d[0] = idata().Ed_Zappeuse ? 0 : 1;
     lib_call(L_Prg_New, n);
@@ -88,7 +89,7 @@ void save_over()
         return;
     dialogue_variables()[0] = d.Name1;
     if (int16_t(dialogue(EdDAExist)) != 1)
-        alert(ed_not_done);
+        alert(AMOS_ROUTINE(ed_not_done));
 }
 
 // Ed_Saved: the program saved first if it was changed (or not, if asked)
@@ -107,8 +108,8 @@ void saved()
     if (answer == 2)
         return;
     if (answer != 1)
-        alert(ed_not_done2);
-    run(ed_save_it_entry);
+        alert(AMOS_ROUTINE(ed_not_done2));
+    run(AMOS_ROUTINE(ed_save_it_entry));
 }
 
 // Ed_New: the program erased, saved first if it was changed
@@ -125,7 +126,7 @@ void set_buffer(uint32_t size)
     Program &p = program();
     dialogue_variables()[2] = size;
     if (int16_t(dialogue(EdDSetBuf)) != 1)
-        alert(ed_not_done);
+        alert(AMOS_ROUTINE(ed_not_done));
     Regs v;
     v.d[0] = 1;
     v.d[1] = 3;
@@ -134,7 +135,7 @@ void set_buffer(uint32_t size)
     uint32_t wanted = v.d[1] & ~1u;
     uint32_t had = p.Prg_StTTexte;
     if (wanted < 1024 || wanted == had)
-        alert(ed_not_done);
+        alert(AMOS_ROUTINE(ed_not_done));
     bool kept = false;
     if (wanted > had) {
         // a new buffer, the program copied into it
@@ -161,7 +162,7 @@ void set_buffer(uint32_t size)
             if (!text_buffer(had))
                 text_buffer(1024);
             new_buffer_all();
-            alert(ed_out_of_memory);
+            alert(AMOS_ROUTINE(ed_out_of_memory));
         }
     }
     Regs b;
@@ -172,7 +173,7 @@ void set_buffer(uint32_t size)
 void set_buffer_command()
 {
     tokenise_current_line();
-    run(ed_clear_var);
+    run(AMOS_ROUTINE(ed_clear_var));
     set_buffer(program().Prg_StTTexte);
 }
 
@@ -190,7 +191,7 @@ void get_place(uint32_t size)
     if (!text_buffer(had))
         text_buffer(1024);
     new_buffer_all();
-    alert(ed_out_of_memory);
+    alert(AMOS_ROUTINE(ed_out_of_memory));
 }
 
 // Ed_File_Selector: the file selector with the editor's messages n to n+3
@@ -228,10 +229,10 @@ void open_load()
     r.a[4] = address(c.a4);
     r.a[5] = address(c.a5);
     r.a[6] = address(c.a6);
-    amos_call_all(&r, ed_open_shown_window_entry);
+    amos_call_all(&r, AMOS_ROUTINE(ed_open_shown_window_entry));
     c.a4 = ptr<uint8_t>(r.a[4]);
     c.a6 = ptr<uint8_t>(r.a[6]);
-    run(ed_load_entry);
+    run(AMOS_ROUTINE(ed_load_entry));
 }
 
 } // namespace

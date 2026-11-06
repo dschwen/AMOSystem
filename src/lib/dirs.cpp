@@ -570,7 +570,7 @@ uint32_t fill_next_string()
 
 void check_no_monitor()
 {
-    if (idata().Patch_Errors)
+    if (idata().Patch_Errors.load())
         fon_call();
 }
 

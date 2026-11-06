@@ -4,6 +4,7 @@
 // editor (run, saved) they hold the offset of the line in the program
 // instead, times 256, with the column.
 
+#include "runtime/static_symbols.h"
 #include "editor/editor.h"
 #include "core/source.h"
 
@@ -98,7 +99,7 @@ void ed_set_mark(AllRegs *r)
     marks()[uint16_t(r->d[0])] = here();
     Regs a;
     a.d[0] = 64;
-    call(ed_alert_100, a);
+    call(AMOS_ROUTINE(ed_alert_100), a);
 }
 
 // Ed_GMark0-9: the cursor to mark d0
@@ -108,7 +109,7 @@ void ed_goto_mark(AllRegs *r)
     uint32_t mark = marks()[uint16_t(r->d[0])];
     if (!mark) {
         Regs a;
-        call(ed_no_mark, a);
+        call(AMOS_ROUTINE(ed_no_mark), a);
     }
     auto_mark();
     goto_y(uint16_t(mark >> 16));
