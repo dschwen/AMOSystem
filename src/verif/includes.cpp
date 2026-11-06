@@ -87,7 +87,7 @@ bool integer(const uint8_t *p, uint32_t *value, const uint8_t **end)
     Regs r;
     r.a[0] = address(p);
     r.d[0] = 0;
-    amos_call(&r, lib_address(L_ValRout));
+    amos_call(&r, lib_entry(L_ValRout));
     c.a4 = a4;
     if (r.a[0] == address(p))
         return false;

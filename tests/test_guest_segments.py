@@ -2,6 +2,7 @@
 from pathlib import Path
 import os
 import platform
+import re
 import concurrent.futures
 import importlib.util
 import shlex
@@ -49,9 +50,21 @@ class SegmentTests(unittest.TestCase):
                                 'src/host/guest_segments.cpp','src/host/guest_memory.cpp','-o',str(binary)],cwd=ROOT,check=True)
                 subprocess.run([str(binary)],check=True)
 
+    def test_dispatch_keys_are_independent_of_native_payload_placement(self):
+        with tempfile.TemporaryDirectory() as temp:
+            for opt in ('-O0','-O2'):
+                binary=Path(temp)/'dispatch'
+                subprocess.run([*self.compiler,'-std=c++20',opt,'-Wall','-Wextra','-Werror',
+                                '-Isrc','tests/guest/dispatch.cpp','src/host/guest_segments.cpp','src/host/guest_memory.cpp',
+                                '-o',str(binary)],cwd=ROOT,check=True)
+                subprocess.run([str(binary)],check=True)
+
     def test_symbol_pointer_entry_domains_are_not_convertible(self):
         prelude='''
 #include "memory/guest_segments.h"
+#include "runtime/guest_dispatch.h"
+#include "runtime/glue.h"
+#include "runtime/mark_handle.h"
 using namespace amos::guest;
 void guest(GuestPtr<Byte>) {}
 void host(HostPtr<Byte>) {}
@@ -62,6 +75,16 @@ int main() { GuestSymbol<Byte> s(SegmentId(1), 10); GuestEntry<int()> e{}; REJEC
                     'GuestSymbol<Byte> x(HostPtr<Byte>{}, 0);',
                     'GuestSymbol<Byte> x(SegmentId(1), 0.5);',
                     'GuestPtr<Byte> p = GuestEntry<void()>{};',
+                    'amos::host::GuestDispatchIndex<void(), int> i; i.find(GuestPtr<Byte>{});',
+                    'amos::host::GuestDispatchIndex<void(), int> i; i.find(e);',
+                    'amos::host::GuestDispatchIndex<void(), int> i; i.find((void*)0);',
+                    'entry(HostPtr<Byte>{});',
+                    'amos::AllRegs r{}; amos::host::glue_call((void*)0, r);',
+                    'amos::AllRegs r{}; amos::host::glue_call(GuestPtr<Byte>{}, r);',
+                    'amos::AllRegs r{}; amos::host::glue_call(HostPtr<Byte>{}, r);',
+                    'amos::host::glue_entry((void*)0);',
+                    'amos::AllRegs r{}; amos::host::mark_jump(amos::host::decode_mark(1), (void*)0, r);',
+                    'amos::AllRegs r{}; amos::host::mark_jump(amos::host::decode_mark(1), GuestPtr<Byte>{}, r);',
                     'constexpr GuestSymbol<Byte> x(SegmentId(1), UINT64_MAX);',
                     'constexpr GuestSymbol<Byte> x(SegmentId(1), -1);',
                     'constexpr SegmentId x(65536);',
@@ -89,6 +112,21 @@ int main() { GuestSymbol<Byte> s(SegmentId(1), 10); GuestEntry<int()> e{}; REJEC
                 return obj
             with concurrent.futures.ThreadPoolExecutor(max_workers=4) as pool:
                 objects=list(pool.map(compile_table,sources))
+            # Keep every real dispatch descriptor live, with explicitly generated
+            # test-only callback bodies. No interpreter implementation is faked.
+            declarations=(ROOT/'src/runtime/native_bindings.h').read_text()
+            stubs=Path(temp)/'callbacks.cpp'
+            definitions=['#include "runtime/native_bindings.h"','extern "C" {']
+            for result,name,parameters in re.findall(r'^(void|uint32_t|uint64_t) (amos_typed_\w+)\(([^;]*)\);',declarations,re.M):
+                definitions.append(result+' '+name+'('+parameters+') {'+('' if result=='void' else 'return {};')+'}')
+            definitions.append('}')
+            stubs.write_text('\n'.join(definitions))
+            binary=Path(temp)/'dispatch-image'
+            subprocess.run([*self.compiler,'-std=c++20','-O2','-Isrc','-pie',
+                            'tests/guest/dispatch_image.cpp',str(stubs),'src/host/static_symbols.cpp',
+                            'src/host/guest_segments.cpp','src/host/guest_memory.cpp',
+                            *map(str,objects),'-Wl,--gc-sections','-o',str(binary)],cwd=ROOT,check=True)
+            subprocess.run([str(binary)],check=True)
             for flags in (['-pie'],['-no-pie','-DAMOS_NATIVE_STATIC_REFERENCE']):
                 with self.subTest(flags=flags):
                     binary=Path(temp)/'image'

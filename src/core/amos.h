@@ -21,6 +21,8 @@
 #pragma once
 
 #include "tables/labels.h"
+#include "runtime/routine_entry.h"
+#include "abi/guest_entry_codec.h"
 
 // The entries the system calls (the VBL server, the input handler...): on
 // the Amiga the machine code of src/amiga/native.cpp, on another host the
@@ -120,6 +122,14 @@ int32_t amos_call_cc(Regs *r, const void *fn);
 [[noreturn]] void amos_goto(const void *fn, uint32_t d0);
 }
 
+#if !defined(__mc68000__)
+void amos_call(Regs*, host::RoutineEntry);
+void amos_call_all(AllRegs*, host::RoutineEntry);
+void amos_eval(Regs*, host::RoutineEntry);
+int32_t amos_call_cc(Regs*, host::RoutineEntry);
+[[noreturn]] void amos_goto(host::RoutineEntry, uint32_t);
+#endif
+
 constexpr int LB_Size = 36;
 
 // The interpreter data, above a5
@@ -134,24 +144,35 @@ inline const void *lib_address(int routine)
     return reinterpret_cast<const void *>(uintptr_t(uint32_t(table[-routine])));
 }
 
+// Code slots have an entry type; lib_address remains the temporary data-slot API.
+#if defined(__mc68000__)
+inline const void* lib_entry(int routine) { return lib_address(routine); }
+#else
+inline host::RoutineEntry lib_entry(int routine) {
+    auto table = reinterpret_cast<const be_u32*>(uintptr_t(idata().AdTokens[0] - LB_Size - 4));
+    return guest::abi::EntryCodec::decode<host::RoutineSignature>(uint32_t(table[-routine]));
+}
+inline void entry_call(host::RoutineEntry entry, Regs& r);
+#endif
+
 using RegFunction = uint32_t (*)(RegFrame &);
 
 // Calls the assembler at entry with registers r (below)
 inline void entry_call(const void *entry, Regs &r);
 
 // JJsr: call a routine of AMOSPro.Lib (the entry of its jump table)
-inline void lib_call(int routine, Regs &r) { entry_call(lib_address(routine), r); }
+inline void lib_call(int routine, Regs &r) { entry_call(lib_entry(routine), r); }
 
 // JJsr to a routine that answers in the condition codes: -1 "less than",
 // 0 "equal", 1 "greater than"
-inline int32_t lib_call_cc(int routine, Regs &r) { return amos_call_cc(&r, lib_address(routine)); }
+inline int32_t lib_call_cc(int routine, Regs &r) { return amos_call_cc(&r, lib_entry(routine)); }
 
 // JJsr to a routine that evaluates parameters from the program: the
 // interpreter continues at the a6 (and with the a3) it leaves
-inline void lib_eval(int routine, Regs &r) { amos_eval(&r, lib_address(routine)); }
+inline void lib_eval(int routine, Regs &r) { amos_eval(&r, lib_entry(routine)); }
 
 // Rjmp to a routine of AMOSPro.Lib that does not come back (errors)
-[[noreturn]] inline void lib_jump(int routine, uint32_t d0) { amos_goto(lib_address(routine), d0); }
+[[noreturn]] inline void lib_jump(int routine, uint32_t d0) { amos_goto(lib_entry(routine), d0); }
 
 extern "C" [[noreturn]] void interp_error(uint32_t n, uint32_t first, uint32_t extension, uint32_t messages);
 
@@ -216,6 +237,14 @@ inline void entry_call(const void *entry, Regs &r)
         return w_direct_call(f, r);
     amos_call(&r, entry);
 }
+
+#if !defined(__mc68000__)
+WFunction wentry_function(host::RoutineEntry entry);
+inline void entry_call(host::RoutineEntry entry, Regs& r) {
+    if (WFunction f = wentry_function(entry)) return w_direct_call(f, r);
+    amos_call(&r, entry);
+}
+#endif
 
 // The monitor's patches on the vectors (monitor/patch.cpp): called first,
 // true if they did the function

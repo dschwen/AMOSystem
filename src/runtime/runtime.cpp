@@ -5,8 +5,10 @@
 // hosts, retaining native stack semantics on the Amiga. Also the entries of the assembler the interpreter calls
 // (chrget_glue.s, control_glue.s, run_glue.s...).
 
+#include "runtime/static_symbols.h"
 #include "runtime/runtime.h"
 #include "runtime/glue.h"
+#include "runtime/detail/legacy_dispatch.h"
 #include "runtime/marks.h"
 #include "runtime/context_handle.h"
 #include "interp/interp.h"
@@ -38,7 +40,11 @@ void run_at(Mark &m)
     m.regs = r;
 }
 
+#if !defined(__mc68000__)
+[[noreturn]] void mark_jump(MarkHandle mark, RoutineEntry target, const AllRegs &r, RoutineEntry then)
+#else
 [[noreturn]] void mark_jump(MarkHandle mark, const void *target, const AllRegs &r, const void *then)
+#endif
 {
 #if defined(__mc68000__)
     Mark &m = *ptr<Mark>(encode_mark(mark));
@@ -60,7 +66,7 @@ void run_at(Mark &m)
 #else
     Mark &m = mark_unwind(mark);
 #endif
-    m.target = m.then = nullptr;
+    m.target = {}; m.then = {};
     m.fn = nullptr;
     m.regs_fn = fn;
     m.regs = r;
@@ -74,7 +80,7 @@ void run_at(Mark &m)
 #else
     Mark &m = mark_unwind(mark);
 #endif
-    m.target = m.then = nullptr;
+    m.target = {}; m.then = {};
     m.fn = fn;
     m.regs_fn = nullptr;
     m.regs = r;
@@ -146,7 +152,7 @@ void interp_exec(const void *routine, uint32_t d0, uint32_t d1)
     AllRegs r = context_regs();
     r.d[0] = d0;
     r.d[1] = d1;
-    glue_call(routine, r);
+    legacy_glue_call(routine, r);
     to_context(r);
 }
 
@@ -159,14 +165,20 @@ void interp_exec_value(const void *routine, uint32_t d0, uint32_t d1, const inte
     r.d[2] = v->type;
     r.d[3] = v->v1;
     r.d[4] = v->v2;
-    glue_call(routine, r);
+    legacy_glue_call(routine, r);
     to_context(r);
 }
 
 void interp_step_instruction(uint32_t t) { interp_run_instruction(t); }
 
 // The interpreter goes on at ret, the stack at sp (the instruction given up)
-[[noreturn]] void interp_continue(MarkHandle sp, uint32_t ret) { mark_jump(sp, ptr<void>(ret), context_regs()); }
+[[noreturn]] void interp_continue(MarkHandle sp, uint32_t ret) {
+#if defined(__mc68000__)
+    mark_jump(sp, ptr<void>(ret), context_regs());
+#else
+    mark_jump(sp, guest::abi::EntryCodec::decode<RoutineSignature>(ret), context_regs());
+#endif
+}
 
 // To fn with d0-d5/a0-a2 from r and the interpreter registers of the
 // context, on the stack as it is
@@ -177,7 +189,7 @@ void interp_step_instruction(uint32_t t) { interp_run_instruction(t); }
         a.d[i] = r->d[i];
     for (int i = 0; i < 3; i++)
         a.a[i] = r->a[i];
-    glue_call(fn, a);
+    legacy_glue_call(fn, a);
     missing("return from a jump to", fn);
 }
 
@@ -185,7 +197,12 @@ void interp_step_instruction(uint32_t t) { interp_run_instruction(t); }
 // with all of r, then ret
 [[noreturn]] void interp_restart(MarkHandle sp, uint32_t ret, const AllRegs *r)
 {
+#if defined(__mc68000__)
     mark_jump(sp, ptr<void>(r->a[0]), *r, ptr<void>(ret));
+#else
+    mark_jump(sp, guest::abi::EntryCodec::decode<RoutineSignature>(r->a[0]), *r,
+              guest::abi::EntryCodec::decode<RoutineSignature>(ret));
+#endif
 }
 
 // End Proc of a procedure a menu called: back to the call, d0 = 0
@@ -211,7 +228,7 @@ uint32_t interp_prun_run(uint32_t program, const void *run_it)
     r.a[1] = address(interp_prun_errors);
     r.a[2] = 0;
     AllRegs out = mark_run(m, [&] {
-        glue_call(run_it, r);
+        legacy_glue_call(run_it, r);
         m.regs = r;
         m.regs.d[0] = uint32_t(-1);
     });
@@ -233,7 +250,7 @@ void interp_zap_in(Regs *r, const void *zap_in)
     a.d[0] = r->d[0];
     a.d[1] = r->d[1];
     AllRegs out = mark_run(m, [&] {
-        glue_call(zap_in, a);
+        legacy_glue_call(zap_in, a);
         m.regs = a;
     });
     idata().BasSp.store(bas_sp);
@@ -258,7 +275,7 @@ uint32_t mn_call_procedure(const void *fn, ContextHandle context, wire::MarkFiel
     r.a[6] = address(regs->a6);
     r.a[0] = address(name);
     AllRegs out = mark_run(m, [&] {
-        glue_call(fn, r);
+        legacy_glue_call(fn, r);
         m.regs = r;
     });
     return out.d[0];
@@ -268,14 +285,14 @@ uint32_t mn_call_procedure(const void *fn, ContextHandle context, wire::MarkFiel
 void w_int_call(const void *fn, uint8_t *data)
 {
     // a C++ function (the extensions'), or an entry of the assembler's
-    if (!glue_entry(fn)) {
+    if (!legacy_glue_entry(fn)) {
         reinterpret_cast<void (*)()>(const_cast<void *>(fn))();
         return;
     }
     AllRegs r = {};
     r.a[5] = address(data);
     r.a[6] = hal::CustomBase;
-    glue_call(fn, r);
+    legacy_glue_call(fn, r);
 }
 
 } // extern "C"
@@ -291,14 +308,14 @@ namespace {
 // .Go: the function on the editor's stack, then its loop
 void zap_go(AllRegs &r)
 {
-    glue_call(ed_zap_prepare_entry, r);
-    glue_call(ed_function_call_entry, r);
-    glue_call(ed_loop, r);
+    glue_call(AMOS_ROUTINE(ed_zap_prepare_entry), r);
+    glue_call(AMOS_ROUTINE(ed_function_call_entry), r);
+    glue_call(AMOS_ROUTINE(ed_loop), r);
 }
 
 [[noreturn]] void zap_back(AllRegs &r)
 {
-    glue_call(ed_zap_result_entry, r);
+    glue_call(AMOS_ROUTINE(ed_zap_result_entry), r);
     mark_return(idata().BasSp.load(), r);
 }
 
@@ -306,19 +323,19 @@ void zap_go(AllRegs &r)
 
 void host_Ed_ZapIn(AllRegs &r)
 {
-    glue_call(ed_zap_in_entry, r);
+    glue_call(AMOS_ROUTINE(ed_zap_in_entry), r);
     uint16_t w = uint16_t(r.d[0] - 1);
     r.d[0] = (r.d[0] & 0xFFFF0000) | w;
     if (int16_t(w) < 0)
         mark_jump_regs(idata().BasSp.load(), zap_go, r);
     if (!w)
-        glue_call(ed_zap_out_entry, r);
+        glue_call(AMOS_ROUTINE(ed_zap_out_entry), r);
     zap_back(r);
 }
 
 void host_ed_zap_out(AllRegs &r)
 {
-    glue_call(ed_zap_out_entry, r);
+    glue_call(AMOS_ROUTINE(ed_zap_out_entry), r);
     zap_back(r);
 }
 

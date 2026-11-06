@@ -8,6 +8,7 @@
 // display (AMOS_DISPLAY=none, or no SDL) AMOS runs without a window and
 // without sound.
 
+#include "runtime/detail/legacy_dispatch.h"
 #include "runtime/runtime.h"
 #include "runtime/glue.h"
 #include "hal/clipboard.h"
@@ -258,7 +259,7 @@ void send(uint8_t event_class, uint16_t code, int16_t x = 0, int16_t y = 0)
     AllRegs r = {};
     r.a[0] = address(&e);
     r.a[1] = address(handler->is_Data);
-    glue_call(reinterpret_cast<const void *>(handler->is_Code), r);
+    legacy_glue_call(reinterpret_cast<const void *>(handler->is_Code), r);
 }
 
 // SDL's scancodes (USB) to the Amiga's raw keys (0xFF: none)

@@ -16,11 +16,11 @@ void relocate_src_lib_convert_glue_s()
 }
 
 const GlueEntry entries_src_lib_convert_glue_s[] = {
-    {host_obj_src_lib_convert_glue_s + 0, GlueKind::reg, AMOS_BIND_REG(lib_long_to_hex_reg), nullptr, 0, 0, "LongToHex"},
-    {host_obj_src_lib_convert_glue_s + 4, GlueKind::reg, AMOS_BIND_REG(lib_long_to_bin_reg), nullptr, 0, 0, "LongToBin"},
-    {host_obj_src_lib_convert_glue_s + 8, GlueKind::reg, AMOS_BIND_REG(lib_long_to_asc), nullptr, 0, 0, "LongToAsc"},
-    {host_obj_src_lib_convert_glue_s + 12, GlueKind::reg, AMOS_BIND_REG(lib_long_to_dec), nullptr, 0, 0, "LongToDec"},
-    {nullptr, GlueKind::missing, nullptr, nullptr, 0, 0, nullptr},
+    {AMOS_ENTRY_AT(host_obj_src_lib_convert_glue_s, 0), GlueKind::reg, AMOS_BIND_REG(lib_long_to_hex_reg), nullptr, 0, 0, "LongToHex"},
+    {AMOS_ENTRY_AT(host_obj_src_lib_convert_glue_s, 4), GlueKind::reg, AMOS_BIND_REG(lib_long_to_bin_reg), nullptr, 0, 0, "LongToBin"},
+    {AMOS_ENTRY_AT(host_obj_src_lib_convert_glue_s, 8), GlueKind::reg, AMOS_BIND_REG(lib_long_to_asc), nullptr, 0, 0, "LongToAsc"},
+    {AMOS_ENTRY_AT(host_obj_src_lib_convert_glue_s, 12), GlueKind::reg, AMOS_BIND_REG(lib_long_to_dec), nullptr, 0, 0, "LongToDec"},
+    {AMOS_ENTRY_END, GlueKind::missing, nullptr, nullptr, 0, 0, nullptr},
 };
 
 } // namespace amos::host

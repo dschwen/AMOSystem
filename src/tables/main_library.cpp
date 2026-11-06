@@ -761,7 +761,7 @@ void relocate_src_main_library_s()
 }
 
 const GlueEntry entries_src_main_library_s[] = {
-    {nullptr, GlueKind::missing, nullptr, nullptr, 0, 0, nullptr},
+    {AMOS_ENTRY_END, GlueKind::missing, nullptr, nullptr, 0, 0, nullptr},
 };
 
 } // namespace amos::host

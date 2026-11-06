@@ -16,10 +16,10 @@ void relocate_src_w_input_glue_s()
 }
 
 const GlueEntry entries_src_w_input_glue_s[] = {
-    {host_obj_src_w_input_glue_s + 0, GlueKind::w, AMOS_BIND_W(w_io_handler), nullptr, 0, 4, "w_input"},
-    {host_obj_src_w_input_glue_s + 4, GlueKind::w, AMOS_BIND_W(w_sy_send_fake_event), nullptr, 0, 4, "w_send_fake_event"},
-    {host_obj_src_w_input_glue_s + 8, GlueKind::w, AMOS_BIND_W(w_sy_test_cyclic), nullptr, 0, 4, "w_test_cyclic"},
-    {nullptr, GlueKind::missing, nullptr, nullptr, 0, 0, nullptr},
+    {AMOS_ENTRY_AT(host_obj_src_w_input_glue_s, 0), GlueKind::w, AMOS_BIND_W(w_io_handler), nullptr, 0, 4, "w_input"},
+    {AMOS_ENTRY_AT(host_obj_src_w_input_glue_s, 4), GlueKind::w, AMOS_BIND_W(w_sy_send_fake_event), nullptr, 0, 4, "w_send_fake_event"},
+    {AMOS_ENTRY_AT(host_obj_src_w_input_glue_s, 8), GlueKind::w, AMOS_BIND_W(w_sy_test_cyclic), nullptr, 0, 4, "w_test_cyclic"},
+    {AMOS_ENTRY_END, GlueKind::missing, nullptr, nullptr, 0, 0, nullptr},
 };
 
 } // namespace amos::host

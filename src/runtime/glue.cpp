@@ -3,12 +3,14 @@
 
 #include "runtime/glue.h"
 #include "runtime/static_symbols.h"
+#include "runtime/detail/legacy_dispatch.h"
 #include "runtime/mark_handle.h"
 #include "runtime/runtime.h"
 #include "interp/interp.h"
 #include "hal/system.h"
 #if !defined(__mc68000__)
 #include <stdlib.h>
+#include "runtime/guest_dispatch.h"
 #endif
 
 using namespace amos;
@@ -23,6 +25,7 @@ namespace amos::host {
 
 namespace {
 
+#if defined(__mc68000__)
 const GlueEntry **sorted;       // the entries by address
 int sorted_count;
 
@@ -38,6 +41,11 @@ void sort_entries()
             sorted[j] = e;
         }
 }
+
+#else
+using DispatchIndex = GuestDispatchIndex<RoutineSignature, GlueEntry>;
+DispatchIndex dispatch_index;
+#endif
 
 // CCall: the interpreter registers into the context for the C++, back
 // from it afterwards
@@ -115,71 +123,100 @@ void glue_start()
     prepare_static_symbols();
 #endif
     glue_relocate();
+#if defined(__mc68000__)
     int count = 0;
     for (const GlueEntry *const *t = glue_entry_tables; *t; t++)
-        for (const GlueEntry *e = *t; e->at; e++)
-            count++;
-#if defined(__mc68000__)
+        for (const GlueEntry *e = *t; e->at; e++) count++;
     sorted = static_cast<const GlueEntry **>(hal::allocate(uint32_t(sizeof(GlueEntry *) * count), 0));
-#else
-    // This index contains native metadata pointers and is not guest RAM.
-    sorted = static_cast<const GlueEntry **>(malloc(sizeof(GlueEntry*) * size_t(count)));
-    if (!sorted) missing("native dispatch index allocation", nullptr);
-#endif
     for (const GlueEntry *const *t = glue_entry_tables; *t; t++)
-        for (const GlueEntry *e = *t; e->at; e++)
-            sorted[sorted_count++] = e;
+        for (const GlueEntry *e = *t; e->at; e++) sorted[sorted_count++] = e;
     sort_entries();
+#else
+    size_t count = 0;
+    for (const GlueEntry *const *t = glue_entry_tables; *t; t++)
+        for (const GlueEntry *e = *t; e->at.segment().index(); e++) count++;
+    auto* slots = static_cast<DispatchIndex::Slot*>(malloc(sizeof(DispatchIndex::Slot) * count));
+    if (count && !slots) missing("native dispatch index allocation", nullptr);
+    size_t index = 0;
+    for (const GlueEntry *const *t = glue_entry_tables; *t; t++)
+        for (const GlueEntry *e = *t; e->at.segment().index(); e++) {
+            auto at = static_symbol_bindings().resolve(e->at);
+            if (!at) missing("invalid guest dispatch entry", nullptr);
+            slots[index++] = {at.value, e};
+        }
+    if (dispatch_index.initialize(slots, count) != guest::Fault::none)
+        missing("invalid guest dispatch index", nullptr);
+#endif
 }
 
-// The entry at an address: the sorted table searched, the answers kept in
-// a small cache (a call goes through here)
+#if defined(__mc68000__)
 const GlueEntry *glue_search(const void *at)
 {
     int lo = 0, hi = sorted_count - 1;
     while (lo <= hi) {
         int mid = (lo + hi) / 2;
         const uint8_t *x = sorted[mid]->at;
-        if (x == at)
-            return sorted[mid];
-        if (x < static_cast<const uint8_t *>(at))
-            lo = mid + 1;
-        else
-            hi = mid - 1;
+        if (x == at) return sorted[mid];
+        if (x < static_cast<const uint8_t *>(at)) lo = mid + 1;
+        else hi = mid - 1;
     }
     return nullptr;
 }
-
 const GlueEntry *glue_entry(const void *at)
 {
-    struct Cached {
-        const void *at;
-        const GlueEntry *entry;
-    };
-#if defined(__mc68000__)
-    constexpr unsigned Size = 512;      // (4KB of the Amiga's memory)
-#else
-    constexpr unsigned Size = 4096;
-#endif
+    struct Cached { const void *at; const GlueEntry *entry; };
+    constexpr unsigned Size = 512;
     static Cached cache[Size];
     Cached &c = cache[(reinterpret_cast<uintptr_t>(at) >> 1) & (Size - 1)];
-    if (c.at != at)
-        c = {at, glue_search(at)};
+    if (c.at != at) c = {at, glue_search(at)};
     return c.entry;
 }
+#else
+const GlueEntry *glue_entry(RoutineEntry at)
+{
+    struct Cached { RoutineEntry at{}; const GlueEntry *entry = nullptr; };
+    constexpr unsigned Size = 4096;
+    static Cached cache[Size];
+    Cached &c = cache[(guest::abi::EntryCodec::encode(at) >> 1) & (Size - 1)];
+    if (c.at != at) c = {at, dispatch_index.find(at)};
+    return c.entry;
+}
+// Finite transition adapter for callers still using the identity data model.
+// A high native callback is a lookup miss, never a truncated guest address.
+const GlueEntry *legacy_glue_entry(const void *at)
+{
+    const auto word = reinterpret_cast<uintptr_t>(at);
+    if (word > UINT32_MAX) return nullptr;
+    return glue_entry(guest::abi::EntryCodec::decode<RoutineSignature>(uint32_t(word)));
+}
+#endif
 
 void poll(bool waiting = false);
+#if defined(__mc68000__)
 int32_t native_call(const void *at, AllRegs &r);
-
 int32_t glue_call(const void *at, AllRegs &r)
+#else
+int32_t native_call(RoutineEntry at, AllRegs &r);
+int32_t legacy_glue_call(const void *at, AllRegs &r) {
+    return glue_call(detail::legacy_routine_entry(at), r);
+}
+int32_t glue_call(RoutineEntry code, AllRegs &r)
+#endif
 {
+#if !defined(__mc68000__)
+    const RoutineEntry at = code;
+#endif
 #if !defined(__mc68000__)
     // (the interrupts due, between two routines)
     poll();
 #endif
+#if defined(__mc68000__)
     const GlueEntry *e = glue_entry(at);
-    if (!e)
-        return native_call(at, r);
+    if (!e) return native_call(at, r);
+#else
+    const GlueEntry *e = glue_entry(code);
+    if (!e) return native_call(code, r);
+#endif
     switch (e->kind) {
     case GlueKind::libcall: {
         uint32_t p[10];
@@ -300,11 +337,19 @@ int32_t glue_call(const void *at, AllRegs &r)
         w_go(r, [&] { w_window(uint32_t(e->a1), &r); });
         return tested(r.d[0], e->a2);
     case GlueKind::alias:
+#if defined(__mc68000__)
         return glue_call(e->target, r);
+#else
+        return glue_call(static_entry(e->target), r);
+#endif
     case GlueKind::stack:
+#if defined(__mc68000__)
         mark_jump(idata().BasSp.load(), e->target, r);
+#else
+        mark_jump(idata().BasSp.load(), static_entry(e->target), r);
+#endif
     case GlueKind::lib_jump:
-        return glue_call(lib_address(e->a1), r);
+        return glue_call(lib_entry(e->a1), r);
     case GlueKind::hand:
         AMOS_NATIVE_CALL((reinterpret_cast<void (*)(AllRegs &)>(const_cast<void *>(e->fn))(r)), (e->binding.hand(r)));
         return int32_t(r.d[0]);
@@ -321,14 +366,31 @@ namespace amos {
 
 // The function of a WEntry glue (found by the address of its entry, or of
 // an alias of it), for the C++ that calls it directly
+#if !defined(__mc68000__)
+WFunction wentry_function(const void* entry) {
+    return wentry_function(host::detail::legacy_routine_entry(entry));
+}
+WFunction wentry_function(host::RoutineEntry code)
+#else
 WFunction wentry_function(const void *entry)
+#endif
 {
     for (int hop = 0; hop < 3; hop++) {
+#if defined(__mc68000__)
         const host::GlueEntry *e = host::glue_entry(entry);
+#else
+        const host::GlueEntry *e = host::glue_entry(code);
+#endif
         if (!e)
             return nullptr;
         if (e->kind == host::GlueKind::alias) {
+#if defined(__mc68000__)
             entry = e->target;
+#else
+            auto resolved = host::static_symbol_bindings().resolve(e->target);
+            if (!resolved) return nullptr;
+            code = resolved.value;
+#endif
             continue;
         }
         #if defined(__mc68000__)

@@ -2,6 +2,7 @@
 // amos_call...): a "call into the assembler" is what the glue at that
 // address does (runtime/glue.cpp).
 
+#include "runtime/detail/legacy_dispatch.h"
 #include "runtime/runtime.h"
 #include "runtime/glue.h"
 
@@ -37,6 +38,7 @@ void back(Regs &r, const AllRegs &a)
 
 } // namespace
 
+#if defined(__mc68000__)
 extern "C" {
 
 // The context is kept: the callee may leave other values
@@ -89,3 +91,68 @@ int32_t amos_call_cc(Regs *r, const void *fn)
 }
 
 } // extern "C"
+
+#else
+namespace amos {
+
+// The context is kept: the callee may leave other values
+void amos_call(Regs *r, host::RoutineEntry fn)
+{
+    Ctx saved = ctx();
+    AllRegs a = all(*r);
+    host::glue_call(fn, a);
+    back(*r, a);
+    ctx() = saved;
+}
+
+void amos_call_all(AllRegs *r, host::RoutineEntry fn)
+{
+    Ctx saved = ctx();
+    host::glue_call(fn, *r);
+    ctx() = saved;
+}
+
+// The routine reads the program: a3 and a6 stay as it leaves them
+void amos_eval(Regs *r, host::RoutineEntry fn)
+{
+    Ctx saved = ctx();
+    AllRegs a = all(*r);
+    host::glue_call(fn, a);
+    back(*r, a);
+    ctx() = saved;
+    ctx().a3 = ptr<uint8_t>(a.a[3]);
+    ctx().a6 = ptr<uint8_t>(a.a[6]);
+}
+
+// -1 "less than", 0 "equal", 1 "greater than"
+int32_t amos_call_cc(Regs *r, host::RoutineEntry fn)
+{
+    Ctx saved = ctx();
+    AllRegs a = all(*r);
+    int32_t cc = host::glue_call(fn, a);
+    back(*r, a);
+    ctx() = saved;
+    return cc < 0 ? -1 : cc > 0;
+}
+
+[[noreturn]] void amos_goto(host::RoutineEntry fn, uint32_t d0)
+{
+    Regs r;
+    r.d[0] = d0;
+    AllRegs a = all(r);
+    host::glue_call(fn, a);
+    host::missing("return from a jump to", fn);
+}
+
+} // namespace amos
+
+// Only existing C ABI callers still cross this identity-model boundary.
+extern "C" {
+void amos_call(Regs* r, const void* fn) { amos::amos_call(r, host::detail::legacy_routine_entry(fn)); }
+void amos_call_all(AllRegs* r, const void* fn) { amos::amos_call_all(r, host::detail::legacy_routine_entry(fn)); }
+void amos_eval(Regs* r, const void* fn) { amos::amos_eval(r, host::detail::legacy_routine_entry(fn)); }
+int32_t amos_call_cc(Regs* r, const void* fn) { return amos::amos_call_cc(r, host::detail::legacy_routine_entry(fn)); }
+[[noreturn]] void amos_goto(const void* fn, uint32_t d0) { amos::amos_goto(host::detail::legacy_routine_entry(fn), d0); }
+}
+
+#endif

@@ -21,12 +21,12 @@ void relocate_src_ext_request_glue_s()
 }
 
 const GlueEntry entries_src_ext_request_glue_s[] = {
-    {host_obj_src_ext_request_glue_s + 16, GlueKind::libcall, AMOS_BIND_LIBRARY(ext_request_wb), nullptr, 0, 3, "Ext_Request_InRequestWb"},
-    {host_obj_src_ext_request_glue_s + 36, GlueKind::libcall, AMOS_BIND_LIBRARY(ext_request_on), nullptr, 0, 3, "Ext_Request_InRequestOn"},
-    {host_obj_src_ext_request_glue_s + 56, GlueKind::libcall, AMOS_BIND_LIBRARY(ext_request_off), nullptr, 0, 3, "Ext_Request_InRequestOff"},
-    {host_obj_src_ext_request_glue_s + 60, GlueKind::reg, AMOS_BIND_REG(ext_request_cold), nullptr, 0, 0, "Ext_Request_Cold"},
-    {host_obj_src_ext_request_glue_s + 64, GlueKind::call, AMOS_BIND_CALL(ext_request_warm), nullptr, 0, 0, "ext_request_warm_entry"},
-    {nullptr, GlueKind::missing, nullptr, nullptr, 0, 0, nullptr},
+    {AMOS_ENTRY_AT(host_obj_src_ext_request_glue_s, 16), GlueKind::libcall, AMOS_BIND_LIBRARY(ext_request_wb), nullptr, 0, 3, "Ext_Request_InRequestWb"},
+    {AMOS_ENTRY_AT(host_obj_src_ext_request_glue_s, 36), GlueKind::libcall, AMOS_BIND_LIBRARY(ext_request_on), nullptr, 0, 3, "Ext_Request_InRequestOn"},
+    {AMOS_ENTRY_AT(host_obj_src_ext_request_glue_s, 56), GlueKind::libcall, AMOS_BIND_LIBRARY(ext_request_off), nullptr, 0, 3, "Ext_Request_InRequestOff"},
+    {AMOS_ENTRY_AT(host_obj_src_ext_request_glue_s, 60), GlueKind::reg, AMOS_BIND_REG(ext_request_cold), nullptr, 0, 0, "Ext_Request_Cold"},
+    {AMOS_ENTRY_AT(host_obj_src_ext_request_glue_s, 64), GlueKind::call, AMOS_BIND_CALL(ext_request_warm), nullptr, 0, 0, "ext_request_warm_entry"},
+    {AMOS_ENTRY_END, GlueKind::missing, nullptr, nullptr, 0, 0, nullptr},
 };
 
 } // namespace amos::host

@@ -5,6 +5,7 @@
 inline void* operator new(size_t, void* storage) noexcept { return storage; }
 #if defined(AMOS_TEST_WRAPPED)
 #include "abi/guest_address_codec.h"
+#include "abi/guest_entry_codec.h"
 #include "core/mark_token.h"
 #include "core/context_token.h"
 #include "memory/guest_view.h"
@@ -225,6 +226,16 @@ extern "C" uint32_t module_base(GuestPtr<const Byte> module) {
 #else
 extern "C" uint32_t module_base(const uint8_t* module) {
     return uint32_t(module);
+}
+#endif
+
+#if defined(AMOS_TEST_WRAPPED)
+extern "C" uint32_t routine_word(GuestEntry<void()> routine) {
+    return abi::EntryCodec::encode(routine);
+}
+#else
+extern "C" uint32_t routine_word(const void* routine) {
+    return uint32_t(routine);
 }
 #endif
 

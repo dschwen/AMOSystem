@@ -16,9 +16,9 @@ void relocate_src_monitor_step_glue_s()
 }
 
 const GlueEntry entries_src_monitor_step_glue_s[] = {
-    {host_obj_src_monitor_step_glue_s + 0, GlueKind::w, AMOS_BIND_W(mon_step_show), nullptr, 0, 4, "mon_step_show_entry"},
-    {host_obj_src_monitor_step_glue_s + 4, GlueKind::w, AMOS_BIND_W(mon_test_error), nullptr, 0, 4, "mon_test_error_entry"},
-    {nullptr, GlueKind::missing, nullptr, nullptr, 0, 0, nullptr},
+    {AMOS_ENTRY_AT(host_obj_src_monitor_step_glue_s, 0), GlueKind::w, AMOS_BIND_W(mon_step_show), nullptr, 0, 4, "mon_step_show_entry"},
+    {AMOS_ENTRY_AT(host_obj_src_monitor_step_glue_s, 4), GlueKind::w, AMOS_BIND_W(mon_test_error), nullptr, 0, 4, "mon_test_error_entry"},
+    {AMOS_ENTRY_END, GlueKind::missing, nullptr, nullptr, 0, 0, nullptr},
 };
 
 } // namespace amos::host

@@ -24,8 +24,13 @@ struct alignas(16) Mark {
 struct Mark {
 #endif
     jmp_buf jb;
-    const void *target;         // the entry to run, then
-    const void *then;           // the entry run after it (its return)
+#if defined(__mc68000__)
+    const void *target;
+    const void *then;
+#else
+    RoutineEntry target;
+    RoutineEntry then;
+#endif
     void (*fn)();               // or this C++ (the context its registers)
     void (*regs_fn)(AllRegs &); // or this C++, with all the registers
     AllRegs regs;

@@ -516,7 +516,7 @@ void main_cold_start(char *command, uint32_t length, uint32_t sp)
     IData &d = idata();
     AllRegs r = context_regs();
     r.d[0] = d.PI_DefSize;
-    amos_call_all(&r, lib_address(L_Prg_NewStructure));
+    amos_call_all(&r, lib_entry(L_Prg_NewStructure));
     uint32_t program = r.d[0];
     if (!program)
         the_end(panic_oomem);
@@ -524,7 +524,7 @@ void main_cold_start(char *command, uint32_t length, uint32_t sp)
         AllRegs p = context_regs();
         p.d[0] = d0;
         p.a[6] = program;
-        amos_call_all(&p, lib_address(routine));
+        amos_call_all(&p, lib_entry(routine));
         return p.d[0];
     };
     call(L_Prg_New, uint32_t(-2));                      // no screen behind
@@ -538,7 +538,7 @@ void main_cold_start(char *command, uint32_t length, uint32_t sp)
         p.d[0] = boot::run_only ? 0 : uint32_t(-1);
         p.a[1] = address(main_run_error_run_only);
         p.a[6] = program;
-        amos_call_all(&p, lib_address(L_Prg_RunIt));    // back if out of memory
+        amos_call_all(&p, lib_entry(L_Prg_RunIt));    // back if out of memory
     }
     if (boot::run_only)
         the_end(panic_noprogram);
@@ -557,7 +557,7 @@ void main_cold_start(char *command, uint32_t length, uint32_t sp)
     w_option();
     Regs t;
     lib_call(L_Ed_Title, t);
-    amos_goto(lib_address(L_Ed_Loop), 0);
+    amos_goto(lib_entry(L_Ed_Loop), 0);
 }
 
 // TheEnd: the general way out
@@ -594,7 +594,7 @@ namespace amos::boot {
         while (uint32_t program = d.Prg_List) {
             AllRegs p = context_regs();
                 p.a[6] = program;
-            amos_call_all(&p, lib_address(L_Prg_DelStructure));
+            amos_call_all(&p, lib_entry(L_Prg_DelStructure));
         }
         edit_free();
         mon_free();

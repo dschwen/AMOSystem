@@ -4,6 +4,8 @@
 // for a frame. Also the entries of AMOS.library's interrupts (+W.s VblIn,
 // IoHandler) and the system structures of its data zone (w/w.h).
 
+#include "runtime/static_symbols.h"
+#include "runtime/detail/legacy_dispatch.h"
 #include "hal/gfx.h"
 #include "core/ioreq.h"
 #include "hal/system.h"
@@ -56,7 +58,7 @@ void run_vbl()
         AllRegs r = {};
         r.a[1] = address(is->is_Data);
         r.a[0] = hal::CustomBase;
-        host::glue_call(reinterpret_cast<const void *>(is->is_Code), r);
+        host::legacy_glue_call(reinterpret_cast<const void *>(is->is_Code), r);
     }
 }
 
@@ -132,7 +134,7 @@ void host_VblIn(AllRegs &r)
 void host_IoHandler(AllRegs &r)
 {
     r.a[5] = amos_w_base;
-    host::glue_call(w_input, r);
+    host::glue_call(AMOS_ROUTINE(w_input), r);
 }
 
 } // namespace amos::host

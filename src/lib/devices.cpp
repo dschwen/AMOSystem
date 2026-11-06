@@ -4,6 +4,10 @@
 #include "core/amiga.h"
 #include "core/ioreq.h"
 #include "lib/devices.h"
+#if !defined(__mc68000__)
+#include "runtime/glue.h"
+#include "abi/guest_entry_codec.h"
+#endif
 #include "lib/dos.h"
 #include "lib/strings.h"
 
@@ -426,7 +430,14 @@ uint32_t library_call(uint32_t base, uint32_t offset)
     for (int i = 0; i < 6; i++)
         r.a[i] = d.CallReg[8 + i];
     r.a[6] = base;
+#if defined(__mc68000__)
     amos_call_all(&r, ptr<uint8_t>(base) + offset);
+#else
+    // Library vectors use signed offsets represented in a 32-bit guest word.
+    // Perform architectural wrapping before decoding a code address; native
+    // pointer arithmetic used to create a >4 GiB pointer and silently truncate.
+    amos_call_all(&r, guest::abi::EntryCodec::decode<host::RoutineSignature>(uint32_t(base + offset)));
+#endif
     return r.d[0];
 }
 

@@ -29,17 +29,17 @@ void relocate_src_ext_compact_glue_s()
 }
 
 const GlueEntry entries_src_ext_compact_glue_s[] = {
-    {host_obj_src_ext_compact_glue_s + 16, GlueKind::libcall, AMOS_BIND_LIBRARY(ext_pack2), nullptr, 2, 3, "Ext_Compact_InPack2"},
-    {host_obj_src_ext_compact_glue_s + 36, GlueKind::libcall, AMOS_BIND_LIBRARY(ext_pack6), nullptr, 6, 3, "Ext_Compact_InPack6"},
-    {host_obj_src_ext_compact_glue_s + 56, GlueKind::libcall, AMOS_BIND_LIBRARY(ext_spack2), nullptr, 2, 3, "Ext_Compact_InSPack2"},
-    {host_obj_src_ext_compact_glue_s + 76, GlueKind::libcall, AMOS_BIND_LIBRARY(ext_spack6), nullptr, 6, 3, "Ext_Compact_InSPack6"},
-    {host_obj_src_ext_compact_glue_s + 96, GlueKind::libcall, AMOS_BIND_LIBRARY(ext_unpack1), nullptr, 1, 3, "Ext_Compact_InUnpack1"},
-    {host_obj_src_ext_compact_glue_s + 116, GlueKind::libcall, AMOS_BIND_LIBRARY(ext_unpack2), nullptr, 2, 3, "Ext_Compact_InUnpack2"},
-    {host_obj_src_ext_compact_glue_s + 136, GlueKind::libcall, AMOS_BIND_LIBRARY(ext_unpack3), nullptr, 3, 3, "Ext_Compact_InUnpack3"},
-    {host_obj_src_ext_compact_glue_s + 140, GlueKind::reg, AMOS_BIND_REG(ext_compact_cold), nullptr, 0, 0, "Ext_Compact_Compact_Cold"},
-    {host_obj_src_ext_compact_glue_s + 144, GlueKind::reg, AMOS_BIND_REG(ext_compact_custom), nullptr, 0, 0, "Ext_Compact_Custom"},
-    {host_obj_src_ext_compact_glue_s + 148, GlueKind::reg, AMOS_BIND_REG(ext_compact_custom2), nullptr, 0, 0, "Ext_Compact_Custom2"},
-    {nullptr, GlueKind::missing, nullptr, nullptr, 0, 0, nullptr},
+    {AMOS_ENTRY_AT(host_obj_src_ext_compact_glue_s, 16), GlueKind::libcall, AMOS_BIND_LIBRARY(ext_pack2), nullptr, 2, 3, "Ext_Compact_InPack2"},
+    {AMOS_ENTRY_AT(host_obj_src_ext_compact_glue_s, 36), GlueKind::libcall, AMOS_BIND_LIBRARY(ext_pack6), nullptr, 6, 3, "Ext_Compact_InPack6"},
+    {AMOS_ENTRY_AT(host_obj_src_ext_compact_glue_s, 56), GlueKind::libcall, AMOS_BIND_LIBRARY(ext_spack2), nullptr, 2, 3, "Ext_Compact_InSPack2"},
+    {AMOS_ENTRY_AT(host_obj_src_ext_compact_glue_s, 76), GlueKind::libcall, AMOS_BIND_LIBRARY(ext_spack6), nullptr, 6, 3, "Ext_Compact_InSPack6"},
+    {AMOS_ENTRY_AT(host_obj_src_ext_compact_glue_s, 96), GlueKind::libcall, AMOS_BIND_LIBRARY(ext_unpack1), nullptr, 1, 3, "Ext_Compact_InUnpack1"},
+    {AMOS_ENTRY_AT(host_obj_src_ext_compact_glue_s, 116), GlueKind::libcall, AMOS_BIND_LIBRARY(ext_unpack2), nullptr, 2, 3, "Ext_Compact_InUnpack2"},
+    {AMOS_ENTRY_AT(host_obj_src_ext_compact_glue_s, 136), GlueKind::libcall, AMOS_BIND_LIBRARY(ext_unpack3), nullptr, 3, 3, "Ext_Compact_InUnpack3"},
+    {AMOS_ENTRY_AT(host_obj_src_ext_compact_glue_s, 140), GlueKind::reg, AMOS_BIND_REG(ext_compact_cold), nullptr, 0, 0, "Ext_Compact_Compact_Cold"},
+    {AMOS_ENTRY_AT(host_obj_src_ext_compact_glue_s, 144), GlueKind::reg, AMOS_BIND_REG(ext_compact_custom), nullptr, 0, 0, "Ext_Compact_Custom"},
+    {AMOS_ENTRY_AT(host_obj_src_ext_compact_glue_s, 148), GlueKind::reg, AMOS_BIND_REG(ext_compact_custom2), nullptr, 0, 0, "Ext_Compact_Custom2"},
+    {AMOS_ENTRY_END, GlueKind::missing, nullptr, nullptr, 0, 0, nullptr},
 };
 
 } // namespace amos::host

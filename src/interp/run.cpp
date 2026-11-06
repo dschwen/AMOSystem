@@ -58,7 +58,7 @@ uint32_t program_call(int routine, uint32_t program, uint32_t d0)
     r.a[4] = address(c.a4);
     r.a[5] = address(c.a5);
     r.a[6] = program;
-    amos_call_all(&r, lib_address(routine));
+    amos_call_all(&r, lib_entry(routine));
     return r.d[0];
 }
 
@@ -156,7 +156,7 @@ void interp_in_run0()
         r.a[4] = address(c.a4);
         r.a[5] = address(c.a5);
         r.a[6] = program;
-        amos_call_all(&r, lib_address(L_Prg_RunIt));
+        amos_call_all(&r, lib_entry(L_Prg_RunIt));
     }
     Regs e;
     e.d[0] = failure;

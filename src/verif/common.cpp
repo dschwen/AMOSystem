@@ -1,5 +1,6 @@
 // What the C++ parts of the verifier share (see verif/verif.h).
 
+#include "runtime/static_symbols.h"
 #include "verif/verif.h"
 
 using namespace amos;
@@ -22,17 +23,17 @@ void fail(uint16_t n)
 {
     IData &d = idata();
     Regs run;
-    entry_call(ver_tables_run_entry, run);
+    entry_call(AMOS_ROUTINE(ver_tables_run_entry), run);
     d.VerPos = includes_address(d.VerPos);
     includes_clear();
     RegFrame close = {};
     lib_d_close(close);
     Regs tables;
-    entry_call(ver_free_tables_entry, tables);
+    entry_call(AMOS_ROUTINE(ver_free_tables_entry), tables);
     d.VerCheck1_3 = 0;
     uint32_t handler = d.Prg_JError;
     Regs pull;
-    entry_call(ver_prg_pull_entry, pull);
+    entry_call(AMOS_ROUTINE(ver_prg_pull_entry), pull);
     Regs e;
     e.d[0] = uint32_t(-int32_t(n));
     e.a[0] = 0;

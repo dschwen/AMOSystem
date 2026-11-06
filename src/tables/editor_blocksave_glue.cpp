@@ -16,14 +16,14 @@ void relocate_src_editor_blocksave_glue_s()
 }
 
 const GlueEntry entries_src_editor_blocksave_glue_s[] = {
-    {host_obj_src_editor_blocksave_glue_s + 0, GlueKind::w, AMOS_BIND_W(ed_block_save), nullptr, 0, 4, "ed_block_save_entry"},
-    {host_obj_src_editor_blocksave_glue_s + 4, GlueKind::w, AMOS_BIND_W(ed_block_save_ascii), nullptr, 0, 4, "ed_block_save_ascii_entry"},
-    {host_obj_src_editor_blocksave_glue_s + 8, GlueKind::w, AMOS_BIND_W(ed_print_program), nullptr, 0, 4, "ed_print_program_entry"},
-    {host_obj_src_editor_blocksave_glue_s + 12, GlueKind::w, AMOS_BIND_W(ed_print_block), nullptr, 0, 4, "ed_print_block_entry"},
-    {host_obj_src_editor_blocksave_glue_s + 16, GlueKind::w, AMOS_BIND_W(ed_block_limits_2), nullptr, 0, 4, "ed_block_limits_2_entry"},
-    {host_obj_src_editor_blocksave_glue_s + 20, GlueKind::w, AMOS_BIND_W(ed_printer_open), nullptr, 0, 4, "ed_printer_open_entry"},
-    {host_obj_src_editor_blocksave_glue_s + 24, GlueKind::w, AMOS_BIND_W(ed_printer_print), nullptr, 0, 4, "ed_printer_print_entry"},
-    {nullptr, GlueKind::missing, nullptr, nullptr, 0, 0, nullptr},
+    {AMOS_ENTRY_AT(host_obj_src_editor_blocksave_glue_s, 0), GlueKind::w, AMOS_BIND_W(ed_block_save), nullptr, 0, 4, "ed_block_save_entry"},
+    {AMOS_ENTRY_AT(host_obj_src_editor_blocksave_glue_s, 4), GlueKind::w, AMOS_BIND_W(ed_block_save_ascii), nullptr, 0, 4, "ed_block_save_ascii_entry"},
+    {AMOS_ENTRY_AT(host_obj_src_editor_blocksave_glue_s, 8), GlueKind::w, AMOS_BIND_W(ed_print_program), nullptr, 0, 4, "ed_print_program_entry"},
+    {AMOS_ENTRY_AT(host_obj_src_editor_blocksave_glue_s, 12), GlueKind::w, AMOS_BIND_W(ed_print_block), nullptr, 0, 4, "ed_print_block_entry"},
+    {AMOS_ENTRY_AT(host_obj_src_editor_blocksave_glue_s, 16), GlueKind::w, AMOS_BIND_W(ed_block_limits_2), nullptr, 0, 4, "ed_block_limits_2_entry"},
+    {AMOS_ENTRY_AT(host_obj_src_editor_blocksave_glue_s, 20), GlueKind::w, AMOS_BIND_W(ed_printer_open), nullptr, 0, 4, "ed_printer_open_entry"},
+    {AMOS_ENTRY_AT(host_obj_src_editor_blocksave_glue_s, 24), GlueKind::w, AMOS_BIND_W(ed_printer_print), nullptr, 0, 4, "ed_printer_print_entry"},
+    {AMOS_ENTRY_END, GlueKind::missing, nullptr, nullptr, 0, 0, nullptr},
 };
 
 } // namespace amos::host

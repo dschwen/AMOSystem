@@ -101,10 +101,43 @@ bundle; native execution remains pending. The image loader is ready for subseque
 uses identity placement and legacy exported raw-pointer labels alongside the
 new typed `tables/guest_labels.h` catalog. This does not enable native arm64 yet.
 
+### Guest code dispatch stage
+
+Hosted GlueEntry metadata now stores typed EntrySymbol values for entry locations
+and alias/stack targets. A native GuestDispatchIndex sorts and searches resolved
+GuestEntry keys, and its cache also carries GuestEntry values. Native array
+addresses no longer determine ordering, cache identity or alias resolution.
+The public hosted glue_entry/glue_call and mark_jump APIs reject native pointers,
+guest data pointers and entry values with another signature at compile time.
+
+The interpreter call/evaluation/condition-code/jump bridges have typed overloads;
+lib_call/lib_eval/lib_jump and known static-label dispatch/verifier calls use
+these paths. lib_entry reads a code slot through EntryCodec, while lib_address
+remains the temporary mixed/data-slot interface. Reading the library table still
+uses identity data backing, so this does not yet migrate library-table storage.
+Mark target/then continuations are typed code addresses on hosts; restart and
+continue decode architectural words directly. Host library-vector arithmetic
+now wraps in a 32-bit guest word before decoding, rather than forming an oversized
+native pointer and relying on truncation.
+
+Raw C ABI callers and mixed native/guest interrupt handlers still use the named
+adapters in runtime/detail/legacy_dispatch.h. These adapters reject unrepresentable
+native addresses; they do not enable translated data access. Amiga retains raw
+literal metadata, its original interpreter bridge and direct calls, without an
+index or translation overhead added to those paths. The code-generation fixture
+also compares GuestEntry argument/word handling against native pointer handling.
+
+The real dispatch catalog is tested with metadata above 4 GiB and two independent
+high-backed guest images. Every entry and all 763 alias/stack targets resolve to
+the same native descriptor after relocation. Callback bodies in this catalog test
+are explicit test stubs; production callback behavior is covered separately by
+the Linux interpreter/editor regressions. This is not a full translated-runtime
+execution test.
+
 ### Still required before a high-address runtime
 
-1. Switch remaining exported-label consumers and dispatch lookup to the typed
-   static symbol/image catalog; finish replacing native source-array references
+1. Switch remaining exported-label consumers, raw C ABI/mixed interrupt callers
+   and data-slot lookup to the typed static symbol/image catalog; finish replacing native source-array references
    before installing the translated image as production backing.
 2. Migrate ordinary guest data pointers/cursors, register façades, guest records,
    array/field access and bank/string/file public APIs; remove the finite raw-data
@@ -225,3 +258,10 @@ Windows and Amiga builds pass, and the arm64 executable cross-links with its
 startup guard retained. Recovery/snapshot cleanup and allocator model tests pass
 AddressSanitizer/UndefinedBehaviorSanitizer. These results do not qualify the
 remaining legacy data-pointer paths or establish native arm64 runtime support.
+
+Dispatch-stage validation: GCC/Clang guest and native-runtime contract suites pass,
+including all real relocated dispatch descriptors, compiler rejection checks and
+the Amiga code-generation comparison. Linux reports 85 text tests passed (54
+skipped) and four editor fixtures passed. Windows and Amiga build successfully;
+macOS arm64 cross-links with its startup guard retained. Ordinary data-pointer
+migration and native Apple Silicon execution remain unfinished.

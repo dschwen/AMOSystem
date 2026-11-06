@@ -3,6 +3,7 @@
 #pragma once
 
 #include "core/amos.h"
+#include "runtime/routine_entry.h"
 
 #if defined(__mc68000__)
 extern "C" uint8_t amos_task[];
@@ -12,6 +13,9 @@ namespace amos::host {
 
 // Stops: a routine (at address) the host has no C++ for
 [[noreturn]] void missing(const char *what, const void *address);
+#if !defined(__mc68000__)
+[[noreturn]] void missing(const char *what, RoutineEntry address);
+#endif
 
 // The narrator's voice (host/speech.cpp)
 bool speak(const char *text, uint32_t length);

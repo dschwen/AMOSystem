@@ -6,6 +6,8 @@
 
 #include "core/amos.h"
 #include "runtime/native_binding.h"
+#include "runtime/routine_entry.h"
+#include "tables/segment_ids.h"
 
 // The data of a section of chip memory (the Amiga's)
 #if defined(__mc68000__)
@@ -41,14 +43,22 @@ enum class GlueKind : uint8_t {
 #pragma pack(push,8)
 #endif
 struct GlueEntry {
+#if defined(__mc68000__)
     const uint8_t *at;
+#else
+    guest::EntrySymbol<RoutineSignature> at;
+#endif
     GlueKind kind;
 #if defined(__mc68000__)
     const void *fn;
 #else
     NativeBinding binding;
 #endif
+#if defined(__mc68000__)
     const void *target;
+#else
+    guest::EntrySymbol<RoutineSignature> target;
+#endif
     int32_t a1, a2;
     const char *name;
 };
@@ -71,9 +81,26 @@ inline void put(uint8_t *at, int n, uint32_t v)
 // The tables ready (at the start)
 void glue_start();
 // The entry at an address, or null
+#if defined(__mc68000__)
 const GlueEntry *glue_entry(const void *at);
+#else
+const GlueEntry *glue_entry(RoutineEntry at);
+#endif
 // The entry called with all the registers; its condition codes (the value
 // they were set from: negative, zero or positive)
+#if defined(__mc68000__)
 int32_t glue_call(const void *at, AllRegs &r);
+#else
+int32_t glue_call(RoutineEntry at, AllRegs &r);
+#endif
 
 } // namespace amos::host
+
+// m68k retains the original literal addresses and sentinel with no lookup.
+#if defined(__mc68000__)
+#define AMOS_ENTRY_AT(segment, offset) (segment + offset)
+#define AMOS_ENTRY_END nullptr
+#else
+#define AMOS_ENTRY_AT(segment, offset) ::amos::guest::EntrySymbol<::amos::host::RoutineSignature>(::amos::guest::SegmentId(uint16_t(::amos::tables::Segment::segment)), offset)
+#define AMOS_ENTRY_END {}
+#endif

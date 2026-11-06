@@ -215,7 +215,7 @@ uint16_t file_selector(uint16_t n)
     r.a[6] = address(c.a6);
     r.d[6] = c.d6;
     r.d[7] = c.d7;
-    amos_call_all(&r, lib_address(L_Dsk_FileSelector));
+    amos_call_all(&r, lib_entry(L_Dsk_FileSelector));
     d.Ed_FSel = 0;
     return uint16_t(r.d[0]);
 }

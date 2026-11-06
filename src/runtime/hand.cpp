@@ -2,6 +2,8 @@
 // host_<label>(AllRegs &) for the entry <label> (tools/host_glue.py finds
 // them here). Each says what its assembler does.
 
+#include "runtime/static_symbols.h"
+#include "runtime/detail/legacy_dispatch.h"
 #include "runtime/runtime.h"
 #include "runtime/glue.h"
 
@@ -22,7 +24,7 @@ namespace amos::host {
 void host_IceStart(AllRegs &r)
 {
     amos_w_base = r.a[5];
-    glue_call(w_ice_start, r);
+    glue_call(AMOS_ROUTINE(w_ice_start), r);
 }
 
 } // namespace amos::host
@@ -80,8 +82,8 @@ namespace amos::host {
 void host_Prg_RunIt(AllRegs &r)
 {
     AllRegs kept = r;
-    if (glue_call(ver_prg_run_it_entry, r) > 0)
-        glue_call(lib_address(L_New_ChrGet), r);
+    if (glue_call(AMOS_ROUTINE(ver_prg_run_it_entry), r) > 0)
+        glue_call(lib_entry(L_New_ChrGet), r);
     for (int i = 2; i < 8; i++)
         r.d[i] = kept.d[i];
     for (int i = 2; i < 7; i++)

@@ -16,11 +16,11 @@ void relocate_src_w_autoback_glue_s()
 }
 
 const GlueEntry entries_src_w_autoback_glue_s[] = {
-    {host_obj_src_w_autoback_glue_s + 0, GlueKind::w, AMOS_BIND_W(w_ec_autoback1), nullptr, 0, 4, "w_tabk1"},
-    {host_obj_src_w_autoback_glue_s + 4, GlueKind::w, AMOS_BIND_W(w_ec_autoback2), nullptr, 0, 4, "w_tabk2"},
-    {host_obj_src_w_autoback_glue_s + 8, GlueKind::w, AMOS_BIND_W(w_ec_autoback3), nullptr, 0, 4, "w_tabk3"},
-    {host_obj_src_w_autoback_glue_s + 12, GlueKind::w, AMOS_BIND_W(w_ec_autoback4), nullptr, 0, 4, "w_tabk4"},
-    {nullptr, GlueKind::missing, nullptr, nullptr, 0, 0, nullptr},
+    {AMOS_ENTRY_AT(host_obj_src_w_autoback_glue_s, 0), GlueKind::w, AMOS_BIND_W(w_ec_autoback1), nullptr, 0, 4, "w_tabk1"},
+    {AMOS_ENTRY_AT(host_obj_src_w_autoback_glue_s, 4), GlueKind::w, AMOS_BIND_W(w_ec_autoback2), nullptr, 0, 4, "w_tabk2"},
+    {AMOS_ENTRY_AT(host_obj_src_w_autoback_glue_s, 8), GlueKind::w, AMOS_BIND_W(w_ec_autoback3), nullptr, 0, 4, "w_tabk3"},
+    {AMOS_ENTRY_AT(host_obj_src_w_autoback_glue_s, 12), GlueKind::w, AMOS_BIND_W(w_ec_autoback4), nullptr, 0, 4, "w_tabk4"},
+    {AMOS_ENTRY_END, GlueKind::missing, nullptr, nullptr, 0, 0, nullptr},
 };
 
 } // namespace amos::host

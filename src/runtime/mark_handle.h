@@ -2,6 +2,7 @@
 #pragma once
 #include "core/amos.h"
 #include "core/mark_token.h"
+#include "runtime/routine_entry.h"
 namespace amos::host {
 struct Mark;
 #if defined(__mc68000__)
@@ -16,7 +17,11 @@ Mark* mark_lookup(MarkHandle);
 Mark& mark_unwind(MarkHandle);
 #endif
 inline MarkHandle mark_token(Mark& mark) { return decode_mark(mark_word(mark)); }
+#if defined(__mc68000__)
 [[noreturn]] void mark_jump(MarkHandle, const void* target, const AllRegs&, const void* then = nullptr);
+#else
+[[noreturn]] void mark_jump(MarkHandle, RoutineEntry target, const AllRegs&, RoutineEntry then = {});
+#endif
 [[noreturn]] void mark_jump_regs(MarkHandle, void (*)(AllRegs&), const AllRegs&);
 [[noreturn]] void mark_jump_cpp(MarkHandle, void (*)(), const AllRegs&);
 [[noreturn]] void mark_return(MarkHandle, const AllRegs&);

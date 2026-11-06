@@ -40,11 +40,13 @@ public:
     }
 };
 class SegmentBindings;
+namespace abi { struct EntryCodec; }
 template<class Signature> class EntrySymbol {
     SegmentId segment_;
     uint32_t offset_;
 public:
     constexpr EntrySymbol() = default;
+    constexpr EntrySymbol(decltype(nullptr)) : segment_{}, offset_{} {}
     template<Integer N> explicit constexpr EntrySymbol(SegmentId segment, N offset) : segment_(segment), offset_(symbol_offset(offset)) {}
     constexpr SegmentId segment() const { return segment_; }
     constexpr uint32_t byte_offset() const { return offset_; }
@@ -53,6 +55,7 @@ template<class Signature> class alignas(pointer_alignment) GuestEntry {
     GuestAddress32 address_;
     explicit constexpr GuestEntry(GuestAddress32 address) : address_(address) {}
     friend class SegmentBindings;
+    friend struct abi::EntryCodec;
 public:
     constexpr GuestEntry() = default;
     explicit constexpr operator bool() const { return bool(address_); }

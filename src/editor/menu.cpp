@@ -105,7 +105,7 @@ uint32_t lib_all(int routine, AllRegs &r)
     r.a[6] = address(c.a6);
     r.d[6] = c.d6;
     r.d[7] = c.d7;
-    amos_call_all(&r, lib_address(routine));
+    amos_call_all(&r, lib_entry(routine));
     return r.d[0];
 }
 

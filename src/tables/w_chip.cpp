@@ -91,7 +91,7 @@ void relocate__W_s_chip()
 }
 
 const GlueEntry entries__W_s_chip[] = {
-    {nullptr, GlueKind::missing, nullptr, nullptr, 0, 0, nullptr},
+    {AMOS_ENTRY_END, GlueKind::missing, nullptr, nullptr, 0, 0, nullptr},
 };
 
 } // namespace amos::host

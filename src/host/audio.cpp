@@ -7,6 +7,7 @@
 // interrupts call AMOS's handlers, as exec would) and queued to the host's
 // sound (host/sdl.cpp), and recorded into AMOS_WAV's file if it is set.
 
+#include "runtime/detail/legacy_dispatch.h"
 #include "hal/chips.h"
 #include "hal/system.h"
 #include "runtime/glue.h"
@@ -162,7 +163,7 @@ void audio_interrupts()
             r.a[1] = address(is->is_Data);
             r.a[5] = address(is->is_Code);
             r.a[6] = hal::exec_base();
-            glue_call(reinterpret_cast<const void *>(is->is_Code), r);
+            legacy_glue_call(reinterpret_cast<const void *>(is->is_Code), r);
         }
     }
     in_interrupts = false;

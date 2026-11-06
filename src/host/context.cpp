@@ -2,6 +2,8 @@
 // on an entry with no C++.
 
 #include "runtime/runtime.h"
+#include "runtime/routine_entry.h"
+#include "abi/guest_entry_codec.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -29,6 +31,12 @@ namespace amos::host {
     exit(70);
 }
 
+[[noreturn]] void missing(const char *what, RoutineEntry at)
+{
+    fprintf(stderr, "amos: %s guest routine 0x%08x has no C++ on this host\n", what, guest::abi::EntryCodec::encode(at));
+    exit(70);
+}
+
 } // namespace amos::host
 
 namespace amos::host {
@@ -40,9 +48,9 @@ bool library_call(uint32_t at, AllRegs &r);
 }
 namespace amos::host {
 
-int32_t native_call(const void *at, AllRegs &r)
+int32_t native_call(RoutineEntry at, AllRegs &r)
 {
-    if (hal::library_call(address(at), r))
+    if (hal::library_call(guest::abi::EntryCodec::encode(at), r))
         return int32_t(r.d[0]);
     missing("address", at);
 }

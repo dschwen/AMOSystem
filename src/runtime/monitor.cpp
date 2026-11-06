@@ -5,6 +5,8 @@
 // out of errors. The assembler reset the stack to BasSp (or Tt_EvPile);
 // here those are marks (host/runtime.h).
 
+#include "runtime/static_symbols.h"
+#include "runtime/detail/legacy_dispatch.h"
 #include "runtime/runtime.h"
 #include "runtime/marks.h"
 
@@ -29,7 +31,7 @@ void banks(uint8_t *entry, const AllRegs &r)
 {
     AllRegs b = r;
     b.a[4] = idata().Mon_Base;
-    glue_call(entry, b);
+    legacy_glue_call(entry, b);
 }
 
 // Tt_Message: message n of the monitor
@@ -37,7 +39,7 @@ uint32_t message(uint32_t n, const AllRegs &r)
 {
     AllRegs m = r;
     m.d[0] = n;
-    glue_call(mon_message_entry, m);
+    glue_call(AMOS_ROUTINE(mon_message_entry), m);
     return m.a[0];
 }
 
@@ -58,7 +60,7 @@ void resume(AllRegs &r)
     to_context(r);
     interp_run_instruction(r.d[0]);
     r = context_regs();
-    glue_call(ptr<void>(idata().Prg_InsRet), r);
+    legacy_glue_call(ptr<void>(idata().Prg_InsRet), r);
     missing("return from Prg_InsRet", nullptr);
 }
 
@@ -93,8 +95,8 @@ AllRegs kept()
 // The monitor stopped on an instruction: its display, its loop
 void stopped(AllRegs &r)
 {
-    if (!glue_call(mon_step_show_entry, r))
-        glue_call(mon_reloop_entry, r);
+    if (!glue_call(AMOS_ROUTINE(mon_step_show_entry), r))
+        glue_call(AMOS_ROUTINE(mon_reloop_entry), r);
     step_out(true, r);
 }
 
@@ -147,7 +149,7 @@ void monitor_chr(AllRegs &r)
                 m.Step_Mess = message(10, r);
                 now = true;
             } else if (peek_w(ptr<void>(at)) == TkEndP) {
-                glue_call(mon_tests_patch_entry, r);
+                glue_call(AMOS_ROUTINE(mon_tests_patch_entry), r);
                 return go_back();
             }
         }
@@ -165,7 +167,7 @@ void monitor_chr(AllRegs &r)
         AllRegs f = r;
         f.a[1] = d.Prg_Run;
         f.a[0] = r.d[7];
-        glue_call(lib_address(L_Tk_FindA), f);
+        glue_call(lib_entry(L_Tk_FindA), f);
         if (!stop && f.d[1])
             return go_out();
         if (!f.d[1]) {
@@ -210,7 +212,7 @@ void error_message(AllRegs &r)
         g.a[0] = d.Ed_RunMessages;
     }
     g.d[0] = (r.d[0] & 0xFFFF0000u) | uint16_t(n);
-    glue_call(lib_address(L_GetMessage), g);
+    glue_call(lib_entry(L_GetMessage), g);
     r.d[0] = g.d[0];
     r.a[0] = g.a[0];
 }
@@ -223,9 +225,9 @@ void error_stop(AllRegs &r)
     error_message(r);
     MonData &m = mon();
     if (!m.Tt_Init) {
-        glue_call(mon_test_error_entry, r);
+        glue_call(AMOS_ROUTINE(mon_test_error_entry), r);
         r.a[4] = d.Mon_Base;
-        glue_call(mon_reloop_entry, r);
+        glue_call(AMOS_ROUTINE(mon_reloop_entry), r);
     } else {
         uint16_t error = uint16_t(r.d[2]);
         if (!r.a[0])
@@ -237,17 +239,17 @@ void error_stop(AllRegs &r)
         uint16_t token = peek_w(ptr<void>(r.a[6] - 2));
         r.d[0] = (r.d[0] & 0xFFFF0000u) | token;
         r.d[1] = (r.d[1] & 0xFFFF0000u) | peek_w(ptr<void>(r.a[4] + int16_t(token)));
-        glue_call(mon_show_entry, r);
+        glue_call(AMOS_ROUTINE(mon_show_entry), r);
         m.Step_Mode = 0;
         if (error == 1003) {
-            glue_call(mon_reinit_entry, r);
+            glue_call(AMOS_ROUTINE(mon_reinit_entry), r);
         } else {
             if (error != 9)
                 m.Tt_Init = 0xFFFF;
             monitor_chr(r);
         }
     }
-    glue_call(ptr<void>(d.Prg_InsRet), r);
+    legacy_glue_call(ptr<void>(d.Prg_InsRet), r);
     missing("return from Prg_InsRet", nullptr);
 }
 
@@ -263,12 +265,12 @@ void host_In_Editor(AllRegs &r)
 {
     IData &d = idata();
     r.a[3] = ptr<EditWindow>(d.Edt_Runned)->Edt_Prg;
-    glue_call(mon_cold_start_entry, r);
+    glue_call(AMOS_ROUTINE(mon_cold_start_entry), r);
     if (r.d[0])
         return;
     r.a[4] = d.Mon_Base;
     mon().Tt_Run = 0;
-    glue_call(mon_tests_entry, r);
+    glue_call(AMOS_ROUTINE(mon_tests_entry), r);
 }
 
 // In_Program: the monitor started by the program (or told to stop it)
@@ -282,7 +284,7 @@ void host_In_Program(AllRegs &r)
     }
     AllRegs s = r;
     s.a[3] = d.Prg_Runned;
-    glue_call(mon_cold_start_entry, s);
+    glue_call(AMOS_ROUTINE(mon_cold_start_entry), s);
     r.d[0] = s.d[0];
     if (s.d[0])
         return;
@@ -320,7 +322,7 @@ void host_mon_evaluate(AllRegs &r)
             e.a[4] = d.AdTokens[0];
             e.d[7] = 0;
             e.a[3] = d.PLoop;
-            glue_call(lib_address(L_New_Evalue), e);
+            glue_call(lib_entry(L_New_Evalue), e);
             mark.regs = e;
         });
         if (evaluation != EvAgain)
@@ -400,7 +402,7 @@ extern "C" {
     AllRegs e = context_regs();
     e.d[0] = 1000;
     e.a[0] = 0;
-    glue_call(ptr<void>(d.Prg_JError), e);
+    legacy_glue_call(ptr<void>(d.Prg_JError), e);
     missing("return from Prg_JError", nullptr);
 }
 

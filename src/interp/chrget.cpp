@@ -5,6 +5,7 @@
 // context. Prg_InsRet, where instructions that jump go back to, is
 // interp_iret: it enters the loop again at a6.
 
+#include "runtime/detail/legacy_dispatch.h"
 #include "interp/interp.h"
 #include "verif/verif.h"
 #if !defined(__mc68000__)
@@ -77,7 +78,7 @@ Native find_native(const uint8_t *a4, uint16_t t, const void *routine, bool func
 #if defined(__mc68000__)
     n.fn = ptr<void>(peek_l(body - 16));
 #else
-    auto* binding = host::glue_entry(routine);
+    auto* binding = host::legacy_glue_entry(routine);
     if (!binding || binding->kind != host::GlueKind::libcall || binding->a1 != params)
         return n;
     n.fn = binding->binding.library;

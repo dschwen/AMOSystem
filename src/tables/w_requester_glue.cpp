@@ -16,9 +16,9 @@ void relocate_src_w_requester_glue_s()
 }
 
 const GlueEntry entries_src_w_requester_glue_s[] = {
-    {host_obj_src_w_requester_glue_s + 0, GlueKind::w, AMOS_BIND_W(w_auto_request), nullptr, 0, 4, "w_auto_req"},
-    {host_obj_src_w_requester_glue_s + 4, GlueKind::w, AMOS_BIND_W(w_easy_request), nullptr, 0, 4, "w_easy_req"},
-    {nullptr, GlueKind::missing, nullptr, nullptr, 0, 0, nullptr},
+    {AMOS_ENTRY_AT(host_obj_src_w_requester_glue_s, 0), GlueKind::w, AMOS_BIND_W(w_auto_request), nullptr, 0, 4, "w_auto_req"},
+    {AMOS_ENTRY_AT(host_obj_src_w_requester_glue_s, 4), GlueKind::w, AMOS_BIND_W(w_easy_request), nullptr, 0, 4, "w_easy_req"},
+    {AMOS_ENTRY_END, GlueKind::missing, nullptr, nullptr, 0, 0, nullptr},
 };
 
 } // namespace amos::host

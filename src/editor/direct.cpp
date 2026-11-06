@@ -362,7 +362,7 @@ namespace {
     lib_call(L_VerDirect, v);
     if (d.ScOn)
         ec_fn(ec::Active, uint32_t(d.ScOn - 1));
-    amos_goto(lib_address(L_New_ChrGet), 0);
+    amos_goto(lib_entry(L_New_ChrGet), 0);
 }
 
 // Esc_Recall
