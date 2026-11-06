@@ -7,3 +7,6 @@ tests/host_only/**/*.txt binary
 
 # Raw data (fonts...)
 data/**/*.bin binary
+
+# Files of the host tests that AMOS reads with CR/LF line ends
+tests/host_only/adf.files/** binary
