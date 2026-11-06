@@ -74,6 +74,7 @@ template<Integer N> constexpr Result<int64_t> signed_offset(N n) {
 }
 
 class Memory;
+class SegmentBindings;
 namespace abi { struct AddressCodec; }
 template<class T> class PointerField;
 template<class T> class GuestPtr;
@@ -84,6 +85,7 @@ class alignas(pointer_alignment) GuestAddress32 {
     explicit constexpr GuestAddress32(uint32_t bits) : bits_(bits) {}
     friend struct abi::AddressCodec;
     friend class Memory;
+    friend class SegmentBindings;
     template<class> friend class GuestPtr;
 public:
     constexpr GuestAddress32() = default;
@@ -122,6 +124,7 @@ template<class T> class alignas(pointer_alignment) GuestPtr {
     template<class> friend class GuestRef;
     friend struct abi::AddressCodec;
     friend class Memory;
+    friend class SegmentBindings;
 public:
     constexpr GuestPtr() = default;
     template<class U> requires const_compatible<U, T>
@@ -265,6 +268,7 @@ template<class T> class alignas(
 ) HostPtr {
     T* value_;
     friend class Memory;
+    friend class SegmentBindings;
     template<class> friend class HostPtr;
 public:
     constexpr HostPtr() = default;
@@ -277,6 +281,7 @@ template<class T> class alignas(offset_alignment) HostSpan {
     HostPtr<T> start_{};
     SpanSize count_ = 0;
     friend class Memory;
+    friend class SegmentBindings;
 public:
     constexpr HostSpan() = default;
     explicit constexpr HostSpan(HostPtr<T> start, SpanSize count) : start_(start), count_(count) {}

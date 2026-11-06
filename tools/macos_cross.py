@@ -73,13 +73,17 @@ def inside(args):
     if args.mode=='probes':
         dest=out/'probes';dest.mkdir(exist_ok=True);results={};failures=0
         (dest/'cross-report.json').unlink(missing_ok=True)
-        for name,source in (('address-probe','address_probe.cpp'),('layout-probe','layout_probe.cpp'),('context-probe','context_probe.cpp'),('jump-probe','local_jump_probe.cpp'),('guest-memory-probe','guest_memory_probe.cpp')):
+        for name,source in (('address-probe','address_probe.cpp'),('layout-probe','layout_probe.cpp'),('context-probe','context_probe.cpp'),('jump-probe','local_jump_probe.cpp'),('guest-memory-probe','guest_memory_probe.cpp'),('static-image-probe','../guest/static_image.cpp')):
             flags=['-fpack-struct=2'] if name in ('layout-probe','jump-probe') else []
             binary=dest/name;binary.unlink(missing_ok=True)
             log=dest/(name+'-build.log')
             extra_sources = [str(ROOT/'src/host/guest_memory.cpp')] if name=='guest-memory-probe' else []
+            if name=='static-image-probe':
+                flags += ['-DAMOS_STATIC_IMAGE_PROBE', '-Wl,-dead_strip']
+                extra_sources = [str(ROOT/path) for path in ('src/host/static_symbols.cpp','src/host/guest_segments.cpp','src/host/guest_memory.cpp')]
+                extra_sources += [str(path) for path in sorted((ROOT/'src/tables').glob('*.cpp'))]
             # Translated memory needs no low native image, even for the Intel control.
-            probe_base = [cxx,'-arch',args.arch,'-std=c++20','-mmacosx-version-min=11.0','-Wl,-pie'] if name=='guest-memory-probe' else base
+            probe_base = [cxx,'-arch',args.arch,'-std=c++20','-mmacosx-version-min=11.0','-Wl,-pie'] if name in ('guest-memory-probe','static-image-probe') else base
             with log.open('w') as stream:
                 result=subprocess.run([*probe_base,'-O2',*flags,'-Isrc',str(ROOT/'tests/macos'/source),*extra_sources,'-o',str(binary)],cwd=ROOT,stdout=stream,stderr=subprocess.STDOUT)
             if result.returncode:

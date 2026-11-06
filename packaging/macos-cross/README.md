@@ -27,7 +27,8 @@ Outputs are isolated under `build/macos-cross/arm64` and `x86_64`:
 - `build.log`/`link.txt`: diagnostics. Failed app builds remove stale executables
   and successful reports. ABI configuration changes discard only cached objects.
 - `probes/`: standalone address/allocation, native/guest layout, ucontext and
-  nested local-jump executables, their build logs and a Mac runner.
+  nested local-jump executables, high-backed guest-memory and full static-image
+  relocation probes, their build logs and a Mac runner.
 
 The Dockerfile pins the upstream OSXCross 14.5-r0 toolchain and Ubuntu image by
 manifest digest. The SDK is supplied by that upstream toolchain image, not this
@@ -74,10 +75,10 @@ changing the attribute or repeatedly attempting blocked launches.
 
 For these locally built AMOS test binaries, after checking their origin, approve
 them under System Settings > Privacy & Security > Open Anyway, or remove the
-download flag from just these four files in the extracted directory:
+download flag from these executables in the extracted directory:
 
 ```sh
-xattr -d com.apple.quarantine address-probe layout-probe context-probe jump-probe
+xattr -d com.apple.quarantine address-probe layout-probe context-probe jump-probe guest-memory-probe static-image-probe
 sh ./run-probes.sh
 ```
 
@@ -109,8 +110,14 @@ nonvolatile locals are not read after standard longjmp. Native and builtin
 nested recovery are tested at O0/O2; existing Linux dialog/file-selector GUI
 fixtures remain regression gates. Runtime marks also receive ARM alignment.
 
-Next: run the native probes, decide the guest-address/layout strategy, then
-implement that translation or a demonstrated supported layout backend. The
+`guest-memory-probe` checks high native backing, typed interior pointers and
+wire access. `static-image-probe` loads all 101 static segments and applies 2,206
+relocations at independent logical addresses, without encoding their native
+source pointers. Both use PIE on Intel and ARM. Passing these probes qualifies
+the translation substrate; it does not qualify the full interpreter.
+
+Next: run the new probes on hardware and continue migrating runtime callers to
+the typed guest-address model. The
 ordinary ARM Mach-O produced here cannot safely run the current direct-pointer
 runtime. Context/register/typed-call validation, GUI tests and ARM packaging
 follow that decision. See [the detailed plan](../../docs/MACOS-CROSS.md).

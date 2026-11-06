@@ -134,205 +134,205 @@ namespace amos::host {
 
 void relocate__Edit_s()
 {
-    put(host_obj__Edit_s + 0, 4, (uint32_t(uintptr_t(host_obj__Edit_s + 64)) - uint32_t(uintptr_t(host_obj__Edit_s + 0))));      // +Edit.s:365
-    put(host_obj__Edit_s + 4, 4, (uint32_t(uintptr_t(host_obj__Edit_s + 70)) - uint32_t(uintptr_t(host_obj__Edit_s + 0))));      // +Edit.s:366
-    put(host_obj__Edit_s + 8, 4, (uint32_t(uintptr_t(host_obj__Edit_s + 80)) - uint32_t(uintptr_t(host_obj__Edit_s + 0))));      // +Edit.s:367
-    put(host_obj__Edit_s + 12, 4, (uint32_t(uintptr_t(host_obj__Edit_s + 134)) - uint32_t(uintptr_t(host_obj__Edit_s + 0))));      // +Edit.s:368
-    put(host_obj__Edit_s + 16, 4, (uint32_t(uintptr_t(host_obj__Edit_s + 1914)) - uint32_t(uintptr_t(host_obj__Edit_s + 0))));      // +Edit.s:369
-    put(host_obj__Edit_s + 20, 4, (uint32_t(uintptr_t(host_obj__Edit_s + 98)) - uint32_t(uintptr_t(host_obj__Edit_s + 0))));      // +Edit.s:370
-    put(host_obj__Edit_s + 24, 4, (uint32_t(uintptr_t(host_obj__Edit_s + 92)) - uint32_t(uintptr_t(host_obj__Edit_s + 0))));      // +Edit.s:371
-    put(host_obj__Edit_s + 28, 4, (uint32_t(uintptr_t(host_obj__Edit_s + 312)) - uint32_t(uintptr_t(host_obj__Edit_s + 0))));      // +Edit.s:372
-    put(host_obj__Edit_s + 32, 4, (uint32_t(uintptr_t(host_obj__Edit_s + 300)) - uint32_t(uintptr_t(host_obj__Edit_s + 0))));      // +Edit.s:373
-    put(host_obj__Edit_s + 36, 4, (uint32_t(uintptr_t(host_obj__Edit_s + 1872)) - uint32_t(uintptr_t(host_obj__Edit_s + 0))));      // +Edit.s:374
-    put(host_obj__Edit_s + 40, 4, (uint32_t(uintptr_t(host_obj__Edit_s + 2648)) - uint32_t(uintptr_t(host_obj__Edit_s + 0))));      // +Edit.s:375
-    put(host_obj__Edit_s + 44, 4, (uint32_t(uintptr_t(host_obj__Edit_s + 2660)) - uint32_t(uintptr_t(host_obj__Edit_s + 0))));      // +Edit.s:376
-    put(host_obj__Edit_s + 48, 4, (uint32_t(uintptr_t(host_obj__Edit_s + 2654)) - uint32_t(uintptr_t(host_obj__Edit_s + 0))));      // +Edit.s:377
-    put(host_obj__Edit_s + 52, 4, (uint32_t(uintptr_t(host_obj__Edit_s + 2666)) - uint32_t(uintptr_t(host_obj__Edit_s + 0))));      // +Edit.s:378
-    put(host_obj__Edit_s + 60, 4, (uint32_t(uintptr_t(reinterpret_cast<const uint8_t *>(&amos_bridge)))));      // +Edit.s:380
-    put(host_obj__Edit_s + 390, 4, (uint32_t(uintptr_t(host_obj_src_editor_cursor_glue_s + 0))));      // +Edit.s:680
-    put(host_obj__Edit_s + 394, 4, (uint32_t(uintptr_t(host_obj_src_editor_cursor_glue_s + 8))));      // +Edit.s:681
-    put(host_obj__Edit_s + 398, 4, (uint32_t(uintptr_t(host_obj_src_editor_cursor_glue_s + 16))));      // +Edit.s:682
-    put(host_obj__Edit_s + 402, 4, (uint32_t(uintptr_t(host_obj_src_editor_cursor_glue_s + 20))));      // +Edit.s:683
-    put(host_obj__Edit_s + 406, 4, (uint32_t(uintptr_t(host_obj_src_editor_cursor_glue_s + 24))));      // +Edit.s:684
-    put(host_obj__Edit_s + 410, 4, (uint32_t(uintptr_t(host_obj_src_editor_cursor_glue_s + 28))));      // +Edit.s:685
-    put(host_obj__Edit_s + 414, 4, (uint32_t(uintptr_t(host_obj_src_editor_cursor_glue_s + 32))));      // +Edit.s:686
-    put(host_obj__Edit_s + 418, 4, (uint32_t(uintptr_t(host_obj_src_editor_cursor_glue_s + 36))));      // +Edit.s:687
-    put(host_obj__Edit_s + 422, 4, (uint32_t(uintptr_t(host_obj_src_editor_cursor_glue_s + 48))));      // +Edit.s:688
-    put(host_obj__Edit_s + 426, 4, (uint32_t(uintptr_t(host_obj_src_editor_cursor_glue_s + 52))));      // +Edit.s:689
-    put(host_obj__Edit_s + 430, 4, (uint32_t(uintptr_t(host_obj__Edit_s + 1352))));      // +Edit.s:690
-    put(host_obj__Edit_s + 434, 4, (uint32_t(uintptr_t(host_obj_src_editor_cursor_glue_s + 44))));      // +Edit.s:691
-    put(host_obj__Edit_s + 438, 4, (uint32_t(uintptr_t(host_obj_src_editor_windows_glue_s + 0))));      // +Edit.s:692
-    put(host_obj__Edit_s + 442, 4, (uint32_t(uintptr_t(host_obj_src_editor_windows_glue_s + 4))));      // +Edit.s:693
-    put(host_obj__Edit_s + 446, 4, (uint32_t(uintptr_t(host_obj_src_editor_windows_glue_s + 8))));      // +Edit.s:694
-    put(host_obj__Edit_s + 450, 4, (uint32_t(uintptr_t(host_obj_src_editor_windows_glue_s + 12))));      // +Edit.s:695
-    put(host_obj__Edit_s + 454, 4, (uint32_t(uintptr_t(host_obj_src_editor_cursor_glue_s + 72))));      // +Edit.s:696
-    put(host_obj__Edit_s + 458, 4, (uint32_t(uintptr_t(host_obj_src_editor_cursor_glue_s + 80))));      // +Edit.s:697
-    put(host_obj__Edit_s + 462, 4, (uint32_t(uintptr_t(host_obj_src_editor_edit_glue_s + 8))));      // +Edit.s:698
-    put(host_obj__Edit_s + 466, 4, (uint32_t(uintptr_t(host_obj_src_editor_lines_glue_s + 32))));      // +Edit.s:699
-    put(host_obj__Edit_s + 470, 4, (uint32_t(uintptr_t(host_obj_src_editor_lines_glue_s + 28))));      // +Edit.s:700
-    put(host_obj__Edit_s + 474, 4, (uint32_t(uintptr_t(host_obj_src_editor_lines_glue_s + 36))));      // +Edit.s:701
-    put(host_obj__Edit_s + 478, 4, (uint32_t(uintptr_t(host_obj_src_editor_edit_glue_s + 0))));      // +Edit.s:702
-    put(host_obj__Edit_s + 482, 4, (uint32_t(uintptr_t(host_obj_src_editor_lines_glue_s + 56))));      // +Edit.s:703
-    put(host_obj__Edit_s + 486, 4, (uint32_t(uintptr_t(host_obj_src_editor_lines_glue_s + 60))));      // +Edit.s:704
-    put(host_obj__Edit_s + 490, 4, (uint32_t(uintptr_t(host_obj_src_editor_misc_glue_s + 0))));      // +Edit.s:705
-    put(host_obj__Edit_s + 494, 4, (uint32_t(uintptr_t(host_obj_src_editor_menu_glue_s + 52))));      // +Edit.s:706
-    put(host_obj__Edit_s + 498, 4, (uint32_t(uintptr_t(host_obj_src_editor_direct_glue_s + 0))));      // +Edit.s:707
-    put(host_obj__Edit_s + 502, 4, (uint32_t(uintptr_t(host_obj_src_editor_edit_glue_s + 16))));      // +Edit.s:708
-    put(host_obj__Edit_s + 506, 4, (uint32_t(uintptr_t(host_obj_src_editor_lines_glue_s + 40))));      // +Edit.s:709
-    put(host_obj__Edit_s + 510, 4, (uint32_t(uintptr_t(host_obj_src_editor_cursor_glue_s + 88))));      // +Edit.s:710
-    put(host_obj__Edit_s + 514, 4, (uint32_t(uintptr_t(host_obj_src_editor_cursor_glue_s + 92))));      // +Edit.s:711
-    put(host_obj__Edit_s + 518, 4, (uint32_t(uintptr_t(host_obj_src_editor_disk_glue_s + 8))));      // +Edit.s:712
-    put(host_obj__Edit_s + 522, 4, (uint32_t(uintptr_t(host_obj_src_editor_disk_glue_s + 36))));      // +Edit.s:713
-    put(host_obj__Edit_s + 526, 4, (uint32_t(uintptr_t(host_obj_src_editor_disk_glue_s + 40))));      // +Edit.s:714
-    put(host_obj__Edit_s + 530, 4, (uint32_t(uintptr_t(host_obj_src_editor_lines_glue_s + 48))));      // +Edit.s:715
-    put(host_obj__Edit_s + 534, 4, (uint32_t(uintptr_t(host_obj_src_editor_lines_glue_s + 52))));      // +Edit.s:716
-    put(host_obj__Edit_s + 538, 4, (uint32_t(uintptr_t(host_obj_src_editor_windows_glue_s + 52))));      // +Edit.s:717
-    put(host_obj__Edit_s + 542, 4, (uint32_t(uintptr_t(host_obj_src_editor_marks_glue_s + 8))));      // +Edit.s:718
-    put(host_obj__Edit_s + 546, 4, (uint32_t(uintptr_t(host_obj_src_editor_marks_glue_s + 28))));      // +Edit.s:719
-    put(host_obj__Edit_s + 550, 4, (uint32_t(uintptr_t(host_obj_src_editor_marks_glue_s + 36))));      // +Edit.s:720
-    put(host_obj__Edit_s + 554, 4, (uint32_t(uintptr_t(host_obj_src_editor_marks_glue_s + 44))));      // +Edit.s:721
-    put(host_obj__Edit_s + 558, 4, (uint32_t(uintptr_t(host_obj_src_editor_marks_glue_s + 52))));      // +Edit.s:722
-    put(host_obj__Edit_s + 562, 4, (uint32_t(uintptr_t(host_obj_src_editor_marks_glue_s + 60))));      // +Edit.s:723
-    put(host_obj__Edit_s + 566, 4, (uint32_t(uintptr_t(host_obj_src_editor_marks_glue_s + 68))));      // +Edit.s:724
-    put(host_obj__Edit_s + 570, 4, (uint32_t(uintptr_t(host_obj_src_editor_marks_glue_s + 76))));      // +Edit.s:725
-    put(host_obj__Edit_s + 574, 4, (uint32_t(uintptr_t(host_obj_src_editor_marks_glue_s + 84))));      // +Edit.s:726
-    put(host_obj__Edit_s + 578, 4, (uint32_t(uintptr_t(host_obj_src_editor_marks_glue_s + 92))));      // +Edit.s:727
-    put(host_obj__Edit_s + 582, 4, (uint32_t(uintptr_t(host_obj_src_editor_marks_glue_s + 12))));      // +Edit.s:728
-    put(host_obj__Edit_s + 586, 4, (uint32_t(uintptr_t(host_obj_src_editor_marks_glue_s + 32))));      // +Edit.s:729
-    put(host_obj__Edit_s + 590, 4, (uint32_t(uintptr_t(host_obj_src_editor_marks_glue_s + 40))));      // +Edit.s:730
-    put(host_obj__Edit_s + 594, 4, (uint32_t(uintptr_t(host_obj_src_editor_marks_glue_s + 48))));      // +Edit.s:731
-    put(host_obj__Edit_s + 598, 4, (uint32_t(uintptr_t(host_obj_src_editor_marks_glue_s + 56))));      // +Edit.s:732
-    put(host_obj__Edit_s + 602, 4, (uint32_t(uintptr_t(host_obj_src_editor_marks_glue_s + 64))));      // +Edit.s:733
-    put(host_obj__Edit_s + 606, 4, (uint32_t(uintptr_t(host_obj_src_editor_marks_glue_s + 72))));      // +Edit.s:734
-    put(host_obj__Edit_s + 610, 4, (uint32_t(uintptr_t(host_obj_src_editor_marks_glue_s + 80))));      // +Edit.s:735
-    put(host_obj__Edit_s + 614, 4, (uint32_t(uintptr_t(host_obj_src_editor_marks_glue_s + 88))));      // +Edit.s:736
-    put(host_obj__Edit_s + 618, 4, (uint32_t(uintptr_t(host_obj_src_editor_marks_glue_s + 96))));      // +Edit.s:737
-    put(host_obj__Edit_s + 622, 4, (uint32_t(uintptr_t(host_obj_src_editor_block_glue_s + 4))));      // +Edit.s:738
-    put(host_obj__Edit_s + 626, 4, (uint32_t(uintptr_t(host_obj_src_editor_block_glue_s + 28))));      // +Edit.s:739
-    put(host_obj__Edit_s + 630, 4, (uint32_t(uintptr_t(host_obj_src_editor_program_glue_s + 36))));      // +Edit.s:740
-    put(host_obj__Edit_s + 634, 4, (uint32_t(uintptr_t(host_obj_src_editor_block_glue_s + 32))));      // +Edit.s:741
-    put(host_obj__Edit_s + 638, 4, (uint32_t(uintptr_t(host_obj_src_editor_block_glue_s + 36))));      // +Edit.s:742
-    put(host_obj__Edit_s + 642, 4, (uint32_t(uintptr_t(host_obj_src_editor_lines_glue_s + 44))));      // +Edit.s:743
-    put(host_obj__Edit_s + 646, 4, (uint32_t(uintptr_t(host_obj_src_editor_undo_glue_s + 48))));      // +Edit.s:744
-    put(host_obj__Edit_s + 650, 4, (uint32_t(uintptr_t(host_obj_src_editor_search_glue_s + 24))));      // +Edit.s:745
-    put(host_obj__Edit_s + 654, 4, (uint32_t(uintptr_t(host_obj_src_editor_search_glue_s + 32))));      // +Edit.s:746
-    put(host_obj__Edit_s + 658, 4, (uint32_t(uintptr_t(host_obj_src_editor_search_glue_s + 28))));      // +Edit.s:747
-    put(host_obj__Edit_s + 662, 4, (uint32_t(uintptr_t(host_obj_src_editor_loop_glue_s + 32))));      // +Edit.s:748
-    put(host_obj__Edit_s + 666, 4, (uint32_t(uintptr_t(host_obj_src_editor_status_glue_s + 44))));      // +Edit.s:749
-    put(host_obj__Edit_s + 670, 4, (uint32_t(uintptr_t(host_obj_src_editor_loop_glue_s + 36))));      // +Edit.s:750
-    put(host_obj__Edit_s + 674, 4, (uint32_t(uintptr_t(host_obj_src_editor_block_glue_s + 24))));      // +Edit.s:751
-    put(host_obj__Edit_s + 678, 4, (uint32_t(uintptr_t(host_obj_src_editor_menu_glue_s + 68))));      // +Edit.s:753
-    put(host_obj__Edit_s + 682, 4, (uint32_t(uintptr_t(host_obj_src_editor_menu_glue_s + 64))));      // +Edit.s:754
-    put(host_obj__Edit_s + 686, 4, (uint32_t(uintptr_t(host_obj_src_editor_menu_glue_s + 72))));      // +Edit.s:755
-    put(host_obj__Edit_s + 690, 4, (uint32_t(uintptr_t(host_obj_src_editor_search_glue_s + 16))));      // +Edit.s:756
-    put(host_obj__Edit_s + 694, 4, (uint32_t(uintptr_t(host_obj_src_editor_run_glue_s + 28))));      // +Edit.s:757
-    put(host_obj__Edit_s + 698, 4, (uint32_t(uintptr_t(host_obj_src_editor_run_glue_s + 56))));      // +Edit.s:758
-    put(host_obj__Edit_s + 702, 4, (uint32_t(uintptr_t(host_obj_src_editor_run_glue_s + 64))));      // +Edit.s:759
-    put(host_obj__Edit_s + 706, 4, (uint32_t(uintptr_t(host_obj_src_editor_program_glue_s + 0))));      // +Edit.s:760
-    put(host_obj__Edit_s + 710, 4, (uint32_t(uintptr_t(host_obj_src_editor_windows_glue_s + 68))));      // +Edit.s:761
-    put(host_obj__Edit_s + 714, 4, (uint32_t(uintptr_t(host_obj_src_editor_session_glue_s + 0))));      // +Edit.s:762
-    put(host_obj__Edit_s + 718, 4, (uint32_t(uintptr_t(host_obj_src_editor_info_glue_s + 12))));      // +Edit.s:763
-    put(host_obj__Edit_s + 722, 4, (uint32_t(uintptr_t(host_obj_src_editor_disk_glue_s + 20))));      // +Edit.s:764
-    put(host_obj__Edit_s + 726, 4, (uint32_t(uintptr_t(host_obj_src_editor_disk_glue_s + 24))));      // +Edit.s:765
-    put(host_obj__Edit_s + 730, 4, (uint32_t(uintptr_t(host_obj_src_editor_blocksave_glue_s + 12))));      // +Edit.s:766
-    put(host_obj__Edit_s + 734, 4, (uint32_t(uintptr_t(host_obj_src_editor_procs_glue_s + 12))));      // +Edit.s:767
-    put(host_obj__Edit_s + 738, 4, (uint32_t(uintptr_t(host_obj_src_editor_disk_glue_s + 4))));      // +Edit.s:768
-    put(host_obj__Edit_s + 742, 4, (uint32_t(uintptr_t(host_obj_src_editor_procs_glue_s + 0))));      // +Edit.s:769
-    put(host_obj__Edit_s + 746, 4, (uint32_t(uintptr_t(host_obj_src_editor_procs_glue_s + 4))));      // +Edit.s:770
-    put(host_obj__Edit_s + 750, 4, (uint32_t(uintptr_t(host_obj_src_editor_windows_glue_s + 120))));      // +Edit.s:771
-    put(host_obj__Edit_s + 754, 4, (uint32_t(uintptr_t(host_obj_src_editor_windows_glue_s + 116))));      // +Edit.s:772
-    put(host_obj__Edit_s + 758, 4, (uint32_t(uintptr_t(host_obj_src_editor_windows_glue_s + 124))));      // +Edit.s:773
-    put(host_obj__Edit_s + 762, 4, (uint32_t(uintptr_t(host_obj_src_editor_undo_glue_s + 52))));      // +Edit.s:774
-    put(host_obj__Edit_s + 766, 4, (uint32_t(uintptr_t(host_obj_src_editor_windows_glue_s + 36))));      // +Edit.s:775
-    put(host_obj__Edit_s + 770, 4, (uint32_t(uintptr_t(host_obj_src_editor_windows_glue_s + 24))));      // +Edit.s:776
-    put(host_obj__Edit_s + 774, 4, (uint32_t(uintptr_t(host_obj_src_editor_blocksave_glue_s + 4))));      // +Edit.s:777
-    put(host_obj__Edit_s + 778, 4, (uint32_t(uintptr_t(host_obj_src_editor_blocksave_glue_s + 0))));      // +Edit.s:778
-    put(host_obj__Edit_s + 782, 4, (uint32_t(uintptr_t(host_obj_src_editor_search_glue_s + 36))));      // +Edit.s:779
-    put(host_obj__Edit_s + 786, 4, (uint32_t(uintptr_t(host_obj_src_editor_search_glue_s + 40))));      // +Edit.s:780
-    put(host_obj__Edit_s + 790, 4, (uint32_t(uintptr_t(host_obj_src_editor_search_glue_s + 44))));      // +Edit.s:781
-    put(host_obj__Edit_s + 794, 4, (uint32_t(uintptr_t(host_obj_src_editor_windows_glue_s + 80))));      // +Edit.s:782
-    put(host_obj__Edit_s + 798, 4, (uint32_t(uintptr_t(host_obj_src_editor_windows_glue_s + 44))));      // +Edit.s:783
-    put(host_obj__Edit_s + 802, 4, (uint32_t(uintptr_t(host_obj_src_editor_menu_glue_s + 32))));      // +Edit.s:784
-    put(host_obj__Edit_s + 806, 4, (uint32_t(uintptr_t(host_obj_src_editor_misc_glue_s + 44))));      // +Edit.s:785
-    put(host_obj__Edit_s + 810, 4, (uint32_t(uintptr_t(host_obj_src_editor_macros_glue_s + 76))));      // +Edit.s:786
-    put(host_obj__Edit_s + 814, 4, (uint32_t(uintptr_t(host_obj_src_editor_macros_glue_s + 68))));      // +Edit.s:787
-    put(host_obj__Edit_s + 818, 4, (uint32_t(uintptr_t(host_obj_src_editor_macros_glue_s + 72))));      // +Edit.s:788
-    put(host_obj__Edit_s + 822, 4, (uint32_t(uintptr_t(host_obj_src_editor_macros_glue_s + 52))));      // +Edit.s:789
-    put(host_obj__Edit_s + 826, 4, (uint32_t(uintptr_t(host_obj_src_editor_macros_glue_s + 60))));      // +Edit.s:790
-    put(host_obj__Edit_s + 830, 4, (uint32_t(uintptr_t(host_obj_src_editor_run_glue_s + 16))));      // +Edit.s:793
-    put(host_obj__Edit_s + 834, 4, (uint32_t(uintptr_t(host_obj_src_editor_windows_glue_s + 84))));      // +Edit.s:794
-    put(host_obj__Edit_s + 838, 4, (uint32_t(uintptr_t(host_obj_src_editor_windows_glue_s + 76))));      // +Edit.s:795
-    put(host_obj__Edit_s + 842, 4, (uint32_t(uintptr_t(host_obj_src_editor_program_glue_s + 20))));      // +Edit.s:796
-    put(host_obj__Edit_s + 846, 4, (uint32_t(uintptr_t(host_obj_src_editor_menu_glue_s + 52))));      // +Edit.s:800
-    put(host_obj__Edit_s + 850, 4, (uint32_t(uintptr_t(host_obj_src_editor_menu_glue_s + 52))));      // +Edit.s:801
-    put(host_obj__Edit_s + 854, 4, (uint32_t(uintptr_t(host_obj_src_editor_menu_glue_s + 52))));      // +Edit.s:802
-    put(host_obj__Edit_s + 858, 4, (uint32_t(uintptr_t(host_obj_src_editor_menu_glue_s + 52))));      // +Edit.s:803
-    put(host_obj__Edit_s + 862, 4, (uint32_t(uintptr_t(host_obj_src_editor_menu_glue_s + 52))));      // +Edit.s:804
-    put(host_obj__Edit_s + 866, 4, (uint32_t(uintptr_t(host_obj_src_editor_menu_glue_s + 52))));      // +Edit.s:805
-    put(host_obj__Edit_s + 870, 4, (uint32_t(uintptr_t(host_obj_src_editor_menu_glue_s + 52))));      // +Edit.s:806
-    put(host_obj__Edit_s + 874, 4, (uint32_t(uintptr_t(host_obj_src_editor_menu_glue_s + 52))));      // +Edit.s:807
-    put(host_obj__Edit_s + 878, 4, (uint32_t(uintptr_t(host_obj_src_editor_menu_glue_s + 52))));      // +Edit.s:808
-    put(host_obj__Edit_s + 882, 4, (uint32_t(uintptr_t(host_obj_src_editor_menu_glue_s + 52))));      // +Edit.s:809
-    put(host_obj__Edit_s + 886, 4, (uint32_t(uintptr_t(host_obj_src_editor_menu_glue_s + 52))));      // +Edit.s:810
-    put(host_obj__Edit_s + 890, 4, (uint32_t(uintptr_t(host_obj_src_editor_menu_glue_s + 52))));      // +Edit.s:811
-    put(host_obj__Edit_s + 894, 4, (uint32_t(uintptr_t(host_obj_src_editor_menu_glue_s + 52))));      // +Edit.s:812
-    put(host_obj__Edit_s + 898, 4, (uint32_t(uintptr_t(host_obj_src_editor_menu_glue_s + 52))));      // +Edit.s:813
-    put(host_obj__Edit_s + 902, 4, (uint32_t(uintptr_t(host_obj_src_editor_menu_glue_s + 52))));      // +Edit.s:814
-    put(host_obj__Edit_s + 906, 4, (uint32_t(uintptr_t(host_obj_src_editor_menu_glue_s + 52))));      // +Edit.s:815
-    put(host_obj__Edit_s + 910, 4, (uint32_t(uintptr_t(host_obj_src_editor_menu_glue_s + 52))));      // +Edit.s:816
-    put(host_obj__Edit_s + 914, 4, (uint32_t(uintptr_t(host_obj_src_editor_menu_glue_s + 52))));      // +Edit.s:817
-    put(host_obj__Edit_s + 918, 4, (uint32_t(uintptr_t(host_obj_src_editor_menu_glue_s + 52))));      // +Edit.s:818
-    put(host_obj__Edit_s + 922, 4, (uint32_t(uintptr_t(host_obj_src_editor_menu_glue_s + 52))));      // +Edit.s:819
-    put(host_obj__Edit_s + 926, 4, (uint32_t(uintptr_t(host_obj_src_editor_menu_glue_s + 56))));      // +Edit.s:821
-    put(host_obj__Edit_s + 930, 4, (uint32_t(uintptr_t(host_obj_src_editor_menu_glue_s + 60))));      // +Edit.s:822
-    put(host_obj__Edit_s + 934, 4, (uint32_t(uintptr_t(host_obj_src_editor_config_glue_s + 40))));      // +Edit.s:823
-    put(host_obj__Edit_s + 938, 4, (uint32_t(uintptr_t(host_obj_src_editor_config_glue_s + 48))));      // +Edit.s:824
-    put(host_obj__Edit_s + 942, 4, (uint32_t(uintptr_t(host_obj_src_editor_config_glue_s + 52))));      // +Edit.s:825
-    put(host_obj__Edit_s + 946, 4, (uint32_t(uintptr_t(host_obj_src_editor_config_glue_s + 60))));      // +Edit.s:826
-    put(host_obj__Edit_s + 950, 4, (uint32_t(uintptr_t(host_obj_src_editor_info_glue_s + 0))));      // +Edit.s:827
-    put(host_obj__Edit_s + 954, 4, (uint32_t(uintptr_t(host_obj_src_editor_menu_glue_s + 44))));      // +Edit.s:828
-    put(host_obj__Edit_s + 958, 4, (uint32_t(uintptr_t(host_obj_src_editor_macros_glue_s + 48))));      // +Edit.s:829
-    put(host_obj__Edit_s + 962, 4, (uint32_t(uintptr_t(host_obj__Edit_s + 1646))));      // +Edit.s:830
-    put(host_obj__Edit_s + 966, 4, (uint32_t(uintptr_t(host_obj_src_editor_run_glue_s + 0))));      // +Edit.s:831
-    put(host_obj__Edit_s + 970, 4, (uint32_t(uintptr_t(host_obj_src_editor_blocksave_glue_s + 8))));      // +Edit.s:832
-    put(host_obj__Edit_s + 974, 4, (uint32_t(uintptr_t(host_obj_src_editor_run_glue_s + 60))));      // +Edit.s:833
-    put(host_obj__Edit_s + 978, 4, (uint32_t(uintptr_t(host_obj_src_editor_menu_glue_s + 76))));      // +Edit.s:834
-    put(host_obj__Edit_s + 982, 4, (uint32_t(uintptr_t(host_obj_src_editor_info_glue_s + 8))));      // +Edit.s:835
-    put(host_obj__Edit_s + 986, 4, (uint32_t(uintptr_t(host_obj_src_editor_info_glue_s + 4))));      // +Edit.s:836
-    put(host_obj__Edit_s + 990, 4, (uint32_t(uintptr_t(host_obj_src_editor_run_glue_s + 84))));      // +Edit.s:837
-    put(host_obj__Edit_s + 994, 4, (uint32_t(uintptr_t(host_obj_src_editor_disk_glue_s + 32))));      // +Edit.s:840
-    put(host_obj__Edit_s + 998, 4, (uint32_t(uintptr_t(host_obj_src_editor_misc_glue_s + 12))));      // +Edit.s:841
-    put(host_obj__Edit_s + 1002, 4, (uint32_t(uintptr_t(host_obj_src_editor_disk_glue_s + 28))));      // +Edit.s:842
-    put(host_obj__Edit_s + 1006, 4, (uint32_t(uintptr_t(host_obj_src_editor_menu_glue_s + 52))));      // +Edit.s:843
-    put(host_obj__Edit_s + 1010, 4, (uint32_t(uintptr_t(host_obj_src_editor_menu_glue_s + 52))));      // +Edit.s:844
-    put(host_obj__Edit_s + 1014, 4, (uint32_t(uintptr_t(host_obj_src_editor_menu_glue_s + 52))));      // +Edit.s:845
-    put(host_obj__Edit_s + 1018, 4, (uint32_t(uintptr_t(host_obj_src_editor_menu_glue_s + 52))));      // +Edit.s:846
-    put(host_obj__Edit_s + 1022, 4, (uint32_t(uintptr_t(host_obj_src_editor_menu_glue_s + 52))));      // +Edit.s:847
-    put(host_obj__Edit_s + 1026, 4, (uint32_t(uintptr_t(host_obj_src_editor_menu_glue_s + 52))));      // +Edit.s:848
-    put(host_obj__Edit_s + 1030, 4, (uint32_t(uintptr_t(host_obj_src_editor_menu_glue_s + 52))));      // +Edit.s:849
-    put(host_obj__Edit_s + 1034, 4, (uint32_t(uintptr_t(host_obj_src_editor_menu_glue_s + 52))));      // +Edit.s:850
-    put(host_obj__Edit_s + 1038, 4, (uint32_t(uintptr_t(host_obj_src_editor_menu_glue_s + 52))));      // +Edit.s:851
-    put(host_obj__Edit_s + 1042, 4, (uint32_t(uintptr_t(host_obj_src_editor_menu_glue_s + 52))));      // +Edit.s:852
-    put(host_obj__Edit_s + 1046, 4, (uint32_t(uintptr_t(host_obj_src_editor_menu_glue_s + 52))));      // +Edit.s:853
-    put(host_obj__Edit_s + 1050, 4, (uint32_t(uintptr_t(host_obj_src_editor_menu_glue_s + 52))));      // +Edit.s:854
-    put(host_obj__Edit_s + 1054, 4, (uint32_t(uintptr_t(host_obj_src_editor_menu_glue_s + 52))));      // +Edit.s:855
-    put(host_obj__Edit_s + 1058, 4, (uint32_t(uintptr_t(host_obj_src_editor_menu_glue_s + 52))));      // +Edit.s:856
-    put(host_obj__Edit_s + 1062, 4, (uint32_t(uintptr_t(host_obj_src_editor_menu_glue_s + 52))));      // +Edit.s:857
-    put(host_obj__Edit_s + 1066, 4, (uint32_t(uintptr_t(host_obj_src_editor_menu_glue_s + 52))));      // +Edit.s:858
-    put(host_obj__Edit_s + 1070, 4, (uint32_t(uintptr_t(host_obj_src_editor_menu_glue_s + 52))));      // +Edit.s:859
-    put(host_obj__Edit_s + 1074, 4, (uint32_t(uintptr_t(host_obj_src_editor_menu_glue_s + 52))));      // +Edit.s:860
-    put(host_obj__Edit_s + 1078, 4, (uint32_t(uintptr_t(host_obj_src_editor_menu_glue_s + 52))));      // +Edit.s:861
-    put(host_obj__Edit_s + 1082, 4, (uint32_t(uintptr_t(host_obj_src_editor_menu_glue_s + 52))));      // +Edit.s:862
-    put(host_obj__Edit_s + 1086, 4, (uint32_t(uintptr_t(host_obj_src_editor_menu_glue_s + 52))));      // +Edit.s:863
-    put(host_obj__Edit_s + 1090, 4, (uint32_t(uintptr_t(host_obj_src_editor_menu_glue_s + 52))));      // +Edit.s:864
-    put(host_obj__Edit_s + 1094, 4, (uint32_t(uintptr_t(host_obj_src_editor_menu_glue_s + 52))));      // +Edit.s:865
-    put(host_obj__Edit_s + 1098, 4, (uint32_t(uintptr_t(host_obj_src_editor_menu_glue_s + 52))));      // +Edit.s:866
-    put(host_obj__Edit_s + 1102, 4, (uint32_t(uintptr_t(host_obj_src_editor_menu_glue_s + 16))));      // +Edit.s:867
-    put(host_obj__Edit_s + 1106, 4, (uint32_t(uintptr_t(host_obj_src_editor_menu_glue_s + 20))));      // +Edit.s:868
-    put(host_obj__Edit_s + 1110, 4, (uint32_t(uintptr_t(host_obj_src_editor_block_glue_s + 20))));      // +Edit.s:869
-    put(host_obj__Edit_s + 1114, 4, (uint32_t(uintptr_t(host_obj_src_editor_loop_glue_s + 28))));      // +Edit.s:870
-    put(host_obj__Edit_s + 1118, 4, (uint32_t(uintptr_t(host_obj__Edit_s + 294))));      // +Edit.s:871
-    put(host_obj__Edit_s + 1122, 4, (uint32_t(uintptr_t(host_obj_src_editor_menu_glue_s + 52))));      // +Edit.s:872
+    put(host_obj__Edit_s + 0, 4, AMOS_STATIC_DIFFERENCE(host_obj__Edit_s, 64, host_obj__Edit_s, 0));      // +Edit.s:365
+    put(host_obj__Edit_s + 4, 4, AMOS_STATIC_DIFFERENCE(host_obj__Edit_s, 70, host_obj__Edit_s, 0));      // +Edit.s:366
+    put(host_obj__Edit_s + 8, 4, AMOS_STATIC_DIFFERENCE(host_obj__Edit_s, 80, host_obj__Edit_s, 0));      // +Edit.s:367
+    put(host_obj__Edit_s + 12, 4, AMOS_STATIC_DIFFERENCE(host_obj__Edit_s, 134, host_obj__Edit_s, 0));      // +Edit.s:368
+    put(host_obj__Edit_s + 16, 4, AMOS_STATIC_DIFFERENCE(host_obj__Edit_s, 1914, host_obj__Edit_s, 0));      // +Edit.s:369
+    put(host_obj__Edit_s + 20, 4, AMOS_STATIC_DIFFERENCE(host_obj__Edit_s, 98, host_obj__Edit_s, 0));      // +Edit.s:370
+    put(host_obj__Edit_s + 24, 4, AMOS_STATIC_DIFFERENCE(host_obj__Edit_s, 92, host_obj__Edit_s, 0));      // +Edit.s:371
+    put(host_obj__Edit_s + 28, 4, AMOS_STATIC_DIFFERENCE(host_obj__Edit_s, 312, host_obj__Edit_s, 0));      // +Edit.s:372
+    put(host_obj__Edit_s + 32, 4, AMOS_STATIC_DIFFERENCE(host_obj__Edit_s, 300, host_obj__Edit_s, 0));      // +Edit.s:373
+    put(host_obj__Edit_s + 36, 4, AMOS_STATIC_DIFFERENCE(host_obj__Edit_s, 1872, host_obj__Edit_s, 0));      // +Edit.s:374
+    put(host_obj__Edit_s + 40, 4, AMOS_STATIC_DIFFERENCE(host_obj__Edit_s, 2648, host_obj__Edit_s, 0));      // +Edit.s:375
+    put(host_obj__Edit_s + 44, 4, AMOS_STATIC_DIFFERENCE(host_obj__Edit_s, 2660, host_obj__Edit_s, 0));      // +Edit.s:376
+    put(host_obj__Edit_s + 48, 4, AMOS_STATIC_DIFFERENCE(host_obj__Edit_s, 2654, host_obj__Edit_s, 0));      // +Edit.s:377
+    put(host_obj__Edit_s + 52, 4, AMOS_STATIC_DIFFERENCE(host_obj__Edit_s, 2666, host_obj__Edit_s, 0));      // +Edit.s:378
+    AMOS_BRIDGE_METADATA(host_obj__Edit_s + 60);      // +Edit.s:380
+    put(host_obj__Edit_s + 390, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_cursor_glue_s, 0));      // +Edit.s:680
+    put(host_obj__Edit_s + 394, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_cursor_glue_s, 8));      // +Edit.s:681
+    put(host_obj__Edit_s + 398, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_cursor_glue_s, 16));      // +Edit.s:682
+    put(host_obj__Edit_s + 402, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_cursor_glue_s, 20));      // +Edit.s:683
+    put(host_obj__Edit_s + 406, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_cursor_glue_s, 24));      // +Edit.s:684
+    put(host_obj__Edit_s + 410, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_cursor_glue_s, 28));      // +Edit.s:685
+    put(host_obj__Edit_s + 414, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_cursor_glue_s, 32));      // +Edit.s:686
+    put(host_obj__Edit_s + 418, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_cursor_glue_s, 36));      // +Edit.s:687
+    put(host_obj__Edit_s + 422, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_cursor_glue_s, 48));      // +Edit.s:688
+    put(host_obj__Edit_s + 426, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_cursor_glue_s, 52));      // +Edit.s:689
+    put(host_obj__Edit_s + 430, 4, AMOS_STATIC_ADDRESS(host_obj__Edit_s, 1352));      // +Edit.s:690
+    put(host_obj__Edit_s + 434, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_cursor_glue_s, 44));      // +Edit.s:691
+    put(host_obj__Edit_s + 438, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_windows_glue_s, 0));      // +Edit.s:692
+    put(host_obj__Edit_s + 442, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_windows_glue_s, 4));      // +Edit.s:693
+    put(host_obj__Edit_s + 446, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_windows_glue_s, 8));      // +Edit.s:694
+    put(host_obj__Edit_s + 450, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_windows_glue_s, 12));      // +Edit.s:695
+    put(host_obj__Edit_s + 454, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_cursor_glue_s, 72));      // +Edit.s:696
+    put(host_obj__Edit_s + 458, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_cursor_glue_s, 80));      // +Edit.s:697
+    put(host_obj__Edit_s + 462, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_edit_glue_s, 8));      // +Edit.s:698
+    put(host_obj__Edit_s + 466, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_lines_glue_s, 32));      // +Edit.s:699
+    put(host_obj__Edit_s + 470, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_lines_glue_s, 28));      // +Edit.s:700
+    put(host_obj__Edit_s + 474, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_lines_glue_s, 36));      // +Edit.s:701
+    put(host_obj__Edit_s + 478, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_edit_glue_s, 0));      // +Edit.s:702
+    put(host_obj__Edit_s + 482, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_lines_glue_s, 56));      // +Edit.s:703
+    put(host_obj__Edit_s + 486, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_lines_glue_s, 60));      // +Edit.s:704
+    put(host_obj__Edit_s + 490, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_misc_glue_s, 0));      // +Edit.s:705
+    put(host_obj__Edit_s + 494, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_menu_glue_s, 52));      // +Edit.s:706
+    put(host_obj__Edit_s + 498, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_direct_glue_s, 0));      // +Edit.s:707
+    put(host_obj__Edit_s + 502, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_edit_glue_s, 16));      // +Edit.s:708
+    put(host_obj__Edit_s + 506, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_lines_glue_s, 40));      // +Edit.s:709
+    put(host_obj__Edit_s + 510, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_cursor_glue_s, 88));      // +Edit.s:710
+    put(host_obj__Edit_s + 514, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_cursor_glue_s, 92));      // +Edit.s:711
+    put(host_obj__Edit_s + 518, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_disk_glue_s, 8));      // +Edit.s:712
+    put(host_obj__Edit_s + 522, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_disk_glue_s, 36));      // +Edit.s:713
+    put(host_obj__Edit_s + 526, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_disk_glue_s, 40));      // +Edit.s:714
+    put(host_obj__Edit_s + 530, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_lines_glue_s, 48));      // +Edit.s:715
+    put(host_obj__Edit_s + 534, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_lines_glue_s, 52));      // +Edit.s:716
+    put(host_obj__Edit_s + 538, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_windows_glue_s, 52));      // +Edit.s:717
+    put(host_obj__Edit_s + 542, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_marks_glue_s, 8));      // +Edit.s:718
+    put(host_obj__Edit_s + 546, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_marks_glue_s, 28));      // +Edit.s:719
+    put(host_obj__Edit_s + 550, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_marks_glue_s, 36));      // +Edit.s:720
+    put(host_obj__Edit_s + 554, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_marks_glue_s, 44));      // +Edit.s:721
+    put(host_obj__Edit_s + 558, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_marks_glue_s, 52));      // +Edit.s:722
+    put(host_obj__Edit_s + 562, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_marks_glue_s, 60));      // +Edit.s:723
+    put(host_obj__Edit_s + 566, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_marks_glue_s, 68));      // +Edit.s:724
+    put(host_obj__Edit_s + 570, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_marks_glue_s, 76));      // +Edit.s:725
+    put(host_obj__Edit_s + 574, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_marks_glue_s, 84));      // +Edit.s:726
+    put(host_obj__Edit_s + 578, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_marks_glue_s, 92));      // +Edit.s:727
+    put(host_obj__Edit_s + 582, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_marks_glue_s, 12));      // +Edit.s:728
+    put(host_obj__Edit_s + 586, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_marks_glue_s, 32));      // +Edit.s:729
+    put(host_obj__Edit_s + 590, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_marks_glue_s, 40));      // +Edit.s:730
+    put(host_obj__Edit_s + 594, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_marks_glue_s, 48));      // +Edit.s:731
+    put(host_obj__Edit_s + 598, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_marks_glue_s, 56));      // +Edit.s:732
+    put(host_obj__Edit_s + 602, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_marks_glue_s, 64));      // +Edit.s:733
+    put(host_obj__Edit_s + 606, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_marks_glue_s, 72));      // +Edit.s:734
+    put(host_obj__Edit_s + 610, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_marks_glue_s, 80));      // +Edit.s:735
+    put(host_obj__Edit_s + 614, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_marks_glue_s, 88));      // +Edit.s:736
+    put(host_obj__Edit_s + 618, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_marks_glue_s, 96));      // +Edit.s:737
+    put(host_obj__Edit_s + 622, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_block_glue_s, 4));      // +Edit.s:738
+    put(host_obj__Edit_s + 626, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_block_glue_s, 28));      // +Edit.s:739
+    put(host_obj__Edit_s + 630, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_program_glue_s, 36));      // +Edit.s:740
+    put(host_obj__Edit_s + 634, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_block_glue_s, 32));      // +Edit.s:741
+    put(host_obj__Edit_s + 638, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_block_glue_s, 36));      // +Edit.s:742
+    put(host_obj__Edit_s + 642, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_lines_glue_s, 44));      // +Edit.s:743
+    put(host_obj__Edit_s + 646, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_undo_glue_s, 48));      // +Edit.s:744
+    put(host_obj__Edit_s + 650, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_search_glue_s, 24));      // +Edit.s:745
+    put(host_obj__Edit_s + 654, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_search_glue_s, 32));      // +Edit.s:746
+    put(host_obj__Edit_s + 658, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_search_glue_s, 28));      // +Edit.s:747
+    put(host_obj__Edit_s + 662, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_loop_glue_s, 32));      // +Edit.s:748
+    put(host_obj__Edit_s + 666, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_status_glue_s, 44));      // +Edit.s:749
+    put(host_obj__Edit_s + 670, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_loop_glue_s, 36));      // +Edit.s:750
+    put(host_obj__Edit_s + 674, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_block_glue_s, 24));      // +Edit.s:751
+    put(host_obj__Edit_s + 678, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_menu_glue_s, 68));      // +Edit.s:753
+    put(host_obj__Edit_s + 682, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_menu_glue_s, 64));      // +Edit.s:754
+    put(host_obj__Edit_s + 686, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_menu_glue_s, 72));      // +Edit.s:755
+    put(host_obj__Edit_s + 690, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_search_glue_s, 16));      // +Edit.s:756
+    put(host_obj__Edit_s + 694, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_run_glue_s, 28));      // +Edit.s:757
+    put(host_obj__Edit_s + 698, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_run_glue_s, 56));      // +Edit.s:758
+    put(host_obj__Edit_s + 702, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_run_glue_s, 64));      // +Edit.s:759
+    put(host_obj__Edit_s + 706, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_program_glue_s, 0));      // +Edit.s:760
+    put(host_obj__Edit_s + 710, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_windows_glue_s, 68));      // +Edit.s:761
+    put(host_obj__Edit_s + 714, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_session_glue_s, 0));      // +Edit.s:762
+    put(host_obj__Edit_s + 718, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_info_glue_s, 12));      // +Edit.s:763
+    put(host_obj__Edit_s + 722, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_disk_glue_s, 20));      // +Edit.s:764
+    put(host_obj__Edit_s + 726, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_disk_glue_s, 24));      // +Edit.s:765
+    put(host_obj__Edit_s + 730, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_blocksave_glue_s, 12));      // +Edit.s:766
+    put(host_obj__Edit_s + 734, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_procs_glue_s, 12));      // +Edit.s:767
+    put(host_obj__Edit_s + 738, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_disk_glue_s, 4));      // +Edit.s:768
+    put(host_obj__Edit_s + 742, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_procs_glue_s, 0));      // +Edit.s:769
+    put(host_obj__Edit_s + 746, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_procs_glue_s, 4));      // +Edit.s:770
+    put(host_obj__Edit_s + 750, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_windows_glue_s, 120));      // +Edit.s:771
+    put(host_obj__Edit_s + 754, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_windows_glue_s, 116));      // +Edit.s:772
+    put(host_obj__Edit_s + 758, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_windows_glue_s, 124));      // +Edit.s:773
+    put(host_obj__Edit_s + 762, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_undo_glue_s, 52));      // +Edit.s:774
+    put(host_obj__Edit_s + 766, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_windows_glue_s, 36));      // +Edit.s:775
+    put(host_obj__Edit_s + 770, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_windows_glue_s, 24));      // +Edit.s:776
+    put(host_obj__Edit_s + 774, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_blocksave_glue_s, 4));      // +Edit.s:777
+    put(host_obj__Edit_s + 778, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_blocksave_glue_s, 0));      // +Edit.s:778
+    put(host_obj__Edit_s + 782, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_search_glue_s, 36));      // +Edit.s:779
+    put(host_obj__Edit_s + 786, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_search_glue_s, 40));      // +Edit.s:780
+    put(host_obj__Edit_s + 790, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_search_glue_s, 44));      // +Edit.s:781
+    put(host_obj__Edit_s + 794, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_windows_glue_s, 80));      // +Edit.s:782
+    put(host_obj__Edit_s + 798, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_windows_glue_s, 44));      // +Edit.s:783
+    put(host_obj__Edit_s + 802, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_menu_glue_s, 32));      // +Edit.s:784
+    put(host_obj__Edit_s + 806, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_misc_glue_s, 44));      // +Edit.s:785
+    put(host_obj__Edit_s + 810, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_macros_glue_s, 76));      // +Edit.s:786
+    put(host_obj__Edit_s + 814, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_macros_glue_s, 68));      // +Edit.s:787
+    put(host_obj__Edit_s + 818, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_macros_glue_s, 72));      // +Edit.s:788
+    put(host_obj__Edit_s + 822, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_macros_glue_s, 52));      // +Edit.s:789
+    put(host_obj__Edit_s + 826, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_macros_glue_s, 60));      // +Edit.s:790
+    put(host_obj__Edit_s + 830, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_run_glue_s, 16));      // +Edit.s:793
+    put(host_obj__Edit_s + 834, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_windows_glue_s, 84));      // +Edit.s:794
+    put(host_obj__Edit_s + 838, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_windows_glue_s, 76));      // +Edit.s:795
+    put(host_obj__Edit_s + 842, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_program_glue_s, 20));      // +Edit.s:796
+    put(host_obj__Edit_s + 846, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_menu_glue_s, 52));      // +Edit.s:800
+    put(host_obj__Edit_s + 850, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_menu_glue_s, 52));      // +Edit.s:801
+    put(host_obj__Edit_s + 854, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_menu_glue_s, 52));      // +Edit.s:802
+    put(host_obj__Edit_s + 858, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_menu_glue_s, 52));      // +Edit.s:803
+    put(host_obj__Edit_s + 862, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_menu_glue_s, 52));      // +Edit.s:804
+    put(host_obj__Edit_s + 866, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_menu_glue_s, 52));      // +Edit.s:805
+    put(host_obj__Edit_s + 870, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_menu_glue_s, 52));      // +Edit.s:806
+    put(host_obj__Edit_s + 874, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_menu_glue_s, 52));      // +Edit.s:807
+    put(host_obj__Edit_s + 878, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_menu_glue_s, 52));      // +Edit.s:808
+    put(host_obj__Edit_s + 882, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_menu_glue_s, 52));      // +Edit.s:809
+    put(host_obj__Edit_s + 886, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_menu_glue_s, 52));      // +Edit.s:810
+    put(host_obj__Edit_s + 890, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_menu_glue_s, 52));      // +Edit.s:811
+    put(host_obj__Edit_s + 894, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_menu_glue_s, 52));      // +Edit.s:812
+    put(host_obj__Edit_s + 898, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_menu_glue_s, 52));      // +Edit.s:813
+    put(host_obj__Edit_s + 902, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_menu_glue_s, 52));      // +Edit.s:814
+    put(host_obj__Edit_s + 906, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_menu_glue_s, 52));      // +Edit.s:815
+    put(host_obj__Edit_s + 910, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_menu_glue_s, 52));      // +Edit.s:816
+    put(host_obj__Edit_s + 914, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_menu_glue_s, 52));      // +Edit.s:817
+    put(host_obj__Edit_s + 918, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_menu_glue_s, 52));      // +Edit.s:818
+    put(host_obj__Edit_s + 922, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_menu_glue_s, 52));      // +Edit.s:819
+    put(host_obj__Edit_s + 926, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_menu_glue_s, 56));      // +Edit.s:821
+    put(host_obj__Edit_s + 930, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_menu_glue_s, 60));      // +Edit.s:822
+    put(host_obj__Edit_s + 934, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_config_glue_s, 40));      // +Edit.s:823
+    put(host_obj__Edit_s + 938, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_config_glue_s, 48));      // +Edit.s:824
+    put(host_obj__Edit_s + 942, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_config_glue_s, 52));      // +Edit.s:825
+    put(host_obj__Edit_s + 946, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_config_glue_s, 60));      // +Edit.s:826
+    put(host_obj__Edit_s + 950, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_info_glue_s, 0));      // +Edit.s:827
+    put(host_obj__Edit_s + 954, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_menu_glue_s, 44));      // +Edit.s:828
+    put(host_obj__Edit_s + 958, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_macros_glue_s, 48));      // +Edit.s:829
+    put(host_obj__Edit_s + 962, 4, AMOS_STATIC_ADDRESS(host_obj__Edit_s, 1646));      // +Edit.s:830
+    put(host_obj__Edit_s + 966, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_run_glue_s, 0));      // +Edit.s:831
+    put(host_obj__Edit_s + 970, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_blocksave_glue_s, 8));      // +Edit.s:832
+    put(host_obj__Edit_s + 974, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_run_glue_s, 60));      // +Edit.s:833
+    put(host_obj__Edit_s + 978, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_menu_glue_s, 76));      // +Edit.s:834
+    put(host_obj__Edit_s + 982, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_info_glue_s, 8));      // +Edit.s:835
+    put(host_obj__Edit_s + 986, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_info_glue_s, 4));      // +Edit.s:836
+    put(host_obj__Edit_s + 990, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_run_glue_s, 84));      // +Edit.s:837
+    put(host_obj__Edit_s + 994, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_disk_glue_s, 32));      // +Edit.s:840
+    put(host_obj__Edit_s + 998, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_misc_glue_s, 12));      // +Edit.s:841
+    put(host_obj__Edit_s + 1002, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_disk_glue_s, 28));      // +Edit.s:842
+    put(host_obj__Edit_s + 1006, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_menu_glue_s, 52));      // +Edit.s:843
+    put(host_obj__Edit_s + 1010, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_menu_glue_s, 52));      // +Edit.s:844
+    put(host_obj__Edit_s + 1014, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_menu_glue_s, 52));      // +Edit.s:845
+    put(host_obj__Edit_s + 1018, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_menu_glue_s, 52));      // +Edit.s:846
+    put(host_obj__Edit_s + 1022, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_menu_glue_s, 52));      // +Edit.s:847
+    put(host_obj__Edit_s + 1026, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_menu_glue_s, 52));      // +Edit.s:848
+    put(host_obj__Edit_s + 1030, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_menu_glue_s, 52));      // +Edit.s:849
+    put(host_obj__Edit_s + 1034, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_menu_glue_s, 52));      // +Edit.s:850
+    put(host_obj__Edit_s + 1038, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_menu_glue_s, 52));      // +Edit.s:851
+    put(host_obj__Edit_s + 1042, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_menu_glue_s, 52));      // +Edit.s:852
+    put(host_obj__Edit_s + 1046, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_menu_glue_s, 52));      // +Edit.s:853
+    put(host_obj__Edit_s + 1050, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_menu_glue_s, 52));      // +Edit.s:854
+    put(host_obj__Edit_s + 1054, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_menu_glue_s, 52));      // +Edit.s:855
+    put(host_obj__Edit_s + 1058, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_menu_glue_s, 52));      // +Edit.s:856
+    put(host_obj__Edit_s + 1062, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_menu_glue_s, 52));      // +Edit.s:857
+    put(host_obj__Edit_s + 1066, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_menu_glue_s, 52));      // +Edit.s:858
+    put(host_obj__Edit_s + 1070, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_menu_glue_s, 52));      // +Edit.s:859
+    put(host_obj__Edit_s + 1074, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_menu_glue_s, 52));      // +Edit.s:860
+    put(host_obj__Edit_s + 1078, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_menu_glue_s, 52));      // +Edit.s:861
+    put(host_obj__Edit_s + 1082, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_menu_glue_s, 52));      // +Edit.s:862
+    put(host_obj__Edit_s + 1086, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_menu_glue_s, 52));      // +Edit.s:863
+    put(host_obj__Edit_s + 1090, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_menu_glue_s, 52));      // +Edit.s:864
+    put(host_obj__Edit_s + 1094, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_menu_glue_s, 52));      // +Edit.s:865
+    put(host_obj__Edit_s + 1098, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_menu_glue_s, 52));      // +Edit.s:866
+    put(host_obj__Edit_s + 1102, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_menu_glue_s, 16));      // +Edit.s:867
+    put(host_obj__Edit_s + 1106, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_menu_glue_s, 20));      // +Edit.s:868
+    put(host_obj__Edit_s + 1110, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_block_glue_s, 20));      // +Edit.s:869
+    put(host_obj__Edit_s + 1114, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_loop_glue_s, 28));      // +Edit.s:870
+    put(host_obj__Edit_s + 1118, 4, AMOS_STATIC_ADDRESS(host_obj__Edit_s, 294));      // +Edit.s:871
+    put(host_obj__Edit_s + 1122, 4, AMOS_STATIC_ADDRESS(host_obj_src_editor_menu_glue_s, 52));      // +Edit.s:872
 }
 
 const GlueEntry entries__Edit_s[] = {

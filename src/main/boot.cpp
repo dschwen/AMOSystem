@@ -378,7 +378,11 @@ void main_cold_start(char *command, uint32_t length, uint32_t sp)
 
     // the AMOS.library's system start
     d.Sys_WAd = w;
+#if defined(__mc68000__)
     wdata().CBridge = address(amos_bridge);
+#else
+    wdata().CBridge = 0; // Hosted modules share native C++ contexts directly.
+#endif
     Regs v;
     v.d[0] = 0x56322E30;        // "V2.0"
     v.d[1] = 0x0200;

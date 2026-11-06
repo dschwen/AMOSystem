@@ -2,6 +2,7 @@
 // macro does, in C++.
 
 #include "runtime/glue.h"
+#include "runtime/static_symbols.h"
 #include "runtime/mark_handle.h"
 #include "runtime/runtime.h"
 #include "interp/interp.h"
@@ -110,6 +111,9 @@ template <typename F> void w_go(AllRegs &r, F f)
 
 void glue_start()
 {
+#if !defined(__mc68000__)
+    prepare_static_symbols();
+#endif
     glue_relocate();
     int count = 0;
     for (const GlueEntry *const *t = glue_entry_tables; *t; t++)

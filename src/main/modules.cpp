@@ -6,6 +6,11 @@
 #include "main/main.h"
 
 #include "core/amiga.h"
+#include "abi/guest_address_codec.h"
+#if !defined(__mc68000__)
+#include "runtime/static_symbols.h"
+#include "tables/guest_labels.h"
+#endif
 
 #include <dos/dos.h>
 
@@ -34,17 +39,19 @@ void lib(int routine)
 // programs of their own, loaded with LoadSeg): *segment marks it loaded,
 // its entry table (offsets from its start, then 0, then the address of its
 // amos_bridge) goes into the jump table from routine first+1 on
-uint32_t program_load(be_u32 &segment, const uint8_t *module, uint32_t first)
+uint32_t program_load(be_u32 &segment, guest::GuestPtr<const guest::Byte> module, uint32_t first)
 {
     IData &d = idata();
-    segment = address(module);
-    uint32_t base = address(module);
+    const uint32_t base = guest::abi::AddressCodec::encode(module.address());
+    segment = base;
     const be_u32 *table = ptr<be_u32>(base);
     be_u32 *jump = ptr<be_u32>(d.AdTokens[0] - int16_t(uint16_t((first << 2) + LB_Size + 4)));
     while (uint32_t offset = *table++)
         *--jump = base + offset;
     // its C++ uses AMOSPro's contexts (src/core/call.s)
+#if defined(__mc68000__)
     poke_l(ptr<void>(*table), wdata().CBridge);
+#endif
     return 0;
 }
 
@@ -184,7 +191,14 @@ uint32_t editor_cold(uint32_t title)
 
 namespace amos::boot {
 
-uint32_t edit_load() { return program_load(idata().Edit_Segment, ed_debut, L_Ed_Start); }
+uint32_t edit_load() {
+#if defined(__mc68000__)
+    const auto module = guest::abi::AddressCodec::decode<const guest::Byte>(address(ed_debut));
+#else
+    const auto module = host::static_pointer(tables::data_symbols::ed_debut);
+#endif
+    return program_load(idata().Edit_Segment, module, L_Ed_Start);
+}
 void edit_free() { program_free(idata().Edit_Segment); }
 
 // Mon_Load: the monitor and its resource bank
@@ -194,7 +208,12 @@ int32_t mon_load()
     uint32_t banks = d.Cur_Banks;
     int32_t e = 0;
     // (the original kept the file of the bank open on an error)
-    program_load(d.Mon_Segment, mon_debut, L_Mon_Start);
+#if defined(__mc68000__)
+    const auto module = guest::abi::AddressCodec::decode<const guest::Byte>(address(mon_debut));
+#else
+    const auto module = host::static_pointer(tables::data_symbols::mon_debut);
+#endif
+    program_load(d.Mon_Segment, module, L_Mon_Start);
     if (!d.Mon_Banks) {
         d.Cur_Banks = address(&d.Mon_Banks);
         sys_add_path(sys_message(11));

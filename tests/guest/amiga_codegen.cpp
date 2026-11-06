@@ -218,6 +218,16 @@ extern "C" void store_context(void* cell, uint32_t value) {
 #endif
 }
 
+#if defined(AMOS_TEST_WRAPPED)
+extern "C" uint32_t module_base(GuestPtr<const Byte> module) {
+    return AddressCodec::encode(module.address());
+}
+#else
+extern "C" uint32_t module_base(const uint8_t* module) {
+    return uint32_t(module);
+}
+#endif
+
 extern "C" uint32_t sum_bytes(uint32_t base, uint32_t count) {
     uint32_t sum = 0;
 #if defined(AMOS_TEST_WRAPPED)

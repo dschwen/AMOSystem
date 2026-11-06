@@ -47,34 +47,34 @@ namespace amos::host {
 
 void relocate__Monitor_s()
 {
-    put(host_obj__Monitor_s + 0, 4, (uint32_t(uintptr_t(host_obj__Monitor_s + 20)) - uint32_t(uintptr_t(host_obj__Monitor_s + 0))));      // +Monitor.s:136
-    put(host_obj__Monitor_s + 4, 4, (uint32_t(uintptr_t(host_obj__Monitor_s + 24)) - uint32_t(uintptr_t(host_obj__Monitor_s + 0))));      // +Monitor.s:137
-    put(host_obj__Monitor_s + 8, 4, (uint32_t(uintptr_t(host_obj__Monitor_s + 306)) - uint32_t(uintptr_t(host_obj__Monitor_s + 0))));      // +Monitor.s:138
-    put(host_obj__Monitor_s + 16, 4, (uint32_t(uintptr_t(reinterpret_cast<const uint8_t *>(&amos_bridge)))));      // +Monitor.s:140
-    put(host_obj__Monitor_s + 40, 4, (uint32_t(uintptr_t(host_obj_src_monitor_shell_glue_s + 40))));      // +Monitor.s:222
-    put(host_obj__Monitor_s + 44, 4, (uint32_t(uintptr_t(host_obj_src_monitor_shell_glue_s + 8))));      // +Monitor.s:223
-    put(host_obj__Monitor_s + 48, 4, (uint32_t(uintptr_t(host_obj_src_monitor_shell_glue_s + 12))));      // +Monitor.s:224
-    put(host_obj__Monitor_s + 52, 4, (uint32_t(uintptr_t(host_obj_src_monitor_shell_glue_s + 16))));      // +Monitor.s:225
-    put(host_obj__Monitor_s + 56, 4, (uint32_t(uintptr_t(host_obj_src_monitor_shell_glue_s + 20))));      // +Monitor.s:226
-    put(host_obj__Monitor_s + 60, 4, (uint32_t(uintptr_t(host_obj_src_monitor_view_glue_s + 52))));      // +Monitor.s:227
-    put(host_obj__Monitor_s + 64, 4, (uint32_t(uintptr_t(host_obj_src_monitor_view_glue_s + 56))));      // +Monitor.s:228
-    put(host_obj__Monitor_s + 68, 4, (uint32_t(uintptr_t(host_obj_src_monitor_view_glue_s + 60))));      // +Monitor.s:229
-    put(host_obj__Monitor_s + 72, 4, (uint32_t(uintptr_t(host_obj_src_monitor_view_glue_s + 64))));      // +Monitor.s:230
-    put(host_obj__Monitor_s + 76, 4, (uint32_t(uintptr_t(host_obj_src_monitor_view_glue_s + 68))));      // +Monitor.s:231
-    put(host_obj__Monitor_s + 80, 4, (uint32_t(uintptr_t(host_obj_src_monitor_shell_glue_s + 24))));      // +Monitor.s:232
-    put(host_obj__Monitor_s + 84, 4, (uint32_t(uintptr_t(host_obj_src_monitor_shell_glue_s + 32))));      // +Monitor.s:233
-    put(host_obj__Monitor_s + 88, 4, (uint32_t(uintptr_t(host_obj_src_monitor_view_glue_s + 72))));      // +Monitor.s:234
-    put(host_obj__Monitor_s + 92, 4, (uint32_t(uintptr_t(host_obj_src_monitor_view_glue_s + 92))));      // +Monitor.s:235
-    put(host_obj__Monitor_s + 96, 4, (uint32_t(uintptr_t(host_obj_src_monitor_view_glue_s + 96))));      // +Monitor.s:236
-    put(host_obj__Monitor_s + 100, 4, (uint32_t(uintptr_t(host_obj_src_monitor_view_glue_s + 100))));      // +Monitor.s:237
-    put(host_obj__Monitor_s + 104, 4, (uint32_t(uintptr_t(host_obj_src_monitor_listing_glue_s + 40))));      // +Monitor.s:238
-    put(host_obj__Monitor_s + 108, 4, (uint32_t(uintptr_t(host_obj_src_monitor_listing_glue_s + 28))));      // +Monitor.s:239
-    put(host_obj__Monitor_s + 112, 4, (uint32_t(uintptr_t(host_obj_src_monitor_info_glue_s + 4))));      // +Monitor.s:240
-    put(host_obj__Monitor_s + 116, 4, (uint32_t(uintptr_t(host_obj_src_monitor_listing_glue_s + 4))));      // +Monitor.s:241
-    put(host_obj__Monitor_s + 120, 4, (uint32_t(uintptr_t(host_obj_src_monitor_listing_glue_s + 8))));      // +Monitor.s:242
-    put(host_obj__Monitor_s + 124, 4, (uint32_t(uintptr_t(host_obj_src_monitor_info_glue_s + 40))));      // +Monitor.s:243
-    put(host_obj__Monitor_s + 128, 4, (uint32_t(uintptr_t(host_obj_src_monitor_listing_glue_s + 0))));      // +Monitor.s:244
-    put(host_obj__Monitor_s + 538, 2, (uint32_t(uintptr_t(host_obj__Monitor_s + 820)) - uint32_t(uintptr_t(host_obj__Monitor_s + 540))));      // +Monitor.s:567
+    put(host_obj__Monitor_s + 0, 4, AMOS_STATIC_DIFFERENCE(host_obj__Monitor_s, 20, host_obj__Monitor_s, 0));      // +Monitor.s:136
+    put(host_obj__Monitor_s + 4, 4, AMOS_STATIC_DIFFERENCE(host_obj__Monitor_s, 24, host_obj__Monitor_s, 0));      // +Monitor.s:137
+    put(host_obj__Monitor_s + 8, 4, AMOS_STATIC_DIFFERENCE(host_obj__Monitor_s, 306, host_obj__Monitor_s, 0));      // +Monitor.s:138
+    AMOS_BRIDGE_METADATA(host_obj__Monitor_s + 16);      // +Monitor.s:140
+    put(host_obj__Monitor_s + 40, 4, AMOS_STATIC_ADDRESS(host_obj_src_monitor_shell_glue_s, 40));      // +Monitor.s:222
+    put(host_obj__Monitor_s + 44, 4, AMOS_STATIC_ADDRESS(host_obj_src_monitor_shell_glue_s, 8));      // +Monitor.s:223
+    put(host_obj__Monitor_s + 48, 4, AMOS_STATIC_ADDRESS(host_obj_src_monitor_shell_glue_s, 12));      // +Monitor.s:224
+    put(host_obj__Monitor_s + 52, 4, AMOS_STATIC_ADDRESS(host_obj_src_monitor_shell_glue_s, 16));      // +Monitor.s:225
+    put(host_obj__Monitor_s + 56, 4, AMOS_STATIC_ADDRESS(host_obj_src_monitor_shell_glue_s, 20));      // +Monitor.s:226
+    put(host_obj__Monitor_s + 60, 4, AMOS_STATIC_ADDRESS(host_obj_src_monitor_view_glue_s, 52));      // +Monitor.s:227
+    put(host_obj__Monitor_s + 64, 4, AMOS_STATIC_ADDRESS(host_obj_src_monitor_view_glue_s, 56));      // +Monitor.s:228
+    put(host_obj__Monitor_s + 68, 4, AMOS_STATIC_ADDRESS(host_obj_src_monitor_view_glue_s, 60));      // +Monitor.s:229
+    put(host_obj__Monitor_s + 72, 4, AMOS_STATIC_ADDRESS(host_obj_src_monitor_view_glue_s, 64));      // +Monitor.s:230
+    put(host_obj__Monitor_s + 76, 4, AMOS_STATIC_ADDRESS(host_obj_src_monitor_view_glue_s, 68));      // +Monitor.s:231
+    put(host_obj__Monitor_s + 80, 4, AMOS_STATIC_ADDRESS(host_obj_src_monitor_shell_glue_s, 24));      // +Monitor.s:232
+    put(host_obj__Monitor_s + 84, 4, AMOS_STATIC_ADDRESS(host_obj_src_monitor_shell_glue_s, 32));      // +Monitor.s:233
+    put(host_obj__Monitor_s + 88, 4, AMOS_STATIC_ADDRESS(host_obj_src_monitor_view_glue_s, 72));      // +Monitor.s:234
+    put(host_obj__Monitor_s + 92, 4, AMOS_STATIC_ADDRESS(host_obj_src_monitor_view_glue_s, 92));      // +Monitor.s:235
+    put(host_obj__Monitor_s + 96, 4, AMOS_STATIC_ADDRESS(host_obj_src_monitor_view_glue_s, 96));      // +Monitor.s:236
+    put(host_obj__Monitor_s + 100, 4, AMOS_STATIC_ADDRESS(host_obj_src_monitor_view_glue_s, 100));      // +Monitor.s:237
+    put(host_obj__Monitor_s + 104, 4, AMOS_STATIC_ADDRESS(host_obj_src_monitor_listing_glue_s, 40));      // +Monitor.s:238
+    put(host_obj__Monitor_s + 108, 4, AMOS_STATIC_ADDRESS(host_obj_src_monitor_listing_glue_s, 28));      // +Monitor.s:239
+    put(host_obj__Monitor_s + 112, 4, AMOS_STATIC_ADDRESS(host_obj_src_monitor_info_glue_s, 4));      // +Monitor.s:240
+    put(host_obj__Monitor_s + 116, 4, AMOS_STATIC_ADDRESS(host_obj_src_monitor_listing_glue_s, 4));      // +Monitor.s:241
+    put(host_obj__Monitor_s + 120, 4, AMOS_STATIC_ADDRESS(host_obj_src_monitor_listing_glue_s, 8));      // +Monitor.s:242
+    put(host_obj__Monitor_s + 124, 4, AMOS_STATIC_ADDRESS(host_obj_src_monitor_info_glue_s, 40));      // +Monitor.s:243
+    put(host_obj__Monitor_s + 128, 4, AMOS_STATIC_ADDRESS(host_obj_src_monitor_listing_glue_s, 0));      // +Monitor.s:244
+    put(host_obj__Monitor_s + 538, 2, AMOS_STATIC_DIFFERENCE(host_obj__Monitor_s, 820, host_obj__Monitor_s, 540));      // +Monitor.s:567
 }
 
 const GlueEntry entries__Monitor_s[] = {

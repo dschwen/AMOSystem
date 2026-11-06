@@ -4,7 +4,9 @@
 
 #include "core/amos.h"
 
+#if defined(__mc68000__)
 extern "C" uint8_t amos_task[];
+#endif
 
 namespace amos::host {
 

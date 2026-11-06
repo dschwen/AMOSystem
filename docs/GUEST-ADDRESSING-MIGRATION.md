@@ -77,10 +77,35 @@ mapping/borrow facility.
   register/context ABI is stable across packed/nonpacked TUs, and OS ucontext
   layouts/coroutine storage retain native packing/alignment.
 
+### Static symbol/image stage
+
+`tools/sync_static_segments.py` now describes all 101 static segments, 300
+exported labels and 2,206 relocation writes. Pointer-bearing relocations use
+segment IDs/byte offsets, including relative differences and one-past labels,
+with checked bounds and no native-pointer truncation. `GuestSymbol<T>`,
+`EntrySymbol<Signature>` and resolved `GuestEntry<Signature>` are distinct from
+both native and guest data pointers. Source bytes enter through HostSpan.
+
+The production bootstrap resolves these symbols through a checked private
+identity adapter while legacy data callers remain. The editor/monitor module
+loader now receives GuestPtr parameters. Hosted modules no longer write an
+assembly bridge pointer cell or retain the fake amos_task/amos_bridge globals;
+Amiga retains the original bridge and literal relocation expressions.
+
+`load_static_image` builds an independent copy in high GuestMemory, with chip
+segments below the guest 24-bit limit and every relocation preflighted. Tests
+load real tables from PIE sources above 4 GiB, vary logical placement, and
+compare every byte against the current identity image after pointer adjustment.
+`static-image-probe` now includes this real catalog in the arm64 Mac probe
+bundle; native execution remains pending. The image loader is ready for subsequent caller integration; production still
+uses identity placement and legacy exported raw-pointer labels alongside the
+new typed `tables/guest_labels.h` catalog. This does not enable native arm64 yet.
+
 ### Still required before a high-address runtime
 
-1. Register/copy static guest data segments and symbols, distinguish callable
-   slots from data addresses, and replace native-address-based table relocations.
+1. Switch remaining exported-label consumers and dispatch lookup to the typed
+   static symbol/image catalog; finish replacing native source-array references
+   before installing the translated image as production backing.
 2. Migrate ordinary guest data pointers/cursors, register façades, guest records,
    array/field access and bank/string/file public APIs; remove the finite raw-data
    argument bridge in `runtime/detail/legacy_call_codec.h`.

@@ -4,6 +4,7 @@
 #pragma once
 
 #include "runtime/glue.h"
+#include "runtime/static_symbols.h"
 #if !defined(__mc68000__)
 #include "runtime/native_bindings.h"
 #endif

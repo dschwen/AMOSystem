@@ -320,7 +320,6 @@ int main(int argc, char **argv)
     *p++ = '\n';
     command_length = uint32_t(p - command);
 
-    amos_bridge = amos_task;
     host::glue_start();
     // (address 4: ExecBase)
     host::put(amos_low_page + 4, 4, hal::exec_base());

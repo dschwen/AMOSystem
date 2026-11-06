@@ -6,7 +6,7 @@ cd "$(dirname "$0")" || exit 1
 uname -a > runtime-system.txt
 sw_vers >> runtime-system.txt
 status=0
-for probe in address-probe layout-probe context-probe jump-probe guest-memory-probe; do
+for probe in address-probe layout-probe context-probe jump-probe guest-memory-probe static-image-probe; do
     [ -f "$probe" ] || continue
     if command -v xattr >/dev/null 2>&1 && xattr -p com.apple.quarantine "$probe" >/dev/null 2>&1; then
         echo "$probe: download quarantine prevents local testing."
