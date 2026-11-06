@@ -352,7 +352,7 @@ namespace {
         jump(AMOS_ROUTINE(ed_esc_loop));
     // the interpreter, on the current program's banks
     EditWindow *current = ptr<EditWindow>(d.Edt_Current);
-    ctx().a4 = reinterpret_cast<uint8_t *>(current);
+    ctx().a4 = host::detail::capture_cursor(reinterpret_cast<uint8_t *>(current));
     ctx().a6 = ptr<uint8_t>(current->Edt_Prg);
     Regs b;
     lib_call(L_Prg_SetBanks, b);
@@ -617,7 +617,7 @@ void show()
 {
     IData &d = idata();
     EditWindow *current = ptr<EditWindow>(d.Edt_Current);
-    ctx().a4 = reinterpret_cast<uint8_t *>(current);
+    ctx().a4 = host::detail::capture_cursor(reinterpret_cast<uint8_t *>(current));
     ctx().a6 = ptr<uint8_t>(current->Edt_Prg);
     Error e = get_error(code, message);
     run(AMOS_ROUTINE(ed_open_editor));

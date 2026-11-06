@@ -54,7 +54,7 @@ void ec_fn(int function, uint32_t d1 = 0)
 
 void use(EditWindow *w)
 {
-    ctx().a4 = reinterpret_cast<uint8_t *>(w);
+    ctx().a4 = host::detail::capture_cursor(reinterpret_cast<uint8_t *>(w));
     ctx().a6 = w ? ptr<uint8_t>(w->Edt_Prg) : nullptr;
 }
 
@@ -221,7 +221,7 @@ bool open_it()
     if (d.EdC_Modified) {
         d.EdC_Modified = 0;
         if (EditWindow *w = ptr<EditWindow>(d.Edt_Current)) {
-            ctx().a4 = reinterpret_cast<uint8_t *>(w);
+            ctx().a4 = host::detail::capture_cursor(reinterpret_cast<uint8_t *>(w));
             if (uint16_t(run_d0(AMOS_ROUTINE(ed_max_size_entry), 0xFFFFFFFF)) != w->Edt_WindTy) {
                 run_d0(AMOS_ROUTINE(ed_shrink_all_entry), 0);
                 uint16_t lines = uint16_t(run_d0(AMOS_ROUTINE(ed_max_size_entry), 0xFFFFFFFF));
@@ -354,7 +354,7 @@ void free_all_config()
 bool make_windows()
 {
     IData &d = idata();
-    ctx().a4 = ptr<uint8_t>(d.Edt_List);
+    ctx().a4 = decode_context_cursor(d.Edt_List);
     d.Ed_WMax = 2;
     for (Program *p = ptr<Program>(d.Prg_List); p; p = ptr<Program>(p->Prg_Next)) {
         if (p->Prg_Edited)

@@ -44,7 +44,7 @@ void run(host::RoutineArg routine)
 // a4/a6 of the assembler: the window and program worked on
 void use(EditWindow *w, Program *p)
 {
-    ctx().a4 = reinterpret_cast<uint8_t *>(w);
+    ctx().a4 = host::detail::capture_cursor(reinterpret_cast<uint8_t *>(w));
     ctx().a6 = reinterpret_cast<uint8_t *>(p);
 }
 
@@ -252,7 +252,7 @@ void restart_empty()
     close();
     temp_buffer(0);
     d.Edt_Current = 0;
-    ctx().a4 = nullptr;
+    ctx().a4 = {};
     open_window(true, int32_t(d.PI_DefSize));
     run(AMOS_ROUTINE(ed_branch_amos));
     draw_windows();
@@ -297,7 +297,7 @@ void warm_start()
     warn_message(159);
     // the first window, the system's, away
     if (EditWindow *first = ptr<EditWindow>(d.Edt_List)) {
-        ctx().a4 = reinterpret_cast<uint8_t *>(first);
+        ctx().a4 = host::detail::capture_cursor(reinterpret_cast<uint8_t *>(first));
         delete_window();
     }
     // the file into the temporary buffer
@@ -406,7 +406,7 @@ void ed_do_quit_fn(AllRegs *) { do_quit(); }
 void ed_warm_start(AllRegs *r)
 {
     warm_start();
-    r->a[4] = address(ctx().a4);
+    r->a[4] = encode_context_cursor(ctx().a4);
     r->a[6] = address(ctx().a6);
 }
 }

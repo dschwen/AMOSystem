@@ -155,10 +155,10 @@ const Native *native(IData &d, interp::TokenTable a4, uint16_t t, host::RoutineA
 void instruction(IData &d, Ctx &c, uint16_t t, bool patched = true)
 {
     uint16_t patch = patched ? uint16_t(d.Cur_ChrJump >> 16) : 0;
-    const interp::TokenTable table = host::detail::legacy_table_address(c.a4);
+    const interp::TokenTable table = guest_cursor(c.a4);
     host::RoutineArg r = routine(table, t, patch);
     if (patch) {
-        interp_exec(r, t, peek_w(c.a4 + int16_t(t)));
+        interp_exec(r, t, require_guest(IdentityDataMemory{}.load_be16(table + int16_t(t))));
         return;
     }
     if (const Native *n = native(d, table, t, r, false)) {
@@ -168,9 +168,9 @@ void instruction(IData &d, Ctx &c, uint16_t t, bool patched = true)
     // its parameters collected here, then its body
     interp::Collected p = interp::collect(table, t, r, false);
     if (p.has_value)
-        interp_exec_value(p.body, t, peek_w(c.a4 + int16_t(t)), &p.last);
+        interp_exec_value(p.body, t, require_guest(IdentityDataMemory{}.load_be16(table + int16_t(t))), &p.last);
     else
-        interp_exec(p.body, t, peek_w(c.a4 + int16_t(t)));
+        interp_exec(p.body, t, require_guest(IdentityDataMemory{}.load_be16(table + int16_t(t))));
 }
 
 // The program's end
@@ -237,7 +237,7 @@ extern "C" {
     c.a6 = ptr<uint8_t>(d.Prg_Run);
     d.DProc = d.Prg_Run;
     d.PData = d.Prg_Run;
-    c.a4 = ptr<uint8_t>(d.AdTokens[0]);
+    c.a4 = decode_context_cursor(d.AdTokens[0]);
     run(true);
 }
 
@@ -265,7 +265,7 @@ namespace amos::interp {
 // Function t (its routine r) called here if it can be (eval.cpp)
 bool native_function(uint16_t t, host::RoutineArg r, Value &v)
 {
-    const Native *n = native(idata(), host::detail::legacy_table_address(ctx().a4), t, r, true);
+    const Native *n = native(idata(), guest_cursor(ctx().a4), t, r, true);
     if (!n)
         return false;
     // a function with parameters: past its opening parenthesis

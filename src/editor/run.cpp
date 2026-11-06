@@ -90,7 +90,7 @@ void ec_fn(int function, uint32_t d1 = 0, uint32_t d2 = 0, uint32_t d3 = 0, uint
 
 void use(EditWindow *w)
 {
-    ctx().a4 = reinterpret_cast<uint8_t *>(w);
+    ctx().a4 = host::detail::capture_cursor(reinterpret_cast<uint8_t *>(w));
     ctx().a6 = ptr<uint8_t>(w->Edt_Prg);
 }
 

@@ -14,6 +14,7 @@
 // ($80 and up: Reloc_*). Its pointer and the last place are in a4/a3 of
 // the assembler, here the context's.
 
+#include "runtime/detail/identity_data_memory.h"
 #include "verif/verif.h"
 
 using namespace amos;
@@ -67,7 +68,7 @@ void reloc_reserve()
     d.Ver_CReloc = address(&d.Ver_Reloc);
     d.Ver_FReloc = 0;
     d.Ver_NoReloc = 0;
-    ctx().a4 = nullptr;
+    ctx().a4 = {};
 }
 
 // New_Reloc: the distance from the last place to pc, then code
@@ -77,16 +78,16 @@ void reloc(uint8_t code)
     if (d.Ver_NoReloc)
         return;
     Ctx &c = ctx();
-    if (address(c.a4) >= d.Ver_FReloc) {
+    if (encode_context_cursor(c.a4) >= d.Ver_FReloc) {
         // a new buffer
         if (d.Ver_FReloc)
-            *c.a4++ = RelocNewBuffer;
+            host::detail::write_cursor_byte(c.a4, RelocNewBuffer);
         uint32_t b = memory(RelocStep);
         if (!b)
             fail(EOutOfMemory);
         poke_l(ptr<uint8_t>(d.Ver_CReloc), b);
         d.Ver_CReloc = b;
-        c.a4 = ptr<uint8_t>(b) + 4;
+        c.a4 = decode_context_cursor(b) + 4;
         poke_l(ptr<uint8_t>(b), 0);
         d.Ver_FReloc = b + RelocStep - 32;
         return reloc(code);
@@ -97,35 +98,35 @@ void reloc(uint8_t code)
             __builtin_trap();                   // (the assembler: illegal)
         for (;;) {
             if (distance <= 254) {
-                *c.a4++ = uint8_t(distance >> 1);
+                host::detail::write_cursor_byte(c.a4, uint8_t(distance >> 1));
                 break;
             }
             if (distance <= 254 * 3) {
-                *c.a4++ = 127;
+                host::detail::write_cursor_byte(c.a4, 127);
                 distance -= 254;
                 continue;
             }
             if (distance <= 65534) {
-                *c.a4++ = RelocLong;
-                *c.a4++ = uint8_t(distance >> 8);
-                *c.a4++ = uint8_t(distance);
+                host::detail::write_cursor_byte(c.a4, RelocLong);
+                host::detail::write_cursor_byte(c.a4, uint8_t(distance >> 8));
+                host::detail::write_cursor_byte(c.a4, uint8_t(distance));
                 break;
             }
-            *c.a4++ = RelocLong;
-            *c.a4++ = 0xFF;
-            *c.a4++ = 0xFE;
+            host::detail::write_cursor_byte(c.a4, RelocLong);
+            host::detail::write_cursor_byte(c.a4, 0xFF);
+            host::detail::write_cursor_byte(c.a4, 0xFE);
             distance -= 65534;
         }
     }
     c.a3 = pc;
-    *c.a4++ = code;
+    host::detail::write_cursor_byte(c.a4, code);
 }
 
 // Out_Reloc: a byte
 void reloc_byte(uint8_t b)
 {
     if (!data().Ver_NoReloc)
-        *ctx().a4++ = b;
+        host::detail::write_cursor_byte(ctx().a4, b);
 }
 
 // VarA0: the variable at pc (after its token)

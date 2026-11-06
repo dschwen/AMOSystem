@@ -222,7 +222,7 @@ On Amiga GuestContext aliases the existing Ctx, and capture returns the original
 context by reference. No temporary snapshot copy is introduced before the native
 save-context token is made. Machine-code fixtures cover capture and saved a3
 loads; hosted tests cover high logical addresses, task ownership, normal/nonlocal
-cleanup and rejection of high native cursors (a3/a4/a6 after the a5 migration).
+cleanup and rejection of the remaining high native cursors (a3/a6).
 
 ### Live a5 data-zone cursor
 
@@ -230,14 +230,15 @@ Hosted Ctx::a5 is now DataZoneAddress (GuestPtr<Byte>), with explicit architectu
 encode/decode at every register, task, requester and file-selector handoff. It
 cannot accept native pointers, HostPtr, integers or code entries implicitly. The
 boot allocator returns a typed address and crosses one checked capture_data_zone
-adapter; high native
+adapter (renamed capture_cursor in the a4 stage); high native
 allocations are rejected, not truncated. Saved GuestContext snapshots now copy
 the typed a5 value directly, and the legacy capture adapter checks only the
-remaining native a3/a4/a6 cursors. Task setup exports the logical a5 word directly
+remaining native cursors (only a3/a6 after the a4 stage). Task setup exports the logical a5 word directly
 without re-encoding a native wdata() record reference.
 
-Ctx retains its native size and a3/a4/a5/a6 offsets across packed/unpacked hosted
-translation units, including the original padding after the guest-width a5.
+At the a5 stage Ctx retained its original hosted size and offsets, including
+padding after a5; the a4 stage below compacts this internal state while retaining
+a stable packed/unpacked layout.
 Amiga retains its original native pointer field and ABI. Machine-code fixtures
 cover data-zone capture and live a5 loads/stores against native baselines.
 
@@ -249,6 +250,30 @@ packing consistency, native-pointer rejection and a low-backed identity overlay.
 The other live context cursors and mapped record conversion remain mandatory
 before production can use high backing.
 
+### Live a4 cursor
+
+Hosted Ctx::a4 is now a guest ContextCursor. Register transfers, editor window
+save/restore, token-table selection and verifier relocation cursors retain guest
+addresses. The instruction/evaluation paths and hosted floating-point token-table
+swaps read/write through the typed IdentityDataMemory interface; no native
+pointer is obtained from a4 to read a token or append a relocation byte.
+The real Amiga float-swap implementation is retained unchanged.
+
+legacy_table_address has been removed. The former data-zone capture adapter is
+now capture_cursor, shared by the two live typed cursors and explicit captures
+from legacy native editor records. Editor window() uses the private identity
+record adapter. These checked captures/overlays remain temporary boundaries;
+this change does not translate native EditWindow storage or install high backing.
+
+The hosted internal Ctx is now 32 bytes, with stable packed/unpacked offsets:
+a3=8, a4=16, a5=20, a6=24. The redundant historical native-width gap after a5 is
+no longer retained. This state is native-owned, not a persisted guest record.
+The Amiga context remains its original 24-byte native layout. Machine-code
+fixtures cover a4 load/store and the actual relocation-byte append helper.
+Saved snapshots copy typed a4/a5 directly; the checked legacy capture now only
+handles a3/a6. High logical a4 register roundtrips and rejected raw/native/code
+pointer assignments are included in the contract tests.
+
 ## Remaining work checklist
 
 Completed compiler-enforced boundaries:
@@ -259,15 +284,16 @@ Completed compiler-enforced boundaries:
 - [x] Hosted call APIs reject raw/native/data pointers; static code arguments use symbols.
 - [x] Twenty-two continuation/error/extension/test/patch/button code cells and mapped views.
 - [x] Guest-only saved context values and checked legacy capture.
-- [x] Live hosted a5 guest address and explicit register/task/requester transfers.
+- [x] Live hosted a4/a5 guest addresses and explicit register/task/requester transfers.
+- [x] Typed a4 token/relocation access and removal of the native token-table adapter.
 
 Required next conversions and release gates:
 
 - [ ] Replace the mixed native marker/code-table representation in Sl_Routines,
   then migrate slider tables and OS interrupt/callback registrations.
-- [ ] Migrate the remaining live Ctx a3/a4/a6, program/token cursors and register
-  façades to guest data addresses; remove the checked native-context capture, native-cursor and
-  native-token-table adapters.
+- [ ] Migrate remaining live Ctx a3/a6, program cursors and register façades to
+  guest data addresses; remove the checked native-context capture, native-cursor and
+  legacy native editor-record captures.
 - [ ] Replace idata/wdata/native record overlays with mapped schema views, starting
   with the interpreter's token/continuation vertical slice. Install high Memory
   behind those readers; remove identity_record, IdentityDataMemory and LegacyCodeReader.
@@ -351,7 +377,7 @@ legacy uses remain outside the compiler-enforced guarantee.
 
 | Boundary | Representation / audit needed | Migration gate |
 |---|---|---|
-| `core/amos.h`: `ptr`, `address`, `Ctx`, `idata/wdata` | a5 typed; a3/a4/a6 and identity record overlays remain | Typed remaining cursors, mapped record views and removal of identity_record |
+| `core/amos.h`: `ptr`, `address`, `Ctx`, `idata/wdata` | a4/a5 typed; a3/a6 and identity record overlays remain | Typed remaining cursors, mapped record views and removal of identity_record |
 | `core/layout.h`, `core/ioreq.h` | Recovery/context tokens and twelve code cells typed; most data/other callable fields remain | Byte-identical mapped schemas; guest fields never hold HostPtr |
 | `tables/labels.*`, `tables/*.cpp` | Static catalog/relocation and code-label callers migrated; raw data-label consumers remain | Finish data consumers, then install the translated static image |
 | `runtime/glue.cpp`, `interp/chrget.cpp` | Typed dispatch, collectors and thunks integrated; native context/data readers remain | Remove identity data/cursor adapters and qualify high-backed execution |
@@ -405,14 +431,16 @@ SDL platform code or VM page-size handling as part of address cleanup.
 - Windows and Amiga: builds pass. Amiga code-field and mapped-view operations
   add no instructions relative to their native load/store baselines. Saved-context
   capture and a3 access also match the native instruction baselines; live a5
-  capture/load/store operations also add no instructions.
+  capture/load/store operations also add no instructions. The a4 load/store and
+  relocation-byte append operations match the native instruction baselines.
 - macOS arm64: cross-links with the startup guard retained; native interpreter
   execution remains unqualified.
 - ASan/UBSan: the high-backed metadata/16-bit access/code-field view fixture passes,
   including permission checks and prevention of partial writes. The snapshot/mark
   registry fixture also passes with task ownership, nonlocal cleanup, saved guest
   pointer values and rejection of high native cursors. Live-a5 register transfers,
-  packing and low-backed record overlays pass the sanitizer fixture as well.
+  packing, typed a4 relocation writes and low-backed record overlays pass the
+  sanitizer fixture as well.
 
 These checks cover the migrated boundaries. They do not qualify legacy native
 data pointers, guest record overlays, platform mirrors or a complete high-address

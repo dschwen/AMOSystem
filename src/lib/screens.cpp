@@ -210,7 +210,7 @@ AllRegs all_regs(const Regs &r)
     for (int i = 0; i < 3; i++)
         a.a[i] = r.a[i];
     a.a[3] = address(ctx().a3);
-    a.a[4] = address(ctx().a4);
+    a.a[4] = encode_context_cursor(ctx().a4);
     a.a[5] = encode_data_zone(ctx().a5);
     a.a[6] = wdata().GfxBase;
     return a;

@@ -101,7 +101,7 @@ void sound(uint8_t c) { sound_play(c); }
 uint32_t lib_all(int routine, AllRegs &r)
 {
     Ctx &c = ctx();
-    r.a[4] = address(c.a4);
+    r.a[4] = encode_context_cursor(c.a4);
     r.a[5] = encode_data_zone(c.a5);
     r.a[6] = address(c.a6);
     r.d[6] = c.d6;
@@ -942,7 +942,8 @@ void set_autosave()
 void save_all()
 {
     Ctx &c = ctx();
-    uint8_t *a4 = c.a4, *a6 = c.a6;
+    ContextCursor a4 = c.a4;
+    uint8_t *a6 = c.a6;
     bool first = true;
     for (uint32_t w = idata().Edt_List; w; w = ptr<EditWindow>(w)->Edt_Next) {
         EditWindow *e = ptr<EditWindow>(w);
@@ -951,7 +952,7 @@ void save_all()
         if (first)
             sound('I');
         first = false;
-        c.a4 = reinterpret_cast<uint8_t *>(e);
+        c.a4 = host::detail::capture_cursor(reinterpret_cast<uint8_t *>(e));
         c.a6 = ptr<uint8_t>(e->Edt_Prg);
         run(AMOS_ROUTINE(ed_saved));
     }

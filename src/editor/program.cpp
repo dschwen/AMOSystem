@@ -211,7 +211,7 @@ uint16_t file_selector(uint16_t n)
     AllRegs r = {};
     Ctx &c = ctx();
     r.a[3] = address(parameters);
-    r.a[4] = address(c.a4);
+    r.a[4] = encode_context_cursor(c.a4);
     r.a[5] = encode_data_zone(c.a5);
     r.a[6] = address(c.a6);
     r.d[6] = c.d6;
@@ -226,11 +226,11 @@ void open_load()
 {
     AllRegs r = {};
     Ctx &c = ctx();
-    r.a[4] = address(c.a4);
+    r.a[4] = encode_context_cursor(c.a4);
     r.a[5] = encode_data_zone(c.a5);
     r.a[6] = address(c.a6);
     amos_call_all(&r, AMOS_ROUTINE(ed_open_shown_window_entry));
-    c.a4 = ptr<uint8_t>(r.a[4]);
+    c.a4 = decode_context_cursor(r.a[4]);
     c.a6 = ptr<uint8_t>(r.a[6]);
     run(AMOS_ROUTINE(ed_load_entry));
 }
@@ -250,7 +250,7 @@ void ed_file_selector_fn(AllRegs *r) { r->d[0] = (r->d[0] & 0xFFFF0000) | file_s
 void ed_open_load(AllRegs *r)
 {
     open_load();
-    r->a[4] = address(ctx().a4);
+    r->a[4] = encode_context_cursor(ctx().a4);
     r->a[6] = address(ctx().a6);
 }
 }

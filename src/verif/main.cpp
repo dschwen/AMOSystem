@@ -156,7 +156,7 @@ void pass_two()
             d.VerPos = address(pc) - 2;
             AllRegs a = {};
             a.a[0] = e;
-            ctx().a4 = ptr<uint8_t>(e);
+            ctx().a4 = decode_context_cursor(e);
             call(host::decode_routine(jump), a);
         }
     }

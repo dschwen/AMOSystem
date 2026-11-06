@@ -85,7 +85,7 @@ AllRegs context_regs()
     r.d[6] = c.d6;
     r.d[7] = c.d7;
     r.a[3] = address(c.a3);
-    r.a[4] = address(c.a4);
+    r.a[4] = encode_context_cursor(c.a4);
     r.a[5] = encode_data_zone(c.a5);
     r.a[6] = address(c.a6);
     return r;
@@ -317,7 +317,7 @@ DataZoneAddress data_zone(uint32_t w_data)
     if (!zone)
         return {};
     uint8_t *a5 = zone + LDataWork + w_data;
-    const DataZoneAddress logical_a5 = host::detail::capture_data_zone(a5);
+    const DataZoneAddress logical_a5 = host::detail::capture_cursor(a5);
     ctx().a5 = logical_a5;
     IData &d = idata();
     d.Sys_AData = address(zone);
@@ -368,7 +368,7 @@ void main_cold_start(char *command, uint32_t length, uint32_t sp)
 
     // AMOS.library, linked in (it was loaded from APSystem or libs)
     uint32_t w = address(w_debut);
-    ctx().a4 = ptr<uint8_t>(w);
+    ctx().a4 = decode_context_cursor(w);
 
     if (!data_zone(peek_l(ptr<void>(w + 8))))
         fatal(s, panic_oomem);

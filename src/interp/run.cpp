@@ -49,7 +49,7 @@ uint32_t program_call(int routine, uint32_t program, uint32_t d0)
     r.d[6] = c.d6;
     r.d[7] = c.d7;
     r.a[3] = address(c.a3);
-    r.a[4] = address(c.a4);
+    r.a[4] = encode_context_cursor(c.a4);
     r.a[5] = encode_data_zone(c.a5);
     r.a[6] = program;
     amos_call_all(&r, lib_entry(routine));
@@ -147,7 +147,7 @@ void interp_in_run0()
         r.d[6] = c.d6;
         r.d[7] = c.d7;
         r.a[3] = address(c.a3);
-        r.a[4] = address(c.a4);
+        r.a[4] = encode_context_cursor(c.a4);
         r.a[5] = encode_data_zone(c.a5);
         r.a[6] = program;
         amos_call_all(&r, lib_entry(L_Prg_RunIt));
@@ -169,7 +169,7 @@ void interp_in_run1(uint32_t name)
     program_name(name);
     check_file();
     Regs i;
-    i.a[0] = address(ctx().a4) - 2;
+    i.a[0] = encode_context_cursor(ctx().a4) - 2;
     lib_call(L_Includes_Adr, i);
     d.VerPos = i.a[0];
     lib(L_Includes_Clear);

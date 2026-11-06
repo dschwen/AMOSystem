@@ -1,4 +1,4 @@
-"""Live a5 uses guest data addresses while native context ABI remains stable."""
+"""Live a4/a5 retain guest data addresses with a stable packed context ABI."""
 from pathlib import Path
 import os
 import shlex
@@ -29,6 +29,13 @@ using namespace amos::guest;
 int main() { Ctx context{}; REJECT }
 '''
         statements=['context.a5 = (uint8_t*)0;',
+                    'context.a4 = (uint8_t*)0;',
+                    'context.a4 = HostPtr<Byte>{};',
+                    'context.a4 = host::decode_routine(16);',
+                    'context.a4 = uint32_t(16);',
+                    'uint8_t* native = context.a4; (void)native;',
+                    'address(context.a4);',
+                    '*context.a4 = 1;',
                     'context.a5 = HostPtr<Byte>{};',
                     'context.a5 = host::decode_routine(16);',
                     'context.a5 = uint32_t(16);',

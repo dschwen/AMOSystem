@@ -30,7 +30,7 @@ void call_routines(be_u32 *list)
         r.d[0] = next;
         r.a[0] = address(routine);
         r.a[3] = address(ctx().a3);
-        r.a[4] = address(ctx().a4);
+        r.a[4] = encode_context_cursor(ctx().a4);
         r.a[5] = encode_data_zone(ctx().a5);
         r.a[6] = address(ctx().a6);
         amos_call_all(&r, host::decode_routine(r.a[0] + 4));

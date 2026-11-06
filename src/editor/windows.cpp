@@ -36,7 +36,7 @@ Program *program_of(const EditWindow *w) { return ptr<Program>(w->Edt_Prg); }
 // a4/a6: the window (and its program) the code works on
 void use(EditWindow *w)
 {
-    ctx().a4 = reinterpret_cast<uint8_t *>(w);
+    ctx().a4 = host::detail::capture_cursor(reinterpret_cast<uint8_t *>(w));
     ctx().a6 = w ? reinterpret_cast<uint8_t *>(program_of(w)) : nullptr;
 }
 
@@ -61,13 +61,13 @@ void run_switching(host::RoutineArg routine, AllRegs &r)
 {
     Ctx &c = ctx();
     r.a[3] = address(c.a3);
-    r.a[4] = address(c.a4);
+    r.a[4] = encode_context_cursor(c.a4);
     r.a[5] = encode_data_zone(c.a5);
     r.a[6] = address(c.a6);
     r.d[6] = c.d6;
     r.d[7] = c.d7;
     amos_call_all(&r, routine);
-    c.a4 = ptr<uint8_t>(r.a[4]);
+    c.a4 = decode_context_cursor(r.a[4]);
     c.a6 = ptr<uint8_t>(r.a[6]);
 }
 
@@ -431,7 +431,7 @@ void draw_windows()
     use(current());
     wi_d1(wi::QWindow, window().Edt_Window);
     place_cursor();
-    ctx().a4 = reinterpret_cast<uint8_t *>(was);
+    ctx().a4 = host::detail::capture_cursor(reinterpret_cast<uint8_t *>(was));
 }
 
 } // namespace amos::ed
@@ -756,7 +756,7 @@ int32_t open_window(bool shown, int32_t size)
     EditWindow *w = ptr<EditWindow>(memory(EditWindow::Edt_Long, true));
     if (!w)
         return -1;
-    EditWindow *c = ptr<EditWindow>(address(ctx().a4));
+    EditWindow *c = ptr<EditWindow>(encode_context_cursor(ctx().a4));
     if (c) {
         w->Edt_Next = c->Edt_Next;
         c->Edt_Next = address(w);
@@ -766,7 +766,7 @@ int32_t open_window(bool shown, int32_t size)
     }
     // (without a program of its own, a6 stays the program of the window
     // it splits: Edt_New works on it)
-    ctx().a4 = reinterpret_cast<uint8_t *>(w);
+    ctx().a4 = host::detail::capture_cursor(reinterpret_cast<uint8_t *>(w));
     if (size >= 0) {
         Regs r;
         r.d[0] = uint32_t(size);
@@ -1155,7 +1155,7 @@ void link_cursor()
 
 void keep_current(AllRegs *r)
 {
-    r->a[4] = address(ctx().a4);
+    r->a[4] = encode_context_cursor(ctx().a4);
     r->a[6] = address(ctx().a6);
 }
 
@@ -1312,7 +1312,8 @@ void ed_delete_window(AllRegs *r)
 void ed_delete_windows(AllRegs *)
 {
     Ctx &c = ctx();
-    uint8_t *a4 = c.a4, *a6 = c.a6;
+    ContextCursor a4 = c.a4;
+    uint8_t *a6 = c.a6;
     while (EditWindow *w = list()) {
         use(w);
         delete_window();

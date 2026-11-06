@@ -432,14 +432,14 @@ void ed_alert_rts(AllRegs *r)
         ed_zap_alert(r);
         return;
     }
-    ctx().a4 = ptr<uint8_t>(d.Edt_Current);
+    ctx().a4 = decode_context_cursor(d.Edt_Current);
     ctx().a6 = ptr<uint8_t>(window().Edt_Prg);
     EditWindow &w = window();
     w.Edt_EtMess = uint16_t(r->d[0]);
     w.Edt_EtAlert = r->a[0];
     w.Edt_EtatAff |= EtAAlert;
     status_line(w);
-    r->a[4] = address(ctx().a4);
+    r->a[4] = encode_context_cursor(ctx().a4);
     r->a[6] = address(ctx().a6);
 }
 

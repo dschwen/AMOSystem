@@ -21,7 +21,7 @@ AllRegs all(const Regs &r)
     for (int i = 0; i < 3; i++)
         a.a[i] = r.a[i];
     a.a[3] = address(c.a3);
-    a.a[4] = address(c.a4);
+    a.a[4] = encode_context_cursor(c.a4);
     a.a[5] = encode_data_zone(c.a5);
     a.a[6] = address(c.a6);
     return a;

@@ -318,9 +318,9 @@ extern "C" uint32_t load_snapshot_a3(const void* context) {
 #endif
 }
 
-extern "C" uint32_t capture_data_zone(uint8_t* native) {
+extern "C" uint32_t capture_cursor(uint8_t* native) {
 #if defined(AMOS_TEST_WRAPPED)
-    return amos::encode_data_zone(amos::host::detail::capture_data_zone(native));
+    return amos::encode_data_zone(amos::host::detail::capture_cursor(native));
 #else
     return uint32_t(native);
 #endif
@@ -337,6 +337,29 @@ extern "C" void store_context_a5(void* context, uint32_t word) {
     static_cast<amos::Ctx*>(context)->a5 = amos::decode_data_zone(word);
 #else
     *reinterpret_cast<uint32_t*>(static_cast<uint8_t*>(context)+16) = word;
+#endif
+}
+
+extern "C" uint32_t load_context_a4(const void* context) {
+#if defined(AMOS_TEST_WRAPPED)
+    return amos::encode_context_cursor(static_cast<const amos::Ctx*>(context)->a4);
+#else
+    return *reinterpret_cast<const uint32_t*>(static_cast<const uint8_t*>(context)+12);
+#endif
+}
+extern "C" void store_context_a4(void* context, uint32_t word) {
+#if defined(AMOS_TEST_WRAPPED)
+    static_cast<amos::Ctx*>(context)->a4 = amos::decode_context_cursor(word);
+#else
+    *reinterpret_cast<uint32_t*>(static_cast<uint8_t*>(context)+12) = word;
+#endif
+}
+extern "C" void append_context_a4(void* context, uint8_t byte) {
+#if defined(AMOS_TEST_WRAPPED)
+    amos::host::detail::write_cursor_byte(static_cast<amos::Ctx*>(context)->a4,byte);
+#else
+    auto& cursor = *reinterpret_cast<uint8_t**>(static_cast<uint8_t*>(context)+12);
+    *cursor++ = byte;
 #endif
 }
 

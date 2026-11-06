@@ -213,9 +213,10 @@ void editor_appear()
         Regs t;
         call(AMOS_ROUTINE(ed_draw_top), t);
         Ctx &c = ctx();
-        uint8_t *a4 = c.a4, *a6 = c.a6;
+        ContextCursor a4 = c.a4;
+        uint8_t *a6 = c.a6;
         EditWindow *current = ptr<EditWindow>(d.Edt_Current);
-        c.a4 = reinterpret_cast<uint8_t *>(current);
+        c.a4 = host::detail::capture_cursor(reinterpret_cast<uint8_t *>(current));
         c.a6 = ptr<uint8_t>(current->Edt_Prg);
         draw_windows();
         c.a4 = a4;

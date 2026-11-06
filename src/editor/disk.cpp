@@ -146,7 +146,7 @@ void merge()
     if (length > 0) {
         uint16_t lines = hidden.Prg_NLigne;
         EditWindow *c = ptr<EditWindow>(d.Edt_Current);
-        ctx().a4 = reinterpret_cast<uint8_t *>(c);
+        ctx().a4 = host::detail::capture_cursor(reinterpret_cast<uint8_t *>(c));
         ctx().a6 = ptr<uint8_t>(c->Edt_Prg);
         uint16_t at = c->Edt_YPos + c->Edt_YCu;
         if (store_block(from, uint32_t(length), at).error)
@@ -341,7 +341,7 @@ extern "C" {
 void ed_load_hidden_fn(AllRegs *r)
 {
     load_hidden();
-    r->a[4] = address(ctx().a4);
+    r->a[4] = encode_context_cursor(ctx().a4);
     r->a[6] = address(ctx().a6);
 }
 
@@ -386,7 +386,7 @@ void ed_name_part(AllRegs *r)
 void ed_merge(AllRegs *r)
 {
     merge();
-    r->a[4] = address(ctx().a4);
+    r->a[4] = encode_context_cursor(ctx().a4);
     r->a[6] = address(ctx().a6);
 }
 

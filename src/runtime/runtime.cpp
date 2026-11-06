@@ -122,7 +122,7 @@ namespace {
 // New_ChrGet: the program starts on the interpreter's stack, a4 the tokens
 void new_chrget()
 {
-    ctx().a4 = ptr<uint8_t>(idata().AdTokens[0]);
+    ctx().a4 = decode_context_cursor(idata().AdTokens[0]);
     interp_new_chrget();
 }
 

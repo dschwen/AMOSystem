@@ -8,7 +8,7 @@
 
 namespace amos::ed {
 
-inline EditWindow &window() { return *reinterpret_cast<EditWindow *>(ctx().a4); }
+inline EditWindow &window() { return host::detail::identity_record<EditWindow>(ctx().a4); }
 inline Program &program() { return *reinterpret_cast<Program *>(ctx().a6); }
 
 // Calls an editor routine of +Edit.s with registers r; returns its d0

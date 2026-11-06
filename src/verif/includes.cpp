@@ -82,8 +82,8 @@ const uint8_t *equates_load(uint32_t *length)
 bool integer(const uint8_t *p, uint32_t *value, const uint8_t **end)
 {
     Ctx &c = ctx();
-    uint8_t *a4 = c.a4;
-    c.a4 = ptr<uint8_t>(idata().AdTokens[0]);
+    ContextCursor a4 = c.a4;
+    c.a4 = decode_context_cursor(idata().AdTokens[0]);
     Regs r;
     r.a[0] = address(p);
     r.d[0] = 0;

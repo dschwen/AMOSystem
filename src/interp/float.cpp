@@ -12,6 +12,7 @@
 
 #include "core/amiga.h"
 #include "interp/interp.h"
+#include "runtime/detail/identity_data_memory.h"
 #include "hal/system.h"
 
 using namespace amos;
@@ -417,6 +418,7 @@ uint32_t open_library(const char *name)
 // Lib_FSwap: the pairs of routines from DFloatSwap to FFloatSwap of the
 // library at lib exchanged in its jump table (the flag of the main
 // library changed)
+#if defined(__mc68000__)
 void float_swap(uint8_t *lib, uint8_t *main)
 {
     main[LB_Flags] ^= 1 << LBF_DFloat;
@@ -432,6 +434,26 @@ void float_swap(uint8_t *lib, uint8_t *main)
         entry -= 2;
     } while (n--);
 }
+#else
+void float_swap(guest::GuestPtr<guest::Byte> lib, guest::GuestPtr<guest::Byte> main)
+{
+    const host::detail::IdentityDataMemory memory;
+    using host::detail::require_guest;
+    auto flags = main + LB_Flags;
+    require_guest(memory.store_byte(flags, uint8_t(require_guest(memory.load_byte(flags)) ^ (1 << LBF_DFloat))));
+    const int16_t first = int16_t(require_guest(memory.load_be16(lib + LB_DFloatSwap)));
+    auto entry = lib - LB_Size - 4 - 4 * first;
+    const auto last = require_guest(memory.load_be16(lib + LB_FFloatSwap));
+    uint16_t n = uint16_t((uint32_t(int32_t(int16_t(last - first))) >> 1) - 1);
+    if (int16_t(n) < 0) return;
+    do {
+        const auto saved = require_guest(memory.load_be32(entry - 4));
+        require_guest(memory.store_be32(entry - 4, require_guest(memory.load_be32(entry - 8))));
+        require_guest(memory.store_be32(entry - 8, saved));
+        entry -= 8;
+    } while (n--);
+}
+#endif
 
 } // namespace
 
@@ -456,13 +478,27 @@ extern "C" void interp_open_math_libraries()
             d.DMathBase = open_library("mathieeedoubtrans.library");
     }
     // Lib_FloatSwap: by the flag of the main library (a4)
+#if defined(__mc68000__)
     uint8_t *main = ctx().a4;
+#else
+    const auto main = guest_cursor(ctx().a4);
+#endif
     for (uint32_t lib : d.AdTokens) {
+#if defined(__mc68000__)
         if (!lib || !peek_w(ptr<uint8_t>(lib) + LB_FFloatSwap))
             continue;
         bool swapped = main[LB_Flags] & (1 << LBF_DFloat);
         if (dble != swapped)
             float_swap(ptr<uint8_t>(lib), main);
+#else
+        const host::detail::IdentityDataMemory memory;
+        using host::detail::require_guest;
+        if (!lib) continue;
+        auto library = guest::abi::AddressCodec::decode<guest::Byte>(lib);
+        if (!require_guest(memory.load_be16(library + LB_FFloatSwap))) continue;
+        const bool swapped = require_guest(memory.load_byte(main + LB_Flags)) & (1 << LBF_DFloat);
+        if (dble != swapped) float_swap(library, main);
+#endif
     }
     Regs r;
     lib_call(L_Sys_ClearCache, r);

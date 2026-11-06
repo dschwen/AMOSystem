@@ -55,7 +55,7 @@ void call(host::RoutineArg routine, AllRegs &r)
 {
     Ctx &c = ctx();
     r.a[3] = address(c.a3);
-    r.a[4] = address(c.a4);
+    r.a[4] = encode_context_cursor(c.a4);
     r.a[5] = encode_data_zone(c.a5);
     r.a[6] = address(pc);
     r.d[6] = c.d6;
@@ -64,7 +64,7 @@ void call(host::RoutineArg routine, AllRegs &r)
     // a3/a4: the relocation's place and pointer (New_Reloc), d6/d7
     pc = ptr<uint8_t>(r.a[6]);
     c.a3 = ptr<uint8_t>(r.a[3]);
-    c.a4 = ptr<uint8_t>(r.a[4]);
+    c.a4 = decode_context_cursor(r.a[4]);
     c.d6 = r.d[6];
     c.d7 = r.d[7];
 }
@@ -76,7 +76,7 @@ void leave(AllRegs *r)
     Ctx &c = ctx();
     r->a[6] = address(pc);
     r->a[3] = address(c.a3);
-    r->a[4] = address(c.a4);
+    r->a[4] = encode_context_cursor(c.a4);
     r->d[6] = c.d6;
     r->d[7] = c.d7;
 }

@@ -15,6 +15,7 @@
 
 #include "runtime/interpreter_bridge.h"
 #include "interp/interp.h"
+#include "runtime/detail/identity_data_memory.h"
 
 using namespace amos;
 
@@ -278,15 +279,15 @@ uint32_t demande(uint32_t length)
         d.ErrorSave[0] = c.d6;
         d.ErrorSave[1] = 0;
         uint16_t token = peek_w(c.a6 - 2);
-        int16_t offset = int16_t(peek_w(c.a4 + token));
+        int16_t offset = int16_t(host::detail::require_guest(host::detail::IdentityDataMemory{}.load_be16(guest_cursor(c.a4) + token)));
         AllRegs a = {};
         a.d[0] = token;
         a.d[1] = uint16_t(offset);
         a.d[6] = c.d6;
         a.d[7] = 0;
-        a.a[0] = peek_l(c.a4 + offset - LB_Size);
+        a.a[0] = host::detail::require_guest(host::detail::IdentityDataMemory{}.load_be32(guest_cursor(c.a4) + offset - LB_Size));
         a.a[3] = address(c.a3);
-        a.a[4] = address(c.a4);
+        a.a[4] = encode_context_cursor(c.a4);
         a.a[5] = encode_data_zone(c.a5);
         a.a[6] = address(c.a6);
         interp_restart(d.BasSp.load(), d.Prg_InsRet.load(), &a);

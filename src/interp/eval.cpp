@@ -342,13 +342,13 @@ Value apply(uint16_t op, Value a, Value b)
 // The function routine of token t
 Value function(uint16_t t)
 {
-    uint8_t *tokens = ctx().a4;
-    int16_t offset = int16_t(peek_w(tokens + t));
-    host::RoutineArg routine = host::decode_routine(peek_l(tokens + offset - LB_Size - 4));
+    const auto tokens = guest_cursor(ctx().a4);
+    int16_t offset = int16_t(host::detail::require_guest(host::detail::IdentityDataMemory{}.load_be16(tokens + t)));
+    host::RoutineArg routine = host::decode_routine(host::detail::require_guest(host::detail::IdentityDataMemory{}.load_be32(tokens + offset - LB_Size - 4)));
     Value v;
     if (native_function(t, routine, v))
         return v;
-    Collected p = collect(host::detail::legacy_table_address(tokens), t, routine, true);
+    Collected p = collect(tokens, t, routine, true);
     Regs r;
     r.d[0] = t;
     r.d[1] = uint16_t(offset);

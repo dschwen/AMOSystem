@@ -67,8 +67,8 @@ bool number(uint8_t *p, uint16_t &token, uint32_t &v1, uint32_t &v2, uint8_t *&e
 {
     IData &d = idata();
     Ctx &c = ctx();
-    uint8_t *a4 = c.a4;
-    c.a4 = ptr<uint8_t>(d.AdTokens[0]);
+    ContextCursor a4 = c.a4;
+    c.a4 = decode_context_cursor(d.AdTokens[0]);
     Regs r;
     r.a[0] = address(p);
     r.d[0] = 0;

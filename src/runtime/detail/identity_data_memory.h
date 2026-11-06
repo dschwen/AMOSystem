@@ -5,6 +5,30 @@
 namespace amos::host::detail {
 class IdentityDataMemory {
 public:
+    guest::Result<guest::Byte> load_byte(guest::GuestPtr<const guest::Byte> at) const {
+        const auto word = guest::abi::AddressCodec::encode(at.address());
+#if !defined(__mc68000__)
+        if (!word) return {{}, guest::Fault::null_pointer};
+#endif
+        return {*ptr<const uint8_t>(word), guest::Fault::none};
+    }
+    guest::Fault store_byte(guest::GuestPtr<guest::Byte> at, guest::Byte value) const {
+        const auto word = guest::abi::AddressCodec::encode(at.address());
+#if !defined(__mc68000__)
+        if (!word) return guest::Fault::null_pointer;
+#endif
+        *ptr<uint8_t>(word) = value;
+        return guest::Fault::none;
+    }
+    guest::Fault store_be32(guest::GuestPtr<guest::Byte> at, uint32_t value) const {
+        const auto word = guest::abi::AddressCodec::encode(at.address());
+#if !defined(__mc68000__)
+        if (!word) return guest::Fault::null_pointer;
+        if (word > UINT32_MAX-3) return guest::Fault::overflow;
+#endif
+        poke_l(ptr<void>(word),value);
+        return guest::Fault::none;
+    }
     guest::Result<uint16_t> load_be16(guest::GuestPtr<const guest::Byte> at) const {
         const auto word = guest::abi::AddressCodec::encode(at.address());
 #if !defined(__mc68000__)
@@ -28,11 +52,15 @@ template<class T> inline T require_guest(guest::Result<T> value) {
 #endif
     return value.value;
 }
-inline guest::GuestPtr<const guest::Byte> legacy_table_address(const uint8_t* at) {
-    const auto word = reinterpret_cast<uintptr_t>(at);
+inline void require_guest(guest::Fault fault) {
 #if !defined(__mc68000__)
-    if (word > UINT32_MAX) guest::pointer_fault(guest::Fault::overflow);
+    if (fault != guest::Fault::none) guest::pointer_fault(fault);
+#else
+    (void)fault;
 #endif
-    return guest::abi::AddressCodec::decode<const guest::Byte>(uint32_t(word));
+}
+inline void write_cursor_byte(ContextCursor& cursor, uint8_t value) {
+    const auto destination = guest_cursor(cursor++);
+    require_guest(IdentityDataMemory{}.store_byte(destination,value));
 }
 }
