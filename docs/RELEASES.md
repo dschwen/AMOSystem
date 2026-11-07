@@ -16,7 +16,7 @@ See [Windows](WINDOWS.md), [Apple Silicon](APPLE-SILICON.md), and
 |---|---|---|---|
 | Windows x64 | `amos-VERSION-windows-x64.msi` | Linux MinGW-w64 + wixl/msitools; Windows VM installation tests | Portable ZIP |
 | Intel macOS | `amos-VERSION-macos-x86_64.dmg` containing `AMOS Professional.app` | Apple Clang/SDK, `hdiutil`, `codesign`, `notarytool`, `stapler` | ZIP for automation |
-| Native Apple Silicon | arm64 DMG, or universal DMG after both slices pass | Same Apple tools, native arm64 validation, optionally `lipo` | No native support claim until the address/ABI/context gates pass |
+| Native Apple Silicon | `amos-VERSION-macos-arm64.dmg` (`make package-dmg MACOS_PKG_ARCH=arm64`) | Same Apple tools | Built and text-tested natively in CI (`macos-arm64.yml`); window/audio testing on real hardware still pending |
 | Debian/Ubuntu x86-64 | `amos_VERSION-REVISION_amd64.deb` | debhelper and `dpkg-buildpackage` in the supported distribution build environment | Portable tarball |
 | Fedora/RHEL-family x86-64 | `amos-VERSION-RELEASE.DIST.x86_64.rpm` | RPM spec and `rpmbuild`, preferably clean `mock` builds for each supported distribution | Source RPM |
 | Amiga | optional `AMOS-amiga-VERSION.zip` | Existing cross compiler and `make dist` | Keep separate from host installers |
@@ -426,7 +426,7 @@ the GitHub release of that tag (the first to finish creates it with generated no
 |---|---|---|
 | `linux-release.yml` | ubuntu-24.04 | `.tar.xz`, `.deb`, SHA-256 list, manifest |
 | `windows-msi.yml` | ubuntu-24.04 (MinGW, wixl), tests on windows-2022 | `amos-VERSION-windows-x64.msi`, manifest; the release step waits for the Windows Installer tests; unsigned |
-| `macos-release.yml` | macos-latest | Intel `.dmg` (SDL2 2.30.12, checked by SHA-256), manifest; ad-hoc signed, not notarized |
+| `macos-release.yml` | macos-latest | Intel and native Apple Silicon `.dmg` (matrix) (SDL2 2.30.12, checked by SHA-256), manifest; ad-hoc signed, not notarized |
 
 ```sh
 git tag v0.1.0 && git push origin v0.1.0

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build an Intel AMOS .app and compressed DMG on macOS (no ROM required)."""
+"""Build an Intel or Apple Silicon AMOS .app and compressed DMG on macOS (no ROM required)."""
 import argparse
 import hashlib
 import json
@@ -40,12 +40,12 @@ def validate_framework(framework):
             raise ValueError(f'broken or external framework symlink: {path}')
 
 
-def verify_binary(path, framework=False):
+def verify_binary(path, framework=False, arch='x86_64'):
     archs=run('/usr/bin/lipo','-archs',path).split()
-    if 'x86_64' not in archs or (not framework and archs != ['x86_64']):
-        raise ValueError(f'{path} must contain x86_64 (the app must be Intel-only)')
+    if arch not in archs or (not framework and archs != [arch]):
+        raise ValueError(f'{path} must contain {arch} (the app is {arch}-only)')
     imports=[]
-    for line in run('/usr/bin/otool','-arch','x86_64','-L',path).splitlines()[1:]:
+    for line in run('/usr/bin/otool','-arch',arch,'-L',path).splitlines()[1:]:
         name=line.strip().split(' (',1)[0]
         if framework and name.startswith('@rpath/SDL2.framework/'): continue # framework's own ID
         if not name.startswith(('/System/Library/','/usr/lib/')):
@@ -65,7 +65,7 @@ def verify_fallback(build):
                 raise ValueError('use the ROM-free macos-release build')
 
 
-def stage_bundle(build, framework, stage, version):
+def stage_bundle(build, framework, stage, version, arch='x86_64'):
     validate_framework(framework)
     app=stage/APP
     binary=app/'Contents/MacOS/amos';binary.parent.mkdir(parents=True)
@@ -92,21 +92,23 @@ def stage_bundle(build, framework, stage, version):
         'CFBundleName':'AMOS Professional', 'CFBundleDisplayName':'AMOS Professional',
         'CFBundleExecutable':'amos', 'CFBundlePackageType':'APPL',
         'CFBundleShortVersionString':version, 'CFBundleVersion':version,
-        'LSMinimumSystemVersion':'11.0', 'LSArchitecturePriority':['x86_64'],
+        'LSMinimumSystemVersion':'11.0', 'LSArchitecturePriority':[arch],
         'NSHighResolutionCapable':True,
     }
     (app/'Contents/Info.plist').write_bytes(plistlib.dumps(info))
     install_icons(app)
     (stage/'Applications').symlink_to('/Applications',target_is_directory=True)
-    (stage/'Read Me.txt').write_text('''AMOS Professional for Intel macOS 11 or later
+    machine='Apple Silicon' if arch=='arm64' else 'Intel'
+    caveat=('This bundle is Apple Silicon-only (native arm64); Intel Macs need the x86_64 DMG.\n' if arch=='arm64' else
+            'This bundle is Intel-only. Apple Silicon requires Rosetta and remains unqualified.\n')
+    (stage/'Read Me.txt').write_text(f'''AMOS Professional for {machine} macOS 11 or later
 Drag AMOS Professional.app to Applications, then launch it from Finder.
 SDL2 is bundled; no global SDL installation, Python or compiler is required.
 Default resources are mirrored into ~/Library/Application Support/AMOSystem/runtime
 on launch. Settings, macros and existing BASIC scripts in that mirror are retained
 on upgrade. Deleting the app does not delete your projects or preferences.
 
-This bundle is Intel-only. Apple Silicon requires Rosetta and remains unqualified.
-A locally ad-hoc signed build is not notarized and may be blocked by Gatekeeper.
+{caveat}A locally ad-hoc signed build is not notarized and may be blocked by Gatekeeper.
 Use a Developer ID signed/notarized build for public distribution.
 Finder .amos document events/default-app registration are not implemented here;
 open documents in the AMOS editor or use --open-document from Terminal.
@@ -144,18 +146,19 @@ def build(args):
         raise ValueError('--out must not contain the input build')
     validate_framework(args.framework)
     verify_fallback(args.build)
-    dependencies={'amos':verify_binary(args.build/'amos'), 'SDL2':verify_binary(args.framework/'SDL2',True)}
+    arch=args.arch
+    dependencies={'amos':verify_binary(args.build/'amos',arch=arch), 'SDL2':verify_binary(args.framework/'SDL2',True,arch)}
     load_commands=run('/usr/bin/otool','-l',args.build/'amos')
     minimum=re.search(r'\bminos\s+([0-9.]+)',load_commands)
     if minimum and tuple(map(int,minimum[1].split('.'))) > (11,0,0):
         raise ValueError('app deployment target exceeds macOS 11; rebuild with MACOSX_DEPLOYMENT_TARGET=11.0')
     out.mkdir(parents=True,exist_ok=True)
-    stem=f'amos-{version}-macos-x86_64';stage=out/(stem+'-stage')
+    stem=f'amos-{version}-macos-{arch}';stage=out/(stem+'-stage')
     for path in (args.build.resolve(),args.framework.resolve()):
         if stage==path or stage in path.parents: raise ValueError('stage must not contain packaging inputs')
     if stage.exists(): shutil.rmtree(stage)
     stage.mkdir()
-    app=stage_bundle(args.build,args.framework,stage,version)
+    app=stage_bundle(args.build,args.framework,stage,version,arch)
     identity=args.sign_identity
     signing=['--force','--sign',identity]
     if identity!='-':signing+=['--timestamp','--options','runtime']
@@ -177,7 +180,7 @@ def build(args):
     manifest=bundle_manifest(app)
     report={'version':version,'sha256':hashlib.sha256(dmg.read_bytes()).hexdigest(),
             'source_revision':run('git','rev-parse','HEAD'),'source_dirty':bool(run('git','status','--porcelain')),
-            'architecture':'x86_64','sign_identity':identity,'notarized':False,
+            'architecture':arch,'sign_identity':identity,'notarized':False,
             'dependencies':dependencies,'app_files':manifest,'runtime_validation':'pending'}
     (out/(stem+'.json')).write_text(json.dumps(report,indent=2)+'\n')
     print(f'Created {dmg}; app signature and disk image verified; runtime/notarization pending')
@@ -186,10 +189,11 @@ def build(args):
 def main():
     ap=argparse.ArgumentParser(description=__doc__)
     ap.add_argument('--version',required=True)
-    ap.add_argument('--build',type=Path,default=ROOT/'build/macos-release')
+    ap.add_argument('--build',type=Path,default=ROOT/'build/macos-release-x86_64')
     ap.add_argument('--framework',type=Path,default=Path('/Library/Frameworks/SDL2.framework'))
     ap.add_argument('--out',type=Path,default=ROOT/'build/packages')
     ap.add_argument('--sign-identity',default='-')
+    ap.add_argument('--arch',choices=('x86_64','arm64'),default='x86_64')
     args=ap.parse_args()
     try:build(args)
     except subprocess.CalledProcessError as e:ap.exit(1,f'{e}\n{e.output or ""}\n')

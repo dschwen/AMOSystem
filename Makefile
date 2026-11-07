@@ -331,8 +331,10 @@ game: host-release dist
 	@echo "made $(GAMEDIR): run $(GAMEDIR)/$(NAME)"
 
 # macOS distribution: build on macOS with Command Line Tools and SDL2.framework.
-MACOS_CXX ?= /usr/bin/clang++ -arch x86_64
-MACOS_BUILD ?= $(BUILD)/macos-release
+# MACOS_PKG_ARCH=arm64: the native Apple Silicon app (the guest's memory biased, HOST_BIASED)
+MACOS_PKG_ARCH ?= x86_64
+MACOS_CXX ?= /usr/bin/clang++ -arch $(MACOS_PKG_ARCH)
+MACOS_BUILD ?= $(BUILD)/macos-release-$(MACOS_PKG_ARCH)
 MACOS_SDL_FRAMEWORK ?= /Library/Frameworks/SDL2.framework
 MACOS_SIGN_IDENTITY ?= -
 .PHONY: macos-release package-dmg dmg
@@ -341,10 +343,10 @@ macos-release:
 	@mkdir -p $(MACOS_BUILD)
 	$(PYTHON) tools/extract_topaz.py --out $(MACOS_BUILD)/topaz.cpp --fallback data/fonts/topaz8
 	$(PYTHON) tools/extract_keymap.py --out $(MACOS_BUILD)/keymap.cpp
-	MACOSX_DEPLOYMENT_TARGET=11.0 $(MAKE) host HOST=$(MACOS_BUILD) HOST_CXX='$(MACOS_CXX)' HOST_OPT=-O2 KICKSTART= ROMKEY=
+	MACOSX_DEPLOYMENT_TARGET=11.0 $(MAKE) host HOST=$(MACOS_BUILD) HOST_CXX='$(MACOS_CXX)' HOST_TARGET_ARCH=$(MACOS_PKG_ARCH) HOST_ARCHFLAGS='-arch $(MACOS_PKG_ARCH)' HOST_OPT=-O2 KICKSTART= ROMKEY=
 
 package-dmg: macos-release
-	$(PYTHON) tools/package_macos.py --version '$(VERSION)' --build $(MACOS_BUILD) --framework '$(MACOS_SDL_FRAMEWORK)' --sign-identity '$(MACOS_SIGN_IDENTITY)'
+	$(PYTHON) tools/package_macos.py --version '$(VERSION)' --build $(MACOS_BUILD) --arch $(MACOS_PKG_ARCH) --framework '$(MACOS_SDL_FRAMEWORK)' --sign-identity '$(MACOS_SIGN_IDENTITY)'
 
 dmg: package-dmg
 

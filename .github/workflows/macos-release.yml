@@ -21,8 +21,12 @@ permissions:
   contents: read
 jobs:
   dmg:
-    # The Intel app, built with the Command Line Tools' clang (-arch x86_64, which an Apple Silicon
-    # runner also does). No native arm64 slice: it is blocked on the guest-address port.
+    # Two apps, each built with the Command Line Tools' clang: Intel (-arch x86_64, which an Apple
+    # Silicon runner also does) and native Apple Silicon (arm64, the guest's memory biased).
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [x86_64, arm64]
     runs-on: macos-latest
     permissions:
       contents: write
@@ -43,13 +47,13 @@ jobs:
       - name: Build the app and DMG
         run: |
           [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]
-          make -j3 package-dmg VERSION="$VERSION" MACOS_SDL_FRAMEWORK="$PWD/build/sdk/SDL2.framework"
+          make -j3 package-dmg VERSION="$VERSION" MACOS_PKG_ARCH=${{ matrix.arch }} MACOS_SDL_FRAMEWORK="$PWD/build/sdk/SDL2.framework"
           ls -l build/packages
       - name: Package tests
         run: python3 -m unittest discover -s tests -p test_package_macos.py
       - uses: actions/upload-artifact@v4
         with:
-          name: amos-${{ env.VERSION }}-macos
+          name: amos-${{ env.VERSION }}-macos-${{ matrix.arch }}
           path: |
             build/packages/*.dmg
             build/packages/*macos*.json
