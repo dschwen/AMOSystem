@@ -50,6 +50,10 @@ jobs:
           rc=$?
           set -e
           { echo "exit $rc"; tail -25 hi.log; ls -l out.txt 2>&1; } | annotate
+          if [ $rc -ne 0 ]; then
+            AMOS_HOME="$OLDPWD/build/dist/AMOS" AMOS_DISPLAY=none AMOS_CONFIG=/dev/null \
+              lldb -b -o run -o "bt 25" -o "register read" -- /tmp/amos-player hi.AMOS 2>&1 | grep -v "^(lldb)" | tail -60 | annotate
+          fi
           test -f out.txt
       - name: Text tests
         run: |
