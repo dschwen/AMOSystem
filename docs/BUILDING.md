@@ -222,8 +222,10 @@ with `src/host` and no assembler:
 - the bridge: the same `src/tables` and `src/runtime` as the Amiga's, each
   table label an address the C++ keeps as on the Amiga; the stack-resetting
   exits of the interpreter are `setjmp` marks (`runtime/runtime.cpp`);
-- memory below 4GB (`MAP_32BIT`, as AMOS keeps its addresses in 32 bits),
-  given out as exec does; AMOS's data (programs, banks, token tables)
+- one mapping for the guest's memory, given out as exec does: anywhere in the
+  address space on Linux and Apple Silicon (`HOST_BIASED=1`, the default there; the
+  executable is an ordinary PIE), below 4GB (`MAP_32BIT`, AMOS keeping its addresses in
+  32 bits) on Windows and Intel macOS (`HOST_BIASED=0`); AMOS's data (programs, banks, token tables)
   stay big-endian (`core/endian.h`);
 - files: POSIX, with AmigaDOS's names; the current directory is
   `AMOSPRO:`. The disks (`host/devices.cpp`, docs/DEVICES.md; floppy images, `.adf`, are

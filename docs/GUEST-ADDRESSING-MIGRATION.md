@@ -481,7 +481,7 @@ below, rather than hiding it behind another experimental flag.
 
 | Existing restriction | Removal condition |
 |---|---|
-| Linux `-no-pie` in Makefile | All static data/code references use guest symbols or typed native registries; translated high-PIE runtime regressions pass |
+| ~~Linux `-no-pie` in Makefile~~ | Removed: Linux builds biased by default and links as a PIE (140/140 host tests, 3 text runs under ASLR) |
 | Intel Mac `-no_pie,-pagezero_size,0x1000` in Makefile and `tools/macos_cross.py` | Same code/data migration and native Intel Mac validation |
 | Windows low image base / disabled ASLR and image gate | All data/code pointers translated; high-image/ASLR Windows runtime validation |
 | ARM startup address-model guard in `host/main.cpp` | Entire translated engine runs correctly on native Apple Silicon, including task/error paths |

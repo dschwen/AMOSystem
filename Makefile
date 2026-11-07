@@ -119,8 +119,12 @@ HOST_CPPFLAGS ?=
 HOST_TARGET_OS ?= $(shell uname -s)
 HOST_TARGET_ARCH ?= x86_64
 HOST_ARCHFLAGS ?= -m64
-# AMOS stores program and arena addresses in 32 bits. Darwin otherwise
-# reserves the first 4GB and places the executable above them.
+# The guest's memory anywhere in the address space (src/core/guest_bias.h) instead of below 4GB: the
+# default on Linux and Apple Silicon (so the executable may be a PIE, wherever the system puts it).
+# HOST_BIASED=0 is the identity mapping, which Windows and Intel macOS still use: AMOS stores
+# program and arena addresses in 32 bits there, and Darwin otherwise reserves the first 4GB and
+# places the executable above them.
+HOST_BIASED ?= $(if $(or $(filter arm64,$(HOST_TARGET_ARCH)),$(filter Linux,$(HOST_TARGET_OS))),1,0)
 ifeq ($(HOST_TARGET_OS),Darwin)
 ifeq ($(HOST_TARGET_ARCH),arm64)
 HOST_LDFLAGS ?= -Wl,-pie
@@ -128,7 +132,7 @@ else
 HOST_LDFLAGS ?= -Wl,-no_pie,-pagezero_size,0x1000
 endif
 else
-HOST_LDFLAGS ?= -no-pie
+HOST_LDFLAGS ?= $(if $(filter 1,$(HOST_BIASED)),,-no-pie)
 endif
 # SDL2: dlopen'ed when AMOS starts (default), or HOST_SDL=link: linked to
 # the system's libSDL2-2.0.so.0 (no SDL headers needed)
@@ -139,9 +143,6 @@ HOST_SDLLIB := $(if $(filter link,$(HOST_SDL)),-l:libSDL2-2.0.so.0)
 # Aminet (tools/fetch_ndk.py: build/ndk, no licence to bundle them: see it)
 NDK_TOOLCHAIN := $(AMIGA_PREFIX)/m68k-amigaos/ndk-include
 NDK_INCLUDE   ?= $(if $(wildcard $(NDK_TOOLCHAIN)/exec/types.h),$(NDK_TOOLCHAIN),$(BUILD)/ndk/Include_H)
-# The guest's memory anywhere in the address space (src/core/guest_bias.h) instead of below 4GB:
-# what Apple Silicon needs (HOST_BIASED=0 for the identity mapping there, which does not run)
-HOST_BIASED ?= $(if $(filter arm64,$(HOST_TARGET_ARCH)),1,0)
 HOST_BIASDEF := $(if $(filter 1,$(HOST_BIASED)),-DAMOS_GUEST_BIASED)
 HOST_FLAGS  := $(HOST_ARCHFLAGS) $(HOST_OPT) $(HOST_SDLDEF) $(HOST_BIASDEF) -D__use_amiga_stdc_c99 -std=c++20 -fno-exceptions -fno-rtti -fno-threadsafe-statics -fpack-struct=2 -include src/host/native_headers.h \
                $(HOST_CPPFLAGS) -Isrc/host/include -Isrc -idirafter $(NDK_INCLUDE) -MMD -MP
@@ -208,7 +209,7 @@ WINDOWS_BUILD ?= $(BUILD)/windows
 WINDOWS_LDFLAGS ?= -Wl,--image-base,0x400000,--disable-dynamicbase,--disable-high-entropy-va -static-libgcc -static-libstdc++
 SDL2_WINDOWS ?= $(HOME)/Downloads/SDL2-2.32.8/x86_64-w64-mingw32
 host-windows:
-	$(MAKE) host HOST=$(WINDOWS_BUILD) HOST_CXX=$(WINDOWS_CXX) HOST_EXE=amos.exe \
+	$(MAKE) host HOST=$(WINDOWS_BUILD) HOST_CXX=$(WINDOWS_CXX) HOST_EXE=amos.exe HOST_BIASED=0 \
 		HOST_EXTRA_OBJ='$(WINDOWS_BUILD)/version.o' \
 		HOST_SDL=link HOST_CPPFLAGS='-I$(SDL2_WINDOWS)/include' \
 		HOST_LDFLAGS='$(WINDOWS_LDFLAGS)' \
