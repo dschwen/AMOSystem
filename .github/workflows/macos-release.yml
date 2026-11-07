@@ -1,0 +1,64 @@
+name: macOS release
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Version (major.minor.patch)
+        default: 0.1.0
+        required: true
+  push:
+    tags:
+      - 'v*'
+  pull_request:
+    paths:
+      - 'tools/package_macos.py'
+      - 'tools/install_icons.py'
+      - 'packaging/macos/**'
+      - 'data/icons/**'
+      - 'Makefile'
+      - '.github/workflows/macos-release.yml'
+permissions:
+  contents: read
+jobs:
+  dmg:
+    # The Intel app, built with the Command Line Tools' clang (-arch x86_64, which an Apple Silicon
+    # runner also does). No native arm64 slice: it is blocked on the guest-address port.
+    runs-on: macos-latest
+    permissions:
+      contents: write
+    env:
+      VERSION: ${{ inputs.version || '0.1.0' }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Version from the tag
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: echo "VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_ENV"
+      - name: Fetch the pinned SDL2 framework
+        run: |
+          curl --fail --location --retry 3 https://www.libsdl.org/release/SDL2-2.30.12.dmg -o SDL2.dmg
+          echo 'a8fcd488a8062f632bacd7a74dbbb5f585f3b0303ccf08384ac0349eccd8420d  SDL2.dmg' | shasum -a 256 -c -
+          hdiutil attach SDL2.dmg -mountpoint /Volumes/SDL2 -nobrowse -quiet
+          mkdir -p build/sdk && cp -R /Volumes/SDL2/SDL2.framework build/sdk/
+          hdiutil detach /Volumes/SDL2 -quiet
+      - name: Build the app and DMG
+        run: |
+          [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]
+          make -j3 package-dmg VERSION="$VERSION" MACOS_SDL_FRAMEWORK="$PWD/build/sdk/SDL2.framework"
+          ls -l build/packages
+      - name: Package tests
+        run: python3 -m unittest discover -s tests -p test_package_macos.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: amos-${{ env.VERSION }}-macos
+          path: |
+            build/packages/*.dmg
+            build/packages/*macos*.json
+          if-no-files-found: error
+      - name: Attach the DMG to the release (ad-hoc signed, not notarized)
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" --generate-notes || true
+          gh release upload "$GITHUB_REF_NAME" build/packages/*.dmg build/packages/*macos*.json --clobber

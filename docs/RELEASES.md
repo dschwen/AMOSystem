@@ -416,3 +416,22 @@ copy are the user's and are not overwritten. `AMOS_HOME` and writable trees (a b
 program with `amos-player` and removes it again; for a `v*` tag it attaches the files to the
 GitHub release. Not done: the RPM, a signed APT/RPM repository, fresh GNOME/KDE default-app checks, and lintian cleanliness (the executable is not position independent
 until the guest-address migration is finished).
+
+## Releases from a tag
+
+Pushing a tag `vMAJOR.MINOR.PATCH` starts three workflows, each of which attaches its files to
+the GitHub release of that tag (the first to finish creates it with generated notes):
+
+| Workflow | Runner | Attached |
+|---|---|---|
+| `linux-release.yml` | ubuntu-24.04 | `.tar.xz`, `.deb`, SHA-256 list, manifest |
+| `windows-msi.yml` | ubuntu-24.04 (MinGW, wixl), tests on windows-2022 | `amos-VERSION-windows-x64.msi`, manifest; the release step waits for the Windows Installer tests; unsigned |
+| `macos-release.yml` | macos-latest | Intel `.dmg` (SDL2 2.30.12, checked by SHA-256), manifest; ad-hoc signed, not notarized |
+
+```sh
+git tag v0.1.0 && git push origin v0.1.0
+```
+
+All three also run by hand (Actions, "Run workflow", with a version) without publishing. The
+Windows and macOS packages are still unsigned/unnotarized (Gatekeeper and SmartScreen warn);
+signing and notarization need the certificate secrets and are not wired in.

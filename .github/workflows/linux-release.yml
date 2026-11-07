@@ -61,4 +61,7 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/v')
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release upload "$GITHUB_REF_NAME" build/packages/amos* --clobber || gh release create "$GITHUB_REF_NAME" build/packages/amos* --generate-notes
+          GH_REPO: ${{ github.repository }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" --generate-notes || true
+          gh release upload "$GITHUB_REF_NAME" build/packages/amos* --clobber
