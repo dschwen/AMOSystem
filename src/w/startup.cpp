@@ -7,6 +7,7 @@
 // +W.s IceStart sets W_Base and the C++ contexts before anything here
 // runs.
 
+#include "core/guest_scratch.h"
 #include "runtime/static_symbols.h"
 #include "core/amiga.h"
 #include "core/ioreq.h"
@@ -115,7 +116,7 @@ void grab_characters(uint8_t *font, uint16_t from, uint16_t to)
 bool make_font()
 {
     WData &d = wdata();
-    static const uint16_t palette[32] = {};
+    static const uint16_t palette_data[32] = {};
     Regs r;
     r.d[1] = 0;
     r.d[2] = 16;
@@ -123,7 +124,7 @@ bool make_font()
     r.d[4] = 1;
     r.d[5] = 0;
     r.d[6] = 2;
-    r.a[1] = address(palette);
+    r.a[1] = guest_constant(palette_data, sizeof palette_data);
     ec_call(ec::Cree, r);
     bool ok = !r.d[0];
     if (ok) {

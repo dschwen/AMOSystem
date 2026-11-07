@@ -10,6 +10,7 @@
 // ":", "X" a procedure, "0" to "2" constants...), its column in the text
 // and its offset in the line; a 0 at the end.
 
+#include "core/guest_scratch.h"
 #include "monitor/monitor.h"
 
 using namespace amos;
@@ -28,7 +29,7 @@ const uint8_t WindowInit[] = {27, 'C', '0', 27, 'B', '2', 27, 'P', '3', 25, 27, 
 void print(const uint8_t *text)
 {
     Regs r;
-    r.a[1] = address(text);
+    r.a[1] = guest_text(text);
     wi_call(wi::Print, r);
 }
 

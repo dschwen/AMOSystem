@@ -6,6 +6,7 @@
 // whole line). A missing item asks again ("?? "); a bad number starts the
 // whole Input again ("Redo from start"; in a file a type mismatch).
 
+#include "core/guest_scratch.h"
 #include "interp/interp.h"
 
 #include "core/amiga.h"
@@ -20,7 +21,7 @@ constexpr int LEdFCursor = 2, LEdFTests = 5, LEdFMulti = 6;      // LEd_F*
 void window_print(const char *text)
 {
     Regs r;
-    r.a[1] = address(text);
+    r.a[1] = guest_text(text);
     wi_call(wi::Print, r);
 }
 

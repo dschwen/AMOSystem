@@ -10,6 +10,7 @@
 // Esc_Loop resets the stack (+Edit.s) and comes here: escape_loop() does
 // not return, it ends in the interpreter or the editor's loop.
 
+#include "core/guest_scratch.h"
 #include "runtime/static_symbols.h"
 #include "editor/editor.h"
 #include "hal/clipboard.h"
@@ -63,7 +64,7 @@ void ec_fn(int function, uint32_t d1 = 0)
 void print(const uint8_t *text)
 {
     Regs r;
-    r.a[1] = address(text);
+    r.a[1] = guest_text(text);
     wi_call(wi::Print, r);
 }
 

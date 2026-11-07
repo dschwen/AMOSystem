@@ -1,6 +1,7 @@
 // Directories: the list of files the Dir instructions, Dir First$ and the
 // file selector read (Fill* in +Lib.s), and the Dir instructions
 
+#include "core/guest_scratch.h"
 #include "core/amiga.h"
 #include "lib/convert.h"
 #include "lib/dos.h"
@@ -411,7 +412,7 @@ void nom_dir(const uint8_t *s)
 void print(const char *text)
 {
     Regs r = {};
-    r.a[0] = address(text);
+    r.a[0] = guest_text(text);
     lib_call(L_ImpChaine, r);
 }
 

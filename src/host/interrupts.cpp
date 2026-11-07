@@ -4,6 +4,7 @@
 // for a frame. Also the entries of AMOS.library's interrupts (+W.s VblIn,
 // IoHandler) and the system structures of its data zone (w/w.h).
 
+#include "core/guest_scratch.h"
 #include "runtime/static_symbols.h"
 #include "runtime/detail/legacy_dispatch.h"
 #include "hal/gfx.h"
@@ -64,17 +65,19 @@ void run_vbl()
 
 // The input handler's and the VBL's structures, the IO requests (with
 // their reply port) of the input and console devices (w/w.h)
-Interrupt input_is, vbl_is;
-alignas(8) uint8_t input_io[256], console_io[256];
+Interrupt &input_is() { static Interrupt *is = guest_object<Interrupt>(); return *is; }
+Interrupt &vbl_is() { static Interrupt *is = guest_object<Interrupt>(); return *is; }
+uint8_t *input_io() { static uint8_t *io = guest_object<uint8_t>(256); return io; }
+uint8_t *console_io() { static uint8_t *io = guest_object<uint8_t>(256); return io; }
 
 
 } // namespace
 
 namespace amos::w {
-struct Interrupt *input_interrupt() { return &input_is; }
-IOReq *input_request() { return reinterpret_cast<IOReq *>(input_io); }
-uint8_t *console_request() { return console_io; }
-struct Interrupt *vbl_interrupt() { return &vbl_is; }
+struct Interrupt *input_interrupt() { return &input_is(); }
+IOReq *input_request() { return reinterpret_cast<IOReq *>(input_io()); }
+uint8_t *console_request() { return console_io(); }
+struct Interrupt *vbl_interrupt() { return &vbl_is(); }
 } // namespace amos::w
 
 namespace amos::host {

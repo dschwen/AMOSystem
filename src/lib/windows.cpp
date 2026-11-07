@@ -1,5 +1,6 @@
 // Text window instructions of AMOSPro.Lib (ecrans.s / FENETRES)
 
+#include "core/guest_scratch.h"
 #include "lib/strings.h"
 
 using namespace amos;
@@ -31,7 +32,7 @@ void send(const char *codes)
 {
     check_screen();
     Regs r = {};
-    r.a[1] = address(codes);
+    r.a[1] = guest_text(codes);
     wi_check(wi::Print, r);
 }
 

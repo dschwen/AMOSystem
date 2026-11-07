@@ -3,6 +3,7 @@
 // system's, AMOS going to the back meanwhile. They come from whatever
 // task needs one (a disc handler...).
 
+#include "core/guest_scratch.h"
 #include "core/amiga.h"
 #include "w/w.h"
 
@@ -56,7 +57,7 @@ void ec_d1(int function, uint32_t d1)
 void print(const void *text)
 {
     Regs r;
-    r.a[1] = address(text);
+    r.a[1] = guest_text(text);
     wi_call(wi::Print, r);
 }
 

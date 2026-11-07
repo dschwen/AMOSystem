@@ -1,6 +1,7 @@
 // IFF pictures and animations: Load Iff, Save Iff, the Form functions,
 // Iff Anim (Iff* and Save* in +Lib.s)
 
+#include "core/guest_scratch.h"
 #include "core/amiga.h"
 #include "lib/banks.h"
 #include "lib/dos.h"
@@ -284,7 +285,7 @@ void iff_body(const uint8_t *data)
     uint16_t row = (width + 7) >> 3;
     // cursor off
     Regs c = {};
-    c.a[1] = address("\x1b" "C0");
+    c.a[1] = guest_text("\x1b" "C0");
     wi_call(wi::Print, c);
     uint8_t compression = bmhd[10];
     if (!compression) {

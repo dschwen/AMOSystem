@@ -16,6 +16,7 @@
 // is a local setjmp target, so no C++ object with a destructor may
 // live in this code.
 
+#include "core/guest_scratch.h"
 #include "core/amiga.h"
 #include "lib/dialog.h"
 #include "core/local_jump.h"
@@ -125,7 +126,7 @@ uint32_t wi(int function, uint32_t d1 = 0, uint32_t a1 = 0)
     return r.d[0];
 }
 
-void print(const char *s) { wi(wi::Print, 0, address(s)); }
+void print(const char *s) { wi(wi::Print, 0, guest_text(s)); }
 void chr_out(uint8_t c) { wi(wi::ChrOut, c); }
 
 uint32_t ec(int function, uint32_t d1 = 0)

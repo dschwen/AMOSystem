@@ -9,6 +9,7 @@
 // Fs_Input. Directories already read can be kept ("store"), in the
 // Fs_Liste list.
 
+#include "core/guest_scratch.h"
 #include "runtime/detail/identity_data_memory.h"
 #include "core/amiga.h"
 #include "lib/dialog.h"
@@ -931,7 +932,7 @@ uint32_t avail_public() { return hal::available_memory(hal::MemoryPublic); }
     f->Fs_AdEc = c.a[0];
     appear(true);
     Regs pr = {};
-    pr.a[1] = address("\x1b" "C0");
+    pr.a[1] = guest_text("\x1b" "C0");
     wi_call(wi::Print, pr);
     f->Fs_Opened = 1;
     DiaOpen o = dia_open(Channel, p.programs + peek_l(p.programs + 14), p.graphics, p.messages, 1024, 32, false);
@@ -999,7 +1000,7 @@ void selector(const be_u32 *params)
         low_memory(params);
     f->Fs_AdEc = address(s);
     Regs pr = {};
-    pr.a[1] = address("\x1b" "C0");
+    pr.a[1] = guest_text("\x1b" "C0");
     wi_call(wi::Print, pr);
     if (avail_public() < 12 * 1024)
         low_memory(params);

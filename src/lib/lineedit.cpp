@@ -2,6 +2,7 @@
 // edited in the current window, for Input, the edit zones of the Interface
 // and the editor.
 
+#include "core/guest_scratch.h"
 #include "lib/dialog.h"
 #include "hal/clipboard.h"
 #if !defined(__m68k__)
@@ -31,7 +32,7 @@ uint8_t *buffer(LineEdit *e) { return ptr<uint8_t>(e->LEd_Buffer); }
 void print(const char *s)
 {
     Regs r = {};
-    r.a[1] = address(s);
+    r.a[1] = guest_text(s);
     wi_call(wi::Print, r);
 }
 

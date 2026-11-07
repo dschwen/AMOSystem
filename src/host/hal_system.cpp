@@ -1,6 +1,7 @@
 // hal/system.h on another host: AMOS's memory below 4GB (it keeps its
 // addresses in 32 bits), one task, no devices or interrupts yet.
 
+#include "core/guest_scratch.h"
 #include "hal/system.h"
 #include "core/ioreq.h"
 #include "memory/guest_allocator.h"
@@ -31,11 +32,15 @@ extern "C" char *getenv(const char *name) noexcept;    // (stdlib.h clashes with
 namespace {
 
 // The one task: a process started from a CLI
-Process the_process = [] {
-    Process p = {};
-    p.pr_CLI = 1;
-    return p;
-}();
+Process &the_process()
+{
+    static Process *p = [] {
+        auto *process = amos::guest_object<Process>();
+        process->pr_CLI = 1;
+        return process;
+    }();
+    return *p;
+}
 
 // The libraries of the system: a base each (room for the library's
 // structure: GfxBase...), known by its name
@@ -305,7 +310,7 @@ void *allocate_at(uint32_t size, void *where)
     return where;
 }
 
-Task *find_task(const char *name) { return name ? nullptr : &the_process.pr_Task; }
+Task *find_task(const char *name) { return name ? nullptr : &the_process().pr_Task; }
 void signal(Task *, uint32_t) {}
 static uint32_t the_requester_window;
 uint32_t requester_window() { return the_requester_window; }
@@ -431,7 +436,7 @@ void free_signal(int32_t n)
 // host has no speech, what is said is silent
 namespace {
 constexpr int DeviceCount = 5;
-Device devices[DeviceCount];
+Device *devices_table() { static Device *table = amos::guest_object<Device>(DeviceCount); return table; }
 const char *const device_names[DeviceCount] = {"input.device", "console.device", "timer.device", "serial.device",
                                                "narrator.device"};
 } // namespace
@@ -441,7 +446,7 @@ const char *const device_names[DeviceCount] = {"input.device", "console.device",
 static int device_of(const IOReq *io)
 {
     for (int i = 0; i < DeviceCount; i++)
-        if (uint32_t(io->io_Device) == address(&devices[i]))
+        if (uint32_t(io->io_Device) == address(&devices_table()[i]))
             return i;
     return -1;
 }
@@ -450,8 +455,8 @@ int32_t open_device(const char *name, uint32_t, IOReq *io, uint32_t)
 {
     for (int i = 0; i < DeviceCount; i++)
         if (!strcmp(name, device_names[i])) {
-            devices[i].dd_Library.lib_Node.ln_Name = const_cast<char *>(device_names[i]);
-            io->io_Device = address(&devices[i]);
+            devices_table()[i].dd_Library.lib_Node.ln_Name = const_cast<char *>(device_names[i]);
+            io->io_Device = address(&devices_table()[i]);
             io->io_Error = 0;
             if (i == 3) {
                 // serial.device's settings in the request, as Kickstart 3.1's

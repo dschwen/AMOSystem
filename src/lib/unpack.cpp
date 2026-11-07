@@ -2,6 +2,7 @@
 // the resource banks, the editor's and the monitor's graphics) and the
 // Screen Copy entry of the editor: the end of Dialog.s in AMOSPro.Lib
 
+#include "core/guest_scratch.h"
 #include "core/amos.h"
 
 using namespace amos;
@@ -130,7 +131,7 @@ extern "C" uint32_t lib_unpack_screen(RegFrame &r)
     EcScreen *s = ptr<EcScreen>(c.a[0]);
     // Cursor off
     Regs w = {};
-    w.a[1] = address("\x1b" "C0");
+    w.a[1] = guest_text("\x1b" "C0");
     wi_call(wi::Print, w);
     s->EcAWX = header->PsAWx;
     s->EcAWY = header->PsAWy;

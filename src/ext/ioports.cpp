@@ -3,6 +3,7 @@
 // channels of lib/devices.cpp. Its data stays in the extension (DT, the
 // address in its ExtAdr), where its end routine closes the channels.
 
+#include "core/guest_scratch.h"
 #include "core/amiga.h"
 #include "core/ioreq.h"
 #include "lib/devices.h"
@@ -466,7 +467,7 @@ uint32_t ext_fn_parallel_input2(int32_t length, uint32_t terminator)
 
 namespace {
 // DT, the data zone (with Special's default)
-alignas(4) uint8_t data_zone[140] = {};
+uint8_t *data_zone_storage() { static uint8_t *zone = guest_object<uint8_t>(140); return zone; }
 } // namespace
 
 extern "C" {
@@ -500,10 +501,10 @@ static uint32_t cold_start(RegFrame &r, uint32_t number, uint16_t version, void 
 extern "C" uint32_t ext_ioports_cold(RegFrame &r)
 {
     IData &d = idata();
-    d.ExtAdr[ExtNb * 4] = address(data_zone);
+    d.ExtAdr[ExtNb * 4] = address(data_zone_storage());
     d.ExtAdr[ExtNb * 4 + 1] = address(AMOS_DATA(ext_ioports_end_entry));
     d.ExtAdr[ExtNb * 4 + 2] = address(AMOS_DATA(ext_ioports_end_entry));
-    poke_w(data_zone + Special, 0x84);
+    poke_w(data_zone_storage() + Special, 0x84);
     return cold_start(r, ExtNb, 0x0200, nullptr);
 }
 
