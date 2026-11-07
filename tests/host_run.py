@@ -175,6 +175,9 @@ def run_text(name, hd, timeout):
                 args = shlex.split(f.read().replace('@FILES@', os.path.join(os.path.dirname(hd), 'files')))
         p = subprocess.run([AMOS] + args + [f'AMOSTEST:{name}.AMOS'], cwd=TREE, env=env, timeout=timeout,
                            stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        # (kept, for what a failing test did: CI prints it)
+        with open(os.path.join(os.path.dirname(hd), 'stdout.log'), 'wb') as f:
+            f.write(p.stdout)
         note = p.stdout.decode('latin-1').strip().splitlines()
         trace = [line for line in note if line.startswith('amos: ') and line.split()[1] in ('signal', 'pc', 'lr', 'frame', 'loaded')]
         if trace:        # (AMOS_CRASH_TRACE: where it was when it crashed or was stopped)

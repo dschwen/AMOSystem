@@ -79,6 +79,13 @@ jobs:
               want=$(ls tests/golden/"$file" tests/host_only/"$file" 2> /dev/null | head -1)
               echo "::error::${test} got: $(head -c 500 "$got" | tr '\n' '|') WANT: $(head -c 500 "$want" | tr '\n' '|')"
             done
+            # (what a differing test did: its output, then the end of what AMOS logged)
+            grep -E "^[a-z0-9_]+: [a-z0-9_.]+\.txt differs" tests.log | head -2 | while read -r test file rest; do
+              dir=$(dirname "$(find build/host-test -path "*/${test%:}/*" -name "$file" | head -1)")
+              echo "::error::${test} output: $(head -c 700 "$dir/$file" | tr '\n' '|')"
+              echo "::error::${test} log: $(grep -v '^amos: file' "$dir/stdout.log" | tail -12 | tr '\n' '|' | head -c 900)"
+              echo "::error::${test} files: $(grep '^amos: file' "$dir/stdout.log" | sed "s/amos: file '\(.*\)' -> '.*' mode [0-9]* error \([0-9]*\)/\1=\2/" | tail -16 | tr '\n' ' ' | head -c 900)"
+            done
             # (a test stopped by the trace: where, by name)
             line=$(grep -E "^equates:" tests.log | head -1)
             load=$(echo "$line" | grep -oE "loaded at 0x[0-9a-f]+" | sed 's/loaded at //')
