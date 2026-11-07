@@ -23,7 +23,7 @@ constexpr uint8_t FArray = 1 << 6;
 bool doubles() { return int8_t(idata().MathFlags) < 0; }
 
 struct Variable {
-    uint8_t *at;        // the value
+    ContextCursor at;   // the value
     uint8_t flags;
     uint16_t offset;    // (d0 of the assembler)
     uint8_t name;       // the name's length (d1)
@@ -34,12 +34,12 @@ Variable variable()
 {
     IData &d = idata();
     uint16_t offset = next_token();
-    uint8_t *at;
+    ContextCursor at;
     if (int16_t(offset) < 0) {
         offset = uint16_t(-int16_t(offset));
-        at = ptr<uint8_t>(d.VarGlo) + 1 + int16_t(offset);
+        at = decode_context_cursor(d.VarGlo) + (1 + int16_t(offset));
     } else {
-        at = ptr<uint8_t>(d.VarLoc) + 2 + int16_t(offset);
+        at = decode_context_cursor(d.VarLoc) + (2 + int16_t(offset));
     }
     uint8_t length = next_byte();
     uint8_t flags = next_byte();
@@ -55,7 +55,7 @@ Value converted(Value v, uint8_t type)
     return kind(v) == TInt ? to_float(v) : to_integer(v);
 }
 
-void store(uint8_t *at, const Value &v)
+void store(ContextCursor at, const Value &v)
 {
     poke_l(at, v.v1);
     if (kind(v) == TFloat && doubles())
@@ -66,14 +66,14 @@ void store(uint8_t *at, const Value &v)
 
 // GetTablo: the element of the array whose slot is at, its indices in
 // parentheses at pc
-uint8_t *array_element(uint8_t *at)
+ContextCursor array_element(ContextCursor at)
 {
-    uint8_t *block = ptr<uint8_t>(peek_l(at));
+    ContextCursor block = decode_context_cursor(peek_l(at));
     if (!block)
         error(ENonDim);
-    uint16_t dimensions = block[0];
-    uint8_t shift = block[1];
-    uint8_t *limits = block + 2;
+    uint16_t dimensions = byte_at(block);
+    uint8_t shift = byte_at(block, 1);
+    ContextCursor limits = block + 2;
     uint32_t index = 0;
     for (;;) {
         Value i = evaluate_after();
@@ -95,14 +95,14 @@ void assign()
 {
     Variable v = variable();
     if (v.flags & FArray) {
-        uint8_t *at = array_element(v.at);
+        ContextCursor at = array_element(v.at);
         Value x = converted(evaluate_after(), v.flags & 0x0F);
         store(at, x);
         return;
     }
     Value x = converted(evaluate_after(), v.flags);
-    v.at[-2] = kind(x) == TFloat && doubles() ? 8 : 4;
-    v.at[-1] = v.flags;
+    host::detail::write_cursor_at(v.at - 2, kind(x) == TFloat && doubles() ? 8 : 4);
+    host::detail::write_cursor_at(v.at - 1, v.flags);
     store(v.at, x);
 }
 
@@ -111,7 +111,7 @@ void assign()
 Value value()
 {
     Variable v = variable();
-    uint8_t *at = v.flags & FArray ? array_element(v.at) : v.at;
+    ContextCursor at = v.flags & FArray ? array_element(v.at) : v.at;
     uint8_t type = v.flags & 0x0F;
     Value x = {type, peek_l(at), 0};
     if (type == TString) {
@@ -134,17 +134,17 @@ FoundVar find_variable()
     pc() += 2;
     Variable v = variable();
     if (v.flags & FArray) {
-        uint8_t *at = array_element(v.at);
+        ContextCursor at = array_element(v.at);
         uint8_t type = v.flags & 0x0F;
         if (type == TString && !peek_l(at))
             poke_l(at, d.ChVide);
         return {at, type};
     }
-    v.at[-2] = 4;
-    v.at[-1] = v.flags;
+    host::detail::write_cursor_at(v.at - 2, 4);
+    host::detail::write_cursor_at(v.at - 1, v.flags);
     if (v.flags == TFloat) {
         if (doubles())
-            v.at[-2] = 8;
+            host::detail::write_cursor_at(v.at - 2, 8);
     } else if (v.flags != TInt && !peek_l(v.at)) {
         poke_l(v.at, d.ChVide);
     }
@@ -187,19 +187,21 @@ void dim()
         }
         uint32_t bytes = count << shift;
         uint32_t header = dimensions * 4 + 2;
-        uint8_t *block = ptr<uint8_t>(d.TabBas - bytes - header);
-        if (address(block) < d.HiChaine) {
+        uint32_t block_word = d.TabBas - bytes - header;
+        if (block_word < d.HiChaine) {
             Regs m;
             lib_call(L_Menage, m);
-            if (address(block) < d.HiChaine)
+            block_word = d.TabBas - bytes - header;
+            if (block_word < d.HiChaine)
                 error(EOofBuf);
         }
-        poke_l(v.at, address(block));
-        d.TabBas = address(block);
-        block[0] = uint8_t(dimensions);
-        block[1] = shift;
-        uint8_t *elements = block + header;
-        uint8_t *p = elements;
+        ContextCursor block = decode_context_cursor(block_word);
+        poke_l(v.at, block_word);
+        d.TabBas = block_word;
+        host::detail::write_cursor_at(block, uint8_t(dimensions));
+        host::detail::write_cursor_at(block + 1, shift);
+        ContextCursor elements = block + header;
+        ContextCursor p = elements;
         uint32_t multiplier = 1;
         for (int i = dimensions - 1; i >= 0; i--) {
             p -= 2;
@@ -208,12 +210,13 @@ void dim()
             poke_w(p, limits[i]);
             multiplier = (multiplier & 0xFFFF) * uint32_t(limits[i] + 1);
         }
-        poke_w(v.at - 2, type | 0x0440);
+        poke_w(v.at - 2, uint16_t(type | 0x0440));
         uint32_t fill = type == TString ? d.ChVide : 0;
         uint32_t longs = bytes >> 2;
-        do
-            poke_l(elements, fill), elements += 4;
-        while (--longs);
+        do {
+            poke_l(elements, fill);
+            elements += 4;
+        } while (--longs);
     } while (next_token() == tk::Vir);
     pc() -= 2;
 }
@@ -224,7 +227,7 @@ uint32_t varptr()
     pc() += 2;
     FoundVar f = find_variable();
     pc() += 2;
-    return uint8_t(f.type) == TString ? peek_l(f.at) + 2 : address(f.at);
+    return uint8_t(f.type) == TString ? peek_l(f.at) + 2 : encode_context_cursor(f.at);
 }
 
 // =Array(a(0...)): the address of the array's block (the indices are
@@ -237,7 +240,7 @@ uint32_t array_address()
     if (!block)
         error(ENonDim);
     pc() -= 2;
-    for (uint8_t n = ptr<uint8_t>(block)[0]; n; n--)
+    for (uint8_t n = byte_at(decode_context_cursor(block)); n; n--)
         evaluate_after();
     return block;
 }
@@ -245,7 +248,7 @@ uint32_t array_address()
 // Swap a,b
 void swap()
 {
-    uint8_t *a = find_variable().at;
+    ContextCursor a = find_variable().at;
     pc() += 2;
     FoundVar b = find_variable();
     uint32_t t = peek_l(b.at);
@@ -261,21 +264,21 @@ void swap()
 // Inc / Dec
 void increment(int32_t by)
 {
-    uint8_t *at = find_variable().at;
+    ContextCursor at = find_variable().at;
     poke_l(at, peek_l(at) + by);
 }
 
 // Add v,n
 void add()
 {
-    uint8_t *at = find_variable().at;
+    ContextCursor at = find_variable().at;
     poke_l(at, peek_l(at) + evaluate_after().v1);
 }
 
 // Add v,n,low To high: past one end, the other one
 void add_range()
 {
-    uint8_t *at = find_variable().at;
+    ContextCursor at = find_variable().at;
     int32_t p[3];
     for (int32_t &x : p) {
         Value v = evaluate_after();
@@ -291,7 +294,7 @@ void add_range()
 // the line is skipped
 void define_function()
 {
-    uint8_t *at = find_variable().at;
+    ContextCursor at = find_variable().at;
     poke_l(at, encode_context_cursor(pc()));
     ContextCursor line = decode_context_cursor(ctx().d7 - 4);
     pc() = line - 2 + 2 * byte_at(line);
@@ -301,7 +304,7 @@ void define_function()
 // its expression evaluated
 Value call_function()
 {
-    uint8_t *at = find_variable().at;
+    ContextCursor at = find_variable().at;
     ContextCursor def = decode_context_cursor(peek_l(at));
     if (!def)
         error(15);
@@ -383,7 +386,7 @@ void interp_fn_var(EvalOut *o)
 void interp_find_var(EvalOut *o)
 {
     FoundVar f = find_variable();
-    *o = {0, 0, f.type, 0, 0, address(f.at)};
+    *o = {0, 0, f.type, 0, 0, encode_context_cursor(f.at)};
 }
 
 void interp_in_dim() { dim(); }
@@ -403,7 +406,7 @@ void interp_fn_fn(EvalOut *o)
 }
 
 // GetTablo: a0 the slot. Out: a0 the element.
-void interp_get_tablo(EvalOut *o) { o->a0 = address(array_element(ptr<uint8_t>(o->a0))); }
+void interp_get_tablo(EvalOut *o) { o->a0 = encode_context_cursor(array_element(decode_context_cursor(o->a0))); }
 
 // The same with registers (L_FindVar: d0-d2/a0; L_GetTablo: a0)
 uint32_t interp_find_var_reg(RegFrame &r)
@@ -418,7 +421,7 @@ uint32_t interp_find_var_reg(RegFrame &r)
 }
 uint32_t interp_get_tablo_reg(RegFrame &r)
 {
-    r.a[0] = address(array_element(ptr<uint8_t>(r.a[0])));
+    r.a[0] = encode_context_cursor(array_element(decode_context_cursor(r.a[0])));
     return r.d[0];
 }
 }

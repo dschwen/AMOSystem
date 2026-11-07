@@ -129,30 +129,30 @@ Regs demande(uint32_t length)
     return r;
 }
 
-const uint8_t *string(const Value &v) { return ptr<uint8_t>(v.v1); }
+GuestString string(const Value &v) { return GuestString::from_word(v.v1); }
 
 Value concatenate(const Value &a, const Value &b)
 {
-    const uint8_t *sa = string(a), *sb = string(b);
-    uint32_t lb = peek_w(sb);
+    GuestString sa = string(a), sb = string(b);
+    uint32_t lb = sb.size();
     if (!lb)
         return {b.type, a.v1, b.v2};
-    uint32_t la = peek_w(sa);
+    uint32_t la = sa.size();
     if (!la)
         return b;
     uint32_t total = la + lb;
     if (total >= StringMax)
         error(21);
     Regs r = demande(total);
-    uint8_t *to = ptr<uint8_t>(r.a[0]);
+    ContextCursor to = decode_context_cursor(r.a[0]);
     poke_w(to, uint16_t(total));
     to += 2;
     for (uint32_t i = 0; i < la; i++)
-        *to++ = sa[2 + i];
+        host::detail::write_cursor_byte(to, sa.at(i));
     for (uint32_t i = 0; i < lb; i++)
-        *to++ = sb[2 + i];
-    to += address(to) & 1;
-    idata().HiChaine = address(to);
+        host::detail::write_cursor_byte(to, sb.at(i));
+    to += encode_context_cursor(to) & 1;
+    idata().HiChaine = encode_context_cursor(to);
     return {b.type, r.a[1], b.v2};
 }
 
@@ -160,30 +160,30 @@ Value concatenate(const Value &a, const Value &b)
 Value subtract(const Value &a, const Value &b)
 {
     IData &d = idata();
-    const uint8_t *sa = string(a), *sb = string(b);
-    uint32_t length = peek_w(sa);
+    GuestString sa = string(a), sb = string(b);
+    uint32_t length = sa.size();
     Regs r = demande(length);
-    uint8_t *to = ptr<uint8_t>(r.a[0]);
+    ContextCursor to = decode_context_cursor(r.a[0]);
     poke_w(to, uint16_t(length));
     to += 2;
     for (uint32_t i = 0; i < (length + 1) / 2; i++, to += 2)
-        poke_w(to, peek_w(sa + 2 + 2 * i));
-    d.HiChaine = address(to);
-    uint8_t *chars = ptr<uint8_t>(r.a[1]) + 2;
-    const uint8_t *needle = sb + 2;
-    uint32_t needle_length = peek_w(sb);
+        poke_w(to, peek_w(sa.chars() + 2 * i));
+    d.HiChaine = encode_context_cursor(to);
+    ContextCursor chars = decode_context_cursor(r.a[1]) + 2;
+    ContextCursor needle = sb.chars();
+    uint32_t needle_length = sb.size();
     for (;;) {
-        uint32_t at = lib_instr_find(chars, length, needle, needle_length, 0);
+        uint32_t at = instr_find_cursor(chars, length, needle, needle_length, 0);
         if (!at)
             break;
         uint32_t keep = at - 1;
-        uint8_t *dest = chars + keep;
-        const uint8_t *from = chars + keep + needle_length;
+        ContextCursor dest = chars + keep;
+        ContextCursor from = chars + (keep + needle_length);
         uint32_t rest = length - keep - needle_length;
         for (uint32_t i = 0; i < rest; i++)
-            *dest++ = *from++;
+            host::detail::write_cursor_byte(dest, host::detail::read_cursor_byte(from++));
         // as the original: the end of the strings where the copy came from
-        d.HiChaine = address(from) + (address(from) & 1);
+        d.HiChaine = encode_context_cursor(from) + (encode_context_cursor(from) & 1);
         length = keep + rest;
         poke_w(chars - 2, uint16_t(length));
     }
@@ -485,14 +485,12 @@ int float_compare(const Value &a, const Value &b)
 Value to_float(const Value &v) { return float_routine(L_IntToFl1, v); }
 Value to_integer(const Value &v) { return float_routine(L_FlToInt1, v); }
 
-int compare_strings(const uint8_t *a, const uint8_t *b)
+int compare_strings(GuestString a, GuestString b)
 {
-    uint16_t la = peek_w(a), lb = peek_w(b);
-    a += 2;
-    b += 2;
+    uint16_t la = a.size(), lb = b.size();
     for (uint16_t i = 0; i < la && i < lb; i++)
-        if (a[i] != b[i])
-            return a[i] < b[i] ? -1 : 1;
+        if (a.at(i) != b.at(i))
+            return a.at(i) < b.at(i) ? -1 : 1;
     return la < lb ? -1 : la != lb;
 }
 

@@ -53,7 +53,7 @@ struct Target {
 Target target()
 {
     pc() += 2;
-    uint8_t *at = find_variable().at;
+    ContextCursor at = find_variable().at;
     GuestString s = GuestString::from_word(peek_l(at));
     uint32_t length = s.size();
     if (!length)

@@ -76,13 +76,13 @@ void direct_variables()
     int32_t size = int32_t(n / 6 * 6) - 6;
     if (size <= 0)
         return;
-    uint8_t *a0 = ptr<uint8_t>(d.TabBas) - 4;
+    ContextCursor a0 = decode_context_cursor(d.TabBas) - 4;
     poke_l(a0, d.VarLoc);
     a0 -= 2;
     poke_w(a0, 0xFFFF);
     a0 -= size;
-    d.VarLoc = address(a0);
-    d.TabBas = address(a0);
+    d.VarLoc = encode_context_cursor(a0);
+    d.TabBas = encode_context_cursor(a0);
     d.TVMax = uint16_t(size);
     for (int32_t i = 0; i < size; i += 2)
         poke_w(a0 + i, 0);
@@ -102,18 +102,18 @@ void resize_variables(uint32_t size)
         if (!m)
             fail(EOutOfMemory);
         d.VarBuf = m;
-        uint8_t *top = ptr<uint8_t>(m + size);
-        d.LabHaut = address(top);
+        ContextCursor top = decode_context_cursor(m + size);
+        d.LabHaut = encode_context_cursor(top);
         top -= 2;
         poke_w(top, 0);
-        d.LabBas = address(top);
+        d.LabBas = encode_context_cursor(top);
         top -= 4;
         poke_l(top, 0);
         top -= 2;
         poke_w(top, 0xFFFF);
-        d.VarGlo = d.TabBas = d.VarLoc = address(top);
+        d.VarGlo = d.TabBas = d.VarLoc = encode_context_cursor(top);
         d.LoChaine = d.ChVide = d.ParamC = m;
-        poke_w(ptr<void>(m), 0);
+        poke_w(decode_context_cursor(m), 0);
         d.HiChaine = d.LabMini = m + 2;
     }
     d.VarLong = 0;

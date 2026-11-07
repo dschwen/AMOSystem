@@ -33,7 +33,7 @@ IData &data() { return idata(); }
 // Every string slot of the variables (each element of a string array)
 template <typename F> void each_string(F visit)
 {
-    const uint8_t *v = ptr<uint8_t>(data().VarLoc);
+    ContextCursor v = decode_context_cursor(data().VarLoc);
     for (;;) {
         uint16_t header = peek_w(v);
         v += 2;
@@ -43,14 +43,14 @@ template <typename F> void each_string(F visit)
             uint32_t next = peek_l(v);
             if (!next)
                 return;
-            v = ptr<uint8_t>(next);
+            v = decode_context_cursor(next);
             continue;
         }
         if (!(header & 2)) {
             v += header >> 8;
             continue;
         }
-        uint8_t *slot = const_cast<uint8_t *>(v);
+        ContextCursor slot = v;
         uint32_t value = peek_l(v);
         v += 4;
         if (!value)
@@ -59,8 +59,8 @@ template <typename F> void each_string(F visit)
             visit(slot);
             continue;
         }
-        uint8_t *a = ptr<uint8_t>(value);
-        uint16_t dims = *a;
+        ContextCursor a = decode_context_cursor(value);
+        uint16_t dims = interp::byte_at(a);
         a += 2;
         uint32_t count = 1;
         for (uint16_t i = 0; i < dims; i++, a += 4)
@@ -84,13 +84,14 @@ bool fast()
     m.a[0] = w::reserve(m.d[0], w::Fast);
     if (!m.a[0])
         return false;
-    uint8_t *buffer = ptr<uint8_t>(m.a[0]);
-    uint8_t *to = buffer;
+    ContextCursor buffer = decode_context_cursor(m.a[0]);
+    ContextCursor to = buffer;
     poke_w(to, 0);
     to += 2;
-    each_string([&](uint8_t *slot) {
-        uint8_t *s = ptr<uint8_t>(peek_l(slot));
-        if (address(s) < low || address(s) >= high)
+    each_string([&](ContextCursor slot) {
+        uint32_t word = peek_l(slot);
+        ContextCursor s = decode_context_cursor(word);
+        if (word < low || word >= high)
             return;
         uint16_t length = peek_w(s);
         if (!length) {
@@ -101,22 +102,22 @@ bool fast()
             poke_l(slot, ((peek_l(s) & 0x3FFFFF) << 1) + low);
             return;
         }
-        uint32_t offset = to - buffer;
+        uint32_t offset = encode_context_cursor(to) - m.a[0];
         poke_l(slot, low + offset);
         poke_w(to, length);
         to += 2;
         for (uint32_t i = 0; i < (length + 1u) / 2; i++, to += 2)
-            poke_w(to, peek_w(s + 2 + 2 * i));
+            poke_w(to, peek_w(s + (2 + 2 * i)));
         poke_l(s, (offset >> 1) | Moved);
     });
-    uint8_t *back = ptr<uint8_t>(low);
-    const uint8_t *from = buffer;
+    ContextCursor back = decode_context_cursor(low);
+    ContextCursor from = buffer;
     do {
         poke_w(back, peek_w(from));
         back += 2;
         from += 2;
-    } while (from < to);
-    d.HiChaine = address(back);
+    } while (encode_context_cursor(from) < encode_context_cursor(to));
+    d.HiChaine = encode_context_cursor(back);
     Regs f;
     f.a[1] = m.a[0];
     f.d[0] = size;
@@ -148,15 +149,15 @@ void slow()
         // the table: (string, slot) pairs by string, a sentinel after them
         uint32_t limit = 0xFFFFFFFF;
         uint32_t end = table;
-        poke_l(ptr<void>(table), 0x7FFFFFFF);
-        each_string([&](uint8_t *slot) {
+        poke_l(decode_context_cursor(table), 0x7FFFFFFF);
+        each_string([&](ContextCursor slot) {
             uint32_t s = peek_l(slot);
             if (s < minimum || s >= high || s >= limit)
                 return;
             uint32_t at = table;
             do
                 at += 8;
-            while (s >= peek_l(ptr<void>(at - 8)));
+            while (s >= peek_l(decode_context_cursor(at - 8)));
             if (at == table_end) {
                 limit = s;
                 end = table_end;
@@ -164,27 +165,27 @@ void slow()
                 uint32_t a1 = end;
                 if (end >= table_end) {
                     a1 -= 8;
-                    limit = peek_l(ptr<void>(a1 - 8));
+                    limit = peek_l(decode_context_cursor(a1 - 8));
                 } else {
                     end += 8;
-                    poke_l(ptr<void>(a1 + 8), 0x7FFFFFFF);
+                    poke_l(decode_context_cursor(a1 + 8), 0x7FFFFFFF);
                 }
                 do {
                     a1 -= 4;
-                    poke_l(ptr<void>(a1 + 8), peek_l(ptr<void>(a1)));
+                    poke_l(decode_context_cursor(a1 + 8), peek_l(decode_context_cursor(a1)));
                     a1 -= 4;
-                    poke_l(ptr<void>(a1 + 8), peek_l(ptr<void>(a1)));
+                    poke_l(decode_context_cursor(a1 + 8), peek_l(decode_context_cursor(a1)));
                 } while (a1 >= at);
             }
-            poke_l(ptr<void>(at - 4), address(slot));
-            poke_l(ptr<void>(at - 8), s);
+            poke_l(decode_context_cursor(at - 4), encode_context_cursor(slot));
+            poke_l(decode_context_cursor(at - 8), s);
         });
         // packed
         uint32_t previous = 0, moved_to = 0;
         to = minimum;
         for (uint32_t e = table; e < end; e += 8) {
-            uint32_t s = peek_l(ptr<void>(e));
-            uint8_t *slot = ptr<uint8_t>(peek_l(ptr<void>(e + 4)));
+            uint32_t s = peek_l(decode_context_cursor(e));
+            ContextCursor slot = decode_context_cursor(peek_l(decode_context_cursor(e + 4)));
             if (s == previous) {
                 poke_l(slot, moved_to);
                 continue;
@@ -192,28 +193,28 @@ void slow()
             previous = s;
             if (s == to) {
                 moved_to = to;
-                to += 2 + peek_w(ptr<void>(to));
+                to += 2 + peek_w(decode_context_cursor(to));
                 to += to & 1;
                 continue;
             }
             poke_l(slot, to);
             moved_to = to;
-            uint16_t length = peek_w(ptr<void>(s));
+            uint16_t length = peek_w(decode_context_cursor(s));
             if (!length) {
                 moved_to = d.ChVide;
                 poke_l(slot, moved_to);
                 continue;
             }
-            poke_w(ptr<void>(to), length);
+            poke_w(decode_context_cursor(to), length);
             to += 2;
             for (uint32_t i = 0; i < (length + 1u) / 2; i++, to += 2)
-                poke_w(ptr<void>(to), peek_w(ptr<uint8_t>(s) + 2 + 2 * i));
+                poke_w(decode_context_cursor(to), peek_w(decode_context_cursor(s) + (2 + 2 * i)));
         }
         if (end < table_end)
             break;
         // the table was full: the other variables that pointed to the last
         // string moved, then the next strings
-        each_string([&](uint8_t *slot) {
+        each_string([&](ContextCursor slot) {
             if (peek_l(slot) == previous)
                 poke_l(slot, moved_to);
         });

@@ -29,7 +29,7 @@ extern "C" {
 // control_glue.s: the record of OMnEff for ClearVar
 
 // Next with floats (NextF): 1 stay in the loop
-uint32_t interp_next_float(uint8_t *var, uint32_t step, uint32_t limit, void *floatbase);
+uint32_t interp_next_float(ContextCursor var, uint32_t step, uint32_t limit, uint32_t floatbase);
 }
 
 namespace {
@@ -122,30 +122,34 @@ void goto_fix()
 
 // GetLabel: the label at pc (a name, or an expression: a number or a
 // string), 0 if there is none. GLb3: from string name.
-uint32_t find_label_named(const uint8_t *name)
+template <typename F> uint32_t find_label_chars(uint16_t length, F character)
 {
     IData &d = data();
-    uint16_t length = peek_w(name);
     if (!length || length >= 32)
         return 0;
-    uint8_t *buffer = ptr<uint8_t>(d.BufLabel);
+    ContextCursor buffer = decode_context_cursor(d.BufLabel);
     for (uint16_t i = 0; i < length; i++) {
-        uint8_t c = name[2 + i];
-        buffer[i] = c >= 'A' && c <= 'Z' ? c + 32 : c;
+        uint8_t c = character(i);
+        host::detail::write_cursor_at(buffer + i, c >= 'A' && c <= 'Z' ? c + 32 : c);
     }
     if (length & 1)
-        buffer[length++] = 0;
-    for (const uint8_t *l = ptr<uint8_t>(d.LabBas); *l; l += 8 + int8_t(*l)) {
-        int16_t n = int8_t(*l);
+        host::detail::write_cursor_at(buffer + length++, 0);
+    for (ContextCursor l = decode_context_cursor(d.LabBas); byte_at(l); l += 8 + int8_t(byte_at(l))) {
+        int16_t n = int8_t(byte_at(l));
         if (n != length)
             continue;
         int16_t i = 0;
-        while (i < n && l[8 + i] == buffer[i])
+        while (i < n && byte_at(l, 8 + i) == byte_at(buffer, i))
             i++;
         if (i == n)
             return peek_l(l + 4);
     }
     return 0;
+}
+
+uint32_t find_label_named(GuestString name)
+{
+    return find_label_chars(name.size(), [&](uint16_t i) { return name.at(i); });
 }
 
 uint32_t get_label()
@@ -155,12 +159,12 @@ uint32_t get_label()
     if (t == tk::Pro || t == tk::LGo) {
         int16_t offset = int16_t(next_token());
         pc() += 2 + int8_t(byte_at(pc()));
-        return peek_l(ptr<uint8_t>(d.LabHaut) + offset);
+        return peek_l(decode_context_cursor(d.LabHaut) + offset);
     }
     pc() -= 2;
     Value v = evaluate();
     if (kind(v) >= TString)
-        return find_label_named(ptr<uint8_t>(v.v1));
+        return find_label_named(GuestString::from_word(v.v1));
     if (kind(v) == TFloat)
         v = to_integer(v);
     Regs r;
@@ -168,15 +172,11 @@ uint32_t get_label()
     r.d[0] = v.v1;
     lib_call(L_LongToDec, r);
     // the number as a string, in place
-    uint8_t *buffer = ptr<uint8_t>(d.BufLabel);
     uint16_t length = uint16_t(r.a[0] - d.BufLabel);
     if (!length)
         return 0;
-    uint8_t name[34];
-    poke_w(name, length);
-    for (uint16_t i = 0; i < length && i < 32; i++)
-        name[2 + i] = buffer[i];
-    return find_label_named(name);
+    ContextCursor buffer = decode_context_cursor(d.BufLabel);
+    return find_label_chars(length, [&](uint16_t i) { return byte_at(buffer, i); });
 }
 
 uint32_t label()
@@ -206,21 +206,21 @@ void call_procedure(ContextCursor proc, uint32_t back, uint16_t errors)
 {
     IData &d = data();
     ContextCursor p = proc + 6;
-    uint8_t *top = ptr<uint8_t>(d.TabBas);
-    if (address(top - 6 - 4 - peek_w(p)) < d.HiChaine) {
+    uint32_t top = d.TabBas;
+    if (top - 6 - 4 - peek_w(p) < d.HiChaine) {
         Regs m;
         m.d[3] = 0;
         lib_call(L_Menage, m);
     }
     // the procedure's variables, below the others
     top -= 4;
-    poke_l(top, d.VarLoc);
+    poke_l(decode_context_cursor(top), d.VarLoc);
     top -= 2;
-    poke_w(top, 0xFFFF);
-    uint8_t *vars = top - peek_w(p);
+    poke_w(decode_context_cursor(top), 0xFFFF);
+    uint32_t vars = top - peek_w(p);
     p += 4;
-    for (uint8_t *v = vars; v < top; v++)
-        *v = 0;
+    for (uint32_t v = vars; v < top; v++)
+        host::detail::write_cursor_at(decode_context_cursor(v), 0);
     p += 6 + int8_t(byte_at(p, 4));
     // (no program pointer for a menu's procedure: the assembler read the
     // word at address 0 then)
@@ -232,25 +232,26 @@ void call_procedure(ContextCursor proc, uint32_t back, uint16_t errors)
             p = param;
             int16_t offset = int16_t(peek_w(p));
             p += 2;
-            uint8_t *at = offset < 0 ? ptr<uint8_t>(d.VarGlo) + 1 - offset : vars + 2 + offset;
+            ContextCursor at = offset < 0 ? decode_context_cursor(d.VarGlo) + (1 - offset)
+                                          : decode_context_cursor(vars) + (2 + offset);
             int8_t length = int8_t(next_cursor_byte(p));
             uint8_t type = next_cursor_byte(p) & 0x0F;
             p += length;
-            at[-2] = reinterpret_cast<uint8_t *>(&d.Long_Var)[type];
-            at[-1] = type;
+            host::detail::write_cursor_at(at - 2, reinterpret_cast<uint8_t *>(&d.Long_Var)[type]);
+            host::detail::write_cursor_at(at - 1, type);
             if (kind(x) != type)
                 x = kind(x) ? to_integer(x) : to_float(x);
             poke_l(at, x.v1);
-            if (at[-2] == 8)
+            if (byte_at(at, -2) == 8)
                 poke_l(at + 4, x.v2);
         } while (peek_token() == tk::Vir);
         pc() += 2;
         p += 2;
     }
-    if (address(vars - 8) < d.HiChaine) {
+    if (vars - 8 < d.HiChaine) {
         // the variables met the strings: room, and the call again
         Regs r;
-        r.d[3] = d.TabBas - address(vars - 16);
+        r.d[3] = d.TabBas - (vars - 16);
         lib_call(L_Demande, r);
         fon_call();
     }
@@ -269,8 +270,8 @@ void call_procedure(ContextCursor proc, uint32_t back, uint16_t errors)
     push_l(Proc);
     check_stack();
     d.BasA3 = encode_context_cursor(a3());
-    d.VarLoc = address(vars);
-    d.TabBas = address(vars);
+    d.VarLoc = vars;
+    d.TabBas = vars;
     d.OnErrLine = 0;
     pc() = p;
     d.DProc = d.PData = encode_context_cursor(p + 2);
@@ -555,7 +556,7 @@ void interp_in_for()
     uint8_t type = uint8_t(var.type);
     Value start = of_type(evaluate_after(), type);
     poke_l(var.at, start.v1);
-    push_l(address(var.at));
+    push_l(encode_context_cursor(var.at));
     Value limit = of_type(evaluate_after(), type);
     push_l(limit.v1);
     Value step = {TInt, 1, 0};
@@ -572,7 +573,7 @@ void interp_in_next()
     if (test_due())
         test_force();
     ContextCursor f = a3();
-    uint8_t *var = ptr<uint8_t>(host::detail::read_cursor_long(f + 20));
+    ContextCursor var = decode_context_cursor(host::detail::read_cursor_long(f + 20));
     int32_t step = int32_t(host::detail::read_cursor_long(f + 12)), limit = int32_t(host::detail::read_cursor_long(f + 16));
     bool stay;
     if (!host::detail::read_cursor_byte(f + 11)) {
@@ -581,7 +582,7 @@ void interp_in_next()
         stay = step < 0 ? limit <= v : limit >= v;
     } else {
         // floats: with mathffp, in either precision (as the original)
-        stay = interp_next_float(var, uint32_t(step), uint32_t(limit), ptr<void>(data().FloatBase));
+        stay = interp_next_float(var, uint32_t(step), uint32_t(limit), data().FloatBase);
     }
     if (stay) {
         pc() = decode_context_cursor(host::detail::read_cursor_long(f + 6));
@@ -734,7 +735,7 @@ void interp_in_goto()
 // A label as an instruction: a Goto to it (Goto2)
 void interp_goto2()
 {
-    pc() = decode_context_cursor(peek_l(ptr<uint8_t>(data().LabHaut) + int16_t(peek_w(pc()))));
+    pc() = decode_context_cursor(peek_l(decode_context_cursor(data().LabHaut) + int16_t(peek_w(pc()))));
     goto_fix();
 }
 
@@ -824,7 +825,7 @@ void interp_in_on_error()
         pc() += 4;
         int16_t offset = int16_t(next_token());
         pc() += 2 + int8_t(byte_at(pc()));
-        d.OnErrLine = peek_l(ptr<uint8_t>(d.LabHaut) + offset);
+        d.OnErrLine = peek_l(decode_context_cursor(d.LabHaut) + offset);
         d.ErrorChr |= 0x80000000;
         return;
     }
@@ -947,7 +948,7 @@ void interp_call_proc()
         test_force();
     int16_t offset = int16_t(next_token());
     pc() += 2 + int8_t(byte_at(pc()));
-    call_procedure(decode_context_cursor(peek_l(ptr<uint8_t>(d.LabHaut) + offset)), 0, 0);
+    call_procedure(decode_context_cursor(peek_l(decode_context_cursor(d.LabHaut) + offset)), 0, 0);
 }
 void interp_in_proc()
 {
@@ -994,7 +995,7 @@ void interp_in_apml()
         do {
             int16_t offset = int16_t(peek_w(p));
             p += 2;
-            uint8_t *at = offset < 0 ? ptr<uint8_t>(d.VarGlo) + 1 - offset : ptr<uint8_t>(d.VarLoc) + 2 + offset;
+            ContextCursor at = offset < 0 ? decode_context_cursor(d.VarGlo) + (1 - offset) : decode_context_cursor(d.VarLoc) + (2 + offset);
             push_l(peek_l(at));
             uint8_t length = next_cursor_byte(p);
             p += 1 + length;
@@ -1059,7 +1060,7 @@ void interp_in_on_menu()
 void interp_menu_procedure(EvalOut *o)
 {
     IData &d = data();
-    uint32_t proc = find_label_named(ptr<uint8_t>(o->a0));
+    uint32_t proc = find_label_named(GuestString::from_word(o->a0));
     if (!proc) {
         *o = {uint32_t(-1), 0, 0, 0, 0, 0};
         return;

@@ -7,6 +7,7 @@
 #include "core/amos.h"
 #include "runtime/detail/identity_data_memory.h"
 #include "core/source.h"
+#include "lib/strings.h"
 
 namespace amos::interp {
 
@@ -83,14 +84,14 @@ uint32_t double_to_single(uint32_t high, uint32_t low);
 int float_compare(const Value &a, const Value &b);
 
 // compch: two strings compared, -1 a < b, 0 equal, 1 a > b
-int compare_strings(const uint8_t *a, const uint8_t *b);
+int compare_strings(GuestString a, GuestString b);
 
 // interp/vars.cpp
 struct FoundVar {
-    uint8_t *at;
+    ContextCursor at;
     uint32_t type;
 };
-uint8_t *array_element(uint8_t *at);    // GetTablo
+ContextCursor array_element(ContextCursor at);    // GetTablo
 void assign();                          // InVar
 Value value();                          // FnVar
 FoundVar find_variable();               // FindVar

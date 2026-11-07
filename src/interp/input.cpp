@@ -106,7 +106,7 @@ enum class Outcome { Done, Redo };
 Outcome fill(uint8_t separator, uint32_t length)
 {
     IData &d = idata();
-    const uint8_t *in = ptr<uint8_t>(d.Buffer);
+    ContextCursor in = decode_context_cursor(d.Buffer);
     for (;;) {
         FoundVar var = find_variable();
         uint8_t type = uint8_t(var.type);
@@ -115,26 +115,27 @@ Outcome fill(uint8_t separator, uint32_t length)
             Regs r;
             r.d[3] = length;
             lib_call(L_DDemande, r);
-            uint8_t *s = ptr<uint8_t>(r.a[1]);
-            uint8_t *to = s + 2;
+            ContextCursor s = decode_context_cursor(r.a[1]);
+            ContextCursor to = s + 2;
             uint8_t c;
             do {
-                c = *in++;
-                *to++ = c;
+                c = byte_at(in);
+                in += 1;
+                host::detail::write_cursor_byte(to, c);
             } while (c && c != separator);
-            to--;
-            in--;
-            uint32_t n = to - s - 2;
+            to -= 1;
+            in -= 1;
+            uint32_t n = encode_context_cursor(to) - encode_context_cursor(s) - 2;
             poke_w(s, uint16_t(n));
-            d.HiChaine = address(to) + (n & 1);
-            poke_l(var.at, address(s));
+            d.HiChaine = encode_context_cursor(to) + (n & 1);
+            poke_l(var.at, encode_context_cursor(s));
         } else {
             Regs r;
-            r.a[0] = address(in);
+            r.a[0] = encode_context_cursor(in);
             r.d[0] = 1;
             lib_call(L_ValRout, r);
-            in = ptr<uint8_t>(r.a[0]);
-            if (*in && *in != separator)
+            in = decode_context_cursor(r.a[0]);
+            if (byte_at(in) && byte_at(in) != separator)
                 return Outcome::Redo;
             Value v = {r.d[2], r.d[3], r.d[4]};
             if (kind(v) != type)
@@ -147,14 +148,16 @@ Outcome fill(uint8_t separator, uint32_t length)
             pc() -= 2;
             return Outcome::Done;
         }
-        if (*in++ == ',')
+        uint8_t sep = byte_at(in);
+        in += 1;
+        if (sep == ',')
             continue;
         if (!d.PrintFile) {
             window_print("\r\n?? ");
-            *ptr<uint8_t>(d.Buffer) = 0;
+            host::detail::write_cursor_at(decode_context_cursor(d.Buffer), 0);
         }
         length = read_line(separator);
-        in = ptr<uint8_t>(d.Buffer);
+        in = decode_context_cursor(d.Buffer);
     }
 }
 

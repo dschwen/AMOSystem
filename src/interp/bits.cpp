@@ -14,7 +14,7 @@ using namespace amos::interp;
 namespace {
 
 struct Target {
-    uint8_t *at;
+    ContextCursor at;
     uint32_t bit;
     bool memory;        // an address, not a variable
 };
@@ -39,7 +39,7 @@ Target target()
             return {v.at, n.v1, false};
         pc() = back;
     }
-    return {ptr<uint8_t>(integer().v1), n.v1, true};
+    return {decode_context_cursor(integer().v1), n.v1, true};
 }
 
 enum class Op { Set, Clear, Change };
@@ -49,7 +49,8 @@ void bit(Op op)
     Target t = target();
     if (t.memory) {
         uint8_t m = uint8_t(1 << (t.bit & 7));
-        *t.at = op == Op::Set ? *t.at | m : op == Op::Clear ? *t.at & ~m : *t.at ^ m;
+        uint8_t v = byte_at(t.at);
+        host::detail::write_cursor_at(t.at, op == Op::Set ? v | m : op == Op::Clear ? v & ~m : v ^ m);
     } else {
         uint32_t m = 1u << (t.bit & 31);
         uint32_t v = peek_l(t.at);
@@ -73,10 +74,10 @@ void rotation(int bits, bool right)
 {
     Target t = target();
     // a variable: its low byte or word
-    uint8_t *at = t.memory ? t.at : t.at + 4 - bits / 8;
+    ContextCursor at = t.memory ? t.at : t.at + (4 - bits / 8);
     switch (bits) {
     case 8:
-        *at = uint8_t(rotate(*at, t.bit, 8, right));
+        host::detail::write_cursor_at(at, uint8_t(rotate(byte_at(at), t.bit, 8, right)));
         break;
     case 16:
         poke_w(at, uint16_t(rotate(peek_w(at), t.bit, 16, right)));
@@ -98,7 +99,7 @@ void interp_fn_btst(EvalOut *o)
 {
     pc() += 2;
     Target t = target();
-    bool set = t.memory ? *t.at & (1 << (t.bit & 7)) : peek_l(t.at) & (1u << (t.bit & 31));
+    bool set = t.memory ? byte_at(t.at) & (1 << (t.bit & 7)) : peek_l(t.at) & (1u << (t.bit & 31));
     *o = {0, 0, TInt, set ? 0xFFFFFFFFu : 0, 0, 0};
 }
 

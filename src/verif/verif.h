@@ -5,6 +5,7 @@
 #pragma once
 
 #include "core/amos.h"
+#include "runtime/detail/identity_data_memory.h"
 
 namespace amos::verif {
 
@@ -88,8 +89,8 @@ Entry *table_find_test(Entry *&e, uint16_t t1, uint16_t t2, uint16_t t3, uint16_
 void poke_distance(uint32_t to);                 // Doke_Distance
 uint32_t instruction_end();                      // Find_End
 void goto_loops(Entry *e, uint32_t to);          // Goto_Loops
-uint8_t *label_store();                          // V1_StockLabel
-uint32_t label_use(uint16_t phase, uint8_t **entry);    // V2_FindLabel(P)
+ContextCursor label_store();                          // V1_StockLabel
+uint32_t label_use(uint16_t phase, ContextCursor *entry);    // V2_FindLabel(P)
 void label_or_expression();                      // V1_GoLabel
 uint32_t label_address();                        // V2_GoLabel
 void label_skip();                               // V1_SautLGoto

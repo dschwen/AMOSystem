@@ -59,7 +59,7 @@ void call_parameters()
 {
     IData &d = data();
     d.VerPos = address(pc);
-    uint8_t *e;
+    ContextCursor e;
     uint32_t start = label_use(0, &e);
     if (!start)
         fail(EProcedureUndefined);
@@ -135,7 +135,7 @@ void pass_two()
             break;
         case 0x92: {                    // a label
             d.VerPos = address(pc) - 2;
-            uint8_t *e;
+            ContextCursor e;
             if (!label_use(d.Phase, &e))
                 fail(ELabelUndefined);
             break;
@@ -367,15 +367,15 @@ void program_test()
     }
 
     // The global variables, under the labels
-    uint8_t *top = ptr<uint8_t>(d.LabBas) - 6;
+    ContextCursor top = decode_context_cursor(d.LabBas) - 6;
     poke_l(top + 2, 0);
     poke_w(top, 0xFFFF);
-    uint8_t *bottom = top - d.GloLong;
-    if (address(bottom) < d.HiChaine)
+    uint32_t bottom = encode_context_cursor(top) - d.GloLong;
+    if (bottom < d.HiChaine)
         fail(EVariableBuffer);
-    d.VarGlo = d.VarLoc = d.TabBas = address(bottom);
-    for (uint8_t *v = bottom; v < top; v++)
-        *v = 0;
+    d.VarGlo = d.VarLoc = d.TabBas = bottom;
+    for (uint32_t v = bottom; v < encode_context_cursor(top); v++)
+        host::detail::write_cursor_at(decode_context_cursor(v), 0);
     globals();
     free_tables();
     tables_swap(false);

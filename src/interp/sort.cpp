@@ -9,7 +9,7 @@ using namespace amos::interp;
 namespace {
 
 struct Array {
-    uint8_t *elements;
+    ContextCursor elements;
     uint8_t type;
     uint8_t shift;      // an element's size
     uint32_t count;
@@ -22,16 +22,16 @@ Array array()
     IData &d = idata();
     pc() += 2;
     int16_t offset = int16_t(next_token());
-    uint8_t *at = offset < 0 ? ptr<uint8_t>(d.VarGlo) + 1 - offset : ptr<uint8_t>(d.VarLoc) + 2 + offset;
+    ContextCursor at = offset < 0 ? decode_context_cursor(d.VarGlo) + (1 - offset) : decode_context_cursor(d.VarLoc) + (2 + offset);
     int8_t length = int8_t(next_byte());
     uint8_t flags = next_byte();
     pc() += length;
-    uint8_t *block = ptr<uint8_t>(peek_l(at));
+    ContextCursor block = decode_context_cursor(peek_l(at));
     if (!block)
         error(ENonDim);
-    uint8_t dimensions = block[0];
-    Array a = {nullptr, uint8_t(flags & 0x0F), block[1], 1};
-    uint8_t *p = block + 2;
+    uint8_t dimensions = byte_at(block);
+    Array a = {ContextCursor(), uint8_t(flags & 0x0F), byte_at(block, 1), 1};
+    ContextCursor p = block + 2;
     for (uint16_t n = dimensions; n; n--, p += 4)
         a.count = (a.count & 0xFFFF) * ((peek_w(p) + 1u) & 0xFFFF);
     a.elements = p;
@@ -45,10 +45,10 @@ Array array()
     return a;
 }
 
-uint8_t *element(const Array &a, uint32_t i) { return a.elements + (i << a.shift); }
+ContextCursor element(const Array &a, uint32_t i) { return a.elements + (i << a.shift); }
 Value value_at(const Array &a, uint32_t i)
 {
-    uint8_t *e = element(a, i);
+    ContextCursor e = element(a, i);
     return {a.type, peek_l(e), peek_l(e + 4)};
 }
 
@@ -60,7 +60,7 @@ int compare(const Value &element, const Value &v)
         return float_compare(element, v);
     if (t < TFloat)
         return int32_t(element.v1) < int32_t(v.v1) ? -1 : element.v1 != v.v1;
-    return compare_strings(ptr<uint8_t>(element.v1), ptr<uint8_t>(v.v1));
+    return compare_strings(GuestString::from_word(element.v1), GuestString::from_word(v.v1));
 }
 
 // Sort: a gap sort, from half the size down
@@ -71,7 +71,7 @@ void sort()
         for (uint32_t na = 1; na <= a.count - gap; na++) {
             uint32_t nr = na;
             for (;;) {
-                uint8_t *x = element(a, nr - 1), *y = element(a, nr - 1 + gap);
+                ContextCursor x = element(a, nr - 1), y = element(a, nr - 1 + gap);
                 Value vy = value_at(a, nr - 1 + gap);
                 vy.type = a.type;
                 if (compare(value_at(a, nr - 1), vy) <= 0)

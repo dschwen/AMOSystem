@@ -300,6 +300,14 @@ uint32_t instr_strings(GuestString hay, GuestString needle, uint32_t start)
 
 } // namespace
 
+// The same for characters at cursors
+uint32_t amos::instr_find_cursor(ContextCursor hay, uint32_t hay_len, ContextCursor needle, uint32_t needle_len,
+                                  uint32_t start)
+{
+    return instr_scan([&](uint32_t i) { return host::detail::read_cursor_byte(hay + i); }, hay_len,
+                      [&](uint32_t i) { return host::detail::read_cursor_byte(needle + i); }, needle_len, start);
+}
+
 // The same for characters in host memory
 extern "C" uint32_t lib_instr_find(const uint8_t *hay, uint32_t hay_len, const uint8_t *needle,
                                    uint32_t needle_len, uint32_t start)

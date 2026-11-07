@@ -3,6 +3,7 @@
 // another host's emulation, src/host/math.cpp).
 
 #include "core/amos.h"
+#include "runtime/detail/identity_data_memory.h"
 
 using namespace amos;
 
@@ -13,16 +14,16 @@ extern "C" {
 // Next of a float loop (control_glue.s): var += step with mathffp (as the
 // original, in either precision); 1 if the loop goes on: a step of 0 or
 // more while var is below the limit, a negative one while it is not
-uint32_t interp_next_float(uint8_t *var, uint32_t step, uint32_t limit, void *base)
+uint32_t interp_next_float(ContextCursor var, uint32_t step, uint32_t limit, uint32_t base)
 {
     uint32_t r[4] = {0, step, 0, 0};
-    int32_t sign = interp_lvo(r, address(base), -48);           // SPTst(step)
+    int32_t sign = interp_lvo(r, base, -48);           // SPTst(step)
     r[0] = step;
     r[1] = peek_l(var);
-    interp_lvo(r, address(base), -66);                          // SPAdd
+    interp_lvo(r, base, -66);                          // SPAdd
     poke_l(var, r[0]);
     r[1] = limit;
-    int32_t c = interp_lvo(r, address(base), -42);              // SPCmp(var, limit)
+    int32_t c = interp_lvo(r, base, -42);              // SPCmp(var, limit)
     // (as the original: equal to the limit ends a loop of positive step)
     if (c < 0)
         return sign >= 0;

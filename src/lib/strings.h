@@ -101,6 +101,10 @@ public:
     }
 };
 
+// L_InstrFind for characters at cursors (the start counts from 1)
+uint32_t instr_find_cursor(ContextCursor hay, uint32_t hay_len, ContextCursor needle, uint32_t needle_len,
+                           uint32_t start);
+
 // L_MCSuit: a new string holding len characters from data (len > 0)
 inline uint32_t str_from(const void *data, uint16_t len)
 {

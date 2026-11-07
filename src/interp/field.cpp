@@ -47,9 +47,9 @@ extern "C" void interp_in_field()
         c.a3 -= 4;
         host::detail::write_cursor_long(c.a3, length);
         pc() += 2;
-        uint8_t *at = find_variable().at;
+        ContextCursor at = find_variable().at;
         c.a3 -= 4;
-        host::detail::write_cursor_long(c.a3, address(at));
+        host::detail::write_cursor_long(c.a3, encode_context_cursor(at));
         count++;
     } while (peek_token() == tk::Vir);
     Regs m;

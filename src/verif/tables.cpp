@@ -215,41 +215,42 @@ void goto_loops(Entry *e, uint32_t to)
 
 // Get_Label: the label at pc (after its token) at procedure level phase;
 // its entry, or null
-uint8_t *label_find(uint16_t phase, uint32_t *key)
+ContextCursor label_find(uint16_t phase, uint32_t *key)
 {
     IData &d = data();
     uint8_t length = pc[2];
     *key = uint32_t(length) << 24 | uint32_t(pc[3]) << 16 | phase;
-    for (uint8_t *a = ptr<uint8_t>(d.LabBas); *a; a += 8 + *a) {
+    for (ContextCursor a = decode_context_cursor(d.LabBas); host::detail::read_cursor_byte(a);
+         a += 8 + host::detail::read_cursor_byte(a)) {
         if (peek_l(a) != *key)
             continue;
         bool same = true;
-        for (uint16_t i = 0; i < *a; i += 2)
-            if (peek_w(a + 8 + i) != peek_w(pc + 4 + i)) {
+        for (uint16_t i = 0; i < host::detail::read_cursor_byte(a); i += 2)
+            if (peek_w(a + (8 + i)) != peek_w(pc + 4 + i)) {
                 same = false;
                 break;
             }
         if (same)
             return a;
     }
-    return nullptr;
+    return ContextCursor{};
 }
 
 // V1_StockLabel: the label defined at pc stored, pc past it; its entry
-uint8_t *label_store()
+ContextCursor label_store()
 {
     IData &d = data();
     uint32_t key;
     if (label_find(d.Phase, &key))
         fail(ELabelTwice);
     uint8_t length = pc[2];
-    uint8_t *a = ptr<uint8_t>(d.LabBas) - 8 - length;
-    if (address(a) < d.LabMini)
+    ContextCursor a = decode_context_cursor(d.LabBas) - (8 + length);
+    if (encode_context_cursor(a) < d.LabMini)
         fail(EVariableBuffer);
-    d.LabBas = address(a);
+    d.LabBas = encode_context_cursor(a);
     poke_l(a, key);
     for (uint16_t i = 0; i < length; i += 2)
-        poke_w(a + 8 + i, peek_w(pc + 4 + i));
+        poke_w(a + (8 + i), peek_w(pc + 4 + i));
     pc += 4 + length;
     const uint8_t *to = pc;
     if (!word(to) && word(to + 2))
@@ -260,15 +261,15 @@ uint8_t *label_store()
 
 // V2_FindLabel(P): the label used at pc found, its offset poked; its
 // address (0 if none), its entry in *entry
-uint32_t label_use(uint16_t phase, uint8_t **entry)
+uint32_t label_use(uint16_t phase, ContextCursor *entry)
 {
     IData &d = data();
     uint32_t key;
-    uint8_t *a = label_find(phase, &key);
+    ContextCursor a = label_find(phase, &key);
     *entry = a;
     if (!a)
         return 0;
-    poke_w(pc, uint16_t(address(a) + 4 - d.LabHaut));
+    poke_w(pc, uint16_t(encode_context_cursor(a) + 4 - d.LabHaut));
     return peek_l(a + 4);
 }
 
@@ -302,7 +303,7 @@ uint32_t label_address()
         return 0;
     uint16_t offset = next_word();
     pc += 2 + int8_t(*pc);
-    return peek_l(ptr<uint8_t>(data().LabHaut + int16_t(offset)));
+    return peek_l(decode_context_cursor(data().LabHaut + int16_t(offset)));
 }
 
 // V1_SautLGoto: a label after Goto skipped

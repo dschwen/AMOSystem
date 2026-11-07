@@ -383,7 +383,7 @@ void test_label(Entry *e, uint32_t to)
     pc = ptr<uint8_t>(peek_l(var_part(e)));
     if (next_word() != tk::LGo)
         return;
-    uint8_t *l;
+    ContextCursor l;
     uint32_t a = label_use(data().Phase, &l);
     if (!a)
         fail(ELabelUndefined);
