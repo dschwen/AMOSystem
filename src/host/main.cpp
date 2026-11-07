@@ -114,7 +114,11 @@ namespace {
 void crash_trace(int signal, siginfo_t *info, void *context)
 {
     char text[160];
-    alarm(5); // (a trace that hangs is cut short, and reports where)
+    // (a trace that hangs is cut short by the alarm: the second time in is only the way out)
+    static volatile sig_atomic_t entered;
+    if (entered) _exit(128 + signal);
+    entered = 1;
+    alarm(5);
     int n = snprintf(text, sizeof text, "amos: signal %d at %p\n", signal, info ? info->si_addr : nullptr);
     if (n > 0) (void)!write(2, text, size_t(n));
 #if defined(__APPLE__)
@@ -144,9 +148,11 @@ void crash_trace(int signal, siginfo_t *info, void *context)
 #else
     (void)context;
 #endif
+#if !defined(__APPLE__)
     void *frames[48];
     int count = backtrace(frames, 48);
     backtrace_symbols_fd(frames, count, 2);
+#endif
     _exit(128 + signal);
 }
 void crash_trace_start()

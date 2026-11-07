@@ -54,10 +54,19 @@ jobs:
           set -e
           { echo "exit $rc"; tail -25 hi.log; ls -l out.txt 2>&1; } | annotate
           if [ $rc -ne 0 ]; then
-            AMOS_CRASH_TRACE=1 AMOS_HOME="$H" AMOS_DISPLAY=none AMOS_CONFIG=/dev/null /tmp/amos-player hi.AMOS > trace.log 2>&1 < /dev/null || true
+            # (in the background and killed after 40s: whatever it printed is then reported)
+            AMOS_CRASH_TRACE=1 AMOS_HOME="$H" AMOS_DISPLAY=none AMOS_CONFIG=/dev/null /tmp/amos-player hi.AMOS > trace.log 2>&1 < /dev/null &
+            pid=$!
+            for i in $(seq 1 40); do kill -0 $pid 2> /dev/null || break; sleep 1; done
+            kill -9 $pid 2> /dev/null || true
+            { echo "trace:"; head -40 trace.log; } | annotate
             load=$(grep "loaded at" trace.log | sed 's/.*loaded at //')
             addrs=$(grep -E "amos: (frame|pc)" trace.log | grep -oE "0x[0-9a-f]{9,}" | tr '\n' ' ')
-            { grep -E "signal|loaded|amos: pc" trace.log; atos -o "$W/build/host/amos" -arch arm64 -l "${load:-0x100000000}" $addrs < /dev/null 2>&1 | head -30; } | annotate
+            atos -o "$W/build/host/amos" -arch arm64 -l "${load:-0x100000000}" $addrs > atos.log 2>&1 < /dev/null &
+            apid=$!
+            for i in $(seq 1 20); do kill -0 $apid 2> /dev/null || break; sleep 1; done
+            kill -9 $apid 2> /dev/null || true
+            { echo "symbols:"; head -30 atos.log; } | annotate
           fi
           test -f out.txt
       - name: Text tests
