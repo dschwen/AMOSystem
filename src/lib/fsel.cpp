@@ -892,11 +892,10 @@ void inputs(const be_u32 *params)
     if (t0[1])
         v[VTitle0] = static_cast<int32_t>(params[1]);
     v[VFile] = static_cast<int32_t>(params[2]);
-    const uint8_t *path = ptr<uint8_t>(params[3]);
+    GuestString path = GuestString::from_word(params[3]);
     char *to = name1();
-    for (uint16_t i = 0, n = str_len(path); i < n; i++)
-        *to++ = static_cast<char>(str_chars(path)[i]);
-    *to = 0;
+    path.copy_to(to, 0, str_len(path));
+    to[str_len(path)] = 0;
     call(lib_dsk_path_it);
     char *p = reinterpret_cast<char *>(buffer() + 514);
     for (const char *n = name1(); (*p++ = *n++);) {

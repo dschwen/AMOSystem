@@ -263,12 +263,13 @@ uint32_t disk_free(const struct InfoData *info)
 }
 
 // AskD3: a string of n characters to fill. Returns it.
-uint8_t *ask_string(int32_t n)
+ContextCursor ask_string(int32_t n)
 {
     if (n <= 0)
         fon_call();
-    uint8_t *s = str_alloc(n);
-    idata().HiChaine = (address(s) + 2 + n + 1) & ~1u;
+    StringBuilder b(n);
+    ContextCursor s = b.start();
+    idata().HiChaine = (encode_context_cursor(s) + 2 + n + 1) & ~1u;
     poke_w(s, static_cast<uint16_t>(n));
     return s;
 }
@@ -386,8 +387,8 @@ extern "C" void lib_in_set_input(uint32_t first, uint32_t second)
 // =INPUT$(n): n characters from the keyboard
 extern "C" uint32_t lib_fn_input1(int32_t n)
 {
-    uint8_t *s = ask_string(n);
-    uint8_t *to = s + 2;
+    ContextCursor s = ask_string(n);
+    ContextCursor to = s + 2;
     for (uint16_t left = static_cast<uint16_t>(n); left;) {
         Regs t = {};
         lib_call(L_Test_PaSaut, t);
@@ -396,33 +397,33 @@ extern "C" uint32_t lib_fn_input1(int32_t n)
         uint8_t c = static_cast<uint8_t>(r.d[1]);
         if (!r.d[1] || c < 32)
             continue;
-        *to++ = c;
+        host::detail::write_cursor_byte(to, c);
         left--;
     }
-    return address(s);
+    return encode_context_cursor(s);
 }
 
 // =INPUT$(#channel,n): n bytes from a file or port
 extern "C" uint32_t lib_fn_input2(uint32_t n, int32_t count)
 {
     Channel &c = open_channel(n);
-    uint8_t *s = ask_string(count);
+    ContextCursor s = ask_string(count);
     if (!static_cast<uint16_t>(count))
-        return address(s);
+        return encode_context_cursor(s);
     if (!(c.type() & ChanIn))
         type_mismatch();
     if (c.type() & ChanPort) {
-        uint8_t *to = s + 2;
+        ContextCursor to = s + 2;
         for (uint16_t left = static_cast<uint16_t>(count); left; left--)
-            *to++ = get_byte(c);
-        return address(s);
+            host::detail::write_cursor_byte(to, get_byte(c));
+        return encode_context_cursor(s);
     }
-    int32_t got = hal::read(c.handle(), s + 2, count);
+    int32_t got = hal::read(c.handle(), ptr<uint8_t>(encode_context_cursor(s) + 2), count);
     if (!got)
         end_of_file();
     if (got < 0)
         disk_error();
-    return address(s);
+    return encode_context_cursor(s);
 }
 
 // DIR$=a$: the current directory, which has to be one
@@ -445,14 +446,13 @@ extern "C" void lib_in_dir(GuestString name)
 // =DIR$
 extern "C" uint32_t lib_fn_dir()
 {
-    uint8_t *s = str_alloc(126);
+    StringBuilder s(126);
     const char *path = ptr<char>(idata().PathAct);
     if (!*path)
         path = ask_dir();
-    uint8_t *to = s + 2;
-    while ((*to++ = static_cast<uint8_t>(*path++)))
-        ;
-    return str_finish(s, to - 1);
+    while (*path)
+        s.put(static_cast<uint8_t>(*path++));
+    return s.finish();
 }
 
 // PARENT: up one directory
@@ -535,13 +535,14 @@ extern "C" uint32_t lib_fn_dfree()
 extern "C" uint32_t lib_fn_disc_info(GuestString name)
 {
     name_disc(name);
-    uint8_t *s = str_alloc(126);
+    StringBuilder s(126);
     BPTR lock = lock_get();
     auto info = ptr<struct InfoData>(idata().Buffer);
     if (!hal::info(lock, info))
         disk_error();
     lock_free();
-    char *to = reinterpret_cast<char *>(s + 2);
+    char text[126];
+    char *to = text;
     uint16_t len = 0;
     char volume[108];
     if (hal::volume_name(info, volume, sizeof volume)) {
@@ -555,9 +556,9 @@ extern "C" uint32_t lib_fn_disc_info(GuestString name)
         to[i] = ' ';
     len += 10;
     long_to_dec(to, static_cast<int32_t>(disk_free(info)), -1, false);
-    poke_w(s, len);
-    idata().HiChaine = address(s) + 2 + ((len + 1u) & ~1u);
-    return address(s);
+    s.put(text, len);
+    s.skip(len & 1);
+    return s.finish_raw(len);
 }
 
 // =PORT(channel): the next byte of a port, or -1 if none is waiting
@@ -651,9 +652,9 @@ extern "C" void lib_in_put(uint32_t n, uint32_t record)
     uint8_t *field = fields + 8;
     for (uint16_t i = peek_w(fields); i; i--, field += 6) {
         uint16_t len = peek_w(field);
-        const uint8_t *s = ptr<uint8_t>(peek_l(ptr<void>(peek_l(field + 2))));
+        GuestString s = GuestString::from_word(peek_l(ptr<void>(peek_l(field + 2))));
         uint16_t slen = str_len(s) < len ? str_len(s) : len;
-        if (static_cast<uint32_t>(hal::write(c->handle(), const_cast<uint8_t *>(s + 2), slen)) != slen)
+        if (static_cast<uint32_t>(hal::write(c->handle(), ptr<uint8_t>(encode_context_cursor(s.chars())), slen)) != slen)
             disk_error();
         if (slen < len) {
             uint16_t pad = len - slen;

@@ -52,9 +52,10 @@ the same code with a base of 0. Built with `make host HOST_BIASED=1` (the defaul
   take `GuestString` instead of `const uint8_t *` (`CallArgument<GuestString>` decodes the word):
   `lib/strings.cpp` whole, `interp/text.cpp` (Left$/Mid$/Val), and the string parameters of
   files, dirs, dos, devices, arexx, keyboard, memory, screens, windows, iff, bankfiles, music and
-  ioports. Left: the legacy `str_len/str_chars/str_alloc/str_finish` on native pointers
-  (`interp/heap.cpp`, `vars.cpp`, textout, maths, files' directory strings, interface), and the
-  string variable zone (`find_variable().at`).
+  ioports, then the builders of textout, files, interface, keyboard, maths, screens and system.
+  The legacy native-pointer `str_len/str_chars/str_alloc/str_finish` are gone. Left: the string
+  garbage collector (`interp/heap.cpp`) and the variable zone/arrays (`interp/vars.cpp`) work on native
+  slots, which is the variable-zone slice, not the strings'.
 - **Status.** All 140 host tests pass on the biased build on Linux x86-64 (guest memory at
   0x7f..., above 4 GB); the identity build and the Amiga build (134/134) are unchanged.
   `.github/workflows/macos-arm64.yml` builds and runs it on a native Apple Silicon runner.

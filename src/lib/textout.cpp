@@ -37,17 +37,17 @@ uint32_t set_hi(RegFrame &r, uint32_t s)
 uint32_t mcsuit(RegFrame &r)
 {
     uint32_t length = r.d[3] & 0xFFFF;
-    uint8_t *s = str_alloc(r.d[3]);
-    poke_w(s, uint16_t(length));
-    uint8_t *to = s + 2;
-    const uint8_t *from = ptr<uint8_t>(r.a[2]);
+    StringBuilder b(r.d[3]);
+    uint32_t s = encode_context_cursor(b.start());
+    poke_w(b.start(), uint16_t(length));
+    ContextCursor from = decode_context_cursor(r.a[2]);
     uint16_t n = uint16_t(length);
     do
-        *to++ = *from++;
+        b.put(host::detail::read_cursor_byte(from++));
     while (--n);
-    r.a[1] = address(s);
-    r.a[2] = address(from);
-    return set_hi(r, address(s));
+    r.a[1] = s;
+    r.a[2] = encode_context_cursor(from);
+    return set_hi(r, s);
 }
 
 uint32_t empty(RegFrame &r)
@@ -162,30 +162,32 @@ uint32_t lib_ret_ch_vide(RegFrame &r) { return empty(r); }
 // restart of DDemande
 uint32_t lib_a0_to_chaine(RegFrame &r)
 {
-    const uint8_t *from = ptr<uint8_t>(r.a[0]);
+    ContextCursor from = decode_context_cursor(r.a[0]);
     uint32_t n = 0;
-    while (from[n])
+    while (host::detail::read_cursor_byte(from + n))
         n++;
     Regs a;
     a.d[3] = n;
     lib_call(L_DDemande, a);
-    uint8_t *s = ptr<uint8_t>(a.a[1]);
+    ContextCursor s = decode_context_cursor(a.a[1]);
     poke_w(s, uint16_t(n));
-    uint8_t *to = s + 2;
+    ContextCursor to = s + 2;
     for (uint32_t i = 0; i <= (n & 0xFFFF); i++)
-        *to++ = *from++;
-    idata().HiChaine = (address(to) + 1) & ~1u;
+        host::detail::write_cursor_byte(to, host::detail::read_cursor_byte(from++));
+    idata().HiChaine = (encode_context_cursor(to) + 1) & ~1u;
     r.d[3] = n;
-    r.a[0] = address(s);
-    r.a[1] = address(to);
-    r.a[2] = address(from);
+    r.a[0] = encode_context_cursor(s);
+    r.a[1] = encode_context_cursor(to);
+    r.a[2] = encode_context_cursor(from);
     return 0;
 }
 
 // FinBin: the string built at a1, its end a0
 uint32_t lib_fin_bin(RegFrame &r)
 {
-    r.d[3] = str_finish(ptr<uint8_t>(r.a[1]), ptr<uint8_t>(r.a[0]));
+    idata().HiChaine = (r.a[0] + 1) & ~1u;
+    poke_w(decode_context_cursor(r.a[1]), static_cast<uint16_t>(r.a[0] - r.a[1] - 2));
+    r.d[3] = r.a[1];
     r.d[2] = 2;
     r.a[0] = r.a[0] - r.a[1] - 2;
     return r.d[3];

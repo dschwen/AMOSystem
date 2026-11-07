@@ -367,11 +367,10 @@ static void read_text(uint32_t title, uint32_t text_address, uint32_t length)
                 if (v.type == 2 && *ptr<uint8_t>(v.value)) {
                     // A word of the hypertext: Param$
                     const uint8_t *word = ptr<uint8_t>(v.value);
-                    uint8_t *s = str_alloc(128);
-                    uint8_t *to = s + 2;
-                    while ((*to++ = *word++)) {
-                    }
-                    d.ParamC = str_finish(s, to - 1);
+                    StringBuilder s(128);
+                    while (*word)
+                        s.put(*word++);
+                    d.ParamC = s.finish();
                     break;
                 }
                 DiaResult ret = dia_return(channel);
@@ -414,7 +413,7 @@ static void read_text(uint32_t title, uint32_t text_address, uint32_t length)
 extern "C" void lib_in_read_text1(GuestString name)
 {
     // Room for Param$ (a hypertext word) before anything happens
-    str_alloc(256);
+    StringBuilder room(256);
     name_disc(name);
     Regs m = {};
     m.d[0] = 20;
@@ -439,7 +438,7 @@ extern "C" void lib_in_read_text1(GuestString name)
 // READ TEXT title$,address,length
 extern "C" void lib_in_read_text3(uint32_t title, uint32_t text, uint32_t length)
 {
-    str_alloc(256);
+    StringBuilder room(256);
     read_text(title, text, length);
 }
 

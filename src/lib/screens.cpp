@@ -1066,12 +1066,10 @@ extern "C" uint32_t lib_fn_font(int32_t n)
     if (r.d[0])
         return str_empty();
     const uint8_t *font = ptr<uint8_t>(r.a[0]);
-    uint8_t *s = str_alloc(40);
-    poke_w(s, 38);
-    char *text = reinterpret_cast<char *>(s + 2);
+    StringBuilder s(40);
+    char text[40];
     for (int i = 0; i < 38; i++)
         text[i] = ' ';
-    idata().HiChaine = address(s + 2 + 40);
     char *to = text;
     for (const char *p = ptr<char>(peek_l(font + 2)); (*to++ = *p++);)
         ;
@@ -1080,7 +1078,9 @@ extern "C" uint32_t lib_fn_font(int32_t n)
     const char *where = peek_w(font) == 1 ? "Rom " : "Disc";
     for (int i = 0; i < 5; i++)
         text[34 + i] = where[i];
-    return address(s);
+    s.put(text, 39);
+    s.skip(1);
+    return s.finish_raw(38);
 }
 
 // SET FONT n

@@ -77,8 +77,10 @@ extern "C" uint32_t lib_fn_err(uint32_t n)
 // =STR$(n), integer
 extern "C" uint32_t lib_fn_str_int(int32_t n)
 {
-    uint8_t *s = str_alloc(16);
-    return str_finish(s, reinterpret_cast<uint8_t *>(long_to_dec(reinterpret_cast<char *>(s + 2), n, -1, true)));
+    StringBuilder s(16);
+    char text[16];
+    s.put(text, static_cast<uint32_t>(long_to_dec(text, n, -1, true) - text));
+    return s.finish();
 }
 
 // RADIAN, DEGREE

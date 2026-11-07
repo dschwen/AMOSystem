@@ -74,13 +74,14 @@ void lib_fn_sgn_f(FloatOut *o)
 // =STR$(f)
 void lib_fn_str_f(FloatOut *o)
 {
-    uint8_t *s = str_alloc(40);
+    StringBuilder s(40);
     Regs r;
-    r.a[0] = address(s + 2);
+    r.a[0] = encode_context_cursor(s.position());
     r.d[3] = o->d3;
     r.d[4] = o->d4;
     lib_call(L_Float2Ascii, r);
-    *o = {2, str_finish(s, ptr<uint8_t>(r.a[0])), r.d[4]};
+    s.set_position(decode_context_cursor(r.a[0]));
+    *o = {2, s.finish(), r.d[4]};
 }
 
 void lib_fn_abs_f(FloatOut *o) { *o = routine(L_Float_Fonction, SPAbs, o->d3, o->d4); }

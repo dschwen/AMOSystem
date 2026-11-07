@@ -29,11 +29,10 @@ extern "C" uint32_t lib_fn_inkey()
     if (!r.d[1])
         return str_empty();
     idata().SScan = static_cast<uint16_t>(r.d[1] >> 16);
-    uint8_t *s = str_alloc(2);
-    poke_w(s, 1);
-    s[2] = static_cast<uint8_t>(r.d[1]);
-    idata().HiChaine = address(s + 4);
-    return address(s);
+    StringBuilder s(2);
+    s.put(static_cast<uint8_t>(r.d[1]));
+    s.skip(1);
+    return s.finish_raw(1);
 }
 
 // =SCANCODE, =SCANSHIFT of the last Inkey$; reading clears them
