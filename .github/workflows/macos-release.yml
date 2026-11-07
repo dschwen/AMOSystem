@@ -9,6 +9,12 @@ on:
   push:
     tags:
       - 'v*'
+    branches: [guest-bias, cpp-conversion]
+    paths:
+      - 'tools/package_macos.py'
+      - 'packaging/macos/**'
+      - 'Makefile'
+      - '.github/workflows/macos-release.yml'
   pull_request:
     paths:
       - 'tools/package_macos.py'
