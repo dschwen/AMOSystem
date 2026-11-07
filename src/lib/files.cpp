@@ -95,7 +95,7 @@ void close_all()
 Channel &open_file(uint32_t n, const uint8_t *name)
 {
     Regs r = {};
-    r.a[1] = address(lib_close_all_on_clear);
+    r.a[1] = address(AMOS_DATA(lib_close_all_on_clear));
     r.a[2] = address(&idata().Sys_ClearRoutines);
     w::add_routine(r.a[1], r.a[2]);
     name_disc(name);

@@ -155,7 +155,7 @@ extern "C" int SDL_main(int argc, char **argv)
 int main(int argc, char **argv)
 #endif
 {
-#if defined(__APPLE__) && (defined(__aarch64__) || defined(__arm64__))
+#if defined(__APPLE__) && (defined(__aarch64__) || defined(__arm64__)) && !defined(AMOS_GUEST_BIASED)
     // Cross-linking is useful before the guest-address port, but never allow
     // an ordinary arm64 image to truncate its function/table pointers and crash.
     if (reinterpret_cast<uintptr_t>(&find_home) > UINT32_MAX ||

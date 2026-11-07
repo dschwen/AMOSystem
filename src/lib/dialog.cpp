@@ -3057,8 +3057,8 @@ DiaOpen amos::dia_open(uint32_t number, const uint8_t *program, const uint8_t *p
     d->Dia_Messages = address(messages);
     // Dia_ClearVar: closed when the program is cleared
     IData &id = idata();
-    add_routine(lib_dia_on_clear, address(&id.Sys_ClearRoutines));
-    add_routine(lib_dia_on_default, address(&id.Sys_DefaultRoutines));
+    add_routine(AMOS_DATA(lib_dia_on_clear), address(&id.Sys_ClearRoutines));
+    add_routine(AMOS_DATA(lib_dia_on_default), address(&id.Sys_DefaultRoutines));
     id.GoTest_Dialog.store(lib_entry(L_Dia_AutoTest));
     Screen *s = ptr<Screen>(wdata().EcCourant);
     d->Dia_Screen = address(s);

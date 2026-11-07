@@ -51,7 +51,7 @@ static uint32_t cold_start(RegFrame &r, uint32_t number, uint16_t version, void 
 extern "C" uint32_t ext_request_cold(RegFrame &r)
 {
     constexpr uint32_t ExtNb = 3 - 1;
-    idata().ExtAdr[ExtNb * 4 + 1] = address(ext_request_warm_entry);
+    idata().ExtAdr[ExtNb * 4 + 1] = address(AMOS_DATA(ext_request_warm_entry));
     return cold_start(r, ExtNb, 0x0200, nullptr);
 }
 

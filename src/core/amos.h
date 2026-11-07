@@ -20,6 +20,7 @@
 //   condition codes need a register to test instead.
 #pragma once
 
+#include "core/guest_bias.h"
 #include "tables/labels.h"
 #include "core/context_data.h"
 #include "runtime/detail/identity_record.h"
@@ -52,20 +53,30 @@ void amiga_w_amos_loadview();
 
 namespace amos {
 
-// AMOS keeps addresses in 32 bits (another host keeps its memory below 4GB)
+// AMOS keeps addresses in 32 bits. A guest address is an offset from amos_guest_base, where the
+// guest memory is mapped (the identity mapping, a base of 0, on a host that keeps it below 4GB).
 #if defined(__mc68000__)
 template <typename T> inline T *ptr(uint32_t address) { return reinterpret_cast<T *>(uintptr_t(address)); }
+template <typename T> inline uint32_t address(T *p) { return uint32_t(reinterpret_cast<uintptr_t>(p)); }
 #else
-// Another host: the first 4K of an Amiga is its vectors, which programs read (ExecBase at
-// 4: Leek(4)); a page of its own stands for them. 0 stays the null pointer.
-extern "C" uint8_t amos_low_page[4096];
-template <typename T> inline T *ptr(uint32_t address)
+template <typename T> inline T *ptr(uint32_t address) { return reinterpret_cast<T *>(bias::to_native(address)); }
+template <typename T>
+inline uint32_t address(T *p, const char *file = __builtin_FILE(), int line = __builtin_LINE())
 {
-    return address && address < 4096 ? reinterpret_cast<T *>(amos_low_page + address)
-                                     : reinterpret_cast<T *>(uintptr_t(address));
+    return bias::to_guest(reinterpret_cast<uintptr_t>(p), file, line);
 }
 #endif
-template <typename T> inline uint32_t address(T *p) { return uint32_t(reinterpret_cast<uintptr_t>(p)); }
+
+#if !defined(__mc68000__)
+namespace host {
+uint32_t static_address(tables::Segment, uint32_t);
+// A label of the tables' data (AMOS_DATA)
+inline uint8_t *static_data(guest::GuestSymbol<guest::Byte> symbol)
+{
+    return ptr<uint8_t>(static_address(tables::Segment(uint16_t(symbol.segment().index())), symbol.byte_offset()));
+}
+}
+#endif
 
 // The interpreter registers, as saved by the glue. Native pointer alignment
 // remains stable while guest-width fields are introduced between them.
@@ -158,8 +169,8 @@ static_assert(offsetof(Ctx,a4) == 16 && offsetof(Ctx,a5) == 20 && offsetof(Ctx,a
 // Address of a routine of AMOSPro.Lib, as JJsr finds it
 inline const void *lib_address(int routine)
 {
-    auto table = reinterpret_cast<const be_u32 *>(uintptr_t(idata().AdTokens[0] - LB_Size - 4));
-    return reinterpret_cast<const void *>(uintptr_t(uint32_t(table[-routine])));
+    auto table = ptr<const be_u32>(idata().AdTokens[0] - LB_Size - 4);
+    return ptr<const void>(uint32_t(table[-routine]));
 }
 
 // Code slots have an entry type; lib_address remains the temporary data-slot API.
@@ -167,7 +178,7 @@ inline const void *lib_address(int routine)
 inline const void* lib_entry(int routine) { return lib_address(routine); }
 #else
 inline host::RoutineEntry lib_entry(int routine) {
-    auto table = reinterpret_cast<const be_u32*>(uintptr_t(idata().AdTokens[0] - LB_Size - 4));
+    auto table = ptr<const be_u32>(idata().AdTokens[0] - LB_Size - 4);
     return guest::abi::EntryCodec::decode<host::RoutineSignature>(uint32_t(table[-routine]));
 }
 inline void entry_call(host::RoutineEntry entry, Regs& r);
@@ -277,22 +288,22 @@ extern bool (*ec_patch)(int function, Regs &r);
 // The function of the vectors themselves (the monitor's patches call them)
 inline void sy_vector_call(int function, Regs &r)
 {
-    if (wdata().SyVect == address(::w_sy_in))
+    if (wdata().SyVect == address(AMOS_DATA(w_sy_in)))
         if (WFunction f = sy_direct[function])
             return w_direct_call(f, r);
 #if defined(__mc68000__)
-    amos_call(&r, reinterpret_cast<const uint8_t *>(uintptr_t(uint32_t(wdata().SyVect))) + 4 * function);
+    amos_call(&r, ptr<const uint8_t>(uint32_t(wdata().SyVect)) + 4 * function);
 #else
     amos_call(&r, host::decode_routine(uint32_t(wdata().SyVect) + uint32_t(4 * function)));
 #endif
 }
 inline void ec_vector_call(int function, Regs &r)
 {
-    if (wdata().EcVect == address(::w_ec_in))
+    if (wdata().EcVect == address(AMOS_DATA(w_ec_in)))
         if (WFunction f = ec_direct[function])
             return w_direct_call(f, r);
 #if defined(__mc68000__)
-    amos_call(&r, reinterpret_cast<const uint8_t *>(uintptr_t(uint32_t(wdata().EcVect))) + 4 * function);
+    amos_call(&r, ptr<const uint8_t>(uint32_t(wdata().EcVect)) + 4 * function);
 #else
     amos_call(&r, host::decode_routine(uint32_t(wdata().EcVect) + uint32_t(4 * function)));
 #endif
@@ -314,10 +325,10 @@ namespace amos {
 
 inline void wi_call(int function, Regs &r)
 {
-    if (wdata().WiVect == address(::w_wi_in))
+    if (wdata().WiVect == address(AMOS_DATA(w_wi_in)))
         return w_direct_call([function](AllRegs *a) { ::w_window(uint32_t(function), a); }, r);
 #if defined(__mc68000__)
-    amos_call(&r, reinterpret_cast<const uint8_t *>(uintptr_t(uint32_t(wdata().WiVect))) + 4 * function);
+    amos_call(&r, ptr<const uint8_t>(uint32_t(wdata().WiVect)) + 4 * function);
 #else
     amos_call(&r, host::decode_routine(uint32_t(wdata().WiVect) + uint32_t(4 * function)));
 #endif

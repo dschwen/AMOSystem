@@ -136,6 +136,22 @@ void arena_start()
 {
     if (arena)
         return;
+#if defined(AMOS_GUEST_BIASED)
+    // One mapping, anywhere (above 4GB if it is): guest address a is amos_guest_base + a. Chip
+    // memory at 1MB, fast memory from 4MB, as the guest's map always was.
+    constexpr uint64_t GuestSize = 4ull << 30, Ram = 1ull << 30;
+    void *mapped = mmap(nullptr, GuestSize, PROT_NONE, MAP_PRIVATE | MAP_ANONYMOUS | MAP_NORESERVE, -1, 0);
+    if (mapped == MAP_FAILED || mprotect(mapped, Ram, PROT_READ | PROT_WRITE) != 0) {
+        fprintf(stderr, "amos: no memory for the guest\n");
+        __builtin_trap();
+    }
+    amos_guest_base = static_cast<uint8_t *>(mapped);
+    amos_guest_size = GuestSize;
+    arena = amos_guest_base + (4ull << 20);
+    pool_start(chip_pool, amos_guest_base + ChipAt, ChipSize);
+    pool_start(fast_pool, arena, ArenaSize);
+    return;
+#else
 #if defined(_WIN32)
     void *m = host::windows::memory_allocate(ArenaSize, true);
     if (!m) {
@@ -170,6 +186,7 @@ void arena_start()
         pool_start(chip_pool, arena, ChipSize);
         pool_start(fast_pool, arena + ChipSize, ArenaSize - ChipSize);
     }
+#endif
 }
 
 Pool &pool_of(const uint8_t *at) { return chip_pool.has(at) ? chip_pool : fast_pool; }
@@ -591,7 +608,7 @@ const void *raw_format(const char *format, const void *args, void (*put)(char, v
             text[1] = 0;
             break;
         case 's':
-            s = reinterpret_cast<const char *>(uintptr_t(longword()));
+            s = ptr<const char>(longword());
             break;
         default:
             text[0] = *p;

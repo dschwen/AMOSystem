@@ -28,7 +28,7 @@ inline Screen *current_screen() { return ptr<Screen>(wdata().EcCourant); }
 // size: another host's, larger, are elsewhere.)
 #if defined(__mc68000__)
 
-inline uint8_t *console_request() { return w_con_io; }         // +W.s ConIo
+inline uint8_t *console_request() { return AMOS_DATA(w_con_io); }         // +W.s ConIo
 inline struct Interrupt *input_interrupt() { return reinterpret_cast<struct Interrupt *>(wdata().Interrupt); }
 inline IOReq *input_request() { return reinterpret_cast<IOReq *>(wdata().IoDevice); }
 inline struct Interrupt *vbl_interrupt() { return reinterpret_cast<struct Interrupt *>(wdata().VBL_Is); }

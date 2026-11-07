@@ -142,7 +142,7 @@ const void *format(const char *text, uint8_t *to, const void *args)
 uint16_t piece(uint16_t from_x, uint16_t from_y, uint16_t x, uint16_t y, uint16_t width, uint16_t height)
 {
     WData &d = wdata();
-    const uint8_t *pic = w_req_pal + 32 * 2 + uint32_t(from_y) * PicWidth + from_x;
+    const uint8_t *pic = AMOS_DATA(w_req_pal) + 32 * 2 + uint32_t(from_y) * PicWidth + from_x;
     const amos::Screen *s = ptr<amos::Screen>(d.ScAdr);
     uint32_t line = int16_t(d.Req_Sx);
     uint32_t offset = uint32_t(y) * line + x;
@@ -241,7 +241,7 @@ uint32_t amos_requester(Texts t)
     o.d[5] = 0x8000;
     o.d[6] = 8;
     o.d[7] = 0;
-    o.a[1] = address(w_req_pal);
+    o.a[1] = address(AMOS_DATA(w_req_pal));
     ec_call(ec::Cree, o);
     if (!o.d[0]) {
         d.ScAdr = o.a[0];

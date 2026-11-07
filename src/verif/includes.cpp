@@ -55,7 +55,7 @@ const uint8_t *equates_load(uint32_t *length)
     IData &d = idata();
     if (!d.Equ_Base) {
         Regs f;
-        f.a[1] = address(ver_equ_flush);
+        f.a[1] = address(AMOS_DATA(ver_equ_flush));
         w::add_routine(f.a[1], address(&wdata().MemFlush));
         Regs m;
         m.d[0] = 9;

@@ -367,7 +367,7 @@ void main_cold_start(char *command, uint32_t length, uint32_t sp)
         command_line(s, command, length);
 
     // AMOS.library, linked in (it was loaded from APSystem or libs)
-    uint32_t w = address(w_debut);
+    uint32_t w = address(AMOS_DATA(w_debut));
     ctx().a4 = decode_context_cursor(w);
 
     if (!data_zone(peek_l(ptr<void>(w + 8))))
@@ -537,7 +537,7 @@ void main_cold_start(char *command, uint32_t length, uint32_t sp)
         // (as an accessory, without the default screen; run only, as the
         // editor's Run: the default screen opened)
         p.d[0] = boot::run_only ? 0 : uint32_t(-1);
-        p.a[1] = address(main_run_error_run_only);
+        p.a[1] = address(AMOS_DATA(main_run_error_run_only));
         p.a[6] = program;
         amos_call_all(&p, lib_entry(L_Prg_RunIt));    // back if out of memory
     }

@@ -231,7 +231,7 @@ uint8_t amos::verif::structure()
         fail(EType);
     if (next_word() != tk::Vir)
         syntax();
-    equate(ver_equ_nul, at);
+    equate(AMOS_DATA(ver_equ_nul), at);
     uint8_t t = at[4];
     if (next_word() != tk::Par2)
         syntax();
@@ -420,7 +420,7 @@ uint8_t operand()
         case 0x0B:
             return menu_function();
         case 0x0C:
-            return equate_function(ver_equ_nul);
+            return equate_function(AMOS_DATA(ver_equ_nul));
         case 0x0D:
             return array_function(table, token, false);
         case 0x0E:
@@ -428,7 +428,7 @@ uint8_t operand()
         case 0x0F: case 0x20:
             return min_max();
         case 0x10:
-            return equate_function(ver_equ_lvo);
+            return equate_function(AMOS_DATA(ver_equ_lvo));
         case 0x11:
             return structure_function(false);
         case 0x12:
@@ -488,7 +488,7 @@ uint8_t operand()
 // Tst_*: the types on both sides of an operator
 uint8_t operation(uint16_t op, uint8_t left, uint8_t right)
 {
-    switch (peek_w(ver_operators + int16_t(op) + 2)) {
+    switch (peek_w(AMOS_DATA(ver_operators) + int16_t(op) + 2)) {
     case Comparison:
         if (left != right)
             type();

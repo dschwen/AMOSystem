@@ -191,8 +191,8 @@ void save_program()
     call(AMOS_ROUTINE(ed_av_name), w);
     open(name1(), MODE_NEWFILE);
     // the header (of the editor's own version), the length to come
-    ed_header[11] = 'v';
-    write(ed_header, 16);
+    AMOS_DATA(ed_header)[11] = 'v';
+    write(AMOS_DATA(ed_header), 16);
     uint8_t *buffer = ptr<uint8_t>(d.Ed_BufT);
     write(buffer, 4);
     uint32_t size = 0;

@@ -94,8 +94,8 @@ uint32_t temp_buffer(uint32_t size)
         return 0;
     poke_l(ptr<void>(at), size);
     d.TempBuffer = at + 4;
-    add_routine(main_temp_on_clear, &d.Sys_ClearRoutines);
-    add_routine(main_temp_on_error, &d.Sys_ErrorRoutines);
+    add_routine(AMOS_DATA(main_temp_on_clear), &d.Sys_ClearRoutines);
+    add_routine(AMOS_DATA(main_temp_on_error), &d.Sys_ErrorRoutines);
     return d.TempBuffer;
 }
 
@@ -286,7 +286,7 @@ void math_close()
 
 // Sys_VerInstall: installed if there is a user name and a registration
 // (the registration and the name begin with a length word)
-bool installed() { return peek_w(main_user_name) && peek_w(main_user_reg); }
+bool installed() { return peek_w(AMOS_DATA(main_user_name)) && peek_w(AMOS_DATA(main_user_reg)); }
 
 } // namespace amos::boot
 

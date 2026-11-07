@@ -267,7 +267,7 @@ extern "C" void w_vbl(uint8_t *data)
     flash(d);
     fade(d);
     if (!d.SyncOff)
-        w_int_call(w_animator, data);
+        w_int_call(AMOS_DATA(w_animator), data);
 }
 
 namespace amos::w {

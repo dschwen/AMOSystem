@@ -388,7 +388,7 @@ void show_slider()
 // Ed_CuOff: the cursor hidden
 void cursor_off()
 {
-    print(ed_cursor_off_text);
+    print(AMOS_DATA(ed_cursor_off_text));
     idata().Ed_CuFlag = 0;
 }
 
@@ -484,7 +484,7 @@ void ed_labels_around(AllRegs *r)
 void ed_show_slider(AllRegs *) { show_slider(); }
 
 // Ed_CuOn / Ed_CuOff: the cursor shown or not
-void ed_cursor_on(AllRegs *) { print(ed_cursor_on_text); }
+void ed_cursor_on(AllRegs *) { print(AMOS_DATA(ed_cursor_on_text)); }
 
 void ed_cursor_off(AllRegs *) { cursor_off(); }
 }

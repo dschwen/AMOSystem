@@ -87,8 +87,8 @@ uint32_t file_open(const char *name, uint32_t mode)
 {
     IData &d = idata();
     d.Handle = static_cast<uint32_t>(hal::open(name, mode));
-    add_routine(lib_close_on_error, address(&d.Sys_ErrorRoutines));
-    add_routine(lib_close_on_clear, address(&d.Sys_ClearRoutines));
+    add_routine(AMOS_DATA(lib_close_on_error), address(&d.Sys_ErrorRoutines));
+    add_routine(AMOS_DATA(lib_close_on_clear), address(&d.Sys_ClearRoutines));
     return d.Handle;
 }
 

@@ -1245,9 +1245,9 @@ extern "C" void lib_menu_error()
 static void menu_clear_var()
 {
     IData &d = idata();
-    add_routine(lib_menu_on_clear, address(&d.Sys_ClearRoutines));
-    add_routine(lib_menu_on_default, address(&d.Sys_DefaultRoutines));
-    add_routine(lib_menu_on_error, address(&d.Sys_ErrorRoutines));
+    add_routine(AMOS_DATA(lib_menu_on_clear), address(&d.Sys_ClearRoutines));
+    add_routine(AMOS_DATA(lib_menu_on_default), address(&d.Sys_DefaultRoutines));
+    add_routine(AMOS_DATA(lib_menu_on_error), address(&d.Sys_ErrorRoutines));
     d.GoTest_Menus.store(lib_entry(L_MnGere));
     d.GoTest_MenuKey.store(lib_entry(L_MenuKeyExplore));
 }

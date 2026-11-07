@@ -10,6 +10,7 @@
 #include <stdint.h>
 
 #include <exec/types.h>
+#include "core/guest_bias.h"
 
 extern "C" {
 // host/hal_chips.cpp: the register at offset (from $DFF000)
@@ -45,8 +46,8 @@ struct ChipPtr {
     ChipReg hi, lo;
 
     uint32_t value() const volatile { return uint32_t(uint16_t(hi)) << 16 | uint16_t(lo); }
-    operator void *() const volatile { return reinterpret_cast<void *>(uintptr_t(value())); }
-    template <typename T> void operator=(T *p) volatile { set(uint32_t(reinterpret_cast<uintptr_t>(p))); }
+    operator void *() const volatile { return amos::bias::to_native(value()); }
+    template <typename T> void operator=(T *p) volatile { set(amos::bias::to_guest(reinterpret_cast<uintptr_t>(p))); }
     void operator=(uint32_t v) volatile { set(v); }
     void set(uint32_t v) volatile
     {

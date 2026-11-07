@@ -186,8 +186,8 @@ const GlueEntry *glue_entry(RoutineEntry at)
 const GlueEntry *legacy_glue_entry(const void *at)
 {
     const auto word = reinterpret_cast<uintptr_t>(at);
-    if (word > UINT32_MAX) return nullptr;
-    return glue_entry(guest::abi::EntryCodec::decode<RoutineSignature>(uint32_t(word)));
+    if (!bias::contains(word)) return nullptr;
+    return glue_entry(guest::abi::EntryCodec::decode<RoutineSignature>(bias::to_guest(word)));
 }
 #endif
 

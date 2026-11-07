@@ -363,7 +363,7 @@ void draw_windows()
         s->Sl_Scroll = w->Edt_WindTy - 2;
         s->Sl_ZDx = SlVDx;
         s->Sl_Zone = zones + 3;
-        s->Sl_Routines = address(ed_slider_routines);
+        s->Sl_Routines = address(AMOS_DATA(ed_slider_routines));
         reinterpret_cast<uint8_t *>(&s->Sl_Flags)[0] |= 1 << 0;      // bset Sl_FlagVertical
         // the colours inactive, then active
         const uint8_t *colours = system_text(19);
@@ -409,7 +409,7 @@ void draw_windows()
             pr.a[1] = address(system_text(20));
             wi_call(wi::Print, pr);
             Regs sh;
-            sh.a[1] = address(ed_cursor_normal);
+            sh.a[1] = address(AMOS_DATA(ed_cursor_normal));
             wi_call(wi::SCurWi, sh);
             set_zone(w->Edt_Zones, w->Edt_WindX, w->Edt_WindY, w->Edt_WindX + w->Edt_WindSx,
                      w->Edt_WindY + w->Edt_WindSy);

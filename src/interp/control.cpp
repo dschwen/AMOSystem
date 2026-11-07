@@ -1047,7 +1047,7 @@ void interp_in_on_menu()
     d.OMnType = type;
     d.ActuMask &= ~(1 << BitJump);
     Regs r;
-    r.a[1] = address(interp_omn_record);
+    r.a[1] = address(AMOS_DATA(interp_omn_record));
     r.a[2] = address(&d.Sys_ClearRoutines);
     w::add_routine(r.a[1], r.a[2]);
 }

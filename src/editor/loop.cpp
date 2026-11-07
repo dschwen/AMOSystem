@@ -67,7 +67,7 @@ void function_call(uint16_t n)
     run(AMOS_ROUTINE(ed_clear_error_proc_entry));
     run(AMOS_ROUTINE(ed_menu_program));
     run(AMOS_ROUTINE(ed_cursor_off_entry));
-    uint8_t flags = ed_function_flags[n];
+    uint8_t flags = AMOS_DATA(ed_function_flags)[n];
     if (d.EdMa_Tape && !(flags & 1 << 5)) {
         // not allowed in a macro
         d.EdMa_Tape -= 3;
@@ -104,7 +104,7 @@ void function_call(uint16_t n)
     r.d[0] = 0;
     r.d[1] = d1;
     r.d[2] = uint32_t(n) << 2;
-    call(host::decode_routine(peek_l(ed_function_table + 4 * n)), r);
+    call(host::decode_routine(peek_l(AMOS_DATA(ed_function_table) + 4 * n)), r);
 }
 
 } // namespace amos::ed
@@ -294,7 +294,7 @@ int32_t zap_in(uint32_t n, uint32_t param, uint16_t *function)
     lib_call(L_Prg_DataNew, n2);
     d.Ed_ZapError = 0;
     uint16_t f = uint16_t(n - 1);
-    uint8_t flags = f < HiddenCommands ? ed_function_flags[f] : 0;
+    uint8_t flags = f < HiddenCommands ? AMOS_DATA(ed_function_flags)[f] : 0;
     if (!(flags & 0x80)) {
         d.Ed_ZapError = uint16_t(-4);
         d.Ed_ZapMessage = address(message(13));

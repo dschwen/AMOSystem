@@ -691,7 +691,7 @@ bool screens_init()
         chips().copjmp1 = 0;
         chips().dmacon = 0x82A0;
     }
-    d.EcVect = address(w_ec_in);
+    d.EcVect = address(AMOS_DATA(w_ec_in));
     return true;
 }
 

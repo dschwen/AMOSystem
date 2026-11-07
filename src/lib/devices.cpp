@@ -186,7 +186,7 @@ void open_device(DeviceChannel &d, const char *name, uint32_t length, uint32_t u
     if (d.opened())
         error(140);
     Regs r = {};
-    r.a[1] = address(lib_close_devs_on_clear);
+    r.a[1] = address(AMOS_DATA(lib_close_devs_on_clear));
     r.a[2] = address(&idata().Sys_ClearRoutines);
     w::add_routine(r.a[1], r.a[2]);
     d.state() = 0;
@@ -367,7 +367,7 @@ extern "C" void lib_in_lib_open(uint32_t n, const uint8_t *name, uint32_t versio
         error(170);
     base = address(lib);
     Regs r = {};
-    r.a[1] = address(lib_close_libs_on_clear);
+    r.a[1] = address(AMOS_DATA(lib_close_libs_on_clear));
     r.a[2] = address(&idata().Sys_ClearRoutines);
     w::add_routine(r.a[1], r.a[2]);
 }

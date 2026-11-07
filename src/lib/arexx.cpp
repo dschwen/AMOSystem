@@ -123,7 +123,7 @@ extern "C" void lib_in_arexx_open(const uint8_t *name)
         lib_arx_close();
         error(195);         // the port is there already
     }
-    add_routine(lib_arexx_on_clear, address(&d.Sys_ClearRoutines));
+    add_routine(AMOS_DATA(lib_arexx_on_clear), address(&d.Sys_ClearRoutines));
 }
 
 // =AREXX: 0 nothing, 1 a command, 2 a command that wants an answer string

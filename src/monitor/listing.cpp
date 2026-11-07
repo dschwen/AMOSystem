@@ -310,7 +310,7 @@ void split(uint16_t n)
     Regs d;
     d.a[0] = m.Tt_CurLigne;
     d.a[1] = m.Tt_BufT;
-    d.d[0] = uint32_t(-int32_t(address(mon_split_hook)));
+    d.d[0] = uint32_t(-int32_t(address(AMOS_DATA(mon_split_hook))));
     lib_call(L_Detok, d);
 }
 

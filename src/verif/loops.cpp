@@ -85,7 +85,7 @@ namespace {
 int32_t for_(uint16_t token)
 {
     loop_in(TForNxt);
-    Entry *e = table_add(address(ver_for_two), token, 2, Loop);
+    Entry *e = table_add(address(AMOS_DATA(ver_for_two)), token, 2, Loop);
     room();
     uint8_t *at = pc;
     uint8_t t = variable_alone();
@@ -110,7 +110,7 @@ int32_t for_(uint16_t token)
 int32_t next(uint16_t token)
 {
     loop_out(TForNxt);
-    Entry *e = table_add(address(ver_next_alone), token, 6, Loop);
+    Entry *e = table_add(address(AMOS_DATA(ver_next_alone)), token, 6, Loop);
     if (!finished(word(pc))) {
         uint8_t *at = pc;
         variable_alone();
@@ -124,7 +124,7 @@ int32_t next(uint16_t token)
 int32_t repeat(uint16_t token)
 {
     loop_in(TRptUnt);
-    table_add(address(ver_repeat_two), token, 0, Loop);
+    table_add(address(AMOS_DATA(ver_repeat_two)), token, 0, Loop);
     room();
     return AfterInstruction;
 }
@@ -132,7 +132,7 @@ int32_t repeat(uint16_t token)
 int32_t until(uint16_t token)
 {
     loop_out(TRptUnt);
-    Entry *e = table_add(address(ver_until_alone), token, 4, Loop);
+    Entry *e = table_add(address(AMOS_DATA(ver_until_alone)), token, 4, Loop);
     expression();
     poke_l(var_part(e), instruction_end());
     return AfterInstruction;
@@ -141,28 +141,28 @@ int32_t until(uint16_t token)
 int32_t while_(uint16_t token)
 {
     loop_in(TWhlWnd);
-    table_add(address(ver_while_two), token, 0, Loop);
+    table_add(address(AMOS_DATA(ver_while_two)), token, 0, Loop);
     room();
     expression();
     return AfterInstruction;
 }
 
-int32_t wend(uint16_t token) { return loop_end(address(ver_wend_alone), token, TWhlWnd); }
+int32_t wend(uint16_t token) { return loop_end(address(AMOS_DATA(ver_wend_alone)), token, TWhlWnd); }
 
 int32_t do_(uint16_t token)
 {
     loop_in(TDoLoop);
-    table_add(address(ver_do_two), token, 0, Loop);
+    table_add(address(AMOS_DATA(ver_do_two)), token, 0, Loop);
     room();
     return AfterInstruction;
 }
 
-int32_t loop(uint16_t token) { return loop_end(address(ver_loop_alone), token, TDoLoop); }
+int32_t loop(uint16_t token) { return loop_end(address(AMOS_DATA(ver_loop_alone)), token, TDoLoop); }
 
 // Exit [n]
 int32_t exit(uint16_t token)
 {
-    Entry *e = table_add(address(ver_exit_two), token, 4, Exit);
+    Entry *e = table_add(address(AMOS_DATA(ver_exit_two)), token, 4, Exit);
     poke_l(pc, 0);
     pc += 4;
     poke_l(var_part(e), 1);
@@ -176,7 +176,7 @@ int32_t exit(uint16_t token)
 // Exit If test[,n]
 int32_t exit_if(uint16_t token)
 {
-    Entry *e = table_add(address(ver_exit_two), token, 4, Exit);
+    Entry *e = table_add(address(AMOS_DATA(ver_exit_two)), token, 4, Exit);
     poke_l(pc, 0);
     pc += 4;
     integer();
@@ -193,7 +193,7 @@ int32_t exit_if(uint16_t token)
 // If test [Then ...]
 int32_t if_(uint16_t token)
 {
-    Entry *e = table_add(address(ver_if_two), token, 8, Test);
+    Entry *e = table_add(address(AMOS_DATA(ver_if_two)), token, 8, Test);
     room();
     poke_l(var_part(e), address(pc));
     poke_l(var_part(e) + 4, data().VDLigne);
@@ -203,7 +203,7 @@ int32_t if_(uint16_t token)
     pc += 2;
     poke_l(var_part(e), address(pc));
     e->Vta_UFlag = 1;
-    e->Vta_Jump = address(ver_if_then_two);
+    e->Vta_Jump = address(AMOS_DATA(ver_if_then_two));
     if (word(pc) != tk::LGo)
         return AtInstruction;
     label_skip();
@@ -212,7 +212,7 @@ int32_t if_(uint16_t token)
 
 int32_t else_if(uint16_t token)
 {
-    Entry *e = table_add(address(ver_else_alone), token, 4, Test);
+    Entry *e = table_add(address(AMOS_DATA(ver_else_alone)), token, 4, Test);
     room();
     poke_l(var_part(e), address(pc));
     integer();
@@ -221,7 +221,7 @@ int32_t else_if(uint16_t token)
 
 int32_t else_(uint16_t token)
 {
-    Entry *e = table_add(address(ver_else_alone), token, 8, Test);
+    Entry *e = table_add(address(AMOS_DATA(ver_else_alone)), token, 8, Test);
     room();
     poke_l(var_part(e), address(pc));
     poke_l(var_part(e) + 4, data().VDLigne);
@@ -235,7 +235,7 @@ int32_t else_(uint16_t token)
 
 int32_t end_if(uint16_t token)
 {
-    Entry *e = table_add(address(ver_end_if_alone), token, 4, Test);
+    Entry *e = table_add(address(AMOS_DATA(ver_end_if_alone)), token, 4, Test);
     poke_l(var_part(e), address(pc));
     return AfterInstruction;
 }
@@ -249,7 +249,7 @@ int32_t gosub(uint16_t)
 // Goto (and On Error Goto, Resume label)
 int32_t goto_(uint16_t token)
 {
-    table_add(address(ver_goto_two), token, 0, Jump);
+    table_add(address(AMOS_DATA(ver_goto_two)), token, 0, Jump);
     label_or_expression();
     return AfterInstruction;
 }
@@ -271,7 +271,7 @@ int32_t on(uint16_t)
         } while (next_word() == tk::Vir);
     } else if (t == tk::Gto || t == tk::Gsb) {
         if (t == tk::Gto)
-            table_add(address(ver_on_goto_two), tk::On, 0, Jump);
+            table_add(address(AMOS_DATA(ver_on_goto_two)), tk::On, 0, Jump);
         do {
             n++;
             label_or_expression();
@@ -436,10 +436,10 @@ void if_two(Entry *e, uint16_t error)
     uint32_t to;
     bool else_if = false;
     if (t == tk::Else) {
-        n->Vta_Jump = address(ver_else_two);
+        n->Vta_Jump = address(AMOS_DATA(ver_else_two));
         to = address(pc);
     } else if (t == tk::ElsI) {
-        n->Vta_Jump = address(ver_else_if_two);
+        n->Vta_Jump = address(AMOS_DATA(ver_else_if_two));
         else_if = true;
         to = address(pc);
     } else {
@@ -464,7 +464,7 @@ void if_then_two(Entry *e)
         if (a->Vta_Token == tk::Else) {
             if (--depth)
                 continue;
-            a->Vta_Jump = address(ver_else_then_two);
+            a->Vta_Jump = address(AMOS_DATA(ver_else_then_two));
             test_label(e, peek_l(var_part(a)));
             return;
         }

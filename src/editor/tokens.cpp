@@ -257,7 +257,7 @@ TkOtre:
     d7 = uint32_t(-4);
     d3 = 0;
     d2 = lower(a3[-1]);
-    table = ed_operators;
+    table = AMOS_DATA(ed_operators);
     goto TkLIn;
 TkUn:
     if (uint8_t(d2) < 'a' || uint8_t(d2) > 'z')
@@ -402,7 +402,7 @@ TklT:
     if (int16_t(d7) == 0)
         token = uint16_t(d4 - ptr<uint8_t>(d.AdTokens[0]));
     else
-        token = uint16_t(d4 - ed_operators_end);
+        token = uint16_t(d4 - AMOS_DATA(ed_operators_end));
 TkKt0:
     poke_w(a4, token);
     a4 += 2;
@@ -744,17 +744,17 @@ Detokenised detokenise(const uint8_t *a6, uint8_t *a1, const uint8_t *at, bool m
         const uint8_t *a0;
         uint8_t d3;
         if (int16_t(t) < 0) {
-            a0 = ed_operators_end + 4 + int16_t(t);
+            a0 = AMOS_DATA(ed_operators_end) + 4 + int16_t(t);
         } else if (t == tk::Ext) {
             uint8_t n = a6[0];
             uint32_t ext = d.AdTokens[int8_t(n)];
             if (!ext) {
                 // "Extension X", an instruction
-                uint8_t *p = ed_extension_missing;
+                uint8_t *p = AMOS_DATA(ed_extension_missing);
                 while (!(*p++ & 0x80))
                     ;
                 p[-1] = uint8_t(n + 'A' + 0x80);
-                a0 = ed_extension_missing;
+                a0 = AMOS_DATA(ed_extension_missing);
                 d3 = 'I';
                 goto Dtk3a;
             }

@@ -2,14 +2,15 @@
 #pragma once
 #include "runtime/glue.h"
 #include "abi/guest_entry_codec.h"
+#include "core/guest_bias.h"
 namespace amos::host::detail {
 inline RoutineArg legacy_routine_entry(const void* at) {
 #if defined(__mc68000__)
     return at;
 #else
     const auto word = reinterpret_cast<uintptr_t>(at);
-    if (word > UINT32_MAX) guest::pointer_fault(guest::Fault::overflow);
-    return guest::abi::EntryCodec::decode<RoutineSignature>(uint32_t(word));
+    if (!bias::contains(word)) guest::pointer_fault(guest::Fault::overflow);
+    return guest::abi::EntryCodec::decode<RoutineSignature>(bias::to_guest(word));
 #endif
 }
 }

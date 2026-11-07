@@ -276,6 +276,8 @@ public:
     template<class U> requires const_compatible<U, T>
     constexpr HostPtr(HostPtr<U> other) : value_(other.value_) {}
     explicit constexpr operator bool() const { return value_ != nullptr; }
+    // Trusted bootstrap only: copying a native source array into guest memory.
+    constexpr T* unsafe_native() const { return value_; }
 };
 template<class T> class alignas(offset_alignment) HostSpan {
     HostPtr<T> start_{};

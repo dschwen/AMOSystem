@@ -143,7 +143,7 @@ void run_program()
     prepare();
     poke_l(command_line(), 0);
     d.Edt_Runned = address(&window());
-    run_it(ed_err_run, ed_test_message, 0);
+    run_it(AMOS_DATA(ed_err_run), AMOS_DATA(ed_test_message), 0);
     d.Edt_Runned = 0;
     jump(AMOS_ROUTINE(ed_out_of_memory));
 }
@@ -156,7 +156,7 @@ void run_program()
     ctx().a6 = ptr<uint8_t>(w->Edt_Prg);
     prepare();
     d.Ed_RunnedHidden = 1;
-    int32_t result = run_it(ed_err_run_hidden, ed_test_message, 1);
+    int32_t result = run_it(AMOS_DATA(ed_err_run_hidden), AMOS_DATA(ed_test_message), 1);
     d.Edt_Runned = 0;
     // (the assembler tested the flags of clearing Edt_Runned, and always
     // said "out of memory")
@@ -184,7 +184,7 @@ void run_direct()
     prepare();
     poke_l(command_line(), 0);
     d.Edt_Runned = d.Edt_Current;
-    run_it(ed_err_direct_run, ed_direct_test_message, 0);
+    run_it(AMOS_DATA(ed_err_direct_run), AMOS_DATA(ed_direct_test_message), 0);
     d.Edt_Runned = 0;
     run(AMOS_ROUTINE(ed_escape_hide_entry));
     run(AMOS_ROUTINE(ed_appear));
@@ -267,7 +267,7 @@ void program_command(const uint8_t *def)
     }
     // in the current window
     run(AMOS_ROUTINE(ed_saved));
-    uint8_t *back = ed_err_run;
+    uint8_t *back = AMOS_DATA(ed_err_run);
     if (!(def[0] & 4)) {
         // the program kept, to be loaded back after
         EditWindow &w = window();
@@ -285,7 +285,7 @@ void program_command(const uint8_t *def)
             *k++ = s[i];
         for (const uint8_t *n = p.Prg_NamePrg; (*k++ = *n++);)
             ;
-        back = ed_err_run_hidden;
+        back = AMOS_DATA(ed_err_run_hidden);
         d.Ed_RunnedHidden = 1;
     }
     // new, load, run
@@ -306,7 +306,7 @@ void program_command(const uint8_t *def)
     poke_l(ptr<uint8_t>(d.Ed_BufT) + 256, 0);   // no Ed_RAlert
     prepare();
     d.Edt_Runned = address(&window());
-    run_it(back, ed_test_message, 0);
+    run_it(back, AMOS_DATA(ed_test_message), 0);
     d.Edt_Runned = 0;
     jump(AMOS_ROUTINE(ed_out_of_memory));
 }
@@ -371,8 +371,8 @@ void test_program()
         return;
     d.Ed_YaUTest = 1;
     Regs r;
-    r.a[1] = address(ed_err_test);
-    r.a[2] = address(ed_test_message);
+    r.a[1] = address(AMOS_DATA(ed_err_test));
+    r.a[2] = address(AMOS_DATA(ed_test_message));
     lib_call(L_Prg_TestIt, r);
     if (r.d[0])
         jump(AMOS_ROUTINE(ed_already_runned));
@@ -487,7 +487,7 @@ uint16_t error_line(uint32_t code, const uint8_t *message)
     v[3] = address(dialogue_string(text + x));
     text[x] = 0;
     v[2] = address(dialogue_string(text + start));
-    v[4] = address(ed_recop);
+    v[4] = address(AMOS_DATA(ed_recop));
     // the window
     ec_fn(ec::EHide, EcEdit, 0);
     ec_fn(ec::First, EcEdit);

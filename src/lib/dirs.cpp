@@ -217,7 +217,7 @@ void fill_first()
 {
     fill_free();
     Regs r = {};
-    r.a[1] = address(lib_fill_free_on_clear);
+    r.a[1] = address(AMOS_DATA(lib_fill_free_on_clear));
     r.a[2] = address(&idata().Sys_ClearRoutines);
     w::add_routine(r.a[1], r.a[2]);
     IData &d = idata();

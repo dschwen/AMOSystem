@@ -73,7 +73,7 @@ void set_requesters(uint32_t &autoreq, uint32_t &easy)
 void requester_start(const be_u16 *palette)
 {
     WData &d = wdata();
-    copy(w_req_pal + 8 * 2, palette + 8, 24 * 2);
+    copy(AMOS_DATA(w_req_pal) + 8 * 2, palette + 8, 24 * 2);
     uint32_t a = address(AMOS_ENTRY(w_auto_req_entry)), e = address(AMOS_ENTRY(w_easy_req_entry));
     set_requesters(a, e);
     d.PrevAuto = a;
@@ -133,8 +133,8 @@ bool make_font()
         if (ok) {
             grab_characters(font + 32 * 8, 32, 128);
             grab_characters(font + 160 * 8, 160, 256);
-            copy(font, w_def_font, 8 * 32);
-            copy(font + 128 * 8, w_def_font + 8 * 32, 8 * 32);
+            copy(font, AMOS_DATA(w_def_font), 8 * 32);
+            copy(font + 128 * 8, AMOS_DATA(w_def_font) + 8 * 32, 8 * 32);
         }
     }
     Regs c;
@@ -190,7 +190,7 @@ bool start(AllRegs *r)
     if (version() >= 2) {
         uint8_t *bank = ptr<uint8_t>(r->a[1]);
         if (!bank)
-            bank = w_default_mouse;                                 // the default one
+            bank = AMOS_DATA(w_default_mouse);                                 // the default one
         if (peek_l(bank) != 0x416D5370)                             // "AmSp"
             return false;
         uint16_t images = peek_w(bank + 4);
@@ -215,7 +215,7 @@ bool start(AllRegs *r)
         return false;
     // AA: Amiga-A through LoadView, as from Kickstart 39
     auto gfx = ptr<struct GfxBase>(d.GfxBase);
-    poke_l(w_gfx_base_var, d.GfxBase);
+    poke_l(AMOS_DATA(w_gfx_base_var), d.GfxBase);
     d.WFlags = 0;
     if (gfx->ChipRevBits0 & GFXF_AA_ALICE)
         d.WFlags |= WFlagAA | WFlagLoadView;
@@ -248,12 +248,12 @@ bool start(AllRegs *r)
         return false;
     call(AMOS_ROUTINE(w_amal_init));
     vbl_init();
-    d.WiVect = address(w_wi_in);
+    d.WiVect = address(AMOS_DATA(w_wi_in));
     // With LoadView, AMOS's LoadView keeps the system's view from showing
     // while AMOS is in front (it tests T_AMOSHere)
     if (d.WFlags & WFlagLoadView) {
         w_amos_here = address(&d.AMOSHere);
-        poke_l(w_old_loadview, hal::set_function(d.GfxBase, LVOLoadView, address(AMOS_ENTRY(w_amos_loadview))));
+        poke_l(AMOS_DATA(w_old_loadview), hal::set_function(d.GfxBase, LVOLoadView, address(AMOS_ENTRY(w_amos_loadview))));
         if (hal::os_version() >= 37)
             hal::clear_cache();
     }
@@ -284,8 +284,8 @@ void end()
         requester_stop();
         free_font();
     }
-    if (d.WFlags & WFlagLoadView && peek_l(w_old_loadview))
-        hal::set_function(d.GfxBase, LVOLoadView, peek_l(w_old_loadview));
+    if (d.WFlags & WFlagLoadView && peek_l(AMOS_DATA(w_old_loadview)))
+        hal::set_function(d.GfxBase, LVOLoadView, peek_l(AMOS_DATA(w_old_loadview)));
     if (d.DevHere) {
         auto io = input_request();
         io->io_Data = address(input_interrupt());
@@ -320,7 +320,7 @@ void w_sy_ice_start(AllRegs *r)
 {
     WData &d = wdata();
     poke_w(&d.WVersion, r->d[0] == 0x56322E30 ? uint16_t(r->d[1]) : 0);
-    d.SyVect = address(w_sy_in);
+    d.SyVect = address(AMOS_DATA(w_sy_in));
     if (version() >= Version20) {
         hal::forbid();
         if (struct Task *t = hal::find_task(reinterpret_cast<CONST_STRPTR>(task_name))) {

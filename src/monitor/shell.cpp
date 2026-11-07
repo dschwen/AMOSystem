@@ -73,7 +73,7 @@ void dialogue_zones()
     if (!n || n > 4)
         return;
     activate_text();
-    mon_dispatch(host::decode_routine(peek_l(mon_text_zones + 4 * (3 + n - 1))), g.d[0], (g.d[1] & 0xFFFF0000u) | uint16_t(n << 2));
+    mon_dispatch(host::decode_routine(peek_l(AMOS_DATA(mon_text_zones) + 4 * (3 + n - 1))), g.d[0], (g.d[1] & 0xFFFF0000u) | uint16_t(n << 2));
 }
 
 } // namespace
@@ -120,7 +120,7 @@ extern "C" {
                 // the text screen's zones
                 if (n && n <= 7) {
                     activate_text();
-                    mon_dispatch(host::decode_routine(peek_l(mon_text_zones + 4 * (n - 1))), 0, uint32_t(n - 1) << 2);
+                    mon_dispatch(host::decode_routine(peek_l(AMOS_DATA(mon_text_zones) + 4 * (n - 1))), 0, uint32_t(n - 1) << 2);
                 }
                 break;
             }
@@ -137,7 +137,7 @@ extern "C" {
                 button_set(n, true);
                 d1 = 1;
             }
-            if (n > 16 || mon_dispatch(host::decode_routine(peek_l(mon_keys + 4 * (n - 1))), uint32_t(n) << 2, d1))
+            if (n > 16 || mon_dispatch(host::decode_routine(peek_l(AMOS_DATA(mon_keys) + 4 * (n - 1))), uint32_t(n) << 2, d1))
                 break;
         }
     }
@@ -198,8 +198,8 @@ void mon_reinit(AllRegs *r)
     banks_program();
     AllRegs p = {};
     p.d[0] = 0;
-    p.a[1] = address(mon_error);
-    p.a[2] = address(mon_testing);
+    p.a[1] = address(AMOS_DATA(mon_error));
+    p.a[2] = address(AMOS_DATA(mon_testing));
     call_a6(lib_entry(L_Prg_RunIt), p, m.Tt_Program);
     // back: out of memory
     alert_message(17);

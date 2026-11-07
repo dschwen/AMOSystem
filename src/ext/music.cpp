@@ -780,9 +780,9 @@ void ext_music_init()
     IData &d = idata();
     volatile MusicData &m = md();
     d.ExtAdr[ExtNb * 4] = mb();
-    d.ExtAdr[ExtNb * 4 + 1] = address(music_default);
-    d.ExtAdr[ExtNb * 4 + 2] = address(music_end);
-    d.ExtAdr[ExtNb * 4 + 3] = address(music_bank_check);
+    d.ExtAdr[ExtNb * 4 + 1] = address(AMOS_DATA(music_default));
+    d.ExtAdr[ExtNb * 4 + 2] = address(AMOS_DATA(music_end));
+    d.ExtAdr[ExtNb * 4 + 3] = address(AMOS_DATA(music_bank_check));
     d.VblRout[0] = address(ext_music_vbl);
     m.MusClock = 3546895;
     m.TempoBase = 100;

@@ -217,7 +217,7 @@ uint32_t interp_prun_run(uint32_t program, RoutineArg run_it)
     AllRegs r = context_regs();
     r.a[6] = program;
     r.d[0] = uint32_t(-1);
-    r.a[1] = address(interp_prun_errors);
+    r.a[1] = address(AMOS_DATA(interp_prun_errors));
     r.a[2] = 0;
     AllRegs out = mark_run(m, [&] {
         glue_call(run_it, r);

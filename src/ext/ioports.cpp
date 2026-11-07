@@ -501,8 +501,8 @@ extern "C" uint32_t ext_ioports_cold(RegFrame &r)
 {
     IData &d = idata();
     d.ExtAdr[ExtNb * 4] = address(data_zone);
-    d.ExtAdr[ExtNb * 4 + 1] = address(ext_ioports_end_entry);
-    d.ExtAdr[ExtNb * 4 + 2] = address(ext_ioports_end_entry);
+    d.ExtAdr[ExtNb * 4 + 1] = address(AMOS_DATA(ext_ioports_end_entry));
+    d.ExtAdr[ExtNb * 4 + 2] = address(AMOS_DATA(ext_ioports_end_entry));
     poke_w(data_zone + Special, 0x84);
     return cold_start(r, ExtNb, 0x0200, nullptr);
 }

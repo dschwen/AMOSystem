@@ -187,14 +187,14 @@ bool cold_start(uint32_t program)
         !reserve_zones(4))
         return false;
     Regs p;
-    p.a[1] = address(mon_window_init);
+    p.a[1] = address(AMOS_DATA(mon_window_init));
     wi_call(wi::Print, p);
     Regs o;
     o.d[0] = ChannelN;
     o.d[1] = 512;
     o.d[2] = 12;
     o.d[3] = 0;                                 // not copied
-    o.a[0] = address(mon_dbl);
+    o.a[0] = address(AMOS_DATA(mon_dbl));
     o.a[1] = d.Ed_Resource + peek_l(ptr<uint8_t>(d.Ed_Resource + 2));
     o.a[2] = 0;
     lib_call(L_Dia_OpenChannel, o);

@@ -2,6 +2,9 @@
 #include "runtime/static_symbols.h"
 #include "runtime/detail/identity_segments.h"
 #include "tables/tables.h"
+#include "hal/system.h"
+#include "core/amos.h"
+#include <string.h>
 #include "memory/guest_memory.h"
 #include "abi/guest_address_codec.h"
 #include <stdio.h>
@@ -50,6 +53,32 @@ Result<uint32_t> relocated_value(const SegmentBindings& bindings, const Relocati
     return {uint32_t(delta.value), Fault::none};
 }
 }
+#if defined(AMOS_GUEST_BIASED)
+// The tables' data is loaded into the guest's memory (chip segments to chip memory), with its
+// relocations: the native arrays are the image's source and are not used again.
+void prepare_static_symbols() {
+    if (ready) return;
+    SegmentBindings plan;
+    for (const auto& source : sources) {
+        const uint64_t size = source.bytes.size();
+        uint8_t *memory = static_cast<uint8_t *>(hal::allocate(uint32_t(size ? size : 1), source.chip ? hal::MemoryChip : 0));
+        if (!memory) invalid_static_symbol();
+        memcpy(memory, source.bytes.data().unsafe_native(), size_t(size));
+        const auto start = abi::AddressCodec::decode<Byte>(address(memory));
+        if (plan.bind(id(source.id), GuestSpan<Byte>(start, size)) != Fault::none) invalid_static_symbol();
+    }
+    for (const auto& relocation : relocations) {
+        auto destination = plan.resolve(GuestSymbol<Byte>(id(relocation.source), relocation.offset));
+        auto value = relocated_value(plan, relocation);
+        if (!destination || !value) invalid_static_symbol();
+        auto *at = ptr<uint8_t>(abi::AddressCodec::encode(destination.value.address()));
+        for (uint8_t i = 0; i < relocation.width; ++i)
+            at[i] = uint8_t(value.value >> (8 * (relocation.width - 1 - i)));
+    }
+    native_bindings = plan;
+    ready = true;
+}
+#else
 void prepare_static_symbols() {
     if (ready) return;
     for (const auto& source : sources) {
@@ -59,12 +88,13 @@ void prepare_static_symbols() {
     }
     ready = true;
 }
+#endif
 const SegmentBindings& static_symbol_bindings() {
-    if (!ready) invalid_static_symbol();
+    if (!ready) prepare_static_symbols();
     return native_bindings;
 }
 uint32_t static_address(tables::Segment segment, uint32_t offset) {
-    if (!ready) invalid_static_symbol();
+    if (!ready) prepare_static_symbols();
     auto pointer = native_bindings.resolve(symbol(segment, offset));
     if (!pointer) invalid_static_symbol();
     return abi::AddressCodec::encode(pointer.value.address());

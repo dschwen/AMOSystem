@@ -139,7 +139,11 @@ HOST_SDLLIB := $(if $(filter link,$(HOST_SDL)),-l:libSDL2-2.0.so.0)
 # Aminet (tools/fetch_ndk.py: build/ndk, no licence to bundle them: see it)
 NDK_TOOLCHAIN := $(AMIGA_PREFIX)/m68k-amigaos/ndk-include
 NDK_INCLUDE   ?= $(if $(wildcard $(NDK_TOOLCHAIN)/exec/types.h),$(NDK_TOOLCHAIN),$(BUILD)/ndk/Include_H)
-HOST_FLAGS  := $(HOST_ARCHFLAGS) $(HOST_OPT) $(HOST_SDLDEF) -D__use_amiga_stdc_c99 -std=c++20 -fno-exceptions -fno-rtti -fno-threadsafe-statics -fpack-struct=2 \
+# The guest's memory anywhere in the address space (src/core/guest_bias.h) instead of below 4GB:
+# what Apple Silicon needs (HOST_BIASED=0 for the identity mapping there, which does not run)
+HOST_BIASED ?= $(if $(filter arm64,$(HOST_TARGET_ARCH)),1,0)
+HOST_BIASDEF := $(if $(filter 1,$(HOST_BIASED)),-DAMOS_GUEST_BIASED)
+HOST_FLAGS  := $(HOST_ARCHFLAGS) $(HOST_OPT) $(HOST_SDLDEF) $(HOST_BIASDEF) -D__use_amiga_stdc_c99 -std=c++20 -fno-exceptions -fno-rtti -fno-threadsafe-statics -fpack-struct=2 \
                $(HOST_CPPFLAGS) -Isrc/host/include -Isrc -idirafter $(NDK_INCLUDE) -MMD -MP
 
 # topaz and the usa keymap, from the user's Kickstart (as the tests'

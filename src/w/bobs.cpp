@@ -469,7 +469,7 @@ void draw(amos::Bob *b, const be_u32 *planes, uint32_t data, uint32_t step, uint
         for (uint16_t p = 0; p <= b->BbNPlan; p++, data += step, which >>= 1) {
             if (!(which & 1))
                 continue;
-            uint8_t *to = ptr<uint8_t>(planes[p]) + offset;
+            uint8_t *to = ptr<uint8_t>(uint32_t(planes[p]) + offset);   // (the offset wraps: it may be negative)
             hal::wait_blit();
             blit(to);
         }

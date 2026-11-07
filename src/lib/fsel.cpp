@@ -975,7 +975,7 @@ void selector(const be_u32 *params)
 {
     IData &d = idata();
     FileSelector *f = fs();
-    d.Fs_ErrPatch = address(lib_fs_error_patch);
+    d.Fs_ErrPatch = address(AMOS_DATA(lib_fs_error_patch));
     Screen *current = ptr<Screen>(wdata().EcCourant);
     f->Fs_OldEc = current ? current->EcNumber : 0xFFFF;
     // The mouse stays on the selector
@@ -1018,7 +1018,7 @@ void selector(const be_u32 *params)
     reinterpret_cast<uint8_t *>(&f->Fs_Array)[1] = 2;
     f->Fs_ASize = 0;
     f->Fs_AMagic = 0x4D67496B;
-    f->Fs_ACall = address(lib_fs_get_name);
+    f->Fs_ACall = address(AMOS_DATA(lib_fs_get_name));
     vars()[VArray] = static_cast<int32_t>(address(&f->Fs_Array));
     if (dia_run(Channel, -1, 0, 0).error)
         cancel();
@@ -1106,9 +1106,9 @@ uint32_t file_selector(const be_u32 *params)
     if (d.Patch_Errors.load())
         fon_call();
     Regs fl = {};
-    fl.a[1] = address(lib_fs_flush_record);
+    fl.a[1] = address(AMOS_DATA(lib_fs_flush_record));
     w::add_routine(fl.a[1], address(&wdata().MemFlush));
-    add_routine(lib_fs_end_record, address(&d.Sys_EndRoutines));
+    add_routine(AMOS_DATA(lib_fs_end_record), address(&d.Sys_EndRoutines));
     Regs m = {};
     m.d[0] = FileSelector::Fs_Long;
     m.a[0] = w::reserve(m.d[0], w::FastClear);

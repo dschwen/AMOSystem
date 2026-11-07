@@ -365,13 +365,13 @@ bool remove(be_u32 *cell)
     return true;
 }
 
-void block_cursor() { set_cursor_shape(ed_cursor_block); }
+void block_cursor() { set_cursor_shape(AMOS_DATA(ed_cursor_block)); }
 
 void hide()
 {
     window().Edt_YBloc = 0xFFFF;
     show_all();
-    set_cursor_shape(ed_cursor_normal);
+    set_cursor_shape(AMOS_DATA(ed_cursor_normal));
 }
 
 } // namespace
@@ -427,7 +427,7 @@ void ed_block_on(AllRegs *) { block_on(); }
 
 void ed_block_cursor(AllRegs *) { block_cursor(); }
 void ed_block_hide(AllRegs *) { hide(); }
-void ed_cursor_normal_fn(AllRegs *) { set_cursor_shape(ed_cursor_normal); }
+void ed_cursor_normal_fn(AllRegs *) { set_cursor_shape(AMOS_DATA(ed_cursor_normal)); }
 
 // Ed_BlocAll: all the text
 void ed_block_all(AllRegs *)

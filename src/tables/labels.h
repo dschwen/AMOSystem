@@ -304,3 +304,12 @@ extern uint8_t *const w_wi_in;
 extern uint8_t *const w_widela;
 extern uint8_t *const w_wopen;
 }
+
+// A label of the tables' data, as a pointer: the place in the table on the Amiga, the place in the
+// guest memory the image of the table was loaded to on another host
+#if defined(__mc68000__)
+#define AMOS_DATA(name) (::name)
+#else
+#include "tables/guest_labels.h"
+#define AMOS_DATA(name) (::amos::host::static_data(::amos::tables::data_symbols::name))
+#endif

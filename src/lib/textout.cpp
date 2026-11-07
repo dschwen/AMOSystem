@@ -78,7 +78,7 @@ uint32_t prt_open()
     if (!d.PrtHandle)
         disk_error();
     Regs r;
-    r.a[1] = address(lib_prt_close_record);
+    r.a[1] = address(AMOS_DATA(lib_prt_close_record));
     r.a[2] = address(&d.Sys_ClearRoutines);
     w::add_routine(r.a[1], r.a[2]);
     return d.PrtHandle;

@@ -55,10 +55,10 @@ const uint8_t *extension_image(const char *name)
     static const struct {
         const char *file;
         const uint8_t *image;
-    } images[] = {{"AMOSPro_Music.Lib", ext_music_image},
-                  {"AMOSPro_Compact.Lib", ext_compact_image},
-                  {"AMOSPro_Request.Lib", ext_request_image},
-                  {"AMOSPro_IOPorts.Lib", ext_ioports_image}};
+    } images[] = {{"AMOSPro_Music.Lib", AMOS_DATA(ext_music_image)},
+                  {"AMOSPro_Compact.Lib", AMOS_DATA(ext_compact_image)},
+                  {"AMOSPro_Request.Lib", AMOS_DATA(ext_request_image)},
+                  {"AMOSPro_IOPorts.Lib", AMOS_DATA(ext_ioports_image)}};
     const char *file = name;
     for (const char *p = name; *p && *p != ' '; p++)
         if (*p == '/' || *p == ':')
@@ -510,7 +510,7 @@ int libraries_load()
     // the main library (linked in: its name in the configuration only
     // gives its command line), then the extensions, from the configuration
     const char *command = sys_add_path_com(sys_message(14));
-    if (int e = library_load(0, command, main_library))
+    if (int e = library_load(0, command, AMOS_DATA(main_library)))
         return e;
     for (uint32_t n = 1; n < Libraries; n++) {
         const char *name = sys_message(16 + n - 1);
@@ -536,7 +536,7 @@ void library_patch()
 {
     uint8_t *tokens = library(0);
     be_u16 *sizes = ptr<be_u16>(lb_long(tokens, LB_LibSizes));
-    const uint8_t *p = main_amos_jmps;
+    const uint8_t *p = AMOS_DATA(main_amos_jmps);
     uint16_t n = peek_w(p);
     p += 2;
     do {
@@ -547,7 +547,7 @@ void library_patch()
     } while (n);
     // the extensions' routines in AMOSPro (src/ext), for the slots that hold
     // them: the same number of routines, the routines empty
-    for (const uint8_t *e = main_ext_jmps; uint16_t slot = peek_w(e); e += 6) {
+    for (const uint8_t *e = AMOS_DATA(main_ext_jmps); uint16_t slot = peek_w(e); e += 6) {
         uint8_t *ext = library(slot);
         if (!ext)
             continue;
