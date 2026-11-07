@@ -699,12 +699,12 @@ extern "C" void lib_in_pload(GuestString name, int32_t number)
     while (read_header_long() != 0x3E9)
         ;
     uint32_t length = read_header_long() << 2;
-    uint8_t *bank = bank_reserve(number, BankData | (chip ? BankChip : 0), length,
-                                 static_cast<const char *>(lib_address(L_BkAsm)));
+    ContextCursor bank = bank_reserve(number, BankData | (chip ? BankChip : 0), length,
+                                      static_cast<const char *>(lib_address(L_BkAsm)));
     bank_changed();
     if (!bank)
         error(24);
-    if (!file_read(bank, length))
+    if (!file_read(bank_host_view(bank), length))
         disk_error();
     file_close();
 }

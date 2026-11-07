@@ -1677,11 +1677,12 @@ extern "C" void lib_in_menu_to_bank(uint32_t n)
     if (!base)
         fon_call();
     uint32_t size = tree_size(base);
-    uint8_t *bank = bank_reserve(n, BankData, size, "Menu    ");
+    ContextCursor bank = bank_reserve(n, BankData, size, "Menu    ");
     if (!bank)
         out_of_memory();
     bank_changed();
-    tree_to_bank(base, bank, bank);
+    // (the tree is copied natively: the bank's host view)
+    tree_to_bank(base, bank_host_view(bank), bank_host_view(bank));
 }
 
 // BANK TO MENU n
@@ -1692,7 +1693,7 @@ extern "C" void lib_in_bank_to_menu(uint32_t n)
     menu_clear_var();
     if (!d.ScOn)
         screen_not_open();
-    uint8_t *bank = bank_find(n);
+    ContextCursor bank = bank_find(n);
     if (!bank)
         error(36);
     if (peek_l(bank - 8) != 0x4D656E75)     // "Menu"
@@ -1701,7 +1702,7 @@ extern "C" void lib_in_bank_to_menu(uint32_t n)
     if (!base)
         out_of_memory();
     d.MnBase = address(base);
-    tree_from_bank(base, reinterpret_cast<MenuItem *>(bank), bank);
+    tree_from_bank(base, reinterpret_cast<MenuItem *>(bank_host_view(bank)), bank_host_view(bank));
     d.MnAdEc = d.ScOnAd;
     d.MnChange++;
 }

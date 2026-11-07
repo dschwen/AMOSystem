@@ -307,7 +307,7 @@ Sample sample(uint32_t n)
     int32_t number = int16_t(md().SamBank);
     if (!number)
         ifonc();
-    uint8_t *bank = bank_find(uint32_t(number));
+    ContextCursor bank = bank_find(uint32_t(number));
     if (!bank || peek_l(bank - 8) != 0x53616D70)       // "Samp"
         error(BNSam);
     if (!n)
@@ -317,8 +317,8 @@ Sample sample(uint32_t n)
     uint32_t offset = peek_l(bank + 2 - 4 + uint16_t(n << 2));
     if (!offset)
         error(SNDef);
-    uint8_t *s = bank + offset;
-    return {address(s + 14), peek_l(s + 10), peek_w(s + 8)};
+    ContextCursor s = bank + offset;
+    return {encode_context_cursor(s + 14), peek_l(s + 10), peek_w(s + 8)};
 }
 
 // Div32: d6 / d3, by the original's division (a 1 for the first 16
@@ -741,16 +741,16 @@ uint8_t *load_bank(GuestString name, uint32_t number, uint16_t flags, uint32_t e
     if (!file)
         music_disk_error();
     int32_t size = hal::seek(file, hal::seek(file, 0, OFFSET_END), OFFSET_BEGINNING);
-    uint8_t *bank = bank_reserve(number, flags, uint32_t(size) + extra, bank_name);
+    ContextCursor bank = bank_reserve(number, flags, uint32_t(size) + extra, bank_name);
     if (!bank) {
         hal::close(file);
         out_of_memory();
     }
-    int32_t read = hal::read(file, bank, size);
+    int32_t read = hal::read(file, bank_host_view(bank), size);
     hal::close(file);
     if (read != size)
         ifonc();
-    return bank;
+    return bank_host_view(bank);
 }
 
 // A file of the program (Sload, Ssave), open and not a directory one
@@ -895,7 +895,7 @@ void ext_music_bank_check()
     }
     // the AMOS music's: bank 3
     uint32_t old = m.MusBank;
-    uint8_t *bank = bank_find(3);
+    ContextCursor bank = bank_find(3);
     if (!bank || peek_l(bank - 8) != 0x4D757369) {   // "Musi"
         if (old) {
             music_init();
@@ -904,14 +904,14 @@ void ext_music_bank_check()
         return;
     }
     uint32_t sum = peek_l(bank) + peek_l(bank + 4) + peek_l(bank + 8) + peek_l(bank + 12);
-    if (address(bank) == old && sum == m.MusCheck)
+    if (encode_context_cursor(bank) == old && sum == m.MusCheck)
         return;
-    m.MusBank = address(bank);
+    m.MusBank = encode_context_cursor(bank);
     m.MusCheck = sum;
     music_init();
-    m.BankInst = address(bank) + peek_l(bank);
-    m.BankSong = address(bank) + peek_l(bank + 4);
-    m.BankPat = address(bank) + peek_l(bank + 8);
+    m.BankInst = encode_context_cursor(bank) + peek_l(bank);
+    m.BankSong = encode_context_cursor(bank) + peek_l(bank + 4);
+    m.BankPat = encode_context_cursor(bank) + peek_l(bank + 8);
 }
 
 // GoSam with registers (the editor's sounds): d1 voices, a1 sample, d2

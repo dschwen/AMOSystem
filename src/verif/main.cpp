@@ -382,8 +382,8 @@ void program_test()
 
     // AMOS 1.3 has 16 banks
     d.VerCheck1_3 = 0;
-    for (uint32_t b = peek_l(ptr<uint8_t>(d.Cur_Banks)); b; b = peek_l(ptr<uint8_t>(b)))
-        if (peek_l(ptr<uint8_t>(b) + 8) > 16) {
+    for (uint32_t b = peek_l(decode_context_cursor(d.Cur_Banks)); b; b = peek_l(decode_context_cursor(b)))
+        if (peek_l(decode_context_cursor(b) + 8) > 16) {
             d.VerNot1_3 = 1;
             break;
         }

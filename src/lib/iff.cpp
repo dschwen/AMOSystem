@@ -702,11 +702,11 @@ extern "C" uint32_t lib_fn_form_load3(uint32_t channel, int32_t where, int32_t c
     if (where < 1024) {
         bank_erase(where);
         uint32_t size = form_size(file, count);
-        uint8_t *bank = bank_reserve(where, 0, size, static_cast<const char *>(lib_address(L_BkIff)));
+        ContextCursor bank = bank_reserve(where, 0, size, static_cast<const char *>(lib_address(L_BkIff)));
         bank_changed();
         if (!bank)
             error(24);
-        to = bank;
+        to = bank_host_view(bank);
     }
     return form_load(file, to, count);
 }

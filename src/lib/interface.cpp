@@ -43,17 +43,19 @@ Resource resource()
     uint32_t n = idata().IDia_BankPuzzle;
     if (!n)
         return default_resource();
-    uint8_t *bank = bank_find(n);
+    ContextCursor bank = bank_find(n);
     if (!bank || peek_l(bank - 8) != 0x5265736F)       // "Reso"
         error(36);
     Resource r = default_resource();
     uint16_t parts = peek_w(bank);
+    // (the resource's parts are read natively below: its host view)
+    const uint8_t *view = bank_host_view(bank);
     if (parts >= 1 && peek_l(bank + 2))
-        r.graphics = bank + peek_l(bank + 2);
+        r.graphics = view + peek_l(bank + 2);
     if (parts >= 2 && peek_l(bank + 6))
-        r.messages = bank + peek_l(bank + 6);
+        r.messages = view + peek_l(bank + 6);
     if (parts >= 3 && peek_l(bank + 10)) {
-        r.programs = bank + peek_l(bank + 10);
+        r.programs = view + peek_l(bank + 10);
         r.count = peek_w(r.programs);
     }
     return r;

@@ -694,11 +694,11 @@ static void set_palette(const be_u16 *palette, uint32_t mask)
     ec_check(ec::SPal, r);
 }
 
-static const be_u16 *bank_palette(uint8_t *bank)
+static const be_u16 *bank_palette(ContextCursor bank)
 {
     if (!bank)
         error(36);
-    return reinterpret_cast<const be_u16 *>(bank + 2 + peek_w(bank) * 8u);
+    return reinterpret_cast<const be_u16 *>(bank_host_view(bank + (2 + peek_w(bank) * 8u)));
 }
 
 // GET ICON PALETTE [mask], GET SPRITE PALETTE [mask], GET PALETTE n[,mask]

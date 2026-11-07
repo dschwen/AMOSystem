@@ -11,51 +11,51 @@ namespace amos {
 
 namespace {
 
-uint8_t *mem_reserve(uint32_t length, uint32_t flags)
+ContextCursor mem_reserve(uint32_t length, uint32_t flags)
 {
     Regs r = {};
     r.d[0] = length;
     r.d[1] = flags;
     r.a[0] = w::reserve(r.d[0], r.d[1]);
-    return ptr<uint8_t>(r.a[0]);
+    return decode_context_cursor(r.a[0]);
 }
 
-void mem_free(void *address, uint32_t length)
+void mem_free(uint32_t at, uint32_t length)
 {
     Regs r = {};
-    r.a[1] = amos::address(address);
+    r.a[1] = at;
     r.d[0] = length;
     w::release(r.a[1], r.d[0]);
 }
 
 // The element before element in the list (the list head itself for the
 // first), or null if element is not in it
-be_u32 *lst_find_previous(be_u32 *list, uint8_t *element)
+ContextCursor lst_find_previous(ContextCursor list, ContextCursor element)
 {
-    be_u32 *previous = list;
-    while (uint32_t next = *previous) {
-        if (ptr<uint8_t>(next) == element)
+    ContextCursor previous = list;
+    while (uint32_t next = peek_l(previous)) {
+        if (next == encode_context_cursor(element))
             return previous;
-        previous = ptr<be_u32>(next);
+        previous = decode_context_cursor(next);
     }
-    return nullptr;
+    return ContextCursor{};
 }
 
 constexpr int BankHeader = 24;
 
-uint8_t *bank_of(uint32_t element) { return ptr<uint8_t>(element) + BankHeader; }
+ContextCursor bank_of(uint32_t element) { return decode_context_cursor(element) + BankHeader; }
 
 // The bank with this number: its element, or null
-be_u32 *bank_element(uint32_t number)
+ContextCursor bank_element(uint32_t number)
 {
-    for (uint32_t e = *bank_list(); e; e = peek_l(ptr<void>(e)))
-        if (peek_l(ptr<uint8_t>(e) + 8) == number)
-            return ptr<be_u32>(e);
-    return nullptr;
+    for (uint32_t e = peek_l(bank_list()); e; e = peek_l(decode_context_cursor(e)))
+        if (peek_l(decode_context_cursor(e) + 8) == number)
+            return decode_context_cursor(e);
+    return ContextCursor{};
 }
 
 // The image of a sprite: width in words, height, planes...
-uint32_t image_size(const uint8_t *image)
+uint32_t image_size(ContextCursor image)
 {
     // mulu on the low word, as in the assembler
     uint32_t size = static_cast<uint16_t>(peek_w(image) * peek_w(image + 2) * 2);
@@ -63,13 +63,13 @@ uint32_t image_size(const uint8_t *image)
 }
 
 // Bnk.EffBobA0: free the image and mask of a sprite bank entry
-void erase_image(uint8_t *entry)
+void erase_image(ContextCursor entry)
 {
     if (uint32_t image = peek_l(entry))
-        mem_free(ptr<void>(image), image_size(ptr<uint8_t>(image)) + 10);
+        mem_free(image, image_size(decode_context_cursor(image)) + 10);
     int32_t mask = static_cast<int32_t>(peek_l(entry + 4));
     if (mask > 0)
-        mem_free(ptr<void>(mask), peek_l(ptr<void>(mask)));
+        mem_free(uint32_t(mask), peek_l(decode_context_cursor(uint32_t(mask))));
     poke_l(entry, 0);
     poke_l(entry + 4, 0);
 }
@@ -78,77 +78,77 @@ void erase_image(uint8_t *entry)
 
 // ---- lists ------------------------------------------------------------
 
-uint8_t *lst_cree(be_u32 *list, uint32_t length, uint32_t memflags)
+ContextCursor lst_cree(ContextCursor list, uint32_t length, uint32_t memflags)
 {
-    uint8_t *element = mem_reserve(length + 8, memflags);
+    ContextCursor element = mem_reserve(length + 8, memflags);
     if (element) {
-        poke_l(element, *list);
-        *list = address(element);
+        poke_l(element, peek_l(list));
+        poke_l(list, encode_context_cursor(element));
         poke_l(element + 4, length);
     }
     return element;
 }
 
-uint8_t *lst_new(be_u32 *list, uint32_t length) { return lst_cree(list, length, MemClear | MemPublic); }
+ContextCursor lst_new(ContextCursor list, uint32_t length) { return lst_cree(list, length, MemClear | MemPublic); }
 
-void lst_del(be_u32 *list, uint8_t *element)
+void lst_del(ContextCursor list, ContextCursor element)
 {
-    if (be_u32 *previous = lst_find_previous(list, element)) {
-        *previous = peek_l(element);
-        mem_free(element, peek_l(element + 4) + 8);
+    if (ContextCursor previous = lst_find_previous(list, element)) {
+        poke_l(previous, peek_l(element));
+        mem_free(encode_context_cursor(element), peek_l(element + 4) + 8);
     }
 }
 
-void lst_del_all(be_u32 *list)
+void lst_del_all(ContextCursor list)
 {
-    while (*list)
-        lst_del(list, ptr<uint8_t>(*list));
+    while (uint32_t first = peek_l(list))
+        lst_del(list, decode_context_cursor(first));
 }
 
-void lst_insert(be_u32 *list, uint8_t *element)
+void lst_insert(ContextCursor list, ContextCursor element)
 {
-    poke_l(element, *list);
-    *list = address(element);
+    poke_l(element, peek_l(list));
+    poke_l(list, encode_context_cursor(element));
 }
 
-void lst_remove(be_u32 *list, uint8_t *element)
+void lst_remove(ContextCursor list, ContextCursor element)
 {
-    if (be_u32 *previous = lst_find_previous(list, element))
-        *previous = peek_l(element);
+    if (ContextCursor previous = lst_find_previous(list, element))
+        poke_l(previous, peek_l(element));
 }
 
 // ---- banks ------------------------------------------------------------
 
-uint8_t *bank_find(uint32_t number)
+ContextCursor bank_find(uint32_t number)
 {
-    be_u32 *e = bank_element(number);
-    return e ? bank_of(address(e)) : nullptr;
+    ContextCursor e = bank_element(number);
+    return e ? bank_of(encode_context_cursor(e)) : ContextCursor{};
 }
 
-uint8_t *bank_bobs()
+ContextCursor bank_bobs()
 {
-    uint8_t *bank = bank_find(1);
-    return bank && bank_flags(bank) & BankBobs ? bank : nullptr;
+    ContextCursor bank = bank_find(1);
+    return bank && bank_flags(bank) & BankBobs ? bank : ContextCursor{};
 }
 
-uint8_t *bank_icons()
+ContextCursor bank_icons()
 {
-    uint8_t *bank = bank_find(2);
-    return bank && bank_flags(bank) & BankIcons ? bank : nullptr;
+    ContextCursor bank = bank_find(2);
+    return bank && bank_flags(bank) & BankIcons ? bank : ContextCursor{};
 }
 
-uint32_t bank_length(const uint8_t *bank)
+uint32_t bank_length(ContextCursor bank)
 {
     if (bank_flags(bank) & (BankBobs | BankIcons))
         return peek_w(bank);
     return bank_size(bank);
 }
 
-void bank_erase_at(uint8_t *bank)
+void bank_erase_at(ContextCursor bank)
 {
     if (bank_flags(bank) & (BankBobs | BankIcons)) {
         uint16_t count = peek_w(bank);
-        uint8_t *entry = bank + 2;
+        ContextCursor entry = bank + 2;
         for (uint16_t i = 0; i < count; i++, entry += 8)
             erase_image(entry);
     }
@@ -159,15 +159,15 @@ void bank_erase_at(uint8_t *bank)
 
 void bank_erase(uint32_t number)
 {
-    if (uint8_t *bank = bank_find(number))
+    if (ContextCursor bank = bank_find(number))
         bank_erase_at(bank);
 }
 
 void bank_erase_all()
 {
-    uint32_t e = *bank_list();
+    uint32_t e = peek_l(bank_list());
     while (e) {
-        uint32_t next = peek_l(ptr<void>(e));
+        uint32_t next = peek_l(decode_context_cursor(e));
         bank_erase_at(bank_of(e));
         e = next;
     }
@@ -175,10 +175,10 @@ void bank_erase_all()
 
 void bank_erase_temp()
 {
-    uint32_t e = *bank_list();
+    uint32_t e = peek_l(bank_list());
     while (e) {
-        uint32_t next = peek_l(ptr<void>(e));
-        if (!(peek_w(ptr<uint8_t>(e) + 12) & BankData))
+        uint32_t next = peek_l(decode_context_cursor(e));
+        if (!(peek_w(decode_context_cursor(e) + 12) & BankData))
             bank_erase_at(bank_of(e));
         e = next;
     }
@@ -190,29 +190,29 @@ void bank_changed()
     for (int i = 0; i < 26; i++) {
         if (uint32_t routine = idata().ExtAdr[i * 4 + 3]) {
             Regs r = {};
-            r.a[0] = *bank_list();
+            r.a[0] = peek_l(bank_list());
             amos_call(&r, host::decode_routine(routine));
         }
     }
     // the sprite bank: bank 1, whatever it holds (as the assembler did)
     Regs r = {};
-    r.a[1] = address(bank_find(1));
+    r.a[1] = encode_context_cursor(bank_find(1));
     sy_call(sy::SetSpBank, r);
 }
 
-uint8_t *bank_reserve(uint32_t number, uint16_t flags, uint32_t length, const char *name)
+ContextCursor bank_reserve(uint32_t number, uint16_t flags, uint32_t length, const char *name)
 {
     number &= 0xFFFF;
     bank_erase(number);
     uint32_t memflags = MemPublic | MemClear | (flags & BankChip ? MemChip : 0);
-    uint8_t *e = lst_cree(bank_list(), length + 16, memflags);
+    ContextCursor e = lst_cree(bank_list(), length + 16, memflags);
     if (!e)
-        return nullptr;
+        return ContextCursor{};
     poke_l(e + 8, number);
     poke_w(e + 12, flags);
     poke_w(e + 14, 0);
     for (int i = 0; i < 8; i++)
-        e[16 + i] = name[i];
+        host::detail::write_cursor_at(e + (16 + i), uint8_t(name[i]));
     return e + BankHeader;
 }
 
@@ -220,10 +220,10 @@ uint32_t bank_or_address(int32_t value)
 {
     if (value >= 1024)
         return value;
-    uint8_t *bank = bank_find(value);
+    ContextCursor bank = bank_find(value);
     if (!bank)
         error(36);
-    return address(bank);
+    return encode_context_cursor(bank);
 }
 
 bool banks_previous_program()
@@ -259,41 +259,41 @@ namespace {
 // images of old. mode 0: the old bank's images are dropped; 1: they are
 // kept (as many as fit); -1: the old bank stays and only its palette is
 // copied. Returns the new bank, or null if out of memory.
-uint8_t *bank_resize_images(uint8_t *old, int16_t mode, uint16_t count, uint16_t flags)
+ContextCursor bank_resize_images(ContextCursor old, int16_t mode, uint16_t count, uint16_t flags)
 {
-    uint8_t *e = lst_new(bank_list(), count * 8u + 8 * 2 + 2 + 64);
+    ContextCursor e = lst_new(bank_list(), count * 8u + 8 * 2 + 2 + 64);
     if (!e)
-        return nullptr;
+        return ContextCursor{};
     bool icons = flags & BankIcons;
     poke_l(e + 8, icons ? 2 : 1);
     poke_w(e + 12, flags);
     poke_w(e + 14, 0);
     auto name = static_cast<const char *>(lib_address(icons ? L_BkIco : L_BkSpr));
     for (int i = 0; i < 8; i++)
-        e[16 + i] = name[i];
-    uint8_t *bank = e + 24;
+        host::detail::write_cursor_at(e + (16 + i), uint8_t(name[i]));
+    ContextCursor bank = e + 24;
     poke_w(bank, count);
-    const be_u16 *palette;
+    ContextCursor palette;
     if (mode < 0 || (mode > 0 && old)) {
         if (mode > 0) {
             // take over the images that fit; the old bank loses them
             uint16_t n = peek_w(old) < count ? peek_w(old) : count;
-            be_u32 *from = reinterpret_cast<be_u32 *>(old + 2);
-            be_u32 *to = reinterpret_cast<be_u32 *>(bank + 2);
-            for (uint32_t i = 0; i < n * 2u; i++) {
-                to[i] = from[i];
-                from[i] = 0;
+            ContextCursor from = old + 2;
+            ContextCursor to = bank + 2;
+            for (uint32_t i = 0; i < n * 2u; i++, from += 4, to += 4) {
+                poke_l(to, peek_l(from));
+                poke_l(from, 0);
             }
         }
-        palette = reinterpret_cast<const be_u16 *>(old + 2 + peek_w(old) * 8);
+        palette = old + (2 + peek_w(old) * 8);
     } else if (idata().ScOnAd) {
-        palette = reinterpret_cast<const be_u16 *>(ptr<Screen>(idata().ScOnAd)->EcPal);
+        palette = decode_context_cursor(idata().ScOnAd + uint32_t(offsetof(Screen, EcPal)));
     } else {
-        palette = reinterpret_cast<const be_u16 *>(idata().DefPal);
+        palette = decode_context_cursor(address(idata().DefPal));
     }
-    be_u16 *to = reinterpret_cast<be_u16 *>(bank + 2 + count * 8);
+    ContextCursor to = bank + (2 + count * 8);
     for (int i = 0; i < 32; i++)
-        to[i] = palette[i];
+        poke_w(to + 2 * i, peek_w(palette + 2 * i));
     if (mode >= 0 && old)
         bank_erase_at(old);
     return bank;
@@ -309,9 +309,9 @@ uint8_t *bank_resize_images(uint8_t *old, int16_t mode, uint16_t count, uint16_t
 // element, or 0 (BEQ).
 extern "C" uint32_t lib_lst_cree(RegFrame &r)
 {
-    uint8_t *e = lst_cree(ptr<be_u32>(r.a[0]), r.d[0], r.d[1]);
+    ContextCursor e = lst_cree(decode_context_cursor(r.a[0]), r.d[0], r.d[1]);
     r.d[1] = r.d[0];
-    r.a[1] = r.d[0] = address(e);
+    r.a[1] = r.d[0] = encode_context_cursor(e);
     return r.d[0];
 }
 extern "C" uint32_t lib_lst_new(RegFrame &r)
@@ -329,22 +329,22 @@ extern "C" uint32_t lib_lst_chip_new(RegFrame &r)
 // a0 = list.
 extern "C" uint32_t lib_lst_del(RegFrame &r)
 {
-    lst_del(ptr<be_u32>(r.a[0]), ptr<uint8_t>(r.a[1]));
+    lst_del(decode_context_cursor(r.a[0]), decode_context_cursor(r.a[1]));
     return 0;
 }
 extern "C" uint32_t lib_lst_remove(RegFrame &r)
 {
-    lst_remove(ptr<be_u32>(r.a[0]), ptr<uint8_t>(r.a[1]));
+    lst_remove(decode_context_cursor(r.a[0]), decode_context_cursor(r.a[1]));
     return 0;
 }
 extern "C" uint32_t lib_lst_insert(RegFrame &r)
 {
-    lst_insert(ptr<be_u32>(r.a[0]), ptr<uint8_t>(r.a[1]));
+    lst_insert(decode_context_cursor(r.a[0]), decode_context_cursor(r.a[1]));
     return 0;
 }
 extern "C" uint32_t lib_lst_del_all(RegFrame &r)
 {
-    lst_del_all(ptr<be_u32>(r.a[0]));
+    lst_del_all(decode_context_cursor(r.a[0]));
     r.d[0] = r.a[1] = 0;
     return 0;
 }
@@ -361,14 +361,14 @@ extern "C" uint32_t lib_bnk_cur_program(RegFrame &)
 // found: a0 = a1 = bank, d0.w = its flags, d1 = its element.
 extern "C" uint32_t lib_bnk_get_adr(RegFrame &r)
 {
-    be_u32 *e = bank_element(r.d[0]);
+    ContextCursor e = bank_element(r.d[0]);
     if (!e) {
         r.a[0] = r.a[1] = r.d[1] = 0;
         return 0;
     }
-    uint8_t *bank = bank_of(address(e));
-    r.d[1] = address(e);
-    r.a[0] = r.a[1] = address(bank);
+    ContextCursor bank = bank_of(encode_context_cursor(e));
+    r.d[1] = encode_context_cursor(e);
+    r.a[0] = r.a[1] = encode_context_cursor(bank);
     r.d[0] = (r.d[0] & 0xFFFF0000u) | bank_flags(bank);
     return 1;
 }
@@ -377,8 +377,8 @@ extern "C" uint32_t lib_bnk_get_adr(RegFrame &r)
 // if none); BNE if it holds sprites / icons. d0/d1 are kept.
 static uint32_t get_images(RegFrame &r, uint32_t number, uint16_t flag)
 {
-    uint8_t *bank = bank_find(number);
-    r.a[0] = r.a[1] = address(bank);
+    ContextCursor bank = bank_find(number);
+    r.a[0] = r.a[1] = encode_context_cursor(bank);
     return bank && bank_flags(bank) & flag;
 }
 extern "C" uint32_t lib_bnk_get_bobs(RegFrame &r) { return get_images(r, 1, BankBobs); }
@@ -393,12 +393,12 @@ extern "C" uint32_t lib_bnk_eff(RegFrame &r)
 }
 extern "C" uint32_t lib_bnk_eff_a0(RegFrame &r)
 {
-    bank_erase_at(ptr<uint8_t>(r.a[0]));
+    bank_erase_at(decode_context_cursor(r.a[0]));
     return 0;
 }
 extern "C" uint32_t lib_bnk_eff_bob_a0(RegFrame &r)
 {
-    erase_image(ptr<uint8_t>(r.a[0]));
+    erase_image(decode_context_cursor(r.a[0]));
     return 0;
 }
 extern "C" uint32_t lib_bnk_eff_all(RegFrame &)
@@ -421,7 +421,7 @@ extern "C" uint32_t lib_bnk_or_adr(RegFrame &r)
 
 // Bnk.AdBob, Bnk.AdIcon: d0 = image number. Out: a0 = d0 = its entry, or
 // 0 (BEQ: no bank, or past the end); d1 = number of images.
-static uint32_t image_entry(RegFrame &r, uint8_t *bank)
+static uint32_t image_entry(RegFrame &r, ContextCursor bank)
 {
     r.d[1] = 0;
     r.a[0] = 0;
@@ -429,7 +429,7 @@ static uint32_t image_entry(RegFrame &r, uint8_t *bank)
         r.d[1] = peek_w(bank);
         uint16_t n = static_cast<uint16_t>(r.d[0]);
         if (n <= r.d[1])
-            r.a[0] = address(bank - 8 + 2) + static_cast<uint16_t>(n << 3);
+            r.a[0] = encode_context_cursor(bank - 8 + 2) + static_cast<uint16_t>(n << 3);
     }
     return r.d[0] = r.a[0];
 }
@@ -440,18 +440,18 @@ extern "C" uint32_t lib_bnk_ad_icon(RegFrame &r) { return image_entry(r, bank_ic
 // Bnk.ResBob / Bnk.ResIco find the old bank and the flags themselves. Out:
 // BEQ: a0 = new bank, a1 = old one, d0 = 0; BNE out of memory: a0 = 0,
 // d0 = -1.
-static uint32_t reserve_images(RegFrame &r, uint8_t *old, uint16_t flags)
+static uint32_t reserve_images(RegFrame &r, ContextCursor old, uint16_t flags)
 {
-    uint8_t *bank = bank_resize_images(old, static_cast<int16_t>(r.d[0]),
+    ContextCursor bank = bank_resize_images(old, static_cast<int16_t>(r.d[0]),
                                        static_cast<uint16_t>(r.d[1]), flags);
-    r.a[0] = address(bank);
-    r.a[1] = address(old);
+    r.a[0] = encode_context_cursor(bank);
+    r.a[1] = encode_context_cursor(old);
     r.d[0] = bank ? 0 : -1u;
     return static_cast<uint16_t>(r.d[0]);
 }
 extern "C" uint32_t lib_bnk_ric(RegFrame &r)
 {
-    return reserve_images(r, ptr<uint8_t>(r.a[1]), static_cast<uint16_t>(r.d[2]));
+    return reserve_images(r, decode_context_cursor(r.a[1]), static_cast<uint16_t>(r.d[2]));
 }
 extern "C" uint32_t lib_bnk_res_bob(RegFrame &r) { return reserve_images(r, bank_find(1), BankBobs | BankData); }
 extern "C" uint32_t lib_bnk_res_ico(RegFrame &r) { return reserve_images(r, bank_find(2), BankIcons | BankData); }
@@ -460,14 +460,14 @@ extern "C" uint32_t lib_bnk_res_ico(RegFrame &r) { return reserve_images(r, bank
 extern "C" uint32_t lib_bnk_schrink(RegFrame &r)
 {
     int32_t size = static_cast<int32_t>(r.d[1]);
-    uint8_t *bank = size > 0 ? bank_find(r.d[0]) : nullptr;
+    ContextCursor bank = size > 0 ? bank_find(r.d[0]) : ContextCursor{};
     if (size <= 0)
         return r.d[0] = 23;
     if (!bank)
         return r.d[0] = 36;
     if (bank_flags(bank) & (BankBobs | BankIcons))
         return r.d[0] = 23;
-    uint8_t *e = bank - 24;
+    ContextCursor e = bank - 24;
     int32_t old_size = static_cast<int32_t>(peek_l(e + 4) + 8);
     int32_t new_size = size + 3 * 8;
     if (new_size > old_size)
@@ -476,8 +476,8 @@ extern "C" uint32_t lib_bnk_schrink(RegFrame &r)
     // again, without letting another task in between
     uint32_t next = peek_l(e);
     hal::forbid();
-    hal::release(e, old_size);
-    hal::allocate_at(new_size, e);
+    hal::release(bank_host_view(e), old_size);
+    hal::allocate_at(new_size, bank_host_view(e));
     hal::permit();
     poke_l(e, next);
     poke_l(e + 4, new_size - 8);
@@ -488,9 +488,9 @@ extern "C" uint32_t lib_bnk_schrink(RegFrame &r)
 // a0 = d0 = bank, or 0 (BEQ).
 extern "C" uint32_t lib_bnk_reserve(RegFrame &r)
 {
-    uint8_t *bank = bank_reserve(r.d[0], static_cast<uint16_t>(r.d[1]), r.d[2],
-                                 ptr<const char>(r.a[0]));
-    return r.a[0] = r.d[0] = address(bank);
+    ContextCursor bank = bank_reserve(r.d[0], static_cast<uint16_t>(r.d[1]), r.d[2],
+                                      ptr<const char>(r.a[0]));
+    return r.a[0] = r.d[0] = encode_context_cursor(bank);
 }
 
 // Bnk.Change: tell the extensions and the sprites. Keeps all registers;
@@ -504,15 +504,15 @@ extern "C" uint32_t lib_bnk_change(RegFrame &r)
 // Bnk.Length: a0 = bank. Out: d0 = memory it uses, with its images.
 extern "C" uint32_t lib_bnk_length(RegFrame &r)
 {
-    const uint8_t *bank = ptr<uint8_t>(r.a[0]);
+    ContextCursor bank = decode_context_cursor(r.a[0]);
     uint32_t size = bank_size(bank);
     if (bank_flags(bank) & (BankBobs | BankIcons)) {
         uint16_t count = peek_w(bank);
-        const uint8_t *entry = bank + 2;
+        ContextCursor entry = bank + 2;
         for (uint16_t i = 0; i < count; i++, entry += 8) {
             if (uint32_t image = peek_l(entry)) {
                 // mulu on the low word, as in the assembler
-                const uint8_t *p = ptr<uint8_t>(image);
+                ContextCursor p = decode_context_cursor(image);
                 uint32_t wh = static_cast<uint32_t>(peek_w(p)) * peek_w(p + 2);
                 size += (static_cast<uint16_t>(wh) * static_cast<uint32_t>(peek_w(p + 4))) << 1;
             }
@@ -526,11 +526,11 @@ extern "C" uint32_t lib_bnk_length(RegFrame &r)
 extern "C" uint32_t lib_bnk_get_length(RegFrame &r)
 {
     uint32_t normal = 0, bobs = 0, icons = 0;
-    for (uint32_t e = *bank_list(); e; e = peek_l(ptr<void>(e))) {
+    for (uint32_t e = peek_l(bank_list()); e; e = peek_l(decode_context_cursor(e))) {
         RegFrame f = {};
-        f.a[0] = address(bank_of(e));
+        f.a[0] = encode_context_cursor(bank_of(e));
         uint32_t size = lib_bnk_length(f);
-        uint16_t flags = peek_w(ptr<uint8_t>(e) + 12);
+        uint16_t flags = peek_w(decode_context_cursor(e) + 12);
         if (flags & BankBobs)
             bobs += size;
         else if (flags & BankIcons)
@@ -550,39 +550,41 @@ namespace {
 // Bnk.InsBob: a new empty image n in the sprite / icon bank (images from n
 // on move up; past the end, it goes at the end). Returns the new entry, or
 // null if out of memory.
-uint8_t *bank_insert_image(uint8_t *old, uint32_t n)
+ContextCursor bank_insert_image(ContextCursor old, uint32_t n)
 {
     uint16_t count = peek_w(old);
-    uint8_t *bank = bank_resize_images(old, -1, count + 1, bank_flags(old));
+    ContextCursor bank = bank_resize_images(old, -1, count + 1, bank_flags(old));
     if (!bank)
-        return nullptr;
-    be_u32 *from = reinterpret_cast<be_u32 *>(old + 2);
-    be_u32 *to = reinterpret_cast<be_u32 *>(bank + 2);
-    be_u32 *hole = nullptr;
-    for (uint16_t i = 1; i <= count + (hole ? 1 : 0); i++) {
-        if (i == static_cast<uint16_t>(n) && !hole) {
+        return ContextCursor{};
+    ContextCursor from = old + 2;
+    ContextCursor to = bank + 2;
+    ContextCursor hole = ContextCursor{};
+    bool holed = false;
+    for (uint16_t i = 1; i <= count + (holed ? 1 : 0); i++) {
+        if (i == static_cast<uint16_t>(n) && !holed) {
             hole = to;
-            to += 2;
+            holed = true;
+            to += 8;
             continue;
         }
-        *to++ = *from;
-        *from++ = 0;
-        *to++ = *from;
-        *from++ = 0;
+        for (int k = 0; k < 2; k++, to += 4, from += 4) {
+            poke_l(to, peek_l(from));
+            poke_l(from, 0);
+        }
     }
-    if (!hole)
+    if (!holed)
         hole = to;
     bank_erase_at(old);
-    return reinterpret_cast<uint8_t *>(hole);
+    return hole;
 }
 
 // Bnk.DelBob: erase images first to last (counted from 1) of the bank;
 // the bank goes when none is left
-void bank_delete_images(uint8_t *bank, int32_t first, int32_t last)
+void bank_delete_images(ContextCursor bank, int32_t first, int32_t last)
 {
     uint16_t count = peek_w(bank);
     uint16_t left = 0;
-    uint8_t *entry = bank + 2;
+    ContextCursor entry = bank + 2;
     for (int32_t i = 1; i <= count; i++, entry += 8) {
         if (i >= first && i <= last)
             erase_image(entry);
@@ -590,17 +592,19 @@ void bank_delete_images(uint8_t *bank, int32_t first, int32_t last)
             left++;
     }
     if (left) {
-        uint8_t *smaller = bank_resize_images(bank, -1, left, bank_flags(bank));
+        ContextCursor smaller = bank_resize_images(bank, -1, left, bank_flags(bank));
         if (!smaller)
             return;
-        be_u32 *from = reinterpret_cast<be_u32 *>(bank + 2);
-        be_u32 *to = reinterpret_cast<be_u32 *>(smaller + 2);
-        for (int32_t i = 1; i <= count; i++, from += 2) {
+        ContextCursor from = bank + 2;
+        ContextCursor to = smaller + 2;
+        for (int32_t i = 1; i <= count; i++, from += 8) {
             if (i < first || i > last) {
-                *to++ = from[0];
-                *to++ = from[1];
+                poke_l(to, peek_l(from));
+                poke_l(to + 4, peek_l(from + 4));
+                to += 8;
             }
-            from[0] = from[1] = 0;
+            poke_l(from, 0);
+            poke_l(from + 4, 0);
         }
     }
     bank_erase_at(bank);
@@ -612,17 +616,17 @@ void bank_delete_images(uint8_t *bank, int32_t first, int32_t last)
 // out of memory.
 extern "C" uint32_t lib_bnk_ins_bob(RegFrame &r)
 {
-    uint8_t *entry = bank_insert_image(ptr<uint8_t>(r.a[0]), r.d[0]);
+    ContextCursor entry = bank_insert_image(decode_context_cursor(r.a[0]), r.d[0]);
     if (!entry)
         return r.d[0] = -1u;
-    r.a[0] = address(entry);
+    r.a[0] = encode_context_cursor(entry);
     return r.d[0] = 0;
 }
 
 // Bnk.DelBob: d0 = first, d1 = last, a0 = bank
 extern "C" uint32_t lib_bnk_del_bob(RegFrame &r)
 {
-    bank_delete_images(ptr<uint8_t>(r.a[0]), r.d[0], r.d[1]);
+    bank_delete_images(decode_context_cursor(r.a[0]), r.d[0], r.d[1]);
     return r.d[0] = 0;
 }
 
@@ -630,16 +634,16 @@ extern "C" uint32_t lib_bnk_del_bob(RegFrame &r)
 // Keeps all registers.
 extern "C" uint32_t lib_bnk_un_rev(RegFrame &r)
 {
-    uint8_t *bank = ptr<uint8_t>(r.a[0]);
+    ContextCursor bank = decode_context_cursor(r.a[0]);
     uint16_t count = peek_w(bank);
-    uint8_t *entry = bank + 2;
+    ContextCursor entry = bank + 2;
     for (uint16_t i = 0; i < count; i++, entry += 8) {
         Regs e = {};
-        e.a[1] = address(entry);
+        e.a[1] = encode_context_cursor(entry);
         ec_call(ec::DoRev, e);
         if (uint32_t image = peek_l(entry)) {
             // the hot spot: drop the flip bits 14-15
-            uint8_t *p = ptr<uint8_t>(image);
+            ContextCursor p = decode_context_cursor(image);
             poke_w(p + 6, static_cast<uint16_t>(static_cast<int16_t>(peek_w(p + 6) << 2) >> 2));
         }
     }
@@ -657,12 +661,12 @@ namespace {
 // Returns its number, or 0 if there is none.
 uint32_t bank_list_line(uint32_t min)
 {
-    uint8_t *best = nullptr;
+    ContextCursor best = ContextCursor{};
     uint32_t number = 65536;
-    for (uint32_t e = *bank_list(); e; e = peek_l(ptr<void>(e))) {
-        uint32_t n = peek_l(ptr<uint8_t>(e) + 8);
+    for (uint32_t e = peek_l(bank_list()); e; e = peek_l(decode_context_cursor(e))) {
+        uint32_t n = peek_l(decode_context_cursor(e) + 8);
         if (n > min && n <= number) {
-            best = ptr<uint8_t>(e);
+            best = decode_context_cursor(e);
             number = n;
         }
     }
@@ -676,10 +680,10 @@ uint32_t bank_list_line(uint32_t min)
     *out++ = '-';
     *out++ = ' ';
     for (int i = 0; i < 8; i++)
-        *out++ = best[16 + i];
+        *out++ = host::detail::read_cursor_byte(best + (16 + i));
     for (const char *t = " S: "; *t;)
         *out++ = *t++;
-    out = long_to_hex(out, address(best + 24), 8);
+    out = long_to_hex(out, encode_context_cursor(best + 24), 8);
     for (const char *t = " L: "; *t;)
         *out++ = *t++;
     out = long_to_dec(out, bank_length(best + 24), -1, false);
@@ -690,11 +694,11 @@ uint32_t bank_list_line(uint32_t min)
 }
 
 // The bank of the program under this one (Bstart, Blength)
-uint8_t *previous_program_bank(uint32_t number)
+ContextCursor previous_program_bank(uint32_t number)
 {
     if (!banks_previous_program())
-        return nullptr;
-    uint8_t *bank = bank_find(number);
+        return ContextCursor{};
+    ContextCursor bank = bank_find(number);
     banks_current_program();
     return bank;
 }
@@ -714,19 +718,19 @@ void check_number(int32_t n)
         fon_call();
 }
 
-void insert_image(uint8_t *bank, int32_t n)
+void insert_image(ContextCursor bank, int32_t n)
 {
     if (!bank)
         bank_not_reserved();
     if (n <= 0)
         fon_call();
-    uint8_t *entry = bank_insert_image(bank, n);
+    ContextCursor entry = bank_insert_image(bank, n);
     bank_changed();
     if (!entry)
         out_of_memory();
 }
 
-void delete_images(uint8_t *bank, int32_t a, int32_t b)
+void delete_images(ContextCursor bank, int32_t a, int32_t b)
 {
     if (!bank)
         bank_not_reserved();
@@ -772,9 +776,9 @@ extern "C" void lib_in_erase_all()
 extern "C" void lib_in_bank_swap(int32_t a, int32_t b)
 {
     check_number(a);
-    uint8_t *bank_a = bank_find(a);
+    ContextCursor bank_a = bank_find(a);
     check_number(b);
-    uint8_t *bank_b = bank_find(b);
+    ContextCursor bank_b = bank_find(b);
     if (bank_a && bank_b) {
         poke_l(bank_a - 16, b);
         poke_l(bank_b - 16, a);
@@ -791,16 +795,16 @@ extern "C" uint32_t lib_fn_bstart(uint32_t n)
 {
     if (!banks_previous_program())
         bank_not_reserved();
-    uint8_t *bank = bank_find(n);
+    ContextCursor bank = bank_find(n);
     banks_current_program();
     if (!bank)
         bank_not_reserved();
-    return address(bank);
+    return encode_context_cursor(bank);
 }
 
 extern "C" uint32_t lib_fn_blength(uint32_t n)
 {
-    uint8_t *bank = previous_program_bank(n);
+    ContextCursor bank = previous_program_bank(n);
     return bank ? bank_length(bank) : 0;
 }
 
@@ -810,7 +814,7 @@ extern "C" void lib_in_bgrab(int32_t n)
     if (n <= 0)
         fon_call();
     bank_erase(n);
-    uint8_t *bank = nullptr;
+    ContextCursor bank = ContextCursor{};
     if (banks_previous_program())
         bank = bank_find(n);
     if (!bank) {
@@ -831,7 +835,7 @@ extern "C" void lib_in_bsend(int32_t n)
         fon_call();
     bank_erase(n);
     banks_current_program();
-    if (uint8_t *bank = bank_find(n)) {
+    if (ContextCursor bank = bank_find(n)) {
         lst_remove(bank_list(), bank - 24);
         banks_previous_program();
         lst_insert(bank_list(), bank - 24);
@@ -872,15 +876,15 @@ extern "C" void lib_in_bank_schrink(uint32_t n, uint32_t length)
 // =START(n), =LENGTH(n)
 extern "C" uint32_t lib_fn_start(uint32_t n)
 {
-    uint8_t *bank = bank_find(n);
+    ContextCursor bank = bank_find(n);
     if (!bank)
         bank_not_reserved();
-    return address(bank);
+    return encode_context_cursor(bank);
 }
 
 extern "C" uint32_t lib_fn_length(uint32_t n)
 {
-    uint8_t *bank = bank_find(n);
+    ContextCursor bank = bank_find(n);
     return bank ? bank_length(bank) : 0;
 }
 

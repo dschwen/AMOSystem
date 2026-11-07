@@ -39,9 +39,9 @@ void start(uint32_t type, uint32_t n, uint32_t program, uint32_t target)
     d.PAmalE = 0;
     if (n >= (d.InterOff ? 64u : 16u))
         fon_call();
-    uint8_t *bank = bank_find(4);
+    ContextCursor bank = bank_find(4);
     if (bank && peek_l(bank - 8) != 0x416D616C)      // "Amal"
-        bank = nullptr;
+        bank = ContextCursor{};
     uint32_t text = program;
     if (program < 1024) {
         // the bank's program
@@ -49,14 +49,14 @@ void start(uint32_t type, uint32_t n, uint32_t program, uint32_t target)
             error(36);
         if (!peek_l(bank))
             fon_call();
-        uint8_t *table = bank + peek_l(bank);
+        ContextCursor table = bank + peek_l(bank);
         uint16_t number = uint16_t(program);
         text = d.ChVide;
         if (number > peek_w(table))
             fon_call();
         table += 2;
         if (uint16_t offset = peek_w(table + int16_t(uint16_t(number << 1))))
-            text = address(table + int16_t(uint16_t(offset << 1)));
+            text = encode_context_cursor(table + int16_t(uint16_t(offset << 1)));
     }
     // the string, ended by a 0 for the time
     uint16_t length = peek_w(ptr<void>(text));
@@ -78,7 +78,7 @@ void start(uint32_t type, uint32_t n, uint32_t program, uint32_t target)
         r.d[5] = object & 0xFF;
     }
     r.d[6] = n;
-    r.d[7] = address(bank);
+    r.d[7] = encode_context_cursor(bank);
     int16_t e = int16_t(amal_call(sy::AMALCre, r));
     *end = kept;
     if (!e)

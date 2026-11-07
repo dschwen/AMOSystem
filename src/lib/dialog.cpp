@@ -16,6 +16,7 @@
 // is a local setjmp target, so no C++ object with a destructor may
 // live in this code.
 
+#include "runtime/detail/identity_data_memory.h"
 #include "core/guest_scratch.h"
 #include "core/amiga.h"
 #include "lib/dialog.h"
@@ -40,8 +41,8 @@ extern "C" uint32_t lib_sco0(RegFrame &r);
 extern "C" uint32_t lib_unpack_bitmap(RegFrame &r);
 // banks.cpp
 namespace amos {
-uint8_t *lst_new(be_u32 *list, uint32_t length);
-void lst_del(be_u32 *list, uint8_t *element);
+ContextCursor lst_new(ContextCursor list, uint32_t length);
+void lst_del(ContextCursor list, ContextCursor element);
 }
 // dialog_glue.s: the routine records of Dia_ClearVar
 
@@ -2734,7 +2735,7 @@ uint16_t run_events(Run &r, int32_t timer, int32_t flags)
 
 // ---- channels --------------------------------------------------------------------------
 
-be_u32 *dialogs() { return ptr<be_u32>(idata().Cur_Dialogs); }
+ContextCursor dialogs() { return decode_context_cursor(idata().Cur_Dialogs); }
 
 // Dia_Active: the dialog's screen becomes current. 0, or EDiaScreen if it
 // is not there any more.
@@ -2820,7 +2821,7 @@ void close_channel(Dialog *d)
 {
     if (d->Dia_Programs && d->Dia_ProgLong)
         mem_free(d->Dia_Programs, d->Dia_ProgLong);
-    lst_del(dialogs(), reinterpret_cast<uint8_t *>(d) - 8);
+    lst_del(dialogs(), decode_context_cursor(address(d) - 8));
 }
 
 // Run fn with a target for the errors of the program outside a loop (the
@@ -3033,7 +3034,7 @@ uint32_t amos::mouse_key()
 
 Dialog *amos::dia_channel(uint32_t number)
 {
-    for (uint32_t e = *dialogs(); e; e = peek_l(ptr<void>(e)))
+    for (uint32_t e = peek_l(dialogs()); e; e = peek_l(ptr<void>(e)))
         if (peek_l(ptr<uint8_t>(e) + 8) == number)
             return ptr<Dialog>(e + 8);
     return nullptr;
@@ -3048,10 +3049,10 @@ DiaOpen amos::dia_open(uint32_t number, const uint8_t *program, const uint8_t *p
         return {EDiaChanAD, 0, nullptr};
     if (!wdata().EcCourant)
         return {EDiaScreen, 0, nullptr};
-    uint8_t *e = lst_new(dialogs(), size);
+    ContextCursor e = lst_new(dialogs(), size);
     if (!e)
         return {EDiaOMem, 0, nullptr};
-    Dialog *d = reinterpret_cast<Dialog *>(e + 8);
+    Dialog *d = ptr<Dialog>(encode_context_cursor(e) + 8);
     d->Dia_Channel = number;
     d->Dia_NVar = variables;
     d->Dia_Puzzle = address(puzzle);
@@ -3135,13 +3136,13 @@ uint16_t amos::dia_close(uint32_t number)
 
 void amos::dia_close_all()
 {
-    while (uint32_t e = *dialogs())
+    while (uint32_t e = peek_l(dialogs()))
         dia_close(peek_l(ptr<uint8_t>(e) + 8));
 }
 
 void amos::dia_freeze_all(bool freeze)
 {
-    for (uint32_t e = *dialogs(); e; e = peek_l(ptr<void>(e)))
+    for (uint32_t e = peek_l(dialogs()); e; e = peek_l(ptr<void>(e)))
         dia_freeze(peek_l(ptr<uint8_t>(e) + 8), freeze);
 }
 
@@ -3317,7 +3318,7 @@ DiaResult amos::dia_zone_at(uint32_t number, uint32_t x, uint32_t y)
 
 uint16_t amos::dia_auto_test(uint32_t channels)
 {
-    uint32_t e = *dialogs();
+    uint32_t e = peek_l(dialogs());
     for (uint16_t n = static_cast<uint16_t>(channels - 1); e; n--) {
         Dialog *d = ptr<Dialog>(e + 8);
         if ((d->Dia_RFlags & RShown) && !(d->Dia_RFlags & RFrozen)) {

@@ -195,10 +195,11 @@ Best best_size(const Area &a)
 // ResBank: a data bank "Pac.Pic." of size bytes
 uint8_t *reserve(uint32_t number, uint32_t size)
 {
-    uint8_t *bank = bank_reserve(number, BankData, size, "Pac.Pic.");
+    ContextCursor bank = bank_reserve(number, BankData, size, "Pac.Pic.");
     if (!bank)
         error(24);
-    return bank;
+    // (the packer works on the bank's memory as the host sees it)
+    return bank_host_view(bank);
 }
 
 // UPack: the packed picture of bank b in screen s at x, y (negative: where

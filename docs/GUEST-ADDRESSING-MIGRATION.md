@@ -60,6 +60,13 @@ the same code with a base of 0. Built with `make host HOST_BIASED=1` (the defaul
   `control.cpp` (labels, procedure calls, For/Next with `interp_next_float`), and the verifier's
   label table and variable buffers (`verif/tables.cpp`, `buffers.cpp`, `main.cpp`). Left on native
   pointers in the verifier: the program it walks (`pc`) and its loop tables.
+- **Banks are typed.** Banks, bank lists and their elements are `ContextCursor`s (`lib/banks.h`,
+  `banks.cpp`, `bankfiles.cpp`, and the callers in music, amal, graphics, files, iff, interface,
+  menus, screens, dialog, fsel, verif). `bank_host_view()` is the one named place a bank's memory
+  goes to native code: file reads into and writes out of a bank, the pack/unpack of `ext/compact`,
+  IFF loading, the menu tree copy (`tree_to_bank`/`tree_from_bank`) and the resource parser of
+  `lib/interface.cpp`. Those native consumers, and the `Dialog` records that sit on list elements
+  (`lib/dialog.cpp`), are the next slices.
 - **Status.** All 140 host tests pass on the biased build on Linux x86-64 (guest memory at
   0x7f..., above 4 GB); the identity build and the Amiga build (134/134) are unchanged.
   `.github/workflows/macos-arm64.yml` builds and runs it on a native Apple Silicon runner.

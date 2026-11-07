@@ -44,8 +44,8 @@ extern "C" uint32_t lib_lock_get(RegFrame &r);
 extern "C" uint32_t lib_copy_path(RegFrame &r);
 extern "C" uint32_t lib_dsk_path_it(RegFrame &r);
 namespace amos {
-uint8_t *lst_new(be_u32 *list, uint32_t length);
-void lst_del(be_u32 *list, uint8_t *element);
+ContextCursor lst_new(ContextCursor list, uint32_t length);
+void lst_del(ContextCursor list, ContextCursor element);
 }
 // fsel_glue (dialog_glue.s)
 
@@ -288,7 +288,7 @@ void delete_store(uint32_t e)
         w::release(r.a[1], r.d[0]);
         f = next;
     }
-    lst_del(&idata().Fs_Liste, ptr<uint8_t>(e));
+    lst_del(decode_context_cursor(address(&idata().Fs_Liste)), decode_context_cursor(e));
 }
 
 void delete_stores()
@@ -355,8 +355,8 @@ void store()
         if (uint32_t e = find_store())
             delete_store(e);
         keep_stores(MaxStore);
-        if (uint8_t *e = lst_new(&d.Fs_Liste, 16 + 128)) {
-            uint8_t *p = e + 8;
+        if (ContextCursor stored = lst_new(decode_context_cursor(address(&d.Fs_Liste)), 16 + 128)) {
+            uint8_t *p = ptr<uint8_t>(encode_context_cursor(stored)) + 8;
             poke_l(p, d.BufFillF);
             poke_w(p + 4, d.FillFNb);
             poke_l(p + 6, static_cast<uint32_t>(vars()[VPList]));
@@ -385,7 +385,7 @@ void branch(uint32_t e)
     vars()[VPList] = static_cast<int32_t>(peek_l(p + 6));
     d.FillFSorted = p[10];
     fs()->Fs_DirOn = 0;
-    lst_del(&d.Fs_Liste, ptr<uint8_t>(e));
+    lst_del(decode_context_cursor(address(&d.Fs_Liste)), decode_context_cursor(e));
 }
 
 // Fs_NomDir: the path zone, as path (Name1) and filter (Name2)

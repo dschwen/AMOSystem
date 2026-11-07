@@ -80,23 +80,23 @@ void fade()
     be_u16 *p;
     if (t == tk::To) {
         int32_t from = int32_t(parameter_int());
-        const uint8_t *colours_from;
+        uint32_t colours_from;
         if (from < 0) {
-            uint8_t *bank = bank_bobs();
+            ContextCursor bank = bank_bobs();
             if (!bank)
                 error(36);
-            colours_from = bank + 2 + 8 * peek_w(bank);
+            colours_from = encode_context_cursor(bank + (2 + 8 * peek_w(bank)));
         } else {
             Regs e;
             e.d[1] = uint32_t(from);
             lib_call(L_GetEc, e);
-            colours_from = ptr<uint8_t>(e.a[0]) + offsetof(Screen, EcPal);
+            colours_from = e.a[0] + uint32_t(offsetof(Screen, EcPal));
         }
         uint32_t mask = 0xFFFFFFFF;
         if (peek_token() == tk::Vir)
             mask = parameter_int();
         Regs r;
-        r.a[0] = address(colours_from);
+        r.a[0] = colours_from;
         r.d[3] = mask;
         lib_call(L_PalRout, r);
         p = ptr<be_u16>(r.a[1]);

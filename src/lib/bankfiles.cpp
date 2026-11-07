@@ -25,7 +25,7 @@ bool write_hunk(Hunk h)
 }
 
 // Bnk.SaveA0
-bool save_bank(uint8_t *bank)
+bool save_bank(ContextCursor bank)
 {
     uint16_t flags = bank_flags(bank);
     if (!(flags & (BankBobs | BankIcons))) {
@@ -36,20 +36,20 @@ bool save_bank(uint8_t *bank)
         poke_w(header, static_cast<uint16_t>(bank_number(bank)));
         poke_w(header + 2, flags & BankChip ? 0 : 1);
         poke_l(header + 4, size | (flags & BankData ? 0x80000000u : 0));
-        return file_write(header, 8) && file_write(bank - 8, size);
+        return file_write(header, 8) && file_write(bank_host_view(bank - 8), size);
     }
     if (!write_hunk(flags & BankBobs ? Hunk::Sprites : Hunk::Icons))
         return false;
     RegFrame r = {};
-    r.a[0] = address(bank);
+    r.a[0] = encode_context_cursor(bank);
     lib_bnk_un_rev(r);
-    if (!file_write(bank, 2))
+    if (!file_write(bank_host_view(bank), 2))
         return false;
     uint8_t *empty = ptr<uint8_t>(idata().Buffer);
     for (int i = 0; i < 10; i++)
         empty[i] = 0;
     uint16_t count = peek_w(bank);
-    uint8_t *entry = bank + 2;
+    ContextCursor entry = bank + 2;
     for (uint16_t i = 0; i < count; i++, entry += 8) {
         uint32_t image = peek_l(entry);
         if (!image) {
@@ -57,14 +57,14 @@ bool save_bank(uint8_t *bank)
                 return false;
             continue;
         }
-        const uint8_t *p = ptr<uint8_t>(image);
+        ContextCursor p = decode_context_cursor(image);
         // mulu on the low word, then a word shift, as in the assembler
         uint32_t size = static_cast<uint16_t>(peek_w(p) * peek_w(p + 2)) * static_cast<uint32_t>(peek_w(p + 4));
         size = (size & 0xFFFF0000u) | static_cast<uint16_t>(size << 1);
-        if (!file_write(p, size + 10))
+        if (!file_write(bank_host_view(p), size + 10))
             return false;
     }
-    return file_write(entry, 32 * 2);
+    return file_write(bank_host_view(entry), 32 * 2);
 }
 
 // Bnk.SaveAll
@@ -73,14 +73,14 @@ bool save_all()
     if (!write_hunk(Hunk::Banks))
         return false;
     uint16_t count = 0;
-    for (uint32_t e = *bank_list(); e; e = peek_l(ptr<void>(e)))
+    for (uint32_t e = peek_l(bank_list()); e; e = peek_l(decode_context_cursor(e)))
         count++;
     uint8_t *buffer = ptr<uint8_t>(idata().Buffer);
     poke_w(buffer, count);
     if (!file_write(buffer, 2))
         return false;
-    for (uint32_t e = *bank_list(); e; e = peek_l(ptr<void>(e)))
-        if (!save_bank(ptr<uint8_t>(e) + 24))
+    for (uint32_t e = peek_l(bank_list()); e; e = peek_l(decode_context_cursor(e)))
+        if (!save_bank(decode_context_cursor(e) + 24))
             return false;
     return true;
 }
@@ -96,9 +96,9 @@ int16_t load_images(uint32_t number, bool icons)
     if (!file_read(buffer, 2))
         return LoadDisk;
     uint16_t count = peek_w(buffer);
-    uint8_t *old = icons ? bank_find(2) : bank_find(1);
+    ContextCursor old = icons ? bank_find(2) : bank_find(1);
     if (old && !(bank_flags(old) & (icons ? BankIcons : BankBobs)))
-        old = nullptr;
+        old = ContextCursor{};
     uint16_t first = 0;
     RegFrame r = {};
     if (static_cast<uint16_t>(number) && old) {
@@ -111,7 +111,7 @@ int16_t load_images(uint32_t number, bool icons)
     }
     if (icons ? lib_bnk_res_ico(r) : lib_bnk_res_bob(r))
         return LoadMemory;
-    uint8_t *entry = ptr<uint8_t>(r.a[0]) + 2 + static_cast<uint16_t>(first << 3);
+    ContextCursor entry = decode_context_cursor(r.a[0]) + (2 + static_cast<uint16_t>(first << 3));
     for (uint16_t i = 0; i < count; i++, entry += 8) {
         poke_l(entry, 0);
         poke_l(entry + 4, 0);
@@ -124,18 +124,18 @@ int16_t load_images(uint32_t number, bool icons)
         Regs m = {};
         m.d[0] = size + 10;
         m.a[0] = w::reserve(m.d[0], w::Chip);
-        uint8_t *image = ptr<uint8_t>(m.a[0]);
-        if (!image)
+        ContextCursor image = decode_context_cursor(m.a[0]);
+        if (!m.a[0])
             return LoadMemory;
-        poke_l(entry, address(image));
+        poke_l(entry, m.a[0]);
         poke_l(image, peek_l(buffer));                      // width, height
         poke_w(image + 4, peek_w(buffer + 4));              // planes
         poke_w(image + 6, peek_w(buffer + 6) & 0x3FFF);     // hot spot, no flips
         poke_w(image + 8, peek_w(buffer + 8));
-        if (!file_read(image + 10, size))
+        if (!file_read(bank_host_view(image + 10), size))
             return LoadDisk;
     }
-    return file_read(entry, 32 * 2) ? LoadOk : LoadDisk;
+    return file_read(bank_host_view(entry), 32 * 2) ? LoadOk : LoadDisk;
 }
 
 // Bnk.Load: the bank(s) of the current file. number: the bank to load
@@ -180,11 +180,11 @@ int16_t load_bank(uint32_t number)
         if (!peek_w(buffer + 2))
             flags |= BankChip;
         length &= 0x0FFFFFFF;
-        uint8_t *bank = bank_reserve(number, flags, length - 8,
-                                     static_cast<const char *>(lib_address(L_Bnk_NoLoad)));
+        ContextCursor bank = bank_reserve(number, flags, length - 8,
+                                          static_cast<const char *>(lib_address(L_Bnk_NoLoad)));
         if (!bank)
             return LoadMemory;
-        return file_read(bank - 8, length) ? LoadOk : LoadDisk;
+        return file_read(bank_host_view(bank - 8), length) ? LoadOk : LoadDisk;
     }
     default:
         return LoadNotBank;
@@ -215,7 +215,7 @@ void load(GuestString name, uint32_t number)
 
 // Bnk.SaveA0: a0 = bank. Bnk.SaveAll. Bnk.SaveVide: a file without banks.
 // Out: d0 = 0 (BEQ), or -1 if writing failed.
-extern "C" uint32_t lib_bnk_save_a0(RegFrame &r) { return r.d[0] = save_bank(ptr<uint8_t>(r.a[0])) ? 0 : -1u; }
+extern "C" uint32_t lib_bnk_save_a0(RegFrame &r) { return r.d[0] = save_bank(decode_context_cursor(r.a[0])) ? 0 : -1u; }
 extern "C" uint32_t lib_bnk_save_all(RegFrame &r) { return r.d[0] = save_all() ? 0 : -1u; }
 extern "C" uint32_t lib_bnk_save_vide(RegFrame &r)
 {
@@ -237,7 +237,7 @@ extern "C" uint32_t lib_bnk_load(RegFrame &r)
 extern "C" void lib_in_save2(GuestString name, uint32_t n)
 {
     open_or_error(name, ModeNewFile);
-    uint8_t *bank = bank_find(n);
+    ContextCursor bank = bank_find(n);
     if (!bank)
         error(36);
     save_bank(bank);
