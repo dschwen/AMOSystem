@@ -37,6 +37,21 @@ jobs:
       - name: Hello
         run: |
           mkdir -p build/dist && cp -a AMOS build/dist/AMOS
-          python3 tests/host_run.py --text-only --fallback-font print
+          annotate() { while read -r line; do echo "::error::${line:0:900}"; done; }
+          python3 - <<'PY'
+          import sys; sys.path.insert(0, 'tools'); import amostok
+          t = amostok.Tables(['AMOS/APSystem'])
+          amostok.tokenize_program('Open Out 1,"out.txt"\nPrint #1,"hello"\nClose 1\nSystem\n', t).save('/tmp/hi.AMOS')
+          PY
+          ln -sf "$PWD/build/host/amos" /tmp/amos-player
+          cd /tmp && rm -f out.txt
+          set +e
+          AMOS_HOME="$OLDPWD/build/dist/AMOS" AMOS_DISPLAY=none AMOS_CONFIG=/dev/null AMOS_ESCAPE_LOG=1 /tmp/amos-player hi.AMOS > hi.log 2>&1
+          rc=$?
+          set -e
+          { echo "exit $rc"; tail -25 hi.log; ls -l out.txt 2>&1; } | annotate
+          test -f out.txt
       - name: Text tests
-        run: python3 tests/host_run.py --text-only --fallback-font -j3
+        run: |
+          python3 tests/host_run.py --text-only --fallback-font -j3 > tests.log 2>&1 || { grep -v ": ok" tests.log | head -20 | while read -r line; do echo "::error::${line:0:600}"; done; exit 1; }
+          tail -1 tests.log
