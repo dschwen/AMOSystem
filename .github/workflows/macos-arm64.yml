@@ -1,0 +1,38 @@
+name: macOS Apple Silicon
+# The native arm64 host: the guest's memory anywhere in the address space (AMOS_GUEST_BIASED),
+# run on a real Apple Silicon runner (text tests: no window, no sound).
+on:
+  workflow_dispatch:
+  push:
+    branches: [guest-bias, cpp-conversion]
+    paths:
+      - 'src/**'
+      - 'tests/**'
+      - 'Makefile'
+      - '.github/workflows/macos-arm64.yml'
+  pull_request:
+    paths:
+      - 'src/**'
+      - 'Makefile'
+      - '.github/workflows/macos-arm64.yml'
+permissions:
+  contents: read
+jobs:
+  arm64:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Tools
+        run: |
+          uname -m
+          python3 -m pip install --break-system-packages pillow || python3 -m pip install pillow
+      - name: Build the arm64 host
+        run: |
+          make -j3 host HOST_TARGET_ARCH=arm64 HOST_ARCHFLAGS='-arch arm64' HOST_CXX=clang++ KICKSTART= ROMKEY=
+          file build/host/amos
+      - name: Hello
+        run: |
+          mkdir -p build/dist && cp -a AMOS build/dist/AMOS
+          python3 tests/host_run.py --text-only --fallback-font print
+      - name: Text tests
+        run: python3 tests/host_run.py --text-only --fallback-font -j3
