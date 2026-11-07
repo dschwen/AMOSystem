@@ -20,7 +20,7 @@ AllRegs all(const Regs &r)
         a.d[i] = r.d[i];
     for (int i = 0; i < 3; i++)
         a.a[i] = r.a[i];
-    a.a[3] = address(c.a3);
+    a.a[3] = encode_context_cursor(c.a3);
     a.a[4] = encode_context_cursor(c.a4);
     a.a[5] = encode_data_zone(c.a5);
     a.a[6] = address(c.a6);
@@ -65,7 +65,7 @@ void amos_eval(Regs *r, const void *fn)
     host::glue_call(fn, a);
     back(*r, a);
     ctx() = saved;
-    ctx().a3 = ptr<uint8_t>(a.a[3]);
+    ctx().a3 = decode_context_cursor(a.a[3]);
     ctx().a6 = ptr<uint8_t>(a.a[6]);
 }
 
@@ -119,7 +119,7 @@ void amos_eval(Regs *r, host::RoutineEntry fn)
     host::glue_call(fn, a);
     back(*r, a);
     ctx() = saved;
-    ctx().a3 = ptr<uint8_t>(a.a[3]);
+    ctx().a3 = decode_context_cursor(a.a[3]);
     ctx().a6 = ptr<uint8_t>(a.a[6]);
 }
 

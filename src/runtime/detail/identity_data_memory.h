@@ -20,6 +20,15 @@ public:
         *ptr<uint8_t>(word) = value;
         return guest::Fault::none;
     }
+    guest::Fault store_be16(guest::GuestPtr<guest::Byte> at, uint16_t value) const {
+        const auto word = guest::abi::AddressCodec::encode(at.address());
+#if !defined(__mc68000__)
+        if (!word) return guest::Fault::null_pointer;
+        if (word > UINT32_MAX-1) return guest::Fault::overflow;
+#endif
+        poke_w(ptr<void>(word),value);
+        return guest::Fault::none;
+    }
     guest::Fault store_be32(guest::GuestPtr<guest::Byte> at, uint32_t value) const {
         const auto word = guest::abi::AddressCodec::encode(at.address());
 #if !defined(__mc68000__)
@@ -63,4 +72,11 @@ inline void write_cursor_byte(ContextCursor& cursor, uint8_t value) {
     const auto destination = guest_cursor(cursor++);
     require_guest(IdentityDataMemory{}.store_byte(destination,value));
 }
+inline uint32_t read_cursor_long(ContextCursor at) { return require_guest(IdentityDataMemory{}.load_be32(guest_cursor(at))); }
+inline uint16_t read_cursor_word(ContextCursor at) { return require_guest(IdentityDataMemory{}.load_be16(guest_cursor(at))); }
+inline uint8_t read_cursor_byte(ContextCursor at) { return require_guest(IdentityDataMemory{}.load_byte(guest_cursor(at))); }
+inline void write_cursor_long(ContextCursor at, uint32_t value) { require_guest(IdentityDataMemory{}.store_be32(guest_cursor(at),value)); }
+inline void write_cursor_word(ContextCursor at, uint16_t value) { require_guest(IdentityDataMemory{}.store_be16(guest_cursor(at),value)); }
+inline void write_cursor_at(ContextCursor at, uint8_t value) { require_guest(IdentityDataMemory{}.store_byte(guest_cursor(at),value)); }
+
 }

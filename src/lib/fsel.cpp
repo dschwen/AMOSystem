@@ -9,6 +9,7 @@
 // Fs_Input. Directories already read can be kept ("store"), in the
 // Fs_Liste list.
 
+#include "runtime/detail/identity_data_memory.h"
 #include "core/amiga.h"
 #include "lib/dialog.h"
 #include "core/local_jump.h"
@@ -1200,7 +1201,14 @@ extern "C" uint32_t lib_fs_get_name_c(RegFrame &r)
 // Out: d0 = length, a0 = Name1.
 extern "C" uint32_t lib_dsk_file_selector(RegFrame &r)
 {
+#if defined(__mc68000__)
     const auto *params = reinterpret_cast<const be_u32 *>(ctx().a3);
+#else
+    const auto stack = ctx().a3;
+    const be_u32 params[4] = {be_u32(host::detail::read_cursor_long(stack)),
+        be_u32(host::detail::read_cursor_long(stack+4)), be_u32(host::detail::read_cursor_long(stack+8)),
+        be_u32(host::detail::read_cursor_long(stack+12))};
+#endif
     uint32_t n = file_selector(params);
     ctx().a3 += 16;
     r.a[0] = idata().Name1;

@@ -60,7 +60,7 @@ void run_d0(host::RoutineArg routine, uint32_t d0)
 void run_switching(host::RoutineArg routine, AllRegs &r)
 {
     Ctx &c = ctx();
-    r.a[3] = address(c.a3);
+    r.a[3] = encode_context_cursor(c.a3);
     r.a[4] = encode_context_cursor(c.a4);
     r.a[5] = encode_data_zone(c.a5);
     r.a[6] = address(c.a6);

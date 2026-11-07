@@ -7,6 +7,7 @@
 // 3 unsigned byte, 4 unsigned word, 5 and 6 unsigned long; 7 (past the
 // original's jump table) works as 0.
 
+#include "runtime/detail/identity_data_memory.h"
 #include "interp/interp.h"
 
 #include "lib/strings.h"
@@ -65,14 +66,14 @@ void interp_in_call()
         pc() += 2;
         uint32_t v = integer().v1;
         c.a3 -= 4;
-        poke_l(c.a3, v);
+        host::detail::write_cursor_long(c.a3, v);
     }
     AllRegs r;
     for (int i = 0; i < 8; i++)
         r.d[i] = d.CallReg[i];
     for (int i = 0; i < 3; i++)
         r.a[i] = d.CallReg[8 + i];
-    r.a[3] = address(c.a3);
+    r.a[3] = encode_context_cursor(c.a3);
     r.a[4] = routine;
     r.a[5] = encode_data_zone(c.a5);
     r.a[6] = address(d.CallReg);

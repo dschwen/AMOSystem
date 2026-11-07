@@ -3,7 +3,7 @@
 #include <assert.h>
 using namespace amos;
 using namespace amos::host;
-namespace amos { extern "C" { uint8_t amos_low_page[4096]{}; } }
+extern "C" { uint8_t amos_low_page[4096]{}; }
 uint32_t zero() { return 0xdeadbeef; }
 int32_t signed_value(int8_t a, int16_t b, int32_t c) { return int32_t(a) + b + c; }
 uint32_t ten(uint32_t a, uint32_t b, uint32_t c, uint32_t d, uint32_t e,

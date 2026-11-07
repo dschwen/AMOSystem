@@ -8,11 +8,11 @@ namespace amos::host::detail {
 inline const GuestContext& capture_context(const Ctx& context) { return context; }
 #else
 inline guest::Result<GuestContext> try_capture_context(const Ctx& context) {
-    const uint8_t* native[] = {context.a3,context.a6};
+    const uint8_t* native[] = {context.a6};
     for (auto pointer : native)
         if (!bias::contains(reinterpret_cast<uintptr_t>(pointer))) return {{},guest::Fault::overflow};
     return {{context.d6, context.d7,
-             guest::abi::AddressCodec::decode<guest::Byte>(bias::to_guest(reinterpret_cast<uintptr_t>(context.a3))),
+             context.a3,
              context.a4,
              context.a5,
              guest::abi::AddressCodec::decode<guest::Byte>(bias::to_guest(reinterpret_cast<uintptr_t>(context.a6)))},guest::Fault::none};

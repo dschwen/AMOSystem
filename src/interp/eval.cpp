@@ -56,11 +56,11 @@ Value float_routine(int routine, const Value &v)
 // The left operand on the a3 stack, as the float layer wants it
 void push(const Value &v)
 {
-    uint8_t *&a3 = ctx().a3;
+    ContextCursor &a3 = ctx().a3;
     a3 -= 12;
-    poke_l(a3, v.type);
-    poke_l(a3 + 4, v.v1);
-    poke_l(a3 + 8, v.v2);
+    host::detail::write_cursor_long(a3, v.type);
+    host::detail::write_cursor_long(a3 + 4, v.v1);
+    host::detail::write_cursor_long(a3 + 8, v.v2);
 }
 
 void pop() { ctx().a3 += 12; }

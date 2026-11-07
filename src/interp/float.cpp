@@ -29,7 +29,7 @@ namespace {
 constexpr int32_t SPFix = -30, SPFlt = -36, SPCmp = -42, SPTst = -48, SPMul = -78, SPDiv = -84;
 
 IData &data() { return idata(); }
-uint8_t *stacked() { return ctx().a3; }
+ContextCursor stacked() { return ctx().a3; }
 
 struct Result {
     uint32_t d0, d1;
@@ -93,35 +93,35 @@ uint32_t interp_dfl_to_int1(RegFrame &r)
 // IntToFl2 / FlToInt2: the value on the stack
 uint32_t interp_int_to_fl2(RegFrame &r)
 {
-    uint8_t *s = stacked();
-    r.d[0] = call(ffp(), SPFlt, peek_l(s + 4)).d0;
-    poke_l(s + 4, r.d[0]);
-    s[3] = 1;
+    ContextCursor s = stacked();
+    r.d[0] = call(ffp(), SPFlt, host::detail::read_cursor_long(s + 4)).d0;
+    host::detail::write_cursor_long(s + 4, r.d[0]);
+    host::detail::write_cursor_at(s + 3, 1);
     return 0;
 }
 uint32_t interp_dint_to_fl2(RegFrame &r)
 {
-    uint8_t *s = stacked();
-    Result x = call(ieee(), SPFlt, peek_l(s + 4), peek_l(s + 8));
-    poke_l(s + 4, r.d[0] = x.d0);
-    poke_l(s + 8, r.d[1] = x.d1);
-    s[3] = 1;
+    ContextCursor s = stacked();
+    Result x = call(ieee(), SPFlt, host::detail::read_cursor_long(s + 4), host::detail::read_cursor_long(s + 8));
+    host::detail::write_cursor_long(s + 4, r.d[0] = x.d0);
+    host::detail::write_cursor_long(s + 8, r.d[1] = x.d1);
+    host::detail::write_cursor_at(s + 3, 1);
     return 0;
 }
 uint32_t interp_fl_to_int2(RegFrame &r)
 {
-    uint8_t *s = stacked();
-    r.d[0] = call(ffp(), SPFix, peek_l(s + 4)).d0;
-    poke_l(s + 4, r.d[0]);
-    s[3] = 0;
+    ContextCursor s = stacked();
+    r.d[0] = call(ffp(), SPFix, host::detail::read_cursor_long(s + 4)).d0;
+    host::detail::write_cursor_long(s + 4, r.d[0]);
+    host::detail::write_cursor_at(s + 3, 0);
     return 0;
 }
 uint32_t interp_dfl_to_int2(RegFrame &r)
 {
-    uint8_t *s = stacked();
-    r.d[0] = call(ieee(), SPFix, peek_l(s + 4), peek_l(s + 8)).d0;
-    poke_l(s + 4, r.d[0]);
-    s[3] = 0;
+    ContextCursor s = stacked();
+    r.d[0] = call(ieee(), SPFix, host::detail::read_cursor_long(s + 4), host::detail::read_cursor_long(s + 8)).d0;
+    host::detail::write_cursor_long(s + 4, r.d[0]);
+    host::detail::write_cursor_at(s + 3, 0);
     return 0;
 }
 
@@ -154,14 +154,14 @@ uint32_t interp_dfloat_fonction(RegFrame &r)
 // Float_Compare: the stacked value against d3/d4
 uint32_t interp_float_compare(RegFrame &r)
 {
-    Result x = call(ffp(), SPCmp, peek_l(stacked() + 4), r.d[3]);
+    Result x = call(ffp(), SPCmp, host::detail::read_cursor_long(stacked() + 4), r.d[3]);
     r.d[0] = x.d0;
     return uint32_t(x.cc);
 }
 uint32_t interp_dfloat_compare(RegFrame &r)
 {
-    uint8_t *s = stacked();
-    Result x = call(ieee(), SPCmp, peek_l(s + 4), peek_l(s + 8), r.d[3], r.d[4]);
+    ContextCursor s = stacked();
+    Result x = call(ieee(), SPCmp, host::detail::read_cursor_long(s + 4), host::detail::read_cursor_long(s + 8), r.d[3], r.d[4]);
     r.d[0] = x.d0;
     return uint32_t(x.cc);
 }
@@ -169,26 +169,26 @@ uint32_t interp_dfloat_compare(RegFrame &r)
 // Float_Operation / Math_Operation: stacked (d2's operation) d3/d4
 uint32_t interp_float_operation(RegFrame &r)
 {
-    r.d[3] = r.d[0] = call(ffp(), lvo(r), peek_l(stacked() + 4), r.d[3]).d0;
+    r.d[3] = r.d[0] = call(ffp(), lvo(r), host::detail::read_cursor_long(stacked() + 4), r.d[3]).d0;
     return real(r);
 }
 uint32_t interp_dfloat_operation(RegFrame &r)
 {
-    uint8_t *s = stacked();
-    Result x = call(ieee(), lvo(r), peek_l(s + 4), peek_l(s + 8), r.d[3], r.d[4]);
+    ContextCursor s = stacked();
+    Result x = call(ieee(), lvo(r), host::detail::read_cursor_long(s + 4), host::detail::read_cursor_long(s + 8), r.d[3], r.d[4]);
     r.d[0] = r.d[3] = x.d0;
     r.d[1] = r.d[4] = x.d1;
     return real(r);
 }
 uint32_t interp_math_operation(RegFrame &r)
 {
-    r.d[3] = r.d[0] = call(trans(), lvo(r), peek_l(stacked() + 4), r.d[3]).d0;
+    r.d[3] = r.d[0] = call(trans(), lvo(r), host::detail::read_cursor_long(stacked() + 4), r.d[3]).d0;
     return real(r);
 }
 uint32_t interp_dmath_operation(RegFrame &r)
 {
-    uint8_t *s = stacked();
-    Result x = call(ieee_trans(), lvo(r), peek_l(s + 4), peek_l(s + 8), r.d[3], r.d[4]);
+    ContextCursor s = stacked();
+    Result x = call(ieee_trans(), lvo(r), host::detail::read_cursor_long(s + 4), host::detail::read_cursor_long(s + 8), r.d[3], r.d[4]);
     r.d[0] = r.d[3] = x.d0;
     r.d[1] = r.d[4] = x.d1;
     return real(r);

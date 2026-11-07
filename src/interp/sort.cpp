@@ -35,7 +35,7 @@ Array array()
     for (uint16_t n = dimensions; n; n--, p += 4)
         a.count = (a.count & 0xFFFF) * ((peek_w(p) + 1u) & 0xFFFF);
     a.elements = p;
-    uint8_t *a3 = ctx().a3;
+    ContextCursor a3 = ctx().a3;
     for (uint16_t n = dimensions; n; n--) {
         Value i = evaluate_after();
         if (kind(i) == TFloat)

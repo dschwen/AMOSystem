@@ -343,7 +343,8 @@ Value call_function()
         error(16);
     def += 2;
     Ctx &c = ctx();
-    uint8_t *back = c.a6, *a3 = c.a3;
+    uint8_t *back = c.a6;
+    ContextCursor a3 = c.a3;
     c.a6 = def;
     Value v = evaluate();
     c.a6 = back;

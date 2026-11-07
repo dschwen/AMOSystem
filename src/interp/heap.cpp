@@ -272,7 +272,7 @@ uint32_t demande(uint32_t length)
         if (!at)
             break;              // twice in the same instruction
         // the instruction again, from its start
-        c.a3 = ptr<uint8_t>(d.PLoop);
+        c.a3 = decode_context_cursor(d.PLoop);
         c.a6 = ptr<uint8_t>(c.d7);
         d.MenA4 = c.d7;
         c.d7 = 0;
@@ -286,7 +286,7 @@ uint32_t demande(uint32_t length)
         a.d[6] = c.d6;
         a.d[7] = 0;
         a.a[0] = host::detail::require_guest(host::detail::IdentityDataMemory{}.load_be32(guest_cursor(c.a4) + offset - LB_Size));
-        a.a[3] = address(c.a3);
+        a.a[3] = encode_context_cursor(c.a3);
         a.a[4] = encode_context_cursor(c.a4);
         a.a[5] = encode_data_zone(c.a5);
         a.a[6] = address(c.a6);

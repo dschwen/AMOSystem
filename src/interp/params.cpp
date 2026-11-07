@@ -6,6 +6,7 @@
 // all but the last on the a3 stack, the last one in d2/d3(/d4) for the
 // routine.
 
+#include "runtime/detail/identity_data_memory.h"
 #include "interp/interp.h"
 #include "runtime/detail/legacy_code_reader.h"
 
@@ -59,7 +60,7 @@ Value convert(Kind kind, const Value &v)
 void push(uint32_t value)
 {
     ctx().a3 -= 4;
-    poke_l(ctx().a3, value);
+    host::detail::write_cursor_long(ctx().a3, value);
 }
 
 } // namespace

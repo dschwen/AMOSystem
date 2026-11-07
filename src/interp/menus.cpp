@@ -2,6 +2,7 @@
 // and MnDim (the coordinates of an item, or a level alone) that the menu
 // instructions of lib/menus.cpp use too.
 
+#include "runtime/detail/identity_data_memory.h"
 #include "interp/interp.h"
 
 #include "lib/menus.h"
@@ -30,7 +31,7 @@ uint16_t coordinates()
         n++;
         uint32_t v = parameter_int();
         c.a3 -= 4;
-        poke_l(c.a3, v);
+        host::detail::write_cursor_long(c.a3, v);
     } while (peek_token() == tk::Vir);
     return n;
 }
@@ -76,9 +77,9 @@ MenuDim menu_dim()
         return {reinterpret_cast<uint8_t *>(d.MnDFlags) + level - 1, nullptr};
     }
     Ctx &c = ctx();
-    uint8_t *a3 = c.a3;
+    ContextCursor a3 = c.a3;
     uint16_t n = coordinates();
-    MenuItem *m = menu::find(reinterpret_cast<const be_u32 *>(c.a3), n);
+    MenuItem *m = menu::find(menu::coordinates(c.a3), n);
     c.a3 = a3;
     if (!m)
         error(39);
@@ -94,13 +95,13 @@ void interp_in_menu()
 {
     IData &d = idata();
     Ctx &c = ctx();
-    uint8_t *a3 = c.a3;
+    ContextCursor a3 = c.a3;
     Regs v;
     lib_call(L_MnClearVar, v);
     uint16_t n = coordinates();
-    MenuItem *m = menu::find(reinterpret_cast<const be_u32 *>(c.a3), n);
+    MenuItem *m = menu::find(menu::coordinates(c.a3), n);
     if (!m)
-        m = menu::insert(reinterpret_cast<const be_u32 *>(c.a3), n);
+        m = menu::insert(menu::coordinates(c.a3), n);
     c.a3 = a3;
     if (d.ScOnAd != d.MnAdEc) {
         if (d.MnAdEc)

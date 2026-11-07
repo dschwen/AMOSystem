@@ -8,6 +8,7 @@
 //     here, and the routine runs with the interpreter's d6/d7 kept in
 //     ErrorSave (it may use them).
 
+#include "runtime/detail/identity_data_memory.h"
 #include "interp/interp.h"
 
 using namespace amos;
@@ -52,7 +53,7 @@ Value call(bool function)
         if (kind(v) == TFloat)
             v = to_integer(v);
         c.a3 -= 4;
-        poke_l(c.a3, v.v1);
+        host::detail::write_cursor_long(c.a3, v.v1);
         if (!function)
             pc() += 2;
     }

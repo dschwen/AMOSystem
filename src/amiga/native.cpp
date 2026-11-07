@@ -24,7 +24,7 @@ extern "C" void amiga_w_go(AllRegs *r, void (*fn)(AllRegs *))
     Ctx saved = c;
     c.d6 = r->d[6];
     c.d7 = r->d[7];
-    c.a3 = ptr<uint8_t>(r->a[3]);
+    c.a3 = decode_context_cursor(r->a[3]);
     c.a4 = decode_context_cursor(r->a[4]);
     c.a5 = decode_data_zone(r->a[5]);
     c.a6 = ptr<uint8_t>(r->a[6]);

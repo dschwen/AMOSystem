@@ -25,6 +25,7 @@
 #include <execinfo.h>
 #if defined(__APPLE__)
 #include <mach-o/dyld.h>
+#include <mach/mach.h>
 #endif
 #endif
 #include <stdlib.h>
@@ -126,11 +127,17 @@ void crash_trace(int signal, siginfo_t *info, void *context)
         n = snprintf(text, sizeof text, "amos: pc %#llx lr %#llx x0 %#llx x1 %#llx\n", (unsigned long long)state.__pc,
                      (unsigned long long)state.__lr, (unsigned long long)state.__x[0], (unsigned long long)state.__x[1]);
         if (n > 0) (void)!write(2, text, size_t(n));
-        auto **fp = reinterpret_cast<uintptr_t **>(state.__fp);
-        for (int i = 0; i < 40 && fp && !(reinterpret_cast<uintptr_t>(fp) & 7); i++) {
-            n = snprintf(text, sizeof text, "amos: frame %#lx\n", (unsigned long)fp[1]);
+        uintptr_t fp = state.__fp;
+        for (int i = 0; i < 40 && fp && !(fp & 7); i++) {
+            uintptr_t record[2];
+            vm_size_t got = 0;
+            // (read safely: a bad frame pointer must not fault in here)
+            if (vm_read_overwrite(mach_task_self(), fp, sizeof record, reinterpret_cast<vm_address_t>(record), &got) != KERN_SUCCESS ||
+                got != sizeof record)
+                break;
+            n = snprintf(text, sizeof text, "amos: frame %#lx\n", (unsigned long)record[1]);
             if (n > 0) (void)!write(2, text, size_t(n));
-            fp = reinterpret_cast<uintptr_t **>(fp[0]);
+            fp = record[0];
         }
     }
 #else

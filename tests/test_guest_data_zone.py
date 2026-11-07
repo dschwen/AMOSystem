@@ -1,4 +1,4 @@
-"""Live a4/a5 retain guest data addresses with a stable packed context ABI."""
+"""Live a3/a4/a5 retain guest data addresses with a stable packed context ABI."""
 from pathlib import Path
 import os
 import shlex
@@ -21,14 +21,34 @@ class DataZoneTests(unittest.TestCase):
                                     'tests/guest/data_zone.cpp','src/host/guest_memory.cpp','-o',str(binary)],cwd=ROOT,check=True)
                     subprocess.run([str(binary)],check=True)
 
+    def test_biased_stack_words_use_guest_offsets(self):
+        with tempfile.TemporaryDirectory() as temp:
+            for opt in ('-O0','-O2'):
+                binary=Path(temp)/'biased-cursors'
+                subprocess.run([*self.compiler,'-std=c++20',opt,'-fpack-struct=2','-DAMOS_GUEST_BIASED',
+                                '-Wall','-Wextra','-Werror','-Isrc','tests/guest/data_zone.cpp',
+                                'src/host/guest_memory.cpp','-o',str(binary)],cwd=ROOT,check=True)
+                subprocess.run([str(binary)],check=True)
+
     def test_data_zone_rejects_native_and_code_pointers(self):
         prelude='''
 #include "core/amos.h"
+#include "lib/menus.h"
 using namespace amos;
 using namespace amos::guest;
 int main() { Ctx context{}; REJECT }
 '''
         statements=['context.a5 = (uint8_t*)0;',
+                    'context.a3 = (uint8_t*)0;',
+                    'menu::find((const be_u32*)0,1);',
+                    'menu::find(HostPtr<Byte>{},1);',
+                    'menu::find(host::decode_routine(16),1);',
+                    'context.a3 = HostPtr<Byte>{};',
+                    'context.a3 = host::decode_routine(16);',
+                    'context.a3 = uint32_t(16);',
+                    'uint8_t* native = context.a3; (void)native;',
+                    'address(context.a3);',
+                    '*context.a3 = 1;',
                     'context.a4 = (uint8_t*)0;',
                     'context.a4 = HostPtr<Byte>{};',
                     'context.a4 = host::decode_routine(16);',

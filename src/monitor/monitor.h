@@ -22,7 +22,7 @@ inline uint32_t call(host::RoutineArg routine, Regs &r)
 inline uint32_t call_a6(host::RoutineArg routine, AllRegs &r, uint32_t a6)
 {
     Ctx &c = ctx();
-    r.a[3] = address(c.a3);
+    r.a[3] = encode_context_cursor(c.a3);
     r.a[4] = idata().Mon_Base;
     r.a[5] = encode_data_zone(c.a5);
     r.a[6] = a6;

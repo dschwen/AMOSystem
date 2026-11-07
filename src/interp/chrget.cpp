@@ -226,7 +226,7 @@ extern "C" {
     d.Prg_InsRet.store(AMOS_ROUTINE(interp_iret));
     // the loops' buffer
     verif::stack_reserve();
-    c.a3 = ptr<uint8_t>(d.HoLoop);
+    c.a3 = decode_context_cursor(d.HoLoop);
     d.PLoop = d.HoLoop;
     d.BasA3 = d.HoLoop;
     d.MinLoop = d.BaLoop + 64;

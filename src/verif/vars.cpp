@@ -92,7 +92,7 @@ void reloc(uint8_t code)
         d.Ver_FReloc = b + RelocStep - 32;
         return reloc(code);
     }
-    uint32_t distance = uint32_t(pc - c.a3);
+    uint32_t distance = uint32_t((guest_cursor(host::detail::capture_cursor(pc)) - guest_cursor(c.a3)).elements());
     if (distance) {
         if (int32_t(distance) < 0)
             __builtin_trap();                   // (the assembler: illegal)
@@ -118,7 +118,7 @@ void reloc(uint8_t code)
             distance -= 65534;
         }
     }
-    c.a3 = pc;
+    c.a3 = host::detail::capture_cursor(pc);
     host::detail::write_cursor_byte(c.a4, code);
 }
 

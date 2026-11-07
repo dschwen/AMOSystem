@@ -84,7 +84,7 @@ AllRegs context_regs()
     AllRegs r = {};
     r.d[6] = c.d6;
     r.d[7] = c.d7;
-    r.a[3] = address(c.a3);
+    r.a[3] = encode_context_cursor(c.a3);
     r.a[4] = encode_context_cursor(c.a4);
     r.a[5] = encode_data_zone(c.a5);
     r.a[6] = address(c.a6);

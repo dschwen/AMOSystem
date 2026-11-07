@@ -363,6 +363,31 @@ extern "C" void append_context_a4(void* context, uint8_t byte) {
 #endif
 }
 
+extern "C" void push_context_a3(void* context, uint32_t word) {
+#if defined(AMOS_TEST_WRAPPED)
+    auto& cursor = static_cast<amos::Ctx*>(context)->a3;
+    cursor -= 4;
+    amos::host::detail::write_cursor_long(cursor,word);
+#else
+    auto& cursor = *reinterpret_cast<uint8_t**>(static_cast<uint8_t*>(context)+8);
+    cursor -= 4;
+    *reinterpret_cast<uint32_t*>(cursor) = word;
+#endif
+}
+extern "C" uint32_t pop_context_a3(void* context) {
+#if defined(AMOS_TEST_WRAPPED)
+    auto& cursor = static_cast<amos::Ctx*>(context)->a3;
+    auto word = amos::host::detail::read_cursor_long(cursor);
+    cursor += 4;
+    return word;
+#else
+    auto& cursor = *reinterpret_cast<uint8_t**>(static_cast<uint8_t*>(context)+8);
+    uint32_t word = *reinterpret_cast<uint32_t*>(cursor);
+    cursor += 4;
+    return word;
+#endif
+}
+
 extern "C" uint32_t sum_bytes(uint32_t base, uint32_t count) {
     uint32_t sum = 0;
 #if defined(AMOS_TEST_WRAPPED)

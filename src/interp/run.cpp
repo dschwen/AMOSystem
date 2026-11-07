@@ -48,7 +48,7 @@ uint32_t program_call(int routine, uint32_t program, uint32_t d0)
     r.d[0] = d0;
     r.d[6] = c.d6;
     r.d[7] = c.d7;
-    r.a[3] = address(c.a3);
+    r.a[3] = encode_context_cursor(c.a3);
     r.a[4] = encode_context_cursor(c.a4);
     r.a[5] = encode_data_zone(c.a5);
     r.a[6] = program;
@@ -146,7 +146,7 @@ void interp_in_run0()
         r.a[1] = host::encode_routine(d.Prg_JError.load());
         r.d[6] = c.d6;
         r.d[7] = c.d7;
-        r.a[3] = address(c.a3);
+        r.a[3] = encode_context_cursor(c.a3);
         r.a[4] = encode_context_cursor(c.a4);
         r.a[5] = encode_data_zone(c.a5);
         r.a[6] = program;

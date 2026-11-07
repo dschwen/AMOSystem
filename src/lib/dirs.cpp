@@ -642,7 +642,7 @@ extern "C" uint32_t lib_fill_fpoke(RegFrame &r)
 extern "C" uint32_t lib_ff_comp(RegFrame &r)
 {
     r.a[0] = r.a[2] + FillName;
-    r.a[1] = address(ctx().a3) + FillName;
+    r.a[1] = encode_context_cursor(ctx().a3) + FillName;
     return !sorts_before(ptr<uint8_t>(r.a[0]), ptr<uint8_t>(r.a[1]));
 }
 

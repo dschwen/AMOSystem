@@ -219,7 +219,7 @@ int32_t test()
     reloc_reserve();
     tables_reserve();
     pc = ptr<uint8_t>(d.Prg_Test);
-    ctx().a3 = pc;
+    ctx().a3 = host::detail::capture_cursor(pc);
 
     int32_t next = d.DirFlag || !d.Phase ? int32_t(AtLine) : int32_t(LineStart);
     for (;;) {

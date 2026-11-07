@@ -613,7 +613,7 @@ Detokenised detokenise(const uint8_t *a6, uint8_t *a1, const uint8_t *at, bool m
             // monitor's Tt_Decoupe, which notes where its instructions are)
             Ctx &c = ctx();
             AllRegs r = {};
-            r.a[3] = address(c.a3);
+            r.a[3] = encode_context_cursor(c.a3);
             r.a[4] = address(a4);
             r.a[5] = encode_data_zone(c.a5);
             r.a[6] = address(a6);

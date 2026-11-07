@@ -342,7 +342,7 @@ void test(Program &p, uint32_t hooks)
     clear_variables();
     AllRegs r = {};
     r.a[2] = hooks;
-    r.a[3] = address(ctx().a3);
+    r.a[3] = encode_context_cursor(ctx().a3);
     r.a[4] = encode_context_cursor(ctx().a4);
     r.a[5] = encode_data_zone(ctx().a5);
     r.a[6] = address(&p);

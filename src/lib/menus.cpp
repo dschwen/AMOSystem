@@ -18,6 +18,7 @@
 #include "lib/banks.h"
 #include "lib/dos.h"
 #include "lib/menus.h"
+#include "runtime/detail/identity_data_memory.h"
 #include "interp/interp.h"
 #include "lib/sprites.h"
 
@@ -1032,15 +1033,25 @@ extern "C" uint32_t lib_omn_eff(RegFrame &)
     return 0;
 }
 
+namespace {
+inline uint32_t coordinate(amos::menu::Coordinates values, uint16_t index) {
+#if defined(__mc68000__)
+    return values[index];
+#else
+    return amos::host::detail::require_guest(amos::host::detail::IdentityDataMemory{}.load_be32(values + 4u * index));
+#endif
+}
+}
+
 // MnFind: the item at coords (the first one deepest), depth of them; 0 if
 // none. *last the last item looked at.
-MenuItem *amos::menu::find(const be_u32 *coords, uint16_t depth, uint32_t *last)
+MenuItem *amos::menu::find(Coordinates coords, uint16_t depth, uint32_t *last)
 {
-    if (!coords[0] || coords[0] >= 1024)
+    if (!coordinate(coords,0) || coordinate(coords,0) >= 1024)
         fon_call();
     uint32_t next = idata().MnBase;
     for (uint16_t i = depth; next;) {
-        uint32_t n = coords[--i];
+        uint32_t n = coordinate(coords,--i);
         if (!n || n >= 1024)
             fon_call();
         MenuItem *m;
@@ -1066,14 +1077,14 @@ MenuItem *amos::menu::find(const be_u32 *coords, uint16_t depth, uint32_t *last)
 extern "C" uint32_t lib_mn_find(RegFrame &r)
 {
     uint32_t last = r.a[2];
-    MenuItem *m = menu::find(reinterpret_cast<const be_u32 *>(ctx().a3), static_cast<uint16_t>(r.d[5]), &last);
+    MenuItem *m = menu::find(menu::coordinates(ctx().a3), static_cast<uint16_t>(r.d[5]), &last);
     r.a[2] = last;
     return r.d[0] = m ? -1u : 0;
 }
 
 // MnIns: insert a new item at coords (as MnFind), with the default flags
 // of its level
-MenuItem *amos::menu::insert(const be_u32 *coords, uint16_t depth)
+MenuItem *amos::menu::insert(Coordinates coords, uint16_t depth)
 {
     IData &d = idata();
     int16_t left = static_cast<int16_t>(depth - 1);
@@ -1083,7 +1094,7 @@ MenuItem *amos::menu::insert(const be_u32 *coords, uint16_t depth)
     uint32_t next = d.MnBase;
     if (next) {
         for (;;) {
-            uint16_t number = static_cast<uint16_t>(coords[--i]);
+            uint16_t number = static_cast<uint16_t>(coordinate(coords,--i));
             for (;;) {
                 m = item(next);
                 if (number == m->MnNb)
@@ -1140,7 +1151,7 @@ MenuItem *amos::menu::insert(const be_u32 *coords, uint16_t depth)
     flags(n) |= MnFlat;
 done:
     flags(n) |= d.MnDFlags[depth - 1];
-    n->MnNb = static_cast<uint16_t>(coords[0]);
+    n->MnNb = static_cast<uint16_t>(coordinate(coords,0));
     return n;
 }
 
@@ -1148,7 +1159,7 @@ done:
 // = the item.
 extern "C" uint32_t lib_mn_ins(RegFrame &r)
 {
-    r.a[2] = address(menu::insert(reinterpret_cast<const be_u32 *>(ctx().a3), static_cast<uint16_t>(r.d[5])));
+    r.a[2] = address(menu::insert(menu::coordinates(ctx().a3), static_cast<uint16_t>(r.d[5])));
     return 0;
 }
 
