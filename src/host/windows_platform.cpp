@@ -81,6 +81,8 @@ bool remove_wide(const std::wstring &path)
 }
 void require_low_stack()
 {
+#if !defined(AMOS_GUEST_BIASED)
+    // (a native stack's addresses are guest words in the identity mapping; biased, they are not)
     ULONG_PTR low, high;
     GetCurrentThreadStackLimits(&low, &high);
     if (!low || low >= high || high > (uintptr_t(1) << 32)) {
@@ -88,6 +90,7 @@ void require_low_stack()
                 reinterpret_cast<void *>(low), reinterpret_cast<void *>(high));
         exit(70);
     }
+#endif
 }
 struct FiberStart { void (*entry)(); };
 VOID WINAPI fiber_entry(void *argument)
