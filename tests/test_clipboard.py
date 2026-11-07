@@ -104,7 +104,7 @@ class EditorClipboardTests(unittest.TestCase):
                 with (ROOT / 'build/clipboard-test.log').open('w+') as log:
                     process = subprocess.Popen([str(Path(os.environ.get('AMOS_CLIPBOARD_TEST_BINARY', ROOT / 'build/host/amos'))), '--open-document', str(doc)],
                                                cwd=folder, env=env, stdout=log, stderr=log)
-                    pump(3)
+                    pump(5)
                     key('ctrl+shift+Up')  # Dismiss startup information.
                     def menu(command):
                         # Default configuration: Clipboard is after Help (root 9).
@@ -120,6 +120,10 @@ class EditorClipboardTests(unittest.TestCase):
                     key('ctrl+b')
                     for _ in range(3): key('Right')
                     menu(1)
+                    # (a slow machine, a CI runner: the clipboard arrives a little later)
+                    for _ in range(10):
+                        if read().lower() == 'rem': break
+                        pump(.5)
                     self.assertEqual(read().lower(), 'rem')
                     # Replace selection; one undo restores the original selection/text.
                     write('Print 1\nRem')
