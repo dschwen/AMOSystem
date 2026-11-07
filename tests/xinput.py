@@ -5,24 +5,33 @@ import ctypes
 import ctypes.util
 import time
 
-_x11 = ctypes.CDLL(ctypes.util.find_library('X11'))
-_xtst = ctypes.CDLL(ctypes.util.find_library('Xtst'))
-_x11.XOpenDisplay.restype = ctypes.c_void_p
-_x11.XOpenDisplay.argtypes = [ctypes.c_char_p]
-_x11.XStringToKeysym.restype = ctypes.c_ulong
-_x11.XStringToKeysym.argtypes = [ctypes.c_char_p]
-_x11.XKeysymToKeycode.restype = ctypes.c_ubyte
-_x11.XKeysymToKeycode.argtypes = [ctypes.c_void_p, ctypes.c_ulong]
-_x11.XFlush.argtypes = [ctypes.c_void_p]
-_x11.XCloseDisplay.argtypes = [ctypes.c_void_p]
-_xtst.XTestFakeKeyEvent.argtypes = [ctypes.c_void_p, ctypes.c_uint, ctypes.c_int, ctypes.c_ulong]
-_xtst.XTestFakeButtonEvent.argtypes = [ctypes.c_void_p, ctypes.c_uint, ctypes.c_int, ctypes.c_ulong]
-_xtst.XTestFakeMotionEvent.argtypes = [ctypes.c_void_p, ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_ulong]
-_xtst.XTestFakeRelativeMotionEvent.argtypes = [ctypes.c_void_p, ctypes.c_int, ctypes.c_int, ctypes.c_ulong]
+def _load(name):
+    path = ctypes.util.find_library(name)
+    return ctypes.CDLL(path) if path else None
 
+
+# (no X on a Mac or a Windows machine: the text-only tests never open a display)
+_x11 = _load('X11')
+_xtst = _load('Xtst')
+if _x11 and _xtst:
+    _x11.XOpenDisplay.restype = ctypes.c_void_p
+    _x11.XOpenDisplay.argtypes = [ctypes.c_char_p]
+    _x11.XStringToKeysym.restype = ctypes.c_ulong
+    _x11.XStringToKeysym.argtypes = [ctypes.c_char_p]
+    _x11.XKeysymToKeycode.restype = ctypes.c_ubyte
+    _x11.XKeysymToKeycode.argtypes = [ctypes.c_void_p, ctypes.c_ulong]
+    _x11.XFlush.argtypes = [ctypes.c_void_p]
+    _x11.XCloseDisplay.argtypes = [ctypes.c_void_p]
+    _xtst.XTestFakeKeyEvent.argtypes = [ctypes.c_void_p, ctypes.c_uint, ctypes.c_int, ctypes.c_ulong]
+    _xtst.XTestFakeButtonEvent.argtypes = [ctypes.c_void_p, ctypes.c_uint, ctypes.c_int, ctypes.c_ulong]
+    _xtst.XTestFakeMotionEvent.argtypes = [ctypes.c_void_p, ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_ulong]
+    _xtst.XTestFakeRelativeMotionEvent.argtypes = [ctypes.c_void_p, ctypes.c_int, ctypes.c_int, ctypes.c_ulong]
+    
 
 class Display:
     def __init__(self, name):
+        if not (_x11 and _xtst):
+            raise RuntimeError('no X11 on this machine')
         self.d = _x11.XOpenDisplay(name.encode())
         if not self.d:
             raise RuntimeError(f'cannot open display {name}')
