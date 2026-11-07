@@ -1212,7 +1212,7 @@ void slider_zone(Run &r, bool vertical)
     s->Sl_Window = static_cast<uint16_t>(evaluate(r));
     s->Sl_Global = static_cast<uint16_t>(evaluate(r));
     s->Sl_Scroll = static_cast<uint16_t>(evaluate(r));
-    s->Sl_Routines = address(&dia_slider_routines);
+    s->Sl_Routines = guest_constant(dia_slider_routines, sizeof dia_slider_routines);
     for (int i = 0; i < 8; i++) {
         s->Sl_Inactive[i] = d->Dia_SlDefault[i];
         s->Sl_Active[i] = d->Dia_SlDefault[8 + i];
@@ -2087,7 +2087,7 @@ void slider_call(Slider *s, uint16_t offset, Run *r)
 {
     if (!s->Sl_Routines)
         return;
-    if (s->Sl_Routines == address(dia_slider_routines)) {
+    if (s->Sl_Routines == guest_constant(dia_slider_routines, sizeof dia_slider_routines)) {
         if (offset && r) {
             uint8_t *e = slider_zone(s);
             zone(e)->Dia_ZoPos = s->Sl_Position;

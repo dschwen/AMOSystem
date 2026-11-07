@@ -7,6 +7,7 @@
 // comes as the argument. The colour functions (w/colours.cpp) change the
 // tables it reads with the interrupt held off.
 
+#include "core/guest_scratch.h"
 #include "core/amiga.h"
 #include "w/w.h"
 
@@ -261,7 +262,7 @@ extern "C" void w_vbl(uint8_t *data)
     d.EveCpt--;
     d.Actualise |= BitVBL;
     for (const be_u32 *r = i.VblRout; *r; r++)
-        w_int_call(ptr<void>(*r), data);
+        w_int_call(callback_target(*r), data);
     mouse(d);
     shifter(d);
     flash(d);

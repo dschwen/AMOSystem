@@ -8,6 +8,7 @@
 // display (AMOS_DISPLAY=none, or no SDL) AMOS runs without a window and
 // without sound.
 
+#include "core/guest_scratch.h"
 #include "runtime/detail/legacy_dispatch.h"
 #include "runtime/runtime.h"
 #include "runtime/glue.h"
@@ -246,7 +247,7 @@ void send(uint8_t event_class, uint16_t code, int16_t x = 0, int16_t y = 0)
 {
     if (!handler)
         return;
-    static InputEvent e;
+    static InputEvent &e = *guest_object<InputEvent>();
     memset(&e, 0, sizeof e);
     e.ie_Class = event_class;
     e.ie_Code = code;

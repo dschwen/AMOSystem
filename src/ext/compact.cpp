@@ -5,6 +5,7 @@
 // one before (the bytes that do follow), and the bits are packed again
 // the same way.
 
+#include "core/guest_scratch.h"
 #include "core/amos.h"
 #include "lib/banks.h"
 
@@ -25,7 +26,7 @@ constexpr uint16_t TSize[] = {1, 2, 3, 4, 5, 6, 7, 8, 12, 16, 24, 32, 48, 64};
 // The extension's error messages
 const char ErrMes[] = "Not a packed bitmap\0Not a packed screen";
 
-[[noreturn]] void not_packed() { interp_error(0, 0, ExtNb, address(ErrMes)); }
+[[noreturn]] void not_packed() { interp_error(0, 0, ExtNb, guest_constant(ErrMes, sizeof ErrMes)); }
 
 // What Pack and Spack work on (PacPar): the screen and its bitplanes, the
 // area in bytes across and lines down, the bank

@@ -67,8 +67,7 @@ extern "C" uint32_t lib_fn_err(uint32_t n)
     Regs r = {};
     r.d[0] = n + 1;
     r.a[0] = idata().Ed_RunMessages;
-    r.a[0] = address(boot::get_message(ptr<uint8_t>(r.a[0]), r.d[0]));
-    const uint8_t *text = ptr<uint8_t>(r.a[0]);
+    const uint8_t *text = boot::get_message(ptr<uint8_t>(r.a[0]), r.d[0]);
     uint8_t len = text[-1];
     if (!len || len == 0xFF)
         return str_empty();

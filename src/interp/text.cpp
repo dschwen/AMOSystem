@@ -196,8 +196,7 @@ void interp_fn_resource(EvalOut *o)
         lib_call(L_Dia_GetPuzzle, p);
         m.a[0] = p.a[2];
         m.d[0] = uint32_t(n);
-        m.a[0] = address(boot::get_message(ptr<uint8_t>(m.a[0]), m.d[0]));
-        text = ptr<char>(m.a[0]);
+        text = reinterpret_cast<const char *>(boot::get_message(ptr<uint8_t>(m.a[0]), m.d[0]));
     } else if (!n) {
         text = reinterpret_cast<const char *>(d.Sys_Pathname);
     } else {
@@ -213,8 +212,7 @@ void interp_fn_resource(EvalOut *o)
         }
         m.a[0] = tables[i];
         m.d[0] = k;
-        m.a[0] = address(boot::get_message(ptr<uint8_t>(m.a[0]), m.d[0]));
-        text = ptr<char>(m.a[0]);
+        text = reinterpret_cast<const char *>(boot::get_message(ptr<uint8_t>(m.a[0]), m.d[0]));
     }
     *o = {0, 0, TString, str_from_cstr(text), 0, 0};
 }

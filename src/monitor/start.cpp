@@ -3,6 +3,7 @@
 // text screen's background, the patches on the interpreter and
 // AMOS.library, the view's interrupt.
 
+#include "core/guest_scratch.h"
 #include "runtime/static_symbols.h"
 #include "monitor/monitor.h"
 #include "core/amiga.h"
@@ -95,7 +96,7 @@ void free_all()
     if (m.Tt_JError.load())
         d.Prg_JError = m.Tt_JError;
     for (be_u32 &v : d.VblRout)
-        if (v == address(mon_view_inter)) {
+        if (v == guest_callback(mon_view_inter)) {
             v = 0;
             break;
         }
@@ -227,7 +228,7 @@ bool cold_start(uint32_t program)
     for (be_u32 *v = d.VblRout;; v++)
         if (!*v) {
             view_data_zone = encode_data_zone(ctx().a5);
-            *v = address(mon_view_inter);
+            *v = guest_callback(mon_view_inter);
             break;
         }
     view_reset();

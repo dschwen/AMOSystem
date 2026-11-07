@@ -2,6 +2,7 @@
 // the extension's cold start), its DEFAULT and END routines and its check
 // of the banks. See music.h; the interrupt side is music_play.cpp.
 
+#include "core/guest_scratch.h"
 #include "core/amiga.h"
 #include "core/ioreq.h"
 #include "ext/music.h"
@@ -496,12 +497,12 @@ void go_bell(uint16_t mask, uint32_t note, uint32_t wait, int16_t forced, uint32
 }
 
 // Shout: noise down the four voices
-void shout(uint16_t note, const be_u16 *env)
+void shout(uint16_t note, uint32_t env)
 {
     stop_dma(0);
     voices(0);
     for (uint16_t mask = 0b1000; mask; mask >>= 1, note++)
-        go_shot(mask, note, 0, 0, address(env));
+        go_shot(mask, note, 0, 0, env);
 }
 
 // ---- the narrator ------------------------------------------------------
@@ -783,7 +784,7 @@ void ext_music_init()
     d.ExtAdr[ExtNb * 4 + 1] = address(AMOS_DATA(music_default));
     d.ExtAdr[ExtNb * 4 + 2] = address(AMOS_DATA(music_end));
     d.ExtAdr[ExtNb * 4 + 3] = address(AMOS_DATA(music_bank_check));
-    d.VblRout[0] = address(ext_music_vbl);
+    d.VblRout[0] = guest_callback(ext_music_vbl);
     m.MusClock = 3546895;
     m.TempoBase = 100;
     Regs r;
@@ -932,11 +933,11 @@ uint32_t ext_music_go_sam_reg(RegFrame &r)
 // ---- instructions ------------------------------------------------------
 
 // BELL [note]
-void ext_bell0() { go_bell(0x0F, 70, 0, 1, address(EnvBell)); }
-void ext_bell1(uint32_t note) { go_bell(0x0F, note, 0, 1, address(EnvBell)); }
+void ext_bell0() { go_bell(0x0F, 70, 0, 1, guest_constant(EnvBell, sizeof EnvBell)); }
+void ext_bell1(uint32_t note) { go_bell(0x0F, note, 0, 1, guest_constant(EnvBell, sizeof EnvBell)); }
 // BOOM, SHOOT
-void ext_boom() { shout(36, EnvBoom); }
-void ext_shoot() { shout(60, EnvShoot); }
+void ext_boom() { shout(36, guest_constant(EnvBoom, sizeof EnvBoom)); }
+void ext_shoot() { shout(60, guest_constant(EnvShoot, sizeof EnvShoot)); }
 
 // PLAY [voices,]note,wait
 void ext_play2(uint32_t note, int32_t wait)

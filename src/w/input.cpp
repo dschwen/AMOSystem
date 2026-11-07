@@ -9,6 +9,7 @@
 // it AMOS.library's data zone as a5, which the C++ context gets (see
 // core/call_go.s).
 
+#include "core/guest_scratch.h"
 #include "core/amiga.h"
 #include "core/ioreq.h"
 #include "w/w.h"
@@ -50,7 +51,7 @@ const uint8_t special[32] = {
 };
 
 // The fake mouse event (WSend_FakeEvent)
-struct InputEvent fake_event;
+struct InputEvent &fake_event_object() { static InputEvent *e = guest_object<InputEvent>(); return *e; }
 
 
 // Cla_Stocke: a key into the key buffer (unless full) and ClLast
@@ -137,7 +138,7 @@ down:
 // What happens to a mouse event while AMOS is in front: true to remove it
 bool mouse_event(WData &d, struct InputEvent *e)
 {
-    if (address(e->ie_position.ie_addr) == FakeCode && e->ie_Qualifier == IEQUALIFIER_RELATIVEMOUSE) {
+    if (e->ie_position.ie_addr == ptr<void>(FakeCode) && e->ie_Qualifier == IEQUALIFIER_RELATIVEMOUSE) {
         // The fake event goes through, without moving
         e->ie_position.ie_addr = nullptr;
         return false;
@@ -173,7 +174,7 @@ namespace amos::w {
 // blanker sees activity
 void send_fake_event()
 {
-    struct InputEvent &e = fake_event;
+    struct InputEvent &e = fake_event_object();
     e.ie_NextEvent = nullptr;
     e.ie_Class = IECLASS_RAWMOUSE;
     e.ie_SubClass = 0;
@@ -250,7 +251,7 @@ void w_io_handler(AllRegs *r)
 void w_sy_send_fake_event(AllRegs *r)
 {
     send_fake_event();
-    r->a[0] = address(&fake_event);
+    r->a[0] = address(&fake_event_object());
 }
 
 // WTest_Cyclique: what the interrupts leave to the program

@@ -18,6 +18,8 @@ template <typename T> inline T *guest_object(size_t count = 1)
 
 inline uint32_t guest_text(const void *text) { return address(text); }
 inline uint32_t guest_constant(const void *data, size_t) { return address(data); }
+inline uint32_t guest_callback(void (*fn)()) { return address(reinterpret_cast<const void *>(fn)); }
+inline const void *callback_target(uint32_t word) { return ptr<const void>(word); }
 
 #else
 
@@ -63,6 +65,44 @@ inline uint32_t guest_constant(const void *data, size_t size)
     memcpy(to, data, size);
     copies[count++] = {data, address(to)};
     return copies[count - 1].to;
+}
+
+// A C++ function the guest holds as a code address (a VBL routine): a marker cell of guest memory
+// stands for it, the same one every time; callback_target finds the function again (else the word is
+// the address of the assembler's code, as before)
+struct CallbackMarkers {
+    static constexpr int Count = 32;
+    void (*fn[Count])() = {};
+    uint8_t *cells = nullptr;
+    int count = 0;
+};
+inline CallbackMarkers &callback_markers()
+{
+    static CallbackMarkers markers;
+    return markers;
+}
+
+inline uint32_t guest_callback(void (*fn)())
+{
+    CallbackMarkers &m = callback_markers();
+    for (int i = 0; i < m.count; i++)
+        if (m.fn[i] == fn)
+            return address(m.cells + 4 * i);
+    if (!m.cells)
+        m.cells = static_cast<uint8_t *>(hal::allocate(4 * CallbackMarkers::Count, hal::MemoryFast | 0x10000));
+    if (!m.cells || m.count == CallbackMarkers::Count)
+        return address(reinterpret_cast<const void *>(fn));
+    m.fn[m.count] = fn;
+    return address(m.cells + 4 * m.count++);
+}
+
+inline const void *callback_target(uint32_t word)
+{
+    CallbackMarkers &m = callback_markers();
+    for (int i = 0; i < m.count; i++)
+        if (word == address(m.cells + 4 * i))
+            return reinterpret_cast<const void *>(m.fn[i]);
+    return ptr<const void>(word);
 }
 
 #endif

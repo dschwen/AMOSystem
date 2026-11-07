@@ -5,6 +5,7 @@
 // position. The structures are the NDK's, in memory below 4GB (AMOS keeps
 // their addresses).
 
+#include "core/guest_scratch.h"
 #include "hal/gfx.h"
 #include "hal/system.h"
 #include "runtime/runtime.h"
@@ -810,7 +811,7 @@ int32_t avail_fonts(char *buffer, int32_t size, uint32_t types)
     for (int i = 0; i < n; i++) {
         uint8_t *e = p + 2 + 10 * i;
         poke_w(e, AFF_MEMORY);
-        poke_l(e + 2, address(topaz));
+        poke_l(e + 2, guest_constant(topaz, sizeof topaz));
         poke_w(e + 6, uint16_t(8 + i));
         e[8] = 0;
         e[9] = FPF_ROMFONT;

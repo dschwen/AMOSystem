@@ -6,6 +6,7 @@
 // Rjsr, Rbra, Rdata...), and the "GetP" before an instruction's code
 // becomes the call to its parameter collector.
 
+#include "core/guest_scratch.h"
 #include "main/main.h"
 
 #include "core/amiga.h"
@@ -166,7 +167,7 @@ int library_load(uint32_t n, const char *command, const uint8_t *image)
         *--entry = code;
         uint16_t words = *length++;
         if (!words)
-            *entry = address(&empty_routine);
+            *entry = guest_constant(&empty_routine, sizeof empty_routine);
         code += 2 * uint32_t(words);
     }
     // the rest
