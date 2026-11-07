@@ -2,6 +2,7 @@
 #pragma once
 
 #include "core/amos.h"
+#include "lib/strings.h"
 
 namespace amos {
 
@@ -17,7 +18,7 @@ void add_routine(uint8_t *record, uint32_t list);
 void path_it();
 // NomDisc: the AMOS string s as a file name in Name1 (completed with the
 // current directory). Returns Name1.
-char *name_disc(const uint8_t *s);
+char *name_disc(GuestString s);
 
 // D_Open / D_OpenD1: open the current file (Handle); D_Close closes it
 // again, here or when an error stops the program. Returns the handle or 0.

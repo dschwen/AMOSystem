@@ -81,7 +81,7 @@ extern "C" uint32_t lib_fn_jright(uint32_t port) { return joy_bit(port, 3); }
 extern "C" uint32_t lib_fn_fire(uint32_t port) { return joy_bit(port, 4); }
 
 // PUT KEY a$: type a$ into the keyboard buffer
-extern "C" void lib_in_put_key(const uint8_t *s)
+extern "C" void lib_in_put_key(GuestString s)
 {
     if (str_len(s) >= 64)
         error(21);
@@ -98,7 +98,7 @@ extern "C" void lib_in_clear_key()
 }
 
 // KEY$(n)=a$: define function key n (1-20)
-extern "C" void lib_in_key(uint32_t n, const uint8_t *s)
+extern "C" void lib_in_key(uint32_t n, GuestString s)
 {
     char *text = str_to_buffer(s);
     if (n - 1 >= 20)

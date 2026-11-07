@@ -674,7 +674,7 @@ extern "C" void lib_in_mask_iff(uint32_t mask) { idata().IffMask = mask; }
 extern "C" uint32_t lib_fn_picture() { return 0x7F; }
 
 // LOAD IFF "file"[,screen]
-extern "C" void lib_in_load_iff2(const uint8_t *name, uint32_t screen)
+extern "C" void lib_in_load_iff2(GuestString name, uint32_t screen)
 {
     IData &d = idata();
     d.IffFlag = 0;
@@ -686,7 +686,7 @@ extern "C" void lib_in_load_iff2(const uint8_t *name, uint32_t screen)
     file_close();
 }
 
-extern "C" void lib_in_load_iff1(const uint8_t *name) { lib_in_load_iff2(name, EntNul); }
+extern "C" void lib_in_load_iff1(GuestString name) { lib_in_load_iff2(name, EntNul); }
 
 // =FORM LOAD(channel,address or bank[,count]): the FORMs of an open file
 // into memory. Returns how many were read.
@@ -752,7 +752,7 @@ extern "C" uint32_t lib_fn_form_param() { return idata().IffReturn; }
 
 // IFF ANIM "file",screen[,times]. (The assembler stopped on a forgotten
 // "illegal" instruction.)
-extern "C" void lib_in_iff_anim3(const uint8_t *name, uint32_t screen, int32_t times)
+extern "C" void lib_in_iff_anim3(GuestString name, uint32_t screen, int32_t times)
 {
     if (times < 0)
         fon_call();
@@ -798,10 +798,10 @@ extern "C" void lib_in_iff_anim3(const uint8_t *name, uint32_t screen, int32_t t
     temp_buffer(0);
 }
 
-extern "C" void lib_in_iff_anim2(const uint8_t *name, uint32_t screen) { lib_in_iff_anim3(name, screen, 1); }
+extern "C" void lib_in_iff_anim2(GuestString name, uint32_t screen) { lib_in_iff_anim3(name, screen, 1); }
 
 // SAVE IFF "file"[,compression]
-extern "C" void lib_in_save_iff2(const uint8_t *name, uint32_t compression)
+extern "C" void lib_in_save_iff2(GuestString name, uint32_t compression)
 {
     if (!idata().ScOnAd)
         screen_error(3);
@@ -814,10 +814,10 @@ extern "C" void lib_in_save_iff2(const uint8_t *name, uint32_t compression)
     file_close();
 }
 
-extern "C" void lib_in_save_iff1(const uint8_t *name) { lib_in_save_iff2(name, 1); }
+extern "C" void lib_in_save_iff1(GuestString name) { lib_in_save_iff2(name, 1); }
 
 // COMMAND LINE$=a$, =COMMAND LINE$: kept at the end of Buffer
-extern "C" void lib_in_command_line(const uint8_t *s)
+extern "C" void lib_in_command_line(GuestString s)
 {
     uint16_t len = str_len(s);
     if (len >= 256)
@@ -825,9 +825,7 @@ extern "C" void lib_in_command_line(const uint8_t *s)
     uint8_t *to = ptr<uint8_t>(idata().Buffer) + 1024 - 256 - 6;
     poke_l(to, id("CmdL"));
     poke_w(to + 4, len);
-    const uint8_t *from = str_chars(s);
-    for (uint16_t i = 0; i < ((len + 1) & ~1); i++)
-        to[6 + i] = from[i];
+    s.copy_to(to + 6, 0, (len + 1) & ~1);
 }
 
 extern "C" uint32_t lib_fn_command_line()

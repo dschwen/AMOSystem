@@ -80,6 +80,8 @@ public:
         to_ += 2;
     }
     void skip(uint32_t n) { to_ += n; }
+    // the length word
+    ContextCursor start() const { return start_; }
     // where the next character goes, as a buffer for a routine that writes characters
     ContextCursor position() const { return to_; }
     void set_position(ContextCursor at) { to_ = at; }

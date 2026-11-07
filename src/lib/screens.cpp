@@ -722,7 +722,7 @@ extern "C" void lib_in_flash_off()
     ec_call(ec::FlRaz, r);
 }
 
-extern "C" void lib_in_flash(uint32_t n, const uint8_t *s)
+extern "C" void lib_in_flash(uint32_t n, GuestString s)
 {
     need_screen();
     Regs r = {};
@@ -1099,14 +1099,14 @@ extern "C" void lib_in_set_font(int32_t n)
 }
 
 // TEXT x,y,a$
-extern "C" void lib_in_text(uint32_t x, uint32_t y, const uint8_t *s)
+extern "C" void lib_in_text(uint32_t x, uint32_t y, GuestString s)
 {
     need_screen();
     move_cursor(x, y);
     if (uint16_t len = str_len(s)) {
         Regs r = {};
         r.d[0] = len;
-        r.a[0] = address(str_chars(s));
+        r.a[0] = encode_context_cursor(s.chars());
         gfx(LVOText, r);
     }
 }
@@ -1118,10 +1118,13 @@ extern "C" uint32_t lib_fn_text_base()
     return rastport()->TxBaseline;
 }
 
-extern "C" uint32_t lib_fn_text_length(const uint8_t *s)
+extern "C" uint32_t lib_fn_text_length(GuestString s)
 {
     need_screen();
-    return static_cast<uint16_t>(hal::text_length(rastport(), reinterpret_cast<CONST_STRPTR>(str_chars(s)), str_len(s)));
+    static char text[65536];
+    uint16_t len = str_len(s);
+    s.copy_to(text, 0, len);
+    return static_cast<uint16_t>(hal::text_length(rastport(), reinterpret_cast<CONST_STRPTR>(text), len));
 }
 
 extern "C" uint32_t lib_fn_text_style()

@@ -92,7 +92,7 @@ void close_all()
 }
 
 // OpIn / RanApp: open channel n on the file named name
-Channel &open_file(uint32_t n, const uint8_t *name)
+Channel &open_file(uint32_t n, GuestString name)
 {
     Regs r = {};
     r.a[1] = address(AMOS_DATA(lib_close_all_on_clear));
@@ -107,7 +107,7 @@ Channel &open_file(uint32_t n, const uint8_t *name)
     return c;
 }
 
-void open_typed(uint32_t n, const uint8_t *name, uint32_t mode, uint8_t type)
+void open_typed(uint32_t n, GuestString name, uint32_t mode, uint8_t type)
 {
     Channel &c = open_file(n, name);
     BPTR h = hal::open(ptr<char>(idata().Name1), mode);
@@ -117,7 +117,7 @@ void open_typed(uint32_t n, const uint8_t *name, uint32_t mode, uint8_t type)
     c.type() = type;
 }
 
-BPTR open_random(uint32_t n, const uint8_t *name, uint8_t type)
+BPTR open_random(uint32_t n, GuestString name, uint8_t type)
 {
     Channel &c = open_file(n, name);
     BPTR h = hal::open(ptr<char>(idata().Name1), ModeOldFile);
@@ -426,7 +426,7 @@ extern "C" uint32_t lib_fn_input2(uint32_t n, int32_t count)
 }
 
 // DIR$=a$: the current directory, which has to be one
-extern "C" void lib_in_dir(const uint8_t *name)
+extern "C" void lib_in_dir(GuestString name)
 {
     name_disc(name);
     BPTR lock = lock_get();
@@ -476,13 +476,13 @@ extern "C" void lib_in_parent()
 }
 
 // KILL a$, RENAME a$ TO b$, MKDIR a$
-extern "C" void lib_in_kill(const uint8_t *name)
+extern "C" void lib_in_kill(GuestString name)
 {
     if (!hal::delete_file(name_disc(name)))
         disk_error();
 }
 
-extern "C" void lib_in_rename(const uint8_t *from, const uint8_t *to)
+extern "C" void lib_in_rename(GuestString from, GuestString to)
 {
     name_disc(to);
     char *name2 = ptr<char>(idata().Name2);
@@ -492,7 +492,7 @@ extern "C" void lib_in_rename(const uint8_t *from, const uint8_t *to)
         disk_error();
 }
 
-extern "C" void lib_in_mkdir(const uint8_t *name)
+extern "C" void lib_in_mkdir(GuestString name)
 {
     lock_free();
     BPTR lock = hal::create_dir(name_disc(name));
@@ -503,10 +503,10 @@ extern "C" void lib_in_mkdir(const uint8_t *name)
 }
 
 // =DRIVE(a$): is there a device "a$" (ending with ":")?
-extern "C" uint32_t lib_fn_drive(const uint8_t *name)
+extern "C" uint32_t lib_fn_drive(GuestString name)
 {
     uint16_t len = str_len(name);
-    if (str_chars(name)[static_cast<int16_t>(len) - 1] != ':')
+    if (name.at(static_cast<uint16_t>(static_cast<int16_t>(len) - 1)) != ':')
         return 0;
     char *text = str_to_buffer(name);
     no_requesters();
@@ -532,7 +532,7 @@ extern "C" uint32_t lib_fn_dfree()
 }
 
 // =DISC INFO$(a$): "Volume:" then the free space, 10 characters
-extern "C" uint32_t lib_fn_disc_info(const uint8_t *name)
+extern "C" uint32_t lib_fn_disc_info(GuestString name)
 {
     name_disc(name);
     uint8_t *s = str_alloc(126);
@@ -575,18 +575,18 @@ extern "C" uint32_t lib_fn_port(uint32_t n)
 }
 
 // OPEN PORT / OPEN OUT / OPEN IN channel,a$
-extern "C" void lib_in_open_port(uint32_t n, const uint8_t *name)
+extern "C" void lib_in_open_port(uint32_t n, GuestString name)
 {
     open_typed(n, name, ModeOldFile, ChanOut | ChanIn | ChanPort);
 }
 
-extern "C" void lib_in_open_out(uint32_t n, const uint8_t *name) { open_typed(n, name, ModeNewFile, ChanOut); }
-extern "C" void lib_in_open_in(uint32_t n, const uint8_t *name) { open_typed(n, name, ModeOldFile, ChanIn); }
+extern "C" void lib_in_open_out(uint32_t n, GuestString name) { open_typed(n, name, ModeNewFile, ChanOut); }
+extern "C" void lib_in_open_in(uint32_t n, GuestString name) { open_typed(n, name, ModeOldFile, ChanIn); }
 
 // OPEN RANDOM channel,a$ / APPEND channel,a$
-extern "C" void lib_in_open_random(uint32_t n, const uint8_t *name) { open_random(n, name, ChanRandom); }
+extern "C" void lib_in_open_random(uint32_t n, GuestString name) { open_random(n, name, ChanRandom); }
 
-extern "C" void lib_in_append(uint32_t n, const uint8_t *name)
+extern "C" void lib_in_append(uint32_t n, GuestString name)
 {
     BPTR h = open_random(n, name, ChanOut);
     hal::seek(h, 0, OffsetEnd);
@@ -673,7 +673,7 @@ extern "C" void lib_in_put(uint32_t n, uint32_t record)
 }
 
 // =EXIST(a$)
-extern "C" uint32_t lib_fn_exist(const uint8_t *name)
+extern "C" uint32_t lib_fn_exist(GuestString name)
 {
     if (!str_len(name))
         return 0;
@@ -683,7 +683,7 @@ extern "C" uint32_t lib_fn_exist(const uint8_t *name)
 
 // PLOAD "file",bank: the code hunk of a program into a bank (in chip
 // memory if the number is negative)
-extern "C" void lib_in_pload(const uint8_t *name, int32_t number)
+extern "C" void lib_in_pload(GuestString name, int32_t number)
 {
     if (!number)
         fon_call();
@@ -709,7 +709,7 @@ extern "C" void lib_in_pload(const uint8_t *name, int32_t number)
 }
 
 // BLOAD "file",address/bank
-extern "C" void lib_in_bload(const uint8_t *name, int32_t where)
+extern "C" void lib_in_bload(GuestString name, int32_t where)
 {
     uint32_t to = bank_or_address(where);
     name_disc(name);
@@ -726,7 +726,7 @@ extern "C" void lib_in_bload(const uint8_t *name, int32_t where)
 }
 
 // BSAVE "file",start TO end
-extern "C" void lib_in_bsave(const uint8_t *name, int32_t start, uint32_t end)
+extern "C" void lib_in_bsave(GuestString name, int32_t start, uint32_t end)
 {
     uint32_t from = bank_or_address(start);
     if (end <= from)

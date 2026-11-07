@@ -90,14 +90,14 @@ extern "C" void lib_arx_close()
 }
 
 // =AREXX EXIST(port$)
-extern "C" uint32_t lib_fn_arexx_exist(const uint8_t *name)
+extern "C" uint32_t lib_fn_arexx_exist(GuestString name)
 {
     struct MsgPort *unused = nullptr;
     return port_exists(str_to_buffer(name), false, &unused) ? -1u : 0;
 }
 
 // AREXX OPEN port$
-extern "C" void lib_in_arexx_open(const uint8_t *name)
+extern "C" void lib_in_arexx_open(GuestString name)
 {
     IData &d = idata();
     uint16_t length = str_len(name);
@@ -105,7 +105,7 @@ extern "C" void lib_in_arexx_open(const uint8_t *name)
         error(21);
     char *to = reinterpret_cast<char *>(d.Arx_PortName);
     for (uint16_t i = 0; i < length; i++) {
-        int8_t c = static_cast<int8_t>(str_chars(name)[i]);
+        int8_t c = static_cast<int8_t>(name.at(i));
         to[i] = c;
         if (c <= ' ')
             fon_call();
@@ -166,13 +166,18 @@ extern "C" uint32_t lib_fn_arexxd(uint32_t n)
 }
 
 // AREXX ANSWER code[,answer$]
-extern "C" void lib_in_arexx_answer2(uint32_t code, const uint8_t *text)
+extern "C" void lib_in_arexx_answer2(uint32_t code, GuestString text)
 {
     struct RexxMsg *m = answer();
     if (!m)
         error(197);         // no command
     if (m->rm_Action & RXFF_RESULT) {
-        UBYTE *s = hal::rexx_text(reinterpret_cast<const char *>(str_chars(text)), str_len(text));
+        char copy[256];
+        uint16_t length = str_len(text);
+        if (length > sizeof copy)
+            length = sizeof copy;
+        text.copy_to(copy, 0, length);
+        UBYTE *s = hal::rexx_text(copy, length);
         if (!s)
             error(24);
         m->rm_Result2 = LONG(address(s));
@@ -182,7 +187,7 @@ extern "C" void lib_in_arexx_answer2(uint32_t code, const uint8_t *text)
     idata().Arx_Answer = 0;
 }
 
-extern "C" void lib_in_arexx_answer1(uint32_t code) { lib_in_arexx_answer2(code, ptr<uint8_t>(idata().ChVide)); }
+extern "C" void lib_in_arexx_answer1(uint32_t code) { lib_in_arexx_answer2(code, GuestString::from_word(idata().ChVide)); }
 
 #if !defined(__mc68000__)
 #include "runtime/bindings/lib_arexx.inc"

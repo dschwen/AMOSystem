@@ -192,14 +192,14 @@ int16_t load_bank(uint32_t number)
 }
 
 // Open a file named by an AMOS string, or stop with the disk error
-void open_or_error(const uint8_t *name, uint32_t mode)
+void open_or_error(GuestString name, uint32_t mode)
 {
     name_disc(name);
     if (!file_open(mode))
         disk_error();
 }
 
-void load(const uint8_t *name, uint32_t number)
+void load(GuestString name, uint32_t number)
 {
     open_or_error(name, ModeOldFile);
     int16_t result = load_bank(number);
@@ -234,7 +234,7 @@ extern "C" uint32_t lib_bnk_load(RegFrame &r)
 }
 
 // SAVE "file",n: one bank; SAVE "file": all of them
-extern "C" void lib_in_save2(const uint8_t *name, uint32_t n)
+extern "C" void lib_in_save2(GuestString name, uint32_t n)
 {
     open_or_error(name, ModeNewFile);
     uint8_t *bank = bank_find(n);
@@ -244,7 +244,7 @@ extern "C" void lib_in_save2(const uint8_t *name, uint32_t n)
     file_close();
 }
 
-extern "C" void lib_in_save1(const uint8_t *name)
+extern "C" void lib_in_save1(GuestString name)
 {
     open_or_error(name, ModeNewFile);
     save_all();
@@ -252,9 +252,9 @@ extern "C" void lib_in_save1(const uint8_t *name)
 }
 
 // LOAD "file"[,n]
-extern "C" void lib_in_load1(const uint8_t *name) { load(name, EntNul); }
+extern "C" void lib_in_load1(GuestString name) { load(name, EntNul); }
 
-extern "C" void lib_in_load2(const uint8_t *name, int32_t n)
+extern "C" void lib_in_load2(GuestString name, int32_t n)
 {
     if (n >= 0x10000)
         fon_call();

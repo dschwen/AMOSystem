@@ -611,7 +611,7 @@ void narrator_open()
 }
 
 // Say
-void say(const uint8_t *text, uint32_t multi)
+void say(GuestString text, uint32_t multi)
 {
     volatile MusicData &m = md();
     stop_dma(0);
@@ -619,14 +619,14 @@ void say(const uint8_t *text, uint32_t multi)
     m.EnvOn = 0;
     m.Noise = 0;
     uint16_t length = str_len(text);
-    const uint8_t *s = str_chars(text);
+    ContextCursor s = text.chars();
     uint8_t *buffer = ptr<uint8_t>(idata().Buffer);
     uint32_t count;
-    if (*s == '~' && length < 1024 && int16_t(length - 2) >= 0) {
+    if (host::detail::read_cursor_byte(s) == '~' && length < 1024 && int16_t(length - 2) >= 0) {
         // phonemes
         s++;
         for (int i = 0; i < length - 1; i++)
-            buffer[i] = s[i];
+            buffer[i] = host::detail::read_cursor_byte(s + i);
         uint8_t *end = buffer + length - 1;
         *end++ = 'Q';
         *end++ = '#';
@@ -635,11 +635,11 @@ void say(const uint8_t *text, uint32_t multi)
         *end = 0;
         count = uint16_t(length + 4);
     } else {
-        if (*s == '~')
+        if (host::detail::read_cursor_byte(s) == '~')
             s++;
         for (int i = 0; i < 255 * 4; i++)
             buffer[i] = 0;
-        if (uint16_t(lvo(m.TranBase, -30, length, 1024, address(s), address(buffer)))) {
+        if (uint16_t(lvo(m.TranBase, -30, length, 1024, encode_context_cursor(s), address(buffer)))) {
             voices(0x0F);
             return;
         }
@@ -722,21 +722,19 @@ void med_open()
 }
 
 // A file into Name1 with its path
-void file_name(const uint8_t *name)
+void file_name(GuestString name)
 {
     uint16_t n = uint16_t(str_len(name) - 1);
     if (n >= 128)
         ifonc();
     char *to = ptr<char>(idata().Name1);
-    const uint8_t *from = str_chars(name);
-    for (uint16_t i = 0; i <= n; i++)
-        to[i] = char(from[i]);
+    name.copy_to(to, 0, uint32_t(n) + 1);
     to[n + 1] = 0;
     path_it();
 }
 
 // A file loaded into a new bank (Track Load, Med Load): its address
-uint8_t *load_bank(const uint8_t *name, uint32_t number, uint16_t flags, uint32_t extra, const char *bank_name)
+uint8_t *load_bank(GuestString name, uint32_t number, uint16_t flags, uint32_t extra, const char *bank_name)
 {
     file_name(name);
     BPTR file = hal::open(ptr<char>(idata().Name1), MODE_OLDFILE);
@@ -1091,13 +1089,15 @@ void ext_sample_to(uint32_t n, uint32_t mask)
 }
 
 // SET WAVE n,a$
-void ext_set_wave(uint32_t n, const uint8_t *s)
+void ext_set_wave(uint32_t n, GuestString s)
 {
     if (str_len(s) < 256)
         error(STSho);
     if (!n)
         ifonc();
-    if (!new_wave(uint16_t(n), str_chars(s)))
+    uint8_t wave[256];
+    s.copy_to(wave, 0, sizeof wave);
+    if (!new_wave(uint16_t(n), wave))
         out_of_memory();
 }
 
@@ -1249,12 +1249,12 @@ void ext_ssave(uint32_t file, uint32_t start, uint32_t end)
 
 // ---- the narrator ----------------------------------------------------------
 
-void ext_say1(const uint8_t *s)
+void ext_say1(GuestString s)
 {
     narrator_open();
     say(s, 0);
 }
-void ext_say2(const uint8_t *s, uint32_t multi)
+void ext_say2(GuestString s, uint32_t multi)
 {
     narrator_open();
     say(s, multi);
@@ -1320,7 +1320,7 @@ int32_t ext_fn_mouth_height() { return int8_t(read_io()[89]); }
 // ---- the tracker -----------------------------------------------------------
 
 // TRACK LOAD "name",bank
-void ext_track_load(const uint8_t *name, int32_t bank)
+void ext_track_load(GuestString name, int32_t bank)
 {
     volatile MusicData &m = md();
     if (bank >= 0x10000)
@@ -1376,7 +1376,7 @@ void ext_track_play0() { ext_track_play2(EntNul, EntNul); }
 // ---- MED -----------------------------------------------------------------
 
 // MED LOAD "name",bank
-void ext_med_load(const uint8_t *name, int32_t bank)
+void ext_med_load(GuestString name, int32_t bank)
 {
     volatile MusicData &m = md();
     med_open();

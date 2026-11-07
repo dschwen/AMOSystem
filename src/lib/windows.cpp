@@ -155,9 +155,10 @@ extern "C" void lib_in_border(uint32_t n, uint32_t paper, uint32_t pen)
 }
 
 // TITLE TOP a$, TITLE BOTTOM a$
-static void title(const uint8_t *s, bool top)
+static void title(GuestString s, bool top)
 {
-    uint32_t text = address(str_to_buffer(s));
+    str_to_buffer(s);
+    uint32_t text = idata().Buffer;
     check_screen();
     Regs r = {};
     r.d[1] = top ? text : 0;
@@ -165,8 +166,8 @@ static void title(const uint8_t *s, bool top)
     wi_check(wi::STitle, r);
 }
 
-extern "C" void lib_in_title_top(const uint8_t *s) { title(s, true); }
-extern "C" void lib_in_title_bottom(const uint8_t *s) { title(s, false); }
+extern "C" void lib_in_title_top(GuestString s) { title(s, true); }
+extern "C" void lib_in_title_bottom(GuestString s) { title(s, false); }
 
 // =X CURS, =Y CURS
 extern "C" uint32_t lib_fn_xcurs()
@@ -199,7 +200,7 @@ extern "C" void lib_in_set_curs(uint32_t a, uint32_t b, uint32_t c, uint32_t d, 
 }
 
 // CENTRE a$
-extern "C" void lib_in_centre(const uint8_t *s)
+extern "C" void lib_in_centre(GuestString s)
 {
     check_screen();
     Regs r = {};

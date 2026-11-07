@@ -411,7 +411,7 @@ static void read_text(uint32_t title, uint32_t text_address, uint32_t length)
 }
 
 // READ TEXT file$
-extern "C" void lib_in_read_text1(const uint8_t *name)
+extern "C" void lib_in_read_text1(GuestString name)
 {
     // Room for Param$ (a hypertext word) before anything happens
     str_alloc(256);

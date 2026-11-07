@@ -69,16 +69,14 @@ void path_it()
     copy(to, saved);
 }
 
-char *name_disc(const uint8_t *s)
+char *name_disc(GuestString s)
 {
     uint16_t len = str_len(s);
     if (!len || len >= 108)
         fon_call();
     char *to = name1();
-    const uint8_t *from = str_chars(s);
-    for (uint16_t i = 0; i < len; i++)
-        *to++ = static_cast<char>(*from++);
-    *to = 0;
+    s.copy_to(to, 0, len);
+    to[len] = 0;
     path_it();
     return name1();
 }
@@ -168,12 +166,12 @@ extern "C" uint32_t lib_dsk_path_it(RegFrame &)
 // its length, a2 after the length word, a0/a1 as ChVerBuf2 left them.
 extern "C" uint32_t lib_nom_disc(RegFrame &r)
 {
-    const uint8_t *s = ptr<uint8_t>(r.a[2]);
+    GuestString s = GuestString::from_word(r.a[2]);
     name_disc(s);
     uint16_t len = str_len(s);
     r.d[2] = (r.d[2] & 0xFFFF0000u) | len;
-    r.a[2] = address(s + 2);
-    r.a[1] = address(s + 2 + len);
+    r.a[2] = encode_context_cursor(s.chars());
+    r.a[1] = encode_context_cursor(s.chars() + len);
     r.a[0] = idata().Name1 + len + 1;
     return 0;
 }

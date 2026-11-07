@@ -376,7 +376,7 @@ void fill_devices()
 
 // NomDir: the AMOS string s as a directory in Name1, and the filter (the
 // last part, if it has * or ?) in Name2
-void nom_dir(const uint8_t *s)
+void nom_dir(GuestString s)
 {
     uint16_t len = str_len(s);
     if (len >= 256)
@@ -387,9 +387,8 @@ void nom_dir(const uint8_t *s)
     *name = *filter = 0;
     char *to = name, *part = name;
     bool joker_seen = false;
-    const uint8_t *from = str_chars(s);
     for (uint16_t i = 0; i < len; i++) {
-        char c = static_cast<char>(*from++);
+        char c = static_cast<char>(s.at(i));
         *to++ = c;
         *to = 0;
         if (c == '*' || c == '?')
@@ -706,7 +705,7 @@ extern "C" uint32_t lib_fill_ffind(RegFrame &r)
 // NomDir: a2 = AMOS string
 extern "C" uint32_t lib_nom_dir(RegFrame &r)
 {
-    nom_dir(ptr<uint8_t>(r.a[2]));
+    nom_dir(GuestString::from_word(r.a[2]));
     return 0;
 }
 
@@ -733,14 +732,14 @@ extern "C" void lib_in_ldir0()
     dir_normal();
 }
 
-extern "C" void lib_in_dir1(const uint8_t *name)
+extern "C" void lib_in_dir1(GuestString name)
 {
     idata().ImpFlg = 0;
     nom_dir(name);
     dir_normal();
 }
 
-extern "C" void lib_in_ldir1(const uint8_t *name)
+extern "C" void lib_in_ldir1(GuestString name)
 {
     idata().ImpFlg = 1;
     nom_dir(name);
@@ -761,14 +760,14 @@ extern "C" void lib_in_ldirw0()
     dir_wide();
 }
 
-extern "C" void lib_in_dirw1(const uint8_t *name)
+extern "C" void lib_in_dirw1(GuestString name)
 {
     idata().ImpFlg = 0;
     nom_dir(name);
     dir_wide();
 }
 
-extern "C" void lib_in_ldirw1(const uint8_t *name)
+extern "C" void lib_in_ldirw1(GuestString name)
 {
     idata().ImpFlg = 1;
     nom_dir(name);
@@ -787,25 +786,23 @@ extern "C" void lib_in_set_dir1(uint32_t length)
     idata().DirLNom = static_cast<uint16_t>(length);
 }
 
-extern "C" void lib_in_set_dir2(uint32_t length, const uint8_t *filter)
+extern "C" void lib_in_set_dir2(uint32_t length, GuestString filter)
 {
-    if (address(filter) != 0x80000000u) {
+    if (filter.word() != 0x80000000u) {
         uint16_t len = str_len(filter);
         if (len >= 106)
             error(21);
         char *to = ptr<char>(idata().DirFNeg);
-        const uint8_t *from = str_chars(filter);
         if (len > 510)
             len = 510;
-        for (uint16_t i = 0; i < len; i++)
-            *to++ = static_cast<char>(*from++);
-        *to = 0;
+        filter.copy_to(to, 0, len);
+        to[len] = 0;
     }
     lib_in_set_dir1(length);
 }
 
 // =DIR FIRST$(a$), =DIR NEXT$
-extern "C" uint32_t lib_fn_dir_first(const uint8_t *name)
+extern "C" uint32_t lib_fn_dir_first(GuestString name)
 {
     check_no_monitor();
     nom_dir(name);
@@ -828,7 +825,7 @@ extern "C" uint32_t lib_fn_fill_next()
 }
 
 // =DEV FIRST$(a$), =PRG FIRST$(a$) (which lists the devices too)
-extern "C" uint32_t lib_fn_dev_first(const uint8_t *filter)
+extern "C" uint32_t lib_fn_dev_first(GuestString filter)
 {
     check_no_monitor();
     nom_dir(filter);
@@ -855,29 +852,29 @@ void lib(int routine)
 }
 
 // The string s into to, zero-terminated (ChVerBuf2: at most 510)
-void to_text(char *to, const uint8_t *s)
+void to_text(char *to, GuestString s)
 {
     Regs r;
     r.a[0] = address(to);
-    r.a[2] = address(s + 2);
-    r.d[2] = peek_w(s);
+    r.a[2] = encode_context_cursor(s.chars());
+    r.d[2] = s.size();
     lib_call(L_ChVerBuf2, r);
 }
 
 // Workbench 2.0: AssignLock with a lock on the path (none: the assign
 // removed)
-void assign_lock(const uint8_t *name, const uint8_t *path)
+void assign_lock(GuestString name, GuestString path)
 {
     IData &d = idata();
     lib(L_LockFree);
-    if (uint16_t n = peek_w(path)) {
+    if (uint16_t n = path.size()) {
         if (n >= 108)
             fon_call();
         to_text(ptr<char>(d.Name1), path);
         path_it();
         lib(L_LockGet);
     }
-    uint16_t n = peek_w(name);
+    uint16_t n = name.size();
     if (!n || n >= 108)
         fon_call();
     char *b = ptr<char>(d.Buffer);
@@ -896,7 +893,7 @@ void assign_lock(const uint8_t *name, const uint8_t *path)
 }
 
 // Workbench 1.3: the command c:assign, output to NIL:
-void assign_command(const uint8_t *name, const uint8_t *path)
+void assign_command(GuestString name, GuestString path)
 {
     IData &d = idata();
     static const char command[] = "c:assign";
@@ -908,7 +905,7 @@ void assign_command(const uint8_t *name, const uint8_t *path)
     if (!e.d[3])
         disk_error();
     *n1 = 0;
-    if (uint16_t n = peek_w(path)) {
+    if (uint16_t n = path.size()) {
         if (n >= 108)
             fon_call();
         to_text(n1, path);
@@ -921,12 +918,12 @@ void assign_command(const uint8_t *name, const uint8_t *path)
     for (const char *c = command; *c; c++)
         *to++ = *c;
     *to++ = ' ';
-    uint16_t n = peek_w(name);
+    uint16_t n = name.size();
     if (!n || n >= 64)
         fon_call();
-    const uint8_t *s = name + 2;
+    ContextCursor s = name.chars();
     for (;;) {
-        uint8_t c = *s++;
+        uint8_t c = host::detail::read_cursor_byte(s++);
         *to++ = char(c);
         if (c <= 32)
             fon_call();
@@ -939,7 +936,7 @@ void assign_command(const uint8_t *name, const uint8_t *path)
     while ((*to++ = *n1++))
         ;
     Regs o;
-    o.d[1] = address("NIL:");
+    o.d[1] = guest_text("NIL:");
     o.d[2] = 1005;
     lib_call(L_D_OpenD1, o);
     if (!d.Handle)
@@ -953,7 +950,7 @@ void assign_command(const uint8_t *name, const uint8_t *path)
 
 } // namespace
 
-extern "C" void lib_in_assign(const uint8_t *name, const uint8_t *path)
+extern "C" void lib_in_assign(GuestString name, GuestString path)
 {
     if (idata().WB2_0)
         assign_lock(name, path);

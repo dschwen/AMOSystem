@@ -354,7 +354,7 @@ extern "C" void lib_close_devs() { close_devices(); }
 // ---- instructions -------------------------------------------------------
 
 // LIB OPEN channel,"name",version
-extern "C" void lib_in_lib_open(uint32_t n, const uint8_t *name, uint32_t version)
+extern "C" void lib_in_lib_open(uint32_t n, GuestString name, uint32_t version)
 {
     if (!str_len(name))
         fon_call();
@@ -378,7 +378,7 @@ extern "C" void lib_in_lib_close1(uint32_t n) { close_library(n); }
 extern "C" uint32_t lib_fn_lib_base(uint32_t n) { return library(n); }
 
 // DEV OPEN channel,"name",IO length,unit,flags
-extern "C" void lib_in_dev_open(uint32_t n, const uint8_t *name, int32_t length, uint32_t unit, uint32_t flags)
+extern "C" void lib_in_dev_open(uint32_t n, GuestString name, int32_t length, uint32_t unit, uint32_t flags)
 {
     if (!str_len(name))
         fon_call();
@@ -403,7 +403,7 @@ extern "C" void lib_in_dev_abort(uint32_t n) { abort_device(device(n)); }
 extern "C" uint32_t lib_fn_dev_check(uint32_t n) { return check_device(device(n)); }
 
 // EXEC "command": run a CLI command, input and output on NIL:
-extern "C" void lib_in_exec(const uint8_t *command)
+extern "C" void lib_in_exec(GuestString command)
 {
     if (!str_len(command))
         fon_call();

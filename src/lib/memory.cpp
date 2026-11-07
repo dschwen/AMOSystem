@@ -83,7 +83,7 @@ extern "C" void lib_in_fill(int32_t start, uint32_t end, uint32_t pattern)
 }
 
 // =HUNT(start TO end,a$): the first address where a$ is, or 0
-extern "C" uint32_t lib_fn_hunt(int32_t start, uint32_t end, const uint8_t *s)
+extern "C" uint32_t lib_fn_hunt(int32_t start, uint32_t end, GuestString s)
 {
     uint16_t len = str_len(s);
     const char *text = str_to_buffer(s);
@@ -155,20 +155,18 @@ extern "C" uint32_t lib_fn_leek(uint32_t a)
 }
 
 // POKE$ address,a$
-extern "C" void lib_in_poke_string(uint32_t a, const uint8_t *s)
+extern "C" void lib_in_poke_string(uint32_t a, GuestString s)
 {
     uint8_t *to = ptr<uint8_t>(a);
-    const uint8_t *from = str_chars(s);
-    for (uint16_t i = str_len(s); i; i--)
-        *to++ = *from++;
+    s.copy_to(to, 0, str_len(s));
 }
 
 // =PEEK$(address,length[,stop$])
 extern "C" uint32_t lib_fn_peek_string2(uint32_t a, uint32_t len) { return peek_string(ptr<uint8_t>(a), len, -1); }
 
-extern "C" uint32_t lib_fn_peek_string3(uint32_t a, uint32_t len, const uint8_t *stop)
+extern "C" uint32_t lib_fn_peek_string3(uint32_t a, uint32_t len, GuestString stop)
 {
-    return peek_string(ptr<uint8_t>(a), len, str_len(stop) ? str_chars(stop)[0] : -1);
+    return peek_string(ptr<uint8_t>(a), len, str_len(stop) ? stop.at(0) : -1);
 }
 
 #if !defined(__mc68000__)

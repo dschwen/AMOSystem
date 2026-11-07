@@ -63,24 +63,25 @@ uint32_t read_string(DeviceChannel &c, IOReq *io, uint32_t n)
     if (n >= StringMax)
         fon_call();
     uint32_t room = (n & 0xFFFE) + 2;
-    uint8_t *s = str_alloc(room);
-    idata().HiChaine = address(s) + 2 + uint16_t(room);
-    poke_w(s, uint16_t(n));
-    io->io_Data = address(s + 2);
+    StringBuilder b(room);
+    uint32_t s = encode_context_cursor(b.start());
+    idata().HiChaine = s + 2 + uint16_t(room);
+    poke_w(b.start(), uint16_t(n));
+    io->io_Data = s + 2;
     io->io_Length = n;
     do_command(c, CMD_READ);
-    return address(s);
+    return s;
 }
 
 // The text of string s written with command
-void write_string(DeviceChannel &c, const uint8_t *s, uint16_t command, bool wait)
+void write_string(DeviceChannel &c, GuestString s, uint16_t command, bool wait)
 {
     IOReq *io = std_io(c);
     uint16_t n = str_len(s);
     if (!n)
         fon_call();
     io->io_Length = n;
-    io->io_Data = address(s + 2);
+    io->io_Data = encode_context_cursor(s.chars());
     if (wait)
         do_command(c, command);
     else
@@ -212,7 +213,7 @@ void ext_serial_close0()
 }
 
 // SERIAL SEND channel,a$ / SERIAL OUT channel,address,length
-void ext_serial_send(uint32_t n, const uint8_t *s) { write_string(serial(n), s, CMD_WRITE, false); }
+void ext_serial_send(uint32_t n, GuestString s) { write_string(serial(n), s, CMD_WRITE, false); }
 void ext_serial_out(uint32_t n, uint32_t at, int32_t length)
 {
     if (length <= 0)
@@ -360,7 +361,7 @@ void ext_printer_close()
 }
 
 uint32_t ext_fn_printer_error() { return uint8_t(std_io(channel(PrinterIO))->io_Error); }
-void ext_printer_send(const uint8_t *s) { write_string(channel(PrinterIO), s, CMD_WRITE, false); }
+void ext_printer_send(GuestString s) { write_string(channel(PrinterIO), s, CMD_WRITE, false); }
 void ext_printer_out(uint32_t at, uint32_t length) { write_memory(channel(PrinterIO), at, length, PRD_RAWWRITE, false); }
 void ext_printer_abort() { abort_device(channel(PrinterIO)); }
 
@@ -420,7 +421,7 @@ void ext_parallel_open()
 }
 
 void ext_parallel_close() { close_device(channel(ParallelIO)); }
-void ext_parallel_send(const uint8_t *s) { write_string(channel(ParallelIO), s, CMD_WRITE, true); }
+void ext_parallel_send(GuestString s) { write_string(channel(ParallelIO), s, CMD_WRITE, true); }
 // (the original sent the printer's PRD_RAWWRITE, which for the parallel
 // device is PDCMD_QUERY: nothing was written)
 void ext_parallel_out(uint32_t at, uint32_t length) { write_memory(channel(ParallelIO), at, length, CMD_WRITE, true); }
