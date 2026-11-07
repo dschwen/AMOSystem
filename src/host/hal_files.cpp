@@ -22,6 +22,9 @@ bool in_task();
 #include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
+#if defined(__APPLE__)
+#include <mach-o/dyld.h>
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -511,6 +514,12 @@ DirLock lock(const char *name, int32_t)
         DirLock result = lock_path(exe);
         free(exe);
         return result;
+#elif defined(__APPLE__)
+        char exe[4096];
+        uint32_t size = sizeof exe;
+        if (_NSGetExecutablePath(exe, &size) != 0)
+            return 0;
+        return lock_path(exe);
 #else
         return lock_path("/proc/self/exe");
 #endif
