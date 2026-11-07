@@ -165,7 +165,15 @@ $(BUILD)/ndk/Include_H/exec/types.h:
 
 ndk: $(BUILD)/ndk/Include_H/exec/types.h
 
-$(HOST)/obj/%.o: %.cpp $(if $(filter $(BUILD)/ndk/Include_H,$(NDK_INCLUDE)),$(BUILD)/ndk/Include_H/exec/types.h)
+# (the compiler and flags the objects were made with: a change of them (HOST_BIASED...) rebuilds all)
+HOST_STAMP := $(HOST)/flags.stamp
+$(HOST_STAMP): FORCE
+	@mkdir -p $(dir $@)
+	@printf '%s\n' '$(HOST_CXX) $(HOST_FLAGS)' | cmp -s - $@ || printf '%s\n' '$(HOST_CXX) $(HOST_FLAGS)' > $@
+.PHONY: FORCE
+FORCE:
+
+$(HOST)/obj/%.o: %.cpp $(HOST_STAMP) $(if $(filter $(BUILD)/ndk/Include_H,$(NDK_INCLUDE)),$(BUILD)/ndk/Include_H/exec/types.h)
 	@mkdir -p $(dir $@)
 	$(HOST_CXX) $(HOST_FLAGS) -c -o $@ $<
 
@@ -173,20 +181,20 @@ $(HOST)/obj/%.o: %.cpp $(if $(filter $(BUILD)/ndk/Include_H,$(NDK_INCLUDE)),$(BU
 
 # Windows API types must retain their native layout across DLL boundaries.
 # std::filesystem uses the native C++ library ABI, never guest packing.
-$(HOST)/obj/src/host/installed_state.o: src/host/installed_state.cpp src/host/installed_state.h
+$(HOST)/obj/src/host/installed_state.o: src/host/installed_state.cpp src/host/installed_state.h $(HOST_STAMP)
 	@mkdir -p $(dir $@)
 	$(HOST_CXX) $(filter-out -fpack-struct=2,$(HOST_FLAGS)) -c -o $@ $<
 
-$(HOST)/obj/src/host/windows_memory.o: src/host/windows_memory.cpp src/host/windows_memory.h
+$(HOST)/obj/src/host/windows_memory.o: src/host/windows_memory.cpp src/host/windows_memory.h $(HOST_STAMP)
 	@mkdir -p $(dir $@)
 	$(HOST_CXX) $(filter-out -fpack-struct=2,$(HOST_FLAGS)) -c -o $@ $<
 
-$(HOST)/obj/src/host/windows_platform.o: src/host/windows_platform.cpp src/host/windows_platform.h
+$(HOST)/obj/src/host/windows_platform.o: src/host/windows_platform.cpp src/host/windows_platform.h $(HOST_STAMP)
 	@mkdir -p $(dir $@)
 	$(HOST_CXX) $(filter-out -fpack-struct=2,$(HOST_FLAGS)) -c -o $@ $<
 
 # Translated memory owns native VM APIs; their ABI must not use guest packing.
-$(HOST)/obj/src/host/guest_memory.o: src/host/guest_memory.cpp src/memory/guest_memory.h src/core/guest_types.h
+$(HOST)/obj/src/host/guest_memory.o: src/host/guest_memory.cpp src/memory/guest_memory.h src/core/guest_types.h $(HOST_STAMP)
 	@mkdir -p $(dir $@)
 	$(HOST_CXX) $(filter-out -fpack-struct=2,$(HOST_FLAGS)) -c -o $@ $<
 
@@ -206,10 +214,15 @@ host: $(HOST_OBJ) $(HOST_EXTRA_OBJ)
 WINDOWS_CXX ?= x86_64-w64-mingw32-g++
 WINDOWS_WINDRES ?= x86_64-w64-mingw32-windres
 WINDOWS_BUILD ?= $(BUILD)/windows
-WINDOWS_LDFLAGS ?= -Wl,--image-base,0x400000,--disable-dynamicbase,--disable-high-entropy-va -static-libgcc -static-libstdc++
+# WINDOWS_BIASED=1: the guest's memory reserved anywhere and committed as it is given out (like
+# the other hosts' biased mode); the executable then needs no low image base and may have ASLR.
+# 0 (the default until a Windows run has passed): AMOS's memory and the image below 4GB.
+WINDOWS_BIASED ?= 0
+WINDOWS_LOW_LDFLAGS := -Wl,--image-base,0x400000,--disable-dynamicbase,--disable-high-entropy-va -static-libgcc -static-libstdc++
+WINDOWS_LDFLAGS ?= $(if $(filter 1,$(WINDOWS_BIASED)),-static-libgcc -static-libstdc++,$(WINDOWS_LOW_LDFLAGS))
 SDL2_WINDOWS ?= $(HOME)/Downloads/SDL2-2.32.8/x86_64-w64-mingw32
 host-windows:
-	$(MAKE) host HOST=$(WINDOWS_BUILD) HOST_CXX=$(WINDOWS_CXX) HOST_EXE=amos.exe HOST_BIASED=0 \
+	$(MAKE) host HOST=$(WINDOWS_BUILD) HOST_CXX=$(WINDOWS_CXX) HOST_EXE=amos.exe HOST_BIASED=$(WINDOWS_BIASED) \
 		HOST_EXTRA_OBJ='$(WINDOWS_BUILD)/version.o' \
 		HOST_SDL=link HOST_CPPFLAGS='-I$(SDL2_WINDOWS)/include' \
 		HOST_LDFLAGS='$(WINDOWS_LDFLAGS)' \
@@ -221,11 +234,12 @@ $(HOST)/version.rc: windows-version tools/windows_resources.py data/icons/amos.i
 $(HOST)/version.o: $(HOST)/version.rc data/icons/amos.ico
 	$(WINDOWS_WINDRES) -i $< -o $@
 
+WINDOWS_RELEASE_DIR ?= $(BUILD)/windows-release
 windows-release:
-	@mkdir -p $(BUILD)/windows-release
-	$(PYTHON) tools/extract_topaz.py --out $(BUILD)/windows-release/topaz.cpp --fallback data/fonts/topaz8
-	$(PYTHON) tools/extract_keymap.py --out $(BUILD)/windows-release/keymap.cpp
-	$(MAKE) host-windows WINDOWS_BUILD=$(BUILD)/windows-release HOST_OPT='-O2' KICKSTART= ROMKEY=
+	@mkdir -p $(WINDOWS_RELEASE_DIR)
+	$(PYTHON) tools/extract_topaz.py --out $(WINDOWS_RELEASE_DIR)/topaz.cpp --fallback data/fonts/topaz8
+	$(PYTHON) tools/extract_keymap.py --out $(WINDOWS_RELEASE_DIR)/keymap.cpp
+	$(MAKE) host-windows WINDOWS_BUILD=$(WINDOWS_RELEASE_DIR) HOST_OPT='-O2' KICKSTART= ROMKEY=
 
 msi-tools:
 	$(PYTHON) tools/bootstrap_msitools.py
@@ -242,8 +256,8 @@ WINDOWS_PROBE_SRC := tests/windows/platform_probe.cpp tests/windows/native_probe
                      src/host/windows_memory.cpp src/host/windows_platform.cpp
 $(BUILD)/windows/windows-probe.exe: $(WINDOWS_PROBE_SRC) src/host/windows_memory.h src/host/windows_platform.h src/host/windows_crt.h
 	@mkdir -p $(dir $@)
-	$(WINDOWS_CXX) -std=c++20 -O2 -g -Wall -Wextra -Werror -Isrc $(WINDOWS_LDFLAGS) \
-		-static-libgcc -static-libstdc++ -o $@ $(WINDOWS_PROBE_SRC) -lshell32 -lole32 -luuid
+	$(WINDOWS_CXX) -std=c++20 -O2 -g -Wall -Wextra -Werror -Isrc $(WINDOWS_LOW_LDFLAGS) \
+		-o $@ $(WINDOWS_PROBE_SRC) -lshell32 -lole32 -luuid
 
 windows-dist: host-windows windows-probe
 	$(PYTHON) tools/package_windows.py --build $(BUILD)/windows --sdk '$(SDL2_WINDOWS)' --out $(BUILD)/windows-portable

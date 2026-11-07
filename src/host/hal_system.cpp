@@ -125,6 +125,29 @@ struct alignas(8) Pool {
 Pool chip_pool, fast_pool;
 uint8_t *arena;
 constexpr uint64_t ChipAt = 1ull << 20, ChipSize = 3ull << 20, ArenaSize = 512ull << 20;
+#if defined(_WIN32) && defined(AMOS_GUEST_BIASED)
+// Windows commits what it is given: the fast memory is committed in chunks, as it is allocated
+// (the first 4MB, the low page and the chip memory, are committed when the guest is mapped)
+constexpr uint64_t CommitChunk = 16ull << 20;
+bool committed[ArenaSize / CommitChunk];
+
+void commit(const uint8_t *from, uint64_t size)
+{
+    if (from < arena || size == 0)
+        return;
+    uint64_t first = uint64_t(from - arena) / CommitChunk, last = (uint64_t(from - arena) + size - 1) / CommitChunk;
+    for (uint64_t i = first; i <= last && i < ArenaSize / CommitChunk; i++)
+        if (!committed[i]) {
+            if (!host::windows::memory_commit(arena + i * CommitChunk, CommitChunk)) {
+                fprintf(stderr, "amos: no memory for the guest (Windows error %u)\n", host::windows::memory_error());
+                __builtin_trap();
+            }
+            committed[i] = true;
+        }
+}
+#else
+void commit(const uint8_t *, uint64_t) {}
+#endif
 
 void pool_start(Pool& pool, uint8_t* start, uint64_t size)
 {
@@ -145,11 +168,20 @@ void arena_start()
     // One mapping, anywhere (above 4GB if it is): guest address a is amos_guest_base + a. Chip
     // memory at 1MB, fast memory from 4MB, as the guest's map always was.
     constexpr uint64_t GuestSize = 4ull << 30, Ram = 1ull << 30;
+#if defined(_WIN32)
+    void *mapped = host::windows::memory_reserve(GuestSize);
+    if (!mapped || !host::windows::memory_commit(mapped, 4ull << 20)) {
+        fprintf(stderr, "amos: no memory for the guest (Windows error %u)\n", host::windows::memory_error());
+        __builtin_trap();
+    }
+    (void)Ram;
+#else
     void *mapped = mmap(nullptr, GuestSize, PROT_NONE, MAP_PRIVATE | MAP_ANONYMOUS | MAP_NORESERVE, -1, 0);
     if (mapped == MAP_FAILED || mprotect(mapped, Ram, PROT_READ | PROT_WRITE) != 0) {
         fprintf(stderr, "amos: no memory for the guest\n");
         __builtin_trap();
     }
+#endif
     amos_guest_base = static_cast<uint8_t *>(mapped);
     amos_guest_size = GuestSize;
     arena = amos_guest_base + (4ull << 20);
@@ -259,6 +291,7 @@ void *allocate(uint32_t size, uint32_t flags)
         found = take(chip_pool, size);
     if (!found)
         return nullptr;
+    commit(found, n);
     if (flags & 0x10000)
         memset(found, 0, n);
     if (memcheck())
@@ -306,6 +339,7 @@ void *allocate_at(uint32_t size, void *where)
     auto guest_address = guest::abi::AddressCodec::decode<guest::Byte>(address(at));
     const auto result = pool_of(at).free.allocate_at(size, guest_address);
     if (!result) return nullptr;
+    commit(at, n);
     if (memcheck()) block_add(at, n);
     return where;
 }

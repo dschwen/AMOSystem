@@ -67,6 +67,20 @@ void *memory_allocate(size_t size, bool below_4gb, void *exact)
 }
 
 bool memory_release(void *address) { return VirtualFree(address, 0, MEM_RELEASE) != 0; }
+
+void *memory_reserve(size_t size)
+{
+    if (!size) {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return nullptr;
+    }
+    return VirtualAlloc(nullptr, size, MEM_RESERVE, PAGE_NOACCESS);
+}
+
+bool memory_commit(void *address, size_t size)
+{
+    return size && VirtualAlloc(address, size, MEM_COMMIT, PAGE_READWRITE) == address;
+}
 uint32_t memory_error() { return GetLastError(); }
 }
 #endif

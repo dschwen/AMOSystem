@@ -206,3 +206,20 @@ clean Windows machine without MinGW or an SDL SDK.
 - VirtualAlloc2: https://learn.microsoft.com/en-us/windows/win32/api/memoryapi/nf-memoryapi-virtualalloc2
 - Boost.Context: https://github.com/boostorg/context
 - SDL Windows guidance: https://wiki.libsdl.org/SDL2/FAQWindows
+
+
+## Biased guest memory (the 4GB gate removed)
+
+`make host-windows WINDOWS_BIASED=1` builds the host as the other platforms' biased mode does: the
+guest's 4GB are reserved with `VirtualAlloc(MEM_RESERVE, PAGE_NOACCESS)` anywhere (`windows_memory.cpp`
+`memory_reserve`), the first 4MB (the low page and the chip memory) are committed at once, and the fast
+memory is committed in 16MB chunks as the allocator gives it out (`hal_system.cpp` `commit`). The
+executable then has no low image base (`WINDOWS_LDFLAGS` without `--image-base`/`--disable-dynamicbase`),
+its image sits above 4GB under ASLR, and the `image_below_4gb` gate in `main.cpp` is not built.
+
+It is not the default yet, because nothing here could run a Windows binary. The `Windows MSI` workflow
+builds the portable bundle both ways and runs the five headless smoke tests (`tests/windows/smoke.ps1`)
+of each on a `windows-2022` runner (the `smoke` job, on pushes to `guest-bias`/`cpp-conversion` and tags).
+When both pass, make `WINDOWS_BIASED ?= 1`, and the low image base, the image gate and `MAP_32BIT`/
+`memory_allocate(below_4gb)` can go. The platform probe still builds with the low image base
+(`WINDOWS_LOW_LDFLAGS`): it tests the identity backend.

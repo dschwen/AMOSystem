@@ -254,7 +254,7 @@ int main(int argc, char **argv)
         return 1;
     }
 #endif
-#if defined(_WIN32)
+#if defined(_WIN32) && !defined(AMOS_GUEST_BIASED)
     if (!host::windows::image_below_4gb()) {
         fprintf(stderr, "amos: Windows executable exceeds 32-bit address range\n");
         return 1;

@@ -9,6 +9,13 @@ on:
   push:
     tags:
       - 'v*'
+    branches: [guest-bias, cpp-conversion]
+    paths:
+      - 'src/**'
+      - 'tests/windows/**'
+      - 'tools/package_windows.py'
+      - 'Makefile'
+      - '.github/workflows/windows-msi.yml'
   pull_request:
     paths:
       - 'src/**'
@@ -58,6 +65,25 @@ jobs:
           python3 -m unittest discover -s tests -p test_icons.py
           python3 -m unittest discover -s tests -p test_package_macos.py
           python3 -m unittest discover -s tests -p test_native_cxx.py
+      - name: Portable bundles for the Windows smoke tests (AMOS memory below 4GB, and anywhere)
+        shell: bash
+        run: |
+          sdk="$PWD/build/sdk/SDL2-2.32.8/x86_64-w64-mingw32"
+          make -j2 windows-release WINDOWS_CXX=x86_64-w64-mingw32-g++-win32 SDL2_WINDOWS="$sdk" \
+               WINDOWS_BIASED=0 WINDOWS_RELEASE_DIR=build/windows-smoke-low
+          make -j2 windows-release WINDOWS_CXX=x86_64-w64-mingw32-g++-win32 SDL2_WINDOWS="$sdk" \
+               WINDOWS_BIASED=1 WINDOWS_RELEASE_DIR=build/windows-smoke-biased
+          for kind in low biased; do
+            python3 tools/package_windows.py --build build/windows-smoke-$kind --sdk "$sdk" --out build/windows-portable-$kind
+          done
+      - name: Upload the portable bundles
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-portable
+          path: |
+            build/windows-portable-low.zip
+            build/windows-portable-biased.zip
+          if-no-files-found: error
       - name: Linux host regression check
         run: |
           make -j2 host KICKSTART= ROMKEY=
@@ -103,6 +129,36 @@ jobs:
         with:
           name: windows-installer-logs
           path: logs
+  smoke:
+    # the interpreter itself, headless, on Windows: the five smoke tests of the portable bundle,
+    # with the guest's memory below 4GB (the release) and anywhere (the biased backend)
+    needs: build
+    runs-on: windows-2022
+    strategy:
+      fail-fast: false
+      matrix:
+        kind: [low, biased]
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: windows-portable
+          path: bundles
+      - name: Run the smoke tests
+        shell: powershell
+        run: |
+          Expand-Archive bundles\windows-portable-${{ matrix.kind }}.zip -DestinationPath run
+          $dir = Get-ChildItem run | Select-Object -First 1
+          & powershell -ExecutionPolicy Bypass -File "$($dir.FullName)\smoke.ps1"
+          $code = $LASTEXITCODE
+          Get-Content "$($dir.FullName)\smoke-results.txt" -ErrorAction SilentlyContinue
+          Get-ChildItem "$($dir.FullName)\smoke" -Recurse -Include stdout.txt,stderr.txt | ForEach-Object { "== $($_.FullName)"; Get-Content $_.FullName -TotalCount 20 }
+          exit $code
+      - name: Preserve the logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-smoke-${{ matrix.kind }}
+          path: run
   release:
     # a v* tag: the installer that passed its tests goes onto the GitHub release (unsigned)
     if: startsWith(github.ref, 'refs/tags/v')
