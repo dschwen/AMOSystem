@@ -137,6 +137,23 @@ three systems):
 `df0=folder` to put it in that unit, `df0=` to take the disk out): the host's
 own tests need no window for it (`tests/host_only/insert`).
 
+**Known flake, and the planned fix.** `tests/host_only/insert` is flaky on a
+loaded machine (seen on the native arm64 CI runner: the output stopped after
+`asked 0`). The likely cause, not yet reproduced: the fake drops fire at
+wall-clock `SECONDS` after the first frame (`host/drops.cpp`), but the program
+is paced in frames and asks for `Disk2:` at its own time. If the 1 s drop
+fires before AMOS is waiting for the disk, nothing is inserted afterwards and
+the requester waits for good.
+
+Fix: a fake drop whose time has come stays *pending* until something wants it.
+For `dfN=folder` that means the drive is ejected or a requester is waiting for
+a volume the folder provides; a plain `dfN=` (eject) waits until a disk is in.
+Drops then happen in order, so a late start cannot skip one. As a second
+measure the test needs no fixed margin: keep the seconds, but let the pending
+rule decide the order. To confirm the cause first, run `insert` under
+`stress`/`taskset` on Linux with `AMOS_FILE_LOG=1` and check whether the drop
+message precedes the first open of `Disk2:b.txt`.
+
 ### 5.3 The window: the Devices panel (F12)
 
 An overlay of the host over AMOS's picture (so it works on every system and
