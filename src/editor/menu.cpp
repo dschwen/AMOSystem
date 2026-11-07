@@ -42,8 +42,9 @@ constexpr uint16_t EdDKyMn1 = 24, EdDKyMnE = 26, EdDKyMn2 = 27, EdDKyMn3 = 28, E
 constexpr int KeyText = 11;                     // L_KDef: the length of a key's text
 
 // The names of the shifts and of the keys without ASCII
+// (a word first: the pointers after it are aligned also in the host's packed layout, as arm64's linker needs)
 struct ShiftName {
-    uint8_t shifts;
+    uintptr_t shifts;
     const char *before, *after;
 };
 const ShiftName shift_names[] = {
@@ -65,7 +66,7 @@ const ShiftName shift_names[] = {
     {Ctr | Shf | Alt | Ami, "[CSAAm+", "]"},
 };
 struct KeyName {
-    uint8_t scan;
+    uintptr_t scan;
     const char *name;
 };
 const KeyName key_names[] = {

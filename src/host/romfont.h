@@ -10,6 +10,7 @@ namespace amos::host {
 struct RomFont {
     uint16_t ysize, xsize, baseline, boldsmear, modulo;
     uint8_t style, flags, lo, hi;
+    uint16_t padding;       // (the pointers aligned also in the host's packed layout: arm64's linker needs it)
     const uint8_t *data;
     const uint32_t *locs;
 };

@@ -76,16 +76,16 @@ with open(args.out, 'w') as f:
             (': not to be distributed\n' if source == 'the Kickstart' else '\n'))
     f.write('#include <stdint.h>\n\nnamespace amos::host {\n\n')
     f.write('struct RomFont {\n    uint16_t ysize, xsize, baseline, boldsmear, modulo;\n')
-    f.write('    uint8_t style, flags, lo, hi;\n    const uint8_t *data;\n    const uint32_t *locs;\n};\n\n')
+    f.write('    uint8_t style, flags, lo, hi;\n    uint16_t padding;\n    const uint8_t *data;\n    const uint32_t *locs;\n};\n\n')
     for ysize, (style, flags, xsize, baseline, smear, lo, hi, modulo, bitmap, locs) in sorted(found.items()):
         f.write(f'static const uint8_t topaz{ysize}_data[] = {{{",".join(str(b) for b in bitmap)}}};\n')
         f.write(f'static const uint32_t topaz{ysize}_locs[] = {{{",".join(str(v) for v in locs)}}};\n')
     f.write('\nextern const RomFont rom_fonts[];\nextern const int rom_font_count;\n')
     f.write('const RomFont rom_fonts[] = {\n')
     for ysize, (style, flags, xsize, baseline, smear, lo, hi, modulo, bitmap, locs) in sorted(found.items()):
-        f.write(f'    {{{ysize}, {xsize}, {baseline}, {smear}, {modulo}, {style}, {flags}, {lo}, {hi}, '
+        f.write(f'    {{{ysize}, {xsize}, {baseline}, {smear}, {modulo}, {style}, {flags}, {lo}, {hi}, 0, '
                 f'topaz{ysize}_data, topaz{ysize}_locs}},\n')
     if not found:
-        f.write('    {0, 0, 0, 0, 0, 0, 0, 0, 0, nullptr, nullptr},\n')
+        f.write('    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, nullptr, nullptr},\n')
     f.write(f'}};\nconst int rom_font_count = {len(found)};\n\n}} // namespace amos::host\n')
 print(f'extract_topaz: {len(found)} fonts' + (f' from {source}' if found else ' (no Kickstart: KICKSTART=, ROMKEY=)'))
