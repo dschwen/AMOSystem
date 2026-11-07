@@ -22,14 +22,13 @@
 #endif
 #include <stdio.h>
 #include <string.h>
-#include <strings.h>
-#include <unistd.h>
 #if defined(__APPLE__)
 #include <mach-o/dyld.h>
 #endif
 
 // (stdlib.h's struct timeval clashes with devices/timer.h's)
 extern "C" char *getenv(const char *name) noexcept;
+extern "C" int usleep(unsigned microseconds);       // (unistd.h also has the host's timeval)
 extern "C" uint16_t host_chip_read(uint32_t offset);
 extern "C" [[noreturn]] void exit(int status) noexcept;
 
