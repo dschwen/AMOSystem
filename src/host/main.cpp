@@ -110,7 +110,7 @@ namespace {
 #if !defined(_WIN32)
 // AMOS_CRASH_TRACE=1: a fatal signal writes the addresses of the stack (and where the executable
 // is loaded, for atos/addr2line), where a debugger is not at hand (a CI runner)
-void crash_trace(int signal, siginfo_t *info, void *)
+void crash_trace(int signal, siginfo_t *info, void *context)
 {
     char text[160];
     int n = snprintf(text, sizeof text, "amos: signal %d at %p\n", signal, info ? info->si_addr : nullptr);
@@ -118,6 +118,23 @@ void crash_trace(int signal, siginfo_t *info, void *)
 #if defined(__APPLE__)
     n = snprintf(text, sizeof text, "amos: loaded at %p\n", static_cast<const void *>(_dyld_get_image_header(0)));
     if (n > 0) (void)!write(2, text, size_t(n));
+#endif
+#if defined(__APPLE__) && defined(__aarch64__)
+    // (backtrace() does not go through the signal frame: the pc, and the frame records from the fp)
+    {
+        auto &state = static_cast<ucontext_t *>(context)->uc_mcontext->__ss;
+        n = snprintf(text, sizeof text, "amos: pc %#llx lr %#llx x0 %#llx x1 %#llx\n", (unsigned long long)state.__pc,
+                     (unsigned long long)state.__lr, (unsigned long long)state.__x[0], (unsigned long long)state.__x[1]);
+        if (n > 0) (void)!write(2, text, size_t(n));
+        auto **fp = reinterpret_cast<uintptr_t **>(state.__fp);
+        for (int i = 0; i < 40 && fp && !(reinterpret_cast<uintptr_t>(fp) & 7); i++) {
+            n = snprintf(text, sizeof text, "amos: frame %#lx\n", (unsigned long)fp[1]);
+            if (n > 0) (void)!write(2, text, size_t(n));
+            fp = reinterpret_cast<uintptr_t **>(fp[0]);
+        }
+    }
+#else
+    (void)context;
 #endif
     void *frames[48];
     int count = backtrace(frames, 48);

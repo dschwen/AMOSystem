@@ -55,7 +55,7 @@ jobs:
           if [ $rc -ne 0 ]; then
             AMOS_CRASH_TRACE=1 AMOS_HOME="$H" AMOS_DISPLAY=none AMOS_CONFIG=/dev/null /tmp/amos-player hi.AMOS > trace.log 2>&1 || true
             load=$(grep "loaded at" trace.log | sed 's/.*loaded at //')
-            { grep -E "signal|loaded" trace.log; grep -oE "0x[0-9a-f]{9,}" trace.log | xargs atos -o "$W/build/host/amos" -arch arm64 -l "$load" 2>&1 | head -30; } | annotate
+            { grep -E "signal|loaded|amos: pc" trace.log; grep -E "amos: (frame|pc)" trace.log | grep -oE "0x[0-9a-f]{9,}" | xargs atos -o "$W/build/host/amos" -arch arm64 -l "$load" 2>&1 | head -30; } | annotate
           fi
           test -f out.txt
       - name: Text tests
