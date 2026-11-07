@@ -120,13 +120,12 @@ HOST_TARGET_OS ?= $(shell uname -s)
 HOST_TARGET_ARCH ?= x86_64
 HOST_ARCHFLAGS ?= -m64
 # The guest's memory anywhere in the address space (src/core/guest_bias.h) instead of below 4GB: the
-# default on Linux and Apple Silicon (so the executable may be a PIE, wherever the system puts it).
-# HOST_BIASED=0 is the identity mapping, which Windows and Intel macOS still use: AMOS stores
-# program and arena addresses in 32 bits there, and Darwin otherwise reserves the first 4GB and
-# places the executable above them.
-HOST_BIASED ?= $(if $(or $(filter arm64,$(HOST_TARGET_ARCH)),$(filter Linux,$(HOST_TARGET_OS))),1,0)
+# default on Linux and macOS (so the executable is an ordinary PIE, wherever the system puts it).
+# HOST_BIASED=0 is the identity mapping: AMOS's memory below 4GB, which on macOS needs
+# -no_pie,-pagezero_size (Darwin otherwise reserves the first 4GB and places the executable above them).
+HOST_BIASED ?= $(if $(or $(filter arm64,$(HOST_TARGET_ARCH)),$(filter Linux Darwin,$(HOST_TARGET_OS))),1,0)
 ifeq ($(HOST_TARGET_OS),Darwin)
-ifeq ($(HOST_TARGET_ARCH),arm64)
+ifeq ($(HOST_BIASED),1)
 HOST_LDFLAGS ?= -Wl,-pie
 else
 HOST_LDFLAGS ?= -Wl,-no_pie,-pagezero_size,0x1000
@@ -346,7 +345,8 @@ game: host-release dist
 	@echo "made $(GAMEDIR): run $(GAMEDIR)/$(NAME)"
 
 # macOS distribution: build on macOS with Command Line Tools and SDL2.framework.
-# MACOS_PKG_ARCH=arm64: the native Apple Silicon app (the guest's memory biased, HOST_BIASED)
+# MACOS_PKG_ARCH=arm64: the native Apple Silicon app (x86_64: the Intel one; both with the guest's
+# memory biased, HOST_BIASED)
 MACOS_PKG_ARCH ?= x86_64
 MACOS_CXX ?= /usr/bin/clang++ -arch $(MACOS_PKG_ARCH)
 MACOS_BUILD ?= $(BUILD)/macos-release-$(MACOS_PKG_ARCH)

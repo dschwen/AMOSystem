@@ -100,3 +100,30 @@ jobs:
             exit 1
           }
           tail -1 tests.log
+  intel:
+    # The Intel build (the guest's memory biased, a PIE: no -no_pie/-pagezero_size), run under Rosetta
+    # on the same runner: the text tests, no window (a real Intel Mac is still for a person to check)
+    runs-on: macos-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - name: Tools and Rosetta
+        run: |
+          python3 -m pip install --break-system-packages pillow || python3 -m pip install pillow
+          /usr/sbin/softwareupdate --install-rosetta --agree-to-license || true
+          arch -x86_64 /usr/bin/true && echo "rosetta works"
+      - name: Build the Intel host
+        run: |
+          if ! make -j3 host HOST=build/host-x86 HOST_TARGET_ARCH=x86_64 HOST_ARCHFLAGS='-arch x86_64' HOST_CXX=clang++ KICKSTART= ROMKEY= > build.log 2>&1; then
+            grep -E "error|Error|undefined|ld:" build.log | head -8 | while read -r line; do echo "::error::${line:0:900}"; done
+            exit 1
+          fi
+          file build/host-x86/amos
+          mkdir -p build/dist && cp -a AMOS build/dist/AMOS && cp -a examples/. build/dist/AMOS/
+      - name: Text tests
+        run: |
+          AMOS_FILE_LOG=1 python3 tests/host_run.py --build build/host-x86 --text-only --fallback-font -j3 > tests.log 2>&1 || {
+            grep -v ": ok" tests.log | head -20 | while read -r line; do echo "::error::${line:0:1200}"; done
+            exit 1
+          }
+          tail -1 tests.log

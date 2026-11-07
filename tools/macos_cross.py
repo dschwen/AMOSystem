@@ -61,7 +61,7 @@ def compiler(arch):
 def inside(args):
     out=ROOT/'build/macos-cross'/args.arch;out.mkdir(parents=True,exist_ok=True)
     cxx=compiler(args.arch)
-    layout=['-Wl,-pie'] if args.arch=='arm64' else ['-Wl,-no_pie,-pagezero_size,0x1000']
+    layout=['-Wl,-pie']
     base=[cxx,'-arch',args.arch,'-std=c++20','-mmacosx-version-min=11.0',*layout]
     metadata={'image':args.image,'image_id':os.environ.get('AMOS_CROSS_IMAGE_ID','unknown'),'architecture':args.arch,'compiler':cxx,
               'deployment_target':'11.0','compiler_version':command(cxx,'--version'),'compiler_target':command(cxx,'-dumpmachine'),
@@ -106,7 +106,7 @@ def inside(args):
     (out/'amos').unlink(missing_ok=True)
     (out/'cross-report.json').unlink(missing_ok=True)
     log=out/'build.log'
-    ld='-Wl,-pie' if args.arch=='arm64' else '-Wl,-no_pie,-pagezero_size,0x1000'
+    ld='-Wl,-pie'
     build=['make',f'-j{args.jobs}','host',f'HOST=build/macos-cross/{args.arch}',
            f'HOST_CXX={cxx}','HOST_TARGET_OS=Darwin',f'HOST_TARGET_ARCH={args.arch}',
            f'HOST_ARCHFLAGS=-arch {args.arch}',f'HOST_LDFLAGS={ld}',

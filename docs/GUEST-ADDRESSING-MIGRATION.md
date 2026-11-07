@@ -482,7 +482,7 @@ below, rather than hiding it behind another experimental flag.
 | Existing restriction | Removal condition |
 |---|---|
 | ~~Linux `-no-pie` in Makefile~~ | Removed: Linux builds biased by default and links as a PIE (140/140 host tests, 3 text runs under ASLR) |
-| Intel Mac `-no_pie,-pagezero_size,0x1000` in Makefile and `tools/macos_cross.py` | Same code/data migration and native Intel Mac validation |
+| ~~Intel Mac `-no_pie,-pagezero_size,0x1000` in Makefile and `tools/macos_cross.py`~~ | Removed: macOS builds biased by default and links as a PIE on both architectures (Intel tested under Rosetta in CI; a real Intel Mac by hand); `HOST_BIASED=0` keeps the old flags |
 | Windows low image base / disabled ASLR and image gate | All data/code pointers translated; high-image/ASLR Windows runtime validation |
 | ARM startup address-model guard in `host/main.cpp` | Entire translated engine runs correctly on native Apple Silicon, including task/error paths |
 | `MAP_32BIT`, low hints/chip native placement in `host/hal_system.cpp` | Guest allocator preserves logical chip/fast ranges without requiring matching native addresses |
