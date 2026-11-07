@@ -34,7 +34,7 @@ struct Field {
 Field field()
 {
     uint32_t offset = peek_l(pc());
-    uint8_t type = pc()[4];
+    uint8_t type = host::detail::read_cursor_byte(pc() + 4);
     pc() += 6 + 2;
     uint32_t base = integer().v1;
     skip_name();

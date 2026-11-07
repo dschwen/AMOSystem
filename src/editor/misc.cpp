@@ -79,7 +79,7 @@ void close_name()
             return;
         EditWindow *w = ptr<EditWindow>(a.d[0]);
         ctx().a4 = host::detail::capture_cursor(reinterpret_cast<uint8_t *>(w));
-        ctx().a6 = ptr<uint8_t>(w->Edt_Prg);
+        ctx().a6 = decode_context_cursor(w->Edt_Prg);
         Regs r;
         lib_call(L_Prg_DejaRunned, r);
         if (r.d[0])

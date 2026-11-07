@@ -23,7 +23,7 @@ AllRegs all(const Regs &r)
     a.a[3] = encode_context_cursor(c.a3);
     a.a[4] = encode_context_cursor(c.a4);
     a.a[5] = encode_data_zone(c.a5);
-    a.a[6] = address(c.a6);
+    a.a[6] = encode_context_cursor(c.a6);
     return a;
 }
 
@@ -66,7 +66,7 @@ void amos_eval(Regs *r, const void *fn)
     back(*r, a);
     ctx() = saved;
     ctx().a3 = decode_context_cursor(a.a[3]);
-    ctx().a6 = ptr<uint8_t>(a.a[6]);
+    ctx().a6 = decode_context_cursor(a.a[6]);
 }
 
 // -1 "less than", 0 "equal", 1 "greater than"
@@ -120,7 +120,7 @@ void amos_eval(Regs *r, host::RoutineEntry fn)
     back(*r, a);
     ctx() = saved;
     ctx().a3 = decode_context_cursor(a.a[3]);
-    ctx().a6 = ptr<uint8_t>(a.a[6]);
+    ctx().a6 = decode_context_cursor(a.a[6]);
 }
 
 // -1 "less than", 0 "equal", 1 "greater than"

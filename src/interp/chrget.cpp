@@ -199,7 +199,7 @@ in_line:
     if (!t)
         goto new_line;
 instruction:
-    c.d7 = address(c.a6);
+    c.d7 = encode_context_cursor(c.a6);
     instruction(d, c, t);
 iret:
     t = peek_w(c.a6);
@@ -234,7 +234,7 @@ extern "C" {
     wdata().Actualise = 0;
     d.AData = 0;
     d.DefFlag = 1;
-    c.a6 = ptr<uint8_t>(d.Prg_Run);
+    c.a6 = decode_context_cursor(d.Prg_Run);
     d.DProc = d.Prg_Run;
     d.PData = d.Prg_Run;
     c.a4 = decode_context_cursor(d.AdTokens[0]);

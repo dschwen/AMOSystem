@@ -220,7 +220,7 @@ int32_t next_piece()
     }
     *out = 0;
     if (!(flags() & FString))
-        d.PrintPos = address(pc());
+        d.PrintPos = encode_context_cursor(pc());
     return out - buffer();
 }
 
@@ -228,7 +228,7 @@ void print()
 {
     IData &d = idata();
     if (d.PrintPos)
-        pc() = ptr<uint8_t>(d.PrintPos);
+        pc() = decode_context_cursor(d.PrintPos);
     d.PrintFlg = 0;
     int32_t n;
     while ((n = next_piece()) >= 0) {

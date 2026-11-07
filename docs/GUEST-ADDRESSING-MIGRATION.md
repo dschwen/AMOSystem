@@ -40,6 +40,18 @@ the same code with a base of 0. Built with `make host HOST_BIASED=1` (the defaul
   Struct pointers in static tables must be 8-aligned in the packed layout (arm64's linker
   refuses a misaligned relocation).
 
+### Backing decision and program cursor (a6)
+
+- **Backing: the arena stays.** Guest memory is one reserved 4 GiB range, committed lazily (physical
+  memory is only what the guest touches; Windows reserves and commits in chunks). All translation
+  stays behind `GuestMemory`/`bias::`, so a page-table backend can replace it later without touching
+  typed callers. Chip and fast memory are two guest ranges (chip low, fast above), as now.
+- **Live a6 is a guest cursor.** `Ctx::a6` is a `ContextCursor` (`pc()`); `Ctx` is 24 bytes on every
+  build and `GuestContext` is a plain copy. Program reads go through `peek_w/peek_l/byte_at`; program
+  lines, labels and procedure headers in `interp/{control,data,vars}.cpp` are cursors. Still native:
+  the variable zone (`TabBas`, `VarLoc`, `LabHaut`...), the editor `Program` record
+  (`identity_record`) and `source::skip_token` (cursor overload converts temporarily).
+
 ## Implemented substrate
 
 - `core/guest_types.h`: distinct GuestAddress32, GuestPtr, HostPtr, GuestSpan,

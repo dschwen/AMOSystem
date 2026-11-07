@@ -92,7 +92,7 @@ struct alignas(void*) Ctx {
     ContextCursor a3;
     ContextCursor a4;
     DataZoneAddress a5;
-    uint8_t *a6;
+    ContextCursor a6;
 };
 #if !defined(__mc68000__)
 #pragma pack(pop)
@@ -138,7 +138,7 @@ struct alignas(uint32_t) AllRegs {
 
 // These native boundary records keep their ABI in both packed and normally
 // compiled units. The Amiga's natural alignments remain two bytes.
-static_assert(offsetof(Ctx, a3) == 8 && sizeof(Ctx) == (sizeof(void*) == 8 ? 32 : 24));
+static_assert(offsetof(Ctx, a3) == 8 && sizeof(Ctx) == 24);
 static_assert(sizeof(Regs) == 44 && sizeof(RegFrame) == 44 && sizeof(AllRegs) == 60);
 
 #if defined(__mc68000__)
@@ -167,7 +167,7 @@ inline WData &wdata() { return *reinterpret_cast<WData *>(ctx().a5 - sizeof(WDat
 inline IData &idata() { return host::detail::identity_record<IData>(ctx().a5); }
 // The AMOS.library data, below the logical a5 address.
 inline WData &wdata() { return host::detail::identity_record<WData>(ctx().a5 - sizeof(WData)); }
-static_assert(offsetof(Ctx,a4) == 12 && offsetof(Ctx,a5) == 16 && offsetof(Ctx,a6) == 24);
+static_assert(offsetof(Ctx,a4) == 12 && offsetof(Ctx,a5) == 16 && offsetof(Ctx,a6) == 20);
 #endif
 
 // Address of a routine of AMOSPro.Lib, as JJsr finds it
@@ -250,7 +250,7 @@ template <typename F> inline void w_direct_call(F f, Regs &r)
     a.a[3] = encode_context_cursor(c.a3);
     a.a[4] = encode_context_cursor(c.a4);
     a.a[5] = encode_data_zone(c.a5);
-    a.a[6] = address(c.a6);
+    a.a[6] = encode_context_cursor(c.a6);
     Ctx saved = c;
     c.d6 = r.d[6];
     c.d7 = r.d[7];

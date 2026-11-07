@@ -32,10 +32,12 @@ int main() {
     assert(encode_data_zone(ctx().a5) == 0xe0001000);
     assert(encode_context_cursor(ctx().a4) == 0xd0002000);
     assert(encode_context_cursor(ctx().a3) == 0xb0003000);
-    auto snapshot = host::detail::try_capture_context(ctx());
-    assert(snapshot && host::context_address(snapshot.value.a5) == 0xe0001000);
-    assert(host::context_address(snapshot.value.a4) == 0xd0002000);
-    assert(host::context_address(snapshot.value.a3) == 0xb0003000);
+    ctx().a6 = decode_context_cursor(0xc0004000);
+    auto snapshot = host::detail::capture_context(ctx());
+    assert(host::context_address(snapshot.a5) == 0xe0001000);
+    assert(host::context_address(snapshot.a4) == 0xd0002000);
+    assert(host::context_address(snapshot.a3) == 0xb0003000);
+    assert(host::context_address(snapshot.a6) == 0xc0004000);
     auto shifted = ctx().a5 + 10;
     assert(encode_data_zone(shifted) == 0xe000100a);
     auto high_native = reinterpret_cast<uint8_t*>(&registers);

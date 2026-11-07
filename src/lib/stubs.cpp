@@ -3,6 +3,7 @@
 // icon addresses, MajD0
 
 #include "lib/banks.h"
+#include "runtime/detail/identity_data_memory.h"
 
 using namespace amos;
 

@@ -104,7 +104,7 @@ uint32_t lib_all(int routine, AllRegs &r)
     Ctx &c = ctx();
     r.a[4] = encode_context_cursor(c.a4);
     r.a[5] = encode_data_zone(c.a5);
-    r.a[6] = address(c.a6);
+    r.a[6] = encode_context_cursor(c.a6);
     r.d[6] = c.d6;
     r.d[7] = c.d7;
     amos_call_all(&r, lib_entry(routine));
@@ -944,7 +944,7 @@ void save_all()
 {
     Ctx &c = ctx();
     ContextCursor a4 = c.a4;
-    uint8_t *a6 = c.a6;
+    ContextCursor a6 = c.a6;
     bool first = true;
     for (uint32_t w = idata().Edt_List; w; w = ptr<EditWindow>(w)->Edt_Next) {
         EditWindow *e = ptr<EditWindow>(w);
@@ -954,7 +954,7 @@ void save_all()
             sound('I');
         first = false;
         c.a4 = host::detail::capture_cursor(reinterpret_cast<uint8_t *>(e));
-        c.a6 = ptr<uint8_t>(e->Edt_Prg);
+        c.a6 = decode_context_cursor(e->Edt_Prg);
         run(AMOS_ROUTINE(ed_saved));
     }
     c.a4 = a4;

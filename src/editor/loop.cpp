@@ -42,7 +42,7 @@ void run(host::RoutineArg routine)
 void use(EditWindow *w)
 {
     ctx().a4 = host::detail::capture_cursor(reinterpret_cast<uint8_t *>(w));
-    ctx().a6 = w ? ptr<uint8_t>(w->Edt_Prg) : nullptr;
+    ctx().a6 = decode_context_cursor(w ? uint32_t(w->Edt_Prg) : 0);
 }
 
 EditWindow *current() { return ptr<EditWindow>(idata().Edt_Current); }
@@ -384,7 +384,7 @@ Answer zap_function(uint32_t n, uint32_t param)
         poke_w(buffer, 0);
         Ctx &c = ctx();
         ContextCursor a4 = c.a4;
-        uint8_t *a6 = c.a6;
+        ContextCursor a6 = c.a6;
         use(w);
         int32_t line = int32_t(param) > 0 ? int32_t(param) - 1 : int32_t(w->Edt_YCu + w->Edt_YPos);
         if (!(int32_t(param) > 0 && uint16_t(param) > p->Prg_NLigne)) {
@@ -480,7 +480,7 @@ void ed_zap_prepare(AllRegs *r)
 {
     zap_prepare();
     r->a[4] = encode_context_cursor(ctx().a4);
-    r->a[6] = address(ctx().a6);
+    r->a[6] = encode_context_cursor(ctx().a6);
 }
 
 void ed_zap_out_fn(AllRegs *) { zap_out(); }

@@ -7,6 +7,7 @@
 #include <assert.h>
 #include <stdint.h>
 #include <string.h>
+extern "C" { uint8_t amos_low_page[4096]; }
 #if defined(AMOS_STATIC_IMAGE_PROBE)
 #include <stdio.h>
 #endif

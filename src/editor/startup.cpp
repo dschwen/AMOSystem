@@ -55,7 +55,7 @@ void ec_fn(int function, uint32_t d1 = 0)
 void use(EditWindow *w)
 {
     ctx().a4 = host::detail::capture_cursor(reinterpret_cast<uint8_t *>(w));
-    ctx().a6 = w ? ptr<uint8_t>(w->Edt_Prg) : nullptr;
+    ctx().a6 = decode_context_cursor(w ? uint32_t(w->Edt_Prg) : 0);
 }
 
 void add_path(uint32_t text)
@@ -359,7 +359,7 @@ bool make_windows()
     for (Program *p = ptr<Program>(d.Prg_List); p; p = ptr<Program>(p->Prg_Next)) {
         if (p->Prg_Edited)
             continue;
-        ctx().a6 = reinterpret_cast<uint8_t *>(p);
+        ctx().a6 = host::detail::capture_cursor(reinterpret_cast<uint8_t *>(p));
         if (open_window(true, -1))
             return false;
         window().Edt_Prg = address(p);

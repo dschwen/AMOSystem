@@ -41,8 +41,8 @@ Variable variable()
     } else {
         at = ptr<uint8_t>(d.VarLoc) + 2 + int16_t(offset);
     }
-    uint8_t length = *pc()++;
-    uint8_t flags = *pc()++;
+    uint8_t length = next_byte();
+    uint8_t flags = next_byte();
     pc() += length;
     return {at, flags, offset, length};
 }
@@ -292,9 +292,9 @@ void add_range()
 void define_function()
 {
     uint8_t *at = find_variable().at;
-    poke_l(at, address(pc()));
-    uint8_t *line = ptr<uint8_t>(ctx().d7 - 4);
-    pc() = line - 2 + 2 * line[0];
+    poke_l(at, encode_context_cursor(pc()));
+    ContextCursor line = decode_context_cursor(ctx().d7 - 4);
+    pc() = line - 2 + 2 * byte_at(line);
 }
 
 // =Fn f(parameters): the parameters given to the definition's variables,
@@ -302,7 +302,7 @@ void define_function()
 Value call_function()
 {
     uint8_t *at = find_variable().at;
-    uint8_t *def = ptr<uint8_t>(peek_l(at));
+    ContextCursor def = decode_context_cursor(peek_l(at));
     if (!def)
         error(15);
     uint16_t t = peek_token();
@@ -313,7 +313,7 @@ Value call_function()
                 error(16);
             def += 2;
             Value x = evaluate();
-            uint8_t *back = pc();
+            ContextCursor back = pc();
             pc() = def;
             FoundVar f = find_variable();
             def = pc();
@@ -343,7 +343,7 @@ Value call_function()
         error(16);
     def += 2;
     Ctx &c = ctx();
-    uint8_t *back = c.a6;
+    ContextCursor back = c.a6;
     ContextCursor a3 = c.a3;
     c.a6 = def;
     Value v = evaluate();
@@ -356,7 +356,7 @@ Value call_function()
 void shared()
 {
     do {
-        pc() += 6 + int8_t(pc()[4]);
+        pc() += 6 + int8_t(host::detail::read_cursor_byte(pc() + 4));
         if (peek_token() == tk::Par1)
             pc() += 4;
     } while (next_token() == tk::Vir);

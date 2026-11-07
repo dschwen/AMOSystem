@@ -4,12 +4,13 @@
 #pragma once
 
 #include "core/amos.h"
+#include "runtime/detail/identity_data_memory.h"
 #include "core/source.h"
 
 namespace amos::ed {
 
 inline EditWindow &window() { return host::detail::identity_record<EditWindow>(ctx().a4); }
-inline Program &program() { return *reinterpret_cast<Program *>(ctx().a6); }
+inline Program &program() { return host::detail::identity_record<Program>(ctx().a6); }
 
 // Calls an editor routine of +Edit.s with registers r; returns its d0
 inline uint32_t call(host::RoutineArg routine, Regs &r)

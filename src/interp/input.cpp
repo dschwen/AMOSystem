@@ -183,7 +183,7 @@ void input(uint8_t separator, bool file)
         m.a[0] = address(boot::def_message(m.d[0]));
         window_print(ptr<char>(m.a[0]));
         window_print("\r\n");
-        pc() = ptr<uint8_t>(ctx().d7);
+        pc() = decode_context_cursor(ctx().d7);
         file = false;
     }
     if (!d.PrintFile) {

@@ -454,11 +454,11 @@ Value double_constant()
 // goes away)
 Value string_constant()
 {
-    uint8_t *s = pc();
+    ContextCursor s = pc();
     uint16_t length = peek_w(s);
     pc() += 2 + length + (length & 1);
     if (!idata().Direct)
-        return {TString, address(s), 0};
+        return {TString, encode_context_cursor(s), 0};
     Regs r = demande(length);
     uint8_t *to = ptr<uint8_t>(r.a[0]);
     poke_w(to, length);

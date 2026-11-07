@@ -433,14 +433,14 @@ void ed_alert_rts(AllRegs *r)
         return;
     }
     ctx().a4 = decode_context_cursor(d.Edt_Current);
-    ctx().a6 = ptr<uint8_t>(window().Edt_Prg);
+    ctx().a6 = decode_context_cursor(window().Edt_Prg);
     EditWindow &w = window();
     w.Edt_EtMess = uint16_t(r->d[0]);
     w.Edt_EtAlert = r->a[0];
     w.Edt_EtatAff |= EtAAlert;
     status_line(w);
     r->a[4] = encode_context_cursor(ctx().a4);
-    r->a[6] = address(ctx().a6);
+    r->a[6] = encode_context_cursor(ctx().a6);
 }
 
 // Ed_RAlert: the last alert again

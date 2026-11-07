@@ -23,8 +23,8 @@ Array array()
     pc() += 2;
     int16_t offset = int16_t(next_token());
     uint8_t *at = offset < 0 ? ptr<uint8_t>(d.VarGlo) + 1 - offset : ptr<uint8_t>(d.VarLoc) + 2 + offset;
-    int8_t length = int8_t(*pc()++);
-    uint8_t flags = *pc()++;
+    int8_t length = int8_t(next_byte());
+    uint8_t flags = next_byte();
     pc() += length;
     uint8_t *block = ptr<uint8_t>(peek_l(at));
     if (!block)

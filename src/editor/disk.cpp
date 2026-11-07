@@ -147,7 +147,7 @@ void merge()
         uint16_t lines = hidden.Prg_NLigne;
         EditWindow *c = ptr<EditWindow>(d.Edt_Current);
         ctx().a4 = host::detail::capture_cursor(reinterpret_cast<uint8_t *>(c));
-        ctx().a6 = ptr<uint8_t>(c->Edt_Prg);
+        ctx().a6 = decode_context_cursor(c->Edt_Prg);
         uint16_t at = c->Edt_YPos + c->Edt_YCu;
         if (store_block(from, uint32_t(length), at).error)
             run(AMOS_ROUTINE(ed_oof_buf));
@@ -342,7 +342,7 @@ void ed_load_hidden_fn(AllRegs *r)
 {
     load_hidden();
     r->a[4] = encode_context_cursor(ctx().a4);
-    r->a[6] = address(ctx().a6);
+    r->a[6] = encode_context_cursor(ctx().a6);
 }
 
 // Ed_LoadHidden: a program into a hidden window, kept
@@ -387,7 +387,7 @@ void ed_merge(AllRegs *r)
 {
     merge();
     r->a[4] = encode_context_cursor(ctx().a4);
-    r->a[6] = address(ctx().a6);
+    r->a[6] = encode_context_cursor(ctx().a6);
 }
 
 void ed_merge_ascii(AllRegs *) { merge_ascii(); }

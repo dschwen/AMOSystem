@@ -29,7 +29,7 @@ Target target()
         fon_call();
     pc() += 2;
     if (peek_token() == tk::Var) {
-        uint8_t *back = pc();
+        ContextCursor back = pc();
         FoundVar v = find_variable();
         uint16_t t = next_token();
         if (t == tk::Par2)

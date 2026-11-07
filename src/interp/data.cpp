@@ -13,8 +13,8 @@ namespace {
 // to the line's start)
 void data()
 {
-    uint8_t *line = pc() - peek_w(pc());
-    pc() = line - 2 + 2 * line[0];
+    ContextCursor line = pc() - peek_w(pc());
+    pc() = line - 2 + 2 * byte_at(line);
 }
 
 [[noreturn]] void out_of_data()
@@ -28,16 +28,16 @@ void next_item()
 {
     IData &d = idata();
     if (d.AData) {
-        pc() = ptr<uint8_t>(d.AData);
+        pc() = decode_context_cursor(d.AData);
         return;
     }
-    uint8_t *line = ptr<uint8_t>(d.PData);
+    ContextCursor line = decode_context_cursor(d.PData);
     if (!line)
         out_of_data();
     for (;;) {
         if (!peek_w(line))
             out_of_data();
-        uint8_t *t = line + 2;
+        ContextCursor t = line + 2;
         uint16_t token = peek_w(t);
         if (token == tk::EndP)
             out_of_data();
@@ -46,15 +46,15 @@ void next_item()
             continue;
         }
         if (token == tk::Lab) {
-            t = line + 8 + int8_t(line[6]);
+            t = line + 8 + int8_t(byte_at(line, 6));
             token = peek_w(t);
         }
         if (token == tk::Data) {
-            d.PData = address(line + 2 * line[0]);
+            d.PData = encode_context_cursor(line + 2 * byte_at(line));
             pc() = t + 4;
             return;
         }
-        line += 2 * line[0];
+        line += 2 * byte_at(line);
     }
 }
 
@@ -65,7 +65,7 @@ void read()
     do {
         FoundVar var = find_variable();
         uint8_t type = uint8_t(var.type);
-        uint8_t *back = pc();
+        ContextCursor back = pc();
         next_item();
         Value v;
         uint16_t t = peek_token();
@@ -76,7 +76,7 @@ void read()
             t = peek_token();
         }
         pc() += 2;
-        d.AData = t ? address(pc()) : 0;
+        d.AData = t ? encode_context_cursor(pc()) : 0;
         pc() = back;
         if (kind(v) != type) {
             if (type == TString || kind(v) == TString)

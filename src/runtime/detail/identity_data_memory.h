@@ -80,3 +80,13 @@ inline void write_cursor_word(ContextCursor at, uint16_t value) { require_guest(
 inline void write_cursor_at(ContextCursor at, uint8_t value) { require_guest(IdentityDataMemory{}.store_byte(guest_cursor(at),value)); }
 
 }
+
+#if !defined(__mc68000__)
+namespace amos {
+// Reads through a live cursor (a4, a6)
+inline uint16_t peek_w(ContextCursor at) { return host::detail::read_cursor_word(at); }
+inline uint32_t peek_l(ContextCursor at) { return host::detail::read_cursor_long(at); }
+inline void poke_w(ContextCursor at, uint16_t v) { host::detail::write_cursor_word(at, v); }
+inline void poke_l(ContextCursor at, uint32_t v) { host::detail::write_cursor_long(at, v); }
+}
+#endif

@@ -409,7 +409,7 @@ uint32_t open_library(const char *name)
     uint32_t base = address(hal::open_library(name, 0));
     if (!base) {
         // Cannot open math libraries, at the start of the program
-        ctx().a6 = ptr<uint8_t>(data().Prg_Run);
+        ctx().a6 = decode_context_cursor(data().Prg_Run);
         interp_error(12, 19, uint32_t(-1), 0);
     }
     return base;

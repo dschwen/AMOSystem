@@ -91,7 +91,7 @@ void ec_fn(int function, uint32_t d1 = 0, uint32_t d2 = 0, uint32_t d3 = 0, uint
 void use(EditWindow *w)
 {
     ctx().a4 = host::detail::capture_cursor(reinterpret_cast<uint8_t *>(w));
-    ctx().a6 = ptr<uint8_t>(w->Edt_Prg);
+    ctx().a6 = decode_context_cursor(w->Edt_Prg);
 }
 
 void set_banks_program()
@@ -153,7 +153,7 @@ void run_program()
 {
     IData &d = idata();
     d.Edt_Runned = address(w);
-    ctx().a6 = ptr<uint8_t>(w->Edt_Prg);
+    ctx().a6 = decode_context_cursor(w->Edt_Prg);
     prepare();
     d.Ed_RunnedHidden = 1;
     int32_t result = run_it(AMOS_DATA(ed_err_run_hidden), AMOS_DATA(ed_test_message), 1);

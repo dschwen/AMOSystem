@@ -120,6 +120,7 @@ int main() { GuestSymbol<Byte> s(SegmentId(1), 10); GuestEntry<int()> e{}; REJEC
             for result,name,parameters in re.findall(r'^(void|uint32_t|uint64_t) (amos_typed_\w+)\(([^;]*)\);',declarations,re.M):
                 definitions.append(result+' '+name+'('+parameters+') {'+('' if result=='void' else 'return {};')+'}')
             definitions.append('}')
+            definitions.append('extern "C" { unsigned char amos_low_page[4096]; }')
             stubs.write_text('\n'.join(definitions))
             binary=Path(temp)/'dispatch-image'
             subprocess.run([*self.compiler,'-std=c++20','-O2','-Isrc','-pie',

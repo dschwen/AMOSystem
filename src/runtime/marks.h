@@ -58,7 +58,7 @@ inline AllRegs context_regs()
     r.a[3] = encode_context_cursor(c.a3);
     r.a[4] = encode_context_cursor(c.a4);
     r.a[5] = encode_data_zone(c.a5);
-    r.a[6] = address(c.a6);
+    r.a[6] = encode_context_cursor(c.a6);
     return r;
 }
 
@@ -70,7 +70,7 @@ inline void to_context(const AllRegs &r)
     c.a3 = decode_context_cursor(r.a[3]);
     c.a4 = decode_context_cursor(r.a[4]);
     c.a5 = decode_data_zone(r.a[5]);
-    c.a6 = ptr<uint8_t>(r.a[6]);
+    c.a6 = decode_context_cursor(r.a[6]);
 }
 
 // What runs at a mark: its target (then what follows it), or its C++

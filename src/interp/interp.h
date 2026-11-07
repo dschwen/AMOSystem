@@ -5,6 +5,8 @@
 #pragma once
 
 #include "core/amos.h"
+#include "runtime/detail/identity_data_memory.h"
+#include "core/source.h"
 
 namespace amos::interp {
 
@@ -23,7 +25,15 @@ enum : uint32_t {
     EOofBuf = 11, EDByZero = 20, ENonDim = 27, EAlrDim = 28, EOverFlow = 29, EOofData = 33, EInpTL = 79 + 20,
 };
 
-inline uint8_t *&pc() { return ctx().a6; }
+inline ContextCursor &pc() { return ctx().a6; }
+// The program is walked by the source module on its native view of it
+inline ContextCursor skip_token(uint16_t t, ContextCursor at)
+{
+    return host::detail::capture_cursor(amos::source::skip_token(t, ptr<uint8_t>(encode_context_cursor(at))));
+}
+inline uint8_t byte_at(ContextCursor at, int offset = 0) { return host::detail::read_cursor_byte(at + offset); }
+inline uint8_t next_cursor_byte(ContextCursor &at) { uint8_t b = byte_at(at); at += 1; return b; }
+inline uint8_t next_byte() { uint8_t b = host::detail::read_cursor_byte(pc()); pc() += 1; return b; }
 inline uint16_t peek_token() { return peek_w(pc()); }
 inline uint16_t next_token()
 {

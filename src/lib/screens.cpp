@@ -1170,7 +1170,7 @@ extern "C" void lib_in_paint3(uint32_t x, uint32_t y, uint32_t mode)
     r.a[1] = address(rp);
     // GfxPnt: AMOS.library's paint, with Autoback (a6 left as it is)
     AllRegs a = all_regs(r);
-    a.a[6] = address(ctx().a6);
+    a.a[6] = encode_context_cursor(ctx().a6);
     gfx_autoback(host::decode_routine(uint32_t(wdata().EcVect) + 4 * ec::SuPaint), 0, a);
     tmp_ras_free();
 }

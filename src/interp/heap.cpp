@@ -273,7 +273,7 @@ uint32_t demande(uint32_t length)
             break;              // twice in the same instruction
         // the instruction again, from its start
         c.a3 = decode_context_cursor(d.PLoop);
-        c.a6 = ptr<uint8_t>(c.d7);
+        c.a6 = decode_context_cursor(c.d7);
         d.MenA4 = c.d7;
         c.d7 = 0;
         d.ErrorSave[0] = c.d6;
@@ -289,7 +289,7 @@ uint32_t demande(uint32_t length)
         a.a[3] = encode_context_cursor(c.a3);
         a.a[4] = encode_context_cursor(c.a4);
         a.a[5] = encode_data_zone(c.a5);
-        a.a[6] = address(c.a6);
+        a.a[6] = encode_context_cursor(c.a6);
         interp_restart(d.BasSp.load(), d.Prg_InsRet.load(), &a);
     }
     if (int32_t(c.d7) <= 0)

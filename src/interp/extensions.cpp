@@ -26,8 +26,8 @@ Value call(bool function)
 {
     IData &d = idata();
     Ctx &c = ctx();
-    uint8_t number = *pc()++;
-    int8_t n = int8_t(*pc()++);
+    uint8_t number = next_byte();
+    int8_t n = int8_t(next_byte());
     uint8_t *table = ptr<uint8_t>(d.AdTokens[number]);
     Regs r;
     if (n < 0) {

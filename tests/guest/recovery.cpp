@@ -34,18 +34,13 @@ int main(int argc, char**) {
     legacy.a5 = decode_data_zone(0xe0000010);
     legacy.a4 = decode_context_cursor(0xd0000010);
     legacy.a3 = decode_context_cursor(0xf0000010);
-    auto captured = detail::try_capture_context(legacy);
-    assert(captured && captured.value.d6 == 31 && captured.value.d7 == 37);
-    assert(context_address(captured.value.a3) == 0xf0000010);
-    assert(context_address(captured.value.a5) == 0xe0000010);
-    assert(context_address(captured.value.a4) == 0xd0000010);
-    uint8_t* Ctx::* registers[] = {&Ctx::a6};
-    assert(reinterpret_cast<uintptr_t>(&legacy) > UINT32_MAX);
-    for (auto reg : registers) {
-        Ctx invalid{};
-        invalid.*reg = reinterpret_cast<uint8_t*>(&legacy);
-        assert(detail::try_capture_context(invalid).fault == guest::Fault::overflow);
-    }
+    legacy.a6 = decode_context_cursor(0xc0000010);
+    auto captured = detail::capture_context(legacy);
+    assert(captured.d6 == 31 && captured.d7 == 37);
+    assert(context_address(captured.a3) == 0xf0000010);
+    assert(context_address(captured.a5) == 0xe0000010);
+    assert(context_address(captured.a4) == 0xd0000010);
+    assert(context_address(captured.a6) == 0xc0000010);
     GuestContext source{}; source.d6 = 11;
     source.a3 = guest::abi::AddressCodec::decode<guest::Byte>(0xf0000010);
     const auto retained = save_context(source);

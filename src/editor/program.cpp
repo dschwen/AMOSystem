@@ -213,7 +213,7 @@ uint16_t file_selector(uint16_t n)
     r.a[3] = address(parameters);
     r.a[4] = encode_context_cursor(c.a4);
     r.a[5] = encode_data_zone(c.a5);
-    r.a[6] = address(c.a6);
+    r.a[6] = encode_context_cursor(c.a6);
     r.d[6] = c.d6;
     r.d[7] = c.d7;
     amos_call_all(&r, lib_entry(L_Dsk_FileSelector));
@@ -228,10 +228,10 @@ void open_load()
     Ctx &c = ctx();
     r.a[4] = encode_context_cursor(c.a4);
     r.a[5] = encode_data_zone(c.a5);
-    r.a[6] = address(c.a6);
+    r.a[6] = encode_context_cursor(c.a6);
     amos_call_all(&r, AMOS_ROUTINE(ed_open_shown_window_entry));
     c.a4 = decode_context_cursor(r.a[4]);
-    c.a6 = ptr<uint8_t>(r.a[6]);
+    c.a6 = decode_context_cursor(r.a[6]);
     run(AMOS_ROUTINE(ed_load_entry));
 }
 
@@ -251,7 +251,7 @@ void ed_open_load(AllRegs *r)
 {
     open_load();
     r->a[4] = encode_context_cursor(ctx().a4);
-    r->a[6] = address(ctx().a6);
+    r->a[6] = encode_context_cursor(ctx().a6);
 }
 }
 

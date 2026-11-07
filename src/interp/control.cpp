@@ -112,7 +112,7 @@ void goto_fix()
     ContextCursor p = a3();
     while (encode_context_cursor(p) < d.BasA3) {
         uint32_t start = host::detail::read_cursor_long(p + 6), end = host::detail::read_cursor_long(p + 2);
-        if (address(pc()) >= start && address(pc()) <= end)
+        if (encode_context_cursor(pc()) >= start && encode_context_cursor(pc()) <= end)
             break;
         p += int16_t(host::detail::read_cursor_word(p));
     }
@@ -154,7 +154,7 @@ uint32_t get_label()
     uint16_t t = next_token();
     if (t == tk::Pro || t == tk::LGo) {
         int16_t offset = int16_t(next_token());
-        pc() += 2 + int8_t(*pc());
+        pc() += 2 + int8_t(byte_at(pc()));
         return peek_l(ptr<uint8_t>(d.LabHaut) + offset);
     }
     pc() -= 2;
@@ -192,20 +192,20 @@ void gosub_to(uint32_t to)
 {
     IData &d = data();
     push_l(d.BasA3);
-    push_l(address(pc()));
+    push_l(encode_context_cursor(pc()));
     push_l(Gosb);
     check_stack();
     d.BasA3 = encode_context_cursor(a3());
-    pc() = ptr<uint8_t>(to);
+    pc() = decode_context_cursor(to);
 }
 
 // InProE / InPrOn2: a procedure called: proc its Procedure token, back the
 // return address (0: stay at pc), errors its ErrorOn. Its parameters are at
 // pc, in brackets.
-void call_procedure(uint8_t *proc, uint32_t back, uint16_t errors)
+void call_procedure(ContextCursor proc, uint32_t back, uint16_t errors)
 {
     IData &d = data();
-    uint8_t *p = proc + 6;
+    ContextCursor p = proc + 6;
     uint8_t *top = ptr<uint8_t>(d.TabBas);
     if (address(top - 6 - 4 - peek_w(p)) < d.HiChaine) {
         Regs m;
@@ -221,20 +221,20 @@ void call_procedure(uint8_t *proc, uint32_t back, uint16_t errors)
     p += 4;
     for (uint8_t *v = vars; v < top; v++)
         *v = 0;
-    p += 6 + int8_t(p[4]);
+    p += 6 + int8_t(byte_at(p, 4));
     // (no program pointer for a menu's procedure: the assembler read the
     // word at address 0 then)
     if (pc() && peek_token() == tk::Bra1) {
         do {
             pc() += 2;
-            uint8_t *param = p + 4;
+            ContextCursor param = p + 4;
             Value x = evaluate();
             p = param;
             int16_t offset = int16_t(peek_w(p));
             p += 2;
             uint8_t *at = offset < 0 ? ptr<uint8_t>(d.VarGlo) + 1 - offset : vars + 2 + offset;
-            int8_t length = int8_t(*p++);
-            uint8_t type = *p++ & 0x0F;
+            int8_t length = int8_t(next_cursor_byte(p));
+            uint8_t type = next_cursor_byte(p) & 0x0F;
             p += length;
             at[-2] = reinterpret_cast<uint8_t *>(&d.Long_Var)[type];
             at[-1] = type;
@@ -255,7 +255,7 @@ void call_procedure(uint8_t *proc, uint32_t back, uint16_t errors)
         fon_call();
     }
     if (back)
-        pc() = ptr<uint8_t>(back);
+        pc() = decode_context_cursor(back);
     push_l(d.BasA3);
     push_l(d.VarLoc);
     push_l(d.TabBas);
@@ -265,7 +265,7 @@ void call_procedure(uint8_t *proc, uint32_t back, uint16_t errors)
     push_l(d.PData);
     push_l(d.AData);
     push_l(d.DProc);
-    push_l(address(pc()));
+    push_l(encode_context_cursor(pc()));
     push_l(Proc);
     check_stack();
     d.BasA3 = encode_context_cursor(a3());
@@ -273,7 +273,7 @@ void call_procedure(uint8_t *proc, uint32_t back, uint16_t errors)
     d.TabBas = address(vars);
     d.OnErrLine = 0;
     pc() = p;
-    d.DProc = d.PData = address(p + 2);
+    d.DProc = d.PData = encode_context_cursor(p + 2);
     d.AData = 0;
     d.ErrorOn = errors;
 }
@@ -304,7 +304,7 @@ uint32_t pop_procedure(ContextCursor from, bool check)
 }
 
 // PopP: out of the procedure (Pop Proc, errors in procedures)
-void pop_proc() { pc() = ptr<uint8_t>(pop_procedure(decode_context_cursor(data().BasA3), true)); }
+void pop_proc() { pc() = decode_context_cursor(pop_procedure(decode_context_cursor(data().BasA3), true)); }
 
 // FnEProc: End Proc[value] into Param
 void procedure_result()
@@ -327,14 +327,14 @@ void procedure_result()
 [[noreturn]] void jump_from_test(uint16_t type, uint32_t to)
 {
     if (type == tk::Gto) {
-        pc() = ptr<uint8_t>(to);
+        pc() = decode_context_cursor(to);
         goto_fix();
     } else {
-        pc() = ptr<uint8_t>(ctx().d7 - 2);
+        pc() = decode_context_cursor(ctx().d7 - 2);
         if (type == tk::Gsb)
             gosub_to(to);
         else
-            call_procedure(ptr<uint8_t>(to), 0, 0);
+            call_procedure(decode_context_cursor(to), 0, 0);
     }
     go_on();
 }
@@ -468,11 +468,11 @@ namespace {
 using source::skip_token;
 
 // Resume Next: the instruction after the one at from
-uint8_t *next_instruction(uint8_t *from)
+ContextCursor next_instruction(ContextCursor from)
 {
     for (;;) {
         uint16_t t = peek_w(from);
-        from = skip_token(t, from + 2);
+        from = interp::skip_token(t, from + 2);
         if (!t && peek_w(from))
             from += 2;
         if (finished(t))
@@ -486,7 +486,7 @@ void loop_frame(uint16_t size, uint32_t end)
 {
     if (!next_token())
         pc() += 2;
-    push_l(address(pc()));
+    push_l(encode_context_cursor(pc()));
     push_l(end);
     push_w(size);
     check_stack();
@@ -510,8 +510,8 @@ void exit_loop()
 
 void while_test()
 {
-    uint8_t *back = pc();
-    pc() = ptr<uint8_t>(host::detail::read_cursor_long(a3() + 6));
+    ContextCursor back = pc();
+    pc() = decode_context_cursor(host::detail::read_cursor_long(a3() + 6));
     if (integer().v1)
         return;
     pc() = back;
@@ -550,7 +550,7 @@ void interp_test_pasaut()
 void interp_in_for()
 {
     int16_t jump = int16_t(next_token());
-    uint32_t next = address(pc()) + jump;
+    uint32_t next = encode_context_cursor(pc()) + jump;
     FoundVar var = find_variable();
     uint8_t type = uint8_t(var.type);
     Value start = of_type(evaluate_after(), type);
@@ -584,7 +584,7 @@ void interp_in_next()
         stay = interp_next_float(var, uint32_t(step), uint32_t(limit), ptr<void>(data().FloatBase));
     }
     if (stay) {
-        pc() = ptr<uint8_t>(host::detail::read_cursor_long(f + 6));
+        pc() = decode_context_cursor(host::detail::read_cursor_long(f + 6));
         return;
     }
     a3() += TForNxt;
@@ -597,7 +597,7 @@ void interp_in_do();
 void interp_in_repeat()
 {
     int16_t jump = int16_t(next_token());
-    loop_frame(TRptUnt, address(pc()) + jump);
+    loop_frame(TRptUnt, encode_context_cursor(pc()) + jump);
 }
 
 void interp_in_do() { interp_in_repeat(); }
@@ -607,7 +607,7 @@ void interp_in_until()
     if (test_due())
         test_force();
     if (!integer().v1) {
-        pc() = ptr<uint8_t>(host::detail::read_cursor_long(a3() + 6));
+        pc() = decode_context_cursor(host::detail::read_cursor_long(a3() + 6));
         return;
     }
     a3() += TRptUnt;
@@ -617,9 +617,9 @@ void interp_in_until()
 void interp_in_while()
 {
     int16_t jump = int16_t(next_token());
-    push_l(address(pc()));
+    push_l(encode_context_cursor(pc()));
     pc() += jump;
-    push_l(address(pc()));
+    push_l(encode_context_cursor(pc()));
     push_w(TWhlWnd);
     check_stack();
     while_test();
@@ -636,7 +636,7 @@ void interp_in_loop()
 {
     if (test_due())
         test_force();
-    pc() = ptr<uint8_t>(host::detail::read_cursor_long(a3() + 6));
+    pc() = decode_context_cursor(host::detail::read_cursor_long(a3() + 6));
 }
 
 void interp_in_exit()
@@ -648,7 +648,7 @@ void interp_in_exit()
 
 void interp_in_exit_if()
 {
-    uint8_t *back = pc();
+    ContextCursor back = pc();
     pc() += 4;
     if (integer().v1) {
         pc() = back;
@@ -664,7 +664,7 @@ void interp_in_exit_if()
 void interp_in_if()
 {
     for (;;) {
-        uint8_t *back = pc();
+        ContextCursor back = pc();
         pc() += 2;
         if (integer().v1) {
             if (peek_token() == tk::Then)
@@ -704,7 +704,7 @@ void interp_in_return()
     a3() = decode_context_cursor(d.BasA3);
     if (pop_l() != Gosb)
         error(ERetGsb);
-    pc() = ptr<uint8_t>(pop_l());
+    pc() = decode_context_cursor(pop_l());
     d.BasA3 = pop_l();
     d.PLoop = encode_context_cursor(a3());
 }
@@ -727,14 +727,14 @@ void interp_in_goto()
 {
     if (test_due())
         test_force();
-    pc() = ptr<uint8_t>(label());
+    pc() = decode_context_cursor(label());
     goto_fix();
 }
 
 // A label as an instruction: a Goto to it (Goto2)
 void interp_goto2()
 {
-    pc() = ptr<uint8_t>(peek_l(ptr<uint8_t>(data().LabHaut) + int16_t(peek_w(pc()))));
+    pc() = decode_context_cursor(peek_l(ptr<uint8_t>(data().LabHaut) + int16_t(peek_w(pc()))));
     goto_fix();
 }
 
@@ -745,12 +745,12 @@ void interp_in_on()
     if (test_due())
         test_force();
     int16_t jump = int16_t(next_token());
-    uint32_t end = address(pc()) + jump + 2;
+    uint32_t end = encode_context_cursor(pc()) + jump + 2;
     uint16_t count = next_token();
     uint32_t n = integer().v1 - 1;
     uint16_t type = next_token();
     if (int32_t(n) < 0 || (n && n >= count)) {
-        pc() = ptr<uint8_t>(end);
+        pc() = decode_context_cursor(end);
         return;
     }
     for (; n; n--) {
@@ -763,7 +763,7 @@ void interp_in_on()
     }
     if (type == tk::Prc) {
         uint32_t proc = get_label();
-        call_procedure(ptr<uint8_t>(proc), end, 0);
+        call_procedure(decode_context_cursor(proc), end, 0);
         return;
     }
     push_l(d.BasA3);
@@ -771,7 +771,7 @@ void interp_in_on()
     push_l(Gosb);
     if (encode_context_cursor(a3()) < d.MinLoop)
         error(EOofStack);
-    pc() = ptr<uint8_t>(label());
+    pc() = decode_context_cursor(label());
     d.PLoop = encode_context_cursor(a3());
     d.BasA3 = encode_context_cursor(a3());
 }
@@ -785,15 +785,15 @@ void interp_in_restore()
         d.AData = 0;
         return;
     }
-    uint8_t *l = ptr<uint8_t>(label());
+    ContextCursor l = decode_context_cursor(label());
     if (peek_w(l) != tk::Data)
         error(ENoData);
     l += 2;
-    d.PData = address(l - peek_w(l));
+    d.PData = encode_context_cursor(l - peek_w(l));
     d.AData = 0;
 }
 
-void interp_in_lab() { pc() += 4 + pc()[2]; }
+void interp_in_lab() { pc() += 4 + host::detail::read_cursor_byte(pc() + 2); }
 void interp_in_system() { error(1002); }
 void interp_in_edit() { error(1000); }
 void interp_in_direct() { error(1001); }
@@ -823,7 +823,7 @@ void interp_in_on_error()
     if (t == tk::Prc) {
         pc() += 4;
         int16_t offset = int16_t(next_token());
-        pc() += 2 + int8_t(*pc());
+        pc() += 2 + int8_t(byte_at(pc()));
         d.OnErrLine = peek_l(ptr<uint8_t>(d.LabHaut) + offset);
         d.ErrorChr |= 0x80000000;
         return;
@@ -859,7 +859,7 @@ void interp_in_resume_label()
     to &= ~0x80000000;
     if (!to)
         error(EResLNo);
-    pc() = ptr<uint8_t>(to);
+    pc() = decode_context_cursor(to);
     goto_fix();
 }
 
@@ -880,11 +880,11 @@ void interp_in_resume()
     }
     if (finished(peek_token())) {
         d.ErrorOn = 0;
-        pc() = ptr<uint8_t>(d.ErrorChr);
+        pc() = decode_context_cursor(d.ErrorChr);
     } else {
         uint32_t to = label();
         d.ErrorOn = 0;
-        pc() = ptr<uint8_t>(to);
+        pc() = decode_context_cursor(to);
     }
     goto_fix();
 }
@@ -895,12 +895,12 @@ void interp_in_resume_next()
     test_normal();
     if (!d.ErrorOn)
         error(ENoErr);
-    uint8_t *from;
+    ContextCursor from;
     if (int16_t(d.ErrorChr >> 16) < 0) {
         pop_proc();
         from = pc();
     } else {
-        from = ptr<uint8_t>(d.ErrorChr);
+        from = decode_context_cursor(d.ErrorChr);
     }
     d.ErrorOn = 0;
     pc() = next_instruction(from);
@@ -909,7 +909,7 @@ void interp_in_resume_next()
 
 void interp_in_trap()
 {
-    data().TrapAdr = address(pc() + 2);
+    data().TrapAdr = encode_context_cursor(pc() + 2);
     data().TrapErr = 0;
 }
 
@@ -946,8 +946,8 @@ void interp_call_proc()
     if (test_due())
         test_force();
     int16_t offset = int16_t(next_token());
-    pc() += 2 + int8_t(*pc());
-    call_procedure(ptr<uint8_t>(peek_l(ptr<uint8_t>(d.LabHaut) + offset)), 0, 0);
+    pc() += 2 + int8_t(byte_at(pc()));
+    call_procedure(decode_context_cursor(peek_l(ptr<uint8_t>(d.LabHaut) + offset)), 0, 0);
 }
 void interp_in_proc()
 {
@@ -965,7 +965,7 @@ void interp_in_end_proc()
     if (d.ErrorOn)
         error(EProErr);
     uint32_t back = pop_procedure(a3(), false);
-    pc() = ptr<uint8_t>(back);
+    pc() = decode_context_cursor(back);
     if (!back)
         interp_menu_return(d.MnPile.load());
 }
@@ -990,13 +990,13 @@ void interp_in_apml()
     IData &d = data();
     uint16_t jump = next_token();
     if (jump) {
-        const uint8_t *p = pc() + jump;
+        ContextCursor p = pc() + jump;
         do {
             int16_t offset = int16_t(peek_w(p));
             p += 2;
             uint8_t *at = offset < 0 ? ptr<uint8_t>(d.VarGlo) + 1 - offset : ptr<uint8_t>(d.VarLoc) + 2 + offset;
             push_l(peek_l(at));
-            uint8_t length = *p++;
+            uint8_t length = next_cursor_byte(p);
             p += 1 + length;
             uint16_t t = peek_w(p);
             p += 4;
@@ -1012,8 +1012,8 @@ void interp_in_apml()
     r.a[3] = encode_context_cursor(a3());
     r.a[4] = address(d.CallReg);
     r.a[5] = encode_data_zone(ctx().a5);
-    r.a[6] = address(pc());
-    amos_call_all(&r, host::detail::legacy_routine_entry(pc()));
+    r.a[6] = encode_context_cursor(pc());
+    amos_call_all(&r, host::detail::legacy_routine_entry(ptr<const void>(encode_context_cursor(pc()))));
     for (int i = 0; i < 8; i++)
         d.CallReg[i] = r.d[i];
     for (int i = 0; i < 3; i++)
@@ -1064,8 +1064,8 @@ void interp_menu_procedure(EvalOut *o)
         *o = {uint32_t(-1), 0, 0, 0, 0, 0};
         return;
     }
-    pc() = nullptr;
-    call_procedure(ptr<uint8_t>(proc), 0, 0);
+    pc() = ContextCursor{};
+    call_procedure(decode_context_cursor(proc), 0, 0);
     Regs r;
     interp_jump(&r, d.Prg_InsRet.load());
 }
@@ -1114,7 +1114,7 @@ uint32_t interp_menu_procedure_reg(RegFrame &r)
         d.TrapAdr = 0;
         d.TrapErr = uint16_t(number | ((extension + 1) << 8));
         a3() = decode_context_cursor(d.PLoop);
-        pc() = next_instruction(ptr<uint8_t>(c.d7 - 2));
+        pc() = next_instruction(decode_context_cursor(c.d7 - 2));
         go_on();
     }
     if (trappable && d.OnErrLine) {
@@ -1125,10 +1125,10 @@ uint32_t interp_menu_procedure_reg(RegFrame &r)
         uint32_t at = c.d7 - 2;
         if (int16_t(d.ErrorChr >> 16) >= 0) {
             d.ErrorChr = at;
-            pc() = ptr<uint8_t>(d.OnErrLine);
+            pc() = decode_context_cursor(d.OnErrLine);
         } else {
-            pc() = ptr<uint8_t>(at);
-            call_procedure(ptr<uint8_t>(d.OnErrLine), 0, d.ErrorOn);
+            pc() = decode_context_cursor(at);
+            call_procedure(decode_context_cursor(d.OnErrLine), 0, d.ErrorOn);
         }
         go_on();
     }

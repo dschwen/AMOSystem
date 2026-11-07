@@ -45,7 +45,7 @@ void run(host::RoutineArg routine)
 void use(EditWindow *w, Program *p)
 {
     ctx().a4 = host::detail::capture_cursor(reinterpret_cast<uint8_t *>(w));
-    ctx().a6 = reinterpret_cast<uint8_t *>(p);
+    ctx().a6 = host::detail::capture_cursor(reinterpret_cast<uint8_t *>(p));
 }
 
 uint8_t *system_text(uint16_t n)
@@ -266,7 +266,7 @@ void warm_error()
     for (uint32_t next = d.Prg_List; next;) {
         Program *p = ptr<Program>(next);
         next = p->Prg_Next;
-        ctx().a6 = reinterpret_cast<uint8_t *>(p);
+        ctx().a6 = host::detail::capture_cursor(reinterpret_cast<uint8_t *>(p));
         Regs t;
         t.d[0] = 0;
         lib_call(L_Prg_ChgTTexte, t);
@@ -368,7 +368,7 @@ void warm_start()
     temp_buffer(0);
     // the programs loaded again
     for (Program *p = ptr<Program>(d.Prg_List); p; p = ptr<Program>(p->Prg_Next)) {
-        ctx().a6 = reinterpret_cast<uint8_t *>(p);
+        ctx().a6 = host::detail::capture_cursor(reinterpret_cast<uint8_t *>(p));
         copy(ptr<uint8_t>(d.Name1), p->Prg_NamePrg);
         Regs t;
         t.d[0] = p->Prg_StBas;
@@ -407,7 +407,7 @@ void ed_warm_start(AllRegs *r)
 {
     warm_start();
     r->a[4] = encode_context_cursor(ctx().a4);
-    r->a[6] = address(ctx().a6);
+    r->a[6] = encode_context_cursor(ctx().a6);
 }
 }
 
