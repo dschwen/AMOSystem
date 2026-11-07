@@ -90,9 +90,11 @@ jobs:
           mkdir -p build/dist
           cp -a AMOS build/dist/AMOS
           cp -a examples/. build/dist/AMOS/
-          python3 tests/host_run.py --text-only --fallback-font
-          python3 -m unittest discover -s tests -p test_open_document.py
-          SDL_AUDIODRIVER=dummy python3 -m unittest discover -s tests -p test_clipboard.py
+          # (failures as annotations: the log of a run needs a login, annotations do not)
+          say() { while read -r line; do echo "::error::${line:0:1200}"; done; }
+          python3 tests/host_run.py --text-only --fallback-font > host.log 2>&1 || { grep -v ": ok" host.log | head -12 | say; exit 1; }
+          python3 -m unittest discover -s tests -p test_open_document.py > open.log 2>&1 || { tail -25 open.log | say; exit 1; }
+          SDL_AUDIODRIVER=dummy python3 -m unittest discover -s tests -p test_clipboard.py > clip.log 2>&1 || { tail -25 clip.log | say; exit 1; }
       - name: Upload unsigned installers and manifests
         uses: actions/upload-artifact@v4
         with:
