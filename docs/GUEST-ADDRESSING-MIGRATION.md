@@ -34,6 +34,19 @@ the same code with a base of 0. Built with `make host HOST_BIASED=1` (the defaul
 - **Bugs it exposed.** Arithmetic on a pointer with a 32-bit offset that was meant to wrap
   (`ptr(plane) + uint32(-2)` in `w/bobs.cpp`) only worked because the identity mapping truncated
   the result; `-1`/`0xFFFFFFFF` markers are native addresses that fault when used.
+- **No native address becomes a guest word any more** in the host suite (`AMOS_ESCAPE_LOG=<path>`
+  lists the sites; it is empty): the system's own objects (the task, devices, the input handler,
+  IO requests and events, the ioports data zone) are allocated in guest memory (`guest_object`),
+  native text and constants the guest reads are copied there (`guest_text`, `guest_constant`),
+  and C++ VBL routines the guest holds as code addresses are marker cells (`guest_callback`,
+  `callback_target`), all in `core/guest_scratch.h`. The handle windows remain only as a safety net.
+- **Native Apple Silicon runs.** The crash on arm64 was the host's `-fpack-struct=2` applied to
+  the system's own structures: macOS `struct stat` is larger than its packed twin, so `stat()` wrote
+  past it onto the caller's stack. `src/host/native_headers.h` (forced in with `-include`) reads
+  `sys/stat.h`/`dirent.h` with the platform's packing. Also: `c:assign` locks the executable via
+  `_NSGetExecutablePath` (there is no `/proc/self/exe`). `.github/workflows/macos-arm64.yml` runs
+  the hello program and the text tests natively: 85 of 86 pass (`insert`, which depends on
+  wall-clock disk-swap timing on a loaded runner, is flaky).
 - **Status.** All 140 host tests pass on the biased build on Linux x86-64 (guest memory at
   0x7f..., above 4 GB); the identity build and the Amiga build (134/134) are unchanged.
   `.github/workflows/macos-arm64.yml` builds and runs it on a native Apple Silicon runner.
