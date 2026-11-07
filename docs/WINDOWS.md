@@ -217,9 +217,8 @@ memory is committed in 16MB chunks as the allocator gives it out (`hal_system.cp
 executable then has no low image base (`WINDOWS_LDFLAGS` without `--image-base`/`--disable-dynamicbase`),
 its image sits above 4GB under ASLR, and the `image_below_4gb` gate in `main.cpp` is not built.
 
-It is not the default yet, because nothing here could run a Windows binary. The `Windows MSI` workflow
-builds the portable bundle both ways and runs the five headless smoke tests (`tests/windows/smoke.ps1`)
-of each on a `windows-2022` runner (the `smoke` job, on pushes to `guest-bias`/`cpp-conversion` and tags).
-When both pass, make `WINDOWS_BIASED ?= 1`, and the low image base, the image gate and `MAP_32BIT`/
-`memory_allocate(below_4gb)` can go. The platform probe still builds with the low image base
-(`WINDOWS_LOW_LDFLAGS`): it tests the identity backend.
+It is the default since the five headless smoke tests passed with it on a `windows-2022` runner (the `smoke`
+job of the `Windows MSI` workflow runs them for both: `WINDOWS_BIASED=0` is the old low image base, with AMOS's
+memory below 4GB, and stays available). What has not been run on Windows is a window: the editor, SDL video and
+audio with the biased build. Check that by hand before a release. The platform probe still builds with the low
+image base (`WINDOWS_LOW_LDFLAGS`): it tests the identity backend.

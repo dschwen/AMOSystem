@@ -215,9 +215,9 @@ WINDOWS_CXX ?= x86_64-w64-mingw32-g++
 WINDOWS_WINDRES ?= x86_64-w64-mingw32-windres
 WINDOWS_BUILD ?= $(BUILD)/windows
 # WINDOWS_BIASED=1: the guest's memory reserved anywhere and committed as it is given out (like
-# the other hosts' biased mode); the executable then needs no low image base and may have ASLR.
-# 0 (the default until a Windows run has passed): AMOS's memory and the image below 4GB.
-WINDOWS_BIASED ?= 0
+# the other hosts' biased mode); the executable then needs no low image base and has ASLR. The
+# default since its smoke tests passed on a Windows runner. 0: AMOS's memory and the image below 4GB.
+WINDOWS_BIASED ?= 1
 WINDOWS_LOW_LDFLAGS := -Wl,--image-base,0x400000,--disable-dynamicbase,--disable-high-entropy-va -static-libgcc -static-libstdc++
 WINDOWS_LDFLAGS ?= $(if $(filter 1,$(WINDOWS_BIASED)),-static-libgcc -static-libstdc++,$(WINDOWS_LOW_LDFLAGS))
 SDL2_WINDOWS ?= $(HOME)/Downloads/SDL2-2.32.8/x86_64-w64-mingw32
