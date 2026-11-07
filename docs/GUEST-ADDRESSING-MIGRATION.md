@@ -7,6 +7,39 @@ ordinary data, and still requires low native code/data/stack placement. Native
 Apple Silicon execution remains unsupported.
 See [the design](GUEST-ADDRESSING.md) for the complete migration and merge gates.
 
+## Biased runtime (`AMOS_GUEST_BIASED`, the path to arm64)
+
+A second production mode, next to the identity mapping, that needs none of the per-site
+conversions below to *run*: guest address `a` is `amos_guest_base + a`, with the guest memory
+(4 GiB reserved `PROT_NONE`, the first 1 GiB read/write: chip memory at 1 MB, fast memory from
+4 MB) mapped wherever the OS puts it. `core/guest_bias.h` is the one place that knows
+(`bias::to_native`, `to_guest`, `contains`); `core/amos.h`'s `ptr<T>`/`address()`, the live
+context cursors, `ChipPtr` and the legacy dispatch adapters use it, so the identity mapping is
+the same code with a base of 0. Built with `make host HOST_BIASED=1` (the default for
+`HOST_TARGET_ARCH=arm64`).
+
+- **Static image in guest memory.** `prepare_static_symbols()` copies each table segment into the
+  guest memory (chip segments into chip memory), applies the 2,206 relocations there and binds
+  the symbols to the copies. The 128 data-label uses (`ed_header`, `w_req_pal`, `music_data`...)
+  are `AMOS_DATA(label)`: the label's place in the table on the Amiga, in the loaded image
+  elsewhere. Code dispatch resolves through the same bindings, so entries are guest addresses of
+  the image.
+- **Native pointers as handle windows.** A native address that is not guest memory (a static or
+  stack object, a callback) and is asked for as a guest address gets a window of the handle
+  region (0xC0000000 up): the 1 MB of native address space around it. `to_native` maps it back,
+  so equality, ordering and increments within a MB behave as a flat 32-bit address did
+  (`context.cpp`; `AMOS_ESCAPE_LOG=1` lists every place that makes one). This is the bridge for
+  the "native temporaries and objects that escape as guest words" items; each place on that list
+  is still to be given real guest storage, and the handle region then disappears.
+- **Bugs it exposed.** Arithmetic on a pointer with a 32-bit offset that was meant to wrap
+  (`ptr(plane) + uint32(-2)` in `w/bobs.cpp`) only worked because the identity mapping truncated
+  the result; `-1`/`0xFFFFFFFF` markers are native addresses that fault when used.
+- **Status.** All 140 host tests pass on the biased build on Linux x86-64 (guest memory at
+  0x7f..., above 4 GB); the identity build and the Amiga build (134/134) are unchanged.
+  `.github/workflows/macos-arm64.yml` builds and runs it on a native Apple Silicon runner.
+  Struct pointers in static tables must be 8-aligned in the packed layout (arm64's linker
+  refuses a misaligned relocation).
+
 ## Implemented substrate
 
 - `core/guest_types.h`: distinct GuestAddress32, GuestPtr, HostPtr, GuestSpan,

@@ -41,7 +41,7 @@ void amiga_w_amos_loadview();
 }
 #define AMOS_ENTRY(name) amiga_##name
 #else
-#define AMOS_ENTRY(name) name
+#define AMOS_ENTRY(name) (::amos::host::detail::native_callback_marker(::amos::tables::entry_symbols::name))
 #endif
 #include <stdint.h>
 
@@ -70,6 +70,10 @@ inline uint32_t address(T *p, const char *file = __builtin_FILE(), int line = __
 #if !defined(__mc68000__)
 namespace host {
 uint32_t static_address(tables::Segment, uint32_t);
+namespace detail {
+// Native SDK callback fields use a marker for a guest code slot, not C++ code.
+uint8_t* native_callback_marker(guest::EntrySymbol<RoutineSignature>);
+}
 // A label of the tables' data (AMOS_DATA)
 inline uint8_t *static_data(guest::GuestSymbol<guest::Byte> symbol)
 {

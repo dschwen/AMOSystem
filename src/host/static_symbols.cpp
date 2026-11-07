@@ -93,6 +93,12 @@ const SegmentBindings& static_symbol_bindings() {
     if (!ready) prepare_static_symbols();
     return native_bindings;
 }
+namespace detail {
+uint8_t* native_callback_marker(guest::EntrySymbol<RoutineSignature> symbol) {
+    const auto entry = static_entry(symbol);
+    return ptr<uint8_t>(guest::abi::EntryCodec::encode(entry));
+}
+}
 uint32_t static_address(tables::Segment segment, uint32_t offset) {
     if (!ready) prepare_static_symbols();
     auto pointer = native_bindings.resolve(symbol(segment, offset));
