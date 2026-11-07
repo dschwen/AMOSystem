@@ -63,6 +63,7 @@ jobs:
           make -j2 host KICKSTART= ROMKEY=
           mkdir -p build/dist
           cp -a AMOS build/dist/AMOS
+          cp -a examples/. build/dist/AMOS/
           python3 tests/host_run.py --text-only --fallback-font
           python3 -m unittest discover -s tests -p test_open_document.py
           SDL_AUDIODRIVER=dummy python3 -m unittest discover -s tests -p test_clipboard.py
