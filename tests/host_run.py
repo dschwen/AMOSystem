@@ -57,7 +57,9 @@ def golden_of(f):
     """The golden file f (a test's result file): the host's own where there
     is one (host_only: its tests; host_only/variants: where it differs from
     the Amiga's)"""
-    for d in (HOST_ONLY, os.path.join(HOST_ONLY, 'variants')):
+    # (variants/darwin: where macOS's libm differs from the Amiga's and glibc's)
+    for d in (HOST_ONLY, *(os.path.join(HOST_ONLY, 'variants', 'darwin') for _ in [0] if sys.platform == 'darwin'),
+              os.path.join(HOST_ONLY, 'variants')):
         p = os.path.join(d, f)
         if os.path.exists(p):
             return p
