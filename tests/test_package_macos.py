@@ -26,7 +26,15 @@ class MacPackagingTests(unittest.TestCase):
             self.assertEqual(info['CFBundleExecutable'],'amos')
             self.assertEqual(info['CFBundleIconFile'],'amos.icns')
             self.assertEqual(info['LSMinimumSystemVersion'],'11.0')
-            self.assertNotIn('CFBundleDocumentTypes',info)
+            doc=info['CFBundleDocumentTypes'][0]
+            self.assertEqual(doc['LSItemContentTypes'],['io.github.dschwen.amosystem.program'])
+            self.assertEqual(doc['CFBundleTypeRole'],'Editor')
+            self.assertIn('AMOS',doc['CFBundleTypeExtensions'])
+            self.assertEqual(doc['CFBundleTypeIconFile'],'amos.icns')
+            exported=info['UTExportedTypeDeclarations'][0]
+            self.assertEqual(exported['UTTypeIdentifier'],'io.github.dschwen.amosystem.program')
+            self.assertIn('AMOS',exported['UTTypeTagSpecification']['public.filename-extension'])
+            self.assertEqual(exported['UTTypeIconFile'],'amos.icns')
             self.assertEqual(os.readlink(stage/'Applications'),'/Applications')
             self.assertTrue((app/'Contents/Frameworks/SDL2.framework/SDL2').is_file())
             config='AMOS/APSystem/AMOSPro_Editor_Config'

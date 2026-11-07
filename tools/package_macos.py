@@ -16,6 +16,7 @@ from install_icons import macos as install_icons
 
 ROOT = Path(__file__).resolve().parents[1]
 APP = 'AMOS Professional.app'
+UTI = 'io.github.dschwen.amosystem.program'
 
 
 def run(*args):
@@ -94,6 +95,17 @@ def stage_bundle(build, framework, stage, version, arch='x86_64'):
         'CFBundleShortVersionString':version, 'CFBundleVersion':version,
         'LSMinimumSystemVersion':'11.0', 'LSArchitecturePriority':[arch],
         'NSHighResolutionCapable':True,
+        # .AMOS (and .amos) programs open in the editor: Finder's double click, Open With, the Dock
+        # (a running AMOS starts another for the file, host/open_document.cpp). The type is ours.
+        'CFBundleDocumentTypes':[{
+            'CFBundleTypeName':'AMOS BASIC program', 'CFBundleTypeRole':'Editor', 'LSHandlerRank':'Owner',
+            'LSItemContentTypes':[UTI], 'CFBundleTypeExtensions':['AMOS','amos'],
+        }],
+        'UTExportedTypeDeclarations':[{
+            'UTTypeIdentifier':UTI, 'UTTypeDescription':'AMOS BASIC program',
+            'UTTypeConformsTo':['public.data'],
+            'UTTypeTagSpecification':{'public.filename-extension':['AMOS','amos']},
+        }],
     }
     (app/'Contents/Info.plist').write_bytes(plistlib.dumps(info))
     install_icons(app)
@@ -110,8 +122,9 @@ on upgrade. Deleting the app does not delete your projects or preferences.
 
 {caveat}A locally ad-hoc signed build is not notarized and may be blocked by Gatekeeper.
 Use a Developer ID signed/notarized build for public distribution.
-Finder .amos document events/default-app registration are not implemented here;
-open documents in the AMOS editor or use --open-document from Terminal.
+Double-clicking an .AMOS program opens it in the editor (Open With > AMOS Professional;
+to make AMOS the default: Get Info > Open with > AMOS Professional > Change All).
+From Terminal: amos --open-document file.AMOS.
 Licenses and redistributable AROS font sources/data are inside Contents/Resources.
 ''')
     return app

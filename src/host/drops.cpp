@@ -27,6 +27,7 @@
 namespace amos::host {
 
 void message(const char *text);     // overlay.cpp
+bool open_in_new_instance(const char *path);    // open_document.cpp
 
 namespace {
 
@@ -101,8 +102,13 @@ void drop(const char *spec)
                 snprintf(note, sizeof note, "%s: %s", info.name, info.label);
             else
                 snprintf(note, sizeof note, "%s: %s", text.c_str(), reason);
+        } else if (n > 5 && !strcasecmp(text.c_str() + n - 5, ".AMOS")) {
+            // a program: edited in an AMOS of its own
+            snprintf(note, sizeof note, open_in_new_instance(text.c_str()) ? "Opening %s" : "Cannot open %s",
+                     text.c_str());
         } else {
-            snprintf(note, sizeof note, "Only folders and disk images (.adf) can be disks: %s", text.c_str());
+            snprintf(note, sizeof note, "Only folders, disk images (.adf) and programs (.AMOS) can be dropped: %s",
+                     text.c_str());
         }
     } else {
         int u = unit >= 0 ? (devices::insert(unit, text.c_str(), nullptr, false, reason) ? unit : -1)

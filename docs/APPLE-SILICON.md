@@ -171,10 +171,9 @@ editor-load operation, Info.plist metadata and release checks.
 2. Declare the proposed UTI `io.github.dschwen.amosystem.program`, extension
    `.amos`, and Editor document role in Info.plist, with a document icon.
    Owner rank advertises capability; it does not override a user's choice.
-3. Integrate Finder's cold/warm document-open events into the common editor-load
-   queue. SDL2 delivers Cocoa file opens as drop events, which the current
-   host treats as device mounts; distinguish document opens and preserve the
-   existing folder-mount behavior. Test queued startup events and unsaved work.
+3. Integrate Finder's cold/warm document-open events: done, see docs/RELEASES.md ("Finder launches and
+   Open With"): a launch with no arguments waits briefly for SDL's drop event for a `.AMOS` file and opens it
+   as `--open-document` does; a file that arrives later starts another AMOS for it.
 4. Sign nested code and the completed app, validate the actual signed runtime's
    address/context behavior, notarize/staple, and create a drag-to-Applications
    DMG using hdiutil. Complete and validate the final image's signing/notary

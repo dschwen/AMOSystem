@@ -225,14 +225,17 @@ hint, not an override of an explicit user selection. Installing/discovering
 the bundle registers its capabilities with Launch Services; a DMG script must
 not reset the user's Launch Services database.
 
-Finder launches and **Open With** can deliver documents as application-open
-Apple events rather than argv. Route cold and warm document-open events into
-the common editor-load queue. SDL2's Cocoa backend converts file opens to drop
-events; the current host uses SDL_DROPFILE to mount folders/files as devices.
-Distinguish `.amos` document opens from that existing mount behavior, retain
-events arriving before the editor is ready, and avoid replacing SDL's Cocoa
-delegate without a tested integration. Test Finder double-click, `open -a`,
-Dock drops, multiple opens and the unsaved-buffer case.
+Finder launches and **Open With** deliver documents as application-open Apple events, not
+argv. Implemented: `Info.plist` declares the exported type `io.github.dschwen.amosystem.program`
+(`.AMOS`/`.amos`, conforming to `public.data`) and an Editor document type for it (Owner rank, the
+`amos.icns` icon). SDL2's Cocoa backend turns the open event into an `SDL_DROPFILE` event once the
+video is started, so on a launch with no arguments from inside a `.app` the host starts SDL's video
+early (`host::startup_document`, `sdl.cpp`) and waits up to 250 ms for such an event; a `.AMOS` file
+that arrives is opened as `--open-document` is. A file that arrives while AMOS is running (a second
+double click) is dropped on the window like any file: a `.AMOS` one starts another AMOS for it
+(`host::open_in_new_instance`, `open_document.cpp`: the program's executable with `--open-document`),
+since the running editor has its work in it. Not tested: unsaved work in a running editor is not touched;
+Dock drops and several files at once are one new AMOS each. Not tested on a Mac by CI (no Finder): by hand.
 
 If AMOS is not selected by default, document Finder **Get Info > Open with >
 AMOS Professional > Change All**. Registering the UTI/editor role alone cannot

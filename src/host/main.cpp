@@ -32,6 +32,7 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <string.h>
+#include <vector>
 #include "host/cxx.h"
 #include "host/devices.h"
 #include <sys/stat.h>
@@ -91,6 +92,7 @@ void *amos_thread(void *)
 
 namespace amos::host {
 void display_save(const char *path);
+bool startup_document(unsigned milliseconds, char *document, size_t size);   // sdl.cpp: the program Finder opened us with
 }
 
 namespace amos::boot {
@@ -331,17 +333,33 @@ int main(int argc, char **argv)
     }
     std::string open_document;
     bool first = true;
-    for (int i = 1; i < argc; i++) {
-        std::string arg = argv[i];
+    std::vector<std::string> args(argv + 1, argv + argc);
+#if defined(__APPLE__)
+    {
+        // Finder starts an application with no arguments and tells it its document by an event
+        // (the arguments of a double click are none, or a process serial number of old systems)
+        bool plain = true;
+        for (const std::string &a : args)
+            plain = plain && a.compare(0, 5, "-psn_") == 0;
+        if (plain && self.find(".app/Contents/MacOS/") != std::string::npos) {
+            char document[4096];
+            if (host::startup_document(250, document, sizeof document))
+                args = {"--open-document", document};
+        }
+    }
+#endif
+    const int count = int(args.size());
+    for (int i = 0; i < count; i++) {
+        std::string arg = args[i];
 #if defined(_WIN32)
         for (char &c : arg) if (c == '\\') c = '/';
 #endif
         if (arg == "--open-document") {
-            if (!open_document.empty() || i + 1 >= argc) {
+            if (!open_document.empty() || i + 1 >= count) {
                 fprintf(stderr, "amos: --open-document requires exactly one file\n");
                 return 1;
             }
-            std::string requested = argv[++i];
+            std::string requested = args[++i];
 #if defined(_WIN32)
             for (char &c : requested) if (c == '\\') c = '/';
 #endif
@@ -372,8 +390,8 @@ int main(int argc, char **argv)
             if (eq != std::string::npos) {
                 value = name.substr(eq + 1);
                 name.resize(eq);
-            } else if (i + 1 < argc) {
-                value = argv[++i];
+            } else if (i + 1 < count) {
+                value = args[++i];
             }
             if (!host::devices::option(name.c_str(), value.c_str())) {
                 fprintf(stderr, "amos: unknown option %s\n", arg.c_str());

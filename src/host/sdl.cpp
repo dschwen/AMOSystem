@@ -22,6 +22,8 @@
 #endif
 #include <stdio.h>
 #include <string.h>
+#include <strings.h>
+#include <unistd.h>
 #if defined(__APPLE__)
 #include <mach-o/dyld.h>
 #endif
@@ -339,6 +341,12 @@ uint16_t qualifier_of(uint8_t raw)
 
 void apply_pointer();
 
+bool is_program_file(const char *path)
+{
+    size_t n = strlen(path);
+    return n > 5 && !strcasecmp(path + n - 5, ".AMOS");
+}
+
 void events()
 {
     uint8_t e[64];
@@ -437,6 +445,36 @@ void events()
 }
 
 } // namespace
+
+// The program file the system opened AMOS with (a double click in Finder: macOS tells the
+// application by an open-document event, not in its arguments; SDL turns it into a drop event
+// once the video is started): waited for a moment before the editor starts. Empty if there is none.
+bool startup_document(unsigned milliseconds, char *document, size_t size)
+{
+    const char *want = getenv("AMOS_DISPLAY");
+    if ((want && !strcmp(want, "none")) || !load() || sdl.Init(0x20) < 0)
+        return false;
+    bool found = false;
+    for (unsigned waited = 0; waited <= milliseconds && !found; waited += 5) {
+        uint8_t e[64];
+        while (sdl.PollEvent(e)) {
+            uint32_t type;
+            memcpy(&type, e, 4);
+            if (type != 0x1000)
+                continue;
+            char *file;
+            memcpy(&file, e + 8, sizeof file);
+            if (file && !found && is_program_file(file) && strlen(file) < size) {
+                strcpy(document, file);
+                found = true;
+            }
+            if (file)
+                sdl.Free(file);
+        }
+        usleep(5000);
+    }
+    return found;
+}
 
 // The window opened, if there is a display
 void window_start()
