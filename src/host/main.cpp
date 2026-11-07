@@ -126,12 +126,28 @@ void crash_trace(int signal, siginfo_t *info, void *context)
     if (n > 0) (void)!write(2, text, size_t(n));
 #endif
 #if defined(__APPLE__) && defined(__aarch64__)
-    // (backtrace() does not go through the signal frame: the pc, and the frame records from the fp)
+    // (backtrace() does not go through the signal frame: the pc, and the frame records from the fp.
+    // Each value is written as it is read, with no stdio: the last line shows how far this got)
     {
+        auto put = [](const char *label, unsigned long long value) {
+            char line[48];
+            int k = 0;
+            for (const char *c = "amos: "; *c; c++) line[k++] = *c;
+            for (const char *c = label; *c; c++) line[k++] = *c;
+            line[k++] = ' ';
+            line[k++] = '0';
+            line[k++] = 'x';
+            for (int shift = 60; shift >= 0; shift -= 4) line[k++] = "0123456789abcdef"[(value >> shift) & 15];
+            line[k++] = '\n';
+            (void)!write(2, line, size_t(k));
+        };
+        put("ctx", (unsigned long long)(uintptr_t)context);
         auto &state = static_cast<ucontext_t *>(context)->uc_mcontext->__ss;
-        n = snprintf(text, sizeof text, "amos: pc %#llx lr %#llx x0 %#llx x1 %#llx\n", (unsigned long long)state.__pc,
-                     (unsigned long long)state.__lr, (unsigned long long)state.__x[0], (unsigned long long)state.__x[1]);
-        if (n > 0) (void)!write(2, text, size_t(n));
+        put("pc", state.__pc);
+        put("lr", state.__lr);
+        put("sp", state.__sp);
+        put("x0", state.__x[0]);
+        put("x1", state.__x[1]);
         uintptr_t fp = state.__fp;
         for (int i = 0; i < 40 && fp && !(fp & 7); i++) {
             uintptr_t record[2];
@@ -140,8 +156,7 @@ void crash_trace(int signal, siginfo_t *info, void *context)
             if (vm_read_overwrite(mach_task_self(), fp, sizeof record, reinterpret_cast<vm_address_t>(record), &got) != KERN_SUCCESS ||
                 got != sizeof record)
                 break;
-            n = snprintf(text, sizeof text, "amos: frame %#lx\n", (unsigned long)record[1]);
-            if (n > 0) (void)!write(2, text, size_t(n));
+            put("frame", record[1]);
             fp = record[0];
         }
     }
