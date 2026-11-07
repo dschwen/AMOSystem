@@ -21,6 +21,12 @@
 #include "host/windows_platform.h"
 #endif
 #include <signal.h>
+#if !defined(_WIN32)
+#include <execinfo.h>
+#if defined(__APPLE__)
+#include <mach-o/dyld.h>
+#endif
+#endif
 #include <stdlib.h>
 #include <unistd.h>
 #include <stdio.h>
@@ -101,6 +107,34 @@ extern "C" [[noreturn]] void main_get_out(uint32_t)
 
 namespace {
 
+#if !defined(_WIN32)
+// AMOS_CRASH_TRACE=1: a fatal signal writes the addresses of the stack (and where the executable
+// is loaded, for atos/addr2line), where a debugger is not at hand (a CI runner)
+void crash_trace(int signal, siginfo_t *info, void *)
+{
+    char text[160];
+    int n = snprintf(text, sizeof text, "amos: signal %d at %p\n", signal, info ? info->si_addr : nullptr);
+    if (n > 0) (void)!write(2, text, size_t(n));
+#if defined(__APPLE__)
+    n = snprintf(text, sizeof text, "amos: loaded at %p\n", static_cast<const void *>(_dyld_get_image_header(0)));
+    if (n > 0) (void)!write(2, text, size_t(n));
+#endif
+    void *frames[48];
+    int count = backtrace(frames, 48);
+    backtrace_symbols_fd(frames, count, 2);
+    _exit(128 + signal);
+}
+void crash_trace_start()
+{
+    if (!getenv("AMOS_CRASH_TRACE")) return;
+    struct sigaction action = {};
+    action.sa_sigaction = crash_trace;
+    action.sa_flags = SA_SIGINFO;
+    for (int signal : {SIGSEGV, SIGBUS, SIGILL, SIGABRT, SIGTRAP, SIGFPE})
+        sigaction(signal, &action, nullptr);
+}
+#endif
+
 bool is_directory(const std::string &path)
 {
     struct stat st;
@@ -169,6 +203,9 @@ int main(int argc, char **argv)
         fprintf(stderr, "amos: Windows executable exceeds 32-bit address range\n");
         return 1;
     }
+#endif
+#if !defined(_WIN32)
+    crash_trace_start();
 #endif
     // where AMOS was started: the volume START:, for the programs named on the command line (the
     // devices directory too, if it has one there); AMOS itself runs in its tree
