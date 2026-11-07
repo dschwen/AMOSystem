@@ -28,7 +28,11 @@ jobs:
           python3 -m pip install --break-system-packages pillow || python3 -m pip install pillow
       - name: Build the arm64 host
         run: |
-          make -j3 host HOST_TARGET_ARCH=arm64 HOST_ARCHFLAGS='-arch arm64' HOST_CXX=clang++ KICKSTART= ROMKEY=
+          # (the errors as annotations: the log of a run needs a login, annotations do not)
+          if ! make -j3 host HOST_TARGET_ARCH=arm64 HOST_ARCHFLAGS='-arch arm64' HOST_CXX=clang++ KICKSTART= ROMKEY= > build.log 2>&1; then
+            grep -E "error|Error|undefined|ld:" build.log | head -8 | while read -r line; do echo "::error::${line:0:900}"; done
+            exit 1
+          fi
           file build/host/amos
       - name: Hello
         run: |
