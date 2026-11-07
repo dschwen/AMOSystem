@@ -127,6 +127,13 @@ bool insert_volume(const char *volume, size_t n)
     // drive now, as AMOS.library sees it
     amos::poke_l(q->idcmp, 0x8000);
     amos::host::disk_event(false);
+    // (a disk put in before the event above would end the requester at once and be forgotten,
+    // for its DISKINSERTED came first: the volume may be there by now. One put in later
+    // sends its event after ours)
+    if (assigned(volume, n)) {
+        amos::hal::release(q, sizeof(Request));
+        return true;
+    }
     amos::host::hint(q->name);
     amos::AllRegs r = {};
     r.a[1] = amos::address(&q->easy);

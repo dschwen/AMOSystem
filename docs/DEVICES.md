@@ -137,22 +137,24 @@ three systems):
 `df0=folder` to put it in that unit, `df0=` to take the disk out): the host's
 own tests need no window for it (`tests/host_only/insert`).
 
-**Known flake, and the planned fix.** `tests/host_only/insert` is flaky on a
-loaded machine (seen on the native arm64 CI runner: the output stopped after
-`asked 0`). The likely cause, not yet reproduced: the fake drops fire at
-wall-clock `SECONDS` after the first frame (`host/drops.cpp`), but the program
-is paced in frames and asks for `Disk2:` at its own time. If the 1 s drop
-fires before AMOS is waiting for the disk, nothing is inserted afterwards and
-the requester waits for good.
+**Timing of the fake drops.** `AMOS_DROP` times are wall-clock seconds from the first frame
+(`host/drops.cpp`), while a test program is paced in frames and does real work between its
+`Wait`s. On a machine that is loaded, the work stretches and a drop can land earlier, relative to
+the program, than it did when the expected output was recorded.
 
-Fix: a fake drop whose time has come stays *pending* until something wants it.
-For `dfN=folder` that means the drive is ejected or a requester is waiting for
-a volume the folder provides; a plain `dfN=` (eject) waits until a disk is in.
-Drops then happen in order, so a late start cannot skip one. As a second
-measure the test needs no fixed margin: keep the seconds, but let the pending
-rule decide the order. To confirm the cause first, run `insert` under
-`stress`/`taskset` on Linux with `AMOS_FILE_LOG=1` and check whether the drop
-message precedes the first open of `Disk2:b.txt`.
+- `insert` stopped after `asked 0` once on the native arm64 CI runner and was never reproduced
+  on Linux (not even 12 runs with every core busy twice over). One real race was found by reading
+  `insert_volume` (`host/hal_files.cpp`): a disk put in between the failed lookup and the
+  requester sent its DISKINSERTED event *before* the requester's own DISKREMOVED, so the
+  requester then waited for an event that had already passed. It now looks the volume up again
+  after sending its event; a disk put in after that sends its event after ours and ends the
+  requester. Whether this was the arm64 failure is unconfirmed.
+- `adf` ejected the disk at 5 s, which lands between the program's reads (they end about 4.6 s
+  in) and the last `Wait` (which ends about 6.6 s): a margin of 0.4 s on one side, which
+  failed once in about 30 loaded runs and once in a full `-j6` run. The eject is now at 5.8 s
+  (the program may take up to about 1.7 s for its reads); 0 of 15 failures with every core
+  busy twice over. A fix that needs no margin would let the program decide when a drop
+  happens (for example after the Nth `Wait`); not done.
 
 ### 5.3 The window: the Devices panel (F12)
 
