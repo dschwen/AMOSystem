@@ -114,6 +114,7 @@ namespace {
 void crash_trace(int signal, siginfo_t *info, void *context)
 {
     char text[160];
+    alarm(5); // (a trace that hangs is cut short, and reports where)
     int n = snprintf(text, sizeof text, "amos: signal %d at %p\n", signal, info ? info->si_addr : nullptr);
     if (n > 0) (void)!write(2, text, size_t(n));
 #if defined(__APPLE__)
@@ -154,8 +155,9 @@ void crash_trace_start()
     struct sigaction action = {};
     action.sa_sigaction = crash_trace;
     action.sa_flags = SA_SIGINFO;
-    for (int signal : {SIGSEGV, SIGBUS, SIGILL, SIGABRT, SIGTRAP, SIGFPE})
+    for (int signal : {SIGSEGV, SIGBUS, SIGILL, SIGABRT, SIGTRAP, SIGFPE, SIGALRM})
         sigaction(signal, &action, nullptr);
+    alarm(60); // (a program that hangs says where, instead of the job timing out)
 }
 #endif
 

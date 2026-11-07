@@ -32,7 +32,8 @@ extern "C" uint8_t *amos_handle_native(uint32_t address)
 // (AMOS_ESCAPE_LOG=1 lists the places each: the native addresses that are made guest words)
 extern "C" uint32_t amos_address_escape(uintptr_t p, const char *file, int line)
 {
-    static const bool log = getenv("AMOS_ESCAPE_LOG");
+    // AMOS_ESCAPE_LOG=1: stderr; a path: appended there (the tests compare stderr)
+    static const char *log = getenv("AMOS_ESCAPE_LOG");
     if (log) {
         static const char *seen[1024][2];
         static int lines[1024], count;
@@ -41,7 +42,11 @@ extern "C" uint32_t amos_address_escape(uintptr_t p, const char *file, int line)
             if (lines[i] == line && seen[i][0] == file) fresh = false;
         if (fresh && count < 1024) {
             seen[count][0] = file; lines[count++] = line;
-            fprintf(stderr, "amos: ESCAPE %s:%d %#lx\n", file, line, (unsigned long)p);
+            FILE *out = log[0] == '/' ? fopen(log, "a") : stderr;
+            if (out) {
+                fprintf(out, "amos: ESCAPE %s:%d %#lx\n", file, line, (unsigned long)p);
+                if (out != stderr) fclose(out);
+            }
         }
     }
     const uintptr_t base = p & ~((uintptr_t(1) << WindowBits) - 1);
