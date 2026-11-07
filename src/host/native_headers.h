@@ -18,7 +18,6 @@
 #include <fcntl.h>
 #include <signal.h>
 #include <time.h>
-#include <ucontext.h>
 #include <pthread.h>
 #include <unistd.h>
 #include <mach/mach.h>
