@@ -176,6 +176,9 @@ def run_text(name, hd, timeout):
         p = subprocess.run([AMOS] + args + [f'AMOSTEST:{name}.AMOS'], cwd=TREE, env=env, timeout=timeout,
                            stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         note = p.stdout.decode('latin-1').strip().splitlines()
+        trace = [line for line in note if line.startswith('amos: ') and line.split()[1] in ('signal', 'pc', 'lr', 'frame', 'loaded')]
+        if trace:        # (AMOS_CRASH_TRACE: where it was when it crashed or was stopped)
+            return ' | '.join(trace)
         return note[-1] if note else f'exit {p.returncode}'
     except subprocess.TimeoutExpired:
         return 'timeout'

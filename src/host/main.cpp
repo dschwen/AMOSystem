@@ -186,7 +186,8 @@ void crash_trace_start()
     action.sa_flags = SA_SIGINFO;
     for (int signal : {SIGSEGV, SIGBUS, SIGILL, SIGABRT, SIGTRAP, SIGFPE, SIGALRM})
         sigaction(signal, &action, nullptr);
-    alarm(60); // (a program that hangs says where, instead of the job timing out)
+    int seconds = atoi(getenv("AMOS_CRASH_TRACE"));
+    alarm(seconds > 1 ? unsigned(seconds) : 60); // (a program that hangs says where, instead of the job timing out)
 }
 #endif
 
