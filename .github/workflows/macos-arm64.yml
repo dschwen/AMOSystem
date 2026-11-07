@@ -79,6 +79,17 @@ jobs:
               want=$(ls tests/golden/"$file" tests/host_only/"$file" 2> /dev/null | head -1)
               echo "::error::${test} got: $(head -c 500 "$got" | tr '\n' '|') WANT: $(head -c 500 "$want" | tr '\n' '|')"
             done
+            # (a test stopped by the trace: where, by name)
+            line=$(grep -E "^equates:" tests.log | head -1)
+            load=$(echo "$line" | grep -oE "loaded at 0x[0-9a-f]+" | sed 's/loaded at //')
+            addrs=$(echo "$line" | grep -oE "(frame|lr) 0x[0-9a-f]{16}" | sed 's/.* //' | tr '\n' ' ')
+            if [ -n "$load" ]; then
+              atos -o build/host/amos -arch arm64 -l "$load" $addrs > atos.log 2>&1 < /dev/null &
+              apid=$!
+              for i in $(seq 1 20); do kill -0 $apid 2> /dev/null || break; sleep 1; done
+              kill -9 $apid 2> /dev/null || true
+              echo "::error::symbols: $(head -24 atos.log | tr '\n' '|')"
+            fi
             exit 1
           }
           tail -1 tests.log
