@@ -59,14 +59,14 @@ jobs:
             pid=$!
             for i in $(seq 1 40); do kill -0 $pid 2> /dev/null || break; sleep 1; done
             kill -9 $pid 2> /dev/null || true
-            { echo "trace:"; head -40 trace.log; } | annotate
+            { echo "trace: $(head -40 trace.log | sed "s/amos: //" | tr "\n" "|")"; } | annotate
             load=$(grep "loaded at" trace.log | sed 's/.*loaded at //')
             addrs=$(grep -E "amos: (frame|pc)" trace.log | grep -oE "0x[0-9a-f]{9,}" | tr '\n' ' ')
             atos -o "$W/build/host/amos" -arch arm64 -l "${load:-0x100000000}" $addrs > atos.log 2>&1 < /dev/null &
             apid=$!
             for i in $(seq 1 20); do kill -0 $apid 2> /dev/null || break; sleep 1; done
             kill -9 $apid 2> /dev/null || true
-            { echo "symbols:"; head -30 atos.log; } | annotate
+            { echo "symbols: $(head -30 atos.log | tr "\n" "|")"; } | annotate
           fi
           test -f out.txt
       - name: Text tests

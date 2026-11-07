@@ -143,7 +143,7 @@ NDK_INCLUDE   ?= $(if $(wildcard $(NDK_TOOLCHAIN)/exec/types.h),$(NDK_TOOLCHAIN)
 # what Apple Silicon needs (HOST_BIASED=0 for the identity mapping there, which does not run)
 HOST_BIASED ?= $(if $(filter arm64,$(HOST_TARGET_ARCH)),1,0)
 HOST_BIASDEF := $(if $(filter 1,$(HOST_BIASED)),-DAMOS_GUEST_BIASED)
-HOST_FLAGS  := $(HOST_ARCHFLAGS) $(HOST_OPT) $(HOST_SDLDEF) $(HOST_BIASDEF) -D__use_amiga_stdc_c99 -std=c++20 -fno-exceptions -fno-rtti -fno-threadsafe-statics -fpack-struct=2 \
+HOST_FLAGS  := $(HOST_ARCHFLAGS) $(HOST_OPT) $(HOST_SDLDEF) $(HOST_BIASDEF) -D__use_amiga_stdc_c99 -std=c++20 -fno-exceptions -fno-rtti -fno-threadsafe-statics -fpack-struct=2 -include src/host/native_headers.h \
                $(HOST_CPPFLAGS) -Isrc/host/include -Isrc -idirafter $(NDK_INCLUDE) -MMD -MP
 
 # topaz and the usa keymap, from the user's Kickstart (as the tests'
