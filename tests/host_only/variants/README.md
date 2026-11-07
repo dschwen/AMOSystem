@@ -11,7 +11,6 @@ any other test, fails as usual.
 |------|------|-----------|----------|-----|
 | `maths` | 12 | `Log(10)` = 2.30258 | 2.30259 | the Amiga's mathtrans series is less accurate than the host's libm |
 | `floats` | 1 | `Sin(30)` = 0.5000001 | 0.5 | the same, in single precision (FFP) |
-| `floats2` | 1 | 59.9999999999961 | 59.999999999996 | the same, in double precision |
 | `expr2` | 14 | `Sqr(2)` = 1.41421356237309 | 1.4142135623731 | the same: the Amiga's is one unit low |
 | `devices` | 21 | `Serial Check` after a write: 0 | -1 | the write never completes in FS-UAE, which has no serial port attached; the host's serial.device completes it at once, as a real Amiga's port sends it |
 

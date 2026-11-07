@@ -115,9 +115,11 @@ bool transcendental(int32_t offset, double x, double y, double &out)
     return true;
 }
 
-// The IEEE libraries' results are truncated (rounded toward zero). (Their
-// transcendental functions, and mathtrans's, are the host's: their last
-// digit can differ from the Amiga's.)
+// The IEEE libraries' basic results are truncated (rounded toward zero). Their transcendental
+// functions, and mathtrans's, are the host's libm, in the default rounding: a libm is made for it,
+// and in a directed mode its last digits depend on the library (Apple's x86_64 one was 50 units off
+// glibc's in Cos(60), where round to nearest gives the Amiga's own result). Their last digit can
+// still differ from the Amiga's.
 struct TowardZero {
     int old = fegetround();
     TowardZero() { fesetround(FE_TOWARDZERO); }
@@ -200,9 +202,9 @@ int32_t ieee_call(uint32_t *r, int32_t offset)
 
 int32_t ieee_trans_call(uint32_t *r, int32_t offset)
 {
-    TowardZero toward_zero;
     double out;
     if (offset == -102) {                                                   // IEEEDPTieee: to single
+        TowardZero toward_zero;
         r[0] = to_single(float(from_ieee(r[0], r[1])));
         return 0;
     }
