@@ -142,13 +142,21 @@ void crash_trace(int signal, siginfo_t *info, void *context)
             (void)!write(2, line, size_t(k));
         };
         put("ctx", (unsigned long long)(uintptr_t)context);
-        auto &state = static_cast<ucontext_t *>(context)->uc_mcontext->__ss;
-        put("pc", state.__pc);
-        put("lr", state.__lr);
-        put("sp", state.__sp);
-        put("x0", state.__x[0]);
-        put("x1", state.__x[1]);
-        uintptr_t fp = state.__fp;
+        // (the host is built packed, the system's ucontext_t is not: the registers are read at their
+        // places in the arm64 macOS frame: uc_mcontext at 48, in it x0.. at 16, fp 248, lr 256, sp 264, pc 272)
+        auto word = [](uintptr_t at) {
+            unsigned long long v = 0;
+            memcpy(&v, reinterpret_cast<const void *>(at), sizeof v);
+            return v;
+        };
+        const uintptr_t mc = uintptr_t(word(uintptr_t(context) + 48));
+        put("mcontext", mc);
+        put("pc", word(mc + 272));
+        put("lr", word(mc + 256));
+        put("sp", word(mc + 264));
+        put("x0", word(mc + 16));
+        put("x1", word(mc + 24));
+        uintptr_t fp = uintptr_t(word(mc + 248));
         for (int i = 0; i < 40 && fp && !(fp & 7); i++) {
             uintptr_t record[2];
             vm_size_t got = 0;
