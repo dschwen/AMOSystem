@@ -73,19 +73,7 @@ jobs:
         run: |
           AMOS_FILE_LOG=1 AMOS_CRASH_TRACE=25 python3 tests/host_run.py --text-only --fallback-font -j3 > tests.log 2>&1 || {
             grep -v ": ok" tests.log | head -20 | while read -r line; do echo "::error::${line:0:1200}"; done
-            # (what a differing test wrote, and what it should have)
-            grep -E "^[a-z0-9_]+: [a-z0-9_.]+\.txt differs" tests.log | head -4 | while read -r test file rest; do
-              got=$(find build/host-test -path "*/${test%:}/*" -name "$file" | head -1)
-              want=$(ls tests/golden/"$file" tests/host_only/"$file" 2> /dev/null | head -1)
-              echo "::error::${test} got: $(head -c 500 "$got" | tr '\n' '|') WANT: $(head -c 500 "$want" | tr '\n' '|')"
-            done
-            # (what a differing test did: its output, then the end of what AMOS logged)
-            grep -E "^[a-z0-9_]+: [a-z0-9_.]+\.txt differs" tests.log | head -2 | while read -r test file rest; do
-              dir=$(dirname "$(find build/host-test -path "*/${test%:}/*" -name "$file" | head -1)")
-              echo "::error::${test} output: $(head -c 700 "$dir/$file" | tr '\n' '|')"
-              echo "::error::${test} log: $(grep -v '^amos: file' "$dir/stdout.log" | tail -12 | tr '\n' '|' | head -c 900)"
-              echo "::error::${test} files: $(grep '^amos: file' "$dir/stdout.log" | sed "s/amos: file '\(.*\)' -> '.*' mode [0-9]* error \([0-9]*\)/\1=\2/" | tail -16 | tr '\n' ' ' | head -c 900)"
-            done
+            sh tests/ci_failures.sh tests.log
             # (a test stopped by the trace: where, by name)
             line=$(grep -E "^equates:" tests.log | head -1)
             load=$(echo "$line" | grep -oE "loaded at 0x[0-9a-f]+" | sed 's/loaded at //')
@@ -124,6 +112,7 @@ jobs:
         run: |
           AMOS_FILE_LOG=1 python3 tests/host_run.py --build build/host-x86 --text-only --fallback-font -j3 > tests.log 2>&1 || {
             grep -v ": ok" tests.log | head -20 | while read -r line; do echo "::error::${line:0:1200}"; done
+            sh tests/ci_failures.sh tests.log
             exit 1
           }
           tail -1 tests.log
