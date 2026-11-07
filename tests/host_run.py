@@ -178,7 +178,7 @@ def run_text(name, hd, timeout):
         note = p.stdout.decode('latin-1').strip().splitlines()
         trace = [line for line in note if line.startswith('amos: ') and line.split()[1] in ('signal', 'pc', 'lr', 'frame', 'loaded')]
         if trace:        # (AMOS_CRASH_TRACE: where it was when it crashed or was stopped)
-            return ' | '.join([line for line in note if line.startswith('amos: file')][-4:] + trace)
+            return ' | '.join([line for line in note if line.startswith('amos: file')][:12] + trace[:2])
         return note[-1] if note else f'exit {p.returncode}'
     except subprocess.TimeoutExpired:
         return 'timeout'
