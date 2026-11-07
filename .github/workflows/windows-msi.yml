@@ -146,12 +146,22 @@ jobs:
       - name: Run the smoke tests
         shell: powershell
         run: |
+          # (the results as annotations: the log of a run needs a login, annotations do not)
+          function Say($text) {
+            $one = ($text -replace "`r?`n", ' | ')
+            if ($one.Length -gt 1200) { $one = $one.Substring(0, 1200) }
+            Write-Host "::error::$one"
+          }
           Expand-Archive bundles\windows-portable-${{ matrix.kind }}.zip -DestinationPath run
-          $dir = Get-ChildItem run | Select-Object -First 1
-          & powershell -ExecutionPolicy Bypass -File "$($dir.FullName)\smoke.ps1"
+          $dir = (Get-ChildItem run | Select-Object -First 1).FullName
+          $output = & powershell -ExecutionPolicy Bypass -File "$dir\smoke.ps1" 2>&1 | Out-String
           $code = $LASTEXITCODE
-          Get-Content "$($dir.FullName)\smoke-results.txt" -ErrorAction SilentlyContinue
-          Get-ChildItem "$($dir.FullName)\smoke" -Recurse -Include stdout.txt,stderr.txt | ForEach-Object { "== $($_.FullName)"; Get-Content $_.FullName -TotalCount 20 }
+          Say "smoke exit $code : $output"
+          if (Test-Path "$dir\smoke-results.txt") { Say ((Get-Content "$dir\smoke-results.txt") -join ' | ') }
+          Get-ChildItem "$dir\smoke" -Recurse -Include stdout.txt,stderr.txt -ErrorAction SilentlyContinue | ForEach-Object {
+            $text = (Get-Content $_.FullName -TotalCount 12 -ErrorAction SilentlyContinue) -join ' | '
+            if ($text) { Say "$($_.Directory.Name)/$($_.Name): $text" }
+          }
           exit $code
       - name: Preserve the logs
         if: always()
