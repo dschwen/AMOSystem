@@ -8,17 +8,15 @@ using namespace amos;
 namespace {
 
 // Copy of s with every character mapped by convert (Upper$, Lower$)
-template <typename F> uint32_t map_string(const uint8_t *s, F convert)
+template <typename F> uint32_t map_string(GuestString s, F convert)
 {
     uint16_t len = str_len(s);
     if (!len)
         return str_empty();
-    uint8_t *result = str_alloc(len);
-    const uint8_t *from = str_chars(s);
-    uint8_t *to = result + 2;
+    StringBuilder result(len);
     for (uint16_t i = 0; i < len; i++)
-        *to++ = convert(*from++);
-    return str_finish(result, to);
+        result.put(convert(s.at(i)));
+    return result.finish();
 }
 
 // n copies of a character pair (the old RString). The length is a word: as
@@ -27,26 +25,23 @@ uint32_t repeat_pair(int32_t n, uint16_t pair)
 {
     if (n < 0)
         fon_call();
-    uint8_t *result = str_alloc(n);
+    StringBuilder result(n);
     uint16_t len = static_cast<uint16_t>(n);
-    poke_w(result, len);
-    uint8_t *to = result + 2;
-    for (uint32_t words = (len + 1u) / 2; words; words--, to += 2)
-        poke_w(to, pair);
-    idata().HiChaine = address(to);
-    return address(result);
+    for (uint32_t words = (len + 1u) / 2; words; words--)
+        result.put_word(pair);
+    return result.finish_raw(len);
 }
 
 } // namespace
 
 // =UPPER$(a$): only a-z change
-extern "C" uint32_t lib_fn_upper(const uint8_t *s)
+extern "C" uint32_t lib_fn_upper(GuestString s)
 {
     return map_string(s, [](uint8_t c) { return c >= 'a' && c <= 'z' ? uint8_t(c - 0x20) : c; });
 }
 
 // =LOWER$(a$): only A-Z change
-extern "C" uint32_t lib_fn_lower(const uint8_t *s)
+extern "C" uint32_t lib_fn_lower(GuestString s)
 {
     return map_string(s, [](uint8_t c) { return c >= 'A' && c <= 'Z' ? uint8_t(c + 0x20) : c; });
 }
@@ -58,11 +53,11 @@ extern "C" uint32_t lib_fn_space(int32_t n)
 }
 
 // =STRING$(a$,n): n times the first character of a$. Empty if a$ is.
-extern "C" uint32_t lib_fn_string(const uint8_t *s, int32_t n)
+extern "C" uint32_t lib_fn_string(GuestString s, int32_t n)
 {
     if (!str_len(s))
         return repeat_pair(0, 0);
-    uint8_t c = str_chars(s)[0];
+    uint8_t c = s.at(0);
     return repeat_pair(n, static_cast<uint16_t>(c << 8 | c));
 }
 
@@ -73,11 +68,10 @@ constexpr uint32_t EntNul = 0x80000000;     // an omitted parameter
 // The one-character strings (L_FinChr)
 uint32_t char_string(uint8_t c)
 {
-    uint8_t *s = str_alloc(2);
-    poke_w(s, 1);
-    s[2] = c;
-    idata().HiChaine = address(s + 4);
-    return address(s);
+    StringBuilder s(2);
+    s.put(c);
+    s.skip(1);
+    return s.finish_raw(1);
 }
 
 // "Illegal function call" of the window library (L_WFonCall)
@@ -87,24 +81,22 @@ uint32_t char_string(uint8_t c)
 
 // =FLIP$(a$). The assembler took the length from a register whose high
 // word was not cleared, and failed with "out of string space".
-extern "C" uint32_t lib_fn_flip(const uint8_t *s)
+extern "C" uint32_t lib_fn_flip(GuestString s)
 {
     uint16_t len = str_len(s);
     if (!len)
         return str_empty();
-    uint8_t *result = str_alloc(len);
-    const uint8_t *from = str_chars(s) + len;
-    uint8_t *to = result + 2;
-    for (uint16_t i = 0; i < len; i++)
-        *to++ = *--from;
-    return str_finish(result, to);
+    StringBuilder result(len);
+    for (uint16_t i = len; i; i--)
+        result.put(s.at(i - 1));
+    return result.finish();
 }
 
 // =LEN(a$)
-extern "C" uint32_t lib_fn_len(const uint8_t *s) { return str_len(s); }
+extern "C" uint32_t lib_fn_len(GuestString s) { return str_len(s); }
 
 // =ASC(a$): the first character, 0 for the empty string
-extern "C" uint32_t lib_fn_asc(const uint8_t *s) { return str_len(s) ? str_chars(s)[0] : 0; }
+extern "C" uint32_t lib_fn_asc(GuestString s) { return str_len(s) ? s.at(0) : 0; }
 
 // =CHR$(n)
 extern "C" uint32_t lib_fn_chr(uint32_t n)
@@ -157,22 +149,18 @@ uint32_t escape_xy(int32_t x, int32_t y, char x_code, char y_code, Check given, 
 }
 
 // Repeat$, Border$, Zone$ (L_FinRpt): ESC code "0", a$, ESC code n
-uint32_t escape_around(char code, const uint8_t *s, uint32_t n)
+uint32_t escape_around(char code, GuestString s, uint32_t n)
 {
     uint16_t len = str_len(s);
-    uint8_t *result = str_alloc(len + 6u);
-    poke_w(result, static_cast<uint16_t>(len + 6));
-    uint8_t *to = result + 2;
-    *to++ = 27;
-    *to++ = code;
-    *to++ = '0';
-    const uint8_t *from = str_chars(s);
-    for (uint16_t i = 0; i < len; i++)
-        *to++ = *from++;
-    *to++ = 27;
-    *to++ = code;
-    *to++ = static_cast<uint8_t>('0' + n);
-    return str_finish(result, to);
+    StringBuilder result(len + 6u);
+    result.put(27);
+    result.put(code);
+    result.put('0');
+    result.put(s, 0, len);
+    result.put(27);
+    result.put(code);
+    result.put(static_cast<uint8_t>('0' + n));
+    return result.finish();
 }
 
 } // namespace
@@ -208,7 +196,7 @@ extern "C" uint32_t lib_fn_cmove(int32_t x, int32_t y)
 }
 
 // =REPEAT$(a$,n)
-extern "C" uint32_t lib_fn_repeat(const uint8_t *s, uint32_t n)
+extern "C" uint32_t lib_fn_repeat(GuestString s, uint32_t n)
 {
     if (!n || n >= 207)
         w_fon_call();
@@ -216,7 +204,7 @@ extern "C" uint32_t lib_fn_repeat(const uint8_t *s, uint32_t n)
 }
 
 // =BORDER$(a$,n)
-extern "C" uint32_t lib_fn_border(const uint8_t *s, uint32_t n)
+extern "C" uint32_t lib_fn_border(GuestString s, uint32_t n)
 {
     if (!n || n >= 16)
         w_fon_call();
@@ -224,7 +212,7 @@ extern "C" uint32_t lib_fn_border(const uint8_t *s, uint32_t n)
 }
 
 // =ZONE$(a$,n)
-extern "C" uint32_t lib_fn_zone(const uint8_t *s, uint32_t n)
+extern "C" uint32_t lib_fn_zone(GuestString s, uint32_t n)
 {
     if (!n || n >= 255 - 48)
         w_fon_call();
@@ -234,52 +222,63 @@ extern "C" uint32_t lib_fn_zone(const uint8_t *s, uint32_t n)
 // =HEX$(n[,digits]), =BIN$(n[,digits]) (L_BinHex)
 extern "C" uint32_t lib_fn_hex1(uint32_t n)
 {
-    uint8_t *s = str_alloc(9);
-    return str_finish(s, reinterpret_cast<uint8_t *>(long_to_hex(reinterpret_cast<char *>(s + 2), n, -1)));
+    StringBuilder s(9);
+    char text[9];
+    s.put(text, static_cast<uint32_t>(long_to_hex(text, n, -1) - text));
+    return s.finish();
 }
 
 extern "C" uint32_t lib_fn_hex2(uint32_t n, int32_t digits)
 {
-    uint8_t *s = str_alloc(9);
-    return str_finish(s, reinterpret_cast<uint8_t *>(long_to_hex(reinterpret_cast<char *>(s + 2), n, digits)));
+    StringBuilder s(9);
+    char text[9];
+    s.put(text, static_cast<uint32_t>(long_to_hex(text, n, digits) - text));
+    return s.finish();
 }
 
 extern "C" uint32_t lib_fn_bin1(uint32_t n)
 {
-    uint8_t *s = str_alloc(33);
-    return str_finish(s, reinterpret_cast<uint8_t *>(long_to_bin(reinterpret_cast<char *>(s + 2), n, -1)));
+    StringBuilder s(33);
+    char text[33];
+    s.put(text, static_cast<uint32_t>(long_to_bin(text, n, -1) - text));
+    return s.finish();
 }
 
 extern "C" uint32_t lib_fn_bin2(uint32_t n, int32_t digits)
 {
-    uint8_t *s = str_alloc(33);
-    return str_finish(s, reinterpret_cast<uint8_t *>(long_to_bin(reinterpret_cast<char *>(s + 2), n, digits)));
+    StringBuilder s(33);
+    char text[33];
+    s.put(text, static_cast<uint32_t>(long_to_bin(text, n, digits) - text));
+    return s.finish();
 }
 
-// L_InstrFind: position (from 1) of the needle in the haystack, searching
-// from position start, or 0. The lengths are words, as in the assembler,
-// and the result keeps the high word of start-1.
-extern "C" uint32_t lib_instr_find(const uint8_t *hay, uint32_t hay_len, const uint8_t *needle,
-                                   uint32_t needle_len, uint32_t start)
+namespace {
+
+// The search of L_InstrFind: position (from 1) of the needle in the haystack,
+// searching from position start, or 0. The lengths are words, as in the
+// assembler, and the result keeps the high word of start-1. h(i) and n(i)
+// are the characters i of the haystack and the needle.
+template <typename H, typename N>
+uint32_t instr_scan(H h, uint32_t hay_len, N n, uint32_t needle_len, uint32_t start)
 {
     if (!needle_len)
         return 0;
     if (start)
         start--;
-    hay += start;
+    uint32_t hay = start;
     uint32_t pos = start;
     auto next = [](uint32_t v) { return (v & 0xFFFF0000u) | ((v + 1) & 0xFFFF); };
     uint16_t len = static_cast<uint16_t>(hay_len);
     uint16_t nlen = static_cast<uint16_t>(needle_len);
     for (;;) {
-        const uint8_t *n;
+        uint32_t ni;
         do {
-            n = needle;
+            ni = 0;
             pos = next(pos);
             if (static_cast<uint16_t>(pos) > len)
                 return 0;
-        } while (*hay++ != *n++);
-        const uint8_t *h = hay;
+        } while (h(hay++) != n(ni++));
+        uint32_t hi = hay;
         uint16_t at = static_cast<uint16_t>(pos);
         uint16_t matched = 0;
         for (;;) {
@@ -287,31 +286,51 @@ extern "C" uint32_t lib_instr_find(const uint8_t *hay, uint32_t hay_len, const u
                 return pos;
             if (++at > len)
                 return 0;
-            if (*h++ != *n++)
+            if (h(hi++) != n(ni++))
                 break;
         }
     }
+}
+
+uint32_t instr_strings(GuestString hay, GuestString needle, uint32_t start)
+{
+    return instr_scan([&](uint32_t i) { return hay.at(i); }, hay.size(),
+                      [&](uint32_t i) { return needle.at(i); }, needle.size(), start);
+}
+
+} // namespace
+
+// The same for characters in host memory
+extern "C" uint32_t lib_instr_find(const uint8_t *hay, uint32_t hay_len, const uint8_t *needle,
+                                   uint32_t needle_len, uint32_t start)
+{
+    return instr_scan([&](uint32_t i) { return hay[i]; }, hay_len, [&](uint32_t i) { return needle[i]; },
+                      needle_len, start);
 }
 
 // The same with registers. In: a1/d1 = string and length, a2/d2 = string
 // to find and length, d4 = start. Out: d3 = d0 = position or 0.
 extern "C" uint32_t lib_instr_find_reg(RegFrame &r)
 {
-    r.d[3] = r.d[0] = lib_instr_find(ptr<uint8_t>(r.a[1]), r.d[1], ptr<uint8_t>(r.a[2]), r.d[2], r.d[4]);
+    ContextCursor hay = decode_context_cursor(r.a[1]);
+    ContextCursor needle = decode_context_cursor(r.a[2]);
+    r.d[3] = r.d[0] = instr_scan([&](uint32_t i) { return host::detail::read_cursor_byte(hay + i); }, r.d[1],
+                                 [&](uint32_t i) { return host::detail::read_cursor_byte(needle + i); }, r.d[2],
+                                 r.d[4]);
     return r.d[0];
 }
 
 // =INSTR(a$,b$[,start])
-extern "C" uint32_t lib_fn_instr2(const uint8_t *hay, const uint8_t *needle)
+extern "C" uint32_t lib_fn_instr2(GuestString hay, GuestString needle)
 {
-    return lib_instr_find(str_chars(hay), str_len(hay), str_chars(needle), str_len(needle), 0);
+    return instr_strings(hay, needle, 0);
 }
 
-extern "C" uint32_t lib_fn_instr3(const uint8_t *hay, const uint8_t *needle, int32_t start)
+extern "C" uint32_t lib_fn_instr3(GuestString hay, GuestString needle, int32_t start)
 {
     if (start < 0)
         fon_call();
-    return lib_instr_find(str_chars(hay), str_len(hay), str_chars(needle), str_len(needle), start);
+    return instr_strings(hay, needle, start);
 }
 
 // =FREE: the free string space, after a garbage collection
