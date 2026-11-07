@@ -71,7 +71,7 @@ jobs:
           test -f out.txt
       - name: Text tests
         run: |
-          AMOS_CRASH_TRACE=25 python3 tests/host_run.py --text-only --fallback-font -j3 > tests.log 2>&1 || {
+          AMOS_FILE_LOG=1 AMOS_CRASH_TRACE=25 python3 tests/host_run.py --text-only --fallback-font -j3 > tests.log 2>&1 || {
             grep -v ": ok" tests.log | head -20 | while read -r line; do echo "::error::${line:0:600}"; done
             # (what a differing test wrote, and what it should have)
             grep -E "^[a-z0-9_]+: [a-z0-9_.]+\.txt differs" tests.log | head -4 | while read -r test file rest; do

@@ -341,6 +341,10 @@ Open opened[1024];
 File open(const char *name, int32_t mode)
 {
     const char *h = host_name(name);
+    // (AMOS_FILE_LOG=1: the files opened, where they went, for a machine one cannot look at)
+    static const bool file_log = getenv("AMOS_FILE_LOG");
+    if (file_log)
+        fprintf(stderr, "amos: file '%s' -> '%s' mode %d error %d\n", name, h ? h : "?", int(mode), int(name_error));
     if (name_error) {
         last_error = name_error;
         return 0;
