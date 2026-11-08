@@ -127,8 +127,10 @@ Default resources are mirrored into ~/Library/Application Support/AMOSystem/runt
 on launch. Settings, macros and existing BASIC scripts in that mirror are retained
 on upgrade. Deleting the app does not delete your projects or preferences.
 
-{caveat}A locally ad-hoc signed build is not notarized and may be blocked by Gatekeeper.
-Use a Developer ID signed/notarized build for public distribution.
+{caveat}This build is not notarized by Apple, so macOS refuses the first launch of a downloaded
+copy ("Apple could not verify..."). Once: open System Settings > Privacy & Security, scroll
+to "AMOS Professional was blocked" and click Open Anyway (macOS 14 and older: Control-click
+the app, Open). Or in Terminal: xattr -dr com.apple.quarantine "/Applications/AMOS Professional.app"
 Double-clicking an .AMOS program opens it in the editor (Open With > AMOS Professional;
 to make AMOS the default: Get Info > Open with > AMOS Professional > Change All).
 From Terminal: amos --open-document file.AMOS.

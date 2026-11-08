@@ -154,8 +154,8 @@ interpreter/editor configurations and macros on upgrades. AMOS devices/config
 also live under that user's AMOSystem data directory; uninstall preserves it.
 .amos Open With: select AMOS Professional and Always in Windows Settings or
 Explorer. Opening a document loads it into the editor without running it.
-This development MSI is unsigned. Installation/lifecycle logs are still required
-before release qualification. See the repository packaging/windows/README.md.
+Release MSIs (and amos.exe in them) are signed through SignPath; builds made
+elsewhere are unsigned. See the repository packaging/windows/README.md.
 ''')
     (stage/'NOTICE.txt').write_text('''AMOS Professional and C++ conversion: see LICENSE.txt.
 SDL2: see SDL2-LICENSE.txt.
@@ -164,7 +164,7 @@ sources/data and attribution are included under licenses/AROS-font.
 This build uses fallback font/keymap data; no Kickstart ROM was read.
 Compiler runtime components are linked statically. Matching Debian/Ubuntu GCC
 runtime copyright/exception information, MinGW notices and GPL text are included
-under licenses. This unsigned artifact is for validation.
+under licenses.
 ''')
     return {p.relative_to(stage).as_posix():sha(p) for p in sorted(stage.rglob('*')) if p.is_file()}, dependencies
 
@@ -249,6 +249,27 @@ def inspect(tools, msi, manifest, product_version, probe=False):
     return tables
 
 
+# The files the release signing (SignPath, .github/workflows/windows-msi.yml) signs inside the MSI;
+# the rest of the payload (SDL2.dll, the resources) must come back unchanged
+SIGNED_PAYLOAD = ('amos.exe', 'amos-player.exe')
+
+
+def record_signed(tools, msi, report_path):
+    """The report of a signed MSI: its payload against the unsigned build's, then the new hashes."""
+    report=json.loads(report_path.read_text())
+    with tempfile.TemporaryDirectory(prefix='amos-msi-signed-') as temp:
+        tools.run('msiextract','-C',temp,msi)
+        install=Path(temp)/'AMOSystem'
+        actual={p.relative_to(install).as_posix():sha(p) for p in install.rglob('*') if p.is_file()}
+    before=report['payload']
+    if set(actual)!=set(before):raise ValueError('signed MSI has a different file list')
+    changed={name for name in actual if actual[name]!=before[name]}
+    if changed!=set(SIGNED_PAYLOAD):raise ValueError(f'signing changed {sorted(changed)}, expected {list(SIGNED_PAYLOAD)}')
+    report.update(sha256=sha(msi),payload=actual,signed=True,unsigned_sha256=report['sha256'])
+    report_path.write_text(json.dumps(report,indent=2)+'\n')
+    print(f'Signed MSI recorded: {msi} ({", ".join(SIGNED_PAYLOAD)} signed inside)')
+
+
 def build(args):
     product_version=version(args.version)
     tools=Tools(args.tools_root)
@@ -300,7 +321,12 @@ def main():
     ap.add_argument('--tools-root',type=Path)
     ap.add_argument('--compiler',default='x86_64-w64-mingw32-gcc')
     ap.add_argument('--objdump',default='x86_64-w64-mingw32-objdump')
+    ap.add_argument('--record-signed',type=Path,metavar='MSI',help='update the report beside a signed MSI (no build)')
     args=ap.parse_args()
+    if args.record_signed:
+        try:record_signed(Tools(args.tools_root),args.record_signed,args.record_signed.with_suffix('.json'))
+        except (ValueError,OSError,KeyError) as exc:ap.exit(1,str(exc)+'\n')
+        return
     args.build=args.build.resolve();args.out=args.out.resolve();args.sdk=args.sdk.resolve()
     if not args.out.is_relative_to((ROOT/'build').resolve()) or args.out==(ROOT/'build').resolve():ap.error('--out must be a subdirectory of build')
     try:build(args)

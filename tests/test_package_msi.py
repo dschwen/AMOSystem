@@ -76,4 +76,34 @@ class MsiInspectionTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError,'payload differs'):
                 msi.inspect(tools,installer,manifest,'0.1.0',True)
 
+    def test_signed_msi_may_change_only_the_executables(self):
+        tools=msi.Tools()
+        if not (tools.local/'usr/bin/wixl').exists():
+            import shutil
+            if not shutil.which('wixl'):self.skipTest('wixl not installed')
+        with tempfile.TemporaryDirectory() as temp:
+            base=Path(temp)
+            def build(name, signature):
+                stage=base/(name+'-stage');stage.mkdir()
+                for file in ('amos.exe','amos-player.exe'):(stage/file).write_text(file+signature)
+                (stage/'SDL2.dll').write_text('sdl')
+                source=base/(name+'.wxs');installer=base/(name+'.msi')
+                msi.author(stage,source,'0.1.0')
+                tools.run('wixl','-a','x64','-o',installer,source)
+                return installer,{p.name:msi.sha(p) for p in stage.iterdir()}
+            unsigned,payload=build('unsigned','')
+            signed,_=build('signed',' signed')
+            report=signed.with_suffix('.json')
+            def record(installer):
+                report.write_text(msi.json.dumps({'sha256':msi.sha(unsigned),'payload':payload,'signed':False}))
+                msi.record_signed(tools,installer,report)
+                return msi.json.loads(report.read_text())
+            recorded=record(signed)
+            self.assertTrue(recorded['signed'])
+            self.assertEqual(recorded['sha256'],msi.sha(signed))
+            self.assertEqual(recorded['unsigned_sha256'],msi.sha(unsigned))
+            self.assertEqual(recorded['payload']['SDL2.dll'],payload['SDL2.dll'])
+            with self.assertRaisesRegex(ValueError,'signing changed'):
+                record(unsigned)
+
 if __name__=='__main__':unittest.main()

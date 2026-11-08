@@ -308,6 +308,29 @@ This boots the hard disk's Workbench with the AMOS tree as `AMOSPRO:`; run
 folders from a volume `Programs:` in its `S/user-startup`, which this
 configuration does not have: Cancel the requester.)
 
+## Installing a release, and code signing
+
+The releases (GitHub, from the `v*` tags) are built by the workflows in
+`.github/workflows` and nowhere else.
+
+- **Windows**: the MSI and the `amos.exe` / `amos-player.exe` in it are signed.
+  Free code signing provided by [SignPath.io](https://about.signpath.io),
+  certificate by [SignPath Foundation](https://signpath.org). SmartScreen can
+  still warn about a new release until it has been downloaded often enough
+  (More info, Run anyway). `SDL2.dll` is libsdl.org's binary, unchanged.
+- **macOS**: the app is not notarized by Apple (that needs a paid developer
+  account), so macOS blocks its first launch. Once: System Settings, Privacy &
+  Security, "AMOS Professional was blocked", Open Anyway (macOS 14 and older:
+  Control-click the app, Open). The DMG's Read Me says the same.
+- **Linux**: the `.tar.xz` and `.deb` come with their SHA-256 list.
+
+Code signing policy (Windows): the committers and reviewers, and the approver
+of each signing, are the repository's maintainers
+([dschwen](https://github.com/dschwen)). Only what the release workflow built
+from this repository's tagged source is signed. Privacy: AMOS makes no network
+connections and sends no information anywhere; it reads and writes only the
+files and folders you give it and its own settings.
+
 ## Licence
 
 MIT, as the original sources (`LICENSE`). AMOS Professional is © François

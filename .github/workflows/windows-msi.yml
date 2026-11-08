@@ -38,6 +38,8 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-24.04
+    outputs:
+      release-msi: ${{ steps.release-msi.outputs.artifact-id }}
     env:
       VERSION: ${{ inputs.version || '0.1.0' }}
     steps:
@@ -107,6 +109,14 @@ jobs:
             build/packages/*.ps1
             build/packages/*.AMOS
           if-no-files-found: error
+      - name: Upload the release MSI alone (what SignPath signs)
+        id: release-msi
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-msi
+          path: build/packages/amos-${{ env.VERSION }}-windows-x64.msi
+          if-no-files-found: error
   installer-tests:
     needs: build
     runs-on: windows-2022
@@ -173,18 +183,81 @@ jobs:
         with:
           name: windows-smoke-${{ matrix.kind }}
           path: run
-  release:
-    # a v* tag: the installer that passed its tests goes onto the GitHub release (unsigned)
-    if: startsWith(github.ref, 'refs/tags/v')
+  sign:
+    # a v* tag, with SignPath set up (the repository variable SIGNPATH_ORGANIZATION_ID and the
+    # secret SIGNPATH_API_TOKEN): the tested MSI, amos.exe and amos-player.exe in it signed by the
+    # SignPath Foundation (.signpath/artifact-configuration.xml), then checked by Windows itself
+    if: startsWith(github.ref, 'refs/tags/v') && vars.SIGNPATH_ORGANIZATION_ID != ''
     needs: [build, installer-tests]
+    runs-on: windows-2022
+    steps:
+      - name: Sign with SignPath (waits for the release's approval)
+        uses: signpath/github-action-submit-signing-request@v1
+        with:
+          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+          organization-id: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
+          project-slug: ${{ vars.SIGNPATH_PROJECT_SLUG || 'AMOSystem' }}
+          signing-policy-slug: ${{ vars.SIGNPATH_SIGNING_POLICY_SLUG || 'release-signing' }}
+          github-artifact-id: ${{ needs.build.outputs.release-msi }}
+          wait-for-completion: true
+          wait-for-completion-timeout-in-seconds: 3600
+          output-artifact-directory: signed
+      - name: Check the signatures, install and uninstall the signed MSI
+        shell: powershell
+        run: |
+          $version = "$env:GITHUB_REF_NAME".TrimStart('v')
+          $msi = (Resolve-Path "signed\amos-$version-windows-x64.msi").Path
+          function Check($path) {
+            $s = Get-AuthenticodeSignature $path
+            Write-Host "$path : $($s.Status) $($s.SignerCertificate.Subject)"
+            if ($s.Status -ne 'Valid') { Write-Host "::error::$path signature $($s.Status): $($s.StatusMessage)"; exit 1 }
+          }
+          Check $msi
+          $p = Start-Process msiexec -ArgumentList "/a `"$msi`" /qn TARGETDIR=`"$PWD\extracted`"" -Wait -PassThru
+          if ($p.ExitCode) { Write-Host "::error::administrative extraction failed: $($p.ExitCode)"; exit 1 }
+          foreach ($exe in 'amos.exe', 'amos-player.exe') {
+            Check (Get-ChildItem extracted -Recurse -Filter $exe | Select-Object -First 1).FullName
+          }
+          $p = Start-Process msiexec -ArgumentList "/i `"$msi`" /qn /l*v install.log" -Wait -PassThru
+          if ($p.ExitCode) { Write-Host "::error::install failed: $($p.ExitCode)"; exit 1 }
+          Check "$env:ProgramFiles\AMOSystem\amos.exe"
+          $p = Start-Process msiexec -ArgumentList "/x `"$msi`" /qn /l*v uninstall.log" -Wait -PassThru
+          if ($p.ExitCode) { Write-Host "::error::uninstall failed: $($p.ExitCode)"; exit 1 }
+      - uses: actions/upload-artifact@v4
+        with:
+          name: signed-msi
+          path: signed
+          if-no-files-found: error
+  release:
+    # a v* tag: the installer that passed its tests goes onto the GitHub release, signed when
+    # SignPath is set up (a signing failure or rejection publishes nothing), unsigned otherwise
+    if: >-
+      always() && startsWith(github.ref, 'refs/tags/v') &&
+      needs.installer-tests.result == 'success' &&
+      (needs.sign.result == 'success' || needs.sign.result == 'skipped')
+    needs: [build, installer-tests, sign]
     runs-on: ubuntu-24.04
     permissions:
       contents: write
     steps:
+      - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
         with:
           name: unsigned-msi
           path: packages
+      - uses: actions/download-artifact@v4
+        if: needs.sign.result == 'success'
+        with:
+          name: signed-msi
+          path: signed
+      - name: The signed MSI in place of the unsigned one, its report updated
+        if: needs.sign.result == 'success'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y msitools
+          version="${GITHUB_REF_NAME#v}"
+          cp "signed/amos-$version-windows-x64.msi" packages/
+          python3 tools/package_msi.py --record-signed "packages/amos-$version-windows-x64.msi"
       - name: Attach the MSI to the release
         env:
           GH_TOKEN: ${{ github.token }}

@@ -348,8 +348,8 @@ Sources: [MIME Apps specification](https://specifications.freedesktop.org/mime-a
    run behavior. Add icons and canonical type identifiers.
 3. Package DEB/RPM metadata and verify MIME/default selection in fresh GNOME
    and KDE sessions. Test installation with `apt`/`dnf`, updates and removal.
-4. Build the x64 MSI on Linux (or the WiX fallback runner), sign through the
-   selected signing workflow, and test on Windows: standard-user operation,
+4. Build the x64 MSI on Linux (or the WiX fallback runner), sign through
+   SignPath (done, see "CI releases"), and test on Windows: standard-user operation,
    Settings/Open With selection, repair, major upgrade and uninstall.
 5. Build the Intel `.app`/DMG, integrate cold/warm Cocoa document events, then
    sign/notarize and test installation from quarantine. Extend to native arm64
@@ -428,13 +428,38 @@ the GitHub release of that tag (the first to finish creates it with generated no
 | Workflow | Runner | Attached |
 |---|---|---|
 | `linux-release.yml` | ubuntu-24.04 | `.tar.xz`, `.deb`, SHA-256 list, manifest |
-| `windows-msi.yml` | ubuntu-24.04 (MinGW, wixl), tests on windows-2022 | `amos-VERSION-windows-x64.msi`, manifest; the release step waits for the Windows Installer tests; unsigned |
+| `windows-msi.yml` | ubuntu-24.04 (MinGW, wixl), tests on windows-2022 | `amos-VERSION-windows-x64.msi`, manifest; the release step waits for the Windows Installer tests; signed through SignPath when it is set up (below), unsigned otherwise |
 | `macos-release.yml` | macos-latest | Intel and native Apple Silicon `.dmg` (matrix) (SDL2 2.30.12, checked by SHA-256), manifest; ad-hoc signed, not notarized |
 
 ```sh
 git tag v0.1.0 && git push origin v0.1.0
 ```
 
-All three also run by hand (Actions, "Run workflow", with a version) without publishing. The
-Windows and macOS packages are still unsigned/unnotarized (Gatekeeper and SmartScreen warn);
-signing and notarization need the certificate secrets and are not wired in.
+All three also run by hand (Actions, "Run workflow", with a version) without publishing.
+
+**macOS** packages are ad-hoc signed and not notarized (notarization needs a paid Apple
+Developer account, not planned): Gatekeeper blocks the first launch until Open Anyway (the
+DMG's Read Me, the README). `MACOS_SIGN_IDENTITY` still signs with a Developer ID identity
+(hardened runtime, timestamp) for a local build; notarytool/stapler are not wired in.
+
+**Windows** releases are signed by the SignPath Foundation (free for open source). The
+`sign` job of `windows-msi.yml` runs for a `v*` tag once the repository has the variable
+`SIGNPATH_ORGANIZATION_ID` (and optionally `SIGNPATH_PROJECT_SLUG`, default `AMOSystem`, and
+`SIGNPATH_SIGNING_POLICY_SLUG`, default `release-signing`) and the secret `SIGNPATH_API_TOKEN`.
+It submits the artifact `release-msi` (the MSI that passed the installer tests) and waits up
+to an hour for the signing request's approval in SignPath. SignPath signs `amos.exe` and
+`amos-player.exe` inside the MSI, then the MSI (`.signpath/artifact-configuration.xml`, to be
+pasted into the SignPath project as its artifact configuration). The job then checks every
+signature with Windows' own `Get-AuthenticodeSignature`, installs and uninstalls the signed MSI;
+the release job checks that only the two executables changed (`package_msi.py
+--record-signed`, which also updates the manifest's hashes) and publishes it. A failed or
+rejected signing publishes no MSI. Without the variable the job is skipped and the MSI is
+published unsigned, as before. Setting up:
+
+1. Apply at https://signpath.org (open-source licence, releases built in CI from public source;
+   the README's "code signing policy" section is the policy they ask for).
+2. In the SignPath project: add the GitHub trusted build system to it, set the artifact
+   configuration from `.signpath/artifact-configuration.xml`, create the signing policy
+   `release-signing` with an approver.
+3. A SignPath CI user's API token as the secret `SIGNPATH_API_TOKEN`, the organization ID as the
+   variable `SIGNPATH_ORGANIZATION_ID` (Settings, Secrets and variables, Actions).

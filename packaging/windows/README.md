@@ -1,6 +1,6 @@
 # Linux-built Windows MSI
 
-This builds unsigned development installers. Building/extracting/table checks
+This builds unsigned installers (releases are signed in CI, below). Building/extracting/table checks
 have run on Linux with wixl/msitools 0.103 and MinGW GCC 13-win32. Windows
 installation/lifecycle and standard-user logs are still required. The GitHub
 workflow is supplied but has not been run from this checkout.
@@ -148,9 +148,10 @@ searches CurrentBuildNumber in the 64-bit registry and requires build 10240+
 (or an already installed product for servicing). Do not change this to a
 VersionNT>=1000 condition. Validate the search on the supported Windows images.
 
-The MSI is deliberately unsigned until a signing identity/workflow is provided.
-Sign the executable before packaging, sign the MSI last, and revalidate its
-contents/trust after signing. Do not manually patch an already signed binary
+Local builds are unsigned. Releases are signed by SignPath in CI (docs/RELEASES.md,
+"CI releases"): the executables inside the tested MSI, then the MSI, then Windows checks
+the signatures and installs it, and `package_msi.py --record-signed` checks that only
+`amos.exe` and `amos-player.exe` changed. Do not manually patch an already signed binary
 or package. The CI workflow builds unsigned installers, checks Linux regressions,
 and defines Windows runner install/repair/upgrade/rollback/uninstall checks;
 standard-user GUI tests and local Amiga regression builds remain separate.
