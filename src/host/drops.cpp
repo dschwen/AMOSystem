@@ -3,7 +3,9 @@
 // takes the disk out. A message tells what happened (host/overlay.cpp shows
 // it in the window; here, and without a window, on stderr).
 //
-//   AMOS_DROP="SECONDS:SPEC,SECONDS:SPEC..."    the drops at those times after the first frame
+//   AMOS_DROP="SECONDS:SPEC,SECONDS:SPEC..."    the drops at those times after the first frame,
+//   counted in frames (50 a second), the clock of the programs that wait for them: a machine that
+//   is slow, or a process that is not run for a while, loses frames, and both lose the same ones
 
 #include "host/devices.h"
 
@@ -38,18 +40,7 @@ struct Fake {
 };
 std::vector<Fake> fakes;
 bool parsed;
-double started = -1;
-
-double clock_seconds()
-{
-#if defined(_WIN32)
-    return double(amos::host::windows::monotonic_microseconds()) / 1e6;
-#else
-    struct timespec t;
-    clock_gettime(CLOCK_MONOTONIC, &t);
-    return double(t.tv_sec) + double(t.tv_nsec) / 1e9;
-#endif
-}
+unsigned long frames;           // since the first one
 
 void parse()
 {
@@ -129,11 +120,9 @@ void drops_frame()
         parse();
     if (fakes.empty())
         return;
-    double now = clock_seconds();
-    if (started < 0)
-        started = now;
+    double now = double(frames++) / 50;
     for (Fake &f : fakes)
-        if (!f.done && now - started >= f.at) {
+        if (!f.done && now >= f.at) {
             f.done = true;
             drop(f.spec.c_str());
         }

@@ -137,24 +137,25 @@ three systems):
 `df0=folder` to put it in that unit, `df0=` to take the disk out): the host's
 own tests need no window for it (`tests/host_only/insert`).
 
-**Timing of the fake drops.** `AMOS_DROP` times are wall-clock seconds from the first frame
-(`host/drops.cpp`), while a test program is paced in frames and does real work between its
-`Wait`s. On a machine that is loaded, the work stretches and a drop can land earlier, relative to
-the program, than it did when the expected output was recorded.
+**Timing of the fake drops.** `AMOS_DROP` times count frames (50 a second) from the first frame
+(`host/drops.cpp`), the clock the test programs wait by (`Wait`). They were wall-clock seconds, and
+`tests/host_only/insert` failed now and then on the macOS CI runners. Reproduced on Linux by stopping
+the AMOS process 150 ms out of every 250 (`SIGSTOP`/`SIGCONT`, what a starved runner does to it) it
+failed every time, in two ways:
 
-- `insert` stopped after `asked 0` once on the native arm64 CI runner and was never reproduced
-  on Linux (not even 12 runs with every core busy twice over). One real race was found by reading
-  `insert_volume` (`host/hal_files.cpp`): a disk put in between the failed lookup and the
-  requester sent its DISKINSERTED event *before* the requester's own DISKREMOVED, so the
-  requester then waited for an event that had already passed. It now looks the volume up again
-  after sending its event; a disk put in after that sends its event after ours and ends the
-  requester. Whether this was the arm64 failure is unconfirmed.
-- `adf` ejected the disk at 5 s, which lands between the program's reads (they end about 4.6 s
-  in) and the last `Wait` (which ends about 6.6 s): a margin of 0.4 s on one side, which
-  failed once in about 30 loaded runs and once in a full `-j6` run. The eject is now at 5.8 s
-  (the program may take up to about 1.7 s for its reads); 0 of 15 failures with every core
-  busy twice over. A fix that needs no margin would let the program decide when a drop
-  happens (for example after the Nth `Wait`); not done.
+- It stopped after `asked 0`: AMOS's requester, which ends by itself when a disk is put in, read the
+  state of the drives only after it had been drawn and had appeared, an animation of some frames; the
+  disk put in meanwhile was never seen (an original bug, docs/BUILDING.md, "Requesters"). It reads the
+  state as it is asked for now (`w/requester.cpp`). The host's `insert_volume` also looks the volume up
+  again after its own "disk removed" event, before the requester.
+- `df0  0 0` instead of `df0 -1-1`: a process that is not run for longer than four frames loses frames
+  (`host/interrupts.cpp` does not make them up), so the program's `Wait 150` took far longer than three
+  seconds, and the disk had already been taken out again by the clock. Counted in frames, the drops and
+  the waits lose the same ones.
+
+With both, `insert` and `adf` pass under that treatment (and 300 ms out of every 350), with the
+test's original times. CI on macOS also runs a failed text test once more (`tests/ci_retry.sh`) for
+what is left of the wall clock (the tracker's counters of `music2`).
 
 ### 5.3 The window: the Devices panel (F12)
 

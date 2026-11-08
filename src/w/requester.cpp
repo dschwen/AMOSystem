@@ -314,7 +314,6 @@ uint32_t amos_requester(Texts t)
         reinterpret_cast<uint8_t *>(&s->EcAW)[0] |= 2;
         uint16_t middle = (d.Req_Sy >> 1) + ReqWY;
         appear(s, middle, 1, 8);
-        d.DOld = sy(sy::GetDisc);
 
         // Until a key or a click
         uint16_t over = 8;
@@ -434,6 +433,7 @@ void w_auto_request(AllRegs *r)
         return;
     }
     WData &d = wdata();
+    d.DOld = d.DiscIn;          // (the state of the drives: see w_easy_request)
     Texts t = new_texts();
     d.Req_IDCMP = 0x8000;
     d.Req_Sx = (uint16_t(uint16_t(r->d[2]) >> 3) + 3) & 0xFFFC;
@@ -467,6 +467,12 @@ void w_easy_request(AllRegs *r)
         return;
     }
     WData &d = wdata();
+    // The state of the drives, as the requester is asked for: a disk put in from now on ends it.
+    // The original read it after the requester had been drawn and had appeared (frames go by, and
+    // with them the input handler), so a disk put in meanwhile was never seen and the requester
+    // waited for another. (Read here, before any routine runs: on another host the interrupts
+    // happen between two routines.)
+    d.DOld = d.DiscIn;
     Texts t = new_texts();
     d.Req_IDCMP = peek_l(ptr<uint8_t>(r->a[2]));
     const struct EasyStruct *easy = ptr<struct EasyStruct>(r->a[1]);

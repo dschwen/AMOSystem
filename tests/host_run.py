@@ -188,7 +188,10 @@ def run_text(name, hd, timeout):
                      for line in note if line.startswith('amos: file')]
             return ' | '.join(files[:14] + trace[:2])
         return note[-1] if note else f'exit {p.returncode}'
-    except subprocess.TimeoutExpired:
+    except subprocess.TimeoutExpired as stopped:
+        # (what it said before it was stopped, for CI to print)
+        with open(os.path.join(os.path.dirname(hd), 'stdout.log'), 'wb') as f:
+            f.write(stopped.stdout or b'')
         return 'timeout'
 
 

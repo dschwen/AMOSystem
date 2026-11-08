@@ -328,7 +328,7 @@ host's own result, with the reason of each (its README). The environment:
 | `AMOS_HOME` | the AMOS tree (found from the program by default) |
 | `AMOS_DEVICES` | the devices directory |
 | `AMOS_CONFIG` | the user's `amos.conf` (else `~/.config/amos/amos.conf`) |
-| `AMOS_DROP` | `SECONDS:SPEC,...`: folders dropped on the window at those times (for tests) |
+| `AMOS_DROP` | `SECONDS:SPEC,...`: folders dropped on the window at those times, counted in frames (50 a second; for tests) |
 | `AMOS_DISPLAY=none` | no window, no sound |
 | `AMOS_SCALE` | the window's magnification (1-9, 2 by default) |
 | `AMOS_SHOT=file.ppm` | the last frame into that file; with `AMOS_SHOT_FRAME=n`, frame n |
@@ -634,6 +634,13 @@ Input handler (AMOS.library)
   buffer that followed. The handler converts into a buffer of its own
   now, so `ConIo` has its full size.
 - console.device was opened at the start and never closed.
+
+Requesters (AMOS.library)
+- AMOS's requester, which also stands for DOS's "Please insert volume" and
+  ends by itself when a disk is put in, read the state of the drives only
+  after it had been drawn and had appeared (an animation of several
+  frames). A disk put in during that time was never seen and the requester
+  waited for the next one. It reads the state before it is drawn now.
 
 Programs in memory (the verifier)
 - `Prg_Save` left the file open when writing it failed (a full disk, say),
