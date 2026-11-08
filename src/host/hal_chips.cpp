@@ -237,12 +237,42 @@ void host_chip_write(uint32_t offset, uint16_t v)
 
 namespace amos::host {
 
+namespace {
+bool mouse_left, port_fire[2];
+
+// CIA A's port A: /FIR0 (bit 6) and /FIR1 (bit 7), low while pressed. Port 0's is the mouse's left
+// button too.
+void fire_buttons()
+{
+    uint8_t v = uint8_t(cia_a | 0xC0);
+    if (mouse_left || port_fire[0])
+        v &= uint8_t(~0x40);
+    if (port_fire[1])
+        v &= uint8_t(~0x80);
+    cia_a = v;
+}
+} // namespace
+
 // The mouse's buttons, as the ports show them: the left one is port 0's
 // fire button (CIA A's /FIR0), the right one its pin 9 (POTINP's DATLY)
 void mouse_buttons(bool left, bool right)
 {
-    cia_a = left ? uint8_t(cia_a & ~0x40) : uint8_t(cia_a | 0x40);
+    mouse_left = left;
+    fire_buttons();
     potinp = right ? uint16_t(potinp & ~0x0400) : uint16_t(potinp | 0x0400);
+}
+
+// A joystick in port 0 or 1 (the Amiga's ports 1 and 2): directions (bit 0 up, 1 down, 2 left, 3 right)
+// into JOY0DAT / JOY1DAT as the hardware shows them (right: bit 1, left: bit 9, down: bit 1 xor bit 0,
+// up: bit 9 xor bit 8), the fire button into CIA A
+void joystick_port(int port, unsigned directions, bool fire)
+{
+    if (port < 0 || port > 1)
+        return;
+    unsigned up = directions & 1, down = directions >> 1 & 1, left = directions >> 2 & 1, right = directions >> 3 & 1;
+    set_word(port ? 0x00C : 0x00A, uint16_t(left << 9 | (up ^ left) << 8 | right << 1 | (down ^ right)));
+    port_fire[port] = fire;
+    fire_buttons();
 }
 
 } // namespace amos::host

@@ -218,6 +218,13 @@ F12 panel, switches between the window and the whole screen (the picture keeps i
 bars); `--fullscreen` starts that way, and the panel's Save keeps the choice (`[window] fullscreen = yes`
 in `amos.conf`). On a Mac the system's own ways work too: the green button, Control+Command+F, Globe+F.
 F11 is not used for it: it is the Amiga's Help key here.
+**Joysticks**: game controllers (anything SDL knows as one: Xbox, PlayStation, Switch pads and most
+others) are the Amiga's joysticks: the d-pad or the left stick, and A, B, X or Y for fire. By default
+the first one is in port 2 (`Joy(1)`, where games expect it) and a second one in port 1 (`Joy(0)`, the
+mouse's port). In the F12 panel, **Port 1** / **Port 2** (keys `1`, `2`) choose for each: auto, none,
+the keyboard (the cursor keys, either Ctrl for fire; the keys still reach AMOS too), or a controller;
+Save keeps it (`[joystick] port1 = ...`, `port2 = ...`: `auto`, `none`, `keyboard`, `pad1`...), and
+`--port2 keyboard` sets it for one start.
 docs/DEVICES.md has the plan for the rest (writing to images, Windows and macOS places); docs/BUILDING.md lists the other environment variables and what the host
 does not do as the Amiga does.
 

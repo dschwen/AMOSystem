@@ -166,7 +166,11 @@ their media and labels; for each: **Insert...**, **Eject**, a write-protect
 toggle; for hard disks **Mount folder...**; **New blank floppy**; the
 library's folders; the assigns; **Save** (writes `amos.conf`); at the top right
 **Full screen** / **Window** (`F`, as Alt+Enter anywhere: SDL's `SDL_WINDOW_FULLSCREEN_DESKTOP` on
-every system, a full screen space of its own on a Mac; Save keeps it as `[window] fullscreen`). Drawn with
+every system, a full screen space of its own on a Mac; Save keeps it as `[window] fullscreen`).
+Above the buttons, **Port 1** and **Port 2** (keys `1`, `2`): the joystick of each Amiga port, cycled
+through auto, none, keyboard and each game controller connected (`host/joystick.cpp`: SDL's game
+controller events into JOY0DAT/JOY1DAT and CIA A's fire bits, `host/hal_chips.cpp`); Save keeps them
+as `[joystick] port1 / port2`. Drawn with
 the topaz font the host already has (a list, buttons, a text line: 350
 lines in `host/overlay.cpp`, no UI library). Keys: Up/Down, `I` or Enter
 (put a folder in the unit: the browser opens in the library, Enter opens a

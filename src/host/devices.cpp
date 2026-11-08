@@ -61,6 +61,7 @@ int unit_medium[Units];         // the volume in a unit, -1 none
 bool unit_set[Units];           // a floppy unit the configuration names
 int floppy_drives = 2;
 int fullscreen_setting = -1;     // the window: full screen (1) or not (0), -1: never said
+std::string joystick_settings[2];   // the ports' joysticks (empty: never said)
 
 struct Entry {
     std::string path, label;
@@ -70,6 +71,7 @@ struct Entry {
 struct Config {
     int floppy_drives = -1;
     int fullscreen = -1;            // [window] fullscreen = yes / no; -1: not said
+    std::string joystick[2];        // [joystick] port1 / port2 = auto, none, keyboard, pad1...
     std::string devices_dir;
     std::vector<std::string> library;
     Entry unit[Units];
@@ -239,6 +241,8 @@ bool load(const std::string &file, Config &c)
             c.devices_dir = expand(value, base);
         } else if (section == "devices" && lower(key) == "floppy_drives") {
             c.floppy_drives = std::min(Floppies, std::max(0, atoi(value.c_str())));
+        } else if (section == "joystick" && (lower(key) == "port1" || lower(key) == "port2")) {
+            c.joystick[lower(key) == "port2"] = lower(value);
         } else if (section == "window" && lower(key) == "fullscreen") {
             c.fullscreen = truth(value);
         } else {
@@ -301,6 +305,8 @@ void apply_option(Config &c, const std::string &name, const std::string &value)
         c.devices_dir = expand(value, "");
     } else if (name == "fullscreen") {
         c.fullscreen = value.empty() || truth(value);
+    } else if (name == "port1" || name == "port2") {
+        c.joystick[name == "port2"] = lower(value);
     }
 }
 
@@ -556,6 +562,9 @@ void init()
         floppy_drives = c.floppy_drives;
     if (c.fullscreen >= 0)
         fullscreen_setting = c.fullscreen;
+    for (int p = 0; p < 2; p++)
+        if (!c.joystick[p].empty())
+            joystick_settings[p] = c.joystick[p];
 
     // the assigns: AMOS_ASSIGNS="NAME=directory;..."
     const char *env = getenv("AMOS_ASSIGNS");
@@ -673,6 +682,18 @@ bool fullscreen_at_start()
 }
 void remember_fullscreen(bool on) { fullscreen_setting = on; }
 
+// The joystick of the Amiga's port 1 (0) or 2 (1): auto, none, keyboard, pad1... (empty: never said)
+const char *joystick_setting(int port)
+{
+    init();
+    return port >= 0 && port < 2 ? joystick_settings[port].c_str() : "";
+}
+void remember_joystick(int port, const char *source)
+{
+    if (port >= 0 && port < 2)
+        joystick_settings[port] = source;
+}
+
 bool option(const char *name, const char *value)
 {
     std::string n = lower(name);
@@ -681,7 +702,7 @@ bool option(const char *name, const char *value)
         return true;
     }
     if (parse_unit(n.c_str(), n.size()) >= 0 || n == "assign" || n == "library" || n == "devices" ||
-        n == "fullscreen") {
+        n == "fullscreen" || n == "port1" || n == "port2") {
         options.push_back({n, value});
         return true;
     }
@@ -931,6 +952,12 @@ bool save_config(const char *&message)
     }
     if (fullscreen_setting >= 0)
         text += std::string("[window]\nfullscreen = ") + (fullscreen_setting ? "yes" : "no") + "\n";
+    if (!joystick_settings[0].empty() || !joystick_settings[1].empty()) {
+        text += "[joystick]\n";
+        for (int p = 0; p < 2; p++)
+            if (!joystick_settings[p].empty())
+                text += "port" + std::to_string(p + 1) + " = " + joystick_settings[p] + "\n";
+    }
     if (!c.library.empty()) {
         text += "[library]\n";
         for (const std::string &l : c.library)

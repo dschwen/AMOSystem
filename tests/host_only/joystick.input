@@ -1,0 +1,10 @@
+# the keyboard's joystick: right, up, then Control and down together, then nothing (host only)
+timeout 60
+sync ready
+wait 0.5
+key Right
+wait 0.5
+key Up
+wait 0.5
+key ctrl+Down
+wait 0.5

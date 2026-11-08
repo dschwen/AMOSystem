@@ -18,6 +18,9 @@ bool option(const char *name, const char *value);
 // The window: in full screen at the start (configuration, --fullscreen); a change remembered for Save
 bool fullscreen_at_start();
 void remember_fullscreen(bool on);
+// The joystick of the Amiga's port 1 (0) or 2 (1): auto, none, keyboard, pad1... (empty: never said)
+const char *joystick_setting(int port);
+void remember_joystick(int port, const char *source);
 
 // The program AMOS is to run (the host's path of it): its profile
 // (Name.amos.conf), and its folder mounted under its own name

@@ -51,6 +51,13 @@ namespace devices {                          // devices.cpp: the setting of the 
 bool fullscreen_at_start();
 void remember_fullscreen(bool on);
 } // namespace devices
+namespace joystick {                         // joystick.cpp
+void added(int id, const char *name);
+void removed(int id);
+void button(int id, int number, bool down);
+void axis(int id, int number, int value);
+void key(int scancode, bool down);
+} // namespace joystick
 namespace overlay {                          // overlay.cpp
 bool active();
 bool visible();
@@ -93,6 +100,11 @@ struct Sdl {
     int (*SetWindowFullscreen)(void *, uint32_t);
     uint32_t (*GetWindowFlags)(void *);
     int (*RenderSetLogicalSize)(void *, int, int);
+    void *(*GameControllerOpen)(int);
+    const char *(*GameControllerName)(void *);
+    void *(*GameControllerGetJoystick)(void *);
+    int32_t (*JoystickInstanceID)(void *);
+    void (*GameControllerClose)(void *);
 } sdl;
 
 uint32_t audio_device;
@@ -150,6 +162,11 @@ void SDL_ClearQueuedAudio(uint32_t);
 int SDL_SetWindowFullscreen(void *, uint32_t);
 uint32_t SDL_GetWindowFlags(void *);
 int SDL_RenderSetLogicalSize(void *, int, int);
+void *SDL_GameControllerOpen(int);
+const char *SDL_GameControllerName(void *);
+void *SDL_GameControllerGetJoystick(void *);
+int32_t SDL_JoystickInstanceID(void *);
+void SDL_GameControllerClose(void *);
 }
 namespace amos::host {
 namespace {
@@ -182,6 +199,11 @@ bool load()
     sdl.SetWindowFullscreen = SDL_SetWindowFullscreen;
     sdl.GetWindowFlags = SDL_GetWindowFlags;
     sdl.RenderSetLogicalSize = SDL_RenderSetLogicalSize;
+    sdl.GameControllerOpen = SDL_GameControllerOpen;
+    sdl.GameControllerName = SDL_GameControllerName;
+    sdl.GameControllerGetJoystick = SDL_GameControllerGetJoystick;
+    sdl.JoystickInstanceID = SDL_JoystickInstanceID;
+    sdl.GameControllerClose = SDL_GameControllerClose;
     return true;
 }
 #else
@@ -217,6 +239,11 @@ bool load()
     symbol(lib, sdl.SetWindowFullscreen, "SDL_SetWindowFullscreen");
     symbol(lib, sdl.GetWindowFlags, "SDL_GetWindowFlags");
     symbol(lib, sdl.RenderSetLogicalSize, "SDL_RenderSetLogicalSize");
+    symbol(lib, sdl.GameControllerOpen, "SDL_GameControllerOpen");
+    symbol(lib, sdl.GameControllerName, "SDL_GameControllerName");
+    symbol(lib, sdl.GameControllerGetJoystick, "SDL_GameControllerGetJoystick");
+    symbol(lib, sdl.JoystickInstanceID, "SDL_JoystickInstanceID");
+    symbol(lib, sdl.GameControllerClose, "SDL_GameControllerClose");
     return symbol(lib, sdl.Init, "SDL_Init") && symbol(lib, sdl.CreateWindow, "SDL_CreateWindow") &&
            symbol(lib, sdl.CreateRenderer, "SDL_CreateRenderer") &&
            symbol(lib, sdl.CreateTexture, "SDL_CreateTexture") &&
@@ -417,6 +444,7 @@ void events()
             }
             if (type == 0x300 && e[13])     // (repeats: the Amiga's own)
                 continue;
+            joystick::key(scancode, type == 0x300);     // (a port's joystick, if it is the keyboard)
             uint8_t raw = raw_key(scancode);
             if (raw == 0xFF)
                 continue;
@@ -439,6 +467,21 @@ void events()
                 continue;
             }
             send(IECLASS_RAWMOUSE, IECODE_NOBUTTON, int16_t(xrel), int16_t(yrel));
+        } else if (type >= 0x650 && type <= 0x654 && sdl.GameControllerOpen) {     // the game controllers
+            int32_t which;
+            memcpy(&which, e + 8, 4);
+            if (type == 0x653) {                    // SDL_CONTROLLERDEVICEADDED: which, the device's index
+                if (void *c = sdl.GameControllerOpen(which))
+                    joystick::added(sdl.JoystickInstanceID(sdl.GameControllerGetJoystick(c)), sdl.GameControllerName(c));
+            } else if (type == 0x654) {             // SDL_CONTROLLERDEVICEREMOVED: which, its instance
+                joystick::removed(which);
+            } else if (type == 0x650) {             // SDL_CONTROLLERAXISMOTION
+                int16_t value;
+                memcpy(&value, e + 16, 2);
+                joystick::axis(which, e[12], value);
+            } else if (type == 0x651 || type == 0x652) {    // SDL_CONTROLLERBUTTONDOWN, UP
+                joystick::button(which, e[12], type == 0x651);
+            }
         } else if (type == 0x1000) {        // SDL_DROPFILE: a folder (or a file) dropped on the window
             char *file;
             memcpy(&file, e + 8, sizeof file);
@@ -549,6 +592,9 @@ void window_start()
     if (sdl.RenderSetLogicalSize)
         sdl.RenderSetLogicalSize(renderer, FrameWidth * scale, FrameHeight * 2 * scale);
     shown = true;
+    // the game controllers: each one connected (now, or later) comes as an event
+    if (sdl.GameControllerOpen && sdl.InitSubSystem(0x2200) < 0)     // SDL_INIT_GAMECONTROLLER | JOYSTICK
+        sdl.GameControllerOpen = nullptr;
     if (devices::fullscreen_at_start())
         set_fullscreen(true);
     pointer_capture(captured);

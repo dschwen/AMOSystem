@@ -35,6 +35,10 @@ namespace amos::host {
 void drop(const char *spec);       // drops.cpp
 void toggle_fullscreen();          // sdl.cpp
 bool is_fullscreen();
+namespace joystick {               // joystick.cpp
+std::string describe(int port);
+void cycle(int port);
+} // namespace joystick
 void message(const char *text);
 
 
@@ -48,7 +52,7 @@ constexpr uint32_t Back = 0x0B1B4D, Edge = 0xFFFFFF, Fg = 0xFFFFFF, Dim = 0xA0B4
 
 // SDL's scancodes
 enum Key { KReturn = 40, KEscape = 41, KBackspace = 42, KEnterPad = 88, KUp = 82, KDown = 81, KPageUp = 75, KPageDown = 78,
-           KHome = 74, KEnd = 77, KE = 8, KF = 9, KI = 12, KM = 16, KS = 22, KW = 26 };
+           KHome = 74, KEnd = 77, KE = 8, KF = 9, KI = 12, KM = 16, KS = 22, KW = 26, K1 = 30, K2 = 31 };
 
 enum class Mode { off, panel, browser };
 Mode mode = Mode::off;
@@ -206,6 +210,15 @@ void draw_panel()
         text(x, y, a.label, Fg, Button);
         buttons.push_back({x, y, int(strlen(a.label)), 1, a.key});
         x += int(strlen(a.label)) + 1;
+    }
+    // the joysticks of the Amiga's ports (port 1: Joy(0), the mouse's; port 2: Joy(1))
+    for (int port = 0; port < 2; port++) {
+        int jy = PRow + PRows - 9 + port;
+        std::string label = " Port " + std::to_string(port + 1) + " (" + std::to_string(port + 1) + ") ";
+        text(PCol + 2, jy, label, Fg, Button);
+        buttons.push_back({PCol + 2, jy, int(label.size()), 1, char('1' + port)});
+        text(PCol + 2 + int(label.size()) + 1, jy, head(std::string("Joystick: ") + joystick::describe(port), 70),
+             Dim);
     }
     // (the window's own button, at the right of the title)
     const char *screen = is_fullscreen() ? " Window (F) " : " Full screen (F) ";
@@ -386,6 +399,10 @@ void action(char key)
             message((std::string("Cannot save ") + devices::config_path() + ": " + why).c_str());
         break;
     }
+    case '1':
+    case '2':
+        joystick::cycle(key - '1');
+        break;
     case 'f':
         toggle_fullscreen();
         message(is_fullscreen() ? "Full screen (Alt+Enter, or F in this panel, for the window)"
@@ -456,6 +473,8 @@ void key(int scancode, bool down)
     case KM: action('m'); break;
     case KS: action('s'); break;
     case KF: action('f'); break;
+    case K1: action('1'); break;
+    case K2: action('2'); break;
     }
 }
 

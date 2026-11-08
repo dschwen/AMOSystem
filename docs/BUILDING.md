@@ -238,7 +238,7 @@ with `src/host` and no assembler:
   `Name.amos.conf`, then the command line: `[df0] path= label= readonly=`,
   `[dh3]`..., `[assign] NAME=path`, `[library] path=`, `[devices]
   directory=`; `--df0 path[=label][,ro]`, `--dh3`, `--assign NAME=path`,
-  `--library path`, `--devices path`, `--config file`, `--fullscreen` (`[window] fullscreen = yes`); `AMOS_CONFIG` names
+  `--library path`, `--devices path`, `--config file`, `--fullscreen` (`[window] fullscreen = yes`), `--port1`/`--port2 auto|none|keyboard|padN` (`[joystick]`); `AMOS_CONFIG` names
   the user's file), `AMOS_ASSIGNS`, the devices directory (`AMOS_DEVICES`,
   the configuration's, `./devices`, else `~/.local/share/amos/devices`; a
   new one has `Work`: each folder in it a volume, a unit `DH0:`... in
