@@ -14,6 +14,8 @@ on:
       - 'src/**'
       - 'tests/windows/**'
       - 'tools/package_windows.py'
+      - 'tools/package_msi.py'
+      - 'examples/**'
       - 'Makefile'
       - '.github/workflows/windows-msi.yml'
   pull_request:

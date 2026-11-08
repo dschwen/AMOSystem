@@ -12,6 +12,7 @@ on:
     branches: [guest-bias, cpp-conversion]
     paths:
       - 'tools/package_macos.py'
+      - 'examples/**'
       - 'packaging/macos/**'
       - 'Makefile'
       - '.github/workflows/macos-release.yml'

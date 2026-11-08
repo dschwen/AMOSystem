@@ -82,6 +82,12 @@ def stage_bundle(build, framework, stage, version, arch='x86_64'):
         if rel.suffix.lower() in ('.info','.uaem'): continue
         dest=defaults/rel;dest.parent.mkdir(parents=True,exist_ok=True)
         dest.write_bytes(subprocess.check_output(['git','show','HEAD:'+name],cwd=ROOT))
+    # The examples (AMOSPro's disks: Examples, Productivity, Tutorial), as the Linux packages have them
+    for name in filter(None,run('git','ls-tree','-rz','--name-only','HEAD','--','examples').split('\0')):
+        rel=Path(name).relative_to('examples')
+        if rel.suffix.lower() in ('.info','.uaem'): continue
+        dest=defaults/rel;dest.parent.mkdir(parents=True,exist_ok=True)
+        dest.write_bytes(subprocess.check_output(['git','show','HEAD:'+name],cwd=ROOT))
     frameworks=app/'Contents/Frameworks';frameworks.mkdir()
     shutil.copytree(framework,frameworks/'SDL2.framework',symlinks=True)
     licenses=resources/'licenses';licenses.mkdir()

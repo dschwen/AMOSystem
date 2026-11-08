@@ -126,6 +126,13 @@ def stage_payload(build, sdk, stage, product_version, objdump):
         if relative.suffix.lower() in ('.info','.uaem'):continue
         dest=resources/relative;dest.parent.mkdir(parents=True,exist_ok=True)
         dest.write_bytes(subprocess.check_output(['git','show','HEAD:'+name],cwd=ROOT))
+    # The examples (AMOSPro's disks: Examples, Productivity, Tutorial), as the Linux packages have them
+    examples=subprocess.check_output(['git','ls-tree','-rz','--name-only','HEAD','--','examples'],cwd=ROOT).decode().split('\0')
+    for name in filter(None,examples):
+        relative=Path(name).relative_to('examples')
+        if relative.suffix.lower() in ('.info','.uaem'):continue
+        dest=resources/relative;dest.parent.mkdir(parents=True,exist_ok=True)
+        dest.write_bytes(subprocess.check_output(['git','show','HEAD:'+name],cwd=ROOT))
     (stage/'installed.ini').write_text('AMOSystem MSI payload v1\n')
     shutil.copy2(ROOT/'LICENSE',stage/'LICENSE.txt')
     shutil.copy2(sdk.parent/'LICENSE.txt',stage/'SDL2-LICENSE.txt')
