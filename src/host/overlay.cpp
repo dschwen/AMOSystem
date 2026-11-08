@@ -291,6 +291,10 @@ void start_browser(bool mount, int unit)
     browser.unit = unit;
     if (last_dir.empty()) {
         const char *start = getenv("AMOS_START_DIR"), *home = getenv("HOME");
+#if defined(_WIN32)
+        if (!home || !*home)
+            home = getenv("USERPROFILE");
+#endif
         last_dir = devices::library_count() ? devices::library_path(0) : start && *start ? start : home ? home : "/";
     }
     browse(last_dir);
@@ -387,8 +391,10 @@ void action(char key)
         break;
     case 'w':
         if (unit >= 0 && devices::unit_info(unit, info) && info.has_disk) {
-            devices::set_read_only(unit, !info.read_only);
-            message((std::string(info.name) + (info.read_only ? ": can be written" : ": write-protected")).c_str());
+            if (devices::set_read_only(unit, !info.read_only))
+                message((std::string(info.name) + (info.read_only ? ": can be written" : ": write-protected")).c_str());
+            else
+                message((std::string(info.name) + ": a disk image is always write-protected").c_str());
         }
         break;
     case 's': {

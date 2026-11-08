@@ -164,14 +164,29 @@ void warn(const std::string &text) { fprintf(stderr, "amos: %s\n", text.c_str())
 
 // ---- the configuration -------------------------------------------------------
 
-// A path of a configuration: ~ for the home directory, relative to the folder of the file
-std::string expand(const std::string &value, const std::string &base)
+// A path of a configuration: ~ for the home directory, relative to the folder of the file (on
+// Windows \ as well as /, and ~ the user's profile folder)
+std::string expand(const std::string &given, const std::string &base)
 {
+    std::string value = given;
     if (value.empty())
         return value;
+#if defined(_WIN32)
+    for (char &c : value)
+        if (c == '\\')
+            c = '/';
+#endif
     if (value[0] == '~' && (value.size() == 1 || value[1] == '/')) {
         const char *home = getenv("HOME");
-        return std::string(home ? home : ".") + value.substr(1);
+#if defined(_WIN32)
+        if (!home || !*home)
+            home = getenv("USERPROFILE");
+#endif
+        std::string folder = home ? home : ".";
+        for (char &c : folder)
+            if (c == '\\')
+                c = '/';
+        return folder + value.substr(1);
     }
 #if defined(_WIN32)
     if (value.size() > 2 && value[1] == ':' && (value[2] == '/' || value[2] == '\\'))
@@ -910,6 +925,9 @@ bool set_read_only(int u, bool read_only)
 {
     init();
     if (u < 0 || u >= Units || unit_medium[u] < 0)
+        return false;
+    // (a disk image stays write-protected: its files are a temporary copy, gone at the eject)
+    if (!read_only && !table[size_t(unit_medium[u])].image.empty())
         return false;
     table[size_t(unit_medium[u])].read_only = read_only;
     return true;

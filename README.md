@@ -170,6 +170,10 @@ make clean
 
 ## Running AMOS on Linux
 
+**The user manual is [docs/MANUAL.md](docs/MANUAL.md)**: installing, the window and keyboard, disks
+and drives, the F12 panel, joysticks, the clipboard, the settings, and the differences between
+Windows, macOS and Linux. What follows is the short form.
+
 ```
 amos                      # the editor
 amos prog.AMOS            # runs the program, then the editor
