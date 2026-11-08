@@ -149,6 +149,28 @@ void text(int col, int row, const std::string &s, uint32_t fg, uint32_t bg = Non
 std::string tail(const std::string &s, size_t n) { return s.size() <= n ? s : "..." + s.substr(s.size() - (n - 3)); }
 std::string head(const std::string &s, size_t n) { return s.size() <= n ? s : s.substr(0, n); }
 
+// A path as the panel shows it: the home folder as ~
+std::string shown(const std::string &path)
+{
+    const char *home = getenv("HOME");
+#if defined(_WIN32)
+    if (!home || !*home)
+        home = getenv("USERPROFILE");
+#endif
+    if (!home || !*home)
+        return path;
+    std::string h = home;
+    for (char &c : h)
+        if (c == '\\')
+            c = '/';
+    while (h.size() > 1 && h.back() == '/')
+        h.pop_back();
+    if (h.size() > 1 && path.size() >= h.size() && strncasecmp(path.c_str(), h.c_str(), h.size()) == 0 &&
+        (path.size() == h.size() || path[h.size()] == '/'))
+        return "~" + path.substr(h.size());
+    return path;
+}
+
 // ---- the units ---------------------------------------------------------------
 
 // The units that are there, in order
@@ -191,7 +213,7 @@ void draw_panel()
         text(PCol + 2, y, std::string(info.name) + ":", fg, bg);
         if (info.has_disk) {
             text(PCol + 9, y, head(info.label, 26), fg, bg);
-            text(PCol + 36, y, tail(info.path, 38), dim, bg);
+            text(PCol + 36, y, tail(shown(info.path), 38), dim, bg);
             if (info.read_only)
                 text(PCol + 76, y, "protected", fg, bg);
         } else {
@@ -228,11 +250,11 @@ void draw_panel()
     text(PCol + 2, PRow + PRows - 4, "Drop a folder to mount it as a hard disk, a .adf image to put it in DF0:", Dim);
     std::string library = "Library: ";
     for (int i = 0; i < devices::library_count(); i++)
-        library += (i ? ", " : "") + std::string(devices::library_path(i));
+        library += (i ? ", " : "") + shown(devices::library_path(i));
     if (!devices::library_count())
         library += "none (set it up in the setup file)";
     text(PCol + 2, PRow + PRows - 3, tail(library, size_t(PCols - 4)), Dim);
-    text(PCol + 2, PRow + PRows - 2, tail(std::string("Setup file: ") + devices::config_path(), size_t(PCols - 4)), Dim);
+    text(PCol + 2, PRow + PRows - 2, tail("Setup file: " + shown(devices::config_path()), size_t(PCols - 4)), Dim);
 }
 
 // ---- the folder browser ----------------------------------------------------------
@@ -314,7 +336,7 @@ void draw_browser()
         title = std::string(" A folder as the disk of ") + info.name + ": ";
     }
     text(PCol + 2, PRow, title, Select, Back);
-    text(PCol + 2, PRow + 2, tail(browser.dir, size_t(PCols - 4)), Fg);
+    text(PCol + 2, PRow + 2, tail(shown(browser.dir), size_t(PCols - 4)), Fg);
     int items = browser_items();
     if (browser.cursor < browser.top)
         browser.top = browser.cursor;

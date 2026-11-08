@@ -135,6 +135,9 @@ Double-clicking an .AMOS program opens it in the editor (Open With > AMOS Profes
 to make AMOS the default: Get Info > Open with > AMOS Professional > Change All).
 From Terminal: amos --open-document file.AMOS.
 Licenses and redistributable AROS font sources/data are inside Contents/Resources.
+
+The user manual (disks and drives, the F12 Devices panel, joysticks, the clipboard, the
+settings, full screen): https://github.com/dschwen/AMOSystem/blob/cpp-conversion/docs/MANUAL.md
 ''')
     return app
 

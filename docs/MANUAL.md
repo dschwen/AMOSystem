@@ -61,6 +61,8 @@ How AMOS becomes the program for `.AMOS` files:
 
 ## 2. The window
 
+![The AMOS Professional editor with a program loaded](images/editor.png)
+
 **Size.**
 - The picture is magnified: twice on Linux and macOS, once on **Windows**.
 - `AMOS_SCALE=3` (any value from 1 to 9) chooses another magnification.
@@ -164,22 +166,10 @@ itself, just as it did when you put the floppy in on the Amiga.
 Press **F12** anywhere, in the editor or while a program runs. The panel appears over AMOS's
 picture, and the program keeps running behind it. F12 or Esc closes it.
 
-```
- Devices                                                    Full screen (F)
-  Unit   Disk                        Folder
-  DF0:   Game Disk 1                 .../disks/Game1.adf       protected
-  DF1:   (no disk)
-  DH0:   Work                        .../amos/devices/Work
-  ...
-  Port 1 (1)  Joystick: auto: no controller
-  Port 2 (2)  Joystick: auto: Xbox Wireless Controller
-  Insert (I)  Eject (E)  Protect (W)  Mount hard disk (M)  Save (S)  Close (F12)
-  Drop a folder to mount it as a hard disk, a .adf image to put it in DF0:
-  Library: ...
-  Setup file: ...
-```
+![The Devices panel (F12): the drives and their disks, the joystick ports, the buttons](images/panel.png)
 
-You can use it with the mouse (click a row or a button; a double click on a drive means *Insert*)
+Paths are shown with your home folder as `~`. You can use the panel with the mouse (click a row
+or a button; a double click on a drive means *Insert*)
 or with the keyboard:
 
 | Key | Action |
@@ -249,6 +239,8 @@ original.
 - What is copied is plain BASIC text, as you would type it.
 - Paste inserts at the cursor or replaces the marked block.
 - Each paste or cut is one step of *Undo*.
+
+![Direct mode: commands run at once, over the program's screen](images/direct.png)
 
 **In direct mode:**
 - Shift with the cursor keys, Home or End (or Shift with a mouse click) selects.
