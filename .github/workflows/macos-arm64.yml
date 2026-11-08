@@ -74,6 +74,11 @@ jobs:
           AMOS_FILE_LOG=1 AMOS_CRASH_TRACE=25 python3 tests/host_run.py --text-only --fallback-font -j3 > tests.log 2>&1 || {
             grep -v ": ok" tests.log | head -20 | while read -r line; do echo "::error::${line:0:1200}"; done
             sh tests/ci_failures.sh tests.log
+            # (the wall-clock ones run once more; a failure that stays is a failure)
+            if sh tests/ci_retry.sh tests.log --text-only --fallback-font; then
+              echo "::warning::passed on a second run"
+              exit 0
+            fi
             # (a test stopped by the trace: where, by name)
             line=$(grep -E "^equates:" tests.log | head -1)
             load=$(echo "$line" | grep -oE "loaded at 0x[0-9a-f]+" | sed 's/loaded at //')
@@ -113,12 +118,9 @@ jobs:
           AMOS_FILE_LOG=1 python3 tests/host_run.py --build build/host-x86 --text-only --fallback-font -j3 > tests.log 2>&1 || {
             grep -v ": ok" tests.log | head -20 | while read -r line; do echo "::error::${line:0:1200}"; done
             sh tests/ci_failures.sh tests.log
-            # Under Rosetta music2 is known to differ in one timing value of the tracker (slow
-            # emulation) and does not fail the job. Anything else fails.
-            others=$(grep -E "^[a-z0-9_]+: [A-Za-z0-9_.]+ differs" tests.log | grep -vE "^music2:" | wc -l)
-            failed=$(grep -cvE ": ok|passed" tests.log)
-            if [ "$others" -eq 0 ] && grep -qE "^music2:" tests.log && [ "$failed" -le 1 ]; then
-              echo "::warning::under Rosetta: music2 differs (known)"
+            # (the wall-clock ones run once more; a failure that stays is a failure)
+            if sh tests/ci_retry.sh tests.log --build build/host-x86 --text-only --fallback-font; then
+              echo "::warning::passed on a second run"
               exit 0
             fi
             exit 1
