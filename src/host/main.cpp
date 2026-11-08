@@ -16,6 +16,9 @@
 #if !defined(_WIN32)
 #pragma pack(push,16)
 #include <pthread.h>
+#if defined(__APPLE__)
+#include <pthread/qos.h>
+#endif
 #pragma pack(pop)
 #else
 #include "host/windows_platform.h"
@@ -264,6 +267,12 @@ int main(int argc, char **argv)
 #endif
 #if !defined(_WIN32)
     crash_trace_start();
+#if defined(__APPLE__)
+    // (AMOS keeps time in frames of 20 ms; macOS lets the timers of a process it thinks is in the
+    // background run late, by more than a frame, and the frames missed are not made up: the interpreter
+    // runs at the user's interactive priority, as a game does)
+    pthread_set_qos_class_self_np(QOS_CLASS_USER_INTERACTIVE, 0);
+#endif
 #endif
     // where AMOS was started: the volume START:, for the programs named on the command line (the
     // devices directory too, if it has one there); AMOS itself runs in its tree
