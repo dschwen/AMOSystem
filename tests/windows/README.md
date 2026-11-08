@@ -60,3 +60,7 @@ the original passing report predates these extra checks.
 PowerShell runner. See docs/WINDOWS.md. These require SDL2.dll even with
 AMOS_DISPLAY=none because the current Windows executable links SDL at load
 time.
+
+The MSI (and the macOS DMG) carry the examples of the repository (`examples/`: AMOSPro's
+Examples, Productivity and Tutorial disks, and `Examples/Games/Roller_II`), as the Linux
+packages do. The installer tests check every installed file against the MSI's manifest.
