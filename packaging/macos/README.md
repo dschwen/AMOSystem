@@ -111,3 +111,11 @@ private host structs containing library objects are explicitly restored to
 native alignment; the include boundary then restores guest packing. This
 avoids newer libc++ format-layout assertions such as `14 == 16`. Do not remove
 the guest packing flag globally or disable those library assertions.
+
+## Opening programs
+
+The app declares `.AMOS` programs as its document type (`io.github.dschwen.amosystem.program`,
+`Info.plist` in `tools/package_macos.py`): double-click one, or Open With > AMOS Professional. Launch
+Services learns of it when the app is first seen (copied to Applications, or opened); to make AMOS
+the default opener: Get Info > Open with > AMOS Professional > Change All. A file opened while AMOS
+is running gets an AMOS of its own.
