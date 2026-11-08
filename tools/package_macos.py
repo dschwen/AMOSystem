@@ -12,6 +12,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import time
 from install_icons import macos as install_icons
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -190,7 +191,14 @@ def build(args):
     dmg=out/(stem+'.dmg');pending=out/(stem+'.pending.dmg')
     pending.unlink(missing_ok=True)
     try:
-        run('/usr/bin/hdiutil','create','-volname','AMOS Professional','-srcfolder',stage,'-format','UDZO','-fs','HFS+','-ov',pending)
+        # (hdiutil now and then fails with "Resource busy" on a busy machine: tried three times)
+        for attempt in range(3):
+            try:
+                run('/usr/bin/hdiutil','create','-volname','AMOS Professional','-srcfolder',stage,'-format','UDZO','-fs','HFS+','-ov',pending)
+                break
+            except subprocess.CalledProcessError:
+                if attempt == 2: raise
+                time.sleep(5)
         if identity!='-':run('/usr/bin/codesign','--force','--sign',identity,'--timestamp',pending)
         run('/usr/bin/hdiutil','verify',pending)
         verify_image(pending,app)

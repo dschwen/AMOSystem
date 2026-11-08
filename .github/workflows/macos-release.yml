@@ -57,6 +57,7 @@ jobs:
           # (the errors as annotations: the log of a run needs a login, annotations do not)
           if ! make -j3 package-dmg VERSION="$VERSION" MACOS_PKG_ARCH=${{ matrix.arch }} MACOS_SDL_FRAMEWORK="$PWD/build/sdk/SDL2.framework" > build.log 2>&1; then
             grep -E "error|Error|undefined|ld:" build.log | head -8 | while read -r line; do echo "::error::${line:0:900}"; done
+            tail -6 build.log | while read -r line; do echo "::error::${line:0:900}"; done
             exit 1
           fi
           tail -3 build.log
