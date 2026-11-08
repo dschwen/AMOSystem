@@ -164,7 +164,9 @@ in the player, and a program keeps running behind it; the AMOS pointer is
 released while it is open, as for the Workbench): the list of units with
 their media and labels; for each: **Insert...**, **Eject**, a write-protect
 toggle; for hard disks **Mount folder...**; **New blank floppy**; the
-library's folders; the assigns; **Save** (writes `amos.conf`). Drawn with
+library's folders; the assigns; **Save** (writes `amos.conf`); at the top right
+**Full screen** / **Window** (`F`, as Alt+Enter anywhere: SDL's `SDL_WINDOW_FULLSCREEN_DESKTOP` on
+every system, a full screen space of its own on a Mac; Save keeps it as `[window] fullscreen`). Drawn with
 the topaz font the host already has (a list, buttons, a text line: 350
 lines in `host/overlay.cpp`, no UI library). Keys: Up/Down, `I` or Enter
 (put a folder in the unit: the browser opens in the library, Enter opens a

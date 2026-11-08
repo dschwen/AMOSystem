@@ -33,6 +33,8 @@
 namespace amos::host {
 
 void drop(const char *spec);       // drops.cpp
+void toggle_fullscreen();          // sdl.cpp
+bool is_fullscreen();
 void message(const char *text);
 
 
@@ -46,7 +48,7 @@ constexpr uint32_t Back = 0x0B1B4D, Edge = 0xFFFFFF, Fg = 0xFFFFFF, Dim = 0xA0B4
 
 // SDL's scancodes
 enum Key { KReturn = 40, KEscape = 41, KBackspace = 42, KEnterPad = 88, KUp = 82, KDown = 81, KPageUp = 75, KPageDown = 78,
-           KHome = 74, KEnd = 77, KE = 8, KI = 12, KM = 16, KS = 22, KW = 26 };
+           KHome = 74, KEnd = 77, KE = 8, KF = 9, KI = 12, KM = 16, KS = 22, KW = 26 };
 
 enum class Mode { off, panel, browser };
 Mode mode = Mode::off;
@@ -205,6 +207,11 @@ void draw_panel()
         buttons.push_back({x, y, int(strlen(a.label)), 1, a.key});
         x += int(strlen(a.label)) + 1;
     }
+    // (the window's own button, at the right of the title)
+    const char *screen = is_fullscreen() ? " Window (F) " : " Full screen (F) ";
+    int sx = PCol + PCols - 2 - int(strlen(screen));
+    text(sx, PRow, screen, Fg, Button);
+    buttons.push_back({sx, PRow, int(strlen(screen)), 1, 'f'});
     text(PCol + 2, PRow + PRows - 4, "Drop a folder to mount it as a hard disk, a .adf image to put it in DF0:", Dim);
     std::string library = "Library: ";
     for (int i = 0; i < devices::library_count(); i++)
@@ -379,6 +386,11 @@ void action(char key)
             message((std::string("Cannot save ") + devices::config_path() + ": " + why).c_str());
         break;
     }
+    case 'f':
+        toggle_fullscreen();
+        message(is_fullscreen() ? "Full screen (Alt+Enter, or F in this panel, for the window)"
+                                : "Window (Alt+Enter, or F in this panel, for full screen)");
+        break;
     case 'x':
         mode = Mode::off;
         break;
@@ -443,6 +455,7 @@ void key(int scancode, bool down)
     case KW: action('w'); break;
     case KM: action('m'); break;
     case KS: action('s'); break;
+    case KF: action('f'); break;
     }
 }
 

@@ -15,6 +15,9 @@ enum class Status { found, no_disk, not_mounted };
 // --dh3, --assign NAME=path, --library path, --devices path, --config file):
 // false if it is not one of ours
 bool option(const char *name, const char *value);
+// The window: in full screen at the start (configuration, --fullscreen); a change remembered for Save
+bool fullscreen_at_start();
+void remember_fullscreen(bool on);
 
 // The program AMOS is to run (the host's path of it): its profile
 // (Name.amos.conf), and its folder mounted under its own name

@@ -46,6 +46,11 @@ void display_frame(uint32_t *out);
 void mouse_buttons(bool left, bool right);
 void pointer_capture(bool on);
 void drop(const char *spec);                 // drops.cpp
+void toggle_fullscreen();
+namespace devices {                          // devices.cpp: the setting of the configuration
+bool fullscreen_at_start();
+void remember_fullscreen(bool on);
+} // namespace devices
 namespace overlay {                          // overlay.cpp
 bool active();
 bool visible();
@@ -84,6 +89,10 @@ struct Sdl {
     int (*QueueAudio)(uint32_t, const void *, uint32_t);
     uint32_t (*GetQueuedAudioSize)(uint32_t);
     void (*ClearQueuedAudio)(uint32_t);
+    // (optional: without them, no full screen)
+    int (*SetWindowFullscreen)(void *, uint32_t);
+    uint32_t (*GetWindowFlags)(void *);
+    int (*RenderSetLogicalSize)(void *, int, int);
 } sdl;
 
 uint32_t audio_device;
@@ -138,6 +147,9 @@ void SDL_PauseAudioDevice(uint32_t, int);
 int SDL_QueueAudio(uint32_t, const void *, uint32_t);
 uint32_t SDL_GetQueuedAudioSize(uint32_t);
 void SDL_ClearQueuedAudio(uint32_t);
+int SDL_SetWindowFullscreen(void *, uint32_t);
+uint32_t SDL_GetWindowFlags(void *);
+int SDL_RenderSetLogicalSize(void *, int, int);
 }
 namespace amos::host {
 namespace {
@@ -167,6 +179,9 @@ bool load()
     sdl.QueueAudio = SDL_QueueAudio;
     sdl.GetQueuedAudioSize = SDL_GetQueuedAudioSize;
     sdl.ClearQueuedAudio = SDL_ClearQueuedAudio;
+    sdl.SetWindowFullscreen = SDL_SetWindowFullscreen;
+    sdl.GetWindowFlags = SDL_GetWindowFlags;
+    sdl.RenderSetLogicalSize = SDL_RenderSetLogicalSize;
     return true;
 }
 #else
@@ -199,6 +214,9 @@ bool load()
     symbol(lib, sdl.GetClipboardText, "SDL_GetClipboardText");
     symbol(lib, sdl.SetClipboardText, "SDL_SetClipboardText");
     symbol(lib, sdl.HasClipboardText, "SDL_HasClipboardText");
+    symbol(lib, sdl.SetWindowFullscreen, "SDL_SetWindowFullscreen");
+    symbol(lib, sdl.GetWindowFlags, "SDL_GetWindowFlags");
+    symbol(lib, sdl.RenderSetLogicalSize, "SDL_RenderSetLogicalSize");
     return symbol(lib, sdl.Init, "SDL_Init") && symbol(lib, sdl.CreateWindow, "SDL_CreateWindow") &&
            symbol(lib, sdl.CreateRenderer, "SDL_CreateRenderer") &&
            symbol(lib, sdl.CreateTexture, "SDL_CreateTexture") &&
@@ -340,6 +358,21 @@ uint16_t qualifier_of(uint8_t raw)
 
 void apply_pointer();
 
+// Full screen: the desktop's size (no change of the display's mode), on every system the same call
+// (SDL_WINDOW_FULLSCREEN_DESKTOP; on a Mac SDL makes it a full screen space of its own)
+bool fullscreen_now()
+{
+    return window && sdl.GetWindowFlags && (sdl.GetWindowFlags(window) & 0x1001) == 0x1001;
+}
+
+void set_fullscreen(bool on)
+{
+    if (!window || !sdl.SetWindowFullscreen)
+        return;
+    sdl.SetWindowFullscreen(window, on ? 0x1001 : 0);
+    devices::remember_fullscreen(on);
+}
+
 bool is_program_file(const char *path)
 {
     size_t n = strlen(path);
@@ -361,6 +394,16 @@ void events()
             if (type == 0x301) {
                 uint8_t released = raw_key(scancode);
                 if (released >= 0x32 && released <= 0x34) clipboard_latched &= ~(1u << (released - 0x32));
+            }
+            // Alt+Enter (Option+Return on a Mac): full screen, the window again. (Not F11, the
+            // usual key elsewhere: it is the Amiga's Help here; on a Mac also Control+Command+F,
+            // the green button and Globe+F, which are the system's own)
+            uint16_t mod;
+            memcpy(&mod, e + 24, 2);
+            if ((scancode == 40 || scancode == 88) && (mod & 0x0300) && !overlay::active()) {    // KMOD_ALT
+                if (type == 0x300 && !e[13])
+                    toggle_fullscreen();
+                continue;
             }
             if (type == 0x300 && scancode == 69 && !e[13]) {    // F12: the Devices panel
                 overlay::toggle();
@@ -501,7 +544,13 @@ void window_start()
     texture = renderer ? sdl.CreateTexture(renderer, 0x16362004, 1, FrameWidth, FrameHeight) : nullptr;
     if (!texture)
         return;
+    // (the picture keeps its shape in a window of any size, and in full screen: black bars; the mouse's
+    // positions stay those of the picture)
+    if (sdl.RenderSetLogicalSize)
+        sdl.RenderSetLogicalSize(renderer, FrameWidth * scale, FrameHeight * 2 * scale);
     shown = true;
+    if (devices::fullscreen_at_start())
+        set_fullscreen(true);
     pointer_capture(captured);
 }
 
@@ -577,6 +626,10 @@ void pointer_capture(bool on)
 }
 
 bool window_shown() { return shown; }
+
+// Full screen or the window again (Alt+Enter, the Devices panel)
+void toggle_fullscreen() { set_fullscreen(!fullscreen_now()); }
+bool is_fullscreen() { return fullscreen_now(); }
 
 // A frame's sound (count stereo samples), unless the sound is behind
 // Speech (host/speech.cpp): stereo samples at 44.1kHz queued at once, whether the sound

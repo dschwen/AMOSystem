@@ -60,6 +60,7 @@ std::vector<Volume> table;      // (a removed assign keeps its place, its name e
 int unit_medium[Units];         // the volume in a unit, -1 none
 bool unit_set[Units];           // a floppy unit the configuration names
 int floppy_drives = 2;
+int fullscreen_setting = -1;     // the window: full screen (1) or not (0), -1: never said
 
 struct Entry {
     std::string path, label;
@@ -68,6 +69,7 @@ struct Entry {
 
 struct Config {
     int floppy_drives = -1;
+    int fullscreen = -1;            // [window] fullscreen = yes / no; -1: not said
     std::string devices_dir;
     std::vector<std::string> library;
     Entry unit[Units];
@@ -237,6 +239,8 @@ bool load(const std::string &file, Config &c)
             c.devices_dir = expand(value, base);
         } else if (section == "devices" && lower(key) == "floppy_drives") {
             c.floppy_drives = std::min(Floppies, std::max(0, atoi(value.c_str())));
+        } else if (section == "window" && lower(key) == "fullscreen") {
+            c.fullscreen = truth(value);
         } else {
             warn(file + ": unknown setting [" + section + "] " + key);
         }
@@ -295,6 +299,8 @@ void apply_option(Config &c, const std::string &name, const std::string &value)
         c.library.push_back(expand(value, ""));
     } else if (name == "devices") {
         c.devices_dir = expand(value, "");
+    } else if (name == "fullscreen") {
+        c.fullscreen = value.empty() || truth(value);
     }
 }
 
@@ -548,6 +554,8 @@ void init()
         apply_option(c, o.first, o.second);
     if (c.floppy_drives >= 0)
         floppy_drives = c.floppy_drives;
+    if (c.fullscreen >= 0)
+        fullscreen_setting = c.fullscreen;
 
     // the assigns: AMOS_ASSIGNS="NAME=directory;..."
     const char *env = getenv("AMOS_ASSIGNS");
@@ -656,6 +664,15 @@ const char *from_library(const char *name, size_t n)
 
 } // namespace
 
+// The window in full screen at the start ([window] fullscreen, --fullscreen); a change of it is
+// written by the next Save of the Devices panel
+bool fullscreen_at_start()
+{
+    init();
+    return fullscreen_setting > 0;
+}
+void remember_fullscreen(bool on) { fullscreen_setting = on; }
+
 bool option(const char *name, const char *value)
 {
     std::string n = lower(name);
@@ -663,7 +680,8 @@ bool option(const char *name, const char *value)
         config_file = value;
         return true;
     }
-    if (parse_unit(n.c_str(), n.size()) >= 0 || n == "assign" || n == "library" || n == "devices") {
+    if (parse_unit(n.c_str(), n.size()) >= 0 || n == "assign" || n == "library" || n == "devices" ||
+        n == "fullscreen") {
         options.push_back({n, value});
         return true;
     }
@@ -911,6 +929,8 @@ bool save_config(const char *&message)
         if (!c.devices_dir.empty())
             text += "directory = " + c.devices_dir + "\n";
     }
+    if (fullscreen_setting >= 0)
+        text += std::string("[window]\nfullscreen = ") + (fullscreen_setting ? "yes" : "no") + "\n";
     if (!c.library.empty()) {
         text += "[library]\n";
         for (const std::string &l : c.library)

@@ -390,6 +390,8 @@ int main(int argc, char **argv)
             if (eq != std::string::npos) {
                 value = name.substr(eq + 1);
                 name.resize(eq);
+            } else if (name == "fullscreen") {
+                value = "yes";              // (a flag: --fullscreen, or --fullscreen=no)
             } else if (i + 1 < count) {
                 value = args[++i];
             }

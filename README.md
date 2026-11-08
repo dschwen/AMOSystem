@@ -213,6 +213,11 @@ disks, put a folder in or take it out, write-protect, mount a hard disk, save
 the setup to `amos.conf`. When a program asks for a disk that is not there
 ("Please insert volume Disk2"), AMOS's requester stays and the window says
 what to do; put the disk in and the program goes on by itself. The window is magnified twice (`AMOS_SCALE`).
+**Full screen**: **Alt+Enter** (Option+Return on a Mac), or **Full screen** at the top right of the
+F12 panel, switches between the window and the whole screen (the picture keeps its shape, with black
+bars); `--fullscreen` starts that way, and the panel's Save keeps the choice (`[window] fullscreen = yes`
+in `amos.conf`). On a Mac the system's own ways work too: the green button, Control+Command+F, Globe+F.
+F11 is not used for it: it is the Amiga's Help key here.
 docs/DEVICES.md has the plan for the rest (writing to images, Windows and macOS places); docs/BUILDING.md lists the other environment variables and what the host
 does not do as the Amiga does.
 
