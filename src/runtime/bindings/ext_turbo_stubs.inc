@@ -29,10 +29,6 @@ using namespace ::amos::music;
 using namespace ::amos::verif;
 using namespace ::amos::w;
 extern "C" {
-uint64_t amos_typed_turbo_bank_end(const uint32_t* words) { return typed_library_call<&turbo_bank_end, 1, 4>(words); }
-uint64_t amos_typed_turbo_between(const uint32_t* words) { return typed_library_call<&turbo_between, 3, 4>(words); }
-uint64_t amos_typed_turbo_bit_field_ext(const uint32_t* words) { return typed_library_call<&turbo_bit_field_ext, 3, 4>(words); }
-uint64_t amos_typed_turbo_bit_field_ins(const uint32_t* words) { return typed_library_call<&turbo_bit_field_ins, 4, 4>(words); }
 uint64_t amos_typed_turbo_blit_clear(const uint32_t* words) { return typed_library_call<&turbo_blit_clear, 1, 0>(words); }
 uint64_t amos_typed_turbo_blit_erase(const uint32_t* words) { return typed_library_call<&turbo_blit_erase, 1, 0>(words); }
 uint64_t amos_typed_turbo_blit_int_change(const uint32_t* words) { return typed_library_call<&turbo_blit_int_change, 2, 0>(words); }
@@ -45,7 +41,6 @@ uint64_t amos_typed_turbo_blit_store_left(const uint32_t* words) { return typed_
 uint64_t amos_typed_turbo_blit_store_up(const uint32_t* words) { return typed_library_call<&turbo_blit_store_up, 7, 0>(words); }
 uint64_t amos_typed_turbo_blit_up(const uint32_t* words) { return typed_library_call<&turbo_blit_up, 6, 0>(words); }
 uint64_t amos_typed_turbo_build_static_block(const uint32_t* words) { return typed_library_call<&turbo_build_static_block, 0, 0>(words); }
-uint64_t amos_typed_turbo_byte_hunt(const uint32_t* words) { return typed_library_call<&turbo_byte_hunt, 5, 4>(words); }
 uint64_t amos_typed_turbo_check(const uint32_t* words) { return typed_library_call<&turbo_check, 4, 4>(words); }
 uint64_t amos_typed_turbo_check_erase(const uint32_t* words) { return typed_library_call<&turbo_check_erase, 0, 0>(words); }
 uint64_t amos_typed_turbo_chip_largest(const uint32_t* words) { return typed_library_call<&turbo_chip_largest, 0, 4>(words); }
@@ -68,7 +63,6 @@ uint64_t amos_typed_turbo_f_draw_4(const uint32_t* words) { return typed_library
 uint64_t amos_typed_turbo_f_paste_icon(const uint32_t* words) { return typed_library_call<&turbo_f_paste_icon, 3, 0>(words); }
 uint64_t amos_typed_turbo_f_put_block(const uint32_t* words) { return typed_library_call<&turbo_f_put_block, 3, 0>(words); }
 uint64_t amos_typed_turbo_f_put_static_block(const uint32_t* words) { return typed_library_call<&turbo_f_put_static_block, 3, 0>(words); }
-uint64_t amos_typed_turbo_f_sqr(const uint32_t* words) { return typed_library_call<&turbo_f_sqr, 1, 4>(words); }
 uint64_t amos_typed_turbo_fast_largest(const uint32_t* words) { return typed_library_call<&turbo_fast_largest, 0, 4>(words); }
 uint64_t amos_typed_turbo_hit_bob_check(const uint32_t* words) { return typed_library_call<&turbo_hit_bob_check, 5, 4>(words); }
 uint64_t amos_typed_turbo_hit_bob_zone(const uint32_t* words) { return typed_library_call<&turbo_hit_bob_zone, 3, 4>(words); }
@@ -76,23 +70,12 @@ uint64_t amos_typed_turbo_hit_spr_check(const uint32_t* words) { return typed_li
 uint64_t amos_typed_turbo_hit_spr_zone(const uint32_t* words) { return typed_library_call<&turbo_hit_spr_zone, 3, 4>(words); }
 uint64_t amos_typed_turbo_icon_check(const uint32_t* words) { return typed_library_call<&turbo_icon_check, 1, 4>(words); }
 uint64_t amos_typed_turbo_is_raw_key(const uint32_t* words) { return typed_library_call<&turbo_is_raw_key, 0, 4>(words); }
-uint64_t amos_typed_turbo_left_click(const uint32_t* words) { return typed_library_call<&turbo_left_click, 0, 4>(words); }
 uint64_t amos_typed_turbo_line_3d(const uint32_t* words) { return typed_library_call<&turbo_line_3d, 6, 0>(words); }
-uint64_t amos_typed_turbo_lsl_b(const uint32_t* words) { return typed_library_call<&turbo_lsl_b, 2, 4>(words); }
-uint64_t amos_typed_turbo_lsl_l(const uint32_t* words) { return typed_library_call<&turbo_lsl_l, 2, 4>(words); }
-uint64_t amos_typed_turbo_lsl_w(const uint32_t* words) { return typed_library_call<&turbo_lsl_w, 2, 4>(words); }
-uint64_t amos_typed_turbo_lsr_b(const uint32_t* words) { return typed_library_call<&turbo_lsr_b, 2, 4>(words); }
-uint64_t amos_typed_turbo_lsr_l(const uint32_t* words) { return typed_library_call<&turbo_lsr_l, 2, 4>(words); }
-uint64_t amos_typed_turbo_lsr_w(const uint32_t* words) { return typed_library_call<&turbo_lsr_w, 2, 4>(words); }
 uint64_t amos_typed_turbo_math_info(const uint32_t* words) { return typed_library_call<&turbo_math_info, 0, 4>(words); }
-uint64_t amos_typed_turbo_memory_fill(const uint32_t* words) { return typed_library_call<&turbo_memory_fill, 3, 0>(words); }
-uint64_t amos_typed_turbo_move_mem(const uint32_t* words) { return typed_library_call<&turbo_move_mem, 3, 0>(words); }
 uint64_t amos_typed_turbo_multi_bl_ended(const uint32_t* words) { return typed_library_call<&turbo_multi_bl_ended, 0, 4>(words); }
 uint64_t amos_typed_turbo_multi_bl_error(const uint32_t* words) { return typed_library_call<&turbo_multi_bl_error, 0, 0>(words); }
 uint64_t amos_typed_turbo_multi_blit(const uint32_t* words) { return typed_library_call<&turbo_multi_blit, 2, 0>(words); }
 uint64_t amos_typed_turbo_multi_bload(const uint32_t* words) { return typed_library_call<&turbo_multi_bload, 3, 0>(words); }
-uint64_t amos_typed_turbo_multi_no(const uint32_t* words) { return typed_library_call<&turbo_multi_no, 0, 0>(words); }
-uint64_t amos_typed_turbo_multi_yes(const uint32_t* words) { return typed_library_call<&turbo_multi_yes, 0, 0>(words); }
 uint64_t amos_typed_turbo_object_draw(const uint32_t* words) { return typed_library_call<&turbo_object_draw, 1, 0>(words); }
 uint64_t amos_typed_turbo_object_erase(const uint32_t* words) { return typed_library_call<&turbo_object_erase, 1, 0>(words); }
 uint64_t amos_typed_turbo_object_limit(const uint32_t* words) { return typed_library_call<&turbo_object_limit, 1, 0>(words); }
@@ -113,7 +96,6 @@ uint64_t amos_typed_turbo_r_home(const uint32_t* words) { return typed_library_c
 uint64_t amos_typed_turbo_r_move(const uint32_t* words) { return typed_library_call<&turbo_r_move, 2, 0>(words); }
 uint64_t amos_typed_turbo_r_object_draw(const uint32_t* words) { return typed_library_call<&turbo_r_object_draw, 3, 0>(words); }
 uint64_t amos_typed_turbo_r_object_mag_draw(const uint32_t* words) { return typed_library_call<&turbo_r_object_mag_draw, 4, 0>(words); }
-uint64_t amos_typed_turbo_range(const uint32_t* words) { return typed_library_call<&turbo_range, 3, 4>(words); }
 uint64_t amos_typed_turbo_raw_key(const uint32_t* words) { return typed_library_call<&turbo_raw_key, 1, 4>(words); }
 uint64_t amos_typed_turbo_reserve_check(const uint32_t* words) { return typed_library_call<&turbo_reserve_check, 1, 0>(words); }
 uint64_t amos_typed_turbo_reserve_object(const uint32_t* words) { return typed_library_call<&turbo_reserve_object, 2, 0>(words); }
@@ -121,7 +103,6 @@ uint64_t amos_typed_turbo_reserve_scene(const uint32_t* words) { return typed_li
 uint64_t amos_typed_turbo_reserve_stars(const uint32_t* words) { return typed_library_call<&turbo_reserve_stars, 1, 0>(words); }
 uint64_t amos_typed_turbo_reserve_static_block(const uint32_t* words) { return typed_library_call<&turbo_reserve_static_block, 1, 0>(words); }
 uint64_t amos_typed_turbo_reset_check(const uint32_t* words) { return typed_library_call<&turbo_reset_check, 1, 0>(words); }
-uint64_t amos_typed_turbo_right_click(const uint32_t* words) { return typed_library_call<&turbo_right_click, 0, 4>(words); }
 uint64_t amos_typed_turbo_scene_16_bottom(const uint32_t* words) { return typed_library_call<&turbo_scene_16_bottom, 2, 0>(words); }
 uint64_t amos_typed_turbo_scene_16_change(const uint32_t* words) { return typed_library_call<&turbo_scene_16_change, 3, 0>(words); }
 uint64_t amos_typed_turbo_scene_16_check(const uint32_t* words) { return typed_library_call<&turbo_scene_16_check, 2, 4>(words); }
@@ -167,12 +148,6 @@ uint64_t amos_typed_turbo_stars_int_off(const uint32_t* words) { return typed_li
 uint64_t amos_typed_turbo_stars_int_on(const uint32_t* words) { return typed_library_call<&turbo_stars_int_on, 1, 0>(words); }
 uint64_t amos_typed_turbo_stars_speed(const uint32_t* words) { return typed_library_call<&turbo_stars_speed, 4, 0>(words); }
 uint64_t amos_typed_turbo_static_block_erase(const uint32_t* words) { return typed_library_call<&turbo_static_block_erase, 0, 0>(words); }
-uint64_t amos_typed_turbo_string_hunt(const uint32_t* words) { return typed_library_call<&turbo_string_hunt, 5, 4>(words); }
-uint64_t amos_typed_turbo_t_clip(const uint32_t* words) { return typed_library_call<&turbo_t_clip, 2, 4>(words); }
-uint64_t amos_typed_turbo_test_b(const uint32_t* words) { return typed_library_call<&turbo_test_b, 2, 4>(words); }
-uint64_t amos_typed_turbo_test_w(const uint32_t* words) { return typed_library_call<&turbo_test_w, 2, 4>(words); }
-uint64_t amos_typed_turbo_texp(const uint32_t* words) { return typed_library_call<&turbo_texp, 3, 4>(words); }
-uint64_t amos_typed_turbo_vbl_wait(const uint32_t* words) { return typed_library_call<&turbo_vbl_wait, 1, 0>(words); }
 uint64_t amos_typed_turbo_workbench_open(const uint32_t* words) { return typed_library_call<&turbo_workbench_open, 0, 0>(words); }
 uint64_t amos_typed_turbo_x_icon(const uint32_t* words) { return typed_library_call<&turbo_x_icon, 1, 4>(words); }
 uint64_t amos_typed_turbo_y_icon(const uint32_t* words) { return typed_library_call<&turbo_y_icon, 1, 4>(words); }

@@ -10,28 +10,6 @@ using namespace amos;
 
 extern "C" {
 
-// multi yes (I)
-void turbo_multi_yes() { ext3::unsupported(ext3::Id::turbo); }
-// multi no (I)
-void turbo_multi_no() { ext3::unsupported(ext3::Id::turbo); }
-// lsl.b (00,0)
-int32_t turbo_lsl_b(int32_t, int32_t) { ext3::unsupported(ext3::Id::turbo); }
-// lsl.w (00,0)
-int32_t turbo_lsl_w(int32_t, int32_t) { ext3::unsupported(ext3::Id::turbo); }
-// lsl.l (00,0)
-int32_t turbo_lsl_l(int32_t, int32_t) { ext3::unsupported(ext3::Id::turbo); }
-// lsr.b (00,0)
-int32_t turbo_lsr_b(int32_t, int32_t) { ext3::unsupported(ext3::Id::turbo); }
-// lsr.w (00,0)
-int32_t turbo_lsr_w(int32_t, int32_t) { ext3::unsupported(ext3::Id::turbo); }
-// lsr.l (00,0)
-int32_t turbo_lsr_l(int32_t, int32_t) { ext3::unsupported(ext3::Id::turbo); }
-// test.b (00,0)
-int32_t turbo_test_b(int32_t, int32_t) { ext3::unsupported(ext3::Id::turbo); }
-// test.w (00,0)
-int32_t turbo_test_w(int32_t, int32_t) { ext3::unsupported(ext3::Id::turbo); }
-// vbl wait (I0)
-void turbo_vbl_wait(int32_t) { ext3::unsupported(ext3::Id::turbo); }
 // reserve check (I0)
 void turbo_reserve_check(int32_t) { ext3::unsupported(ext3::Id::turbo); }
 // check erase (I)
@@ -116,12 +94,8 @@ void turbo_stars_draw() { ext3::unsupported(ext3::Id::turbo); }
 void turbo_stars_speed(int32_t, int32_t, int32_t, int32_t) { ext3::unsupported(ext3::Id::turbo); }
 // stars clip (I0,0,0,0)
 void turbo_stars_clip(int32_t, int32_t, int32_t, int32_t) { ext3::unsupported(ext3::Id::turbo); }
-// left click (0)
-int32_t turbo_left_click() { ext3::unsupported(ext3::Id::turbo); }
 // f circle (I0,0,0,0)
 void turbo_f_circle(int32_t, int32_t, int32_t, int32_t) { ext3::unsupported(ext3::Id::turbo); }
-// f sqr (00)
-int32_t turbo_f_sqr(int32_t) { ext3::unsupported(ext3::Id::turbo); }
 // stars int on (I0)
 void turbo_stars_int_on(int32_t) { ext3::unsupported(ext3::Id::turbo); }
 // stars int off (I)
@@ -230,28 +204,16 @@ int32_t turbo_scene_x() { ext3::unsupported(ext3::Id::turbo); }
 int32_t turbo_scene_y() { ext3::unsupported(ext3::Id::turbo); }
 // debug (I)
 void turbo_debug() { ext3::unsupported(ext3::Id::turbo); }
-// bit field ins (00,0,0,0)
-int32_t turbo_bit_field_ins(int32_t, int32_t, int32_t, int32_t) { ext3::unsupported(ext3::Id::turbo); }
-// bit field ext (00,0,0)
-int32_t turbo_bit_field_ext(int32_t, int32_t, int32_t) { ext3::unsupported(ext3::Id::turbo); }
 // hit bob check (00t0,0,0,0)
 int32_t turbo_hit_bob_check(int32_t, int32_t, int32_t, int32_t, int32_t) { ext3::unsupported(ext3::Id::turbo); }
-// byte hunt (00t0,0,0t0)
-int32_t turbo_byte_hunt(int32_t, int32_t, int32_t, int32_t, int32_t) { ext3::unsupported(ext3::Id::turbo); }
 // workbench open (I)
 void turbo_workbench_open() { ext3::unsupported(ext3::Id::turbo); }
 // scene load (I2,0)
 void turbo_scene_load(GuestString, int32_t) { ext3::unsupported(ext3::Id::turbo); }
-// memory fill (I0t0,2)
-void turbo_memory_fill(int32_t, int32_t, GuestString) { ext3::unsupported(ext3::Id::turbo); }
 // blit int change (I0t0)
 void turbo_blit_int_change(int32_t, int32_t) { ext3::unsupported(ext3::Id::turbo); }
 // blit int wait (I0)
 void turbo_blit_int_wait(int32_t) { ext3::unsupported(ext3::Id::turbo); }
-// range (00,0t0)
-int32_t turbo_range(int32_t, int32_t, int32_t) { ext3::unsupported(ext3::Id::turbo); }
-// texp (00,0,0)
-int32_t turbo_texp(int32_t, int32_t, int32_t) { ext3::unsupported(ext3::Id::turbo); }
 // blit up (I0,0,0t0,0,0)
 void turbo_blit_up(int32_t, int32_t, int32_t, int32_t, int32_t, int32_t) { ext3::unsupported(ext3::Id::turbo); }
 // blit store up (I0,0,0,0t0,0,0)
@@ -260,16 +222,10 @@ void turbo_blit_store_up(int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, i
 int32_t turbo_icon_check(int32_t) { ext3::unsupported(ext3::Id::turbo); }
 // scene icon bank (I0)
 void turbo_scene_icon_bank(int32_t) { ext3::unsupported(ext3::Id::turbo); }
-// t clip (00,0)
-int32_t turbo_t_clip(int32_t, int32_t) { ext3::unsupported(ext3::Id::turbo); }
-// between (00,0,0)
-int32_t turbo_between(int32_t, int32_t, int32_t) { ext3::unsupported(ext3::Id::turbo); }
 // scene palette (I0)
 void turbo_scene_palette(int32_t) { ext3::unsupported(ext3::Id::turbo); }
 // scene mask palette (I0)
 void turbo_scene_mask_palette(int32_t) { ext3::unsupported(ext3::Id::turbo); }
-// bank end (00)
-int32_t turbo_bank_end(int32_t) { ext3::unsupported(ext3::Id::turbo); }
 // scene scan x (00,0,0,0)
 int32_t turbo_scene_scan_x(int32_t, int32_t, int32_t, int32_t) { ext3::unsupported(ext3::Id::turbo); }
 // scene scan y (00,0,0,0)
@@ -288,10 +244,6 @@ void turbo_scene_replace(int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, i
 int32_t turbo_chip_largest() { ext3::unsupported(ext3::Id::turbo); }
 // fast largest (0)
 int32_t turbo_fast_largest() { ext3::unsupported(ext3::Id::turbo); }
-// string hunt (00t0,0,0,2)
-int32_t turbo_string_hunt(int32_t, int32_t, int32_t, int32_t, GuestString) { ext3::unsupported(ext3::Id::turbo); }
-// right click (0)
-int32_t turbo_right_click() { ext3::unsupported(ext3::Id::turbo); }
 // is raw key (0)
 int32_t turbo_is_raw_key() { ext3::unsupported(ext3::Id::turbo); }
 // multi bload (I2,2,0)
@@ -302,8 +254,6 @@ void turbo_multi_bl_error() { ext3::unsupported(ext3::Id::turbo); }
 int32_t turbo_multi_bl_ended() { ext3::unsupported(ext3::Id::turbo); }
 // parse$ (02,0,2,0)
 int32_t turbo_parse_s(GuestString, int32_t, GuestString, int32_t) { ext3::unsupported(ext3::Id::turbo); }
-// move mem (I0,0t0)
-void turbo_move_mem(int32_t, int32_t, int32_t) { ext3::unsupported(ext3::Id::turbo); }
 
 }
 
