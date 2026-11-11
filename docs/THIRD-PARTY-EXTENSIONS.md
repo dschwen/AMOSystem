@@ -212,7 +212,27 @@ part of these; the rest has to be derived from the disassembly.
   text is another, and the authors should be asked (or a licence found) before a release
   carries the ports.
 
-## 9. Decisions needed
+## 9. Status
+
+Checked against the original libraries with `tests/run.py --reference` (the emulator runs them) and
+`tests/host_run.py` (the C++): `amcafpt`, `amcafraw`, `amcafmath`, `extmisc`, `turbomisc`; each
+records the original's results, the C++ reproduces them. Done: the Protracker player and all of its
+commands (AMCAF `Pt ...`), the integer, bit, memory and quick-maths functions of both (see
+`data/extensions/*.json`: `"status": "implemented"`). The rest still raises the extension's
+"not available" error.
+
+**Where the C++ differs from the originals** (each one a case in which the original crashed the
+machine, read memory by accident, or cannot be reproduced):
+- a division by zero of the originals' (`Vmod` with a range of 65536, `T Clip` with a multiple of
+  65536) is an illegal function call (error 23), not a crash;
+- `Qarc` of a vector wider than 16 bits looks past the end of its ratio table; the C++ reads 0 there;
+- `String Hunt` with an empty string answers 0 (the original compares 65536 bytes of whatever follows);
+- `Bank End` of a bank that is not there: the error "Bank not reserved" (the original reads address -8);
+- `Pt Play` takes a bank that is flagged chip memory (the original wants its address below 2MB);
+- on the Amiga the C++ player ticks from the vertical blank, never from a CIA timer (the original
+  libraries, which the Amiga uses, do use the CIA).
+
+## 10. Decisions needed
 
 1. **Approach**: A (ports, recommended) as the plan says. B (a 68000 interpreter for the
    original binaries) as a possible separate feature later.

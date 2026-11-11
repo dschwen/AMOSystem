@@ -42,10 +42,6 @@ int32_t amcaf_pjdown(int32_t) { ext3::unsupported(ext3::Id::amcaf); }
 int32_t amcaf_pfire(int32_t) { ext3::unsupported(ext3::Id::amcaf); }
 // xfire (00,0)
 int32_t amcaf_xfire(int32_t, int32_t) { ext3::unsupported(ext3::Id::amcaf); }
-// nop (I)
-void amcaf_nop() { ext3::unsupported(ext3::Id::amcaf); }
-// nfn (0)
-int32_t amcaf_nfn() { ext3::unsupported(ext3::Id::amcaf); }
 // audio free (I)
 void amcaf_audio_free() { ext3::unsupported(ext3::Id::amcaf); }
 // bank to chip (I0)
@@ -260,8 +256,6 @@ void amcaf_protect_object(GuestString, int32_t) { ext3::unsupported(ext3::Id::am
 void amcaf_set_object_comment(GuestString, GuestString) { ext3::unsupported(ext3::Id::amcaf); }
 // set object date (I2,0,0)
 void amcaf_set_object_date(GuestString, int32_t, int32_t) { ext3::unsupported(ext3::Id::amcaf); }
-// extbase (00)
-int32_t amcaf_extbase(int32_t) { ext3::unsupported(ext3::Id::amcaf); }
 // extdefault (I0)
 void amcaf_extdefault(int32_t) { ext3::unsupported(ext3::Id::amcaf); }
 // extremove (I0)
@@ -338,22 +332,6 @@ void amcaf_mask_copy_10(int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, in
 uint32_t amcaf_lzstr_s(int32_t, int32_t) { ext3::unsupported(ext3::Id::amcaf); }
 // lsstr$ (20,0)
 uint32_t amcaf_lsstr_s(int32_t, int32_t) { ext3::unsupported(ext3::Id::amcaf); }
-// chr.w$ (20)
-uint32_t amcaf_chr_w_s(int32_t) { ext3::unsupported(ext3::Id::amcaf); }
-// chr.l$ (20)
-uint32_t amcaf_chr_l_s(int32_t) { ext3::unsupported(ext3::Id::amcaf); }
-// asc.w (02)
-int32_t amcaf_asc_w(GuestString) { ext3::unsupported(ext3::Id::amcaf); }
-// asc.l (02)
-int32_t amcaf_asc_l(GuestString) { ext3::unsupported(ext3::Id::amcaf); }
-// vclip (00,0t0)
-int32_t amcaf_vclip(int32_t, int32_t, int32_t) { ext3::unsupported(ext3::Id::amcaf); }
-// vin (00,0t0)
-int32_t amcaf_vin(int32_t, int32_t, int32_t) { ext3::unsupported(ext3::Id::amcaf); }
-// vmod (00,0)
-int32_t amcaf_vmod_2(int32_t, int32_t) { ext3::unsupported(ext3::Id::amcaf); }
-// vmod (00,0t0)
-int32_t amcaf_vmod_3(int32_t, int32_t, int32_t) { ext3::unsupported(ext3::Id::amcaf); }
 // insstr$ (22,2,0)
 uint32_t amcaf_insstr_s(GuestString, GuestString, int32_t) { ext3::unsupported(ext3::Id::amcaf); }
 // cutstr$ (22,0t0)
@@ -364,20 +342,6 @@ uint32_t amcaf_replacestr_s(GuestString, GuestString, GuestString) { ext3::unsup
 uint32_t amcaf_itemstr_s_2(GuestString, int32_t) { ext3::unsupported(ext3::Id::amcaf); }
 // itemstr$ (22,0,2)
 uint32_t amcaf_itemstr_s_3(GuestString, int32_t, GuestString) { ext3::unsupported(ext3::Id::amcaf); }
-// binexp (00)
-int32_t amcaf_binexp(int32_t) { ext3::unsupported(ext3::Id::amcaf); }
-// binlog (00)
-int32_t amcaf_binlog(int32_t) { ext3::unsupported(ext3::Id::amcaf); }
-// lsl (00,0)
-int32_t amcaf_lsl(int32_t, int32_t) { ext3::unsupported(ext3::Id::amcaf); }
-// lsr (00,0)
-int32_t amcaf_lsr(int32_t, int32_t) { ext3::unsupported(ext3::Id::amcaf); }
-// wordswap (00)
-int32_t amcaf_wordswap(int32_t) { ext3::unsupported(ext3::Id::amcaf); }
-// sdeek (00)
-int32_t amcaf_sdeek(int32_t) { ext3::unsupported(ext3::Id::amcaf); }
-// speek (00)
-int32_t amcaf_speek(int32_t) { ext3::unsupported(ext3::Id::amcaf); }
 // set rain colour (I0,0)
 void amcaf_set_rain_colour(int32_t, int32_t) { ext3::unsupported(ext3::Id::amcaf); }
 // rain fade (I0,0)
@@ -450,20 +414,8 @@ void amcaf_ppfromdisk(GuestString, int32_t) { ext3::unsupported(ext3::Id::amcaf)
 void amcaf_ptile_bank(int32_t) { ext3::unsupported(ext3::Id::amcaf); }
 // paste ptile (I0,0,0)
 void amcaf_paste_ptile(int32_t, int32_t, int32_t) { ext3::unsupported(ext3::Id::amcaf); }
-// qsqr (00)
-int32_t amcaf_qsqr(int32_t) { ext3::unsupported(ext3::Id::amcaf); }
-// qrnd (00)
-int32_t amcaf_qrnd(int32_t) { ext3::unsupported(ext3::Id::amcaf); }
-// qcos (00,0)
-int32_t amcaf_qcos(int32_t, int32_t) { ext3::unsupported(ext3::Id::amcaf); }
-// qsin (00,0)
-int32_t amcaf_qsin(int32_t, int32_t) { ext3::unsupported(ext3::Id::amcaf); }
-// qarc (00,0)
-int32_t amcaf_qarc(int32_t, int32_t) { ext3::unsupported(ext3::Id::amcaf); }
 // rnc unpack (I0t0)
 void amcaf_rnc_unpack(int32_t, int32_t) { ext3::unsupported(ext3::Id::amcaf); }
-// rnp (0)
-int32_t amcaf_rnp() { ext3::unsupported(ext3::Id::amcaf); }
 // scanstr$ (20)
 uint32_t amcaf_scanstr_s(int32_t) { ext3::unsupported(ext3::Id::amcaf); }
 // scrn rastport (0)

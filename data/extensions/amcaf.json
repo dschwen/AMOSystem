@@ -573,8 +573,8 @@
    "routine": 277,
    "terminator": 255,
    "symbol": "amcaf_rnp",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_math.cpp"
   },
   {
    "offset": 1050,
@@ -663,8 +663,8 @@
    "routine": 21,
    "terminator": 255,
    "symbol": "amcaf_nop",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_math.cpp"
   },
   {
    "offset": 1194,
@@ -673,8 +673,8 @@
    "routine": 22,
    "terminator": 255,
    "symbol": "amcaf_nfn",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_math.cpp"
   },
   {
    "offset": 1204,
@@ -723,8 +723,8 @@
    "routine": 194,
    "terminator": 255,
    "symbol": "amcaf_binexp",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_math.cpp"
   },
   {
    "offset": 1286,
@@ -733,8 +733,8 @@
    "routine": 195,
    "terminator": 255,
    "symbol": "amcaf_binlog",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_math.cpp"
   },
   {
    "offset": 1300,
@@ -743,8 +743,8 @@
    "routine": 133,
    "terminator": 255,
    "symbol": "amcaf_extbase",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_math.cpp"
   },
   {
    "offset": 1314,
@@ -1313,8 +1313,8 @@
    "routine": 179,
    "terminator": 255,
    "symbol": "amcaf_chr_w_s",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_math.cpp"
   },
   {
    "offset": 2258,
@@ -1323,8 +1323,8 @@
    "routine": 180,
    "terminator": 255,
    "symbol": "amcaf_chr_l_s",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_math.cpp"
   },
   {
    "offset": 2272,
@@ -1393,8 +1393,8 @@
    "routine": 196,
    "terminator": 255,
    "symbol": "amcaf_lsl",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_math.cpp"
   },
   {
    "offset": 2362,
@@ -1403,8 +1403,8 @@
    "routine": 197,
    "terminator": 255,
    "symbol": "amcaf_lsr",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_math.cpp"
   },
   {
    "offset": 2374,
@@ -1413,8 +1413,8 @@
    "routine": 198,
    "terminator": 255,
    "symbol": "amcaf_wordswap",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_math.cpp"
   },
   {
    "offset": 2390,
@@ -1453,8 +1453,8 @@
    "routine": 181,
    "terminator": 255,
    "symbol": "amcaf_asc_w",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_math.cpp"
   },
   {
    "offset": 2456,
@@ -1463,8 +1463,8 @@
    "routine": 182,
    "terminator": 255,
    "symbol": "amcaf_asc_l",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_math.cpp"
   },
   {
    "offset": 2468,
@@ -1753,8 +1753,8 @@
    "routine": 199,
    "terminator": 255,
    "symbol": "amcaf_sdeek",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_math.cpp"
   },
   {
    "offset": 3056,
@@ -1763,8 +1763,8 @@
    "routine": 200,
    "terminator": 255,
    "symbol": "amcaf_speek",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_math.cpp"
   },
   {
    "offset": 3068,
@@ -2383,8 +2383,8 @@
    "routine": 274,
    "terminator": 255,
    "symbol": "amcaf_qsin",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_math.cpp"
   },
   {
    "offset": 4372,
@@ -2393,8 +2393,8 @@
    "routine": 273,
    "terminator": 255,
    "symbol": "amcaf_qcos",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_math.cpp"
   },
   {
    "offset": 4386,
@@ -2483,8 +2483,8 @@
    "routine": 272,
    "terminator": 255,
    "symbol": "amcaf_qrnd",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_math.cpp"
   },
   {
    "offset": 4548,
@@ -2713,8 +2713,8 @@
    "routine": 271,
    "terminator": 255,
    "symbol": "amcaf_qsqr",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_math.cpp"
   },
   {
    "offset": 4978,
@@ -3123,8 +3123,8 @@
    "routine": 183,
    "terminator": 255,
    "symbol": "amcaf_vclip",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_math.cpp"
   },
   {
    "offset": 5698,
@@ -3133,8 +3133,8 @@
    "routine": 184,
    "terminator": 255,
    "symbol": "amcaf_vin",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_math.cpp"
   },
   {
    "offset": 5712,
@@ -3143,8 +3143,8 @@
    "routine": 185,
    "terminator": 254,
    "symbol": "amcaf_vmod_2",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_math.cpp"
   },
   {
    "offset": 5726,
@@ -3153,8 +3153,8 @@
    "routine": 186,
    "terminator": 255,
    "symbol": "amcaf_vmod_3",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_math.cpp"
   },
   {
    "offset": 5738,
@@ -3213,8 +3213,8 @@
    "routine": 275,
    "terminator": 255,
    "symbol": "amcaf_qarc",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_math.cpp"
   },
   {
    "offset": 5840,
