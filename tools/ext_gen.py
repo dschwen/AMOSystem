@@ -340,7 +340,7 @@ def generate(check=False, sync=True):
                 raise ValueError(f'{c["symbol"]}: implemented but no source')
         owners[f'{key}_cold'] = f'src/ext/{key}.cpp'
         for name, at in hooks:
-            owners[f'{key}_{name}'] = f'src/ext/{key}.cpp'
+            owners[f'{key}_{name}'] = manifest.get('hookSource', f'src/ext/{key}.cpp')
         seg_g, seg_i = f'host_obj_src_ext_{key}_glue_s', f'host_obj_src_ext_{key}_image_s'
         declarations += [f'extern uint8_t {seg_g}[{glue_size}];', f'extern uint8_t {seg_i}[{image_size}];']
         functions += [f'void relocate_src_ext_{key}_glue_s();', f'extern const GlueEntry entries_src_ext_{key}_glue_s[];',

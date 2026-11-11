@@ -3,6 +3,7 @@
 #pragma once
 
 #include "core/amos.h"
+#include "ext/vbl.h"
 
 namespace amos::ext3 {
 

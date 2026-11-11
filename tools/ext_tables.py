@@ -28,7 +28,7 @@ def generate():
     if hashlib.sha256(b).hexdigest() != SHA:
         sys.exit(f'{LIB}: not AMCAF V1.50beta4')
     word = lambda at: int.from_bytes(b[at:at + 2], 'big')
-    periods = [word(0x974C + 2 * i) for i in range(16 * 36)]
+    periods = [word(0x974C + 2 * i) for i in range(16 * 36 + 40)]
     sine = list(b[0x972C:0x974C])
     funk = list(b[0x971C:0x972C])
     return ('// The constant tables of AMCAF\'s Protracker player: written by tools/ext_tables.py from the library\n'
@@ -37,7 +37,7 @@ def generate():
             '// The vibrato and tremolo waveform (one period, 32 values)\n' + array('SineTable', 'uint8_t', sine, 16) + '\n\n'
             '// The funk repeat\'s speeds (EFx)\n' + array('FunkTable', 'uint8_t', funk, 16) + '\n\n'
             '// The periods of the 36 notes of each finetune (0 to 7, then -8 to -1), a row of 36 words; one\n'
-            '// search runs on over the end of a row into the next\n' + array('Periods', 'uint16_t', periods, 12) + '\n\n'
+            '// search runs on over the end of a row into the next (and past the last: 40 words more)\n' + array('Periods', 'uint16_t', periods, 12) + '\n\n'
             '} // namespace amos::amcaf::pt\n')
 
 

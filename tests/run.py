@@ -437,6 +437,22 @@ def lock_procedures(program):
         lines[n:end + 1] = coded
 
 
+def extension_slots(name):
+    """The extensions of other authors a test uses (tests/amos/<name>.ext: lines SLOT=FILE): they
+    are put in the interpreter's configuration of the test's own copy of the AMOS drive, and in
+    the tokenizer"""
+    path = os.path.join(TESTS, name + '.ext')
+    slots = {}
+    if os.path.exists(path):
+        with open(path) as f:
+            for line in f:
+                line = line.split('#')[0].strip()
+                if '=' in line:
+                    slot, _, file = line.partition('=')
+                    slots[int(slot)] = file.strip()
+    return slots
+
+
 def run_test(name, tables, amos, kickstart, workbench, timeout, visible):
     """Boot an emulator for one test. Returns (finished, seconds, out dir,
     screenshots of an editor test)."""
@@ -469,6 +485,9 @@ def run_test(name, tables, amos, kickstart, workbench, timeout, visible):
         listing = body
     else:
         listing = head + PROLOGUE.format(name=name) + body.rstrip('\n') + '\n' + EPILOGUE
+    slots = extension_slots(name)
+    if slots:
+        tables = amostok.Tables([os.path.join(amos, 'APSystem')], slots)
     program = amostok.tokenize_program(listing, tables)
     lock_procedures(program)
     program.save(os.path.join(hd, name + '.AMOS'))
@@ -490,11 +509,16 @@ def run_test(name, tables, amos, kickstart, workbench, timeout, visible):
         f.write(STARTUP.format(name=name, again='AMOSPRO:AMOSPro\n' * (runs - 1)))
     uaem.add_sidecars(hd)
     read_only = 1
-    if runs > 1:
-        # AMOS writes to its own drive then (the configuration, the session)
+    if runs > 1 or slots:
+        # AMOS writes to its own drive then (the configuration, the session); with extensions, the
+        # configuration is its own too
         private = os.path.join(base, 'AMOS')
         shutil.copytree(amos, private)
-        amos, read_only = private, 0
+        amos, read_only = private, 0 if runs > 1 else 1
+        if slots:
+            import ext_config
+            ext_config.patch_file(os.path.join(private, 'AMOSPro_Interpreter_Config'),
+                                  [f'{slot}={file}' for slot, file in slots.items()])
 
     config = os.path.join(base, 'test.fs-uae')
     with open(config, 'w') as f:
@@ -643,6 +667,15 @@ def main():
         sys.exit('another tests/run.py is running')
 
     tests = args.tests or sorted(f[:-4] for f in os.listdir(TESTS) if f.endswith('.asc'))
+    # (a test of the extensions of other authors needs their libraries in the tree)
+    needed = lambda name: [f for f in extension_slots(name).values()
+                           if f and not os.path.exists(os.path.join(ROOT, 'AMOS' if args.reference else
+                                                                    os.path.join('build', 'dist', 'AMOS'),
+                                                                    'APSystem', f))]
+    skipped = [t for t in tests if needed(t)]
+    tests = [t for t in tests if t not in skipped]
+    if skipped:
+        print('skipped (the libraries are not in the tree): ' + ' '.join(skipped))
     amos_tree = args.amos_tree or (os.path.join(ROOT, 'AMOS') if args.reference
                                    else os.path.join(ROOT, 'build', 'dist', 'AMOS'))
     if not os.path.isdir(amos_tree):

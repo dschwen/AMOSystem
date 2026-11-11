@@ -446,68 +446,6 @@ void amcaf_pptodisk_2(GuestString, int32_t) { ext3::unsupported(ext3::Id::amcaf)
 void amcaf_ppunpack(int32_t, int32_t) { ext3::unsupported(ext3::Id::amcaf); }
 // ppfromdisk (I2,0)
 void amcaf_ppfromdisk(GuestString, int32_t) { ext3::unsupported(ext3::Id::amcaf); }
-// pt free voice (0)
-int32_t amcaf_pt_free_voice_0() { ext3::unsupported(ext3::Id::amcaf); }
-// pt free voice (00)
-int32_t amcaf_pt_free_voice_1(int32_t) { ext3::unsupported(ext3::Id::amcaf); }
-// pt cpattern (0)
-int32_t amcaf_pt_cpattern() { ext3::unsupported(ext3::Id::amcaf); }
-// pt cpos (0)
-int32_t amcaf_pt_cpos() { ext3::unsupported(ext3::Id::amcaf); }
-// pt cinstr (00)
-int32_t amcaf_pt_cinstr(int32_t) { ext3::unsupported(ext3::Id::amcaf); }
-// pt cnote (00)
-int32_t amcaf_pt_cnote(int32_t) { ext3::unsupported(ext3::Id::amcaf); }
-// pt sam volume (I0)
-void amcaf_pt_sam_volume_1(int32_t) { ext3::unsupported(ext3::Id::amcaf); }
-// pt sam volume (I0,0)
-void amcaf_pt_sam_volume_2(int32_t, int32_t) { ext3::unsupported(ext3::Id::amcaf); }
-// pt sam freq (I0,0)
-void amcaf_pt_sam_freq(int32_t, int32_t) { ext3::unsupported(ext3::Id::amcaf); }
-// pt sam stop (I0)
-void amcaf_pt_sam_stop(int32_t) { ext3::unsupported(ext3::Id::amcaf); }
-// pt raw play (I0,0,0,0)
-void amcaf_pt_raw_play(int32_t, int32_t, int32_t, int32_t) { ext3::unsupported(ext3::Id::amcaf); }
-// pt sam bank (I0)
-void amcaf_pt_sam_bank(int32_t) { ext3::unsupported(ext3::Id::amcaf); }
-// pt sam play (I0)
-void amcaf_pt_sam_play_1(int32_t) { ext3::unsupported(ext3::Id::amcaf); }
-// pt sam play (I0,0)
-void amcaf_pt_sam_play_2(int32_t, int32_t) { ext3::unsupported(ext3::Id::amcaf); }
-// pt sam play (I0,0,0)
-void amcaf_pt_sam_play_3(int32_t, int32_t, int32_t) { ext3::unsupported(ext3::Id::amcaf); }
-// pt data base (0)
-int32_t amcaf_pt_data_base() { ext3::unsupported(ext3::Id::amcaf); }
-// pt instr play (I0)
-void amcaf_pt_instr_play_1(int32_t) { ext3::unsupported(ext3::Id::amcaf); }
-// pt instr play (I0,0)
-void amcaf_pt_instr_play_2(int32_t, int32_t) { ext3::unsupported(ext3::Id::amcaf); }
-// pt instr play (I0,0,0)
-void amcaf_pt_instr_play_3(int32_t, int32_t, int32_t) { ext3::unsupported(ext3::Id::amcaf); }
-// pt instr address (00)
-int32_t amcaf_pt_instr_address(int32_t) { ext3::unsupported(ext3::Id::amcaf); }
-// pt instr length (00)
-int32_t amcaf_pt_instr_length(int32_t) { ext3::unsupported(ext3::Id::amcaf); }
-// pt cia speed (I0)
-void amcaf_pt_cia_speed(int32_t) { ext3::unsupported(ext3::Id::amcaf); }
-// pt vu (00)
-int32_t amcaf_pt_vu(int32_t) { ext3::unsupported(ext3::Id::amcaf); }
-// pt volume (I0)
-void amcaf_pt_volume(int32_t) { ext3::unsupported(ext3::Id::amcaf); }
-// pt voice (I0)
-void amcaf_pt_voice(int32_t) { ext3::unsupported(ext3::Id::amcaf); }
-// pt bank (I0)
-void amcaf_pt_bank(int32_t) { ext3::unsupported(ext3::Id::amcaf); }
-// pt play (I0)
-void amcaf_pt_play_1(int32_t) { ext3::unsupported(ext3::Id::amcaf); }
-// pt play (I0,0)
-void amcaf_pt_play_2(int32_t, int32_t) { ext3::unsupported(ext3::Id::amcaf); }
-// pt continue (I)
-void amcaf_pt_continue() { ext3::unsupported(ext3::Id::amcaf); }
-// pt stop (I)
-void amcaf_pt_stop() { ext3::unsupported(ext3::Id::amcaf); }
-// pt signal (0)
-int32_t amcaf_pt_signal() { ext3::unsupported(ext3::Id::amcaf); }
 // ptile bank (I0)
 void amcaf_ptile_bank(int32_t) { ext3::unsupported(ext3::Id::amcaf); }
 // paste ptile (I0,0,0)

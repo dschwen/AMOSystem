@@ -38,6 +38,10 @@ Interrupt *vbl_servers[8];
 uint64_t next_frame;            // in microseconds
 bool in_interrupt;
 
+// A timer of the CIAs: its routine and its period (hal::timer_start)
+void (*timer_tick)();
+uint64_t timer_next, timer_period;      // in microseconds
+
 constexpr uint64_t Frame = 20000;
 
 uint64_t now()
@@ -106,6 +110,17 @@ void poll(bool waiting)
     if (!waiting && ++calls & 63)
         return;
     uint64_t t = now();
+    if (timer_tick && t >= timer_next) {
+        // (the ticks missed are not made up for beyond a few)
+        in_interrupt = true;
+        for (int n = 0; timer_tick && t >= timer_next && n < 4; n++) {
+            timer_next += timer_period;
+            timer_tick();
+        }
+        if (t >= timer_next)
+            timer_next = t + timer_period;
+        in_interrupt = false;
+    }
     if (t < next_frame)
         return;
     in_interrupt = true;
@@ -163,6 +178,18 @@ void remove_vbl_server(Interrupt *server)
         if (s == server)
             s = nullptr;
 }
+
+bool timer_start(void (*tick)(), uint32_t microseconds)
+{
+    timer_period = microseconds ? microseconds : 1;
+    timer_next = now() + timer_period;
+    timer_tick = tick;
+    return true;
+}
+
+void timer_change(uint32_t microseconds) { timer_period = microseconds ? microseconds : 1; }
+
+void timer_stop() { timer_tick = nullptr; }
 
 // A wait loop: the interrupts due, a little sleep
 void idle()

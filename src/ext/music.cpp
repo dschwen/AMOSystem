@@ -6,6 +6,7 @@
 #include "core/amiga.h"
 #include "core/ioreq.h"
 #include "ext/music.h"
+#include "ext/vbl.h"
 #include "lib/banks.h"
 #include "lib/strings.h"
 
@@ -782,7 +783,7 @@ void ext_music_init()
     d.ExtAdr[ExtNb * 4 + 1] = address(AMOS_DATA(music_default));
     d.ExtAdr[ExtNb * 4 + 2] = address(AMOS_DATA(music_end));
     d.ExtAdr[ExtNb * 4 + 3] = address(AMOS_DATA(music_bank_check));
-    d.VblRout[0] = guest_callback(ext_music_vbl);
+    ext3::vbl_add(ext_music_vbl);
     m.MusClock = 3546895;
     m.TempoBase = 100;
     Regs r;
@@ -864,7 +865,7 @@ void ext_music_end()
         hal::close_library(ptr<struct Library>(m.TranBase));
     track_stop();
     med_close();
-    idata().VblRout[0] = 0;
+    ext3::vbl_remove(ext_music_vbl);
     samples_remove();
     stop_sound();
     envelopes_off(0x0F);

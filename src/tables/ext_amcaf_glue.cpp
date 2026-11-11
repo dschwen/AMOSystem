@@ -5,7 +5,7 @@ using namespace amos;
 using namespace amos::host;
 
 extern "C" {
-alignas(4) uint8_t host_obj_src_ext_amcaf_glue_s[9010] = {
+alignas(4) uint8_t host_obj_src_ext_amcaf_glue_s[9022] = {
     0,0,0,0,0,3,0,3,76,67,97,108,71,101,116,80,0,0,0,0,0,0,0,0,
     0,3,0,3,76,67,97,108,71,101,116,80,0,0,0,0,0,0,0,0,0,0,0,3,
     76,67,97,108,71,101,116,80,0,0,0,0,0,0,0,0,0,3,0,0,76,67,97,108,
@@ -294,94 +294,94 @@ alignas(4) uint8_t host_obj_src_ext_amcaf_glue_s[9010] = {
     0,0,0,0,0,3,0,3,76,67,97,108,71,101,116,80,0,0,0,0,0,0,0,0,
     0,4,0,3,76,67,97,108,71,101,116,80,0,0,0,0,0,0,0,0,0,9,0,3,
     76,67,97,108,71,101,116,80,0,0,0,0,0,0,0,0,0,4,0,3,76,67,97,108,
-    71,101,116,80,0,0,0,0,0,0,0,0,1,143,0,0,0,0,0,0,0,2,0,0,
-    0,0,0,3,0,0,0,0,0,4,0,0,0,0,0,5,0,0,0,0,0,6,0,0,
-    0,0,0,7,0,0,0,0,0,8,0,0,0,0,0,9,0,0,0,0,0,10,0,0,
-    0,0,0,11,0,0,0,0,0,12,0,0,0,0,0,13,0,0,0,0,0,14,0,0,
-    0,0,0,15,0,0,0,0,0,16,0,0,0,0,0,17,0,0,0,0,0,18,0,0,
-    0,0,0,19,0,0,0,0,0,20,0,0,0,0,0,21,0,0,0,0,0,22,0,0,
-    0,0,0,23,0,0,0,0,0,24,0,0,0,0,0,25,0,0,0,0,0,26,0,0,
-    0,0,0,27,0,0,0,0,0,28,0,0,0,0,0,29,0,0,0,0,0,30,0,0,
-    0,0,0,31,0,0,0,0,0,32,0,0,0,0,0,33,0,0,0,0,0,34,0,0,
-    0,0,0,35,0,0,0,0,0,36,0,0,0,0,0,37,0,0,0,0,0,38,0,0,
-    0,0,0,39,0,0,0,0,0,40,0,0,0,0,0,41,0,0,0,0,0,42,0,0,
-    0,0,0,43,0,0,0,0,0,44,0,0,0,0,0,45,0,0,0,0,0,46,0,0,
-    0,0,0,47,0,0,0,0,0,48,0,0,0,0,0,49,0,0,0,0,0,50,0,0,
-    0,0,0,51,0,0,0,0,0,52,0,0,0,0,0,53,0,0,0,0,0,54,0,0,
-    0,0,0,55,0,0,0,0,0,56,0,0,0,0,0,57,0,0,0,0,0,58,0,0,
-    0,0,0,59,0,0,0,0,0,60,0,0,0,0,0,61,0,0,0,0,0,62,0,0,
-    0,0,0,63,0,0,0,0,0,64,0,0,0,0,0,65,0,0,0,0,0,66,0,0,
-    0,0,0,67,0,0,0,0,0,68,0,0,0,0,0,69,0,0,0,0,0,70,0,0,
-    0,0,0,71,0,0,0,0,0,72,0,0,0,0,0,73,0,0,0,0,0,74,0,0,
-    0,0,0,75,0,0,0,0,0,76,0,0,0,0,0,77,0,0,0,0,0,78,0,0,
-    0,0,0,79,0,0,0,0,0,80,0,0,0,0,0,81,0,0,0,0,0,82,0,0,
-    0,0,0,83,0,0,0,0,0,84,0,0,0,0,0,85,0,0,0,0,0,86,0,0,
-    0,0,0,87,0,0,0,0,0,88,0,0,0,0,0,89,0,0,0,0,0,90,0,0,
-    0,0,0,91,0,0,0,0,0,92,0,0,0,0,0,93,0,0,0,0,0,94,0,0,
-    0,0,0,95,0,0,0,0,0,96,0,0,0,0,0,97,0,0,0,0,0,98,0,0,
-    0,0,0,99,0,0,0,0,0,100,0,0,0,0,0,101,0,0,0,0,0,102,0,0,
-    0,0,0,103,0,0,0,0,0,104,0,0,0,0,0,105,0,0,0,0,0,106,0,0,
-    0,0,0,107,0,0,0,0,0,108,0,0,0,0,0,109,0,0,0,0,0,110,0,0,
-    0,0,0,111,0,0,0,0,0,112,0,0,0,0,0,113,0,0,0,0,0,114,0,0,
-    0,0,0,115,0,0,0,0,0,116,0,0,0,0,0,117,0,0,0,0,0,118,0,0,
-    0,0,0,119,0,0,0,0,0,120,0,0,0,0,0,121,0,0,0,0,0,122,0,0,
-    0,0,0,123,0,0,0,0,0,124,0,0,0,0,0,125,0,0,0,0,0,126,0,0,
-    0,0,0,127,0,0,0,0,0,128,0,0,0,0,0,129,0,0,0,0,0,130,0,0,
-    0,0,0,131,0,0,0,0,0,132,0,0,0,0,0,133,0,0,0,0,0,134,0,0,
-    0,0,0,135,0,0,0,0,0,136,0,0,0,0,0,137,0,0,0,0,0,138,0,0,
-    0,0,0,139,0,0,0,0,0,140,0,0,0,0,0,141,0,0,0,0,0,142,0,0,
-    0,0,0,143,0,0,0,0,0,144,0,0,0,0,0,145,0,0,0,0,0,146,0,0,
-    0,0,0,147,0,0,0,0,0,148,0,0,0,0,0,149,0,0,0,0,0,150,0,0,
-    0,0,0,152,0,0,0,0,0,153,0,0,0,0,0,154,0,0,0,0,0,160,0,0,
-    0,0,0,161,0,0,0,0,0,162,0,0,0,0,0,163,0,0,0,0,0,164,0,0,
-    0,0,0,165,0,0,0,0,0,166,0,0,0,0,0,167,0,0,0,0,0,168,0,0,
-    0,0,0,169,0,0,0,0,0,170,0,0,0,0,0,171,0,0,0,0,0,172,0,0,
-    0,0,0,173,0,0,0,0,0,174,0,0,0,0,0,175,0,0,0,0,0,176,0,0,
-    0,0,0,177,0,0,0,0,0,178,0,0,0,0,0,179,0,0,0,0,0,180,0,0,
-    0,0,0,181,0,0,0,0,0,182,0,0,0,0,0,183,0,0,0,0,0,184,0,0,
-    0,0,0,185,0,0,0,0,0,186,0,0,0,0,0,187,0,0,0,0,0,188,0,0,
-    0,0,0,189,0,0,0,0,0,190,0,0,0,0,0,191,0,0,0,0,0,192,0,0,
-    0,0,0,193,0,0,0,0,0,194,0,0,0,0,0,195,0,0,0,0,0,196,0,0,
-    0,0,0,197,0,0,0,0,0,198,0,0,0,0,0,199,0,0,0,0,0,200,0,0,
-    0,0,0,201,0,0,0,0,0,202,0,0,0,0,0,203,0,0,0,0,0,204,0,0,
-    0,0,0,205,0,0,0,0,0,206,0,0,0,0,0,207,0,0,0,0,0,208,0,0,
-    0,0,0,209,0,0,0,0,0,210,0,0,0,0,0,211,0,0,0,0,0,212,0,0,
-    0,0,0,213,0,0,0,0,0,214,0,0,0,0,0,215,0,0,0,0,0,216,0,0,
-    0,0,0,217,0,0,0,0,0,218,0,0,0,0,0,219,0,0,0,0,0,220,0,0,
-    0,0,0,221,0,0,0,0,0,222,0,0,0,0,0,223,0,0,0,0,0,224,0,0,
-    0,0,0,225,0,0,0,0,0,226,0,0,0,0,0,227,0,0,0,0,0,228,0,0,
-    0,0,0,229,0,0,0,0,0,230,0,0,0,0,0,231,0,0,0,0,0,232,0,0,
-    0,0,0,233,0,0,0,0,0,234,0,0,0,0,0,235,0,0,0,0,0,236,0,0,
-    0,0,0,237,0,0,0,0,0,238,0,0,0,0,0,239,0,0,0,0,0,240,0,0,
-    0,0,0,241,0,0,0,0,0,242,0,0,0,0,0,243,0,0,0,0,0,244,0,0,
-    0,0,0,245,0,0,0,0,0,246,0,0,0,0,0,247,0,0,0,0,0,248,0,0,
-    0,0,0,249,0,0,0,0,0,250,0,0,0,0,0,251,0,0,0,0,0,252,0,0,
-    0,0,0,253,0,0,0,0,0,254,0,0,0,0,0,255,0,0,0,0,1,0,0,0,
-    0,0,1,1,0,0,0,0,1,2,0,0,0,0,1,3,0,0,0,0,1,4,0,0,
-    0,0,1,5,0,0,0,0,1,6,0,0,0,0,1,7,0,0,0,0,1,8,0,0,
-    0,0,1,9,0,0,0,0,1,10,0,0,0,0,1,11,0,0,0,0,1,12,0,0,
-    0,0,1,13,0,0,0,0,1,14,0,0,0,0,1,15,0,0,0,0,1,16,0,0,
-    0,0,1,17,0,0,0,0,1,18,0,0,0,0,1,19,0,0,0,0,1,20,0,0,
-    0,0,1,21,0,0,0,0,1,22,0,0,0,0,1,23,0,0,0,0,1,24,0,0,
-    0,0,1,25,0,0,0,0,1,26,0,0,0,0,1,27,0,0,0,0,1,28,0,0,
-    0,0,1,29,0,0,0,0,1,30,0,0,0,0,1,31,0,0,0,0,1,32,0,0,
-    0,0,1,33,0,0,0,0,1,34,0,0,0,0,1,35,0,0,0,0,1,36,0,0,
-    0,0,1,37,0,0,0,0,1,38,0,0,0,0,1,39,0,0,0,0,1,40,0,0,
-    0,0,1,41,0,0,0,0,1,42,0,0,0,0,1,43,0,0,0,0,1,44,0,0,
-    0,0,1,45,0,0,0,0,1,46,0,0,0,0,1,47,0,0,0,0,1,48,0,0,
-    0,0,1,49,0,0,0,0,1,50,0,0,0,0,1,51,0,0,0,0,1,52,0,0,
-    0,0,1,53,0,0,0,0,1,54,0,0,0,0,1,55,0,0,0,0,1,56,0,0,
-    0,0,1,57,0,0,0,0,1,58,0,0,0,0,1,59,0,0,0,0,1,60,0,0,
-    0,0,1,61,0,0,0,0,1,62,0,0,0,0,1,63,0,0,0,0,1,64,0,0,
-    0,0,1,65,0,0,0,0,1,66,0,0,0,0,1,67,0,0,0,0,1,68,0,0,
-    0,0,1,69,0,0,0,0,1,70,0,0,0,0,1,71,0,0,0,0,1,72,0,0,
-    0,0,1,73,0,0,0,0,1,74,0,0,0,0,1,75,0,0,0,0,1,76,0,0,
-    0,0,1,77,0,0,0,0,1,78,0,0,0,0,1,79,0,0,0,0,1,80,0,0,
-    0,0,1,81,0,0,0,0,1,82,0,0,0,0,1,83,0,0,0,0,1,84,0,0,
-    0,0,1,85,0,0,0,0,1,86,0,0,0,0,1,87,0,0,0,0,1,88,0,0,
-    0,0,1,89,0,0,0,0,1,90,0,0,0,0,1,91,0,0,0,0,1,92,0,0,
-    0,0,1,93,0,0,0,0,1,94,0,0,0,0,1,95,0,0,0,0,1,96,0,0,
-    0,0,1,97,0,0,0,0,0,0};
+    71,101,116,80,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+    1,143,0,0,0,0,0,0,0,2,0,0,0,0,0,3,0,0,0,0,0,4,0,0,
+    0,0,0,5,0,0,0,0,0,6,0,0,0,0,0,7,0,0,0,0,0,8,0,0,
+    0,0,0,9,0,0,0,0,0,10,0,0,0,0,0,11,0,0,0,0,0,12,0,0,
+    0,0,0,13,0,0,0,0,0,14,0,0,0,0,0,15,0,0,0,0,0,16,0,0,
+    0,0,0,17,0,0,0,0,0,18,0,0,0,0,0,19,0,0,0,0,0,20,0,0,
+    0,0,0,21,0,0,0,0,0,22,0,0,0,0,0,23,0,0,0,0,0,24,0,0,
+    0,0,0,25,0,0,0,0,0,26,0,0,0,0,0,27,0,0,0,0,0,28,0,0,
+    0,0,0,29,0,0,0,0,0,30,0,0,0,0,0,31,0,0,0,0,0,32,0,0,
+    0,0,0,33,0,0,0,0,0,34,0,0,0,0,0,35,0,0,0,0,0,36,0,0,
+    0,0,0,37,0,0,0,0,0,38,0,0,0,0,0,39,0,0,0,0,0,40,0,0,
+    0,0,0,41,0,0,0,0,0,42,0,0,0,0,0,43,0,0,0,0,0,44,0,0,
+    0,0,0,45,0,0,0,0,0,46,0,0,0,0,0,47,0,0,0,0,0,48,0,0,
+    0,0,0,49,0,0,0,0,0,50,0,0,0,0,0,51,0,0,0,0,0,52,0,0,
+    0,0,0,53,0,0,0,0,0,54,0,0,0,0,0,55,0,0,0,0,0,56,0,0,
+    0,0,0,57,0,0,0,0,0,58,0,0,0,0,0,59,0,0,0,0,0,60,0,0,
+    0,0,0,61,0,0,0,0,0,62,0,0,0,0,0,63,0,0,0,0,0,64,0,0,
+    0,0,0,65,0,0,0,0,0,66,0,0,0,0,0,67,0,0,0,0,0,68,0,0,
+    0,0,0,69,0,0,0,0,0,70,0,0,0,0,0,71,0,0,0,0,0,72,0,0,
+    0,0,0,73,0,0,0,0,0,74,0,0,0,0,0,75,0,0,0,0,0,76,0,0,
+    0,0,0,77,0,0,0,0,0,78,0,0,0,0,0,79,0,0,0,0,0,80,0,0,
+    0,0,0,81,0,0,0,0,0,82,0,0,0,0,0,83,0,0,0,0,0,84,0,0,
+    0,0,0,85,0,0,0,0,0,86,0,0,0,0,0,87,0,0,0,0,0,88,0,0,
+    0,0,0,89,0,0,0,0,0,90,0,0,0,0,0,91,0,0,0,0,0,92,0,0,
+    0,0,0,93,0,0,0,0,0,94,0,0,0,0,0,95,0,0,0,0,0,96,0,0,
+    0,0,0,97,0,0,0,0,0,98,0,0,0,0,0,99,0,0,0,0,0,100,0,0,
+    0,0,0,101,0,0,0,0,0,102,0,0,0,0,0,103,0,0,0,0,0,104,0,0,
+    0,0,0,105,0,0,0,0,0,106,0,0,0,0,0,107,0,0,0,0,0,108,0,0,
+    0,0,0,109,0,0,0,0,0,110,0,0,0,0,0,111,0,0,0,0,0,112,0,0,
+    0,0,0,113,0,0,0,0,0,114,0,0,0,0,0,115,0,0,0,0,0,116,0,0,
+    0,0,0,117,0,0,0,0,0,118,0,0,0,0,0,119,0,0,0,0,0,120,0,0,
+    0,0,0,121,0,0,0,0,0,122,0,0,0,0,0,123,0,0,0,0,0,124,0,0,
+    0,0,0,125,0,0,0,0,0,126,0,0,0,0,0,127,0,0,0,0,0,128,0,0,
+    0,0,0,129,0,0,0,0,0,130,0,0,0,0,0,131,0,0,0,0,0,132,0,0,
+    0,0,0,133,0,0,0,0,0,134,0,0,0,0,0,135,0,0,0,0,0,136,0,0,
+    0,0,0,137,0,0,0,0,0,138,0,0,0,0,0,139,0,0,0,0,0,140,0,0,
+    0,0,0,141,0,0,0,0,0,142,0,0,0,0,0,143,0,0,0,0,0,144,0,0,
+    0,0,0,145,0,0,0,0,0,146,0,0,0,0,0,147,0,0,0,0,0,148,0,0,
+    0,0,0,149,0,0,0,0,0,150,0,0,0,0,0,152,0,0,0,0,0,153,0,0,
+    0,0,0,154,0,0,0,0,0,160,0,0,0,0,0,161,0,0,0,0,0,162,0,0,
+    0,0,0,163,0,0,0,0,0,164,0,0,0,0,0,165,0,0,0,0,0,166,0,0,
+    0,0,0,167,0,0,0,0,0,168,0,0,0,0,0,169,0,0,0,0,0,170,0,0,
+    0,0,0,171,0,0,0,0,0,172,0,0,0,0,0,173,0,0,0,0,0,174,0,0,
+    0,0,0,175,0,0,0,0,0,176,0,0,0,0,0,177,0,0,0,0,0,178,0,0,
+    0,0,0,179,0,0,0,0,0,180,0,0,0,0,0,181,0,0,0,0,0,182,0,0,
+    0,0,0,183,0,0,0,0,0,184,0,0,0,0,0,185,0,0,0,0,0,186,0,0,
+    0,0,0,187,0,0,0,0,0,188,0,0,0,0,0,189,0,0,0,0,0,190,0,0,
+    0,0,0,191,0,0,0,0,0,192,0,0,0,0,0,193,0,0,0,0,0,194,0,0,
+    0,0,0,195,0,0,0,0,0,196,0,0,0,0,0,197,0,0,0,0,0,198,0,0,
+    0,0,0,199,0,0,0,0,0,200,0,0,0,0,0,201,0,0,0,0,0,202,0,0,
+    0,0,0,203,0,0,0,0,0,204,0,0,0,0,0,205,0,0,0,0,0,206,0,0,
+    0,0,0,207,0,0,0,0,0,208,0,0,0,0,0,209,0,0,0,0,0,210,0,0,
+    0,0,0,211,0,0,0,0,0,212,0,0,0,0,0,213,0,0,0,0,0,214,0,0,
+    0,0,0,215,0,0,0,0,0,216,0,0,0,0,0,217,0,0,0,0,0,218,0,0,
+    0,0,0,219,0,0,0,0,0,220,0,0,0,0,0,221,0,0,0,0,0,222,0,0,
+    0,0,0,223,0,0,0,0,0,224,0,0,0,0,0,225,0,0,0,0,0,226,0,0,
+    0,0,0,227,0,0,0,0,0,228,0,0,0,0,0,229,0,0,0,0,0,230,0,0,
+    0,0,0,231,0,0,0,0,0,232,0,0,0,0,0,233,0,0,0,0,0,234,0,0,
+    0,0,0,235,0,0,0,0,0,236,0,0,0,0,0,237,0,0,0,0,0,238,0,0,
+    0,0,0,239,0,0,0,0,0,240,0,0,0,0,0,241,0,0,0,0,0,242,0,0,
+    0,0,0,243,0,0,0,0,0,244,0,0,0,0,0,245,0,0,0,0,0,246,0,0,
+    0,0,0,247,0,0,0,0,0,248,0,0,0,0,0,249,0,0,0,0,0,250,0,0,
+    0,0,0,251,0,0,0,0,0,252,0,0,0,0,0,253,0,0,0,0,0,254,0,0,
+    0,0,0,255,0,0,0,0,1,0,0,0,0,0,1,1,0,0,0,0,1,2,0,0,
+    0,0,1,3,0,0,0,0,1,4,0,0,0,0,1,5,0,0,0,0,1,6,0,0,
+    0,0,1,7,0,0,0,0,1,8,0,0,0,0,1,9,0,0,0,0,1,10,0,0,
+    0,0,1,11,0,0,0,0,1,12,0,0,0,0,1,13,0,0,0,0,1,14,0,0,
+    0,0,1,15,0,0,0,0,1,16,0,0,0,0,1,17,0,0,0,0,1,18,0,0,
+    0,0,1,19,0,0,0,0,1,20,0,0,0,0,1,21,0,0,0,0,1,22,0,0,
+    0,0,1,23,0,0,0,0,1,24,0,0,0,0,1,25,0,0,0,0,1,26,0,0,
+    0,0,1,27,0,0,0,0,1,28,0,0,0,0,1,29,0,0,0,0,1,30,0,0,
+    0,0,1,31,0,0,0,0,1,32,0,0,0,0,1,33,0,0,0,0,1,34,0,0,
+    0,0,1,35,0,0,0,0,1,36,0,0,0,0,1,37,0,0,0,0,1,38,0,0,
+    0,0,1,39,0,0,0,0,1,40,0,0,0,0,1,41,0,0,0,0,1,42,0,0,
+    0,0,1,43,0,0,0,0,1,44,0,0,0,0,1,45,0,0,0,0,1,46,0,0,
+    0,0,1,47,0,0,0,0,1,48,0,0,0,0,1,49,0,0,0,0,1,50,0,0,
+    0,0,1,51,0,0,0,0,1,52,0,0,0,0,1,53,0,0,0,0,1,54,0,0,
+    0,0,1,55,0,0,0,0,1,56,0,0,0,0,1,57,0,0,0,0,1,58,0,0,
+    0,0,1,59,0,0,0,0,1,60,0,0,0,0,1,61,0,0,0,0,1,62,0,0,
+    0,0,1,63,0,0,0,0,1,64,0,0,0,0,1,65,0,0,0,0,1,66,0,0,
+    0,0,1,67,0,0,0,0,1,68,0,0,0,0,1,69,0,0,0,0,1,70,0,0,
+    0,0,1,71,0,0,0,0,1,72,0,0,0,0,1,73,0,0,0,0,1,74,0,0,
+    0,0,1,75,0,0,0,0,1,76,0,0,0,0,1,77,0,0,0,0,1,78,0,0,
+    0,0,1,79,0,0,0,0,1,80,0,0,0,0,1,81,0,0,0,0,1,82,0,0,
+    0,0,1,83,0,0,0,0,1,84,0,0,0,0,1,85,0,0,0,0,1,86,0,0,
+    0,0,1,87,0,0,0,0,1,88,0,0,0,0,1,89,0,0,0,0,1,90,0,0,
+    0,0,1,91,0,0,0,0,1,92,0,0,0,0,1,93,0,0,0,0,1,94,0,0,
+    0,0,1,95,0,0,0,0,1,96,0,0,0,0,1,97,0,0,0,0,0,0};
 }
 
 namespace amos::host {
@@ -734,353 +734,353 @@ void relocate_src_ext_amcaf_glue_s()
     AMOS_LIBRARY_METADATA(host_obj_src_ext_amcaf_glue_s + 6860, amcaf_fellipse);
     AMOS_LIBRARY_METADATA(host_obj_src_ext_amcaf_glue_s + 6880, amcaf_bzoom);
     AMOS_LIBRARY_METADATA(host_obj_src_ext_amcaf_glue_s + 6900, amcaf_bcircle);
-    put(host_obj_src_ext_amcaf_glue_s + 6928, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 6920));
-    put(host_obj_src_ext_amcaf_glue_s + 6934, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 16));
-    put(host_obj_src_ext_amcaf_glue_s + 6940, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 36));
-    put(host_obj_src_ext_amcaf_glue_s + 6946, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 56));
-    put(host_obj_src_ext_amcaf_glue_s + 6952, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 76));
-    put(host_obj_src_ext_amcaf_glue_s + 6958, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 96));
-    put(host_obj_src_ext_amcaf_glue_s + 6964, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 116));
-    put(host_obj_src_ext_amcaf_glue_s + 6970, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 136));
-    put(host_obj_src_ext_amcaf_glue_s + 6976, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 156));
-    put(host_obj_src_ext_amcaf_glue_s + 6982, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 176));
-    put(host_obj_src_ext_amcaf_glue_s + 6988, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 196));
-    put(host_obj_src_ext_amcaf_glue_s + 6994, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 216));
-    put(host_obj_src_ext_amcaf_glue_s + 7000, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 236));
-    put(host_obj_src_ext_amcaf_glue_s + 7006, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 256));
-    put(host_obj_src_ext_amcaf_glue_s + 7012, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 276));
-    put(host_obj_src_ext_amcaf_glue_s + 7018, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 296));
-    put(host_obj_src_ext_amcaf_glue_s + 7024, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 316));
-    put(host_obj_src_ext_amcaf_glue_s + 7030, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 336));
-    put(host_obj_src_ext_amcaf_glue_s + 7036, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 356));
-    put(host_obj_src_ext_amcaf_glue_s + 7042, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 376));
-    put(host_obj_src_ext_amcaf_glue_s + 7048, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 396));
-    put(host_obj_src_ext_amcaf_glue_s + 7054, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 416));
-    put(host_obj_src_ext_amcaf_glue_s + 7060, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 436));
-    put(host_obj_src_ext_amcaf_glue_s + 7066, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 456));
-    put(host_obj_src_ext_amcaf_glue_s + 7072, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 476));
-    put(host_obj_src_ext_amcaf_glue_s + 7078, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 496));
-    put(host_obj_src_ext_amcaf_glue_s + 7084, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 516));
-    put(host_obj_src_ext_amcaf_glue_s + 7090, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 536));
-    put(host_obj_src_ext_amcaf_glue_s + 7096, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 556));
-    put(host_obj_src_ext_amcaf_glue_s + 7102, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 576));
-    put(host_obj_src_ext_amcaf_glue_s + 7108, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 596));
-    put(host_obj_src_ext_amcaf_glue_s + 7114, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 616));
-    put(host_obj_src_ext_amcaf_glue_s + 7120, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 636));
-    put(host_obj_src_ext_amcaf_glue_s + 7126, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 656));
-    put(host_obj_src_ext_amcaf_glue_s + 7132, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 676));
-    put(host_obj_src_ext_amcaf_glue_s + 7138, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 696));
-    put(host_obj_src_ext_amcaf_glue_s + 7144, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 716));
-    put(host_obj_src_ext_amcaf_glue_s + 7150, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 736));
-    put(host_obj_src_ext_amcaf_glue_s + 7156, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 756));
-    put(host_obj_src_ext_amcaf_glue_s + 7162, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 776));
-    put(host_obj_src_ext_amcaf_glue_s + 7168, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 796));
-    put(host_obj_src_ext_amcaf_glue_s + 7174, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 816));
-    put(host_obj_src_ext_amcaf_glue_s + 7180, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 836));
-    put(host_obj_src_ext_amcaf_glue_s + 7186, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 856));
-    put(host_obj_src_ext_amcaf_glue_s + 7192, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 876));
-    put(host_obj_src_ext_amcaf_glue_s + 7198, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 896));
-    put(host_obj_src_ext_amcaf_glue_s + 7204, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 916));
-    put(host_obj_src_ext_amcaf_glue_s + 7210, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 936));
-    put(host_obj_src_ext_amcaf_glue_s + 7216, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 956));
-    put(host_obj_src_ext_amcaf_glue_s + 7222, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 976));
-    put(host_obj_src_ext_amcaf_glue_s + 7228, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 996));
-    put(host_obj_src_ext_amcaf_glue_s + 7234, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 1016));
-    put(host_obj_src_ext_amcaf_glue_s + 7240, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 1036));
-    put(host_obj_src_ext_amcaf_glue_s + 7246, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 1056));
-    put(host_obj_src_ext_amcaf_glue_s + 7252, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 1076));
-    put(host_obj_src_ext_amcaf_glue_s + 7258, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 1096));
-    put(host_obj_src_ext_amcaf_glue_s + 7264, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 1116));
-    put(host_obj_src_ext_amcaf_glue_s + 7270, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 1136));
-    put(host_obj_src_ext_amcaf_glue_s + 7276, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 1156));
-    put(host_obj_src_ext_amcaf_glue_s + 7282, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 1176));
-    put(host_obj_src_ext_amcaf_glue_s + 7288, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 1196));
-    put(host_obj_src_ext_amcaf_glue_s + 7294, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 1216));
-    put(host_obj_src_ext_amcaf_glue_s + 7300, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 1236));
-    put(host_obj_src_ext_amcaf_glue_s + 7306, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 1256));
-    put(host_obj_src_ext_amcaf_glue_s + 7312, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 1276));
-    put(host_obj_src_ext_amcaf_glue_s + 7318, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 1296));
-    put(host_obj_src_ext_amcaf_glue_s + 7324, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 1316));
-    put(host_obj_src_ext_amcaf_glue_s + 7330, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 1336));
-    put(host_obj_src_ext_amcaf_glue_s + 7336, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 1356));
-    put(host_obj_src_ext_amcaf_glue_s + 7342, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 1376));
-    put(host_obj_src_ext_amcaf_glue_s + 7348, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 1396));
-    put(host_obj_src_ext_amcaf_glue_s + 7354, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 1416));
-    put(host_obj_src_ext_amcaf_glue_s + 7360, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 1436));
-    put(host_obj_src_ext_amcaf_glue_s + 7366, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 1456));
-    put(host_obj_src_ext_amcaf_glue_s + 7372, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 1476));
-    put(host_obj_src_ext_amcaf_glue_s + 7378, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 1496));
-    put(host_obj_src_ext_amcaf_glue_s + 7384, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 1516));
-    put(host_obj_src_ext_amcaf_glue_s + 7390, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 1536));
-    put(host_obj_src_ext_amcaf_glue_s + 7396, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 1556));
-    put(host_obj_src_ext_amcaf_glue_s + 7402, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 1576));
-    put(host_obj_src_ext_amcaf_glue_s + 7408, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 1596));
-    put(host_obj_src_ext_amcaf_glue_s + 7414, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 1616));
-    put(host_obj_src_ext_amcaf_glue_s + 7420, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 1636));
-    put(host_obj_src_ext_amcaf_glue_s + 7426, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 1656));
-    put(host_obj_src_ext_amcaf_glue_s + 7432, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 1676));
-    put(host_obj_src_ext_amcaf_glue_s + 7438, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 1696));
-    put(host_obj_src_ext_amcaf_glue_s + 7444, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 1716));
-    put(host_obj_src_ext_amcaf_glue_s + 7450, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 1736));
-    put(host_obj_src_ext_amcaf_glue_s + 7456, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 1756));
-    put(host_obj_src_ext_amcaf_glue_s + 7462, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 1776));
-    put(host_obj_src_ext_amcaf_glue_s + 7468, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 1796));
-    put(host_obj_src_ext_amcaf_glue_s + 7474, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 1816));
-    put(host_obj_src_ext_amcaf_glue_s + 7480, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 1836));
-    put(host_obj_src_ext_amcaf_glue_s + 7486, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 1856));
-    put(host_obj_src_ext_amcaf_glue_s + 7492, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 1876));
-    put(host_obj_src_ext_amcaf_glue_s + 7498, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 1896));
-    put(host_obj_src_ext_amcaf_glue_s + 7504, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 1916));
-    put(host_obj_src_ext_amcaf_glue_s + 7510, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 1936));
-    put(host_obj_src_ext_amcaf_glue_s + 7516, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 1956));
-    put(host_obj_src_ext_amcaf_glue_s + 7522, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 1976));
-    put(host_obj_src_ext_amcaf_glue_s + 7528, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 1996));
-    put(host_obj_src_ext_amcaf_glue_s + 7534, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 2016));
-    put(host_obj_src_ext_amcaf_glue_s + 7540, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 2036));
-    put(host_obj_src_ext_amcaf_glue_s + 7546, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 2056));
-    put(host_obj_src_ext_amcaf_glue_s + 7552, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 2076));
-    put(host_obj_src_ext_amcaf_glue_s + 7558, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 2096));
-    put(host_obj_src_ext_amcaf_glue_s + 7564, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 2116));
-    put(host_obj_src_ext_amcaf_glue_s + 7570, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 2136));
-    put(host_obj_src_ext_amcaf_glue_s + 7576, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 2156));
-    put(host_obj_src_ext_amcaf_glue_s + 7582, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 2176));
-    put(host_obj_src_ext_amcaf_glue_s + 7588, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 2196));
-    put(host_obj_src_ext_amcaf_glue_s + 7594, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 2216));
-    put(host_obj_src_ext_amcaf_glue_s + 7600, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 2236));
-    put(host_obj_src_ext_amcaf_glue_s + 7606, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 2256));
-    put(host_obj_src_ext_amcaf_glue_s + 7612, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 2276));
-    put(host_obj_src_ext_amcaf_glue_s + 7618, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 2296));
-    put(host_obj_src_ext_amcaf_glue_s + 7624, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 2316));
-    put(host_obj_src_ext_amcaf_glue_s + 7630, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 2336));
-    put(host_obj_src_ext_amcaf_glue_s + 7636, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 2356));
-    put(host_obj_src_ext_amcaf_glue_s + 7642, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 2376));
-    put(host_obj_src_ext_amcaf_glue_s + 7648, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 2396));
-    put(host_obj_src_ext_amcaf_glue_s + 7654, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 2416));
-    put(host_obj_src_ext_amcaf_glue_s + 7660, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 2436));
-    put(host_obj_src_ext_amcaf_glue_s + 7666, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 2456));
-    put(host_obj_src_ext_amcaf_glue_s + 7672, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 2476));
-    put(host_obj_src_ext_amcaf_glue_s + 7678, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 2496));
-    put(host_obj_src_ext_amcaf_glue_s + 7684, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 2516));
-    put(host_obj_src_ext_amcaf_glue_s + 7690, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 2536));
-    put(host_obj_src_ext_amcaf_glue_s + 7696, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 2556));
-    put(host_obj_src_ext_amcaf_glue_s + 7702, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 2576));
-    put(host_obj_src_ext_amcaf_glue_s + 7708, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 2596));
-    put(host_obj_src_ext_amcaf_glue_s + 7714, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 2616));
-    put(host_obj_src_ext_amcaf_glue_s + 7720, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 2636));
-    put(host_obj_src_ext_amcaf_glue_s + 7726, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 2656));
-    put(host_obj_src_ext_amcaf_glue_s + 7732, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 2676));
-    put(host_obj_src_ext_amcaf_glue_s + 7738, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 2696));
-    put(host_obj_src_ext_amcaf_glue_s + 7744, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 2716));
-    put(host_obj_src_ext_amcaf_glue_s + 7750, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 2736));
-    put(host_obj_src_ext_amcaf_glue_s + 7756, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 2756));
-    put(host_obj_src_ext_amcaf_glue_s + 7762, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 2776));
-    put(host_obj_src_ext_amcaf_glue_s + 7768, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 2796));
-    put(host_obj_src_ext_amcaf_glue_s + 7774, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 2816));
-    put(host_obj_src_ext_amcaf_glue_s + 7780, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 2836));
-    put(host_obj_src_ext_amcaf_glue_s + 7786, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 2856));
-    put(host_obj_src_ext_amcaf_glue_s + 7792, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 2876));
-    put(host_obj_src_ext_amcaf_glue_s + 7798, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 2896));
-    put(host_obj_src_ext_amcaf_glue_s + 7804, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 2916));
-    put(host_obj_src_ext_amcaf_glue_s + 7810, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 2936));
-    put(host_obj_src_ext_amcaf_glue_s + 7816, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 2956));
-    put(host_obj_src_ext_amcaf_glue_s + 7822, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 2976));
-    put(host_obj_src_ext_amcaf_glue_s + 7828, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 2996));
-    put(host_obj_src_ext_amcaf_glue_s + 7834, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 3016));
-    put(host_obj_src_ext_amcaf_glue_s + 7840, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 3036));
-    put(host_obj_src_ext_amcaf_glue_s + 7846, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 3056));
-    put(host_obj_src_ext_amcaf_glue_s + 7852, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 3076));
-    put(host_obj_src_ext_amcaf_glue_s + 7858, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 3096));
-    put(host_obj_src_ext_amcaf_glue_s + 7864, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 3116));
-    put(host_obj_src_ext_amcaf_glue_s + 7870, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 3136));
-    put(host_obj_src_ext_amcaf_glue_s + 7876, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 3156));
-    put(host_obj_src_ext_amcaf_glue_s + 7882, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 3176));
-    put(host_obj_src_ext_amcaf_glue_s + 7888, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 3196));
-    put(host_obj_src_ext_amcaf_glue_s + 7894, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 3216));
-    put(host_obj_src_ext_amcaf_glue_s + 7900, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 3236));
-    put(host_obj_src_ext_amcaf_glue_s + 7906, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 3256));
-    put(host_obj_src_ext_amcaf_glue_s + 7912, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 3276));
-    put(host_obj_src_ext_amcaf_glue_s + 7918, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 3296));
-    put(host_obj_src_ext_amcaf_glue_s + 7924, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 3316));
-    put(host_obj_src_ext_amcaf_glue_s + 7930, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 3336));
-    put(host_obj_src_ext_amcaf_glue_s + 7936, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 3356));
-    put(host_obj_src_ext_amcaf_glue_s + 7942, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 3376));
-    put(host_obj_src_ext_amcaf_glue_s + 7948, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 3396));
-    put(host_obj_src_ext_amcaf_glue_s + 7954, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 3416));
-    put(host_obj_src_ext_amcaf_glue_s + 7960, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 3436));
-    put(host_obj_src_ext_amcaf_glue_s + 7966, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 3456));
-    put(host_obj_src_ext_amcaf_glue_s + 7972, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 3476));
-    put(host_obj_src_ext_amcaf_glue_s + 7978, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 3496));
-    put(host_obj_src_ext_amcaf_glue_s + 7984, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 3516));
-    put(host_obj_src_ext_amcaf_glue_s + 7990, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 3536));
-    put(host_obj_src_ext_amcaf_glue_s + 7996, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 3556));
-    put(host_obj_src_ext_amcaf_glue_s + 8002, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 3576));
-    put(host_obj_src_ext_amcaf_glue_s + 8008, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 3596));
-    put(host_obj_src_ext_amcaf_glue_s + 8014, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 3616));
-    put(host_obj_src_ext_amcaf_glue_s + 8020, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 3636));
-    put(host_obj_src_ext_amcaf_glue_s + 8026, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 3656));
-    put(host_obj_src_ext_amcaf_glue_s + 8032, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 3676));
-    put(host_obj_src_ext_amcaf_glue_s + 8038, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 3696));
-    put(host_obj_src_ext_amcaf_glue_s + 8044, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 3716));
-    put(host_obj_src_ext_amcaf_glue_s + 8050, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 3736));
-    put(host_obj_src_ext_amcaf_glue_s + 8056, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 3756));
-    put(host_obj_src_ext_amcaf_glue_s + 8062, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 3776));
-    put(host_obj_src_ext_amcaf_glue_s + 8068, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 3796));
-    put(host_obj_src_ext_amcaf_glue_s + 8074, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 3816));
-    put(host_obj_src_ext_amcaf_glue_s + 8080, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 3836));
-    put(host_obj_src_ext_amcaf_glue_s + 8086, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 3856));
-    put(host_obj_src_ext_amcaf_glue_s + 8092, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 3876));
-    put(host_obj_src_ext_amcaf_glue_s + 8098, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 3896));
-    put(host_obj_src_ext_amcaf_glue_s + 8104, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 3916));
-    put(host_obj_src_ext_amcaf_glue_s + 8110, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 3936));
-    put(host_obj_src_ext_amcaf_glue_s + 8116, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 3956));
-    put(host_obj_src_ext_amcaf_glue_s + 8122, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 3976));
-    put(host_obj_src_ext_amcaf_glue_s + 8128, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 3996));
-    put(host_obj_src_ext_amcaf_glue_s + 8134, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 4016));
-    put(host_obj_src_ext_amcaf_glue_s + 8140, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 4036));
-    put(host_obj_src_ext_amcaf_glue_s + 8146, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 4056));
-    put(host_obj_src_ext_amcaf_glue_s + 8152, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 4076));
-    put(host_obj_src_ext_amcaf_glue_s + 8158, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 4096));
-    put(host_obj_src_ext_amcaf_glue_s + 8164, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 4116));
-    put(host_obj_src_ext_amcaf_glue_s + 8170, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 4136));
-    put(host_obj_src_ext_amcaf_glue_s + 8176, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 4156));
-    put(host_obj_src_ext_amcaf_glue_s + 8182, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 4176));
-    put(host_obj_src_ext_amcaf_glue_s + 8188, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 4196));
-    put(host_obj_src_ext_amcaf_glue_s + 8194, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 4216));
-    put(host_obj_src_ext_amcaf_glue_s + 8200, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 4236));
-    put(host_obj_src_ext_amcaf_glue_s + 8206, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 4256));
-    put(host_obj_src_ext_amcaf_glue_s + 8212, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 4276));
-    put(host_obj_src_ext_amcaf_glue_s + 8218, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 4296));
-    put(host_obj_src_ext_amcaf_glue_s + 8224, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 4316));
-    put(host_obj_src_ext_amcaf_glue_s + 8230, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 4336));
-    put(host_obj_src_ext_amcaf_glue_s + 8236, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 4356));
-    put(host_obj_src_ext_amcaf_glue_s + 8242, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 4376));
-    put(host_obj_src_ext_amcaf_glue_s + 8248, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 4396));
-    put(host_obj_src_ext_amcaf_glue_s + 8254, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 4416));
-    put(host_obj_src_ext_amcaf_glue_s + 8260, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 4436));
-    put(host_obj_src_ext_amcaf_glue_s + 8266, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 4456));
-    put(host_obj_src_ext_amcaf_glue_s + 8272, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 4476));
-    put(host_obj_src_ext_amcaf_glue_s + 8278, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 4496));
-    put(host_obj_src_ext_amcaf_glue_s + 8284, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 4516));
-    put(host_obj_src_ext_amcaf_glue_s + 8290, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 4536));
-    put(host_obj_src_ext_amcaf_glue_s + 8296, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 4556));
-    put(host_obj_src_ext_amcaf_glue_s + 8302, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 4576));
-    put(host_obj_src_ext_amcaf_glue_s + 8308, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 4596));
-    put(host_obj_src_ext_amcaf_glue_s + 8314, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 4616));
-    put(host_obj_src_ext_amcaf_glue_s + 8320, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 4636));
-    put(host_obj_src_ext_amcaf_glue_s + 8326, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 4656));
-    put(host_obj_src_ext_amcaf_glue_s + 8332, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 4676));
-    put(host_obj_src_ext_amcaf_glue_s + 8338, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 4696));
-    put(host_obj_src_ext_amcaf_glue_s + 8344, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 4716));
-    put(host_obj_src_ext_amcaf_glue_s + 8350, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 4736));
-    put(host_obj_src_ext_amcaf_glue_s + 8356, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 4756));
-    put(host_obj_src_ext_amcaf_glue_s + 8362, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 4776));
-    put(host_obj_src_ext_amcaf_glue_s + 8368, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 4796));
-    put(host_obj_src_ext_amcaf_glue_s + 8374, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 4816));
-    put(host_obj_src_ext_amcaf_glue_s + 8380, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 4836));
-    put(host_obj_src_ext_amcaf_glue_s + 8386, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 4856));
-    put(host_obj_src_ext_amcaf_glue_s + 8392, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 4876));
-    put(host_obj_src_ext_amcaf_glue_s + 8398, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 4896));
-    put(host_obj_src_ext_amcaf_glue_s + 8404, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 4916));
-    put(host_obj_src_ext_amcaf_glue_s + 8410, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 4936));
-    put(host_obj_src_ext_amcaf_glue_s + 8416, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 4956));
-    put(host_obj_src_ext_amcaf_glue_s + 8422, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 4976));
-    put(host_obj_src_ext_amcaf_glue_s + 8428, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 4996));
-    put(host_obj_src_ext_amcaf_glue_s + 8434, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 5016));
-    put(host_obj_src_ext_amcaf_glue_s + 8440, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 5036));
-    put(host_obj_src_ext_amcaf_glue_s + 8446, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 5056));
-    put(host_obj_src_ext_amcaf_glue_s + 8452, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 5076));
-    put(host_obj_src_ext_amcaf_glue_s + 8458, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 5096));
-    put(host_obj_src_ext_amcaf_glue_s + 8464, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 5116));
-    put(host_obj_src_ext_amcaf_glue_s + 8470, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 5136));
-    put(host_obj_src_ext_amcaf_glue_s + 8476, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 5156));
-    put(host_obj_src_ext_amcaf_glue_s + 8482, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 5176));
-    put(host_obj_src_ext_amcaf_glue_s + 8488, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 5196));
-    put(host_obj_src_ext_amcaf_glue_s + 8494, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 5216));
-    put(host_obj_src_ext_amcaf_glue_s + 8500, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 5236));
-    put(host_obj_src_ext_amcaf_glue_s + 8506, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 5256));
-    put(host_obj_src_ext_amcaf_glue_s + 8512, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 5276));
-    put(host_obj_src_ext_amcaf_glue_s + 8518, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 5296));
-    put(host_obj_src_ext_amcaf_glue_s + 8524, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 5316));
-    put(host_obj_src_ext_amcaf_glue_s + 8530, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 5336));
-    put(host_obj_src_ext_amcaf_glue_s + 8536, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 5356));
-    put(host_obj_src_ext_amcaf_glue_s + 8542, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 5376));
-    put(host_obj_src_ext_amcaf_glue_s + 8548, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 5396));
-    put(host_obj_src_ext_amcaf_glue_s + 8554, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 5416));
-    put(host_obj_src_ext_amcaf_glue_s + 8560, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 5436));
-    put(host_obj_src_ext_amcaf_glue_s + 8566, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 5456));
-    put(host_obj_src_ext_amcaf_glue_s + 8572, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 5476));
-    put(host_obj_src_ext_amcaf_glue_s + 8578, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 5496));
-    put(host_obj_src_ext_amcaf_glue_s + 8584, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 5516));
-    put(host_obj_src_ext_amcaf_glue_s + 8590, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 5536));
-    put(host_obj_src_ext_amcaf_glue_s + 8596, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 5556));
-    put(host_obj_src_ext_amcaf_glue_s + 8602, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 5576));
-    put(host_obj_src_ext_amcaf_glue_s + 8608, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 5596));
-    put(host_obj_src_ext_amcaf_glue_s + 8614, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 5616));
-    put(host_obj_src_ext_amcaf_glue_s + 8620, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 5636));
-    put(host_obj_src_ext_amcaf_glue_s + 8626, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 5656));
-    put(host_obj_src_ext_amcaf_glue_s + 8632, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 5676));
-    put(host_obj_src_ext_amcaf_glue_s + 8638, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 5696));
-    put(host_obj_src_ext_amcaf_glue_s + 8644, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 5716));
-    put(host_obj_src_ext_amcaf_glue_s + 8650, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 5736));
-    put(host_obj_src_ext_amcaf_glue_s + 8656, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 5756));
-    put(host_obj_src_ext_amcaf_glue_s + 8662, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 5776));
-    put(host_obj_src_ext_amcaf_glue_s + 8668, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 5796));
-    put(host_obj_src_ext_amcaf_glue_s + 8674, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 5816));
-    put(host_obj_src_ext_amcaf_glue_s + 8680, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 5836));
-    put(host_obj_src_ext_amcaf_glue_s + 8686, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 5856));
-    put(host_obj_src_ext_amcaf_glue_s + 8692, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 5876));
-    put(host_obj_src_ext_amcaf_glue_s + 8698, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 5896));
-    put(host_obj_src_ext_amcaf_glue_s + 8704, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 5916));
-    put(host_obj_src_ext_amcaf_glue_s + 8710, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 5936));
-    put(host_obj_src_ext_amcaf_glue_s + 8716, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 5956));
-    put(host_obj_src_ext_amcaf_glue_s + 8722, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 5976));
-    put(host_obj_src_ext_amcaf_glue_s + 8728, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 5996));
-    put(host_obj_src_ext_amcaf_glue_s + 8734, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 6016));
-    put(host_obj_src_ext_amcaf_glue_s + 8740, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 6036));
-    put(host_obj_src_ext_amcaf_glue_s + 8746, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 6056));
-    put(host_obj_src_ext_amcaf_glue_s + 8752, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 6076));
-    put(host_obj_src_ext_amcaf_glue_s + 8758, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 6096));
-    put(host_obj_src_ext_amcaf_glue_s + 8764, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 6116));
-    put(host_obj_src_ext_amcaf_glue_s + 8770, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 6136));
-    put(host_obj_src_ext_amcaf_glue_s + 8776, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 6156));
-    put(host_obj_src_ext_amcaf_glue_s + 8782, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 6176));
-    put(host_obj_src_ext_amcaf_glue_s + 8788, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 6196));
-    put(host_obj_src_ext_amcaf_glue_s + 8794, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 6216));
-    put(host_obj_src_ext_amcaf_glue_s + 8800, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 6236));
-    put(host_obj_src_ext_amcaf_glue_s + 8806, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 6256));
-    put(host_obj_src_ext_amcaf_glue_s + 8812, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 6276));
-    put(host_obj_src_ext_amcaf_glue_s + 8818, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 6296));
-    put(host_obj_src_ext_amcaf_glue_s + 8824, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 6316));
-    put(host_obj_src_ext_amcaf_glue_s + 8830, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 6336));
-    put(host_obj_src_ext_amcaf_glue_s + 8836, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 6356));
-    put(host_obj_src_ext_amcaf_glue_s + 8842, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 6376));
-    put(host_obj_src_ext_amcaf_glue_s + 8848, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 6396));
-    put(host_obj_src_ext_amcaf_glue_s + 8854, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 6416));
-    put(host_obj_src_ext_amcaf_glue_s + 8860, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 6436));
-    put(host_obj_src_ext_amcaf_glue_s + 8866, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 6456));
-    put(host_obj_src_ext_amcaf_glue_s + 8872, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 6476));
-    put(host_obj_src_ext_amcaf_glue_s + 8878, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 6496));
-    put(host_obj_src_ext_amcaf_glue_s + 8884, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 6516));
-    put(host_obj_src_ext_amcaf_glue_s + 8890, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 6536));
-    put(host_obj_src_ext_amcaf_glue_s + 8896, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 6556));
-    put(host_obj_src_ext_amcaf_glue_s + 8902, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 6576));
-    put(host_obj_src_ext_amcaf_glue_s + 8908, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 6596));
-    put(host_obj_src_ext_amcaf_glue_s + 8914, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 6616));
-    put(host_obj_src_ext_amcaf_glue_s + 8920, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 6636));
-    put(host_obj_src_ext_amcaf_glue_s + 8926, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 6656));
-    put(host_obj_src_ext_amcaf_glue_s + 8932, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 6676));
-    put(host_obj_src_ext_amcaf_glue_s + 8938, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 6696));
-    put(host_obj_src_ext_amcaf_glue_s + 8944, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 6716));
-    put(host_obj_src_ext_amcaf_glue_s + 8950, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 6736));
-    put(host_obj_src_ext_amcaf_glue_s + 8956, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 6756));
-    put(host_obj_src_ext_amcaf_glue_s + 8962, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 6776));
-    put(host_obj_src_ext_amcaf_glue_s + 8968, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 6796));
-    put(host_obj_src_ext_amcaf_glue_s + 8974, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 6816));
-    put(host_obj_src_ext_amcaf_glue_s + 8980, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 6836));
-    put(host_obj_src_ext_amcaf_glue_s + 8986, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 6856));
-    put(host_obj_src_ext_amcaf_glue_s + 8992, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 6876));
-    put(host_obj_src_ext_amcaf_glue_s + 8998, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 6896));
-    put(host_obj_src_ext_amcaf_glue_s + 9004, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 6916));
+    put(host_obj_src_ext_amcaf_glue_s + 6940, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 6920));
+    put(host_obj_src_ext_amcaf_glue_s + 6946, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 16));
+    put(host_obj_src_ext_amcaf_glue_s + 6952, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 36));
+    put(host_obj_src_ext_amcaf_glue_s + 6958, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 56));
+    put(host_obj_src_ext_amcaf_glue_s + 6964, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 76));
+    put(host_obj_src_ext_amcaf_glue_s + 6970, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 96));
+    put(host_obj_src_ext_amcaf_glue_s + 6976, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 116));
+    put(host_obj_src_ext_amcaf_glue_s + 6982, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 136));
+    put(host_obj_src_ext_amcaf_glue_s + 6988, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 156));
+    put(host_obj_src_ext_amcaf_glue_s + 6994, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 176));
+    put(host_obj_src_ext_amcaf_glue_s + 7000, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 196));
+    put(host_obj_src_ext_amcaf_glue_s + 7006, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 216));
+    put(host_obj_src_ext_amcaf_glue_s + 7012, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 236));
+    put(host_obj_src_ext_amcaf_glue_s + 7018, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 256));
+    put(host_obj_src_ext_amcaf_glue_s + 7024, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 276));
+    put(host_obj_src_ext_amcaf_glue_s + 7030, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 296));
+    put(host_obj_src_ext_amcaf_glue_s + 7036, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 316));
+    put(host_obj_src_ext_amcaf_glue_s + 7042, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 336));
+    put(host_obj_src_ext_amcaf_glue_s + 7048, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 356));
+    put(host_obj_src_ext_amcaf_glue_s + 7054, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 376));
+    put(host_obj_src_ext_amcaf_glue_s + 7060, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 396));
+    put(host_obj_src_ext_amcaf_glue_s + 7066, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 416));
+    put(host_obj_src_ext_amcaf_glue_s + 7072, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 436));
+    put(host_obj_src_ext_amcaf_glue_s + 7078, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 456));
+    put(host_obj_src_ext_amcaf_glue_s + 7084, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 476));
+    put(host_obj_src_ext_amcaf_glue_s + 7090, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 496));
+    put(host_obj_src_ext_amcaf_glue_s + 7096, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 516));
+    put(host_obj_src_ext_amcaf_glue_s + 7102, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 536));
+    put(host_obj_src_ext_amcaf_glue_s + 7108, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 556));
+    put(host_obj_src_ext_amcaf_glue_s + 7114, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 576));
+    put(host_obj_src_ext_amcaf_glue_s + 7120, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 596));
+    put(host_obj_src_ext_amcaf_glue_s + 7126, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 616));
+    put(host_obj_src_ext_amcaf_glue_s + 7132, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 636));
+    put(host_obj_src_ext_amcaf_glue_s + 7138, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 656));
+    put(host_obj_src_ext_amcaf_glue_s + 7144, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 676));
+    put(host_obj_src_ext_amcaf_glue_s + 7150, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 696));
+    put(host_obj_src_ext_amcaf_glue_s + 7156, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 716));
+    put(host_obj_src_ext_amcaf_glue_s + 7162, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 736));
+    put(host_obj_src_ext_amcaf_glue_s + 7168, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 756));
+    put(host_obj_src_ext_amcaf_glue_s + 7174, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 776));
+    put(host_obj_src_ext_amcaf_glue_s + 7180, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 796));
+    put(host_obj_src_ext_amcaf_glue_s + 7186, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 816));
+    put(host_obj_src_ext_amcaf_glue_s + 7192, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 836));
+    put(host_obj_src_ext_amcaf_glue_s + 7198, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 856));
+    put(host_obj_src_ext_amcaf_glue_s + 7204, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 876));
+    put(host_obj_src_ext_amcaf_glue_s + 7210, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 896));
+    put(host_obj_src_ext_amcaf_glue_s + 7216, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 916));
+    put(host_obj_src_ext_amcaf_glue_s + 7222, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 936));
+    put(host_obj_src_ext_amcaf_glue_s + 7228, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 956));
+    put(host_obj_src_ext_amcaf_glue_s + 7234, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 976));
+    put(host_obj_src_ext_amcaf_glue_s + 7240, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 996));
+    put(host_obj_src_ext_amcaf_glue_s + 7246, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 1016));
+    put(host_obj_src_ext_amcaf_glue_s + 7252, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 1036));
+    put(host_obj_src_ext_amcaf_glue_s + 7258, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 1056));
+    put(host_obj_src_ext_amcaf_glue_s + 7264, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 1076));
+    put(host_obj_src_ext_amcaf_glue_s + 7270, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 1096));
+    put(host_obj_src_ext_amcaf_glue_s + 7276, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 1116));
+    put(host_obj_src_ext_amcaf_glue_s + 7282, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 1136));
+    put(host_obj_src_ext_amcaf_glue_s + 7288, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 1156));
+    put(host_obj_src_ext_amcaf_glue_s + 7294, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 1176));
+    put(host_obj_src_ext_amcaf_glue_s + 7300, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 1196));
+    put(host_obj_src_ext_amcaf_glue_s + 7306, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 1216));
+    put(host_obj_src_ext_amcaf_glue_s + 7312, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 1236));
+    put(host_obj_src_ext_amcaf_glue_s + 7318, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 1256));
+    put(host_obj_src_ext_amcaf_glue_s + 7324, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 1276));
+    put(host_obj_src_ext_amcaf_glue_s + 7330, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 1296));
+    put(host_obj_src_ext_amcaf_glue_s + 7336, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 1316));
+    put(host_obj_src_ext_amcaf_glue_s + 7342, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 1336));
+    put(host_obj_src_ext_amcaf_glue_s + 7348, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 1356));
+    put(host_obj_src_ext_amcaf_glue_s + 7354, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 1376));
+    put(host_obj_src_ext_amcaf_glue_s + 7360, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 1396));
+    put(host_obj_src_ext_amcaf_glue_s + 7366, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 1416));
+    put(host_obj_src_ext_amcaf_glue_s + 7372, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 1436));
+    put(host_obj_src_ext_amcaf_glue_s + 7378, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 1456));
+    put(host_obj_src_ext_amcaf_glue_s + 7384, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 1476));
+    put(host_obj_src_ext_amcaf_glue_s + 7390, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 1496));
+    put(host_obj_src_ext_amcaf_glue_s + 7396, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 1516));
+    put(host_obj_src_ext_amcaf_glue_s + 7402, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 1536));
+    put(host_obj_src_ext_amcaf_glue_s + 7408, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 1556));
+    put(host_obj_src_ext_amcaf_glue_s + 7414, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 1576));
+    put(host_obj_src_ext_amcaf_glue_s + 7420, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 1596));
+    put(host_obj_src_ext_amcaf_glue_s + 7426, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 1616));
+    put(host_obj_src_ext_amcaf_glue_s + 7432, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 1636));
+    put(host_obj_src_ext_amcaf_glue_s + 7438, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 1656));
+    put(host_obj_src_ext_amcaf_glue_s + 7444, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 1676));
+    put(host_obj_src_ext_amcaf_glue_s + 7450, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 1696));
+    put(host_obj_src_ext_amcaf_glue_s + 7456, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 1716));
+    put(host_obj_src_ext_amcaf_glue_s + 7462, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 1736));
+    put(host_obj_src_ext_amcaf_glue_s + 7468, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 1756));
+    put(host_obj_src_ext_amcaf_glue_s + 7474, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 1776));
+    put(host_obj_src_ext_amcaf_glue_s + 7480, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 1796));
+    put(host_obj_src_ext_amcaf_glue_s + 7486, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 1816));
+    put(host_obj_src_ext_amcaf_glue_s + 7492, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 1836));
+    put(host_obj_src_ext_amcaf_glue_s + 7498, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 1856));
+    put(host_obj_src_ext_amcaf_glue_s + 7504, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 1876));
+    put(host_obj_src_ext_amcaf_glue_s + 7510, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 1896));
+    put(host_obj_src_ext_amcaf_glue_s + 7516, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 1916));
+    put(host_obj_src_ext_amcaf_glue_s + 7522, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 1936));
+    put(host_obj_src_ext_amcaf_glue_s + 7528, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 1956));
+    put(host_obj_src_ext_amcaf_glue_s + 7534, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 1976));
+    put(host_obj_src_ext_amcaf_glue_s + 7540, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 1996));
+    put(host_obj_src_ext_amcaf_glue_s + 7546, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 2016));
+    put(host_obj_src_ext_amcaf_glue_s + 7552, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 2036));
+    put(host_obj_src_ext_amcaf_glue_s + 7558, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 2056));
+    put(host_obj_src_ext_amcaf_glue_s + 7564, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 2076));
+    put(host_obj_src_ext_amcaf_glue_s + 7570, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 2096));
+    put(host_obj_src_ext_amcaf_glue_s + 7576, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 2116));
+    put(host_obj_src_ext_amcaf_glue_s + 7582, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 2136));
+    put(host_obj_src_ext_amcaf_glue_s + 7588, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 2156));
+    put(host_obj_src_ext_amcaf_glue_s + 7594, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 2176));
+    put(host_obj_src_ext_amcaf_glue_s + 7600, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 2196));
+    put(host_obj_src_ext_amcaf_glue_s + 7606, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 2216));
+    put(host_obj_src_ext_amcaf_glue_s + 7612, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 2236));
+    put(host_obj_src_ext_amcaf_glue_s + 7618, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 2256));
+    put(host_obj_src_ext_amcaf_glue_s + 7624, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 2276));
+    put(host_obj_src_ext_amcaf_glue_s + 7630, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 2296));
+    put(host_obj_src_ext_amcaf_glue_s + 7636, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 2316));
+    put(host_obj_src_ext_amcaf_glue_s + 7642, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 2336));
+    put(host_obj_src_ext_amcaf_glue_s + 7648, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 2356));
+    put(host_obj_src_ext_amcaf_glue_s + 7654, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 2376));
+    put(host_obj_src_ext_amcaf_glue_s + 7660, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 2396));
+    put(host_obj_src_ext_amcaf_glue_s + 7666, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 2416));
+    put(host_obj_src_ext_amcaf_glue_s + 7672, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 2436));
+    put(host_obj_src_ext_amcaf_glue_s + 7678, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 2456));
+    put(host_obj_src_ext_amcaf_glue_s + 7684, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 2476));
+    put(host_obj_src_ext_amcaf_glue_s + 7690, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 2496));
+    put(host_obj_src_ext_amcaf_glue_s + 7696, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 2516));
+    put(host_obj_src_ext_amcaf_glue_s + 7702, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 2536));
+    put(host_obj_src_ext_amcaf_glue_s + 7708, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 2556));
+    put(host_obj_src_ext_amcaf_glue_s + 7714, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 2576));
+    put(host_obj_src_ext_amcaf_glue_s + 7720, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 2596));
+    put(host_obj_src_ext_amcaf_glue_s + 7726, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 2616));
+    put(host_obj_src_ext_amcaf_glue_s + 7732, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 2636));
+    put(host_obj_src_ext_amcaf_glue_s + 7738, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 2656));
+    put(host_obj_src_ext_amcaf_glue_s + 7744, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 2676));
+    put(host_obj_src_ext_amcaf_glue_s + 7750, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 2696));
+    put(host_obj_src_ext_amcaf_glue_s + 7756, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 2716));
+    put(host_obj_src_ext_amcaf_glue_s + 7762, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 2736));
+    put(host_obj_src_ext_amcaf_glue_s + 7768, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 2756));
+    put(host_obj_src_ext_amcaf_glue_s + 7774, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 2776));
+    put(host_obj_src_ext_amcaf_glue_s + 7780, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 2796));
+    put(host_obj_src_ext_amcaf_glue_s + 7786, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 2816));
+    put(host_obj_src_ext_amcaf_glue_s + 7792, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 2836));
+    put(host_obj_src_ext_amcaf_glue_s + 7798, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 2856));
+    put(host_obj_src_ext_amcaf_glue_s + 7804, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 2876));
+    put(host_obj_src_ext_amcaf_glue_s + 7810, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 2896));
+    put(host_obj_src_ext_amcaf_glue_s + 7816, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 2916));
+    put(host_obj_src_ext_amcaf_glue_s + 7822, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 2936));
+    put(host_obj_src_ext_amcaf_glue_s + 7828, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 2956));
+    put(host_obj_src_ext_amcaf_glue_s + 7834, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 2976));
+    put(host_obj_src_ext_amcaf_glue_s + 7840, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 2996));
+    put(host_obj_src_ext_amcaf_glue_s + 7846, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 3016));
+    put(host_obj_src_ext_amcaf_glue_s + 7852, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 3036));
+    put(host_obj_src_ext_amcaf_glue_s + 7858, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 3056));
+    put(host_obj_src_ext_amcaf_glue_s + 7864, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 3076));
+    put(host_obj_src_ext_amcaf_glue_s + 7870, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 3096));
+    put(host_obj_src_ext_amcaf_glue_s + 7876, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 3116));
+    put(host_obj_src_ext_amcaf_glue_s + 7882, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 3136));
+    put(host_obj_src_ext_amcaf_glue_s + 7888, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 3156));
+    put(host_obj_src_ext_amcaf_glue_s + 7894, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 3176));
+    put(host_obj_src_ext_amcaf_glue_s + 7900, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 3196));
+    put(host_obj_src_ext_amcaf_glue_s + 7906, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 3216));
+    put(host_obj_src_ext_amcaf_glue_s + 7912, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 3236));
+    put(host_obj_src_ext_amcaf_glue_s + 7918, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 3256));
+    put(host_obj_src_ext_amcaf_glue_s + 7924, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 3276));
+    put(host_obj_src_ext_amcaf_glue_s + 7930, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 3296));
+    put(host_obj_src_ext_amcaf_glue_s + 7936, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 3316));
+    put(host_obj_src_ext_amcaf_glue_s + 7942, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 3336));
+    put(host_obj_src_ext_amcaf_glue_s + 7948, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 3356));
+    put(host_obj_src_ext_amcaf_glue_s + 7954, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 3376));
+    put(host_obj_src_ext_amcaf_glue_s + 7960, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 3396));
+    put(host_obj_src_ext_amcaf_glue_s + 7966, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 3416));
+    put(host_obj_src_ext_amcaf_glue_s + 7972, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 3436));
+    put(host_obj_src_ext_amcaf_glue_s + 7978, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 3456));
+    put(host_obj_src_ext_amcaf_glue_s + 7984, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 3476));
+    put(host_obj_src_ext_amcaf_glue_s + 7990, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 3496));
+    put(host_obj_src_ext_amcaf_glue_s + 7996, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 3516));
+    put(host_obj_src_ext_amcaf_glue_s + 8002, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 3536));
+    put(host_obj_src_ext_amcaf_glue_s + 8008, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 3556));
+    put(host_obj_src_ext_amcaf_glue_s + 8014, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 3576));
+    put(host_obj_src_ext_amcaf_glue_s + 8020, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 3596));
+    put(host_obj_src_ext_amcaf_glue_s + 8026, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 3616));
+    put(host_obj_src_ext_amcaf_glue_s + 8032, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 3636));
+    put(host_obj_src_ext_amcaf_glue_s + 8038, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 3656));
+    put(host_obj_src_ext_amcaf_glue_s + 8044, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 3676));
+    put(host_obj_src_ext_amcaf_glue_s + 8050, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 3696));
+    put(host_obj_src_ext_amcaf_glue_s + 8056, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 3716));
+    put(host_obj_src_ext_amcaf_glue_s + 8062, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 3736));
+    put(host_obj_src_ext_amcaf_glue_s + 8068, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 3756));
+    put(host_obj_src_ext_amcaf_glue_s + 8074, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 3776));
+    put(host_obj_src_ext_amcaf_glue_s + 8080, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 3796));
+    put(host_obj_src_ext_amcaf_glue_s + 8086, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 3816));
+    put(host_obj_src_ext_amcaf_glue_s + 8092, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 3836));
+    put(host_obj_src_ext_amcaf_glue_s + 8098, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 3856));
+    put(host_obj_src_ext_amcaf_glue_s + 8104, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 3876));
+    put(host_obj_src_ext_amcaf_glue_s + 8110, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 3896));
+    put(host_obj_src_ext_amcaf_glue_s + 8116, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 3916));
+    put(host_obj_src_ext_amcaf_glue_s + 8122, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 3936));
+    put(host_obj_src_ext_amcaf_glue_s + 8128, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 3956));
+    put(host_obj_src_ext_amcaf_glue_s + 8134, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 3976));
+    put(host_obj_src_ext_amcaf_glue_s + 8140, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 3996));
+    put(host_obj_src_ext_amcaf_glue_s + 8146, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 4016));
+    put(host_obj_src_ext_amcaf_glue_s + 8152, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 4036));
+    put(host_obj_src_ext_amcaf_glue_s + 8158, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 4056));
+    put(host_obj_src_ext_amcaf_glue_s + 8164, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 4076));
+    put(host_obj_src_ext_amcaf_glue_s + 8170, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 4096));
+    put(host_obj_src_ext_amcaf_glue_s + 8176, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 4116));
+    put(host_obj_src_ext_amcaf_glue_s + 8182, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 4136));
+    put(host_obj_src_ext_amcaf_glue_s + 8188, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 4156));
+    put(host_obj_src_ext_amcaf_glue_s + 8194, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 4176));
+    put(host_obj_src_ext_amcaf_glue_s + 8200, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 4196));
+    put(host_obj_src_ext_amcaf_glue_s + 8206, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 4216));
+    put(host_obj_src_ext_amcaf_glue_s + 8212, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 4236));
+    put(host_obj_src_ext_amcaf_glue_s + 8218, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 4256));
+    put(host_obj_src_ext_amcaf_glue_s + 8224, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 4276));
+    put(host_obj_src_ext_amcaf_glue_s + 8230, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 4296));
+    put(host_obj_src_ext_amcaf_glue_s + 8236, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 4316));
+    put(host_obj_src_ext_amcaf_glue_s + 8242, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 4336));
+    put(host_obj_src_ext_amcaf_glue_s + 8248, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 4356));
+    put(host_obj_src_ext_amcaf_glue_s + 8254, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 4376));
+    put(host_obj_src_ext_amcaf_glue_s + 8260, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 4396));
+    put(host_obj_src_ext_amcaf_glue_s + 8266, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 4416));
+    put(host_obj_src_ext_amcaf_glue_s + 8272, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 4436));
+    put(host_obj_src_ext_amcaf_glue_s + 8278, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 4456));
+    put(host_obj_src_ext_amcaf_glue_s + 8284, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 4476));
+    put(host_obj_src_ext_amcaf_glue_s + 8290, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 4496));
+    put(host_obj_src_ext_amcaf_glue_s + 8296, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 4516));
+    put(host_obj_src_ext_amcaf_glue_s + 8302, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 4536));
+    put(host_obj_src_ext_amcaf_glue_s + 8308, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 4556));
+    put(host_obj_src_ext_amcaf_glue_s + 8314, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 4576));
+    put(host_obj_src_ext_amcaf_glue_s + 8320, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 4596));
+    put(host_obj_src_ext_amcaf_glue_s + 8326, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 4616));
+    put(host_obj_src_ext_amcaf_glue_s + 8332, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 4636));
+    put(host_obj_src_ext_amcaf_glue_s + 8338, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 4656));
+    put(host_obj_src_ext_amcaf_glue_s + 8344, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 4676));
+    put(host_obj_src_ext_amcaf_glue_s + 8350, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 4696));
+    put(host_obj_src_ext_amcaf_glue_s + 8356, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 4716));
+    put(host_obj_src_ext_amcaf_glue_s + 8362, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 4736));
+    put(host_obj_src_ext_amcaf_glue_s + 8368, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 4756));
+    put(host_obj_src_ext_amcaf_glue_s + 8374, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 4776));
+    put(host_obj_src_ext_amcaf_glue_s + 8380, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 4796));
+    put(host_obj_src_ext_amcaf_glue_s + 8386, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 4816));
+    put(host_obj_src_ext_amcaf_glue_s + 8392, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 4836));
+    put(host_obj_src_ext_amcaf_glue_s + 8398, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 4856));
+    put(host_obj_src_ext_amcaf_glue_s + 8404, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 4876));
+    put(host_obj_src_ext_amcaf_glue_s + 8410, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 4896));
+    put(host_obj_src_ext_amcaf_glue_s + 8416, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 4916));
+    put(host_obj_src_ext_amcaf_glue_s + 8422, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 4936));
+    put(host_obj_src_ext_amcaf_glue_s + 8428, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 4956));
+    put(host_obj_src_ext_amcaf_glue_s + 8434, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 4976));
+    put(host_obj_src_ext_amcaf_glue_s + 8440, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 4996));
+    put(host_obj_src_ext_amcaf_glue_s + 8446, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 5016));
+    put(host_obj_src_ext_amcaf_glue_s + 8452, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 5036));
+    put(host_obj_src_ext_amcaf_glue_s + 8458, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 5056));
+    put(host_obj_src_ext_amcaf_glue_s + 8464, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 5076));
+    put(host_obj_src_ext_amcaf_glue_s + 8470, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 5096));
+    put(host_obj_src_ext_amcaf_glue_s + 8476, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 5116));
+    put(host_obj_src_ext_amcaf_glue_s + 8482, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 5136));
+    put(host_obj_src_ext_amcaf_glue_s + 8488, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 5156));
+    put(host_obj_src_ext_amcaf_glue_s + 8494, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 5176));
+    put(host_obj_src_ext_amcaf_glue_s + 8500, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 5196));
+    put(host_obj_src_ext_amcaf_glue_s + 8506, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 5216));
+    put(host_obj_src_ext_amcaf_glue_s + 8512, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 5236));
+    put(host_obj_src_ext_amcaf_glue_s + 8518, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 5256));
+    put(host_obj_src_ext_amcaf_glue_s + 8524, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 5276));
+    put(host_obj_src_ext_amcaf_glue_s + 8530, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 5296));
+    put(host_obj_src_ext_amcaf_glue_s + 8536, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 5316));
+    put(host_obj_src_ext_amcaf_glue_s + 8542, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 5336));
+    put(host_obj_src_ext_amcaf_glue_s + 8548, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 5356));
+    put(host_obj_src_ext_amcaf_glue_s + 8554, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 5376));
+    put(host_obj_src_ext_amcaf_glue_s + 8560, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 5396));
+    put(host_obj_src_ext_amcaf_glue_s + 8566, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 5416));
+    put(host_obj_src_ext_amcaf_glue_s + 8572, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 5436));
+    put(host_obj_src_ext_amcaf_glue_s + 8578, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 5456));
+    put(host_obj_src_ext_amcaf_glue_s + 8584, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 5476));
+    put(host_obj_src_ext_amcaf_glue_s + 8590, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 5496));
+    put(host_obj_src_ext_amcaf_glue_s + 8596, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 5516));
+    put(host_obj_src_ext_amcaf_glue_s + 8602, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 5536));
+    put(host_obj_src_ext_amcaf_glue_s + 8608, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 5556));
+    put(host_obj_src_ext_amcaf_glue_s + 8614, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 5576));
+    put(host_obj_src_ext_amcaf_glue_s + 8620, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 5596));
+    put(host_obj_src_ext_amcaf_glue_s + 8626, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 5616));
+    put(host_obj_src_ext_amcaf_glue_s + 8632, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 5636));
+    put(host_obj_src_ext_amcaf_glue_s + 8638, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 5656));
+    put(host_obj_src_ext_amcaf_glue_s + 8644, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 5676));
+    put(host_obj_src_ext_amcaf_glue_s + 8650, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 5696));
+    put(host_obj_src_ext_amcaf_glue_s + 8656, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 5716));
+    put(host_obj_src_ext_amcaf_glue_s + 8662, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 5736));
+    put(host_obj_src_ext_amcaf_glue_s + 8668, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 5756));
+    put(host_obj_src_ext_amcaf_glue_s + 8674, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 5776));
+    put(host_obj_src_ext_amcaf_glue_s + 8680, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 5796));
+    put(host_obj_src_ext_amcaf_glue_s + 8686, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 5816));
+    put(host_obj_src_ext_amcaf_glue_s + 8692, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 5836));
+    put(host_obj_src_ext_amcaf_glue_s + 8698, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 5856));
+    put(host_obj_src_ext_amcaf_glue_s + 8704, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 5876));
+    put(host_obj_src_ext_amcaf_glue_s + 8710, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 5896));
+    put(host_obj_src_ext_amcaf_glue_s + 8716, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 5916));
+    put(host_obj_src_ext_amcaf_glue_s + 8722, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 5936));
+    put(host_obj_src_ext_amcaf_glue_s + 8728, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 5956));
+    put(host_obj_src_ext_amcaf_glue_s + 8734, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 5976));
+    put(host_obj_src_ext_amcaf_glue_s + 8740, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 5996));
+    put(host_obj_src_ext_amcaf_glue_s + 8746, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 6016));
+    put(host_obj_src_ext_amcaf_glue_s + 8752, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 6036));
+    put(host_obj_src_ext_amcaf_glue_s + 8758, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 6056));
+    put(host_obj_src_ext_amcaf_glue_s + 8764, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 6076));
+    put(host_obj_src_ext_amcaf_glue_s + 8770, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 6096));
+    put(host_obj_src_ext_amcaf_glue_s + 8776, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 6116));
+    put(host_obj_src_ext_amcaf_glue_s + 8782, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 6136));
+    put(host_obj_src_ext_amcaf_glue_s + 8788, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 6156));
+    put(host_obj_src_ext_amcaf_glue_s + 8794, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 6176));
+    put(host_obj_src_ext_amcaf_glue_s + 8800, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 6196));
+    put(host_obj_src_ext_amcaf_glue_s + 8806, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 6216));
+    put(host_obj_src_ext_amcaf_glue_s + 8812, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 6236));
+    put(host_obj_src_ext_amcaf_glue_s + 8818, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 6256));
+    put(host_obj_src_ext_amcaf_glue_s + 8824, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 6276));
+    put(host_obj_src_ext_amcaf_glue_s + 8830, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 6296));
+    put(host_obj_src_ext_amcaf_glue_s + 8836, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 6316));
+    put(host_obj_src_ext_amcaf_glue_s + 8842, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 6336));
+    put(host_obj_src_ext_amcaf_glue_s + 8848, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 6356));
+    put(host_obj_src_ext_amcaf_glue_s + 8854, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 6376));
+    put(host_obj_src_ext_amcaf_glue_s + 8860, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 6396));
+    put(host_obj_src_ext_amcaf_glue_s + 8866, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 6416));
+    put(host_obj_src_ext_amcaf_glue_s + 8872, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 6436));
+    put(host_obj_src_ext_amcaf_glue_s + 8878, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 6456));
+    put(host_obj_src_ext_amcaf_glue_s + 8884, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 6476));
+    put(host_obj_src_ext_amcaf_glue_s + 8890, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 6496));
+    put(host_obj_src_ext_amcaf_glue_s + 8896, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 6516));
+    put(host_obj_src_ext_amcaf_glue_s + 8902, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 6536));
+    put(host_obj_src_ext_amcaf_glue_s + 8908, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 6556));
+    put(host_obj_src_ext_amcaf_glue_s + 8914, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 6576));
+    put(host_obj_src_ext_amcaf_glue_s + 8920, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 6596));
+    put(host_obj_src_ext_amcaf_glue_s + 8926, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 6616));
+    put(host_obj_src_ext_amcaf_glue_s + 8932, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 6636));
+    put(host_obj_src_ext_amcaf_glue_s + 8938, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 6656));
+    put(host_obj_src_ext_amcaf_glue_s + 8944, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 6676));
+    put(host_obj_src_ext_amcaf_glue_s + 8950, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 6696));
+    put(host_obj_src_ext_amcaf_glue_s + 8956, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 6716));
+    put(host_obj_src_ext_amcaf_glue_s + 8962, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 6736));
+    put(host_obj_src_ext_amcaf_glue_s + 8968, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 6756));
+    put(host_obj_src_ext_amcaf_glue_s + 8974, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 6776));
+    put(host_obj_src_ext_amcaf_glue_s + 8980, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 6796));
+    put(host_obj_src_ext_amcaf_glue_s + 8986, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 6816));
+    put(host_obj_src_ext_amcaf_glue_s + 8992, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 6836));
+    put(host_obj_src_ext_amcaf_glue_s + 8998, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 6856));
+    put(host_obj_src_ext_amcaf_glue_s + 9004, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 6876));
+    put(host_obj_src_ext_amcaf_glue_s + 9010, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 6896));
+    put(host_obj_src_ext_amcaf_glue_s + 9016, 4, AMOS_STATIC_ADDRESS(host_obj_src_ext_amcaf_glue_s, 6916));
 }
 
 const GlueEntry entries_src_ext_amcaf_glue_s[] = {
@@ -1431,6 +1431,9 @@ const GlueEntry entries_src_ext_amcaf_glue_s[] = {
     {AMOS_ENTRY_AT(host_obj_src_ext_amcaf_glue_s, 6896), GlueKind::libcall, AMOS_BIND_LIBRARY(amcaf_bzoom), nullptr, 9, 3, "Ext_Amcaf_AmcafBzoom"},
     {AMOS_ENTRY_AT(host_obj_src_ext_amcaf_glue_s, 6916), GlueKind::libcall, AMOS_BIND_LIBRARY(amcaf_bcircle), nullptr, 4, 3, "Ext_Amcaf_AmcafBcircle"},
     {AMOS_ENTRY_AT(host_obj_src_ext_amcaf_glue_s, 6920), GlueKind::reg, AMOS_BIND_REG(amcaf_cold), nullptr, 0, 0, "Ext_Amcaf_Cold"},
+    {AMOS_ENTRY_AT(host_obj_src_ext_amcaf_glue_s, 6924), GlueKind::call, AMOS_BIND_CALL(amcaf_default), nullptr, 0, 0, "amcaf_default_entry"},
+    {AMOS_ENTRY_AT(host_obj_src_ext_amcaf_glue_s, 6928), GlueKind::call, AMOS_BIND_CALL(amcaf_end), nullptr, 0, 0, "amcaf_end_entry"},
+    {AMOS_ENTRY_AT(host_obj_src_ext_amcaf_glue_s, 6932), GlueKind::call, AMOS_BIND_CALL(amcaf_bank_check), nullptr, 0, 0, "amcaf_bank_check_entry"},
     {AMOS_ENTRY_END, GlueKind::missing, nullptr, nullptr, 0, 0, nullptr},
 };
 

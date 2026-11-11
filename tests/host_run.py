@@ -68,8 +68,9 @@ def golden_of(f):
 
 def extension_slots(name):
     """The extensions a test's configuration (name.conf) puts in slots: {slot: file}"""
+    # (a test of the Amiga's, tests/amos/NAME.ext: lines SLOT=FILE; it runs here with the same ones)
+    slots, section = run.extension_slots(name), ''
     conf = os.path.join(HOST_ONLY, name + '.conf')
-    slots, section = {}, ''
     if os.path.exists(conf):
         with open(conf) as f:
             for line in f:
@@ -125,9 +126,13 @@ def prepare(name, tables):
                 shutil.rmtree(folder)
             dirs[:] = [d for d in dirs if not d.endswith('.adfdir')]
     conf = os.path.join(HOST_ONLY, name + '.conf')
+    text = ''
     if os.path.exists(conf):
         with open(conf) as f:
             text = f.read().replace('@FILES@', os.path.join(os.path.dirname(hd), 'files'))
+    if os.path.exists(os.path.join(run.TESTS, name + '.ext')):
+        text += '[extensions]\n' + ''.join(f'{slot} = {file}\n' for slot, file in run.extension_slots(name).items())
+    if text:
         with open(os.path.join(os.path.dirname(hd), 'amos.conf'), 'w') as f:
             f.write(text)
     extra = os.path.join(run.TESTS, name + '.d')

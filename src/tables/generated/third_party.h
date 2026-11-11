@@ -5,7 +5,7 @@
 #include "runtime/glue.h"
 
 extern "C" {
-extern uint8_t host_obj_src_ext_amcaf_glue_s[9010];
+extern uint8_t host_obj_src_ext_amcaf_glue_s[9022];
 extern uint8_t host_obj_src_ext_amcaf_image_s[7286];
 extern uint8_t host_obj_src_ext_turbo_glue_s[4000];
 extern uint8_t host_obj_src_ext_turbo_image_s[3968];
@@ -369,6 +369,9 @@ void amcaf_fellipse();
 void amcaf_bzoom();
 void amcaf_bcircle();
 void amcaf_cold();
+void amcaf_default();
+void amcaf_end();
+void amcaf_bank_check();
 void turbo_multi_yes();
 void turbo_multi_no();
 void turbo_lsl_b();

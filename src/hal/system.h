@@ -85,6 +85,14 @@ inline void idle() {}
 void idle();
 #endif
 
+// A timer of the CIAs (the interrupt of AMCAF's Protracker player in its CIA mode): tick() is called
+// every `microseconds`, between AMOS's routines or in a wait. False when there is no such timer (the
+// Amiga: the originals use the CIA resource themselves; the C++ extensions then use the vertical blank).
+// A started timer is changed (a new tempo) or stopped.
+bool timer_start(void (*tick)(), uint32_t microseconds);
+void timer_change(uint32_t microseconds);
+void timer_stop();
+
 // The priority of the task AMOS runs in (-128 to 20; the host has no tasks to give one to)
 void set_task_priority(int32_t priority);
 

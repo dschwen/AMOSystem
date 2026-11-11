@@ -18,8 +18,8 @@ inline constexpr uint8_t FunkTable[16] = {
 };
 
 // The periods of the 36 notes of each finetune (0 to 7, then -8 to -1), a row of 36 words; one
-// search runs on over the end of a row into the next
-inline constexpr uint16_t Periods[576] = {
+// search runs on over the end of a row into the next (and past the last: 40 words more)
+inline constexpr uint16_t Periods[616] = {
     856, 808, 762, 720, 678, 640, 604, 570, 538, 508, 480, 453,
     428, 404, 381, 360, 339, 320, 302, 285, 269, 254, 240, 226,
     214, 202, 190, 180, 170, 160, 151, 143, 135, 127, 120, 113,
@@ -68,6 +68,10 @@ inline constexpr uint16_t Periods[576] = {
     862, 814, 768, 725, 684, 646, 610, 575, 543, 513, 484, 457,
     431, 407, 384, 363, 342, 323, 305, 288, 272, 256, 242, 228,
     216, 203, 192, 181, 171, 161, 152, 144, 136, 128, 121, 114,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0,
+    0, 0, 0, 0,
 };
 
 } // namespace amos::amcaf::pt

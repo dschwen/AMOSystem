@@ -2303,8 +2303,8 @@
    "routine": 264,
    "terminator": 254,
    "symbol": "amcaf_pt_play_1",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_pt.cpp"
   },
   {
    "offset": 4254,
@@ -2313,8 +2313,8 @@
    "routine": 265,
    "terminator": 255,
    "symbol": "amcaf_pt_play_2",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_pt.cpp"
   },
   {
    "offset": 4264,
@@ -2323,8 +2323,8 @@
    "routine": 267,
    "terminator": 255,
    "symbol": "amcaf_pt_stop",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_pt.cpp"
   },
   {
    "offset": 4278,
@@ -2333,8 +2333,8 @@
    "routine": 268,
    "terminator": 255,
    "symbol": "amcaf_pt_signal",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_pt.cpp"
   },
   {
    "offset": 4294,
@@ -2343,8 +2343,8 @@
    "routine": 261,
    "terminator": 255,
    "symbol": "amcaf_pt_volume",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_pt.cpp"
   },
   {
    "offset": 4310,
@@ -2353,8 +2353,8 @@
    "routine": 262,
    "terminator": 255,
    "symbol": "amcaf_pt_voice",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_pt.cpp"
   },
   {
    "offset": 4326,
@@ -2363,8 +2363,8 @@
    "routine": 260,
    "terminator": 255,
    "symbol": "amcaf_pt_vu",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_pt.cpp"
   },
   {
    "offset": 4338,
@@ -2373,8 +2373,8 @@
    "routine": 259,
    "terminator": 255,
    "symbol": "amcaf_pt_cia_speed",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_pt.cpp"
   },
   {
    "offset": 4358,
@@ -2733,8 +2733,8 @@
    "routine": 253,
    "terminator": 255,
    "symbol": "amcaf_pt_data_base",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_pt.cpp"
   },
   {
    "offset": 5016,
@@ -2743,8 +2743,8 @@
    "routine": 257,
    "terminator": 255,
    "symbol": "amcaf_pt_instr_address",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_pt.cpp"
   },
   {
    "offset": 5040,
@@ -2753,8 +2753,8 @@
    "routine": 258,
    "terminator": 255,
    "symbol": "amcaf_pt_instr_length",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_pt.cpp"
   },
   {
    "offset": 5062,
@@ -2763,8 +2763,8 @@
    "routine": 263,
    "terminator": 255,
    "symbol": "amcaf_pt_bank",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_pt.cpp"
   },
   {
    "offset": 5076,
@@ -2773,8 +2773,8 @@
    "routine": 254,
    "terminator": 254,
    "symbol": "amcaf_pt_instr_play_1",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_pt.cpp"
   },
   {
    "offset": 5098,
@@ -2783,8 +2783,8 @@
    "routine": 255,
    "terminator": 254,
    "symbol": "amcaf_pt_instr_play_2",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_pt.cpp"
   },
   {
    "offset": 5108,
@@ -2793,8 +2793,8 @@
    "routine": 256,
    "terminator": 255,
    "symbol": "amcaf_pt_instr_play_3",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_pt.cpp"
   },
   {
    "offset": 5120,
@@ -2803,8 +2803,8 @@
    "routine": 247,
    "terminator": 255,
    "symbol": "amcaf_pt_sam_stop",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_pt.cpp"
   },
   {
    "offset": 5138,
@@ -2813,8 +2813,8 @@
    "routine": 248,
    "terminator": 255,
    "symbol": "amcaf_pt_raw_play",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_pt.cpp"
   },
   {
    "offset": 5162,
@@ -2823,8 +2823,8 @@
    "routine": 249,
    "terminator": 255,
    "symbol": "amcaf_pt_sam_bank",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_pt.cpp"
   },
   {
    "offset": 5180,
@@ -2833,8 +2833,8 @@
    "routine": 250,
    "terminator": 254,
    "symbol": "amcaf_pt_sam_play_1",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_pt.cpp"
   },
   {
    "offset": 5200,
@@ -2843,8 +2843,8 @@
    "routine": 251,
    "terminator": 254,
    "symbol": "amcaf_pt_sam_play_2",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_pt.cpp"
   },
   {
    "offset": 5210,
@@ -2853,8 +2853,8 @@
    "routine": 252,
    "terminator": 255,
    "symbol": "amcaf_pt_sam_play_3",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_pt.cpp"
   },
   {
    "offset": 5222,
@@ -2863,8 +2863,8 @@
    "routine": 244,
    "terminator": 254,
    "symbol": "amcaf_pt_sam_volume_1",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_pt.cpp"
   },
   {
    "offset": 5244,
@@ -2873,8 +2873,8 @@
    "routine": 245,
    "terminator": 255,
    "symbol": "amcaf_pt_sam_volume_2",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_pt.cpp"
   },
   {
    "offset": 5254,
@@ -3063,8 +3063,8 @@
    "routine": 266,
    "terminator": 255,
    "symbol": "amcaf_pt_continue",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_pt.cpp"
   },
   {
    "offset": 5598,
@@ -3073,8 +3073,8 @@
    "routine": 240,
    "terminator": 255,
    "symbol": "amcaf_pt_cpattern",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_pt.cpp"
   },
   {
    "offset": 5616,
@@ -3083,8 +3083,8 @@
    "routine": 241,
    "terminator": 255,
    "symbol": "amcaf_pt_cpos",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_pt.cpp"
   },
   {
    "offset": 5630,
@@ -3093,8 +3093,8 @@
    "routine": 242,
    "terminator": 255,
    "symbol": "amcaf_pt_cinstr",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_pt.cpp"
   },
   {
    "offset": 5646,
@@ -3103,8 +3103,8 @@
    "routine": 243,
    "terminator": 255,
    "symbol": "amcaf_pt_cnote",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_pt.cpp"
   },
   {
    "offset": 5662,
@@ -3113,8 +3113,8 @@
    "routine": 246,
    "terminator": 255,
    "symbol": "amcaf_pt_sam_freq",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_pt.cpp"
   },
   {
    "offset": 5682,
@@ -3353,8 +3353,8 @@
    "routine": 238,
    "terminator": 254,
    "symbol": "amcaf_pt_free_voice_0",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_pt.cpp"
   },
   {
    "offset": 6106,
@@ -3363,8 +3363,8 @@
    "routine": 239,
    "terminator": 255,
    "symbol": "amcaf_pt_free_voice_1",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_pt.cpp"
   },
   {
    "offset": 6114,
@@ -3476,5 +3476,11 @@
    "status": "stub",
    "source": ""
   }
- ]
+ ],
+ "hooks": [
+  "default",
+  "end",
+  "bank_check"
+ ],
+ "hookSource": "src/ext/amcaf_pt.cpp"
 }

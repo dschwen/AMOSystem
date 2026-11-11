@@ -30,6 +30,9 @@ uint16_t os_version() { return EXEC_BASE_NAME->lib_Version; }
 uint8_t vblank_frequency() { return reinterpret_cast<struct ExecBase *>(EXEC_BASE_NAME)->VBlankFrequency; }
 
 const char *extension_file(uint32_t) { return nullptr; }
+bool timer_start(void (*)(), uint32_t) { return false; }
+void timer_change(uint32_t) {}
+void timer_stop() {}
 void set_task_priority(int32_t priority) { SetTaskPri(FindTask(nullptr), priority); }
 void clear_cache() { CacheClearU(); }
 

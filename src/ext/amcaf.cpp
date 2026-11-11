@@ -43,12 +43,22 @@ uint32_t amcaf_version_s()
     return str_from(text, sizeof text - 1);
 }
 
-// The cold start (routine 0)
+// amcaf_pt.cpp: the player's start
+void amcaf_start_player();
+
+// The cold start (routine 0): the extension's data, and the routines AMOS calls at each Default (+1),
+// at the end (+2) and when the banks change (+3)
 uint32_t amcaf_cold(RegFrame &r)
 {
     uint32_t result = ext3::cold_start(r, Id::amcaf, 0x0200);
-    if (int32_t(result) >= 0)
-        idata().ExtAdr[result * 4] = address(amcaf::state());
+    if (int32_t(result) >= 0) {
+        IData &d = idata();
+        d.ExtAdr[result * 4] = address(amcaf::state());
+        d.ExtAdr[result * 4 + 1] = address(AMOS_DATA(ext_amcaf_default_entry));
+        d.ExtAdr[result * 4 + 2] = address(AMOS_DATA(ext_amcaf_end_entry));
+        d.ExtAdr[result * 4 + 3] = address(AMOS_DATA(ext_amcaf_bank_check_entry));
+        amcaf_start_player();
+    }
     return result;
 }
 }

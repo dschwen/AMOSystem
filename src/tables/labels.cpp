@@ -306,7 +306,10 @@ uint8_t *const w_wopen = host_obj_src_w_windows_glue_s + 92;
 // third-party extensions (tools/ext_gen.py): begin labels
 #if !defined(__mc68000__) || defined(AMOS_THIRD_PARTY)
 uint8_t *const ext_amcaf_image = host_obj_src_ext_amcaf_image_s + 0;
-uint8_t *const ext_amcaf_jumps = host_obj_src_ext_amcaf_glue_s + 6924;
+uint8_t *const ext_amcaf_jumps = host_obj_src_ext_amcaf_glue_s + 6936;
+uint8_t *const ext_amcaf_default_entry = host_obj_src_ext_amcaf_glue_s + 6924;
+uint8_t *const ext_amcaf_end_entry = host_obj_src_ext_amcaf_glue_s + 6928;
+uint8_t *const ext_amcaf_bank_check_entry = host_obj_src_ext_amcaf_glue_s + 6932;
 uint8_t *const ext_turbo_image = host_obj_src_ext_turbo_image_s + 0;
 uint8_t *const ext_turbo_jumps = host_obj_src_ext_turbo_glue_s + 3072;
 uint8_t *const ext_turbo_default_entry = host_obj_src_ext_turbo_glue_s + 3064;

@@ -307,6 +307,9 @@ extern uint8_t *const w_wopen;
 #if !defined(__mc68000__) || defined(AMOS_THIRD_PARTY)
 extern uint8_t *const ext_amcaf_image;
 extern uint8_t *const ext_amcaf_jumps;
+extern uint8_t *const ext_amcaf_default_entry;
+extern uint8_t *const ext_amcaf_end_entry;
+extern uint8_t *const ext_amcaf_bank_check_entry;
 extern uint8_t *const ext_turbo_image;
 extern uint8_t *const ext_turbo_jumps;
 extern uint8_t *const ext_turbo_default_entry;
