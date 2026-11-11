@@ -62,6 +62,9 @@ bool unit_set[Units];           // a floppy unit the configuration names
 int floppy_drives = 2;
 int fullscreen_setting = -1;     // the window: full screen (1) or not (0), -1: never said
 std::string joystick_settings[2];   // the ports' joysticks (empty: never said)
+constexpr int ExtensionSlots = 26;
+std::string extension_files[ExtensionSlots + 1];      // the extensions of the slots (1-26) the setup names
+bool extension_said[ExtensionSlots + 1];              // (an empty name frees the slot)
 
 struct Entry {
     std::string path, label;
@@ -72,6 +75,8 @@ struct Config {
     int floppy_drives = -1;
     int fullscreen = -1;            // [window] fullscreen = yes / no; -1: not said
     std::string joystick[2];        // [joystick] port1 / port2 = auto, none, keyboard, pad1...
+    std::string extension[ExtensionSlots + 1];      // [extensions] 8 = AMOSPro_AMCAF.Lib
+    bool extension_said[ExtensionSlots + 1] = {};
     std::string devices_dir;
     std::vector<std::string> library;
     Entry unit[Units];
@@ -260,6 +265,9 @@ bool load(const std::string &file, Config &c)
             c.joystick[lower(key) == "port2"] = lower(value);
         } else if (section == "window" && lower(key) == "fullscreen") {
             c.fullscreen = truth(value);
+        } else if (section == "extensions" && atoi(key.c_str()) >= 1 && atoi(key.c_str()) <= ExtensionSlots) {
+            c.extension[atoi(key.c_str())] = value;
+            c.extension_said[atoi(key.c_str())] = true;
         } else {
             warn(file + ": unknown setting [" + section + "] " + key);
         }
@@ -322,6 +330,16 @@ void apply_option(Config &c, const std::string &name, const std::string &value)
         c.fullscreen = value.empty() || truth(value);
     } else if (name == "port1" || name == "port2") {
         c.joystick[name == "port2"] = lower(value);
+    } else if (name == "extension") {
+        // --extension SLOT=FILE (FILE empty: the slot is free)
+        int slot = atoi(value.c_str());
+        size_t eq = value.find('=');
+        if (slot < 1 || slot > ExtensionSlots || eq == std::string::npos) {
+            warn("--extension SLOT=FILE (SLOT 1 to 26)");
+        } else {
+            c.extension[slot] = value.substr(eq + 1);
+            c.extension_said[slot] = true;
+        }
     }
 }
 
@@ -580,6 +598,10 @@ void init()
     for (int p = 0; p < 2; p++)
         if (!c.joystick[p].empty())
             joystick_settings[p] = c.joystick[p];
+    for (int slot = 1; slot <= ExtensionSlots; slot++) {
+        extension_said[slot] = c.extension_said[slot];
+        extension_files[slot] = c.extension[slot];
+    }
 
     // the assigns: AMOS_ASSIGNS="NAME=directory;..."
     const char *env = getenv("AMOS_ASSIGNS");
@@ -698,6 +720,14 @@ bool fullscreen_at_start()
 void remember_fullscreen(bool on) { fullscreen_setting = on; }
 
 // The joystick of the Amiga's port 1 (0) or 2 (1): auto, none, keyboard, pad1... (empty: never said)
+// The extension the setup puts in a slot (1-26): its file ("" none), null: the interpreter's
+// configuration says
+const char *extension_file(unsigned slot)
+{
+    init();
+    return slot >= 1 && slot <= unsigned(ExtensionSlots) && extension_said[slot] ? extension_files[slot].c_str() : nullptr;
+}
+
 const char *joystick_setting(int port)
 {
     init();
@@ -717,7 +747,7 @@ bool option(const char *name, const char *value)
         return true;
     }
     if (parse_unit(n.c_str(), n.size()) >= 0 || n == "assign" || n == "library" || n == "devices" ||
-        n == "fullscreen" || n == "port1" || n == "port2") {
+        n == "fullscreen" || n == "port1" || n == "port2" || n == "extension") {
         options.push_back({n, value});
         return true;
     }
@@ -975,6 +1005,14 @@ bool save_config(const char *&message)
         for (int p = 0; p < 2; p++)
             if (!joystick_settings[p].empty())
                 text += "port" + std::to_string(p + 1) + " = " + joystick_settings[p] + "\n";
+    }
+    {
+        bool any = false;
+        for (int slot = 1; slot <= ExtensionSlots; slot++)
+            if (c.extension_said[slot]) {
+                text += std::string(any ? "" : "[extensions]\n") + std::to_string(slot) + " = " + c.extension[slot] + "\n";
+                any = true;
+            }
     }
     if (!c.library.empty()) {
         text += "[library]\n";

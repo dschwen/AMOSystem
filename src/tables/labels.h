@@ -303,6 +303,16 @@ extern uint8_t *const w_vbl_in;
 extern uint8_t *const w_wi_in;
 extern uint8_t *const w_widela;
 extern uint8_t *const w_wopen;
+// third-party extensions (tools/ext_gen.py): begin labels
+#if !defined(__mc68000__) || defined(AMOS_THIRD_PARTY)
+extern uint8_t *const ext_amcaf_image;
+extern uint8_t *const ext_amcaf_jumps;
+extern uint8_t *const ext_turbo_image;
+extern uint8_t *const ext_turbo_jumps;
+extern uint8_t *const ext_turbo_default_entry;
+extern uint8_t *const ext_turbo_end_entry;
+#endif
+// third-party extensions (tools/ext_gen.py): end labels
 }
 
 // A label of the tables' data, as a pointer: the place in the table on the Amiga, the place in the

@@ -1,0 +1,16 @@
+odd-1-1 0 0
+even 0 0-1-1
+permanent 100
+temporary 0
+after
+raster
+smouse 0
+fpoint 5 0 0 0-1-1-1
+point 5
+fpoint2 5
+autoback 7
+ERROR  23
+not reached
+hunt 20 0 98
+hunt2 40 0 0 0
+hunt3 0 0

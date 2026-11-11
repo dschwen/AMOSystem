@@ -14,6 +14,7 @@ import sys
 import tempfile
 import time
 from install_icons import macos as install_icons
+import ext_config
 
 ROOT = Path(__file__).resolve().parents[1]
 APP = 'AMOS Professional.app'
@@ -83,6 +84,8 @@ def stage_bundle(build, framework, stage, version, arch='x86_64'):
         if rel.suffix.lower() in ('.info','.uaem'): continue
         dest=defaults/rel;dest.parent.mkdir(parents=True,exist_ok=True)
         dest.write_bytes(subprocess.check_output(['git','show','HEAD:'+name],cwd=ROOT))
+    # AMCAF and Turbo Plus in their slots (docs/THIRD-PARTY-EXTENSIONS.md)
+    ext_config.patch_file(defaults/'AMOSPro_Interpreter_Config')
     # The examples (AMOSPro's disks: Examples, Productivity, Tutorial), as the Linux packages have them
     for name in filter(None,run('git','ls-tree','-rz','--name-only','HEAD','--','examples').split('\0')):
         rel=Path(name).relative_to('examples')

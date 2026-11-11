@@ -18,6 +18,9 @@ bool option(const char *name, const char *value);
 // The window: in full screen at the start (configuration, --fullscreen); a change remembered for Save
 bool fullscreen_at_start();
 void remember_fullscreen(bool on);
+// The extension the setup puts in a slot (1-26): [extensions] 8 = AMOSPro_AMCAF.Lib, --extension 8=FILE;
+// its file ("" none), null: the interpreter's configuration says
+const char *extension_file(unsigned slot);
 // The joystick of the Amiga's port 1 (0) or 2 (1): auto, none, keyboard, pad1... (empty: never said)
 const char *joystick_setting(int port);
 void remember_joystick(int port, const char *source);

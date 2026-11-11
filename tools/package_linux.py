@@ -18,6 +18,7 @@ import tarfile
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'tools'))
+import ext_config
 import install_icons
 
 NAME = 'amos'
@@ -46,6 +47,7 @@ def stage(prefix, executable):
     subprocess.check_call([sys.executable, str(ROOT / 'tools/blue_palette.py'),
                            str(tree / 'APSystem/AMOSPro_Editor_Config'),
                            str(tree / 'APSystem/AMOSPro_Editor_Config')])
+    ext_config.patch_file(tree / 'AMOSPro_Interpreter_Config')
     install_icons.linux(prefix)
     licenses = prefix / 'share/doc/amos'
     licenses.mkdir(parents=True)

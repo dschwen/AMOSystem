@@ -10,6 +10,7 @@
 #include "main/main.h"
 
 #include "core/amiga.h"
+#include "hal/system.h"
 
 using namespace amos;
 using namespace amos::boot;
@@ -49,27 +50,46 @@ constexpr uint16_t L_FFloat = 0x1000, L_FAngle = 0x2000, L_FMath = 0x3000, L_VRe
 
 uint8_t *library(uint32_t n) { return ptr<uint8_t>(idata().AdTokens[n]); }
 
+// The extensions linked in: the library's file, its image and, for the extensions of other
+// authors (written by tools/ext_gen.py), the list that binds its routines to its jump table, so
+// that they can be in any slot. The four of AMOSPro's are bound by slot (main_ext_jmps).
+struct Port {
+    const char *file;
+    const uint8_t *image;
+    const uint8_t *jumps;
+};
+
+const Port *ports()
+{
+    static const Port list[] = {{"AMOSPro_Music.Lib", AMOS_DATA(ext_music_image), nullptr},
+                                {"AMOSPro_Compact.Lib", AMOS_DATA(ext_compact_image), nullptr},
+                                {"AMOSPro_Request.Lib", AMOS_DATA(ext_request_image), nullptr},
+                                {"AMOSPro_IOPorts.Lib", AMOS_DATA(ext_ioports_image), nullptr},
+#if !defined(__mc68000__) || defined(AMOS_THIRD_PARTY)
+                                {"AMOSPro_AMCAF.Lib", AMOS_DATA(ext_amcaf_image), AMOS_DATA(ext_amcaf_jumps)},
+                                {"AMOSPro_TURBO_Plus.Lib", AMOS_DATA(ext_turbo_image), AMOS_DATA(ext_turbo_jumps)},
+#endif
+                                {nullptr, nullptr, nullptr}};
+    return list;
+}
+
+// What each slot was loaded from: the list of its routines (none: the library's file, or by slot)
+const uint8_t *loaded_jumps[Libraries];
+
 // The image linked in of the extension a configuration names (by the name
 // of its file, without its path), or none
-const uint8_t *extension_image(const char *name)
+const Port *extension_port(const char *name)
 {
-    static const struct {
-        const char *file;
-        const uint8_t *image;
-    } images[] = {{"AMOSPro_Music.Lib", AMOS_DATA(ext_music_image)},
-                  {"AMOSPro_Compact.Lib", AMOS_DATA(ext_compact_image)},
-                  {"AMOSPro_Request.Lib", AMOS_DATA(ext_request_image)},
-                  {"AMOSPro_IOPorts.Lib", AMOS_DATA(ext_ioports_image)}};
     const char *file = name;
     for (const char *p = name; *p && *p != ' '; p++)
         if (*p == '/' || *p == ':')
             file = p + 1;
-    for (const auto &i : images) {
-        const char *a = file, *b = i.file;
+    for (const Port *i = ports(); i->file; i++) {
+        const char *a = file, *b = i->file;
         while (*b && (*a | 0x20) == (*b | 0x20))
             a++, b++;
         if (!*b && (!*a || *a == ' '))
-            return i.image;
+            return i;
     }
     return nullptr;
 }
@@ -493,6 +513,7 @@ int library_init(uint32_t n)
         return 0;
     Regs r;
     r.a[1] = lb_long(tokens, LB_Command);
+    r.d[0] = n - 1;             // (the number it is loaded as: the extensions of other authors take it)
     r.d[1] = 0x41506578;        // "APex"
     r.d[2] = 0x200;             // VerNumber
     amos_call(&r, host::decode_routine(lb_jump(tokens, 0)));
@@ -514,11 +535,16 @@ int libraries_load()
     if (int e = library_load(0, command, AMOS_DATA(main_library)))
         return e;
     for (uint32_t n = 1; n < Libraries; n++) {
-        const char *name = sys_message(16 + n - 1);
+        // (a host's setup can put an extension in a slot: amos.conf's [extensions])
+        const char *name = hal::extension_file(n);
+        if (!name)
+            name = sys_message(16 + n - 1);
         if (!*name)
             continue;
         command = sys_add_path_com(name);
-        const uint8_t *image = extension_image(name);
+        const Port *port = extension_port(name);
+        const uint8_t *image = port ? port->image : nullptr;
+        loaded_jumps[n] = port ? port->jumps : nullptr;
 #if !defined(__mc68000__)
         // another host cannot run the 68000 code of an extension's file:
         // only the extensions linked in
@@ -548,13 +574,12 @@ void library_patch()
     } while (n);
     // the extensions' routines in AMOSPro (src/ext), for the slots that hold
     // them: the same number of routines, the routines empty
-    for (const uint8_t *e = AMOS_DATA(main_ext_jmps); uint16_t slot = peek_w(e); e += 6) {
+    auto bind = [](uint32_t slot, const uint8_t *list) {
         uint8_t *ext = library(slot);
         if (!ext)
-            continue;
-        const uint8_t *list = ptr<uint8_t>(peek_l(e + 2));
+            return;
         if (peek_w(list) != lb_word(ext, LB_NRout))
-            continue;
+            return;
         // (the list ends with routine 0, which may also come first: the
         // cold start)
         auto each = [list](auto f) {
@@ -568,9 +593,15 @@ void library_patch()
                 empty = false;
         });
         if (!empty)
-            continue;
+            return;
         each([&](uint16_t r, uint32_t routine) { lb_jump(ext, r) = routine; });
-    }
+    };
+    for (const uint8_t *e = AMOS_DATA(main_ext_jmps); uint16_t slot = peek_w(e); e += 6)
+        if (!loaded_jumps[slot])
+            bind(slot, ptr<uint8_t>(peek_l(e + 2)));
+    for (uint32_t slot = 1; slot < Libraries; slot++)
+        if (loaded_jumps[slot])
+            bind(slot, loaded_jumps[slot]);
 }
 
 // Libraries_Reloc: relocation, then the parameter collectors

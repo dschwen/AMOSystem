@@ -1,0 +1,7 @@
+length 9142
+versionAMCAF extension V1.50beta4 11-Jan-98 by Chris Hodges.
+base-1
+swap$56781234
+qsinERROR  2304
+after 1
+vmodERROR  2304

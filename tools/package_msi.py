@@ -17,6 +17,8 @@ import tempfile
 import uuid
 import xml.etree.ElementTree as ET
 
+import ext_config
+
 ROOT = Path(__file__).resolve().parents[1]
 NS = 'http://schemas.microsoft.com/wix/2006/wi'
 ET.register_namespace('', NS)
@@ -126,6 +128,8 @@ def stage_payload(build, sdk, stage, product_version, objdump):
         if relative.suffix.lower() in ('.info','.uaem'):continue
         dest=resources/relative;dest.parent.mkdir(parents=True,exist_ok=True)
         dest.write_bytes(subprocess.check_output(['git','show','HEAD:'+name],cwd=ROOT))
+    # AMCAF and Turbo Plus in their slots (docs/THIRD-PARTY-EXTENSIONS.md)
+    ext_config.patch_file(resources/'AMOSPro_Interpreter_Config')
     # The examples (AMOSPro's disks: Examples, Productivity, Tutorial), as the Linux packages have them
     examples=subprocess.check_output(['git','ls-tree','-rz','--name-only','HEAD','--','examples'],cwd=ROOT).decode().split('\0')
     for name in filter(None,examples):

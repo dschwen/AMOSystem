@@ -10,6 +10,7 @@ import sys
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'tools'))
 import amostok
+import ext_config
 
 PROLOGUE = 'Open Out 1,"AMOSTEST:out/{name}.txt"\nOn Error Goto TESTERR\n'
 EPILOGUE = 'Goto TESTEND\nTESTEND:\nClose 1\nSystem\nTESTERR:\nPrint #1,"ERROR ";Errn\nResume Next\n'
@@ -39,6 +40,7 @@ def main():
     if (args.build / 'windows-probe.exe').exists():
         shutil.copy2(args.build / 'windows-probe.exe', out)
     shutil.copytree(ROOT / 'AMOS', out / 'AMOS', ignore=shutil.ignore_patterns('*.uaem'))
+    ext_config.patch_file(out / 'AMOS' / 'AMOSPro_Interpreter_Config')
     shutil.copy2(ROOT / 'tests/windows/smoke.ps1', out / 'smoke.ps1')
     tables = amostok.Tables([str(ROOT / 'AMOS/APSystem')])
     manifest = []

@@ -66,6 +66,22 @@ def golden_of(f):
     return os.path.join(run.GOLDEN, f)
 
 
+def extension_slots(name):
+    """The extensions a test's configuration (name.conf) puts in slots: {slot: file}"""
+    conf = os.path.join(HOST_ONLY, name + '.conf')
+    slots, section = {}, ''
+    if os.path.exists(conf):
+        with open(conf) as f:
+            for line in f:
+                line = line.strip()
+                if line.startswith('['):
+                    section = line.strip('[]').lower()
+                elif section == 'extensions' and '=' in line and not line.startswith('#'):
+                    slot, _, file = line.partition('=')
+                    slots[int(slot)] = file.strip()
+    return slots
+
+
 def prepare(name, tables):
     """The test's drive: its program, the programs it uses, out/, and S/
     as the emulator's drive has it (the file selector shows it); its RAM:
@@ -87,6 +103,10 @@ def prepare(name, tables):
         listing = head + body
     else:
         listing = head + run.PROLOGUE.format(name=name) + body.rstrip('\n') + '\n' + run.EPILOGUE
+    slots = extension_slots(name)
+    if slots:
+        # (its extensions in the slots its configuration names: the program's tokens have them)
+        tables = amostok.Tables([os.path.join(TREE, 'APSystem')], slots)
     program = amostok.tokenize_program(listing, tables)
     run.lock_procedures(program)
     program.save(os.path.join(hd, name + '.AMOS'))
@@ -363,6 +383,9 @@ def main():
         window = (not own and (run.is_editor_test(name) or os.path.exists(os.path.join(run.TESTS, name + '.input')))) or \
                  (own and os.path.exists(os.path.join(HOST_ONLY, name + '.input')))
         if window and args.text_only:
+            return None
+        # (the libraries of other authors are not in the repository's tree for everyone: no test of them without)
+        if any(file and not os.path.exists(os.path.join(TREE, 'APSystem', file)) for file in extension_slots(name).values()):
             return None
         hd, out = prepare(name, tables)
         if not window:

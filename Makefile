@@ -51,6 +51,15 @@ LDLIBS   := -L$(AMIGA_PREFIX)/m68k-amigaos/libnix/lib -lgcc -lnix13 -lgcc
 AMIGA_DIRS   := src/lib src/main src/verif src/interp src/ext src/hal src/w src/editor src/monitor src/core \
                 src/runtime src/tables
 AMIGA_CXX    := $(sort $(wildcard $(addsuffix /*.cpp,$(AMIGA_DIRS))))
+# The extensions of other authors (Turbo Plus, AMCAF; docs/THIRD-PARTY-EXTENSIONS.md) are C++ here, but the
+# Amiga loads the originals from their files. `make EXTRAS=1` links the C++ into AMOSPro as well (to compare
+# them with the originals: the tests' second build).
+THIRD_PARTY  := $(wildcard src/ext/amcaf*.cpp src/ext/turbo*.cpp src/ext/third_party.cpp src/tables/ext_amcaf_*.cpp src/tables/ext_turbo_*.cpp)
+ifeq ($(EXTRAS),)
+AMIGA_CXX    := $(filter-out $(THIRD_PARTY),$(AMIGA_CXX))
+else
+CXXFLAGS     += -DAMOS_THIRD_PARTY=1
+endif
 AMOSPRO_LINK := $(OBJ)/src/amiga/start.o $(OBJ)/src/amiga/native.o $(patsubst %.cpp,$(OBJ)/%.o,$(AMIGA_CXX))
 
 .PHONY: linux-release package-linux dist-host all dist test test-reference install-hd host-check host host-sdl host-release game ndk install-host uninstall-host clean

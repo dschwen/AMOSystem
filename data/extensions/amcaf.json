@@ -1,0 +1,3480 @@
+{
+ "extension": "AMCAF",
+ "key": "amcaf",
+ "file": "AMOSPro_AMCAF.Lib",
+ "defaultSlot": 8,
+ "libSha256": "9894a7e216ff501244bbcdc47d3830abdbcf4382d4f4a6daa43551faa87917e4",
+ "routines": 399,
+ "commands": [
+  {
+   "offset": 6,
+   "name": "amcaf base",
+   "signature": "0",
+   "routine": 18,
+   "terminator": 255,
+   "symbol": "amcaf_base",
+   "status": "implemented",
+   "source": "src/ext/amcaf.cpp"
+  },
+  {
+   "offset": 22,
+   "name": "amcaf version$",
+   "signature": "2",
+   "routine": 19,
+   "terminator": 255,
+   "symbol": "amcaf_version_s",
+   "status": "implemented",
+   "source": "src/ext/amcaf.cpp"
+  },
+  {
+   "offset": 42,
+   "name": "amcaf length",
+   "signature": "0",
+   "routine": 20,
+   "terminator": 255,
+   "symbol": "amcaf_length",
+   "status": "implemented",
+   "source": "src/ext/amcaf.cpp"
+  },
+  {
+   "offset": 60,
+   "name": "amcaf aga notation on",
+   "signature": "I",
+   "routine": 80,
+   "terminator": 255,
+   "symbol": "amcaf_aga_notation_on",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 88,
+   "name": "amcaf aga notation off",
+   "signature": "I",
+   "routine": 81,
+   "terminator": 255,
+   "symbol": "amcaf_aga_notation_off",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 116,
+   "name": "bank permanent",
+   "signature": "I0",
+   "routine": 25,
+   "terminator": 255,
+   "symbol": "amcaf_bank_permanent",
+   "status": "implemented",
+   "source": "src/ext/amcaf_misc.cpp"
+  },
+  {
+   "offset": 138,
+   "name": "bank temporary",
+   "signature": "I0",
+   "routine": 26,
+   "terminator": 255,
+   "symbol": "amcaf_bank_temporary",
+   "status": "implemented",
+   "source": "src/ext/amcaf_misc.cpp"
+  },
+  {
+   "offset": 160,
+   "name": "bank to chip",
+   "signature": "I0",
+   "routine": 27,
+   "terminator": 255,
+   "symbol": "amcaf_bank_to_chip",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 180,
+   "name": "bank to fast",
+   "signature": "I0",
+   "routine": 28,
+   "terminator": 255,
+   "symbol": "amcaf_bank_to_fast",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 200,
+   "name": "bank code xor.b",
+   "signature": "I0,0",
+   "routine": 34,
+   "terminator": 254,
+   "symbol": "amcaf_bank_code_xor_b_2",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 226,
+   "name": "bank code xor.b",
+   "signature": "I0,0t0",
+   "routine": 33,
+   "terminator": 255,
+   "symbol": "amcaf_bank_code_xor_b_3",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 238,
+   "name": "bank code add.b",
+   "signature": "I0,0",
+   "routine": 36,
+   "terminator": 254,
+   "symbol": "amcaf_bank_code_add_b_2",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 264,
+   "name": "bank code add.b",
+   "signature": "I0,0t0",
+   "routine": 35,
+   "terminator": 255,
+   "symbol": "amcaf_bank_code_add_b_3",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 276,
+   "name": "bank code mix.b",
+   "signature": "I0,0",
+   "routine": 38,
+   "terminator": 254,
+   "symbol": "amcaf_bank_code_mix_b_2",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 302,
+   "name": "bank code mix.b",
+   "signature": "I0,0t0",
+   "routine": 37,
+   "terminator": 255,
+   "symbol": "amcaf_bank_code_mix_b_3",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 314,
+   "name": "bank code rol.b",
+   "signature": "I0,0",
+   "routine": 40,
+   "terminator": 254,
+   "symbol": "amcaf_bank_code_rol_b_2",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 340,
+   "name": "bank code rol.b",
+   "signature": "I0,0t0",
+   "routine": 39,
+   "terminator": 255,
+   "symbol": "amcaf_bank_code_rol_b_3",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 352,
+   "name": "bank code ror.b",
+   "signature": "I0,0",
+   "routine": 42,
+   "terminator": 254,
+   "symbol": "amcaf_bank_code_ror_b_2",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 378,
+   "name": "bank code ror.b",
+   "signature": "I0,0t0",
+   "routine": 41,
+   "terminator": 255,
+   "symbol": "amcaf_bank_code_ror_b_3",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 390,
+   "name": "bank code xor.w",
+   "signature": "I0,0",
+   "routine": 44,
+   "terminator": 254,
+   "symbol": "amcaf_bank_code_xor_w_2",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 416,
+   "name": "bank code xor.w",
+   "signature": "I0,0t0",
+   "routine": 43,
+   "terminator": 255,
+   "symbol": "amcaf_bank_code_xor_w_3",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 428,
+   "name": "bank code add.w",
+   "signature": "I0,0",
+   "routine": 46,
+   "terminator": 254,
+   "symbol": "amcaf_bank_code_add_w_2",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 454,
+   "name": "bank code add.w",
+   "signature": "I0,0t0",
+   "routine": 45,
+   "terminator": 255,
+   "symbol": "amcaf_bank_code_add_w_3",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 466,
+   "name": "bank code mix.w",
+   "signature": "I0,0",
+   "routine": 48,
+   "terminator": 254,
+   "symbol": "amcaf_bank_code_mix_w_2",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 492,
+   "name": "bank code mix.w",
+   "signature": "I0,0t0",
+   "routine": 47,
+   "terminator": 255,
+   "symbol": "amcaf_bank_code_mix_w_3",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 504,
+   "name": "bank code rol.w",
+   "signature": "I0,0",
+   "routine": 50,
+   "terminator": 254,
+   "symbol": "amcaf_bank_code_rol_w_2",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 530,
+   "name": "bank code rol.w",
+   "signature": "I0,0t0",
+   "routine": 49,
+   "terminator": 255,
+   "symbol": "amcaf_bank_code_rol_w_3",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 542,
+   "name": "bank code ror.w",
+   "signature": "I0,0",
+   "routine": 52,
+   "terminator": 254,
+   "symbol": "amcaf_bank_code_ror_w_2",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 568,
+   "name": "bank code ror.w",
+   "signature": "I0,0t0",
+   "routine": 51,
+   "terminator": 255,
+   "symbol": "amcaf_bank_code_ror_w_3",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 580,
+   "name": "bank stretch",
+   "signature": "I0t0",
+   "routine": 53,
+   "terminator": 255,
+   "symbol": "amcaf_bank_stretch",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 602,
+   "name": "bank copy",
+   "signature": "I0t0",
+   "routine": 57,
+   "terminator": 254,
+   "symbol": "amcaf_bank_copy_2",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 622,
+   "name": "bank copy",
+   "signature": "I0,0t0",
+   "routine": 56,
+   "terminator": 255,
+   "symbol": "amcaf_bank_copy_3",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 634,
+   "name": "bank name$",
+   "signature": "20",
+   "routine": 59,
+   "terminator": 255,
+   "symbol": "amcaf_bank_name_s",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 652,
+   "name": "bank name",
+   "signature": "I0,2",
+   "routine": 58,
+   "terminator": 255,
+   "symbol": "amcaf_bank_name",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 670,
+   "name": "bank checksum",
+   "signature": "00",
+   "routine": 55,
+   "terminator": 254,
+   "symbol": "amcaf_bank_checksum_1",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 692,
+   "name": "bank checksum",
+   "signature": "00t0",
+   "routine": 54,
+   "terminator": 255,
+   "symbol": "amcaf_bank_checksum_2",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 702,
+   "name": "disk state",
+   "signature": "02",
+   "routine": 101,
+   "terminator": 255,
+   "symbol": "amcaf_disk_state",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 720,
+   "name": "disk type",
+   "signature": "02",
+   "routine": 100,
+   "terminator": 255,
+   "symbol": "amcaf_disk_type",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 736,
+   "name": "dos hash",
+   "signature": "02",
+   "routine": 99,
+   "terminator": 255,
+   "symbol": "amcaf_dos_hash",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 752,
+   "name": "filename$",
+   "signature": "22",
+   "routine": 96,
+   "terminator": 255,
+   "symbol": "amcaf_filename_s",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 768,
+   "name": "pattern match",
+   "signature": "02,2",
+   "routine": 102,
+   "terminator": 255,
+   "symbol": "amcaf_pattern_match",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 790,
+   "name": "open workbench",
+   "signature": "I",
+   "routine": 220,
+   "terminator": 255,
+   "symbol": "amcaf_open_workbench",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 810,
+   "name": "x raster",
+   "signature": "0",
+   "routine": 204,
+   "terminator": 255,
+   "symbol": "amcaf_x_raster",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 824,
+   "name": "y raster",
+   "signature": "0",
+   "routine": 205,
+   "terminator": 255,
+   "symbol": "amcaf_y_raster",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 838,
+   "name": "raster wait",
+   "signature": "I0",
+   "routine": 206,
+   "terminator": 254,
+   "symbol": "amcaf_raster_wait_1",
+   "status": "implemented",
+   "source": "src/ext/amcaf_misc.cpp"
+  },
+  {
+   "offset": 856,
+   "name": "raster wait",
+   "signature": "I0,0",
+   "routine": 207,
+   "terminator": 255,
+   "symbol": "amcaf_raster_wait_2",
+   "status": "implemented",
+   "source": "src/ext/amcaf_misc.cpp"
+  },
+  {
+   "offset": 876,
+   "name": "set ntsc",
+   "signature": "I",
+   "routine": 208,
+   "terminator": 255,
+   "symbol": "amcaf_set_ntsc",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 890,
+   "name": "set pal",
+   "signature": "I",
+   "routine": 209,
+   "terminator": 255,
+   "symbol": "amcaf_set_pal",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 904,
+   "name": "turbo plot",
+   "signature": "I0,0,0",
+   "routine": 348,
+   "terminator": 255,
+   "symbol": "amcaf_turbo_plot",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 926,
+   "name": "turbo point",
+   "signature": "00,0",
+   "routine": 349,
+   "terminator": 255,
+   "symbol": "amcaf_turbo_point",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 946,
+   "name": "red val",
+   "signature": "00",
+   "routine": 87,
+   "terminator": 255,
+   "symbol": "amcaf_red_val",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 960,
+   "name": "green val",
+   "signature": "00",
+   "routine": 88,
+   "terminator": 255,
+   "symbol": "amcaf_green_val",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 976,
+   "name": "blue val",
+   "signature": "00",
+   "routine": 89,
+   "terminator": 255,
+   "symbol": "amcaf_blue_val",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 992,
+   "name": "path$",
+   "signature": "22",
+   "routine": 97,
+   "terminator": 255,
+   "symbol": "amcaf_path_s",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 1004,
+   "name": "extpath$",
+   "signature": "22",
+   "routine": 98,
+   "terminator": 255,
+   "symbol": "amcaf_extpath_s",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 1020,
+   "name": "rnc unpack",
+   "signature": "I0t0",
+   "routine": 276,
+   "terminator": 255,
+   "symbol": "amcaf_rnc_unpack",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 1040,
+   "name": "rnp",
+   "signature": "0",
+   "routine": 277,
+   "terminator": 255,
+   "symbol": "amcaf_rnp",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 1050,
+   "name": "reset computer",
+   "signature": "I",
+   "routine": 215,
+   "terminator": 255,
+   "symbol": "amcaf_reset_computer",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 1070,
+   "name": "rrggbb to rgb",
+   "signature": "00",
+   "routine": 90,
+   "terminator": 255,
+   "symbol": "amcaf_rrggbb_to_rgb",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 1090,
+   "name": "rgb to rrggbb",
+   "signature": "00",
+   "routine": 91,
+   "terminator": 255,
+   "symbol": "amcaf_rgb_to_rrggbb",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 1110,
+   "name": "wload",
+   "signature": "I2,0",
+   "routine": 104,
+   "terminator": 255,
+   "symbol": "amcaf_wload",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 1124,
+   "name": "dload",
+   "signature": "I2,0",
+   "routine": 103,
+   "terminator": 255,
+   "symbol": "amcaf_dload",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 1138,
+   "name": "wsave",
+   "signature": "I2,0",
+   "routine": 105,
+   "terminator": 255,
+   "symbol": "amcaf_wsave",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 1152,
+   "name": "dsave",
+   "signature": "I2,0",
+   "routine": 105,
+   "terminator": 255,
+   "symbol": "amcaf_wsave",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 1166,
+   "name": "file copy",
+   "signature": "I2t2",
+   "routine": 108,
+   "terminator": 255,
+   "symbol": "amcaf_file_copy",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 1184,
+   "name": "nop",
+   "signature": "I",
+   "routine": 21,
+   "terminator": 255,
+   "symbol": "amcaf_nop",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 1194,
+   "name": "nfn",
+   "signature": "0",
+   "routine": 22,
+   "terminator": 255,
+   "symbol": "amcaf_nfn",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 1204,
+   "name": "pptodisk",
+   "signature": "I2,0",
+   "routine": 235,
+   "terminator": 254,
+   "symbol": "amcaf_pptodisk_2",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 1222,
+   "name": "pptodisk",
+   "signature": "I2,0,0",
+   "routine": 234,
+   "terminator": 254,
+   "symbol": "amcaf_pptodisk_3",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 1234,
+   "name": "ppunpack",
+   "signature": "I0t0",
+   "routine": 236,
+   "terminator": 255,
+   "symbol": "amcaf_ppunpack",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 1252,
+   "name": "ppfromdisk",
+   "signature": "I2,0",
+   "routine": 237,
+   "terminator": 255,
+   "symbol": "amcaf_ppfromdisk",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 1272,
+   "name": "binexp",
+   "signature": "00",
+   "routine": 194,
+   "terminator": 255,
+   "symbol": "amcaf_binexp",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 1286,
+   "name": "binlog",
+   "signature": "00",
+   "routine": 195,
+   "terminator": 255,
+   "symbol": "amcaf_binlog",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 1300,
+   "name": "extbase",
+   "signature": "00",
+   "routine": 133,
+   "terminator": 255,
+   "symbol": "amcaf_extbase",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 1314,
+   "name": "io error$",
+   "signature": "20",
+   "routine": 173,
+   "terminator": 255,
+   "symbol": "amcaf_io_error_s",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 1330,
+   "name": "io error",
+   "signature": "0",
+   "routine": 172,
+   "terminator": 255,
+   "symbol": "amcaf_io_error",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 1344,
+   "name": "scrn rastport",
+   "signature": "0",
+   "routine": 279,
+   "terminator": 255,
+   "symbol": "amcaf_scrn_rastport",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 1364,
+   "name": "scrn bitmap",
+   "signature": "0",
+   "routine": 280,
+   "terminator": 255,
+   "symbol": "amcaf_scrn_bitmap",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 1382,
+   "name": "scrn layerinfo",
+   "signature": "0",
+   "routine": 281,
+   "terminator": 255,
+   "symbol": "amcaf_scrn_layerinfo",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 1402,
+   "name": "scrn layer",
+   "signature": "0",
+   "routine": 282,
+   "terminator": 255,
+   "symbol": "amcaf_scrn_layer",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 1418,
+   "name": "scrn region",
+   "signature": "0",
+   "routine": 283,
+   "terminator": 255,
+   "symbol": "amcaf_scrn_region",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 1436,
+   "name": "change font",
+   "signature": "I2",
+   "routine": 142,
+   "terminator": 254,
+   "symbol": "amcaf_change_font_1",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 1456,
+   "name": "change font",
+   "signature": "I2,0",
+   "routine": 143,
+   "terminator": 254,
+   "symbol": "amcaf_change_font_2",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 1466,
+   "name": "change font",
+   "signature": "I2,0,0",
+   "routine": 144,
+   "terminator": 255,
+   "symbol": "amcaf_change_font_3",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 1478,
+   "name": "font style",
+   "signature": "0",
+   "routine": 145,
+   "terminator": 255,
+   "symbol": "amcaf_font_style",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 1494,
+   "name": "flush libs",
+   "signature": "I",
+   "routine": 219,
+   "terminator": 255,
+   "symbol": "amcaf_flush_libs",
+   "status": "implemented",
+   "source": "src/ext/amcaf_misc.cpp"
+  },
+  {
+   "offset": 1510,
+   "name": "fcircle",
+   "signature": "I0,0,0",
+   "routine": 350,
+   "terminator": 255,
+   "symbol": "amcaf_fcircle",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 1528,
+   "name": "fellipse",
+   "signature": "I0,0,0,0",
+   "routine": 351,
+   "terminator": 255,
+   "symbol": "amcaf_fellipse",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 1550,
+   "name": "cpu",
+   "signature": "0",
+   "routine": 216,
+   "terminator": 255,
+   "symbol": "amcaf_cpu",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 1560,
+   "name": "fpu",
+   "signature": "0",
+   "routine": 217,
+   "terminator": 255,
+   "symbol": "amcaf_fpu",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 1570,
+   "name": "launch",
+   "signature": "I2",
+   "routine": 221,
+   "terminator": 254,
+   "symbol": "amcaf_launch_1",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 1584,
+   "name": "launch",
+   "signature": "I2,0",
+   "routine": 222,
+   "terminator": 255,
+   "symbol": "amcaf_launch_2",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 1594,
+   "name": "examine dir",
+   "signature": "I2",
+   "routine": 109,
+   "terminator": 255,
+   "symbol": "amcaf_examine_dir",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 1612,
+   "name": "examine next$",
+   "signature": "2",
+   "routine": 110,
+   "terminator": 255,
+   "symbol": "amcaf_examine_next_s",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 1632,
+   "name": "examine stop",
+   "signature": "I",
+   "routine": 111,
+   "terminator": 255,
+   "symbol": "amcaf_examine_stop",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 1650,
+   "name": "examine object",
+   "signature": "I2",
+   "routine": 112,
+   "terminator": 255,
+   "symbol": "amcaf_examine_object",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 1672,
+   "name": "object type",
+   "signature": "0",
+   "routine": 116,
+   "terminator": 254,
+   "symbol": "amcaf_object_type_0",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 1690,
+   "name": "object type",
+   "signature": "02",
+   "routine": 115,
+   "terminator": 255,
+   "symbol": "amcaf_object_type_1",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 1698,
+   "name": "object size",
+   "signature": "0",
+   "routine": 118,
+   "terminator": 254,
+   "symbol": "amcaf_object_size_0",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 1716,
+   "name": "object size",
+   "signature": "02",
+   "routine": 117,
+   "terminator": 255,
+   "symbol": "amcaf_object_size_1",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 1724,
+   "name": "object blocks",
+   "signature": "0",
+   "routine": 120,
+   "terminator": 254,
+   "symbol": "amcaf_object_blocks_0",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 1744,
+   "name": "object blocks",
+   "signature": "02",
+   "routine": 119,
+   "terminator": 255,
+   "symbol": "amcaf_object_blocks_1",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 1752,
+   "name": "object name$",
+   "signature": "2",
+   "routine": 114,
+   "terminator": 254,
+   "symbol": "amcaf_object_name_s_0",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 1772,
+   "name": "object name$",
+   "signature": "22",
+   "routine": 113,
+   "terminator": 255,
+   "symbol": "amcaf_object_name_s_1",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 1780,
+   "name": "object date",
+   "signature": "0",
+   "routine": 122,
+   "terminator": 254,
+   "symbol": "amcaf_object_date_0",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 1798,
+   "name": "object date",
+   "signature": "02",
+   "routine": 121,
+   "terminator": 255,
+   "symbol": "amcaf_object_date_1",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 1806,
+   "name": "object time",
+   "signature": "0",
+   "routine": 124,
+   "terminator": 254,
+   "symbol": "amcaf_object_time_0",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 1824,
+   "name": "object time",
+   "signature": "02",
+   "routine": 123,
+   "terminator": 255,
+   "symbol": "amcaf_object_time_1",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 1832,
+   "name": "object protection$",
+   "signature": "20",
+   "routine": 127,
+   "terminator": 255,
+   "symbol": "amcaf_object_protection_s",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 1858,
+   "name": "object protection",
+   "signature": "0",
+   "routine": 126,
+   "terminator": 254,
+   "symbol": "amcaf_object_protection_0",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 1882,
+   "name": "object protection",
+   "signature": "02",
+   "routine": 125,
+   "terminator": 255,
+   "symbol": "amcaf_object_protection_1",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 1890,
+   "name": "object comment$",
+   "signature": "2",
+   "routine": 129,
+   "terminator": 254,
+   "symbol": "amcaf_object_comment_s_0",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 1912,
+   "name": "object comment$",
+   "signature": "22",
+   "routine": 128,
+   "terminator": 254,
+   "symbol": "amcaf_object_comment_s_1",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 1920,
+   "name": "protect object",
+   "signature": "I2,0",
+   "routine": 130,
+   "terminator": 255,
+   "symbol": "amcaf_protect_object",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 1944,
+   "name": "set object comment",
+   "signature": "I2,2",
+   "routine": 131,
+   "terminator": 255,
+   "symbol": "amcaf_set_object_comment",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 1972,
+   "name": "set sprite priority",
+   "signature": "I0",
+   "routine": 210,
+   "terminator": 255,
+   "symbol": "amcaf_set_sprite_priority",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 1998,
+   "name": "current date",
+   "signature": "0",
+   "routine": 320,
+   "terminator": 255,
+   "symbol": "amcaf_current_date",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 2016,
+   "name": "current time",
+   "signature": "0",
+   "routine": 321,
+   "terminator": 255,
+   "symbol": "amcaf_current_time",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 2034,
+   "name": "cd year",
+   "signature": "00",
+   "routine": 322,
+   "terminator": 255,
+   "symbol": "amcaf_cd_year",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 2048,
+   "name": "cd month",
+   "signature": "00",
+   "routine": 323,
+   "terminator": 255,
+   "symbol": "amcaf_cd_month",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 2064,
+   "name": "cd day",
+   "signature": "00",
+   "routine": 324,
+   "terminator": 255,
+   "symbol": "amcaf_cd_day",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 2078,
+   "name": "cd weekday",
+   "signature": "00",
+   "routine": 325,
+   "terminator": 255,
+   "symbol": "amcaf_cd_weekday",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 2096,
+   "name": "ct hour",
+   "signature": "00",
+   "routine": 329,
+   "terminator": 255,
+   "symbol": "amcaf_ct_hour",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 2110,
+   "name": "ct minute",
+   "signature": "00",
+   "routine": 330,
+   "terminator": 255,
+   "symbol": "amcaf_ct_minute",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 2126,
+   "name": "ct second",
+   "signature": "00",
+   "routine": 331,
+   "terminator": 255,
+   "symbol": "amcaf_ct_second",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 2142,
+   "name": "ct tick",
+   "signature": "00",
+   "routine": 332,
+   "terminator": 255,
+   "symbol": "amcaf_ct_tick",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 2156,
+   "name": "mask copy",
+   "signature": "I0t0,0",
+   "routine": 174,
+   "terminator": 254,
+   "symbol": "amcaf_mask_copy_3",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 2178,
+   "name": "mask copy",
+   "signature": "I0,0,0,0,0t0,0,0,0",
+   "routine": 175,
+   "terminator": 254,
+   "symbol": "amcaf_mask_copy_9",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 2202,
+   "name": "mask copy",
+   "signature": "I0,0,0,0,0t0,0,0,0,0",
+   "routine": 176,
+   "terminator": 255,
+   "symbol": "amcaf_mask_copy_10",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 2228,
+   "name": "scanstr$",
+   "signature": "20",
+   "routine": 278,
+   "terminator": 255,
+   "symbol": "amcaf_scanstr_s",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 2244,
+   "name": "chr.w$",
+   "signature": "20",
+   "routine": 179,
+   "terminator": 255,
+   "symbol": "amcaf_chr_w_s",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 2258,
+   "name": "chr.l$",
+   "signature": "20",
+   "routine": 180,
+   "terminator": 255,
+   "symbol": "amcaf_chr_l_s",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 2272,
+   "name": "pjoy",
+   "signature": "00",
+   "routine": 11,
+   "terminator": 255,
+   "symbol": "amcaf_pjoy",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 2284,
+   "name": "pjleft",
+   "signature": "00",
+   "routine": 12,
+   "terminator": 255,
+   "symbol": "amcaf_pjleft",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 2298,
+   "name": "pjright",
+   "signature": "00",
+   "routine": 13,
+   "terminator": 255,
+   "symbol": "amcaf_pjright",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 2312,
+   "name": "pjup",
+   "signature": "00",
+   "routine": 14,
+   "terminator": 255,
+   "symbol": "amcaf_pjup",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 2324,
+   "name": "pjdown",
+   "signature": "00",
+   "routine": 15,
+   "terminator": 255,
+   "symbol": "amcaf_pjdown",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 2338,
+   "name": "pfire",
+   "signature": "00",
+   "routine": 16,
+   "terminator": 255,
+   "symbol": "amcaf_pfire",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 2350,
+   "name": "lsl",
+   "signature": "00,0",
+   "routine": 196,
+   "terminator": 255,
+   "symbol": "amcaf_lsl",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 2362,
+   "name": "lsr",
+   "signature": "00,0",
+   "routine": 197,
+   "terminator": 255,
+   "symbol": "amcaf_lsr",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 2374,
+   "name": "wordswap",
+   "signature": "00",
+   "routine": 198,
+   "terminator": 255,
+   "symbol": "amcaf_wordswap",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 2390,
+   "name": "audio lock",
+   "signature": "I",
+   "routine": 23,
+   "terminator": 255,
+   "symbol": "amcaf_audio_lock",
+   "status": "implemented",
+   "source": "src/ext/amcaf_misc.cpp"
+  },
+  {
+   "offset": 2406,
+   "name": "audio free",
+   "signature": "I",
+   "routine": 24,
+   "terminator": 255,
+   "symbol": "amcaf_audio_free",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 2422,
+   "name": "convert grey",
+   "signature": "I0t0",
+   "routine": 79,
+   "terminator": 255,
+   "symbol": "amcaf_convert_grey",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 2444,
+   "name": "asc.w",
+   "signature": "02",
+   "routine": 181,
+   "terminator": 255,
+   "symbol": "amcaf_asc_w",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 2456,
+   "name": "asc.l",
+   "signature": "02",
+   "routine": 182,
+   "terminator": 255,
+   "symbol": "amcaf_asc_l",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 2468,
+   "name": "amos task",
+   "signature": "0",
+   "routine": 339,
+   "terminator": 255,
+   "symbol": "amcaf_amos_task",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 2484,
+   "name": "amos cli",
+   "signature": "0",
+   "routine": 341,
+   "terminator": 255,
+   "symbol": "amcaf_amos_cli",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 2498,
+   "name": "command name$",
+   "signature": "2",
+   "routine": 340,
+   "terminator": 255,
+   "symbol": "amcaf_command_name_s",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 2518,
+   "name": "tool types$",
+   "signature": "22",
+   "routine": 342,
+   "terminator": 255,
+   "symbol": "amcaf_tool_types_s",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 2536,
+   "name": "ham colour",
+   "signature": "00,0",
+   "routine": 161,
+   "terminator": 255,
+   "symbol": "amcaf_ham_colour",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 2556,
+   "name": "ham best",
+   "signature": "00,0",
+   "routine": 162,
+   "terminator": 255,
+   "symbol": "amcaf_ham_best",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 2574,
+   "name": "glue colour",
+   "signature": "00,0,0",
+   "routine": 86,
+   "terminator": 255,
+   "symbol": "amcaf_glue_colour",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 2596,
+   "name": "ptile bank",
+   "signature": "I0",
+   "routine": 269,
+   "terminator": 255,
+   "symbol": "amcaf_ptile_bank",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 2614,
+   "name": "paste ptile",
+   "signature": "I0,0,0",
+   "routine": 270,
+   "terminator": 255,
+   "symbol": "amcaf_paste_ptile",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 2636,
+   "name": "extdefault",
+   "signature": "I0",
+   "routine": 134,
+   "terminator": 255,
+   "symbol": "amcaf_extdefault",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 2654,
+   "name": "extremove",
+   "signature": "I0",
+   "routine": 135,
+   "terminator": 255,
+   "symbol": "amcaf_extremove",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 2670,
+   "name": "extreinit",
+   "signature": "I0",
+   "routine": 136,
+   "terminator": 255,
+   "symbol": "amcaf_extreinit",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 2686,
+   "name": "td stars bank",
+   "signature": "I0,0",
+   "routine": 304,
+   "terminator": 255,
+   "symbol": "amcaf_td_stars_bank",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 2708,
+   "name": "td stars limit",
+   "signature": "I",
+   "routine": 305,
+   "terminator": 254,
+   "symbol": "amcaf_td_stars_limit_0",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 2730,
+   "name": "td stars limit",
+   "signature": "I0,0t0,0",
+   "routine": 306,
+   "terminator": 255,
+   "symbol": "amcaf_td_stars_limit_4",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 2744,
+   "name": "td stars origin",
+   "signature": "I0,0",
+   "routine": 307,
+   "terminator": 255,
+   "symbol": "amcaf_td_stars_origin",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 2768,
+   "name": "td stars init",
+   "signature": "I",
+   "routine": 308,
+   "terminator": 255,
+   "symbol": "amcaf_td_stars_init",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 2788,
+   "name": "td stars single do",
+   "signature": "I",
+   "routine": 313,
+   "terminator": 255,
+   "symbol": "amcaf_td_stars_single_do",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 2812,
+   "name": "td stars double do",
+   "signature": "I",
+   "routine": 314,
+   "terminator": 255,
+   "symbol": "amcaf_td_stars_double_do",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 2836,
+   "name": "td stars single del",
+   "signature": "I",
+   "routine": 315,
+   "terminator": 255,
+   "symbol": "amcaf_td_stars_single_del",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 2862,
+   "name": "td stars double del",
+   "signature": "I",
+   "routine": 316,
+   "terminator": 255,
+   "symbol": "amcaf_td_stars_double_del",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 2888,
+   "name": "td stars move",
+   "signature": "I",
+   "routine": 317,
+   "terminator": 254,
+   "symbol": "amcaf_td_stars_move_0",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 2908,
+   "name": "td stars move",
+   "signature": "I0",
+   "routine": 318,
+   "terminator": 255,
+   "symbol": "amcaf_td_stars_move_1",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 2916,
+   "name": "td stars draw",
+   "signature": "I",
+   "routine": 319,
+   "terminator": 255,
+   "symbol": "amcaf_td_stars_draw",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 2936,
+   "name": "td stars gravity",
+   "signature": "I0,0",
+   "routine": 309,
+   "terminator": 255,
+   "symbol": "amcaf_td_stars_gravity",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 2962,
+   "name": "td stars accelerate on",
+   "signature": "I",
+   "routine": 310,
+   "terminator": 255,
+   "symbol": "amcaf_td_stars_accelerate_on",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 2990,
+   "name": "td stars accelerate off",
+   "signature": "I",
+   "routine": 311,
+   "terminator": 255,
+   "symbol": "amcaf_td_stars_accelerate_off",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 3020,
+   "name": "td stars planes",
+   "signature": "I0,0",
+   "routine": 312,
+   "terminator": 255,
+   "symbol": "amcaf_td_stars_planes",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 3044,
+   "name": "sdeek",
+   "signature": "00",
+   "routine": 199,
+   "terminator": 255,
+   "symbol": "amcaf_sdeek",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 3056,
+   "name": "speek",
+   "signature": "00",
+   "routine": 200,
+   "terminator": 255,
+   "symbol": "amcaf_speek",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 3068,
+   "name": "pix shift up",
+   "signature": "I0,0,0,0,0t0,0",
+   "routine": 227,
+   "terminator": 254,
+   "symbol": "amcaf_pix_shift_up_7",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 3100,
+   "name": "pix shift up",
+   "signature": "I0,0,0,0,0t0,0,0",
+   "routine": 226,
+   "terminator": 255,
+   "symbol": "amcaf_pix_shift_up_8",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 3122,
+   "name": "pix shift down",
+   "signature": "I0,0,0,0,0t0,0",
+   "routine": 229,
+   "terminator": 254,
+   "symbol": "amcaf_pix_shift_down_7",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 3156,
+   "name": "pix shift down",
+   "signature": "I0,0,0,0,0t0,0,0",
+   "routine": 228,
+   "terminator": 255,
+   "symbol": "amcaf_pix_shift_down_8",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 3178,
+   "name": "pix brighten",
+   "signature": "I0,0,0,0,0t0,0",
+   "routine": 231,
+   "terminator": 254,
+   "symbol": "amcaf_pix_brighten_7",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 3210,
+   "name": "pix brighten",
+   "signature": "I0,0,0,0,0t0,0,0",
+   "routine": 230,
+   "terminator": 255,
+   "symbol": "amcaf_pix_brighten_8",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 3232,
+   "name": "pix darken",
+   "signature": "I0,0,0,0,0t0,0",
+   "routine": 233,
+   "terminator": 254,
+   "symbol": "amcaf_pix_darken_7",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 3262,
+   "name": "pix darken",
+   "signature": "I0,0,0,0,0t0,0,0",
+   "routine": 232,
+   "terminator": 255,
+   "symbol": "amcaf_pix_darken_8",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 3284,
+   "name": "make pix mask",
+   "signature": "I0,0,0t0,0,0",
+   "routine": 225,
+   "terminator": 255,
+   "symbol": "amcaf_make_pix_mask",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 3314,
+   "name": "count pixels",
+   "signature": "00,0,0,0t0,0",
+   "routine": 92,
+   "terminator": 255,
+   "symbol": "amcaf_count_pixels",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 3344,
+   "name": "coords bank",
+   "signature": "I0",
+   "routine": 93,
+   "terminator": 254,
+   "symbol": "amcaf_coords_bank_1",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 3364,
+   "name": "coords bank",
+   "signature": "I0,0",
+   "routine": 94,
+   "terminator": 255,
+   "symbol": "amcaf_coords_bank_2",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 3374,
+   "name": "coords read",
+   "signature": "I0,0,0,0t0,0,0,0",
+   "routine": 95,
+   "terminator": 255,
+   "symbol": "amcaf_coords_read",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 3406,
+   "name": "splinters bank",
+   "signature": "I0,0",
+   "routine": 288,
+   "terminator": 255,
+   "symbol": "amcaf_splinters_bank",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 3430,
+   "name": "splinters limit",
+   "signature": "I",
+   "routine": 291,
+   "terminator": 254,
+   "symbol": "amcaf_splinters_limit_0",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 3452,
+   "name": "splinters limit",
+   "signature": "I0,0t0,0",
+   "routine": 292,
+   "terminator": 255,
+   "symbol": "amcaf_splinters_limit_4",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 3466,
+   "name": "splinters gravity",
+   "signature": "I0,0",
+   "routine": 293,
+   "terminator": 255,
+   "symbol": "amcaf_splinters_gravity",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 3492,
+   "name": "splinters init",
+   "signature": "I",
+   "routine": 295,
+   "terminator": 255,
+   "symbol": "amcaf_splinters_init",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 3512,
+   "name": "splinters colour",
+   "signature": "I0,0",
+   "routine": 294,
+   "terminator": 255,
+   "symbol": "amcaf_splinters_colour",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 3538,
+   "name": "splinters single do",
+   "signature": "I",
+   "routine": 296,
+   "terminator": 255,
+   "symbol": "amcaf_splinters_single_do",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 3564,
+   "name": "splinters double do",
+   "signature": "I",
+   "routine": 297,
+   "terminator": 255,
+   "symbol": "amcaf_splinters_double_do",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 3590,
+   "name": "splinters single del",
+   "signature": "I",
+   "routine": 298,
+   "terminator": 255,
+   "symbol": "amcaf_splinters_single_del",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 3616,
+   "name": "splinters double del",
+   "signature": "I",
+   "routine": 299,
+   "terminator": 255,
+   "symbol": "amcaf_splinters_double_del",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 3642,
+   "name": "splinters move",
+   "signature": "I",
+   "routine": 300,
+   "terminator": 255,
+   "symbol": "amcaf_splinters_move",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 3662,
+   "name": "splinters draw",
+   "signature": "I",
+   "routine": 302,
+   "terminator": 255,
+   "symbol": "amcaf_splinters_draw",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 3682,
+   "name": "splinters max",
+   "signature": "I0",
+   "routine": 289,
+   "terminator": 255,
+   "symbol": "amcaf_splinters_max",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 3702,
+   "name": "splinters back",
+   "signature": "I",
+   "routine": 301,
+   "terminator": 255,
+   "symbol": "amcaf_splinters_back",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 3722,
+   "name": "imploder unpack",
+   "signature": "I0t0",
+   "routine": 137,
+   "terminator": 255,
+   "symbol": "amcaf_imploder_unpack",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 3746,
+   "name": "imploder load",
+   "signature": "I2,0",
+   "routine": 138,
+   "terminator": 255,
+   "symbol": "amcaf_imploder_load",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 3768,
+   "name": "lzstr$",
+   "signature": "20,0",
+   "routine": 177,
+   "terminator": 255,
+   "symbol": "amcaf_lzstr_s",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 3784,
+   "name": "lsstr$",
+   "signature": "20,0",
+   "routine": 178,
+   "terminator": 255,
+   "symbol": "amcaf_lsstr_s",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 3800,
+   "name": "write cli",
+   "signature": "I2",
+   "routine": 214,
+   "terminator": 255,
+   "symbol": "amcaf_write_cli",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 3816,
+   "name": "mix colour",
+   "signature": "00,0",
+   "routine": 84,
+   "terminator": 254,
+   "symbol": "amcaf_mix_colour_2",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 3836,
+   "name": "mix colour",
+   "signature": "00,0,0t0",
+   "routine": 85,
+   "terminator": 255,
+   "symbol": "amcaf_mix_colour_4",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 3850,
+   "name": "cd date$",
+   "signature": "20",
+   "routine": 328,
+   "terminator": 255,
+   "symbol": "amcaf_cd_date_s",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 3866,
+   "name": "ct time$",
+   "signature": "20",
+   "routine": 333,
+   "terminator": 255,
+   "symbol": "amcaf_ct_time_s",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 3882,
+   "name": "splinters fuel",
+   "signature": "I0",
+   "routine": 290,
+   "terminator": 255,
+   "symbol": "amcaf_splinters_fuel",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 3904,
+   "name": "splinters active",
+   "signature": "0",
+   "routine": 303,
+   "terminator": 255,
+   "symbol": "amcaf_splinters_active",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 3926,
+   "name": "shade bob mask",
+   "signature": "I0",
+   "routine": 284,
+   "terminator": 255,
+   "symbol": "amcaf_shade_bob_mask",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 3948,
+   "name": "shade bob planes",
+   "signature": "I0",
+   "routine": 285,
+   "terminator": 255,
+   "symbol": "amcaf_shade_bob_planes",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 3972,
+   "name": "shade bob up",
+   "signature": "I0,0,0,0",
+   "routine": 286,
+   "terminator": 255,
+   "symbol": "amcaf_shade_bob_up",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 3998,
+   "name": "shade bob down",
+   "signature": "I0,0,0,0",
+   "routine": 287,
+   "terminator": 255,
+   "symbol": "amcaf_shade_bob_down",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 4026,
+   "name": "ham fade out",
+   "signature": "I0",
+   "routine": 163,
+   "terminator": 255,
+   "symbol": "amcaf_ham_fade_out",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 4046,
+   "name": "bank delta encode",
+   "signature": "I0",
+   "routine": 30,
+   "terminator": 254,
+   "symbol": "amcaf_bank_delta_encode_1",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 4072,
+   "name": "bank delta encode",
+   "signature": "I0t0",
+   "routine": 29,
+   "terminator": 255,
+   "symbol": "amcaf_bank_delta_encode_2",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 4082,
+   "name": "bank delta decode",
+   "signature": "I0",
+   "routine": 32,
+   "terminator": 254,
+   "symbol": "amcaf_bank_delta_decode_1",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 4108,
+   "name": "bank delta decode",
+   "signature": "I0t0",
+   "routine": 31,
+   "terminator": 255,
+   "symbol": "amcaf_bank_delta_decode_2",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 4118,
+   "name": "turbo draw",
+   "signature": "I0,0t0,0,0",
+   "routine": 346,
+   "terminator": 254,
+   "symbol": "amcaf_turbo_draw_5",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 4144,
+   "name": "turbo draw",
+   "signature": "I0,0t0,0,0,0",
+   "routine": 347,
+   "terminator": 255,
+   "symbol": "amcaf_turbo_draw_6",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 4162,
+   "name": "blitter fill",
+   "signature": "I0,0",
+   "routine": 74,
+   "terminator": 254,
+   "symbol": "amcaf_blitter_fill_2",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 4184,
+   "name": "blitter fill",
+   "signature": "I0,0t0,0",
+   "routine": 73,
+   "terminator": 254,
+   "symbol": "amcaf_blitter_fill_4",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 4198,
+   "name": "blitter fill",
+   "signature": "I0,0,0,0,0,0",
+   "routine": 72,
+   "terminator": 254,
+   "symbol": "amcaf_blitter_fill_6",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 4216,
+   "name": "blitter fill",
+   "signature": "I0,0,0,0,0,0t0,0",
+   "routine": 75,
+   "terminator": 255,
+   "symbol": "amcaf_blitter_fill_8",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 4238,
+   "name": "pt play",
+   "signature": "I0",
+   "routine": 264,
+   "terminator": 254,
+   "symbol": "amcaf_pt_play_1",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 4254,
+   "name": "pt play",
+   "signature": "I0,0",
+   "routine": 265,
+   "terminator": 255,
+   "symbol": "amcaf_pt_play_2",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 4264,
+   "name": "pt stop",
+   "signature": "I",
+   "routine": 267,
+   "terminator": 255,
+   "symbol": "amcaf_pt_stop",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 4278,
+   "name": "pt signal",
+   "signature": "0",
+   "routine": 268,
+   "terminator": 255,
+   "symbol": "amcaf_pt_signal",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 4294,
+   "name": "pt volume",
+   "signature": "I0",
+   "routine": 261,
+   "terminator": 255,
+   "symbol": "amcaf_pt_volume",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 4310,
+   "name": "pt voice",
+   "signature": "I0",
+   "routine": 262,
+   "terminator": 255,
+   "symbol": "amcaf_pt_voice",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 4326,
+   "name": "pt vu",
+   "signature": "00",
+   "routine": 260,
+   "terminator": 255,
+   "symbol": "amcaf_pt_vu",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 4338,
+   "name": "pt cia speed",
+   "signature": "I0",
+   "routine": 259,
+   "terminator": 255,
+   "symbol": "amcaf_pt_cia_speed",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 4358,
+   "name": "qsin",
+   "signature": "00,0",
+   "routine": 274,
+   "terminator": 255,
+   "symbol": "amcaf_qsin",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 4372,
+   "name": "qcos",
+   "signature": "00,0",
+   "routine": 273,
+   "terminator": 255,
+   "symbol": "amcaf_qcos",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 4386,
+   "name": "vec rot pos",
+   "signature": "I0,0,0",
+   "routine": 2,
+   "terminator": 255,
+   "symbol": "amcaf_vec_rot_pos",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 4408,
+   "name": "vec rot angles",
+   "signature": "I0,0,0",
+   "routine": 3,
+   "terminator": 255,
+   "symbol": "amcaf_vec_rot_angles",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 4434,
+   "name": "vec rot precalc",
+   "signature": "I",
+   "routine": 4,
+   "terminator": 255,
+   "symbol": "amcaf_vec_rot_precalc",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 4456,
+   "name": "vec rot x",
+   "signature": "0",
+   "routine": 6,
+   "terminator": 254,
+   "symbol": "amcaf_vec_rot_x_0",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 4472,
+   "name": "vec rot x",
+   "signature": "00,0,0",
+   "routine": 5,
+   "terminator": 255,
+   "symbol": "amcaf_vec_rot_x_3",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 4484,
+   "name": "vec rot y",
+   "signature": "0",
+   "routine": 8,
+   "terminator": 254,
+   "symbol": "amcaf_vec_rot_y_0",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 4500,
+   "name": "vec rot y",
+   "signature": "00,0,0",
+   "routine": 7,
+   "terminator": 255,
+   "symbol": "amcaf_vec_rot_y_3",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 4512,
+   "name": "change print font",
+   "signature": "I0",
+   "routine": 141,
+   "terminator": 255,
+   "symbol": "amcaf_change_print_font",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 4536,
+   "name": "qrnd",
+   "signature": "00",
+   "routine": 272,
+   "terminator": 255,
+   "symbol": "amcaf_qrnd",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 4548,
+   "name": "vec rot z",
+   "signature": "0",
+   "routine": 10,
+   "terminator": 254,
+   "symbol": "amcaf_vec_rot_z_0",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 4564,
+   "name": "vec rot z",
+   "signature": "00,0,0",
+   "routine": 9,
+   "terminator": 255,
+   "symbol": "amcaf_vec_rot_z_3",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 4576,
+   "name": "cop pos",
+   "signature": "0",
+   "routine": 211,
+   "terminator": 255,
+   "symbol": "amcaf_cop_pos",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 4590,
+   "name": "make bank font",
+   "signature": "I0",
+   "routine": 139,
+   "terminator": 255,
+   "symbol": "amcaf_make_bank_font",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 4612,
+   "name": "change bank font",
+   "signature": "I0",
+   "routine": 140,
+   "terminator": 255,
+   "symbol": "amcaf_change_bank_font",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 4636,
+   "name": "blitter clear",
+   "signature": "I0,0",
+   "routine": 70,
+   "terminator": 254,
+   "symbol": "amcaf_blitter_clear_2",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 4660,
+   "name": "blitter clear",
+   "signature": "I0,0,0,0t0,0",
+   "routine": 71,
+   "terminator": 255,
+   "symbol": "amcaf_blitter_clear_6",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 4678,
+   "name": "blitter busy",
+   "signature": "0",
+   "routine": 68,
+   "terminator": 255,
+   "symbol": "amcaf_blitter_busy",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 4696,
+   "name": "blitter wait",
+   "signature": "I",
+   "routine": 69,
+   "terminator": 255,
+   "symbol": "amcaf_blitter_wait",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 4714,
+   "name": "shade pix",
+   "signature": "I0,0",
+   "routine": 223,
+   "terminator": 254,
+   "symbol": "amcaf_shade_pix_2",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 4734,
+   "name": "shade pix",
+   "signature": "I0,0,0",
+   "routine": 224,
+   "terminator": 255,
+   "symbol": "amcaf_shade_pix_3",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 4746,
+   "name": "blitter copy limit",
+   "signature": "I0",
+   "routine": 60,
+   "terminator": 254,
+   "symbol": "amcaf_blitter_copy_limit_1",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 4772,
+   "name": "blitter copy limit",
+   "signature": "I0,0t0,0",
+   "routine": 61,
+   "terminator": 255,
+   "symbol": "amcaf_blitter_copy_limit_4",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 4786,
+   "name": "blitter copy",
+   "signature": "I0,0t0,0",
+   "routine": 62,
+   "terminator": 254,
+   "symbol": "amcaf_blitter_copy_4",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 4812,
+   "name": "blitter copy",
+   "signature": "I0,0t0,0,0",
+   "routine": 63,
+   "terminator": 254,
+   "symbol": "amcaf_blitter_copy_5",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 4828,
+   "name": "blitter copy",
+   "signature": "I0,0,0,0t0,0",
+   "routine": 64,
+   "terminator": 254,
+   "symbol": "amcaf_blitter_copy_6",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 4846,
+   "name": "blitter copy",
+   "signature": "I0,0,0,0t0,0,0",
+   "routine": 65,
+   "terminator": 254,
+   "symbol": "amcaf_blitter_copy_7",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 4866,
+   "name": "blitter copy",
+   "signature": "I0,0,0,0,0,0t0,0",
+   "routine": 66,
+   "terminator": 254,
+   "symbol": "amcaf_blitter_copy_8",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 4888,
+   "name": "blitter copy",
+   "signature": "I0,0,0,0,0,0t0,0,0",
+   "routine": 67,
+   "terminator": 255,
+   "symbol": "amcaf_blitter_copy_9",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 4912,
+   "name": "set rain colour",
+   "signature": "I0,0",
+   "routine": 201,
+   "terminator": 255,
+   "symbol": "amcaf_set_rain_colour",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 4936,
+   "name": "rain fade",
+   "signature": "I0,0",
+   "routine": 202,
+   "terminator": 254,
+   "symbol": "amcaf_rain_fade_2a",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 4956,
+   "name": "rain fade",
+   "signature": "I0t0",
+   "routine": 203,
+   "terminator": 255,
+   "symbol": "amcaf_rain_fade_2b",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 4966,
+   "name": "qsqr",
+   "signature": "00",
+   "routine": 271,
+   "terminator": 255,
+   "symbol": "amcaf_qsqr",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 4978,
+   "name": "bcircle",
+   "signature": "I0,0,0,0",
+   "routine": 353,
+   "terminator": 255,
+   "symbol": "amcaf_bcircle",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 4998,
+   "name": "pt data base",
+   "signature": "0",
+   "routine": 253,
+   "terminator": 255,
+   "symbol": "amcaf_pt_data_base",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 5016,
+   "name": "pt instr address",
+   "signature": "00",
+   "routine": 257,
+   "terminator": 255,
+   "symbol": "amcaf_pt_instr_address",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 5040,
+   "name": "pt instr length",
+   "signature": "00",
+   "routine": 258,
+   "terminator": 255,
+   "symbol": "amcaf_pt_instr_length",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 5062,
+   "name": "pt bank",
+   "signature": "I0",
+   "routine": 263,
+   "terminator": 255,
+   "symbol": "amcaf_pt_bank",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 5076,
+   "name": "pt instr play",
+   "signature": "I0",
+   "routine": 254,
+   "terminator": 254,
+   "symbol": "amcaf_pt_instr_play_1",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 5098,
+   "name": "pt instr play",
+   "signature": "I0,0",
+   "routine": 255,
+   "terminator": 254,
+   "symbol": "amcaf_pt_instr_play_2",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 5108,
+   "name": "pt instr play",
+   "signature": "I0,0,0",
+   "routine": 256,
+   "terminator": 255,
+   "symbol": "amcaf_pt_instr_play_3",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 5120,
+   "name": "pt sam stop",
+   "signature": "I0",
+   "routine": 247,
+   "terminator": 255,
+   "symbol": "amcaf_pt_sam_stop",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 5138,
+   "name": "pt raw play",
+   "signature": "I0,0,0,0",
+   "routine": 248,
+   "terminator": 255,
+   "symbol": "amcaf_pt_raw_play",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 5162,
+   "name": "pt sam bank",
+   "signature": "I0",
+   "routine": 249,
+   "terminator": 255,
+   "symbol": "amcaf_pt_sam_bank",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 5180,
+   "name": "pt sam play",
+   "signature": "I0",
+   "routine": 250,
+   "terminator": 254,
+   "symbol": "amcaf_pt_sam_play_1",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 5200,
+   "name": "pt sam play",
+   "signature": "I0,0",
+   "routine": 251,
+   "terminator": 254,
+   "symbol": "amcaf_pt_sam_play_2",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 5210,
+   "name": "pt sam play",
+   "signature": "I0,0,0",
+   "routine": 252,
+   "terminator": 255,
+   "symbol": "amcaf_pt_sam_play_3",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 5222,
+   "name": "pt sam volume",
+   "signature": "I0",
+   "routine": 244,
+   "terminator": 254,
+   "symbol": "amcaf_pt_sam_volume_1",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 5244,
+   "name": "pt sam volume",
+   "signature": "I0,0",
+   "routine": 245,
+   "terminator": 255,
+   "symbol": "amcaf_pt_sam_volume_2",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 5254,
+   "name": "pal get screen",
+   "signature": "I0,0",
+   "routine": 335,
+   "terminator": 255,
+   "symbol": "amcaf_pal_get_screen",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 5278,
+   "name": "pal set screen",
+   "signature": "I0,0",
+   "routine": 336,
+   "terminator": 255,
+   "symbol": "amcaf_pal_set_screen",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 5302,
+   "name": "pal get",
+   "signature": "00,0",
+   "routine": 337,
+   "terminator": 255,
+   "symbol": "amcaf_pal_get",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 5318,
+   "name": "pal set",
+   "signature": "I0,0,0",
+   "routine": 338,
+   "terminator": 255,
+   "symbol": "amcaf_pal_set",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 5336,
+   "name": "exchange bob",
+   "signature": "I0,0",
+   "routine": 212,
+   "terminator": 255,
+   "symbol": "amcaf_exchange_bob",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 5358,
+   "name": "exchange icon",
+   "signature": "I0,0",
+   "routine": 213,
+   "terminator": 255,
+   "symbol": "amcaf_exchange_icon",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 5380,
+   "name": "best pen",
+   "signature": "00",
+   "routine": 82,
+   "terminator": 254,
+   "symbol": "amcaf_best_pen_1",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 5396,
+   "name": "best pen",
+   "signature": "00,0t0",
+   "routine": 83,
+   "terminator": 255,
+   "symbol": "amcaf_best_pen_3",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 5408,
+   "name": "bzoom",
+   "signature": "I0,0,0,0,0t0,0,0,0",
+   "routine": 352,
+   "terminator": 255,
+   "symbol": "amcaf_bzoom",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 5436,
+   "name": "x smouse",
+   "signature": "0",
+   "routine": 164,
+   "terminator": 255,
+   "symbol": "amcaf_x_smouse",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 5450,
+   "name": "y smouse",
+   "signature": "0",
+   "routine": 165,
+   "terminator": 255,
+   "symbol": "amcaf_y_smouse",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 5464,
+   "name": "smouse x",
+   "signature": "I0",
+   "routine": 166,
+   "terminator": 255,
+   "symbol": "amcaf_smouse_x",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 5480,
+   "name": "smouse y",
+   "signature": "I0",
+   "routine": 167,
+   "terminator": 255,
+   "symbol": "amcaf_smouse_y",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 5496,
+   "name": "smouse speed",
+   "signature": "I0",
+   "routine": 170,
+   "terminator": 255,
+   "symbol": "amcaf_smouse_speed",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 5516,
+   "name": "smouse key",
+   "signature": "0",
+   "routine": 171,
+   "terminator": 255,
+   "symbol": "amcaf_smouse_key",
+   "status": "implemented",
+   "source": "src/ext/amcaf_misc.cpp"
+  },
+  {
+   "offset": 5532,
+   "name": "limit smouse",
+   "signature": "I",
+   "routine": 168,
+   "terminator": 254,
+   "symbol": "amcaf_limit_smouse_0",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 5552,
+   "name": "limit smouse",
+   "signature": "I0,0t0,0",
+   "routine": 169,
+   "terminator": 255,
+   "symbol": "amcaf_limit_smouse_4",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 5566,
+   "name": "xfire",
+   "signature": "00,0",
+   "routine": 17,
+   "terminator": 255,
+   "symbol": "amcaf_xfire",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 5580,
+   "name": "pt continue",
+   "signature": "I",
+   "routine": 266,
+   "terminator": 255,
+   "symbol": "amcaf_pt_continue",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 5598,
+   "name": "pt cpattern",
+   "signature": "0",
+   "routine": 240,
+   "terminator": 255,
+   "symbol": "amcaf_pt_cpattern",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 5616,
+   "name": "pt cpos",
+   "signature": "0",
+   "routine": 241,
+   "terminator": 255,
+   "symbol": "amcaf_pt_cpos",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 5630,
+   "name": "pt cinstr",
+   "signature": "00",
+   "routine": 242,
+   "terminator": 255,
+   "symbol": "amcaf_pt_cinstr",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 5646,
+   "name": "pt cnote",
+   "signature": "00",
+   "routine": 243,
+   "terminator": 255,
+   "symbol": "amcaf_pt_cnote",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 5662,
+   "name": "pt sam freq",
+   "signature": "I0,0",
+   "routine": 246,
+   "terminator": 255,
+   "symbol": "amcaf_pt_sam_freq",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 5682,
+   "name": "vclip",
+   "signature": "00,0t0",
+   "routine": 183,
+   "terminator": 255,
+   "symbol": "amcaf_vclip",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 5698,
+   "name": "vin",
+   "signature": "00,0t0",
+   "routine": 184,
+   "terminator": 255,
+   "symbol": "amcaf_vin",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 5712,
+   "name": "vmod",
+   "signature": "00,0",
+   "routine": 185,
+   "terminator": 254,
+   "symbol": "amcaf_vmod_2",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 5726,
+   "name": "vmod",
+   "signature": "00,0t0",
+   "routine": 186,
+   "terminator": 255,
+   "symbol": "amcaf_vmod_3",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 5738,
+   "name": "insstr$",
+   "signature": "22,2,0",
+   "routine": 187,
+   "terminator": 255,
+   "symbol": "amcaf_insstr_s",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 5756,
+   "name": "cutstr$",
+   "signature": "22,0t0",
+   "routine": 188,
+   "terminator": 255,
+   "symbol": "amcaf_cutstr_s",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 5774,
+   "name": "replacestr$",
+   "signature": "22,2t2",
+   "routine": 189,
+   "terminator": 255,
+   "symbol": "amcaf_replacestr_s",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 5796,
+   "name": "itemstr$",
+   "signature": "22,0",
+   "routine": 190,
+   "terminator": 254,
+   "symbol": "amcaf_itemstr_s_2",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 5814,
+   "name": "itemstr$",
+   "signature": "22,0,2",
+   "routine": 191,
+   "terminator": 255,
+   "symbol": "amcaf_itemstr_s_3",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 5826,
+   "name": "qarc",
+   "signature": "00,0",
+   "routine": 275,
+   "terminator": 255,
+   "symbol": "amcaf_qarc",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 5840,
+   "name": "even",
+   "signature": "00",
+   "routine": 193,
+   "terminator": 255,
+   "symbol": "amcaf_even",
+   "status": "implemented",
+   "source": "src/ext/amcaf_misc.cpp"
+  },
+  {
+   "offset": 5852,
+   "name": "odd",
+   "signature": "00",
+   "routine": 192,
+   "terminator": 255,
+   "symbol": "amcaf_odd",
+   "status": "implemented",
+   "source": "src/ext/amcaf_misc.cpp"
+  },
+  {
+   "offset": 5862,
+   "name": "ham point",
+   "signature": "00,0",
+   "routine": 160,
+   "terminator": 255,
+   "symbol": "amcaf_ham_point",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 5880,
+   "name": "set object date",
+   "signature": "I2,0,0",
+   "routine": 132,
+   "terminator": 255,
+   "symbol": "amcaf_set_object_date",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 5906,
+   "name": "aga detect",
+   "signature": "0",
+   "routine": 218,
+   "terminator": 255,
+   "symbol": "amcaf_aga_detect",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 5922,
+   "name": "pal spread",
+   "signature": "I0,0t0,0",
+   "routine": 334,
+   "terminator": 255,
+   "symbol": "amcaf_pal_spread",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 5946,
+   "name": "ct string",
+   "signature": "02",
+   "routine": 326,
+   "terminator": 255,
+   "symbol": "amcaf_ct_string",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 5962,
+   "name": "cd string",
+   "signature": "02",
+   "routine": 327,
+   "terminator": 255,
+   "symbol": "amcaf_cd_string",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 5978,
+   "name": "c2p convert",
+   "signature": "I0,0,0t0,0,0",
+   "routine": 78,
+   "terminator": 255,
+   "symbol": "amcaf_c2p_convert",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 6006,
+   "name": "c2p shift",
+   "signature": "I0,0,0t0,0",
+   "routine": 77,
+   "terminator": 255,
+   "symbol": "amcaf_c2p_shift",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 6030,
+   "name": "c2p fire",
+   "signature": "I0,0,0t0,0",
+   "routine": 76,
+   "terminator": 255,
+   "symbol": "amcaf_c2p_fire",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 6054,
+   "name": "sload",
+   "signature": "I0t0,0",
+   "routine": 106,
+   "terminator": 255,
+   "symbol": "amcaf_sload",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 6070,
+   "name": "ssave",
+   "signature": "I0,0t0",
+   "routine": 107,
+   "terminator": 255,
+   "symbol": "amcaf_ssave",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 6086,
+   "name": "pt free voice",
+   "signature": "0",
+   "routine": 238,
+   "terminator": 254,
+   "symbol": "amcaf_pt_free_voice_0",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 6106,
+   "name": "pt free voice",
+   "signature": "00",
+   "routine": 239,
+   "terminator": 255,
+   "symbol": "amcaf_pt_free_voice_1",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 6114,
+   "name": "alloc trans source",
+   "signature": "I0",
+   "routine": 146,
+   "terminator": 255,
+   "symbol": "amcaf_alloc_trans_source",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 6140,
+   "name": "set trans source",
+   "signature": "I0",
+   "routine": 147,
+   "terminator": 255,
+   "symbol": "amcaf_set_trans_source",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 6164,
+   "name": "alloc trans map",
+   "signature": "I0,0,0",
+   "routine": 148,
+   "terminator": 255,
+   "symbol": "amcaf_alloc_trans_map",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 6190,
+   "name": "set trans map",
+   "signature": "I0,0,0",
+   "routine": 149,
+   "terminator": 255,
+   "symbol": "amcaf_set_trans_map",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 6214,
+   "name": "alloc code bank",
+   "signature": "I0,0",
+   "routine": 150,
+   "terminator": 255,
+   "symbol": "amcaf_alloc_code_bank",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 6238,
+   "name": "trans screen runtime",
+   "signature": "I0,0,0,0",
+   "routine": 152,
+   "terminator": 255,
+   "symbol": "amcaf_trans_screen_runtime",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 6272,
+   "name": "trans screen static",
+   "signature": "I0,0,0,0",
+   "routine": 154,
+   "terminator": 255,
+   "symbol": "amcaf_trans_screen_static",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 6304,
+   "name": "trans screen dynamic",
+   "signature": "I0,0,0,0",
+   "routine": 153,
+   "terminator": 255,
+   "symbol": "amcaf_trans_screen_dynamic",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 6338,
+   "name": "turbo text",
+   "signature": "I0,0,2",
+   "routine": 343,
+   "terminator": 254,
+   "symbol": "amcaf_turbo_text_3",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 6360,
+   "name": "turbo text",
+   "signature": "I0,0,2,0",
+   "routine": 344,
+   "terminator": 254,
+   "symbol": "amcaf_turbo_text_4",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 6374,
+   "name": "turbo text",
+   "signature": "I0,0,2,0,0",
+   "routine": 345,
+   "terminator": 255,
+   "symbol": "amcaf_turbo_text_5",
+   "status": "stub",
+   "source": ""
+  }
+ ]
+}

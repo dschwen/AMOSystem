@@ -33,7 +33,9 @@ TK_ELSI, TK_EQU, TK_STRUS, TK_DFL, TK_DPRE = 0x25A4, 0x2A40, 0x2A64, 0x2B6A, 0x2
 
 # Extension slot -> library file (+Interpreter_Config.s, messages 16..41)
 EXTENSIONS = {1: 'AMOSPro_Music.Lib', 2: 'AMOSPro_Compact.Lib', 3: 'AMOSPro_Request.Lib',
-              5: 'AMOSPro_Compiler.Lib', 6: 'AMOSPro_IOPorts.Lib'}
+              5: 'AMOSPro_Compiler.Lib', 6: 'AMOSPro_IOPorts.Lib',
+              # (of other authors, if the file is there: their default slots)
+              8: 'AMOSPro_AMCAF.Lib', 12: 'AMOSPro_TURBO_Plus.Lib'}
 
 # Dtk_Operateurs (+Edit.s): names exactly as in the table
 OPERATORS = [b' xor ', b' or ', b' and ', b'<>', b'><', b'<=', b'=<', b'>=', b'=>',
@@ -105,7 +107,9 @@ class TokenTable:
             raw = f.read()
         body = raw[0x20:]                       # skip the hunk header
         tk_offset = struct.unpack_from('>L', body, 0)[0]
-        base = 22 + tk_offset                   # C_Tk (after 4 longs, a word, "AP20")
+        # C_Tk (after 4 longs, a word, "AP20"; the old form, of the extensions of other authors, has
+        # no "AP20")
+        base = (22 if body[18:22] == b'AP20' else 18) + tk_offset
         # AdTokens points at C_Tk; slow searches start after the first entry
         table = cls(body[base:], 6)
         return table
@@ -130,7 +134,9 @@ def operator_table():
 
 
 class Tables:
-    def __init__(self, libdirs):
+    def __init__(self, libdirs, extensions=None):
+        """extensions: {slot: file} for the extensions of other authors in other slots than their
+        default ones (the file's own default entry goes; an empty file frees a slot)"""
         def find(name):
             for d in libdirs:
                 p = os.path.join(d, name)
@@ -144,7 +150,14 @@ class Tables:
         self.main = TokenTable.from_lib(main)
         self.ops = operator_table()
         self.ext = {}
-        for slot, name in EXTENSIONS.items():
+        mapping = dict(EXTENSIONS)
+        for slot, name in (extensions or {}).items():
+            for other in [k for k, v in mapping.items() if name and v.lower() == name.lower()]:
+                del mapping[other]
+            mapping.pop(slot, None)
+            if name:
+                mapping[slot] = name
+        for slot, name in mapping.items():
             p = find(name)
             if p:
                 self.ext[slot] = TokenTable.from_lib(p)

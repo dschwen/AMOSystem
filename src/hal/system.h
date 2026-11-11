@@ -85,6 +85,13 @@ inline void idle() {}
 void idle();
 #endif
 
+// The priority of the task AMOS runs in (-128 to 20; the host has no tasks to give one to)
+void set_task_priority(int32_t priority);
+
+// The extension a setup of the host puts in a slot (1-26) in place of the interpreter's configuration's: its
+// file name, "" for none, null for the configuration's (always null on the Amiga)
+const char *extension_file(uint32_t slot);
+
 // Interrupts: a server of the vertical blank; the handler of interrupt n
 // (the old one)
 void add_vbl_server(Interrupt *server);

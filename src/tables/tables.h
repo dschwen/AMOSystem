@@ -2279,3 +2279,4 @@ extern const GlueEntry entries_src_w_vbl_glue_s[];
 void relocate_src_w_windows_glue_s();
 extern const GlueEntry entries_src_w_windows_glue_s[];
 } // namespace amos::host
+#include "tables/generated/third_party.h"

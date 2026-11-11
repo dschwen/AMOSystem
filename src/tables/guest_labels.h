@@ -304,6 +304,12 @@ inline constexpr guest::GuestSymbol<guest::Byte> w_vbl_in(guest::SegmentId(uint1
 inline constexpr guest::GuestSymbol<guest::Byte> w_wi_in(guest::SegmentId(uint16_t(Segment::host_obj_src_w_windows_glue_s)), 0);
 inline constexpr guest::GuestSymbol<guest::Byte> w_widela(guest::SegmentId(uint16_t(Segment::host_obj_src_w_windows_glue_s)), 160);
 inline constexpr guest::GuestSymbol<guest::Byte> w_wopen(guest::SegmentId(uint16_t(Segment::host_obj_src_w_windows_glue_s)), 92);
+inline constexpr guest::GuestSymbol<guest::Byte> ext_amcaf_image(guest::SegmentId(uint16_t(Segment::host_obj_src_ext_amcaf_image_s)), 0);
+inline constexpr guest::GuestSymbol<guest::Byte> ext_amcaf_jumps(guest::SegmentId(uint16_t(Segment::host_obj_src_ext_amcaf_glue_s)), 6924);
+inline constexpr guest::GuestSymbol<guest::Byte> ext_turbo_image(guest::SegmentId(uint16_t(Segment::host_obj_src_ext_turbo_image_s)), 0);
+inline constexpr guest::GuestSymbol<guest::Byte> ext_turbo_jumps(guest::SegmentId(uint16_t(Segment::host_obj_src_ext_turbo_glue_s)), 3072);
+inline constexpr guest::GuestSymbol<guest::Byte> ext_turbo_default_entry(guest::SegmentId(uint16_t(Segment::host_obj_src_ext_turbo_glue_s)), 3064);
+inline constexpr guest::GuestSymbol<guest::Byte> ext_turbo_end_entry(guest::SegmentId(uint16_t(Segment::host_obj_src_ext_turbo_glue_s)), 3068);
 }
 namespace amos::tables::entry_symbols {
 using Routine = int32_t(AllRegs&);
@@ -553,4 +559,6 @@ inline constexpr guest::EntrySymbol<Routine> w_vbl_in(guest::SegmentId(uint16_t(
 inline constexpr guest::EntrySymbol<Routine> w_wi_in(guest::SegmentId(uint16_t(Segment::host_obj_src_w_windows_glue_s)), 0);
 inline constexpr guest::EntrySymbol<Routine> w_widela(guest::SegmentId(uint16_t(Segment::host_obj_src_w_windows_glue_s)), 160);
 inline constexpr guest::EntrySymbol<Routine> w_wopen(guest::SegmentId(uint16_t(Segment::host_obj_src_w_windows_glue_s)), 92);
+inline constexpr guest::EntrySymbol<Routine> ext_turbo_default_entry(guest::SegmentId(uint16_t(Segment::host_obj_src_ext_turbo_glue_s)), 3064);
+inline constexpr guest::EntrySymbol<Routine> ext_turbo_end_entry(guest::SegmentId(uint16_t(Segment::host_obj_src_ext_turbo_glue_s)), 3068);
 }

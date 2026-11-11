@@ -303,4 +303,14 @@ uint8_t *const w_vbl_in = host_obj__W_s + 2212;
 uint8_t *const w_wi_in = host_obj_src_w_windows_glue_s + 0;
 uint8_t *const w_widela = host_obj_src_w_windows_glue_s + 160;
 uint8_t *const w_wopen = host_obj_src_w_windows_glue_s + 92;
+// third-party extensions (tools/ext_gen.py): begin labels
+#if !defined(__mc68000__) || defined(AMOS_THIRD_PARTY)
+uint8_t *const ext_amcaf_image = host_obj_src_ext_amcaf_image_s + 0;
+uint8_t *const ext_amcaf_jumps = host_obj_src_ext_amcaf_glue_s + 6924;
+uint8_t *const ext_turbo_image = host_obj_src_ext_turbo_image_s + 0;
+uint8_t *const ext_turbo_jumps = host_obj_src_ext_turbo_glue_s + 3072;
+uint8_t *const ext_turbo_default_entry = host_obj_src_ext_turbo_glue_s + 3064;
+uint8_t *const ext_turbo_end_entry = host_obj_src_ext_turbo_glue_s + 3068;
+#endif
+// third-party extensions (tools/ext_gen.py): end labels
 }

@@ -28,6 +28,9 @@ Library *open_library(const char *name, uint32_t version) { return OpenLibrary(n
 void close_library(Library *library) { CloseLibrary(library); }
 uint16_t os_version() { return EXEC_BASE_NAME->lib_Version; }
 uint8_t vblank_frequency() { return reinterpret_cast<struct ExecBase *>(EXEC_BASE_NAME)->VBlankFrequency; }
+
+const char *extension_file(uint32_t) { return nullptr; }
+void set_task_priority(int32_t priority) { SetTaskPri(FindTask(nullptr), priority); }
 void clear_cache() { CacheClearU(); }
 
 // (the NDK's inline of SetFunction does not compile as C++)

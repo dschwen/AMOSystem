@@ -93,6 +93,10 @@ const char *library_name(uint32_t base)
 
 } // namespace amos::host
 
+namespace amos::host::devices {
+const char *extension_file(unsigned slot);
+}
+
 namespace amos::hal {
 
 uint32_t available_memory(uint32_t flags)
@@ -394,6 +398,13 @@ uint32_t exec_base()
     return 0;
 }
 uint8_t vblank_frequency() { return 50; }
+
+void set_task_priority(int32_t) {}
+
+const char *extension_file(uint32_t slot)
+{
+    return amos::host::devices::extension_file(slot);
+}
 void clear_cache() {}
 uint32_t set_function(uint32_t, int16_t, uint32_t) { return 0; }
 

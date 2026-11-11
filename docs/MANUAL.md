@@ -138,7 +138,7 @@ You can do it in any of these ways:
   amos --df0 Game1.adf --df1 "~/disks/Game 2=Game Disk 2" --dh1 ~/amiga/Work,ro prog.AMOS
   ```
   Each value is `path[=label][,ro]`; `,ro` makes the disk write-protected.
-- **The settings file** (section 6), for disks that should be there at every start.
+- **The settings file** (section 7), for disks that should be there at every start.
 
 **Disk images (`.adf`)** are always write-protected. A program that tries to save to one gets the
 Amiga's "disk is write protected" error. AMOS unpacks the image into a temporary folder and never
@@ -283,6 +283,8 @@ fullscreen = no
 [joystick]
 port1 = auto                   # auto, none, keyboard, pad1, pad2...
 port2 = keyboard
+[extensions]
+9 = AMOSPro_AMCAF.Lib          # an extension in a slot (section 8)
 ```
 
 How paths are written:
@@ -309,6 +311,7 @@ How paths are written:
 | `--config file` | the settings file to use (and to save to) |
 | `--fullscreen` | start in full screen |
 | `--port1`, `--port2` `auto\|none\|keyboard\|padN` | the joysticks |
+| `--extension SLOT=FILE` | an extension in a slot (1 to 26); an empty FILE frees the slot |
 | `--open-document file` | open a program in the editor without running it |
 
 ### Where AMOS keeps its files
@@ -336,7 +339,36 @@ How paths are written:
 | `AMOS_HOME` | another AMOS system tree (for developers) |
 | `AMOS_DISPLAY=none` | no window and no sound (text-only programs, scripts) |
 
-## 8. The differences at a glance
+## 8. Extensions
+
+AMOS Professional's extensions add commands to the language. The four of AMOS itself (Music, Compact,
+Request, IO_Ports) are always there. Two more, by other authors, are built into this version and
+set up in their usual slots:
+
+| Slot | Extension | What it is |
+|---|---|---|
+| 8 | **AMCAF** V1.50beta4 | fast maths, strings and banks, the Protracker player, blitter, C2P, fonts... |
+| 12 | **Turbo Plus** V2.15 | pixels, planes, scenes, objects, stars, memory search... |
+
+(The releases' configuration puts them there; a build you made yourself runs without until you say
+so, see below.) A program saved with their commands holds the slot, so it needs the extension in the
+slot it was written for; Editor → About Extensions lists what is loaded.
+
+**Putting an extension in another slot**, or freeing one: the setup file's `[extensions]` section or
+`--extension` on the command line (section 7), or AMOS's own configuration (the extensions are the
+interpreter configuration's file names, the slot their number):
+
+```
+amos --extension 9=AMOSPro_AMCAF.Lib prog.AMOS
+```
+
+The name is the library's file name, whether or not the file is there: the code is the C++ of this
+version, not the original library. **Not every command is there yet**: one that is not raises an AMOS
+error ("This command is not available in this version of the extension"). Programs that use them
+still list, edit and save correctly. `docs/THIRD-PARTY-EXTENSIONS.md` has the plan and
+`data/extensions/*.json` says which command is done.
+
+## 9. The differences at a glance
 
 | | **Windows** | **macOS** | **Linux** |
 |---|---|---|---|
@@ -356,7 +388,7 @@ The rest is the same on all three systems:
 - the F12 panel, drag and drop of folders and `.adf` images, disk images, the library;
 - joysticks, profiles and the command-line options.
 
-## 9. Not there yet
+## 10. Not there yet
 
 - Writing to `.adf` images, and creating new blank floppies (images are read-only for now).
 - Hard disk images (`.hdf`): use a folder as the hard disk.

@@ -105,6 +105,7 @@ const GlueEntry *const glue_entry_tables[] = {
     entries_src_w_system_glue_s,
     entries_src_w_vbl_glue_s,
     entries_src_w_windows_glue_s,
+#include "tables/generated/third_party_entries.inc"
     nullptr,
 };
 
@@ -211,6 +212,7 @@ void glue_relocate()
     relocate_src_w_system_glue_s();
     relocate_src_w_vbl_glue_s();
     relocate_src_w_windows_glue_s();
+#include "tables/generated/third_party_relocate.inc"
 }
 
 } // namespace amos::host

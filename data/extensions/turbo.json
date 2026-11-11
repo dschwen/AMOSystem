@@ -1,0 +1,1544 @@
+{
+ "extension": "Turbo Plus",
+ "key": "turbo",
+ "file": "AMOSPro_TURBO_Plus.Lib",
+ "defaultSlot": 12,
+ "libSha256": "ddc8abb16f35cd2fb4230e2c70dc85e6bcbbfe5f73ebcc6712135471faaafb07",
+ "routines": 340,
+ "commands": [
+  {
+   "offset": 6,
+   "name": "multi yes",
+   "signature": "I",
+   "routine": 2,
+   "terminator": 255,
+   "symbol": "turbo_multi_yes",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 22,
+   "name": "multi no",
+   "signature": "I",
+   "routine": 3,
+   "terminator": 255,
+   "symbol": "turbo_multi_no",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 36,
+   "name": "lsl.b",
+   "signature": "00,0",
+   "routine": 4,
+   "terminator": 255,
+   "symbol": "turbo_lsl_b",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 50,
+   "name": "lsl.w",
+   "signature": "00,0",
+   "routine": 5,
+   "terminator": 255,
+   "symbol": "turbo_lsl_w",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 64,
+   "name": "lsl.l",
+   "signature": "00,0",
+   "routine": 6,
+   "terminator": 255,
+   "symbol": "turbo_lsl_l",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 78,
+   "name": "lsr.b",
+   "signature": "00,0",
+   "routine": 7,
+   "terminator": 255,
+   "symbol": "turbo_lsr_b",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 92,
+   "name": "lsr.w",
+   "signature": "00,0",
+   "routine": 8,
+   "terminator": 255,
+   "symbol": "turbo_lsr_w",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 106,
+   "name": "lsr.l",
+   "signature": "00,0",
+   "routine": 9,
+   "terminator": 255,
+   "symbol": "turbo_lsr_l",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 120,
+   "name": "l swap",
+   "signature": "00",
+   "routine": 10,
+   "terminator": 255,
+   "symbol": "turbo_l_swap",
+   "status": "implemented",
+   "source": "src/ext/turbo.cpp"
+  },
+  {
+   "offset": 134,
+   "name": "test.b",
+   "signature": "00,0",
+   "routine": 11,
+   "terminator": 255,
+   "symbol": "turbo_test_b",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 150,
+   "name": "test.w",
+   "signature": "00,0",
+   "routine": 12,
+   "terminator": 255,
+   "symbol": "turbo_test_w",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 166,
+   "name": "vbl wait",
+   "signature": "I0",
+   "routine": 13,
+   "terminator": 255,
+   "symbol": "turbo_vbl_wait",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 182,
+   "name": "reserve check",
+   "signature": "I0",
+   "routine": 14,
+   "terminator": 255,
+   "symbol": "turbo_reserve_check",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 202,
+   "name": "check erase",
+   "signature": "I",
+   "routine": 15,
+   "terminator": 255,
+   "symbol": "turbo_check_erase",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 220,
+   "name": "check",
+   "signature": "00t0,0,0",
+   "routine": 16,
+   "terminator": 255,
+   "symbol": "turbo_check",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 238,
+   "name": "set check",
+   "signature": "I0,0,0t0,0",
+   "routine": 17,
+   "terminator": 255,
+   "symbol": "turbo_set_check",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 262,
+   "name": "reset check",
+   "signature": "I0",
+   "routine": 18,
+   "terminator": 255,
+   "symbol": "turbo_reset_check",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 280,
+   "name": "hit spr zone",
+   "signature": "00,0,0",
+   "routine": 19,
+   "terminator": 255,
+   "symbol": "turbo_hit_spr_zone",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 304,
+   "name": "hit bob zone",
+   "signature": "00,0,0",
+   "routine": 20,
+   "terminator": 255,
+   "symbol": "turbo_hit_bob_zone",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 328,
+   "name": "hit spr check",
+   "signature": "00t0,0,0,0",
+   "routine": 21,
+   "terminator": 255,
+   "symbol": "turbo_hit_spr_check",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 356,
+   "name": "raw key",
+   "signature": "00",
+   "routine": 22,
+   "terminator": 255,
+   "symbol": "turbo_raw_key",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 370,
+   "name": "r move",
+   "signature": "I0,0",
+   "routine": 23,
+   "terminator": 255,
+   "symbol": "turbo_r_move",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 386,
+   "name": "r draw",
+   "signature": "I0,0",
+   "routine": 24,
+   "terminator": 255,
+   "symbol": "turbo_r_draw",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 402,
+   "name": "r box",
+   "signature": "I0,0",
+   "routine": 25,
+   "terminator": 255,
+   "symbol": "turbo_r_box",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 416,
+   "name": "r home",
+   "signature": "I0,0",
+   "routine": 26,
+   "terminator": 255,
+   "symbol": "turbo_r_home",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 432,
+   "name": "r bar",
+   "signature": "I0,0",
+   "routine": 27,
+   "terminator": 255,
+   "symbol": "turbo_r_bar",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 446,
+   "name": "reserve object",
+   "signature": "I0,0",
+   "routine": 28,
+   "terminator": 255,
+   "symbol": "turbo_reserve_object",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 470,
+   "name": "define draw",
+   "signature": "I0,0t0,0",
+   "routine": 30,
+   "terminator": 255,
+   "symbol": "turbo_define_draw",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 494,
+   "name": "define move",
+   "signature": "I0,0t0,0",
+   "routine": 31,
+   "terminator": 255,
+   "symbol": "turbo_define_move",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 518,
+   "name": "define stop",
+   "signature": "I0,0",
+   "routine": 32,
+   "terminator": 255,
+   "symbol": "turbo_define_stop",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 538,
+   "name": "define attr",
+   "signature": "I0,0t0,0",
+   "routine": 33,
+   "terminator": 255,
+   "symbol": "turbo_define_attr",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 562,
+   "name": "object draw",
+   "signature": "I0",
+   "routine": 34,
+   "terminator": 255,
+   "symbol": "turbo_object_draw",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 580,
+   "name": "r object draw",
+   "signature": "I0,0,0",
+   "routine": 35,
+   "terminator": 255,
+   "symbol": "turbo_r_object_draw",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 604,
+   "name": "object mag draw",
+   "signature": "I0,0",
+   "routine": 36,
+   "terminator": 255,
+   "symbol": "turbo_object_mag_draw",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 628,
+   "name": "r object mag draw",
+   "signature": "I0,0,0,0",
+   "routine": 37,
+   "terminator": 255,
+   "symbol": "turbo_r_object_mag_draw",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 658,
+   "name": "object erase",
+   "signature": "I0",
+   "routine": 38,
+   "terminator": 255,
+   "symbol": "turbo_object_erase",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 678,
+   "name": "line 3d",
+   "signature": "I0,0,0t0,0,0",
+   "routine": 41,
+   "terminator": 255,
+   "symbol": "turbo_line_3d",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 702,
+   "name": "eye 3d",
+   "signature": "I0,0",
+   "routine": 42,
+   "terminator": 255,
+   "symbol": "turbo_eye_3d",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 718,
+   "name": "object save",
+   "signature": "I2,0t0",
+   "routine": 39,
+   "terminator": 255,
+   "symbol": "turbo_object_save",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 740,
+   "name": "object load",
+   "signature": "I2,0",
+   "routine": 40,
+   "terminator": 255,
+   "symbol": "turbo_object_load",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 760,
+   "name": "blit store left",
+   "signature": "I0,0,0,0t0,0,0",
+   "routine": 43,
+   "terminator": 255,
+   "symbol": "turbo_blit_store_left",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 794,
+   "name": "multi blit",
+   "signature": "I0t0",
+   "routine": 44,
+   "terminator": 255,
+   "symbol": "turbo_multi_blit",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 814,
+   "name": "blit erase",
+   "signature": "I0",
+   "routine": 45,
+   "terminator": 255,
+   "symbol": "turbo_blit_erase",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 832,
+   "name": "blit speed",
+   "signature": "I0,0",
+   "routine": 46,
+   "terminator": 255,
+   "symbol": "turbo_blit_speed",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 852,
+   "name": "blit left",
+   "signature": "I0,0,0t0,0,0",
+   "routine": 47,
+   "terminator": 255,
+   "symbol": "turbo_blit_left",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 878,
+   "name": "f plot",
+   "signature": "I0,0,0",
+   "routine": 49,
+   "terminator": 255,
+   "symbol": "turbo_f_plot",
+   "status": "implemented",
+   "source": "src/ext/turbo.cpp"
+  },
+  {
+   "offset": 896,
+   "name": "blit clear",
+   "signature": "I0",
+   "routine": 48,
+   "terminator": 255,
+   "symbol": "turbo_blit_clear",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 914,
+   "name": "left click",
+   "signature": "0",
+   "routine": 60,
+   "terminator": 255,
+   "symbol": "turbo_left_click",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 930,
+   "name": "reserve stars",
+   "signature": "I0",
+   "routine": 52,
+   "terminator": 255,
+   "symbol": "turbo_reserve_stars",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 950,
+   "name": "define star",
+   "signature": "I0,0,0,0,0",
+   "routine": 53,
+   "terminator": 255,
+   "symbol": "turbo_define_star",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 976,
+   "name": "display stars",
+   "signature": "I",
+   "routine": 54,
+   "terminator": 255,
+   "symbol": "turbo_display_stars",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 996,
+   "name": "stars erase",
+   "signature": "I",
+   "routine": 55,
+   "terminator": 255,
+   "symbol": "turbo_stars_erase",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 1014,
+   "name": "stars compute",
+   "signature": "I0t0",
+   "routine": 56,
+   "terminator": 255,
+   "symbol": "turbo_stars_compute",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 1036,
+   "name": "stars draw",
+   "signature": "I",
+   "routine": 57,
+   "terminator": 255,
+   "symbol": "turbo_stars_draw",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 1052,
+   "name": "stars speed",
+   "signature": "I0t0,0,0",
+   "routine": 58,
+   "terminator": 255,
+   "symbol": "turbo_stars_speed",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 1076,
+   "name": "stars clip",
+   "signature": "I0,0,0,0",
+   "routine": 59,
+   "terminator": 255,
+   "symbol": "turbo_stars_clip",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 1100,
+   "name": "f point",
+   "signature": "00,0",
+   "routine": 51,
+   "terminator": 255,
+   "symbol": "turbo_f_point",
+   "status": "implemented",
+   "source": "src/ext/turbo.cpp"
+  },
+  {
+   "offset": 1116,
+   "name": "f circle",
+   "signature": "I0,0,0,0",
+   "routine": 61,
+   "terminator": 255,
+   "symbol": "turbo_f_circle",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 1138,
+   "name": "f sqr",
+   "signature": "00",
+   "routine": 65,
+   "terminator": 255,
+   "symbol": "turbo_f_sqr",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 1150,
+   "name": "stars int on",
+   "signature": "I0",
+   "routine": 66,
+   "terminator": 255,
+   "symbol": "turbo_stars_int_on",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 1170,
+   "name": "stars int off",
+   "signature": "I",
+   "routine": 67,
+   "terminator": 255,
+   "symbol": "turbo_stars_int_off",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 1190,
+   "name": "blit int on",
+   "signature": "I0t0",
+   "routine": 68,
+   "terminator": 255,
+   "symbol": "turbo_blit_int_on",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 1210,
+   "name": "blit int off",
+   "signature": "I",
+   "routine": 69,
+   "terminator": 255,
+   "symbol": "turbo_blit_int_off",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 1228,
+   "name": "f draw",
+   "signature": "I0,0t0,0",
+   "routine": 70,
+   "terminator": 254,
+   "symbol": "turbo_f_draw_4",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 1248,
+   "name": "f draw",
+   "signature": "I0,0",
+   "routine": 74,
+   "terminator": 255,
+   "symbol": "turbo_f_draw_2",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 1258,
+   "name": "object limit",
+   "signature": "I0",
+   "routine": 73,
+   "terminator": 255,
+   "symbol": "turbo_object_limit",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 1278,
+   "name": "set planes",
+   "signature": "I0",
+   "routine": 76,
+   "terminator": 255,
+   "symbol": "turbo_set_planes",
+   "status": "implemented",
+   "source": "src/ext/turbo.cpp"
+  },
+  {
+   "offset": 1296,
+   "name": "plane offset",
+   "signature": "I0,0,0,0",
+   "routine": 77,
+   "terminator": 255,
+   "symbol": "turbo_plane_offset",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 1322,
+   "name": "plane swap",
+   "signature": "I0,0,0",
+   "routine": 78,
+   "terminator": 255,
+   "symbol": "turbo_plane_swap",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 1344,
+   "name": "plane shift up",
+   "signature": "I0,0t0",
+   "routine": 79,
+   "terminator": 255,
+   "symbol": "turbo_plane_shift_up",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 1370,
+   "name": "plane shift down",
+   "signature": "I0,0t0",
+   "routine": 80,
+   "terminator": 255,
+   "symbol": "turbo_plane_shift_down",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 1398,
+   "name": "plane update",
+   "signature": "I0",
+   "routine": 81,
+   "terminator": 255,
+   "symbol": "turbo_plane_update",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 1418,
+   "name": "f paste icon",
+   "signature": "I0,0,0",
+   "routine": 82,
+   "terminator": 255,
+   "symbol": "turbo_f_paste_icon",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 1442,
+   "name": "f 32 icon",
+   "signature": "I0,0,0",
+   "routine": 83,
+   "terminator": 255,
+   "symbol": "turbo_f_32_icon",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 1462,
+   "name": "f 16 icon",
+   "signature": "I0,0,0",
+   "routine": 84,
+   "terminator": 255,
+   "symbol": "turbo_f_16_icon",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 1482,
+   "name": "f 16proc icon",
+   "signature": "I0,0,0",
+   "routine": 85,
+   "terminator": 255,
+   "symbol": "turbo_f_16proc_icon",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 1506,
+   "name": "f 32proc icon",
+   "signature": "I0,0,0",
+   "routine": 86,
+   "terminator": 255,
+   "symbol": "turbo_f_32proc_icon",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 1530,
+   "name": "x icon",
+   "signature": "00",
+   "routine": 87,
+   "terminator": 255,
+   "symbol": "turbo_x_icon",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 1544,
+   "name": "y icon",
+   "signature": "00",
+   "routine": 88,
+   "terminator": 255,
+   "symbol": "turbo_y_icon",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 1558,
+   "name": "planes icon",
+   "signature": "00",
+   "routine": 89,
+   "terminator": 255,
+   "symbol": "turbo_planes_icon",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 1576,
+   "name": "cpu info",
+   "signature": "0",
+   "routine": 90,
+   "terminator": 255,
+   "symbol": "turbo_cpu_info",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 1590,
+   "name": "math info",
+   "signature": "0",
+   "routine": 91,
+   "terminator": 255,
+   "symbol": "turbo_math_info",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 1606,
+   "name": "f put block",
+   "signature": "I0,0,0",
+   "routine": 92,
+   "terminator": 255,
+   "symbol": "turbo_f_put_block",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 1628,
+   "name": "reserve static block",
+   "signature": "I0",
+   "routine": 93,
+   "terminator": 255,
+   "symbol": "turbo_reserve_static_block",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 1656,
+   "name": "static block erase",
+   "signature": "I",
+   "routine": 94,
+   "terminator": 255,
+   "symbol": "turbo_static_block_erase",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 1680,
+   "name": "build static block",
+   "signature": "I",
+   "routine": 95,
+   "terminator": 255,
+   "symbol": "turbo_build_static_block",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 1704,
+   "name": "f put static block",
+   "signature": "I0,0,0",
+   "routine": 96,
+   "terminator": 255,
+   "symbol": "turbo_f_put_static_block",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 1734,
+   "name": "scene bank",
+   "signature": "I0",
+   "routine": 97,
+   "terminator": 255,
+   "symbol": "turbo_scene_bank",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 1752,
+   "name": "scene check",
+   "signature": "00,0",
+   "routine": 98,
+   "terminator": 255,
+   "symbol": "turbo_scene_check",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 1772,
+   "name": "scene 16 check",
+   "signature": "00,0",
+   "routine": 99,
+   "terminator": 255,
+   "symbol": "turbo_scene_16_check",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 1796,
+   "name": "scene change",
+   "signature": "I0,0,0",
+   "routine": 100,
+   "terminator": 255,
+   "symbol": "turbo_scene_change",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 1820,
+   "name": "scene 16 change",
+   "signature": "I0,0,0",
+   "routine": 101,
+   "terminator": 255,
+   "symbol": "turbo_scene_16_change",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 1846,
+   "name": "scene 16 draw",
+   "signature": "I0,0,0,0,0,0",
+   "routine": 102,
+   "terminator": 255,
+   "symbol": "turbo_scene_16_draw",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 1876,
+   "name": "scene 16 def",
+   "signature": "I0,0,0,0,0,0,0,0",
+   "routine": 103,
+   "terminator": 255,
+   "symbol": "turbo_scene_16_def",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 1910,
+   "name": "scene 16 restore",
+   "signature": "I0",
+   "routine": 104,
+   "terminator": 255,
+   "symbol": "turbo_scene_16_restore",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 1934,
+   "name": "scene 16 limit",
+   "signature": "I0",
+   "routine": 105,
+   "terminator": 255,
+   "symbol": "turbo_scene_16_limit",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 1956,
+   "name": "scene 32 check",
+   "signature": "00,0",
+   "routine": 106,
+   "terminator": 255,
+   "symbol": "turbo_scene_32_check",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 1980,
+   "name": "scene 32 change",
+   "signature": "I0,0,0",
+   "routine": 107,
+   "terminator": 255,
+   "symbol": "turbo_scene_32_change",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 2006,
+   "name": "scene 32 draw",
+   "signature": "I0,0,0,0,0,0",
+   "routine": 108,
+   "terminator": 255,
+   "symbol": "turbo_scene_32_draw",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 2036,
+   "name": "scene 16 view",
+   "signature": "I0,0,0t0,0",
+   "routine": 109,
+   "terminator": 255,
+   "symbol": "turbo_scene_16_view",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 2064,
+   "name": "scene 32 view",
+   "signature": "I0,0,0t0,0",
+   "routine": 110,
+   "terminator": 255,
+   "symbol": "turbo_scene_32_view",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 2092,
+   "name": "scene 16 do",
+   "signature": "I0,0",
+   "routine": 111,
+   "terminator": 255,
+   "symbol": "turbo_scene_16_do",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 2112,
+   "name": "scene 32 do",
+   "signature": "I0,0",
+   "routine": 112,
+   "terminator": 255,
+   "symbol": "turbo_scene_32_do",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 2132,
+   "name": "scene 16 top",
+   "signature": "I0,0",
+   "routine": 113,
+   "terminator": 255,
+   "symbol": "turbo_scene_16_top",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 2154,
+   "name": "scene 32 top",
+   "signature": "I0,0",
+   "routine": 114,
+   "terminator": 255,
+   "symbol": "turbo_scene_32_top",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 2176,
+   "name": "scene 16 bottom",
+   "signature": "I0,0",
+   "routine": 115,
+   "terminator": 255,
+   "symbol": "turbo_scene_16_bottom",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 2200,
+   "name": "scene 32 bottom",
+   "signature": "I0,0",
+   "routine": 116,
+   "terminator": 255,
+   "symbol": "turbo_scene_32_bottom",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 2224,
+   "name": "scene 16 left",
+   "signature": "I0,0",
+   "routine": 117,
+   "terminator": 255,
+   "symbol": "turbo_scene_16_left",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 2246,
+   "name": "scene 32 left",
+   "signature": "I0,0",
+   "routine": 118,
+   "terminator": 255,
+   "symbol": "turbo_scene_32_left",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 2268,
+   "name": "scene 16 right",
+   "signature": "I0,0",
+   "routine": 119,
+   "terminator": 255,
+   "symbol": "turbo_scene_16_right",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 2292,
+   "name": "scene 32 right",
+   "signature": "I0,0",
+   "routine": 120,
+   "terminator": 255,
+   "symbol": "turbo_scene_32_right",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 2316,
+   "name": "scene x",
+   "signature": "0",
+   "routine": 123,
+   "terminator": 255,
+   "symbol": "turbo_scene_x",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 2330,
+   "name": "scene y",
+   "signature": "0",
+   "routine": 124,
+   "terminator": 255,
+   "symbol": "turbo_scene_y",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 2344,
+   "name": "amos pri",
+   "signature": "I0",
+   "routine": 125,
+   "terminator": 255,
+   "symbol": "turbo_amos_pri",
+   "status": "implemented",
+   "source": "src/ext/turbo.cpp"
+  },
+  {
+   "offset": 2360,
+   "name": "bit field ins",
+   "signature": "00,0,0,0",
+   "routine": 134,
+   "terminator": 255,
+   "symbol": "turbo_bit_field_ins",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 2386,
+   "name": "bit field ext",
+   "signature": "00,0,0",
+   "routine": 135,
+   "terminator": 255,
+   "symbol": "turbo_bit_field_ext",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 2410,
+   "name": "hit bob check",
+   "signature": "00t0,0,0,0",
+   "routine": 136,
+   "terminator": 255,
+   "symbol": "turbo_hit_bob_check",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 2438,
+   "name": "byte hunt",
+   "signature": "00t0,0,0t0",
+   "routine": 137,
+   "terminator": 255,
+   "symbol": "turbo_byte_hunt",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 2462,
+   "name": "workbench open",
+   "signature": "I",
+   "routine": 138,
+   "terminator": 255,
+   "symbol": "turbo_workbench_open",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 2482,
+   "name": "scene load",
+   "signature": "I2,0",
+   "routine": 139,
+   "terminator": 255,
+   "symbol": "turbo_scene_load",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 2502,
+   "name": "memory fill",
+   "signature": "I0t0,2",
+   "routine": 140,
+   "terminator": 255,
+   "symbol": "turbo_memory_fill",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 2524,
+   "name": "blit int change",
+   "signature": "I0t0",
+   "routine": 141,
+   "terminator": 255,
+   "symbol": "turbo_blit_int_change",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 2548,
+   "name": "blit int wait",
+   "signature": "I0",
+   "routine": 142,
+   "terminator": 255,
+   "symbol": "turbo_blit_int_wait",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 2568,
+   "name": "range",
+   "signature": "00,0t0",
+   "routine": 143,
+   "terminator": 255,
+   "symbol": "turbo_range",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 2584,
+   "name": "texp",
+   "signature": "00,0,0",
+   "routine": 144,
+   "terminator": 255,
+   "symbol": "turbo_texp",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 2600,
+   "name": "blit up",
+   "signature": "I0,0,0t0,0,0",
+   "routine": 145,
+   "terminator": 255,
+   "symbol": "turbo_blit_up",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 2624,
+   "name": "blit store up",
+   "signature": "I0,0,0,0t0,0,0",
+   "routine": 146,
+   "terminator": 255,
+   "symbol": "turbo_blit_store_up",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 2656,
+   "name": "icon check",
+   "signature": "00",
+   "routine": 147,
+   "terminator": 255,
+   "symbol": "turbo_icon_check",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 2674,
+   "name": "scene icon bank",
+   "signature": "I0",
+   "routine": 148,
+   "terminator": 255,
+   "symbol": "turbo_scene_icon_bank",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 2696,
+   "name": "t clip",
+   "signature": "00,0",
+   "routine": 149,
+   "terminator": 255,
+   "symbol": "turbo_t_clip",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 2712,
+   "name": "between",
+   "signature": "00,0,0",
+   "routine": 150,
+   "terminator": 255,
+   "symbol": "turbo_between",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 2730,
+   "name": "scene palette",
+   "signature": "I0",
+   "routine": 151,
+   "terminator": 255,
+   "symbol": "turbo_scene_palette",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 2750,
+   "name": "scene mask palette",
+   "signature": "I0",
+   "routine": 152,
+   "terminator": 255,
+   "symbol": "turbo_scene_mask_palette",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 2776,
+   "name": "bank end",
+   "signature": "00",
+   "routine": 153,
+   "terminator": 255,
+   "symbol": "turbo_bank_end",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 2792,
+   "name": "scene scan x",
+   "signature": "00,0,0,0",
+   "routine": 154,
+   "terminator": 255,
+   "symbol": "turbo_scene_scan_x",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 2818,
+   "name": "scene scan y",
+   "signature": "00,0,0,0",
+   "routine": 155,
+   "terminator": 255,
+   "symbol": "turbo_scene_scan_y",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 2844,
+   "name": "scene copy",
+   "signature": "I0,0,0,0,0t0,0,0",
+   "routine": 156,
+   "terminator": 255,
+   "symbol": "turbo_scene_copy",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 2876,
+   "name": "scene fill",
+   "signature": "I0,0,0,0,0,0",
+   "routine": 157,
+   "terminator": 255,
+   "symbol": "turbo_scene_fill",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 2904,
+   "name": "scene convert",
+   "signature": "I0t0",
+   "routine": 160,
+   "terminator": 255,
+   "symbol": "turbo_scene_convert",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 2926,
+   "name": "reserve scene",
+   "signature": "I0,0,0",
+   "routine": 158,
+   "terminator": 255,
+   "symbol": "turbo_reserve_scene",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 2950,
+   "name": "word hunt",
+   "signature": "00t0,0,0t0",
+   "routine": 159,
+   "terminator": 255,
+   "symbol": "turbo_word_hunt",
+   "status": "implemented",
+   "source": "src/ext/turbo.cpp"
+  },
+  {
+   "offset": 2974,
+   "name": "scene replace",
+   "signature": "I0,0,0,0,0,0,0",
+   "routine": 161,
+   "terminator": 255,
+   "symbol": "turbo_scene_replace",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 3006,
+   "name": "chip largest",
+   "signature": "0",
+   "routine": 167,
+   "terminator": 255,
+   "symbol": "turbo_chip_largest",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 3024,
+   "name": "fast largest",
+   "signature": "0",
+   "routine": 168,
+   "terminator": 255,
+   "symbol": "turbo_fast_largest",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 3042,
+   "name": "string hunt",
+   "signature": "00t0,0,0,2",
+   "routine": 169,
+   "terminator": 255,
+   "symbol": "turbo_string_hunt",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 3068,
+   "name": "right click",
+   "signature": "0",
+   "routine": 170,
+   "terminator": 255,
+   "symbol": "turbo_right_click",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 3086,
+   "name": "is raw key",
+   "signature": "0",
+   "routine": 171,
+   "terminator": 255,
+   "symbol": "turbo_is_raw_key",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 3102,
+   "name": "multi bload",
+   "signature": "I2,2,0",
+   "routine": 172,
+   "terminator": 255,
+   "symbol": "turbo_multi_bload",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 3124,
+   "name": "multi bl error",
+   "signature": "I",
+   "routine": 173,
+   "terminator": 255,
+   "symbol": "turbo_multi_bl_error",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 3144,
+   "name": "multi bl ended",
+   "signature": "0",
+   "routine": 174,
+   "terminator": 255,
+   "symbol": "turbo_multi_bl_ended",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 3164,
+   "name": "parse$",
+   "signature": "02,0,2,0",
+   "routine": 180,
+   "terminator": 255,
+   "symbol": "turbo_parse_s",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 3184,
+   "name": "move mem",
+   "signature": "I0,0t0",
+   "routine": 181,
+   "terminator": 255,
+   "symbol": "turbo_move_mem",
+   "status": "stub",
+   "source": ""
+  },
+  {
+   "offset": 3204,
+   "name": "debug",
+   "signature": "I",
+   "routine": 132,
+   "terminator": 255,
+   "symbol": "turbo_debug",
+   "status": "stub",
+   "source": ""
+  }
+ ],
+ "hooks": [
+  "default",
+  "end"
+ ]
+}
