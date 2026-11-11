@@ -104,8 +104,6 @@ uint64_t amos_typed_amcaf_file_copy(const uint32_t* words) { return typed_librar
 uint64_t amos_typed_amcaf_filename_s(const uint32_t* words) { return typed_library_call<&amcaf_filename_s, 1, 4>(words); }
 uint64_t amos_typed_amcaf_font_style(const uint32_t* words) { return typed_library_call<&amcaf_font_style, 0, 4>(words); }
 uint64_t amos_typed_amcaf_fpu(const uint32_t* words) { return typed_library_call<&amcaf_fpu, 0, 4>(words); }
-uint64_t amos_typed_amcaf_ham_best(const uint32_t* words) { return typed_library_call<&amcaf_ham_best, 2, 4>(words); }
-uint64_t amos_typed_amcaf_ham_colour(const uint32_t* words) { return typed_library_call<&amcaf_ham_colour, 2, 4>(words); }
 uint64_t amos_typed_amcaf_ham_fade_out(const uint32_t* words) { return typed_library_call<&amcaf_ham_fade_out, 1, 0>(words); }
 uint64_t amos_typed_amcaf_ham_point(const uint32_t* words) { return typed_library_call<&amcaf_ham_point, 2, 4>(words); }
 uint64_t amos_typed_amcaf_imploder_load(const uint32_t* words) { return typed_library_call<&amcaf_imploder_load, 2, 0>(words); }

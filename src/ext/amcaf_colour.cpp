@@ -52,9 +52,84 @@ int32_t best_pen_in(int32_t colour, int32_t lo, int32_t hi)
     return best;
 }
 
+// R0a2's measure (R4546): 0 for the same colour, else the sum of the costs of the differences of the three
+// nibbles
+int16_t colour_distance(uint16_t candidate, uint16_t reference)
+{
+    static const int8_t cost[16] = {0, 1, 3, 5, 8, 12, 16, 20, 30, 40, 50, 60, 70, 80, 90, 100};
+    if (reference == candidate)
+        return 0;
+    auto diff = [](int a, int b) { int d = a - b; return d < 0 ? -d : d; };
+    int dr = diff((reference & 0x0F00) >> 8, (candidate & 0x0F00) >> 8);
+    int dg = diff((reference & 0xF0) >> 4, (candidate & 0xF0) >> 4);
+    int db = diff(reference & 15, candidate & 15);
+    return int16_t(cost[dr & 15] + cost[dg & 15] + cost[db & 15]);
+}
+
 } // namespace
 
 extern "C" {
+
+// =HAM COLOUR(code,colour): the colour with one of its nibbles replaced as a HAM code says: 0-15 the
+// pen's colour (read from the screen at +62, as the library does), 16-31 the blue, 32-47 the red, 48-63 the
+// green
+int32_t amcaf_ham_colour(int32_t code, int32_t colour)
+{
+    uint32_t d3 = uint32_t(colour);
+    uint16_t d0 = uint16_t(code);
+    if (d0 <= 15) {
+        uint32_t screen = idata().ScOnAd;
+        if (!screen)
+            error(47);
+        uint32_t at = screen + 62 + 2u * d0;
+        return int32_t((d3 & 0xFFFF0000u) | peek_w(decode_context_cursor(at)));
+    }
+    if (d0 <= 31)
+        return int32_t((d3 & 0xFFFFFF00u) | uint8_t((d3 & 0xF0) | uint8_t(d0 - 16)));
+    if (d0 <= 47)
+        return int32_t((d3 & 0xFFFF0000u) | uint16_t((d3 & 0xFF) | uint16_t((d0 - 32) << 8)));
+    return int32_t((d3 & 0xFFFFFF00u) | uint8_t((d3 & 15) | uint8_t(uint8_t(d0 - 48) << 4)));
+}
+
+// =HAM BEST(from,to): the code, of the 64, that brings the colour from nearest to the colour to (the same
+// colours: its blue nibble as a blue code); the pens' colours are those of the screen's palette
+int32_t amcaf_ham_best(int32_t from, int32_t to)
+{
+    uint32_t d6 = uint32_t(from);
+    uint16_t reference = uint16_t(d6), target = uint16_t(to);
+    if (reference == target)
+        return int32_t((d6 & 0xFFFF0000u) | uint16_t((d6 & 15) + 16));
+    const Screen *s = ptr<Screen>(idata().ScOnAd);
+    int16_t best = 1000;
+    uint16_t result = 0;
+    for (int pen = 15; pen >= 0; pen--) {
+        int16_t d = colour_distance(s->EcPal[pen], reference);
+        if (d == 0)
+            return pen;
+        if (best >= d) {
+            best = d;
+            result = uint16_t(pen);
+        }
+    }
+    struct Try {
+        uint16_t keep, mask, shift, offset;
+    };
+    // the red, the green and the blue nibble of the reference put in the target in turn
+    static const Try tries[3] = {{0x00FF, 0x0F00, 8, 32}, {0x0F0F, 0x00F0, 4, 48}, {0x0FF0, 0x000F, 0, 16}};
+    for (const Try &t : tries) {
+        uint16_t nibble = reference & t.mask;
+        uint16_t trial = uint16_t((target & t.keep) | nibble);
+        nibble >>= t.shift;
+        int16_t d = colour_distance(trial, reference);
+        if (d == 0)
+            return nibble + t.offset;
+        if (best >= d) {
+            best = d;
+            result = uint16_t(nibble + t.offset);
+        }
+    }
+    return result;
+}
 
 // AMCAF AGA NOTATION ON / OFF: the values of Red Val... in 4 bits (on) or 8 (off)
 void amcaf_aga_notation_on() { poke_w(amcaf::state_at(amcaf::Notation), 4); }

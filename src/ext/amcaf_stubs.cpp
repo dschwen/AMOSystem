@@ -196,10 +196,6 @@ void amcaf_trans_screen_dynamic(int32_t, int32_t, int32_t, int32_t) { ext3::unsu
 void amcaf_trans_screen_static(int32_t, int32_t, int32_t, int32_t) { ext3::unsupported(ext3::Id::amcaf); }
 // ham point (00,0)
 int32_t amcaf_ham_point(int32_t, int32_t) { ext3::unsupported(ext3::Id::amcaf); }
-// ham colour (00,0)
-int32_t amcaf_ham_colour(int32_t, int32_t) { ext3::unsupported(ext3::Id::amcaf); }
-// ham best (00,0)
-int32_t amcaf_ham_best(int32_t, int32_t) { ext3::unsupported(ext3::Id::amcaf); }
 // ham fade out (I0)
 void amcaf_ham_fade_out(int32_t) { ext3::unsupported(ext3::Id::amcaf); }
 // io error (0)

@@ -1513,8 +1513,8 @@
    "routine": 161,
    "terminator": 255,
    "symbol": "amcaf_ham_colour",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_colour.cpp"
   },
   {
    "offset": 2556,
@@ -1523,8 +1523,8 @@
    "routine": 162,
    "terminator": 255,
    "symbol": "amcaf_ham_best",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_colour.cpp"
   },
   {
    "offset": 2574,

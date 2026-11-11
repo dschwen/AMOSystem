@@ -36,6 +36,8 @@ uint64_t amos_typed_amcaf_best_pen_3(const uint32_t* words) { return typed_libra
 uint64_t amos_typed_amcaf_blue_val(const uint32_t* words) { return typed_library_call<&amcaf_blue_val, 1, 4>(words); }
 uint64_t amos_typed_amcaf_glue_colour(const uint32_t* words) { return typed_library_call<&amcaf_glue_colour, 3, 4>(words); }
 uint64_t amos_typed_amcaf_green_val(const uint32_t* words) { return typed_library_call<&amcaf_green_val, 1, 4>(words); }
+uint64_t amos_typed_amcaf_ham_best(const uint32_t* words) { return typed_library_call<&amcaf_ham_best, 2, 4>(words); }
+uint64_t amos_typed_amcaf_ham_colour(const uint32_t* words) { return typed_library_call<&amcaf_ham_colour, 2, 4>(words); }
 uint64_t amos_typed_amcaf_mix_colour_2(const uint32_t* words) { return typed_library_call<&amcaf_mix_colour_2, 2, 4>(words); }
 uint64_t amos_typed_amcaf_mix_colour_4(const uint32_t* words) { return typed_library_call<&amcaf_mix_colour_4, 4, 4>(words); }
 uint64_t amos_typed_amcaf_red_val(const uint32_t* words) { return typed_library_call<&amcaf_red_val, 1, 4>(words); }
