@@ -121,8 +121,6 @@ uint64_t amos_typed_amcaf_io_error(const uint32_t* words) { return typed_library
 uint64_t amos_typed_amcaf_io_error_s(const uint32_t* words) { return typed_library_call<&amcaf_io_error_s, 1, 4>(words); }
 uint64_t amos_typed_amcaf_launch_1(const uint32_t* words) { return typed_library_call<&amcaf_launch_1, 1, 0>(words); }
 uint64_t amos_typed_amcaf_launch_2(const uint32_t* words) { return typed_library_call<&amcaf_launch_2, 2, 0>(words); }
-uint64_t amos_typed_amcaf_limit_smouse_0(const uint32_t* words) { return typed_library_call<&amcaf_limit_smouse_0, 0, 0>(words); }
-uint64_t amos_typed_amcaf_limit_smouse_4(const uint32_t* words) { return typed_library_call<&amcaf_limit_smouse_4, 4, 0>(words); }
 uint64_t amos_typed_amcaf_make_bank_font(const uint32_t* words) { return typed_library_call<&amcaf_make_bank_font, 1, 0>(words); }
 uint64_t amos_typed_amcaf_make_pix_mask(const uint32_t* words) { return typed_library_call<&amcaf_make_pix_mask, 6, 0>(words); }
 uint64_t amos_typed_amcaf_mask_copy_10(const uint32_t* words) { return typed_library_call<&amcaf_mask_copy_10, 10, 0>(words); }
@@ -156,7 +154,6 @@ uint64_t amos_typed_amcaf_pal_spread(const uint32_t* words) { return typed_libra
 uint64_t amos_typed_amcaf_paste_ptile(const uint32_t* words) { return typed_library_call<&amcaf_paste_ptile, 3, 0>(words); }
 uint64_t amos_typed_amcaf_path_s(const uint32_t* words) { return typed_library_call<&amcaf_path_s, 1, 4>(words); }
 uint64_t amos_typed_amcaf_pattern_match(const uint32_t* words) { return typed_library_call<&amcaf_pattern_match, 2, 4>(words); }
-uint64_t amos_typed_amcaf_pfire(const uint32_t* words) { return typed_library_call<&amcaf_pfire, 1, 4>(words); }
 uint64_t amos_typed_amcaf_pix_brighten_7(const uint32_t* words) { return typed_library_call<&amcaf_pix_brighten_7, 7, 0>(words); }
 uint64_t amos_typed_amcaf_pix_brighten_8(const uint32_t* words) { return typed_library_call<&amcaf_pix_brighten_8, 8, 0>(words); }
 uint64_t amos_typed_amcaf_pix_darken_7(const uint32_t* words) { return typed_library_call<&amcaf_pix_darken_7, 7, 0>(words); }
@@ -165,11 +162,6 @@ uint64_t amos_typed_amcaf_pix_shift_down_7(const uint32_t* words) { return typed
 uint64_t amos_typed_amcaf_pix_shift_down_8(const uint32_t* words) { return typed_library_call<&amcaf_pix_shift_down_8, 8, 0>(words); }
 uint64_t amos_typed_amcaf_pix_shift_up_7(const uint32_t* words) { return typed_library_call<&amcaf_pix_shift_up_7, 7, 0>(words); }
 uint64_t amos_typed_amcaf_pix_shift_up_8(const uint32_t* words) { return typed_library_call<&amcaf_pix_shift_up_8, 8, 0>(words); }
-uint64_t amos_typed_amcaf_pjdown(const uint32_t* words) { return typed_library_call<&amcaf_pjdown, 1, 4>(words); }
-uint64_t amos_typed_amcaf_pjleft(const uint32_t* words) { return typed_library_call<&amcaf_pjleft, 1, 4>(words); }
-uint64_t amos_typed_amcaf_pjoy(const uint32_t* words) { return typed_library_call<&amcaf_pjoy, 1, 4>(words); }
-uint64_t amos_typed_amcaf_pjright(const uint32_t* words) { return typed_library_call<&amcaf_pjright, 1, 4>(words); }
-uint64_t amos_typed_amcaf_pjup(const uint32_t* words) { return typed_library_call<&amcaf_pjup, 1, 4>(words); }
 uint64_t amos_typed_amcaf_ppfromdisk(const uint32_t* words) { return typed_library_call<&amcaf_ppfromdisk, 2, 0>(words); }
 uint64_t amos_typed_amcaf_pptodisk_2(const uint32_t* words) { return typed_library_call<&amcaf_pptodisk_2, 2, 0>(words); }
 uint64_t amos_typed_amcaf_pptodisk_3(const uint32_t* words) { return typed_library_call<&amcaf_pptodisk_3, 3, 0>(words); }
@@ -203,9 +195,6 @@ uint64_t amos_typed_amcaf_shade_bob_up(const uint32_t* words) { return typed_lib
 uint64_t amos_typed_amcaf_shade_pix_2(const uint32_t* words) { return typed_library_call<&amcaf_shade_pix_2, 2, 0>(words); }
 uint64_t amos_typed_amcaf_shade_pix_3(const uint32_t* words) { return typed_library_call<&amcaf_shade_pix_3, 3, 0>(words); }
 uint64_t amos_typed_amcaf_sload(const uint32_t* words) { return typed_library_call<&amcaf_sload, 3, 0>(words); }
-uint64_t amos_typed_amcaf_smouse_speed(const uint32_t* words) { return typed_library_call<&amcaf_smouse_speed, 1, 0>(words); }
-uint64_t amos_typed_amcaf_smouse_x(const uint32_t* words) { return typed_library_call<&amcaf_smouse_x, 1, 0>(words); }
-uint64_t amos_typed_amcaf_smouse_y(const uint32_t* words) { return typed_library_call<&amcaf_smouse_y, 1, 0>(words); }
 uint64_t amos_typed_amcaf_splinters_active(const uint32_t* words) { return typed_library_call<&amcaf_splinters_active, 0, 4>(words); }
 uint64_t amos_typed_amcaf_splinters_back(const uint32_t* words) { return typed_library_call<&amcaf_splinters_back, 0, 0>(words); }
 uint64_t amos_typed_amcaf_splinters_bank(const uint32_t* words) { return typed_library_call<&amcaf_splinters_bank, 2, 0>(words); }
@@ -263,9 +252,7 @@ uint64_t amos_typed_amcaf_wload(const uint32_t* words) { return typed_library_ca
 uint64_t amos_typed_amcaf_write_cli(const uint32_t* words) { return typed_library_call<&amcaf_write_cli, 1, 0>(words); }
 uint64_t amos_typed_amcaf_wsave(const uint32_t* words) { return typed_library_call<&amcaf_wsave, 2, 0>(words); }
 uint64_t amos_typed_amcaf_x_raster(const uint32_t* words) { return typed_library_call<&amcaf_x_raster, 0, 4>(words); }
-uint64_t amos_typed_amcaf_x_smouse(const uint32_t* words) { return typed_library_call<&amcaf_x_smouse, 0, 4>(words); }
 uint64_t amos_typed_amcaf_xfire(const uint32_t* words) { return typed_library_call<&amcaf_xfire, 2, 4>(words); }
 uint64_t amos_typed_amcaf_y_raster(const uint32_t* words) { return typed_library_call<&amcaf_y_raster, 0, 4>(words); }
-uint64_t amos_typed_amcaf_y_smouse(const uint32_t* words) { return typed_library_call<&amcaf_y_smouse, 0, 4>(words); }
 }
 }

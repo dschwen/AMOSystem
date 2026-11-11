@@ -19,9 +19,15 @@ constexpr uint32_t CustomBase = 0xDFF000, CiaABase = 0xBFE001;
 inline volatile struct Custom &custom() { return *reinterpret_cast<volatile struct Custom *>(CustomBase); }
 // CIA A's port A (the fire buttons, the filter LED...)
 inline volatile uint8_t &cia_a_pra() { return *reinterpret_cast<volatile uint8_t *>(CiaABase); }
+// The parallel port: its data lines (CIA A's port B) and its control lines (CIA B's port A: busy, paper
+// out, select)
+inline volatile uint8_t &parallel_data() { return *reinterpret_cast<volatile uint8_t *>(0xBFE101); }
+inline volatile uint8_t &parallel_control() { return *reinterpret_cast<volatile uint8_t *>(0xBFD000); }
 #else
 volatile struct Custom &custom();
 volatile uint8_t &cia_a_pra();
+volatile uint8_t &parallel_data();
+volatile uint8_t &parallel_control();
 #endif
 
 // The blitter started on the registers set (BLTSIZE written with size: its

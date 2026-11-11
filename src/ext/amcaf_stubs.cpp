@@ -28,18 +28,6 @@ int32_t amcaf_vec_rot_y_0() { ext3::unsupported(ext3::Id::amcaf); }
 int32_t amcaf_vec_rot_z_3(int32_t, int32_t, int32_t) { ext3::unsupported(ext3::Id::amcaf); }
 // vec rot z (0)
 int32_t amcaf_vec_rot_z_0() { ext3::unsupported(ext3::Id::amcaf); }
-// pjoy (00)
-int32_t amcaf_pjoy(int32_t) { ext3::unsupported(ext3::Id::amcaf); }
-// pjleft (00)
-int32_t amcaf_pjleft(int32_t) { ext3::unsupported(ext3::Id::amcaf); }
-// pjright (00)
-int32_t amcaf_pjright(int32_t) { ext3::unsupported(ext3::Id::amcaf); }
-// pjup (00)
-int32_t amcaf_pjup(int32_t) { ext3::unsupported(ext3::Id::amcaf); }
-// pjdown (00)
-int32_t amcaf_pjdown(int32_t) { ext3::unsupported(ext3::Id::amcaf); }
-// pfire (00)
-int32_t amcaf_pfire(int32_t) { ext3::unsupported(ext3::Id::amcaf); }
 // xfire (00,0)
 int32_t amcaf_xfire(int32_t, int32_t) { ext3::unsupported(ext3::Id::amcaf); }
 // audio free (I)
@@ -238,20 +226,6 @@ int32_t amcaf_ham_colour(int32_t, int32_t) { ext3::unsupported(ext3::Id::amcaf);
 int32_t amcaf_ham_best(int32_t, int32_t) { ext3::unsupported(ext3::Id::amcaf); }
 // ham fade out (I0)
 void amcaf_ham_fade_out(int32_t) { ext3::unsupported(ext3::Id::amcaf); }
-// x smouse (0)
-int32_t amcaf_x_smouse() { ext3::unsupported(ext3::Id::amcaf); }
-// y smouse (0)
-int32_t amcaf_y_smouse() { ext3::unsupported(ext3::Id::amcaf); }
-// smouse x (I0)
-void amcaf_smouse_x(int32_t) { ext3::unsupported(ext3::Id::amcaf); }
-// smouse y (I0)
-void amcaf_smouse_y(int32_t) { ext3::unsupported(ext3::Id::amcaf); }
-// limit smouse (I)
-void amcaf_limit_smouse_0() { ext3::unsupported(ext3::Id::amcaf); }
-// limit smouse (I0,0t0,0)
-void amcaf_limit_smouse_4(int32_t, int32_t, int32_t, int32_t) { ext3::unsupported(ext3::Id::amcaf); }
-// smouse speed (I0)
-void amcaf_smouse_speed(int32_t) { ext3::unsupported(ext3::Id::amcaf); }
 // io error (0)
 int32_t amcaf_io_error() { ext3::unsupported(ext3::Id::amcaf); }
 // io error$ (20)

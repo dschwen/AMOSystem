@@ -1,0 +1,8 @@
+pj 0 1 0 0 0 0 0
+pj 1 0 0 0 0 0 0
+pos 100 50
+speed2 100 50
+pos2 30 7
+speed1 30 7
+limit 30 7
+neg-5-3

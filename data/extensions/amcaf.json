@@ -1333,8 +1333,8 @@
    "routine": 11,
    "terminator": 255,
    "symbol": "amcaf_pjoy",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_joy.cpp"
   },
   {
    "offset": 2284,
@@ -1343,8 +1343,8 @@
    "routine": 12,
    "terminator": 255,
    "symbol": "amcaf_pjleft",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_joy.cpp"
   },
   {
    "offset": 2298,
@@ -1353,8 +1353,8 @@
    "routine": 13,
    "terminator": 255,
    "symbol": "amcaf_pjright",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_joy.cpp"
   },
   {
    "offset": 2312,
@@ -1363,8 +1363,8 @@
    "routine": 14,
    "terminator": 255,
    "symbol": "amcaf_pjup",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_joy.cpp"
   },
   {
    "offset": 2324,
@@ -1373,8 +1373,8 @@
    "routine": 15,
    "terminator": 255,
    "symbol": "amcaf_pjdown",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_joy.cpp"
   },
   {
    "offset": 2338,
@@ -1383,8 +1383,8 @@
    "routine": 16,
    "terminator": 255,
    "symbol": "amcaf_pfire",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_joy.cpp"
   },
   {
    "offset": 2350,
@@ -2973,8 +2973,8 @@
    "routine": 164,
    "terminator": 255,
    "symbol": "amcaf_x_smouse",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_joy.cpp"
   },
   {
    "offset": 5450,
@@ -2983,8 +2983,8 @@
    "routine": 165,
    "terminator": 255,
    "symbol": "amcaf_y_smouse",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_joy.cpp"
   },
   {
    "offset": 5464,
@@ -2993,8 +2993,8 @@
    "routine": 166,
    "terminator": 255,
    "symbol": "amcaf_smouse_x",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_joy.cpp"
   },
   {
    "offset": 5480,
@@ -3003,8 +3003,8 @@
    "routine": 167,
    "terminator": 255,
    "symbol": "amcaf_smouse_y",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_joy.cpp"
   },
   {
    "offset": 5496,
@@ -3013,8 +3013,8 @@
    "routine": 170,
    "terminator": 255,
    "symbol": "amcaf_smouse_speed",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_joy.cpp"
   },
   {
    "offset": 5516,
@@ -3033,8 +3033,8 @@
    "routine": 168,
    "terminator": 254,
    "symbol": "amcaf_limit_smouse_0",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_joy.cpp"
   },
   {
    "offset": 5552,
@@ -3043,8 +3043,8 @@
    "routine": 169,
    "terminator": 255,
    "symbol": "amcaf_limit_smouse_4",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_joy.cpp"
   },
   {
    "offset": 5566,

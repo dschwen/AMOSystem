@@ -291,5 +291,8 @@ volatile struct Custom &custom()
     return registers;
 }
 volatile uint8_t &cia_a_pra() { return cia_a; }
+// nothing on the parallel port: the lines are pulled up
+volatile uint8_t &parallel_data() { static volatile uint8_t v = 0xFF; return v; }
+volatile uint8_t &parallel_control() { static volatile uint8_t v = 0xFF; return v; }
 
 } // namespace amos::hal
