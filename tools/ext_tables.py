@@ -12,6 +12,8 @@ import sys
 ROOT = Path(__file__).resolve().parents[1]
 LIB = ROOT / 'AMOS/APSystem/AMOSPro_AMCAF.Lib'
 SHA = '9894a7e216ff501244bbcdc47d3830abdbcf4382d4f4a6daa43551faa87917e4'
+TURBO = ROOT / 'AMOS/APSystem/AMOSPro_TURBO_Plus.Lib'
+TURBO_SHA = 'ddc8abb16f35cd2fb4230e2c70dc85e6bcbbfe5f73ebcc6712135471faaafb07'
 OUT = ROOT / 'src/ext/amcaf_pt_tables.h'
 
 
@@ -33,8 +35,14 @@ def generate():
     funk = list(b[0x971C:0x972C])
     quarter = [word(0xABA2 + 2 * i) for i in range(256)]
     arc = list(b[0xADA2:0xADA2 + 513])
+    scan = list(b[0x6418:0x65D6])
+    errors = list(b[0xAFB4:0xB1A6])
+    t = TURBO.read_bytes()
+    if hashlib.sha256(t).hexdigest() != TURBO_SHA:
+        sys.exit(f'{TURBO}: not Turbo Plus V2.15')
+    turbo_errors = list(t[0x6E64:0x7242])
     return ('// The constant tables of AMCAF\'s Protracker player: written by tools/ext_tables.py from the library\n'
-            '// (file offsets $972c, $971c, $974c, $aba2 and $ada2). Do not edit.\n#pragma once\n\n#include <stdint.h>\n\n'
+            '// (file offsets $972c, $971c, $974c, $aba2, $ada2, $6418 and the error texts of both). Do not edit.\n#pragma once\n\n#include <stdint.h>\n\n'
             'namespace amos::amcaf::pt {\n\n'
             '// The vibrato and tremolo waveform (one period, 32 values)\n' + array('SineTable', 'uint8_t', sine, 16) + '\n\n'
             '// The funk repeat\'s speeds (EFx)\n' + array('FunkTable', 'uint8_t', funk, 16) + '\n\n'
@@ -44,7 +52,14 @@ def generate():
             'namespace amos::amcaf::math {\n\n'
             '// A quarter of the sine, 256 words 0 to 255 (the library builds its 1024 words from it)\n' + array('SineQuarter', 'uint16_t', quarter, 12) + '\n\n'
             '// The arctangent of ratios of 512ths: 513 bytes (Qarc)\n' + array('ArcRatio', 'uint8_t', arc, 16) + '\n\n'
-            '} // namespace amos::amcaf::math\n')
+            '} // namespace amos::amcaf::math\n\n'
+            'namespace amos::amcaf::keys {\n\n'
+            '// The names of the keys (Scanstr$): from the scancode 1 on, each ended by a 0, a name empty for a key with none\n' + array('Names', 'uint8_t', scan, 20) + '\n\n'
+            '} // namespace amos::amcaf::keys\n\n'
+            'namespace amos::ext3::messages {\n\n'
+            '// The extensions\' error messages, each ended by a 0 (AMCAF\'s start with an empty one: its numbers count from 1)\n'
+            + array('Amcaf', 'uint8_t', errors, 20) + '\n\n' + array('Turbo', 'uint8_t', turbo_errors, 20) + '\n\n'
+            '} // namespace amos::ext3::messages\n')
 
 
 if __name__ == '__main__':

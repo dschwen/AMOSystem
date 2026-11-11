@@ -1,6 +1,7 @@
 // What Turbo Plus and AMCAF share (third_party.h)
 
 #include "ext/third_party.h"
+#include "ext/amcaf_pt_tables.h"
 #include "core/guest_scratch.h"
 
 using namespace amos;
@@ -28,6 +29,13 @@ uint32_t cold_start(RegFrame &r, Id id, uint16_t version)
     numbers[uint32_t(id)] = r.d[0] & 0xFF;
     r.d[1] = (r.d[1] & 0xFFFF0000) | version;
     return r.d[0] & 0xFF;
+}
+
+[[noreturn]] void error(Id id, uint32_t n)
+{
+    const uint8_t *table = id == Id::amcaf ? messages::Amcaf : messages::Turbo;
+    size_t size = id == Id::amcaf ? sizeof messages::Amcaf : sizeof messages::Turbo;
+    interp_error(n, 0, number(id), guest_constant(table, size));
 }
 
 [[noreturn]] void unsupported(Id id)

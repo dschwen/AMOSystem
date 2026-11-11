@@ -83,8 +83,8 @@
    "routine": 27,
    "terminator": 255,
    "symbol": "amcaf_bank_to_chip",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_banks.cpp"
   },
   {
    "offset": 180,
@@ -93,8 +93,8 @@
    "routine": 28,
    "terminator": 255,
    "symbol": "amcaf_bank_to_fast",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_banks.cpp"
   },
   {
    "offset": 200,
@@ -103,8 +103,8 @@
    "routine": 34,
    "terminator": 254,
    "symbol": "amcaf_bank_code_xor_b_2",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_banks.cpp"
   },
   {
    "offset": 226,
@@ -113,8 +113,8 @@
    "routine": 33,
    "terminator": 255,
    "symbol": "amcaf_bank_code_xor_b_3",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_banks.cpp"
   },
   {
    "offset": 238,
@@ -123,8 +123,8 @@
    "routine": 36,
    "terminator": 254,
    "symbol": "amcaf_bank_code_add_b_2",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_banks.cpp"
   },
   {
    "offset": 264,
@@ -133,8 +133,8 @@
    "routine": 35,
    "terminator": 255,
    "symbol": "amcaf_bank_code_add_b_3",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_banks.cpp"
   },
   {
    "offset": 276,
@@ -143,8 +143,8 @@
    "routine": 38,
    "terminator": 254,
    "symbol": "amcaf_bank_code_mix_b_2",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_banks.cpp"
   },
   {
    "offset": 302,
@@ -153,8 +153,8 @@
    "routine": 37,
    "terminator": 255,
    "symbol": "amcaf_bank_code_mix_b_3",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_banks.cpp"
   },
   {
    "offset": 314,
@@ -163,8 +163,8 @@
    "routine": 40,
    "terminator": 254,
    "symbol": "amcaf_bank_code_rol_b_2",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_banks.cpp"
   },
   {
    "offset": 340,
@@ -173,8 +173,8 @@
    "routine": 39,
    "terminator": 255,
    "symbol": "amcaf_bank_code_rol_b_3",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_banks.cpp"
   },
   {
    "offset": 352,
@@ -183,8 +183,8 @@
    "routine": 42,
    "terminator": 254,
    "symbol": "amcaf_bank_code_ror_b_2",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_banks.cpp"
   },
   {
    "offset": 378,
@@ -193,8 +193,8 @@
    "routine": 41,
    "terminator": 255,
    "symbol": "amcaf_bank_code_ror_b_3",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_banks.cpp"
   },
   {
    "offset": 390,
@@ -203,8 +203,8 @@
    "routine": 44,
    "terminator": 254,
    "symbol": "amcaf_bank_code_xor_w_2",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_banks.cpp"
   },
   {
    "offset": 416,
@@ -213,8 +213,8 @@
    "routine": 43,
    "terminator": 255,
    "symbol": "amcaf_bank_code_xor_w_3",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_banks.cpp"
   },
   {
    "offset": 428,
@@ -223,8 +223,8 @@
    "routine": 46,
    "terminator": 254,
    "symbol": "amcaf_bank_code_add_w_2",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_banks.cpp"
   },
   {
    "offset": 454,
@@ -233,8 +233,8 @@
    "routine": 45,
    "terminator": 255,
    "symbol": "amcaf_bank_code_add_w_3",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_banks.cpp"
   },
   {
    "offset": 466,
@@ -243,8 +243,8 @@
    "routine": 48,
    "terminator": 254,
    "symbol": "amcaf_bank_code_mix_w_2",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_banks.cpp"
   },
   {
    "offset": 492,
@@ -253,8 +253,8 @@
    "routine": 47,
    "terminator": 255,
    "symbol": "amcaf_bank_code_mix_w_3",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_banks.cpp"
   },
   {
    "offset": 504,
@@ -263,8 +263,8 @@
    "routine": 50,
    "terminator": 254,
    "symbol": "amcaf_bank_code_rol_w_2",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_banks.cpp"
   },
   {
    "offset": 530,
@@ -273,8 +273,8 @@
    "routine": 49,
    "terminator": 255,
    "symbol": "amcaf_bank_code_rol_w_3",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_banks.cpp"
   },
   {
    "offset": 542,
@@ -283,8 +283,8 @@
    "routine": 52,
    "terminator": 254,
    "symbol": "amcaf_bank_code_ror_w_2",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_banks.cpp"
   },
   {
    "offset": 568,
@@ -293,8 +293,8 @@
    "routine": 51,
    "terminator": 255,
    "symbol": "amcaf_bank_code_ror_w_3",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_banks.cpp"
   },
   {
    "offset": 580,
@@ -303,8 +303,8 @@
    "routine": 53,
    "terminator": 255,
    "symbol": "amcaf_bank_stretch",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_banks.cpp"
   },
   {
    "offset": 602,
@@ -313,8 +313,8 @@
    "routine": 57,
    "terminator": 254,
    "symbol": "amcaf_bank_copy_2",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_banks.cpp"
   },
   {
    "offset": 622,
@@ -323,8 +323,8 @@
    "routine": 56,
    "terminator": 255,
    "symbol": "amcaf_bank_copy_3",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_banks.cpp"
   },
   {
    "offset": 634,
@@ -333,8 +333,8 @@
    "routine": 59,
    "terminator": 255,
    "symbol": "amcaf_bank_name_s",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_banks.cpp"
   },
   {
    "offset": 652,
@@ -343,8 +343,8 @@
    "routine": 58,
    "terminator": 255,
    "symbol": "amcaf_bank_name",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_banks.cpp"
   },
   {
    "offset": 670,
@@ -353,8 +353,8 @@
    "routine": 55,
    "terminator": 254,
    "symbol": "amcaf_bank_checksum_1",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_banks.cpp"
   },
   {
    "offset": 692,
@@ -363,8 +363,8 @@
    "routine": 54,
    "terminator": 255,
    "symbol": "amcaf_bank_checksum_2",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_banks.cpp"
   },
   {
    "offset": 702,
@@ -1303,8 +1303,8 @@
    "routine": 278,
    "terminator": 255,
    "symbol": "amcaf_scanstr_s",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_strings.cpp"
   },
   {
    "offset": 2244,
@@ -2063,8 +2063,8 @@
    "routine": 177,
    "terminator": 255,
    "symbol": "amcaf_lzstr_s",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_strings.cpp"
   },
   {
    "offset": 3784,
@@ -2073,8 +2073,8 @@
    "routine": 178,
    "terminator": 255,
    "symbol": "amcaf_lsstr_s",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_strings.cpp"
   },
   {
    "offset": 3800,
@@ -2203,8 +2203,8 @@
    "routine": 30,
    "terminator": 254,
    "symbol": "amcaf_bank_delta_encode_1",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_banks.cpp"
   },
   {
    "offset": 4072,
@@ -2213,8 +2213,8 @@
    "routine": 29,
    "terminator": 255,
    "symbol": "amcaf_bank_delta_encode_2",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_banks.cpp"
   },
   {
    "offset": 4082,
@@ -2223,8 +2223,8 @@
    "routine": 32,
    "terminator": 254,
    "symbol": "amcaf_bank_delta_decode_1",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_banks.cpp"
   },
   {
    "offset": 4108,
@@ -2233,8 +2233,8 @@
    "routine": 31,
    "terminator": 255,
    "symbol": "amcaf_bank_delta_decode_2",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_banks.cpp"
   },
   {
    "offset": 4118,
@@ -3163,8 +3163,8 @@
    "routine": 187,
    "terminator": 255,
    "symbol": "amcaf_insstr_s",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_strings.cpp"
   },
   {
    "offset": 5756,
@@ -3173,8 +3173,8 @@
    "routine": 188,
    "terminator": 255,
    "symbol": "amcaf_cutstr_s",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_strings.cpp"
   },
   {
    "offset": 5774,
@@ -3183,8 +3183,8 @@
    "routine": 189,
    "terminator": 255,
    "symbol": "amcaf_replacestr_s",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_strings.cpp"
   },
   {
    "offset": 5796,
@@ -3193,8 +3193,8 @@
    "routine": 190,
    "terminator": 254,
    "symbol": "amcaf_itemstr_s_2",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_strings.cpp"
   },
   {
    "offset": 5814,
@@ -3203,8 +3203,8 @@
    "routine": 191,
    "terminator": 255,
    "symbol": "amcaf_itemstr_s_3",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_strings.cpp"
   },
   {
    "offset": 5826,

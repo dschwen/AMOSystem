@@ -1,0 +1,276 @@
+Bank Code xor.b 0: $DF1B7FE6  3  10  17  24  66  73  90  97  104  177  184
+Bank Code xor.b 0 range: $DF1B7FE6  3  10  17  24  66  73  90  97  104  177  184
+Bank Code xor.b 1: $F620968F  2  11  16  25  67  72  91  96  105  176  185
+Bank Code xor.b 1 range: $E11181FC  3  10  17  24  66  72  91  97  104  177  184
+Bank Code xor.b 90: $B6A50ACC  89  80  75  66  24  19  0  59  50  235  226
+Bank Code xor.b 90 range: $7B5F4272  3  10  17  24  66  19  0  97  104  177  184
+Bank Code xor.b 4660: $A0C763F2  55  62  37  44  118  125  110  85  92  133  140
+Bank Code xor.b 4660 range: $FF7B1FA6  3  10  17  24  66  125  110  97  104  177  184
+Bank Code xor.b 255: $20E48071  252  245  238  231  189  182  165  158  151  78  71
+Bank Code xor.b 255 range: $825515C8  3  10  17  24  66  182  165  97  104  177  184
+Bank Code xor.b 259: $207264BD  0  9  18  27  65  74  89  98  107  178  187
+Bank Code xor.b 259 range: $FD057588  3  10  17  24  66  74  89  97  104  177  184
+Bank Code xor.b -1: $20E48071  252  245  238  231  189  182  165  158  151  78  71
+Bank Code xor.b -1 range: $825515C8  3  10  17  24  66  182  165  97  104  177  184
+Bank Code xor.b 7: $240E58B9  4  13  22  31  69  78  93  102  111  182  191
+Bank Code xor.b 7 range: $FD057588  3  10  17  24  66  78  93  97  104  177  184
+Bank Code xor.b 13: $E22482F3  14  7  28  21  79  68  87  108  101  188  181
+Bank Code xor.b 13 range: $D10181FC  3  10  17  24  66  68  87  97  104  177  184
+Bank Code xor.b 63: $EC2640B1  60  53  46  39  125  118  101  94  87  142  135
+Bank Code xor.b 63 range: $0D551548  3  10  17  24  66  118  101  97  104  177  184
+Bank Code xor.b 64: $9C5B3F26  67  74  81  88  2  9  26  33  40  241  248
+Bank Code xor.b 64 range: $5F1B7E66  3  10  17  24  66  9  26  97  104  177  184
+Bank Code xor.b 65: $B76057CF  66  75  80  89  3  8  27  32  41  240  249
+Bank Code xor.b 65 range: $6111807C  3  10  17  24  66  8  27  97  104  177  184
+Bank Code xor.w 0: $DF1B7FE6  3  10  17  24  66  73  90  97  104  177  184
+Bank Code xor.w 0 range: $DF1B7FE6  3  10  17  24  66  73  90  97  104  177  184
+Bank Code xor.w 1: $DF207F8F  3  11  17  25  67  73  91  97  105  177  185
+Bank Code xor.w 1 range: $DF117FFC  3  10  17  24  66  73  91  97  104  177  184
+Bank Code xor.w 90: $DCA57CCC  3  80  17  66  24  73  0  97  50  177  226
+Bank Code xor.w 90 range: $DF5F7E72  3  10  17  24  66  73  0  97  104  177  184
+Bank Code xor.w 4660: $FEC75DF2  17  62  3  44  118  91  110  115  92  163  140
+Bank Code xor.w 4660 range: $0B7B43A6  3  10  17  24  66  91  110  97  104  177  184
+Bank Code xor.w 255: $D3E67F71  3  245  17  231  189  73  165  97  151  177  71
+Bank Code xor.w 255 range: $DC557FC8  3  10  17  24  66  73  165  97  104  177  184
+Bank Code xor.w 259: $F67296BD  2  9  16  27  65  72  89  96  107  176  187
+Bank Code xor.w 259 range: $E1058188  3  10  17  24  66  72  89  97  104  177  184
+Bank Code xor.w -1: $20E48071  252  245  238  231  189  182  165  158  151  78  71
+Bank Code xor.w -1 range: $825515C8  3  10  17  24  66  182  165  97  104  177  184
+Bank Code xor.w 7: $DF0E7FB9  3  13  17  31  69  73  93  97  111  177  191
+Bank Code xor.w 7 range: $DF057F88  3  10  17  24  66  73  93  97  104  177  184
+Bank Code xor.w 13: $DF247FF3  3  7  17  21  79  73  87  97  101  177  181
+Bank Code xor.w 13 range: $DF017FFC  3  10  17  24  66  73  87  97  104  177  184
+Bank Code xor.w 63: $DF267FB1  3  53  17  39  125  73  101  97  87  177  135
+Bank Code xor.w 63 range: $DF557F48  3  10  17  24  66  73  101  97  104  177  184
+Bank Code xor.w 64: $DC5B7F26  3  74  17  88  2  73  26  97  40  177  248
+Bank Code xor.w 64 range: $DF1B7E66  3  10  17  24  66  73  26  97  104  177  184
+Bank Code xor.w 65: $DC607CCF  3  75  17  89  3  73  27  97  41  177  249
+Bank Code xor.w 65 range: $DF117E7C  3  10  17  24  66  73  27  97  104  177  184
+Bank Code add.b 0: $DF1B7FE6  3  10  17  24  66  73  90  97  104  177  184
+Bank Code add.b 0 range: $DF1B7FE6  3  10  17  24  66  73  90  97  104  177  184
+Bank Code add.b 1: $C420648F  4  11  18  25  67  74  91  98  105  178  185
+Bank Code add.b 1 range: $D51175FC  3  10  17  24  66  74  91  97  104  177  184
+Bank Code add.b 90: $0B6FAA3C  93  100  107  114  156  163  180  187  194  11  18
+Bank Code add.b 90 range: $5094F362  3  10  17  24  66  163  180  97  104  177  184
+Bank Code add.b 4660: $C12460F2  55  62  69  76  118  125  142  149  156  229  236
+Bank Code add.b 4660 range: $D71377FE  3  10  17  24  66  125  142  97  104  177  184
+Bank Code add.b 255: $F67296C1  2  9  16  23  65  72  89  96  103  176  183
+Bank Code add.b 255 range: $E10581D0  3  10  17  24  66  72  89  97  104  177  184
+Bank Code add.b 259: $8BEE2ABD  6  13  20  27  69  76  93  100  107  180  187
+Bank Code add.b 259 range: $B93D5988  3  10  17  24  66  76  93  97  104  177  184
+Bank Code add.b -1: $F67296C1  2  9  16  23  65  72  89  96  103  176  183
+Bank Code add.b -1 range: $E10581D0  3  10  17  24  66  72  89  97  104  177  184
+Bank Code add.b 7: $2F4BCE19  10  17  24  31  73  80  97  104  111  184  191
+Bank Code add.b 7 range: $96D531A0  3  10  17  24  66  80  97  97  104  177  184
+Bank Code add.b 13: $96D533A3  16  23  30  37  79  86  103  110  117  190  197
+Bank Code add.b 13 range: $5296FC64  3  10  17  24  66  86  103  97  104  177  184
+Bank Code add.b 63: $B4305481  66  73  80  87  129  136  153  160  167  240  247
+Bank Code add.b 63 range: $66850150  3  10  17  24  66  136  153  97  104  177  184
+Bank Code add.b 64: $92D93CA6  67  74  81  88  130  137  154  161  168  241  248
+Bank Code add.b 64 range: $5C98FE66  3  10  17  24  66  137  154  97  104  177  184
+Bank Code add.b 65: $7BFE254F  68  75  82  89  131  138  155  162  169  242  249
+Bank Code add.b 65 range: $4AAEF47C  3  10  17  24  66  138  155  97  104  177  184
+Bank Code add.w 0: $DF1B7FE6  3  10  17  24  66  73  90  97  104  177  184
+Bank Code add.w 0 range: $DF1B7FE6  3  10  17  24  66  73  90  97  104  177  184
+Bank Code add.w 1: $DF207F8F  3  11  17  25  67  73  91  97  105  177  185
+Bank Code add.w 1 range: $DF117FFC  3  10  17  24  66  73  91  97  104  177  184
+Bank Code add.w 90: $D451773C  3  100  17  114  156  73  180  97  194  178  18
+Bank Code add.w 90 range: $D3977262  3  10  17  24  66  73  180  97  104  177  184
+Bank Code add.w 4660: $1627B6F2  21  62  35  76  118  91  142  115  156  195  236
+Bank Code add.w 4660 range: $2113C1FE  3  10  17  24  66  91  142  97  104  177  184
+Bank Code add.w 255: $C47264C1  4  9  18  23  65  74  89  98  103  178  183
+Bank Code add.w 255 range: $D50575D0  3  10  17  24  66  74  89  97  104  177  184
+Bank Code add.w 259: $C5EE64BD  4  13  18  27  69  74  93  98  107  178  187
+Bank Code add.w 259 range: $D53D7588  3  10  17  24  66  74  93  97  104  177  184
+Bank Code add.w -1: $DF727FC1  3  9  17  23  65  73  89  97  103  177  183
+Bank Code add.w -1 range: $DF057FD0  3  10  17  24  66  73  89  97  104  177  184
+Bank Code add.w 7: $DC4A7F19  3  17  17  31  73  73  97  97  111  177  191
+Bank Code add.w 7 range: $DCD57FA0  3  10  17  24  66  73  97  97  104  177  184
+Bank Code add.w 13: $DDD47CA3  3  23  17  37  79  73  103  97  117  177  197
+Bank Code add.w 13 range: $DC997F64  3  10  17  24  66  73  103  97  104  177  184
+Bank Code add.w 63: $D1327181  3  73  17  87  129  73  153  97  167  177  247
+Bank Code add.w 63 range: $D2857D50  3  10  17  24  66  73  153  97  104  177  184
+Bank Code add.w 64: $D6DB71A6  3  74  17  88  130  73  154  97  168  177  248
+Bank Code add.w 64 range: $D29B7D66  3  10  17  24  66  73  154  97  104  177  184
+Bank Code add.w 65: $D6E0714F  3  75  17  89  131  73  155  97  169  177  249
+Bank Code add.w 65 range: $D2917D7C  3  10  17  24  66  73  155  97  104  177  184
+Bank Code mix.b 0: $67A569CE  169  94  239  176  230  7  110  191  224  15  208
+Bank Code mix.b 0 range: $30D0FBCE  3  10  17  24  66  227  202  97  104  177  184
+Bank Code mix.b 1: $78CE9183  175  93  19  181  237  19  61  115  213  147  117
+Bank Code mix.b 1 range: $F4A2D2A4  3  10  17  24  66  229  227  97  104  177  184
+Bank Code mix.b 90: $C483250C  73  48  59  2  248  227  96  75  114  155  162
+Bank Code mix.b 90 range: $9B1E2272  3  10  17  24  66  3  128  97  104  177  184
+Bank Code mix.b 4660: $3C88B9CA  209  122  31  180  34  183  74  207  36  255  84
+Bank Code mix.b 4660 range: $60020BDE  3  10  17  24  66  155  190  97  104  177  184
+Bank Code mix.b 255: $F7D6257D  87  163  239  75  19  239  195  143  43  111  139
+Bank Code mix.b 255 range: $7CC16B00  3  10  17  24  66  29  29  97  104  177  184
+Bank Code mix.b 259: $599C1F69  175  95  239  191  223  15  95  207  63  239  191
+Bank Code mix.b 259 range: $4F003A90  3  10  17  24  66  229  49  97  104  177  184
+Bank Code mix.b -1: $F7D6257D  87  163  239  75  19  239  195  143  43  111  139
+Bank Code mix.b -1 range: $7CC16B00  3  10  17  24  66  29  29  97  104  177  184
+Bank Code mix.b 7: $90906B85  183  107  31  163  139  63  139  31  67  95  35
+Bank Code mix.b 7 range: $BC518A20  3  10  17  24  66  253  85  97  104  177  184
+Bank Code mix.b 13: $F73A9C87  183  81  19  177  209  115  241  51  145  19  241
+Bank Code mix.b 13 range: $65850294  3  10  17  24  66  253  127  97  104  177  184
+Bank Code mix.b 63: $76961EBD  215  99  239  139  83  239  3  143  235  111  203
+Bank Code mix.b 63 range: $7DC16B80  3  10  17  24  66  157  221  97  104  177  184
+Bank Code mix.b 64: $E5656E0E  41  30  239  240  38  7  174  191  160  15  16
+Bank Code mix.b 64 range: $31D1F84E  3  10  17  24  66  99  138  97  104  177  184
+Bank Code mix.b 65: $F98E92C3  47  29  19  245  45  19  125  115  149  147  181
+Bank Code mix.b 65 range: $F5A2D324  3  10  17  24  66  101  163  97  104  177  184
+Bank Code mix.w 0: $D7DEDC8A  249  196  228  132  68  169  68  25  132  77  132
+Bank Code mix.w 0 range: $7F1F655E  3  10  17  24  66  179  66  97  104  177  184
+Bank Code mix.w 1: $D200D2B9  249  218  228  135  78  169  98  24  111  77  215
+Bank Code mix.w 1 range: $7C2B6568  3  10  17  24  66  179  119  97  104  177  184
+Bank Code mix.w 90: $3DF1DCD4  249  228  228  154  124  150  148  18  10  64  250
+Bank Code mix.w 90 range: $5417703A  3  10  17  24  66  179  176  97  104  177  184
+Bank Code mix.w 4660: $A55E3A5E  248  36  245  48  84  193  196  218  240  34  176
+Bank Code mix.w 4660 range: $69849DD6  3  10  17  24  66  178  230  97  104  177  184
+Bank Code mix.w 255: $42132247  248  58  228  121  182  151  146  8  145  111  41
+Bank Code mix.w 255 range: $355B581C  3  10  17  24  66  178  137  97  104  177  184
+Bank Code mix.w 259: $58B1611B  255  218  233  133  70  174  82  242  189  158  181
+Bank Code mix.w 259 range: $84431CD4  3  10  17  24  66  181  93  97  104  177  184
+Bank Code mix.w -1: $2C102D47  6  58  27  121  182  86  146  231  145  178  41
+Bank Code mix.w -1 range: $ED5B2E1C  3  10  17  24  66  76  137  97  104  177  184
+Bank Code mix.w 7: $F4B0E0FF  249  218  228  129  182  169  242  25  25  74  241
+Bank Code mix.w 7 range: $853B668C  3  10  17  24  66  179  225  97  104  177  184
+Bank Code mix.w 13: $4740DF35  249  218  228  139  158  169  66  22  179  75  155
+Bank Code mix.w 13 range: $78E363F0  3  10  17  24  66  179  19  97  104  177  184
+Bank Code mix.w 63: $73103E07  248  58  231  57  182  168  146  29  209  178  233
+Bank Code mix.w 63 range: $81DB5E9C  3  10  17  24  66  178  73  97  104  177  184
+Bank Code mix.w 64: $40C1BE4A  249  196  228  68  68  150  68  19  196  94  68
+Bank Code mix.w 64 range: $509F7BDE  3  10  17  24  66  179  2  97  104  177  184
+Bank Code mix.w 65: $4903DD79  249  218  228  71  78  150  98  19  175  65  151
+Bank Code mix.w 65 range: $51AB7BE8  3  10  17  24  66  179  55  97  104  177  184
+Bank Code rol.b 0: $DF1B7FE6  3  10  17  24  66  73  90  97  104  177  184
+Bank Code rol.b 0 range: $DF1B7FE6  3  10  17  24  66  73  90  97  104  177  184
+Bank Code rol.b 1: $B764F293  6  20  34  48  132  146  180  194  208  99  113
+Bank Code rol.b 1 range: $87BFAAF7  3  10  17  24  66  146  180  97  104  177  184
+Bank Code rol.b 90: $669DEB0B  12  40  68  96  9  37  105  133  161  198  226
+Bank Code rol.b 90 range: $D6671F92  3  10  17  24  66  37  105  97  104  177  184
+Bank Code rol.b 4660: $8B85BDF7  48  160  17  129  36  148  165  22  134  27  139
+Bank Code rol.b 4660 range: $BFCF9CE7  3  10  17  24  66  148  165  97  104  177  184
+Bank Code rol.b 255: $7CB9CCDA  129  5  136  12  33  164  45  176  52  216  92
+Bank Code rol.b 255 range: $8F42E06C  3  10  17  24  66  164  45  97  104  177  184
+Bank Code rol.b 259: $C268D958  24  80  136  192  18  74  210  11  67  141  197
+Bank Code rol.b 259 range: $70D2EA6E  3  10  17  24  66  74  210  97  104  177  184
+Bank Code rol.b -1: $7CB9CCDA  129  5  136  12  33  164  45  176  52  216  92
+Bank Code rol.b -1 range: $8F42E06C  3  10  17  24  66  164  45  97  104  177  184
+Bank Code rol.b 7: $7CB9CCDA  129  5  136  12  33  164  45  176  52  216  92
+Bank Code rol.b 7 range: $8F42E06C  3  10  17  24  66  164  45  97  104  177  184
+Bank Code rol.b 13: $1B5977B1  96  65  34  3  72  41  75  44  13  54  23
+Bank Code rol.b 13 range: $4205E8F5  3  10  17  24  66  41  75  97  104  177  184
+Bank Code rol.b 63: $7CB9CCDA  129  5  136  12  33  164  45  176  52  216  92
+Bank Code rol.b 63 range: $8F42E06C  3  10  17  24  66  164  45  97  104  177  184
+Bank Code rol.b 64: $DF1B7FE6  3  10  17  24  66  73  90  97  104  177  184
+Bank Code rol.b 64 range: $DF1B7FE6  3  10  17  24  66  73  90  97  104  177  184
+Bank Code rol.b 65: $B764F293  6  20  34  48  132  146  180  194  208  99  113
+Bank Code rol.b 65 range: $87BFAAF7  3  10  17  24  66  146  180  97  104  177  184
+Bank Code rol.w 0: $DF1B7FE6  3  10  17  24  66  73  90  97  104  177  184
+Bank Code rol.w 0 range: $DF1B7FE6  3  10  17  24  66  73  90  97  104  177  184
+Bank Code rol.w 1: $B162F095  6  20  34  48  132  146  180  194  208  99  113
+Bank Code rol.w 1 range: $86BCAAF7  3  10  17  24  66  146  180  97  104  177  184
+Bank Code rol.w 90: $A25834C7  40  12  96  68  237  65  77  161  133  226  198
+Bank Code rol.w 90 range: $BE5F078A  3  10  17  24  66  65  77  97  104  177  184
+Bank Code rol.w 4660: $A791A9E3  48  160  17  129  35  149  165  22  134  27  139
+Bank Code rol.w 4660 range: $C3C391EA  3  10  17  24  66  149  165  97  104  177  184
+Bank Code rol.w 255: $E824385A  1  133  8  140  161  36  173  48  180  88  220
+Bank Code rol.w 255 range: $8049E56C  3  10  17  24  66  36  173  97  104  177  184
+Bank Code rol.w 259: $D47ED35E  24  80  136  192  17  74  210  11  67  141  197
+Bank Code rol.w 259 range: $7EECE850  3  10  17  24  66  74  210  97  104  177  184
+Bank Code rol.w -1: $E824385A  1  133  8  140  161  36  173  48  180  88  220
+Bank Code rol.w -1 range: $8049E56C  3  10  17  24  66  36  173  97  104  177  184
+Bank Code rol.w 7: $11DD637E  133  1  140  8  29  168  41  180  48  220  88
+Bank Code rol.w 7 range: $E72AB8B4  3  10  17  24  66  168  41  97  104  177  184
+Bank Code rol.w 13: $3E7A8A51  64  97  2  35  104  9  107  12  45  22  55
+Bank Code rol.w 13 range: $80C729B5  3  10  17  24  66  9  107  97  104  177  184
+Bank Code rol.w 63: $E824385A  1  133  8  140  161  36  173  48  180  88  220
+Bank Code rol.w 63 range: $8049E56C  3  10  17  24  66  36  173  97  104  177  184
+Bank Code rol.w 64: $DF1B7FE6  3  10  17  24  66  73  90  97  104  177  184
+Bank Code rol.w 64 range: $DF1B7FE6  3  10  17  24  66  73  90  97  104  177  184
+Bank Code rol.w 65: $B162F095  6  20  34  48  132  146  180  194  208  99  113
+Bank Code rol.w 65 range: $86BCAAF7  3  10  17  24  66  146  180  97  104  177  184
+Bank Code ror.b 0: $DF1B7FE6  3  10  17  24  66  73  90  97  104  177  184
+Bank Code ror.b 0 range: $DF1B7FE6  3  10  17  24  66  73  90  97  104  177  184
+Bank Code ror.b 1: $7CB9CCDA  129  5  136  12  33  164  45  176  52  216  92
+Bank Code ror.b 1 range: $8F42E06C  3  10  17  24  66  164  45  97  104  177  184
+Bank Code ror.b 90: $39E1E1C4  192  130  68  6  144  82  150  88  26  108  46
+Bank Code ror.b 90 range: $58939091  3  10  17  24  66  82  150  97  104  177  184
+Bank Code ror.b 4660: $8B85BDF7  48  160  17  129  36  148  165  22  134  27  139
+Bank Code ror.b 4660 range: $BFCF9CE7  3  10  17  24  66  148  165  97  104  177  184
+Bank Code ror.b 255: $B764F293  6  20  34  48  132  146  180  194  208  99  113
+Bank Code ror.b 255 range: $87BFAAF7  3  10  17  24  66  146  180  97  104  177  184
+Bank Code ror.b 259: $1B5977B1  96  65  34  3  72  41  75  44  13  54  23
+Bank Code ror.b 259 range: $4205E8F5  3  10  17  24  66  41  75  97  104  177  184
+Bank Code ror.b -1: $B764F293  6  20  34  48  132  146  180  194  208  99  113
+Bank Code ror.b -1 range: $87BFAAF7  3  10  17  24  66  146  180  97  104  177  184
+Bank Code ror.b 7: $B764F293  6  20  34  48  132  146  180  194  208  99  113
+Bank Code ror.b 7 range: $87BFAAF7  3  10  17  24  66  146  180  97  104  177  184
+Bank Code ror.b 13: $C268D958  24  80  136  192  18  74  210  11  67  141  197
+Bank Code ror.b 13 range: $70D2EA6E  3  10  17  24  66  74  210  97  104  177  184
+Bank Code ror.b 63: $B764F293  6  20  34  48  132  146  180  194  208  99  113
+Bank Code ror.b 63 range: $87BFAAF7  3  10  17  24  66  146  180  97  104  177  184
+Bank Code ror.b 64: $DF1B7FE6  3  10  17  24  66  73  90  97  104  177  184
+Bank Code ror.b 64 range: $DF1B7FE6  3  10  17  24  66  73  90  97  104  177  184
+Bank Code ror.b 65: $7CB9CCDA  129  5  136  12  33  164  45  176  52  216  92
+Bank Code ror.b 65 range: $8F42E06C  3  10  17  24  66  164  45  97  104  177  184
+Bank Code ror.w 0: $DF1B7FE6  3  10  17  24  66  73  90  97  104  177  184
+Bank Code ror.w 0 range: $DF1B7FE6  3  10  17  24  66  73  90  97  104  177  184
+Bank Code ror.w 1: $E824385A  1  133  8  140  161  36  173  48  180  88  220
+Bank Code ror.w 1 range: $8049E56C  3  10  17  24  66  36  173  97  104  177  184
+Bank Code ror.w 90: $8FB3B616  194  128  70  4  142  84  148  90  24  110  44
+Bank Code ror.w 90 range: $8C478485  3  10  17  24  66  84  148  97  104  177  184
+Bank Code ror.w 4660: $9894C287  160  48  129  17  180  4  53  134  22  139  27
+Bank Code ror.w 4660 range: $5E6E3C07  3  10  17  24  66  4  53  97  104  177  184
+Bank Code ror.w 255: $B162F095  6  20  34  48  132  146  180  194  208  99  113
+Bank Code ror.w 255 range: $86BCAAF7  3  10  17  24  66  146  180  97  104  177  184
+Bank Code ror.w 259: $3E7A8A51  64  97  2  35  104  9  107  12  45  22  55
+Bank Code ror.w 259 range: $80C729B5  3  10  17  24  66  9  107  97  104  177  184
+Bank Code ror.w -1: $B162F095  6  20  34  48  132  146  180  194  208  99  113
+Bank Code ror.w -1 range: $86BCAAF7  3  10  17  24  66  146  180  97  104  177  184
+Bank Code ror.w 7: $56859C31  20  6  48  34  118  160  166  208  194  113  99
+Bank Code ror.w 7 range: $F32B2163  3  10  17  24  66  160  166  97  104  177  184
+Bank Code ror.w 13: $D47ED35E  24  80  136  192  17  74  210  11  67  141  197
+Bank Code ror.w 13 range: $7EECE850  3  10  17  24  66  74  210  97  104  177  184
+Bank Code ror.w 63: $B162F095  6  20  34  48  132  146  180  194  208  99  113
+Bank Code ror.w 63 range: $86BCAAF7  3  10  17  24  66  146  180  97  104  177  184
+Bank Code ror.w 64: $DF1B7FE6  3  10  17  24  66  73  90  97  104  177  184
+Bank Code ror.w 64 range: $DF1B7FE6  3  10  17  24  66  73  90  97  104  177  184
+Bank Code ror.w 65: $E824385A  1  133  8  140  161  36  173  48  180  88  220
+Bank Code ror.w 65 range: $8049E56C  3  10  17  24  66  36  173  97  104  177  184
+Bank Code xor.w odd range 0,100: $FEC75DF2  17  62  3  44  118  91  110  115  92  163  140
+ $031B7FD4  3  10  17  24  66  73  90  97  104  177  184
+ $EB3F5E30  3  10  17  10  80  125  90  97  104  177  184
+Bank Code xor.w even range 2,12: $FB3B61D2  3  10  3  44  118  91  90  97  104  177  184
+Bank Code xor.w even range 10,12: $DF1B6DF2  3  10  17  24  66  91  90  97  104  177  184
+Bank Code xor.w even range 4,100: $0F1B4FE6  3  10  17  24  118  91  110  115  92  163  140
+Delta encode range: $EFB1B8AC  3  10  17  24  66  73  7  97  104  177  184
+Delta decode range: $D4FE43EA  3  10  17  24  66  73  188  97  104  177  184
+Checksum 0,100:$DF1B7FE6
+Checksum 0,4:$F9C4EBD6
+Checksum 10,50:$31DFAC56
+Checksum bank:$DF1B7FE6
+Checksum no bank:ERROR  36
+Bank Name: $DF1B7FE6  3  10  17  24  66  73  90  97  104  177  184
+[Hello wo] 8
+Bank Name short: $DF1B7FE6  3  10  17  24  66  73  90  97  104  177  184
+[ab      ]
+Bank Name empty: $DF1B7FE6  3  10  17  24  66  73  90  97  104  177  184
+[        ]
+Bank Name$ 9:ERROR  36
+To Chip: $DF1B7FE6  3  10  17  24  66  73  90  97  104  177  184
+flags 100
+To Chip again: $DF1B7FE6  3  10  17  24  66  73  90  97  104  177  184
+To Fast: $DF1B7FE6  3  10  17  24  66  73  90  97  104  177  184
+To Fast again: $DF1B7FE6  3  10  17  24  66  73  90  97  104  177  184
+after to fast 100$DF1B7FE6Test    
+Copy 6: $DF1B7FE6  3  10  17  24  66  73  90  97  104  177  184
+copy 100$DF1B7FE6Test    
+Copy same:ERROR  23
+ $DF1B7FE6  3  10  17  24  66  73  90  97  104  177  184
+Copy range: $DF1B7FE6  3  10  17  24  66  73  90  97  104  177  184
+copy range 50$5330AB6EWork    
+Missing bank:ERROR  36
+ $DF1B7FE6  3  10  17  24  66  73  90  97  104  177  184
+Missing to chip:ERROR  36
+ $DF1B7FE6  3  10  17  24  66  73  90  97  104  177  184

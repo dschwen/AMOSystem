@@ -17,6 +17,9 @@ uint32_t number(Id id);
 // Out: d0 the number, d1 (low word) the version; d0 = -1 and a0 = 0 for another version.
 uint32_t cold_start(RegFrame &r, Id id, uint16_t version);
 
+// An error of the extension: the message n of its list (AMCAF's start at 1; Turbo Plus's at 0)
+[[noreturn]] void error(Id id, uint32_t n);
+
 // A command that is not in this version of the port: an AMOS error of the extension
 [[noreturn]] void unsupported(Id id);
 

@@ -44,72 +44,6 @@ int32_t amcaf_pfire(int32_t) { ext3::unsupported(ext3::Id::amcaf); }
 int32_t amcaf_xfire(int32_t, int32_t) { ext3::unsupported(ext3::Id::amcaf); }
 // audio free (I)
 void amcaf_audio_free() { ext3::unsupported(ext3::Id::amcaf); }
-// bank to chip (I0)
-void amcaf_bank_to_chip(int32_t) { ext3::unsupported(ext3::Id::amcaf); }
-// bank to fast (I0)
-void amcaf_bank_to_fast(int32_t) { ext3::unsupported(ext3::Id::amcaf); }
-// bank delta encode (I0t0)
-void amcaf_bank_delta_encode_2(int32_t, int32_t) { ext3::unsupported(ext3::Id::amcaf); }
-// bank delta encode (I0)
-void amcaf_bank_delta_encode_1(int32_t) { ext3::unsupported(ext3::Id::amcaf); }
-// bank delta decode (I0t0)
-void amcaf_bank_delta_decode_2(int32_t, int32_t) { ext3::unsupported(ext3::Id::amcaf); }
-// bank delta decode (I0)
-void amcaf_bank_delta_decode_1(int32_t) { ext3::unsupported(ext3::Id::amcaf); }
-// bank code xor.b (I0,0t0)
-void amcaf_bank_code_xor_b_3(int32_t, int32_t, int32_t) { ext3::unsupported(ext3::Id::amcaf); }
-// bank code xor.b (I0,0)
-void amcaf_bank_code_xor_b_2(int32_t, int32_t) { ext3::unsupported(ext3::Id::amcaf); }
-// bank code add.b (I0,0t0)
-void amcaf_bank_code_add_b_3(int32_t, int32_t, int32_t) { ext3::unsupported(ext3::Id::amcaf); }
-// bank code add.b (I0,0)
-void amcaf_bank_code_add_b_2(int32_t, int32_t) { ext3::unsupported(ext3::Id::amcaf); }
-// bank code mix.b (I0,0t0)
-void amcaf_bank_code_mix_b_3(int32_t, int32_t, int32_t) { ext3::unsupported(ext3::Id::amcaf); }
-// bank code mix.b (I0,0)
-void amcaf_bank_code_mix_b_2(int32_t, int32_t) { ext3::unsupported(ext3::Id::amcaf); }
-// bank code rol.b (I0,0t0)
-void amcaf_bank_code_rol_b_3(int32_t, int32_t, int32_t) { ext3::unsupported(ext3::Id::amcaf); }
-// bank code rol.b (I0,0)
-void amcaf_bank_code_rol_b_2(int32_t, int32_t) { ext3::unsupported(ext3::Id::amcaf); }
-// bank code ror.b (I0,0t0)
-void amcaf_bank_code_ror_b_3(int32_t, int32_t, int32_t) { ext3::unsupported(ext3::Id::amcaf); }
-// bank code ror.b (I0,0)
-void amcaf_bank_code_ror_b_2(int32_t, int32_t) { ext3::unsupported(ext3::Id::amcaf); }
-// bank code xor.w (I0,0t0)
-void amcaf_bank_code_xor_w_3(int32_t, int32_t, int32_t) { ext3::unsupported(ext3::Id::amcaf); }
-// bank code xor.w (I0,0)
-void amcaf_bank_code_xor_w_2(int32_t, int32_t) { ext3::unsupported(ext3::Id::amcaf); }
-// bank code add.w (I0,0t0)
-void amcaf_bank_code_add_w_3(int32_t, int32_t, int32_t) { ext3::unsupported(ext3::Id::amcaf); }
-// bank code add.w (I0,0)
-void amcaf_bank_code_add_w_2(int32_t, int32_t) { ext3::unsupported(ext3::Id::amcaf); }
-// bank code mix.w (I0,0t0)
-void amcaf_bank_code_mix_w_3(int32_t, int32_t, int32_t) { ext3::unsupported(ext3::Id::amcaf); }
-// bank code mix.w (I0,0)
-void amcaf_bank_code_mix_w_2(int32_t, int32_t) { ext3::unsupported(ext3::Id::amcaf); }
-// bank code rol.w (I0,0t0)
-void amcaf_bank_code_rol_w_3(int32_t, int32_t, int32_t) { ext3::unsupported(ext3::Id::amcaf); }
-// bank code rol.w (I0,0)
-void amcaf_bank_code_rol_w_2(int32_t, int32_t) { ext3::unsupported(ext3::Id::amcaf); }
-// bank code ror.w (I0,0t0)
-void amcaf_bank_code_ror_w_3(int32_t, int32_t, int32_t) { ext3::unsupported(ext3::Id::amcaf); }
-// bank code ror.w (I0,0)
-void amcaf_bank_code_ror_w_2(int32_t, int32_t) { ext3::unsupported(ext3::Id::amcaf); }
-// bank stretch (I0t0)
-void amcaf_bank_stretch(int32_t, int32_t) { ext3::unsupported(ext3::Id::amcaf); }
-// bank checksum (00t0)
-int32_t amcaf_bank_checksum_2(int32_t, int32_t) { ext3::unsupported(ext3::Id::amcaf); }
-// bank checksum (00)
-int32_t amcaf_bank_checksum_1(int32_t) { ext3::unsupported(ext3::Id::amcaf); }
-// bank copy (I0,0t0)
-void amcaf_bank_copy_3(int32_t, int32_t, int32_t) { ext3::unsupported(ext3::Id::amcaf); }
-// bank copy (I0t0)
-void amcaf_bank_copy_2(int32_t, int32_t) { ext3::unsupported(ext3::Id::amcaf); }
-// bank name (I0,2)
-void amcaf_bank_name(int32_t, GuestString) { ext3::unsupported(ext3::Id::amcaf); }
-// bank name$ (20)
-uint32_t amcaf_bank_name_s(int32_t) { ext3::unsupported(ext3::Id::amcaf); }
 // blitter copy limit (I0)
 void amcaf_blitter_copy_limit_1(int32_t) { ext3::unsupported(ext3::Id::amcaf); }
 // blitter copy limit (I0,0t0,0)
@@ -328,20 +262,6 @@ void amcaf_mask_copy_3(int32_t, int32_t, int32_t) { ext3::unsupported(ext3::Id::
 void amcaf_mask_copy_9(int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t) { ext3::unsupported(ext3::Id::amcaf); }
 // mask copy (I0,0,0,0,0t0,0,0,0,0)
 void amcaf_mask_copy_10(int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t) { ext3::unsupported(ext3::Id::amcaf); }
-// lzstr$ (20,0)
-uint32_t amcaf_lzstr_s(int32_t, int32_t) { ext3::unsupported(ext3::Id::amcaf); }
-// lsstr$ (20,0)
-uint32_t amcaf_lsstr_s(int32_t, int32_t) { ext3::unsupported(ext3::Id::amcaf); }
-// insstr$ (22,2,0)
-uint32_t amcaf_insstr_s(GuestString, GuestString, int32_t) { ext3::unsupported(ext3::Id::amcaf); }
-// cutstr$ (22,0t0)
-uint32_t amcaf_cutstr_s(GuestString, int32_t, int32_t) { ext3::unsupported(ext3::Id::amcaf); }
-// replacestr$ (22,2t2)
-uint32_t amcaf_replacestr_s(GuestString, GuestString, GuestString) { ext3::unsupported(ext3::Id::amcaf); }
-// itemstr$ (22,0)
-uint32_t amcaf_itemstr_s_2(GuestString, int32_t) { ext3::unsupported(ext3::Id::amcaf); }
-// itemstr$ (22,0,2)
-uint32_t amcaf_itemstr_s_3(GuestString, int32_t, GuestString) { ext3::unsupported(ext3::Id::amcaf); }
 // set rain colour (I0,0)
 void amcaf_set_rain_colour(int32_t, int32_t) { ext3::unsupported(ext3::Id::amcaf); }
 // rain fade (I0,0)
@@ -416,8 +336,6 @@ void amcaf_ptile_bank(int32_t) { ext3::unsupported(ext3::Id::amcaf); }
 void amcaf_paste_ptile(int32_t, int32_t, int32_t) { ext3::unsupported(ext3::Id::amcaf); }
 // rnc unpack (I0t0)
 void amcaf_rnc_unpack(int32_t, int32_t) { ext3::unsupported(ext3::Id::amcaf); }
-// scanstr$ (20)
-uint32_t amcaf_scanstr_s(int32_t) { ext3::unsupported(ext3::Id::amcaf); }
 // scrn rastport (0)
 int32_t amcaf_scrn_rastport() { ext3::unsupported(ext3::Id::amcaf); }
 // scrn bitmap (0)
