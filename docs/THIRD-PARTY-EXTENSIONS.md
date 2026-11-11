@@ -215,9 +215,12 @@ part of these; the rest has to be derived from the disassembly.
 ## 9. Status
 
 Checked against the original libraries with `tests/run.py --reference` (the emulator runs them) and
-`tests/host_run.py` (the C++): `amcafpt`, `amcafraw`, `amcafmath`, `extmisc`, `turbomisc`; each
+`tests/host_run.py` (the C++): `amcafpt`, `amcafraw`, `amcafmath`, `amcafstr`, `amcafbank`,
+`amcafstretch*`, `amcafjoy`, `amcafcolour`, `extmisc`, `turbomisc`; each
 records the original's results, the C++ reproduces them. Done: the Protracker player and all of its
-commands (AMCAF `Pt ...`), the integer, bit, memory and quick-maths functions of both (see
+commands (AMCAF `Pt ...`), the integer, bit, memory, string and bank functions, the colour values and
+the parallel-port joysticks / second mouse of AMCAF, the integer, bit, memory and quick-maths
+functions of both (see
 `data/extensions/*.json`: `"status": "implemented"`). The rest still raises the extension's
 "not available" error.
 
@@ -228,6 +231,9 @@ machine, read memory by accident, or cannot be reproduced):
 - `Qarc` of a vector wider than 16 bits looks past the end of its ratio table; the C++ reads 0 there;
 - `String Hunt` with an empty string answers 0 (the original compares 65536 bytes of whatever follows);
 - `Bank End` of a bank that is not there: the error "Bank not reserved" (the original reads address -8);
+- the bank commands (`Bank Code`, `Bank Delta`, `Bank Stretch`, `Bank Copy`...) keep to the range they
+  are given: the original's `Bank Delta` of a whole bank writes 1.5 times past it, and a zero-length
+  range or an odd address (a word access) crashes it; those are an illegal function call (error 23);
 - `Pt Play` takes a bank that is flagged chip memory (the original wants its address below 2MB);
 - on the Amiga the C++ player ticks from the vertical blank, never from a CIA timer (the original
   libraries, which the Amiga uses, do use the CIA).
