@@ -25,6 +25,7 @@ enum : uint32_t {
     CiaConstant = 712,          // long: the clock the timer's period is made from (the tempo divides it)
     Player = 716,               // long: the player's block (Pt Data Base)
     SampleVolume = 720,         // word: the volume of Pt Sam Play and Pt Raw Play (64)
+    Notation = 722,             // word: Red Val and the others' colours, 4 (12 bits) or 8 (24 bits)
     AudioLocked = 1168,         // word: Audio Lock done (-1)
     Silence = 9138,             // long: four bytes of chip memory of zeros: what a sample effect ends on
 };

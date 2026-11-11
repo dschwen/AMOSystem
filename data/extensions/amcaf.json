@@ -43,8 +43,8 @@
    "routine": 80,
    "terminator": 255,
    "symbol": "amcaf_aga_notation_on",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_colour.cpp"
   },
   {
    "offset": 88,
@@ -53,8 +53,8 @@
    "routine": 81,
    "terminator": 255,
    "symbol": "amcaf_aga_notation_off",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_colour.cpp"
   },
   {
    "offset": 116,
@@ -513,8 +513,8 @@
    "routine": 87,
    "terminator": 255,
    "symbol": "amcaf_red_val",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_colour.cpp"
   },
   {
    "offset": 960,
@@ -523,8 +523,8 @@
    "routine": 88,
    "terminator": 255,
    "symbol": "amcaf_green_val",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_colour.cpp"
   },
   {
    "offset": 976,
@@ -533,8 +533,8 @@
    "routine": 89,
    "terminator": 255,
    "symbol": "amcaf_blue_val",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_colour.cpp"
   },
   {
    "offset": 992,
@@ -593,8 +593,8 @@
    "routine": 90,
    "terminator": 255,
    "symbol": "amcaf_rrggbb_to_rgb",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_colour.cpp"
   },
   {
    "offset": 1090,
@@ -603,8 +603,8 @@
    "routine": 91,
    "terminator": 255,
    "symbol": "amcaf_rgb_to_rrggbb",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_colour.cpp"
   },
   {
    "offset": 1110,
@@ -1533,8 +1533,8 @@
    "routine": 86,
    "terminator": 255,
    "symbol": "amcaf_glue_colour",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_colour.cpp"
   },
   {
    "offset": 2596,
@@ -2093,8 +2093,8 @@
    "routine": 84,
    "terminator": 254,
    "symbol": "amcaf_mix_colour_2",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_colour.cpp"
   },
   {
    "offset": 3836,
@@ -2103,8 +2103,8 @@
    "routine": 85,
    "terminator": 255,
    "symbol": "amcaf_mix_colour_4",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_colour.cpp"
   },
   {
    "offset": 3850,
@@ -2943,8 +2943,8 @@
    "routine": 82,
    "terminator": 254,
    "symbol": "amcaf_best_pen_1",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_colour.cpp"
   },
   {
    "offset": 5396,
@@ -2953,8 +2953,8 @@
    "routine": 83,
    "terminator": 255,
    "symbol": "amcaf_best_pen_3",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_colour.cpp"
   },
   {
    "offset": 5408,

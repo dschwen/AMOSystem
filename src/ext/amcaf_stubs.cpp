@@ -72,30 +72,6 @@ void amcaf_c2p_shift(int32_t, int32_t, int32_t, int32_t, int32_t) { ext3::unsupp
 void amcaf_c2p_convert(int32_t, int32_t, int32_t, int32_t, int32_t, int32_t) { ext3::unsupported(ext3::Id::amcaf); }
 // convert grey (I0t0)
 void amcaf_convert_grey(int32_t, int32_t) { ext3::unsupported(ext3::Id::amcaf); }
-// amcaf aga notation on (I)
-void amcaf_aga_notation_on() { ext3::unsupported(ext3::Id::amcaf); }
-// amcaf aga notation off (I)
-void amcaf_aga_notation_off() { ext3::unsupported(ext3::Id::amcaf); }
-// best pen (00)
-int32_t amcaf_best_pen_1(int32_t) { ext3::unsupported(ext3::Id::amcaf); }
-// best pen (00,0t0)
-int32_t amcaf_best_pen_3(int32_t, int32_t, int32_t) { ext3::unsupported(ext3::Id::amcaf); }
-// mix colour (00,0)
-int32_t amcaf_mix_colour_2(int32_t, int32_t) { ext3::unsupported(ext3::Id::amcaf); }
-// mix colour (00,0,0t0)
-int32_t amcaf_mix_colour_4(int32_t, int32_t, int32_t, int32_t) { ext3::unsupported(ext3::Id::amcaf); }
-// glue colour (00,0,0)
-int32_t amcaf_glue_colour(int32_t, int32_t, int32_t) { ext3::unsupported(ext3::Id::amcaf); }
-// red val (00)
-int32_t amcaf_red_val(int32_t) { ext3::unsupported(ext3::Id::amcaf); }
-// green val (00)
-int32_t amcaf_green_val(int32_t) { ext3::unsupported(ext3::Id::amcaf); }
-// blue val (00)
-int32_t amcaf_blue_val(int32_t) { ext3::unsupported(ext3::Id::amcaf); }
-// rrggbb to rgb (00)
-int32_t amcaf_rrggbb_to_rgb(int32_t) { ext3::unsupported(ext3::Id::amcaf); }
-// rgb to rrggbb (00)
-int32_t amcaf_rgb_to_rrggbb(int32_t) { ext3::unsupported(ext3::Id::amcaf); }
 // count pixels (00,0,0,0t0,0)
 int32_t amcaf_count_pixels(int32_t, int32_t, int32_t, int32_t, int32_t, int32_t) { ext3::unsupported(ext3::Id::amcaf); }
 // coords bank (I0)

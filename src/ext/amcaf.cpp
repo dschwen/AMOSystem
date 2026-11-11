@@ -57,6 +57,7 @@ uint32_t amcaf_cold(RegFrame &r)
         d.ExtAdr[result * 4 + 1] = address(AMOS_DATA(ext_amcaf_default_entry));
         d.ExtAdr[result * 4 + 2] = address(AMOS_DATA(ext_amcaf_end_entry));
         d.ExtAdr[result * 4 + 3] = address(AMOS_DATA(ext_amcaf_bank_check_entry));
+        poke_w(amcaf::state_at(amcaf::Notation), 4);
         amcaf_start_player();
     }
     return result;
