@@ -26,6 +26,10 @@ enum : uint32_t {
     Player = 716,               // long: the player's block (Pt Data Base)
     SampleVolume = 720,         // word: the volume of Pt Sam Play and Pt Raw Play (64)
     Notation = 722,             // word: Red Val and the others' colours, 4 (12 bits) or 8 (24 bits)
+    CopyX = 856,                // words: the limits of Blitter Copy (a word's x, y, its width in words, its height)
+    CopyY = 858,
+    CopyWords = 860,
+    CopyHeight = 862,
     AudioLocked = 1168,         // word: Audio Lock done (-1)
     Silence = 9138,             // long: four bytes of chip memory of zeros: what a sample effect ends on
 };

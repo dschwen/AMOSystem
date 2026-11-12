@@ -32,10 +32,6 @@ int32_t amcaf_vec_rot_z_0() { ext3::unsupported(ext3::Id::amcaf); }
 int32_t amcaf_xfire(int32_t, int32_t) { ext3::unsupported(ext3::Id::amcaf); }
 // audio free (I)
 void amcaf_audio_free() { ext3::unsupported(ext3::Id::amcaf); }
-// blitter copy limit (I0)
-void amcaf_blitter_copy_limit_1(int32_t) { ext3::unsupported(ext3::Id::amcaf); }
-// blitter copy limit (I0,0t0,0)
-void amcaf_blitter_copy_limit_4(int32_t, int32_t, int32_t, int32_t) { ext3::unsupported(ext3::Id::amcaf); }
 // blitter copy (I0,0t0,0)
 void amcaf_blitter_copy_4(int32_t, int32_t, int32_t, int32_t) { ext3::unsupported(ext3::Id::amcaf); }
 // blitter copy (I0,0t0,0,0)
@@ -48,22 +44,6 @@ void amcaf_blitter_copy_7(int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, 
 void amcaf_blitter_copy_8(int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t) { ext3::unsupported(ext3::Id::amcaf); }
 // blitter copy (I0,0,0,0,0,0t0,0,0)
 void amcaf_blitter_copy_9(int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t) { ext3::unsupported(ext3::Id::amcaf); }
-// blitter busy (0)
-int32_t amcaf_blitter_busy() { ext3::unsupported(ext3::Id::amcaf); }
-// blitter wait (I)
-void amcaf_blitter_wait() { ext3::unsupported(ext3::Id::amcaf); }
-// blitter clear (I0,0)
-void amcaf_blitter_clear_2(int32_t, int32_t) { ext3::unsupported(ext3::Id::amcaf); }
-// blitter clear (I0,0,0,0t0,0)
-void amcaf_blitter_clear_6(int32_t, int32_t, int32_t, int32_t, int32_t, int32_t) { ext3::unsupported(ext3::Id::amcaf); }
-// blitter fill (I0,0,0,0,0,0)
-void amcaf_blitter_fill_6(int32_t, int32_t, int32_t, int32_t, int32_t, int32_t) { ext3::unsupported(ext3::Id::amcaf); }
-// blitter fill (I0,0t0,0)
-void amcaf_blitter_fill_4(int32_t, int32_t, int32_t, int32_t) { ext3::unsupported(ext3::Id::amcaf); }
-// blitter fill (I0,0)
-void amcaf_blitter_fill_2(int32_t, int32_t) { ext3::unsupported(ext3::Id::amcaf); }
-// blitter fill (I0,0,0,0,0,0t0,0)
-void amcaf_blitter_fill_8(int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t) { ext3::unsupported(ext3::Id::amcaf); }
 // c2p fire (I0,0,0t0,0)
 void amcaf_c2p_fire(int32_t, int32_t, int32_t, int32_t, int32_t) { ext3::unsupported(ext3::Id::amcaf); }
 // c2p shift (I0,0,0t0,0)

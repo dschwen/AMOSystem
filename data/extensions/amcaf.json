@@ -2263,8 +2263,8 @@
    "routine": 74,
    "terminator": 254,
    "symbol": "amcaf_blitter_fill_2",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_blitter.cpp"
   },
   {
    "offset": 4184,
@@ -2273,8 +2273,8 @@
    "routine": 73,
    "terminator": 254,
    "symbol": "amcaf_blitter_fill_4",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_blitter.cpp"
   },
   {
    "offset": 4198,
@@ -2283,8 +2283,8 @@
    "routine": 72,
    "terminator": 254,
    "symbol": "amcaf_blitter_fill_6",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_blitter.cpp"
   },
   {
    "offset": 4216,
@@ -2293,8 +2293,8 @@
    "routine": 75,
    "terminator": 255,
    "symbol": "amcaf_blitter_fill_8",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_blitter.cpp"
   },
   {
    "offset": 4238,
@@ -2543,8 +2543,8 @@
    "routine": 70,
    "terminator": 254,
    "symbol": "amcaf_blitter_clear_2",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_blitter.cpp"
   },
   {
    "offset": 4660,
@@ -2553,8 +2553,8 @@
    "routine": 71,
    "terminator": 255,
    "symbol": "amcaf_blitter_clear_6",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_blitter.cpp"
   },
   {
    "offset": 4678,
@@ -2563,8 +2563,8 @@
    "routine": 68,
    "terminator": 255,
    "symbol": "amcaf_blitter_busy",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_blitter.cpp"
   },
   {
    "offset": 4696,
@@ -2573,8 +2573,8 @@
    "routine": 69,
    "terminator": 255,
    "symbol": "amcaf_blitter_wait",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_blitter.cpp"
   },
   {
    "offset": 4714,
@@ -2603,8 +2603,8 @@
    "routine": 60,
    "terminator": 254,
    "symbol": "amcaf_blitter_copy_limit_1",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_blitter.cpp"
   },
   {
    "offset": 4772,
@@ -2613,8 +2613,8 @@
    "routine": 61,
    "terminator": 255,
    "symbol": "amcaf_blitter_copy_limit_4",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_blitter.cpp"
   },
   {
    "offset": 4786,
