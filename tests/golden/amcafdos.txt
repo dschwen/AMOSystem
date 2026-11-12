@@ -1,0 +1,12 @@
+len 333 333 333
+sum 6 42527706
+sum 7 42527706
+replaced 333
+flags 0 65536Work    Datas   
+nofile 81 0
+badsave 94 0
+empty 23
+bignum 0 333
+nobank 36
+bobs 36
+len 333

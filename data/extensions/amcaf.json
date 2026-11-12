@@ -613,8 +613,8 @@
    "routine": 104,
    "terminator": 255,
    "symbol": "amcaf_wload",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_dos.cpp"
   },
   {
    "offset": 1124,
@@ -623,8 +623,8 @@
    "routine": 103,
    "terminator": 255,
    "symbol": "amcaf_dload",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_dos.cpp"
   },
   {
    "offset": 1138,
@@ -633,8 +633,8 @@
    "routine": 105,
    "terminator": 255,
    "symbol": "amcaf_wsave",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_dos.cpp"
   },
   {
    "offset": 1152,
@@ -643,8 +643,8 @@
    "routine": 105,
    "terminator": 255,
    "symbol": "amcaf_wsave",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_dos.cpp"
   },
   {
    "offset": 1166,
@@ -763,8 +763,8 @@
    "routine": 172,
    "terminator": 255,
    "symbol": "amcaf_io_error",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_dos.cpp"
   },
   {
    "offset": 1344,
