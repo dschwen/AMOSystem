@@ -1,0 +1,20 @@
+point 0 15 3 0 15 15 15 1 0
+out-1-1-1-1-1
+over 2
+ink 15 15
+point 1 1 1 0 1 1 1 1 0
+out-1-1-1-1-1
+over 0
+ink 1 1
+point 2 63 3 0 15 31 63 1 0
+out-1-1-1-1-1
+over 2
+ink 63 63
+point 3 3 3 0 3 3 3 1 0
+out-1-1-1-1-1
+over 2
+ink 3 3
+point 4 15 3 0 15 15 15 1 0
+out-1-1-1-1-1
+over 2
+ink 15 15

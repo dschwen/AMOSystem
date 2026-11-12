@@ -493,8 +493,8 @@
    "routine": 348,
    "terminator": 255,
    "symbol": "amcaf_turbo_plot",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_draw.cpp"
   },
   {
    "offset": 926,
@@ -503,8 +503,8 @@
    "routine": 349,
    "terminator": 255,
    "symbol": "amcaf_turbo_point",
-   "status": "stub",
-   "source": ""
+   "status": "implemented",
+   "source": "src/ext/amcaf_draw.cpp"
   },
   {
    "offset": 946,
