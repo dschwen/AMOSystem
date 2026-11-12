@@ -202,8 +202,6 @@ uint64_t amos_typed_amcaf_tool_types_s(const uint32_t* words) { return typed_lib
 uint64_t amos_typed_amcaf_trans_screen_dynamic(const uint32_t* words) { return typed_library_call<&amcaf_trans_screen_dynamic, 4, 0>(words); }
 uint64_t amos_typed_amcaf_trans_screen_runtime(const uint32_t* words) { return typed_library_call<&amcaf_trans_screen_runtime, 4, 0>(words); }
 uint64_t amos_typed_amcaf_trans_screen_static(const uint32_t* words) { return typed_library_call<&amcaf_trans_screen_static, 4, 0>(words); }
-uint64_t amos_typed_amcaf_turbo_draw_5(const uint32_t* words) { return typed_library_call<&amcaf_turbo_draw_5, 5, 0>(words); }
-uint64_t amos_typed_amcaf_turbo_draw_6(const uint32_t* words) { return typed_library_call<&amcaf_turbo_draw_6, 6, 0>(words); }
 uint64_t amos_typed_amcaf_turbo_text_3(const uint32_t* words) { return typed_library_call<&amcaf_turbo_text_3, 3, 0>(words); }
 uint64_t amos_typed_amcaf_turbo_text_4(const uint32_t* words) { return typed_library_call<&amcaf_turbo_text_4, 4, 0>(words); }
 uint64_t amos_typed_amcaf_turbo_text_5(const uint32_t* words) { return typed_library_call<&amcaf_turbo_text_5, 5, 0>(words); }

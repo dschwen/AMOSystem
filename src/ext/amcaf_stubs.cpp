@@ -384,10 +384,6 @@ void amcaf_turbo_text_3(int32_t, int32_t, GuestString) { ext3::unsupported(ext3:
 void amcaf_turbo_text_4(int32_t, int32_t, GuestString, int32_t) { ext3::unsupported(ext3::Id::amcaf); }
 // turbo text (I0,0,2,0,0)
 void amcaf_turbo_text_5(int32_t, int32_t, GuestString, int32_t, int32_t) { ext3::unsupported(ext3::Id::amcaf); }
-// turbo draw (I0,0t0,0,0)
-void amcaf_turbo_draw_5(int32_t, int32_t, int32_t, int32_t, int32_t) { ext3::unsupported(ext3::Id::amcaf); }
-// turbo draw (I0,0t0,0,0,0)
-void amcaf_turbo_draw_6(int32_t, int32_t, int32_t, int32_t, int32_t, int32_t) { ext3::unsupported(ext3::Id::amcaf); }
 // fcircle (I0,0,0)
 void amcaf_fcircle(int32_t, int32_t, int32_t) { ext3::unsupported(ext3::Id::amcaf); }
 // fellipse (I0,0,0,0)

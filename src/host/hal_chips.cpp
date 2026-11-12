@@ -60,8 +60,92 @@ uint16_t minterm(uint8_t m, uint16_t a, uint16_t b, uint16_t c)
     return d;
 }
 
+// The blitter's line mode (BLTCON1 bit 0): a pixel at a time, from the start bit of A's shift in the word of
+// the C/D pointers. A's pointer is the error: while its sign is clear the line steps in the minor axis too
+// (A's modulo is added), else only in the major one (B's modulo). SUD: x is the major axis; AUL: the major
+// step is left or up; SUL: the minor step is left or up. SING: only the first pixel of a row is drawn.
+void line(uint16_t size)
+{
+    uint16_t con0 = word(0x40), con1 = word(0x42);
+    uint16_t first_mask = word(0x44);
+    uint32_t cpt = pointer(0x48), dpt = pointer(0x54);
+    int16_t error = int16_t(word(0x52) & 0xFFFE);
+    int16_t amod = int16_t(word(0x64)), bmod = int16_t(word(0x62)), cmod = int16_t(word(0x60)),
+            dmod = int16_t(word(0x66));
+    uint16_t bdat = word(0x72), adat = word(0x74);
+    int length = size >> 6;
+    if (!length)
+        length = 1024;
+    int ashift = con0 >> 12, bshift = con1 >> 12;
+    uint8_t m = uint8_t(con0);
+    bool sign = con1 & 0x40, single = con1 & 0x02, sud = con1 & 0x10, sul = con1 & 0x08, aul = con1 & 0x04;
+    bool dot = false, zero = true;
+    auto right = [&] {
+        if (++ashift == 16) {
+            ashift = 0;
+            cpt += 2;
+            dpt += 2;
+        }
+    };
+    auto left = [&] {
+        if (--ashift < 0) {
+            ashift = 15;
+            cpt -= 2;
+            dpt -= 2;
+        }
+    };
+    auto down = [&] {
+        cpt += cmod;
+        dpt += dmod;
+        dot = false;
+    };
+    auto up = [&] {
+        cpt -= cmod;
+        dpt -= dmod;
+        dot = false;
+    };
+    for (int i = 0; i < length; i++) {
+        uint16_t a = uint16_t((adat & first_mask) >> ashift);
+        uint16_t b = (bdat >> bshift & 1) ? 0xFFFF : 0;
+        bshift = (bshift - 1) & 15;
+        uint16_t d = minterm(m, a, b, read_word(cpt));
+        if (!single || !dot) {
+            write_word(dpt, d);
+            dot = true;
+            if (d)
+                zero = false;
+        }
+        if (sud) {
+            aul ? left() : right();
+            if (!sign)
+                sul ? up() : down();
+        } else {
+            aul ? up() : down();
+            if (!sign)
+                sul ? left() : right();
+        }
+        error = int16_t(error + (sign ? bmod : amod));
+        sign = error < 0;
+    }
+    set_word(0x48, uint16_t(cpt >> 16));
+    set_word(0x4A, uint16_t(cpt));
+    set_word(0x54, uint16_t(dpt >> 16));
+    set_word(0x56, uint16_t(dpt));
+    set_word(0x52, uint16_t(error));
+    set_word(0x40, uint16_t((con0 & 0x0FFF) | ashift << 12));
+    set_word(0x42, uint16_t((con1 & ~0x40 & 0x0FFF) | bshift << 12 | (sign ? 0x40 : 0)));
+    uint16_t dma = word(0x02) & ~0x6000;
+    if (zero)
+        dma |= 0x2000;
+    set_word(0x02, dma);
+}
+
 void blit(uint16_t size)
 {
+    if (word(0x42) & 1) {
+        line(size);
+        return;
+    }
     uint16_t con0 = word(0x40), con1 = word(0x42);
     uint16_t first_mask = word(0x44), last_mask = word(0x46);
     uint32_t cpt = pointer(0x48), bpt = pointer(0x4C), apt = pointer(0x50), dpt = pointer(0x54);

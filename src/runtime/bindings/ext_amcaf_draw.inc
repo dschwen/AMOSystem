@@ -29,6 +29,8 @@ using namespace ::amos::music;
 using namespace ::amos::verif;
 using namespace ::amos::w;
 extern "C" {
+uint64_t amos_typed_amcaf_turbo_draw_5(const uint32_t* words) { return typed_library_call<&amcaf_turbo_draw_5, 5, 0>(words); }
+uint64_t amos_typed_amcaf_turbo_draw_6(const uint32_t* words) { return typed_library_call<&amcaf_turbo_draw_6, 6, 0>(words); }
 uint64_t amos_typed_amcaf_turbo_plot(const uint32_t* words) { return typed_library_call<&amcaf_turbo_plot, 3, 0>(words); }
 uint64_t amos_typed_amcaf_turbo_point(const uint32_t* words) { return typed_library_call<&amcaf_turbo_point, 2, 4>(words); }
 }
