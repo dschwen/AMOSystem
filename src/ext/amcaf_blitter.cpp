@@ -133,6 +133,59 @@ void copy_limits(int32_t x1, int32_t y1, int32_t x2, int32_t y2)
     poke_w(amcaf::state_at(amcaf::CopyX), first);
 }
 
+// R03f-R043: Blitter Copy. The limits of Blitter Copy Limit (words from x, rows from y) copied from up to
+// three source planes into the destination plane, a logic function of them (the minterm, with the enables of
+// as many sources as there are) done by the blitter. The destination is the last pair; the planes are
+// checked in the order they are taken: the destination first
+struct Pair {
+    int32_t screen, plane;
+};
+void copy(const Pair *pairs, int count, int32_t minterm)
+{
+    uint32_t base[4];
+    uint16_t row[4];
+    // pairs[count - 1] is the destination: slot 0; the sources A, B, C follow in the order of the blitter's
+    // channels
+    for (int i = 0; i < count; i++) {
+        const Pair &pair = pairs[count - 1 - i];
+        const Screen *s = get_ec(pair.screen);
+        base[i] = logic_plane(s, pair.plane);
+        row[i] = uint16_t(s->EcTx >> 3);
+    }
+    uint16_t x = peek_w(amcaf::state_at(amcaf::CopyX)), y = peek_w(amcaf::state_at(amcaf::CopyY));
+    uint16_t words = peek_w(amcaf::state_at(amcaf::CopyWords)), height = peek_w(amcaf::state_at(amcaf::CopyHeight));
+    uint32_t shift = uint32_t(uint16_t(x * 2));
+    for (int i = 0; i < count; i++)
+        base[i] += uint32_t(y) * row[i] + shift;
+    uint16_t size = uint16_t(uint16_t(height << 6) + words);
+    uint16_t mod[4];
+    for (int i = 0; i < count; i++)
+        mod[i] = uint16_t(row[i] - 2 * words);
+    static const uint16_t enables[5] = {0, 0, 0x0900, 0x0D00, 0x0F00};
+    volatile struct Custom &c = hal::custom();
+    take_blitter();
+    c.bltcon0 = uint16_t(enables[count] + (minterm & 255));
+    c.bltcon1 = 0;
+    c.bltafwm = 0xFFFF;
+    c.bltalwm = 0xFFFF;
+    // the destination is slot 0; A is the source given first, the last slot, then B, then C
+    const int ia = count - 1, ib = count - 2, ic = 1;
+    if (count >= 4) {
+        c.bltcpt = ptr<uint8_t>(base[ic]);
+        c.bltcmod = mod[ic];
+    }
+    if (count >= 3) {
+        c.bltbpt = ptr<uint8_t>(base[ib]);
+        c.bltbmod = mod[ib];
+    }
+    c.bltapt = ptr<uint8_t>(base[ia]);
+    c.bltdpt = ptr<uint8_t>(base[0]);
+    c.bltamod = mod[ia];
+    c.bltdmod = mod[0];
+    hal::blit(size);
+    hal::disown_blitter();
+}
+
 } // namespace
 
 extern "C" {
@@ -190,6 +243,41 @@ void amcaf_blitter_copy_limit_1(int32_t screen)
     poke_w(amcaf::state_at(amcaf::CopyHeight), s->EcTy);
 }
 void amcaf_blitter_copy_limit_4(int32_t x1, int32_t y1, int32_t x2, int32_t y2) { copy_limits(x1, y1, x2, y2); }
+
+// BLITTER COPY from,plane [,from,plane [,from,plane]] TO to,plane [,minterm]: the sources A, B, C given in
+// this order; the minterm 240 (D = A), 252 (A or B), 255 (all ones...) when it is not given
+void amcaf_blitter_copy_4(int32_t s1, int32_t p1, int32_t s2, int32_t p2)
+{
+    const Pair pairs[2] = {{s1, p1}, {s2, p2}};
+    copy(pairs, 2, 240);
+}
+void amcaf_blitter_copy_5(int32_t s1, int32_t p1, int32_t s2, int32_t p2, int32_t minterm)
+{
+    const Pair pairs[2] = {{s1, p1}, {s2, p2}};
+    copy(pairs, 2, minterm);
+}
+void amcaf_blitter_copy_6(int32_t s1, int32_t p1, int32_t s2, int32_t p2, int32_t s3, int32_t p3)
+{
+    const Pair pairs[3] = {{s1, p1}, {s2, p2}, {s3, p3}};
+    copy(pairs, 3, 252);
+}
+void amcaf_blitter_copy_7(int32_t s1, int32_t p1, int32_t s2, int32_t p2, int32_t s3, int32_t p3, int32_t minterm)
+{
+    const Pair pairs[3] = {{s1, p1}, {s2, p2}, {s3, p3}};
+    copy(pairs, 3, minterm);
+}
+void amcaf_blitter_copy_8(int32_t s1, int32_t p1, int32_t s2, int32_t p2, int32_t s3, int32_t p3, int32_t s4,
+                          int32_t p4)
+{
+    const Pair pairs[4] = {{s1, p1}, {s2, p2}, {s3, p3}, {s4, p4}};
+    copy(pairs, 4, 255);
+}
+void amcaf_blitter_copy_9(int32_t s1, int32_t p1, int32_t s2, int32_t p2, int32_t s3, int32_t p3, int32_t s4,
+                          int32_t p4, int32_t minterm)
+{
+    const Pair pairs[4] = {{s1, p1}, {s2, p2}, {s3, p3}, {s4, p4}};
+    copy(pairs, 4, minterm);
+}
 }
 
 #if !defined(__mc68000__)
