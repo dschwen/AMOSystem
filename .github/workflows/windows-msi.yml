@@ -80,6 +80,18 @@ jobs:
           for kind in low biased; do
             python3 tools/package_windows.py --build build/windows-smoke-$kind --sdk "$sdk" --out build/windows-portable-$kind
           done
+      - name: Portable release ZIP (no installation; what a release carries)
+        shell: bash
+        run: |
+          sdk="$PWD/build/sdk/SDL2-2.32.8/x86_64-w64-mingw32"
+          make -j2 windows-release WINDOWS_CXX=x86_64-w64-mingw32-g++-win32 SDL2_WINDOWS="$sdk" WINDOWS_RELEASE_DIR=build/windows-portable-release-build
+          python3 tools/package_windows.py --build build/windows-portable-release-build --sdk "$sdk" --release "$VERSION" --out build/windows-portable-release
+      - name: Upload the portable release ZIP
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-portable-release
+          path: build/windows-portable-release/amos-*-portable.zip*
+          if-no-files-found: error
       - name: Upload the portable bundles
         uses: actions/upload-artifact@v4
         with:
@@ -246,6 +258,10 @@ jobs:
           name: unsigned-msi
           path: packages
       - uses: actions/download-artifact@v4
+        with:
+          name: windows-portable-release
+          path: portable
+      - uses: actions/download-artifact@v4
         if: needs.sign.result == 'success'
         with:
           name: signed-msi
@@ -266,4 +282,5 @@ jobs:
           # (not the upgrade probes' MSIs, which are in the artifact too)
           version="${GITHUB_REF_NAME#v}"
           gh release create "$GITHUB_REF_NAME" --generate-notes || true
-          gh release upload "$GITHUB_REF_NAME" "packages/amos-$version-windows-x64.msi" "packages/amos-$version-windows-x64.json" --clobber
+          gh release upload "$GITHUB_REF_NAME" "packages/amos-$version-windows-x64.msi" "packages/amos-$version-windows-x64.json" \
+            "portable/amos-$version-windows-x64-portable.zip" "portable/amos-$version-windows-x64-portable.zip.sha256" --clobber

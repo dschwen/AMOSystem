@@ -1,6 +1,6 @@
 # Packaging and distribution plan
 
-Status: mostly planned. Experimental Windows portable ZIP/smoke packaging
+Status: mostly planned. The Windows portable ZIP (`amos-VERSION-windows-x64-portable.zip`, unzip and run, built by the Windows MSI workflow with `tools/package_windows.py --release VERSION`) is attached to each `v*` release next to the MSI. Experimental Windows portable ZIP/smoke packaging
 (`make windows-dist`) and a Linux-built unsigned MSI (`make package-msi`) now
 exist; MSI installation/lifecycle tests and signing are pending. Linux, Intel macOS and Windows x86-64 host code
 now builds; native Apple Silicon remains a separate port. `make package-linux` builds the Linux portable tarball and a

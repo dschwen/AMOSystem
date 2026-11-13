@@ -5,6 +5,7 @@ import hashlib
 import json
 from pathlib import Path
 import shutil
+import subprocess
 import sys
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -21,7 +22,11 @@ def main():
     parser.add_argument('--build', type=Path, default=ROOT / 'build/windows')
     parser.add_argument('--sdk', type=Path, required=True)
     parser.add_argument('--out', type=Path, default=ROOT / 'build/windows-portable')
+    parser.add_argument('--release', metavar='VERSION', help='the clean portable release ZIP (no smoke tests), named for this version')
     args = parser.parse_args()
+    if args.release:
+        release(args, parser)
+        return
     # Validate inputs before touching the package directory.
     for source in (args.build / 'amos.exe', args.sdk / 'bin/SDL2.dll'):
         if not source.is_file():
@@ -80,6 +85,62 @@ SDL2 license: SDL2-LICENSE.txt. Original AMOS notices/resources remain in AMOS.
         parser.error('SDL2 SDK license file not found in SDK parent directory')
     archive = shutil.make_archive(str(out), 'zip', root_dir=out.parent, base_dir=out.name)
     print(f'Windows bundle: {archive}')
+
+
+def tracked(prefix):
+    # Only committed files, never a developer's editor files or third-party libraries not in the repository
+    names = subprocess.check_output(['git', 'ls-tree', '-rz', '--name-only', 'HEAD', '--', prefix], cwd=ROOT).decode().split('\0')
+    return [n for n in names if n]
+
+
+def release(args, parser):
+    """amos-VERSION-windows-x64-portable.zip: unzip anywhere and run amos.exe (settings stay in its folder)."""
+    for source in (args.build / 'amos.exe', args.sdk / 'bin/SDL2.dll'):
+        if not source.is_file():
+            parser.error(f'missing {source}')
+    name = f'amos-{args.release}-windows-x64-portable'
+    out = args.out.resolve()
+    if not out.is_relative_to((ROOT / 'build').resolve()) or out == (ROOT / 'build').resolve():
+        parser.error('--out must be a subdirectory of the repository build directory')
+    stage = out / name
+    if out.exists():
+        shutil.rmtree(out)
+    stage.mkdir(parents=True)
+    shutil.copy2(args.build / 'amos.exe', stage)
+    shutil.copy2(args.sdk / 'bin/SDL2.dll', stage)
+    resources = stage / 'AMOS'
+    for source, base in (('AMOS', 'AMOS'), ('examples', 'examples')):
+        for tracked_name in tracked(source):
+            relative = Path(tracked_name).relative_to(base)
+            if relative.suffix.lower() in ('.info', '.uaem'):
+                continue
+            dest = resources / relative
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            dest.write_bytes(subprocess.check_output(['git', 'show', 'HEAD:' + tracked_name], cwd=ROOT))
+    ext_config.patch_file(resources / 'AMOSPro_Interpreter_Config')
+    shutil.copy2(ROOT / 'LICENSE', stage / 'LICENSE.txt')
+    for license_name in ('COPYING.txt', 'LICENSE.txt', 'LICENSE'):
+        source = args.sdk.parent / license_name
+        if source.exists():
+            shutil.copy2(source, stage / 'SDL2-LICENSE.txt')
+            break
+    else:
+        parser.error('SDL2 SDK license file not found in SDK parent directory')
+    for font_name in ('LICENSE.AROS', 'README.md'):
+        dest = stage / 'licenses/AROS-font' / font_name
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(ROOT / 'data/fonts/topaz8' / font_name, dest)
+    (stage / 'README.txt').write_text(f'''AMOS Professional {args.release}, portable Windows x86-64 build. No installation needed.
+Unzip the whole folder anywhere that is writable (not Program Files) and run amos.exe.
+Keep SDL2.dll and the AMOS folder next to amos.exe. Settings and your programs are
+kept in that folder, so moving or copying it takes them along.
+Use an ASCII-only path for now: several file operations still use the narrow CRT APIs.
+SDL2 license: SDL2-LICENSE.txt. Original AMOS notices/resources remain in AMOS.
+''')
+    archive = shutil.make_archive(str(out / name), 'zip', root_dir=out, base_dir=name)
+    digest = hashlib.sha256(Path(archive).read_bytes()).hexdigest()
+    Path(archive + '.sha256').write_text(f'{digest}  {Path(archive).name}\n')
+    print(f'Windows portable release: {archive}')
 
 
 if __name__ == '__main__':
