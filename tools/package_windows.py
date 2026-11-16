@@ -22,6 +22,7 @@ def main():
     parser.add_argument('--build', type=Path, default=ROOT / 'build/windows')
     parser.add_argument('--sdk', type=Path, required=True)
     parser.add_argument('--out', type=Path, default=ROOT / 'build/windows-portable')
+    parser.add_argument('--arch', default='x64', choices=('x64', 'x86'), help='the name of the architecture in the release ZIP')
     parser.add_argument('--release', metavar='VERSION', help='the clean portable release ZIP (no smoke tests), named for this version')
     args = parser.parse_args()
     if args.release:
@@ -98,7 +99,7 @@ def release(args, parser):
     for source in (args.build / 'amos.exe', args.sdk / 'bin/SDL2.dll'):
         if not source.is_file():
             parser.error(f'missing {source}')
-    name = f'amos-{args.release}-windows-x64-portable'
+    name = f'amos-{args.release}-windows-{args.arch}-portable'
     out = args.out.resolve()
     if not out.is_relative_to((ROOT / 'build').resolve()) or out == (ROOT / 'build').resolve():
         parser.error('--out must be a subdirectory of the repository build directory')
@@ -130,7 +131,7 @@ def release(args, parser):
         dest = stage / 'licenses/AROS-font' / font_name
         dest.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(ROOT / 'data/fonts/topaz8' / font_name, dest)
-    (stage / 'README.txt').write_text(f'''AMOS Professional {args.release}, portable Windows x86-64 build. No installation needed.
+    (stage / 'README.txt').write_text(f'''AMOS Professional {args.release}, portable Windows {'x86-64' if args.arch == 'x64' else '32-bit x86'} build. No installation needed.
 Unzip the whole folder anywhere that is writable (not Program Files) and run amos.exe.
 Keep SDL2.dll and the AMOS folder next to amos.exe. Settings and your programs are
 kept in that folder, so moving or copying it takes them along.

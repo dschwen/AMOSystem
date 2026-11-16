@@ -320,10 +320,14 @@ void *fiber_create(size_t size, void (*entry)())
 void fiber_delete(void *fiber) { DeleteFiber(fiber); }
 void *fiber_current()
 {
-    // Same GS-relative read as MinGW's GetCurrentFiber. A volatile offset
+    // Same segment-relative read as MinGW's GetCurrentFiber (GS on x64, FS on i686). A volatile offset
     // avoids GCC 13's false array-bounds warning for its constant-offset intrinsic.
     volatile DWORD offset = FIELD_OFFSET(NT_TIB, FiberData);
+#if defined(_WIN64)
     return reinterpret_cast<void *>(__readgsqword(offset));
+#else
+    return reinterpret_cast<void *>(__readfsdword(offset));
+#endif
 }
 void fiber_switch(void *fiber) { SwitchToFiber(fiber); }
 uint64_t monotonic_microseconds()

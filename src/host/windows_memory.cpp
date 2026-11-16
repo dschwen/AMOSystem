@@ -8,7 +8,7 @@
 
 namespace amos::host::windows {
 namespace {
-constexpr uintptr_t Limit = uintptr_t(1) << 32;
+constexpr uint64_t Limit = uint64_t(1) << 32;
 }
 
 void *memory_allocate(size_t size, bool below_4gb, void *exact)
@@ -18,7 +18,7 @@ void *memory_allocate(size_t size, bool below_4gb, void *exact)
         return nullptr;
     }
     if (exact) {
-        uintptr_t at = reinterpret_cast<uintptr_t>(exact);
+        uint64_t at = reinterpret_cast<uintptr_t>(exact);
         if (below_4gb && (at >= Limit || size > Limit - at)) {
             SetLastError(ERROR_INVALID_ADDRESS);
             return nullptr;

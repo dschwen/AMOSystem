@@ -243,6 +243,15 @@ $(HOST)/version.o: $(HOST)/version.rc data/icons/amos.ico
 	$(WINDOWS_WINDRES) -i $< -o $@
 
 WINDOWS_RELEASE_DIR ?= $(BUILD)/windows-release
+# 32-bit Windows (i686): the same build with the 32-bit toolchain and the identity mapping (a 32-bit
+# process has no room for the biased one), and without the 64-bit-only linker options
+WINDOWS32_ARGS = WINDOWS_CXX=i686-w64-mingw32-g++-win32 WINDOWS_WINDRES=i686-w64-mingw32-windres \
+	HOST_ARCHFLAGS=-m32 HOST_TARGET_ARCH=i686 WINDOWS_BIASED=0 \
+	WINDOWS_LDFLAGS='-Wl,--disable-dynamicbase -static-libgcc -static-libstdc++'
+WINDOWS32_RELEASE_DIR ?= $(BUILD)/windows32-release
+windows32-release:
+	$(MAKE) windows-release WINDOWS_RELEASE_DIR=$(WINDOWS32_RELEASE_DIR) $(WINDOWS32_ARGS)
+
 windows-release:
 	@mkdir -p $(WINDOWS_RELEASE_DIR)
 	$(PYTHON) tools/extract_topaz.py --out $(WINDOWS_RELEASE_DIR)/topaz.cpp --fallback data/fonts/topaz8

@@ -50,7 +50,7 @@ jobs:
       - name: Install cross compiler and MSI inspection tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y g++-mingw-w64-x86-64 wixl msitools python3-pil libsdl2-2.0-0 xvfb libxtst6
+          sudo apt-get install -y g++-mingw-w64-x86-64 g++-mingw-w64-i686 wixl msitools python3-pil libsdl2-2.0-0 xvfb libxtst6
       - name: Fetch pinned SDL2 MinGW SDK
         run: |
           mkdir -p build/sdk
@@ -92,6 +92,19 @@ jobs:
           name: windows-portable-release
           path: build/windows-portable-release/amos-*-portable.zip*
           if-no-files-found: error
+      - name: 32-bit (i686) portable bundle for the smoke tests, and the release ZIP
+        shell: bash
+        run: |
+          sdk32="$PWD/build/sdk/SDL2-2.32.8/i686-w64-mingw32"
+          make -j2 windows32-release SDL2_WINDOWS="$sdk32"
+          python3 tools/package_windows.py --build build/windows32-release --sdk "$sdk32" --out build/windows-portable-x86
+          python3 tools/package_windows.py --build build/windows32-release --sdk "$sdk32" --release "$VERSION" --arch x86 --out build/windows-portable-release-x86
+      - name: Upload the 32-bit portable release ZIP
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-portable-release-x86
+          path: build/windows-portable-release-x86/amos-*-portable.zip*
+          if-no-files-found: error
       - name: Upload the portable bundles
         uses: actions/upload-artifact@v4
         with:
@@ -99,6 +112,7 @@ jobs:
           path: |
             build/windows-portable-low.zip
             build/windows-portable-biased.zip
+            build/windows-portable-x86.zip
           if-no-files-found: error
       - name: Linux host regression check
         run: |
@@ -163,7 +177,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        kind: [low, biased]
+        kind: [low, biased, x86]
     steps:
       - uses: actions/download-artifact@v4
         with:
@@ -262,6 +276,10 @@ jobs:
           name: windows-portable-release
           path: portable
       - uses: actions/download-artifact@v4
+        with:
+          name: windows-portable-release-x86
+          path: portable
+      - uses: actions/download-artifact@v4
         if: needs.sign.result == 'success'
         with:
           name: signed-msi
@@ -283,4 +301,5 @@ jobs:
           version="${GITHUB_REF_NAME#v}"
           gh release create "$GITHUB_REF_NAME" --generate-notes || true
           gh release upload "$GITHUB_REF_NAME" "packages/amos-$version-windows-x64.msi" "packages/amos-$version-windows-x64.json" \
-            "portable/amos-$version-windows-x64-portable.zip" "portable/amos-$version-windows-x64-portable.zip.sha256" --clobber
+            "portable/amos-$version-windows-x64-portable.zip" "portable/amos-$version-windows-x64-portable.zip.sha256" \
+            "portable/amos-$version-windows-x86-portable.zip" "portable/amos-$version-windows-x86-portable.zip.sha256" --clobber
