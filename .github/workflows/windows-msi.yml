@@ -263,9 +263,9 @@ jobs:
     # SignPath is set up (a signing failure or rejection publishes nothing), unsigned otherwise
     if: >-
       always() && startsWith(github.ref, 'refs/tags/v') &&
-      needs.installer-tests.result == 'success' &&
+      needs.installer-tests.result == 'success' && needs.smoke.result == 'success' &&
       (needs.sign.result == 'success' || needs.sign.result == 'skipped')
-    needs: [build, installer-tests, sign]
+    needs: [build, installer-tests, smoke, sign]
     runs-on: ubuntu-24.04
     permissions:
       contents: write

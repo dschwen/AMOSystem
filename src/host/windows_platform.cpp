@@ -85,7 +85,7 @@ void require_low_stack()
     // (a native stack's addresses are guest words in the identity mapping; biased, they are not)
     ULONG_PTR low, high;
     GetCurrentThreadStackLimits(&low, &high);
-    if (!low || low >= high || high > (uintptr_t(1) << 32)) {
+    if (!low || low >= high || uint64_t(high) > (uint64_t(1) << 32)) {
         fprintf(stderr, "amos: Windows fiber stack [%p, %p) exceeds 32-bit address range\n",
                 reinterpret_cast<void *>(low), reinterpret_cast<void *>(high));
         exit(70);
@@ -232,9 +232,9 @@ bool image_below_4gb()
 {
     auto *base = reinterpret_cast<const unsigned char *>(GetModuleHandleW(nullptr));
     auto *dos = reinterpret_cast<const IMAGE_DOS_HEADER *>(base);
-    auto *pe = reinterpret_cast<const IMAGE_NT_HEADERS64 *>(base + dos->e_lfanew);
-    uintptr_t at = reinterpret_cast<uintptr_t>(base);
-    return at < (uintptr_t(1) << 32) && pe->OptionalHeader.SizeOfImage <= (uintptr_t(1) << 32) - at;
+    auto *pe = reinterpret_cast<const IMAGE_NT_HEADERS *>(base + dos->e_lfanew);
+    uint64_t at = reinterpret_cast<uintptr_t>(base);
+    return at < (uint64_t(1) << 32) && pe->OptionalHeader.SizeOfImage <= (uint64_t(1) << 32) - at;
 }
 int make_directory(const char *path)
 {
