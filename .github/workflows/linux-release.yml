@@ -64,4 +64,5 @@ jobs:
           GH_REPO: ${{ github.repository }}
         run: |
           gh release create "$GITHUB_REF_NAME" --generate-notes || true
-          gh release upload "$GITHUB_REF_NAME" build/packages/amos* --clobber
+          # (the manifest stays in the workflow's artifact)
+          gh release upload "$GITHUB_REF_NAME" build/packages/*.tar.xz build/packages/*.deb build/packages/*.sha256 --clobber

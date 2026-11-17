@@ -78,4 +78,6 @@ jobs:
           GH_REPO: ${{ github.repository }}
         run: |
           gh release create "$GITHUB_REF_NAME" --generate-notes || true
-          gh release upload "$GITHUB_REF_NAME" build/packages/*.dmg build/packages/*macos*.json --clobber
+          # (the manifests stay in the workflow's artifact; the release has the DMG and its checksum)
+          (cd build/packages && for f in *.dmg; do shasum -a 256 "$f" > "$f.sha256"; done)
+          gh release upload "$GITHUB_REF_NAME" build/packages/*.dmg build/packages/*.dmg.sha256 --clobber

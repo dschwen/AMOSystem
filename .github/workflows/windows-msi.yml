@@ -304,6 +304,6 @@ jobs:
           # (not the upgrade probes' MSIs, which are in the artifact too)
           version="${GITHUB_REF_NAME#v}"
           gh release create "$GITHUB_REF_NAME" --generate-notes || true
-          gh release upload "$GITHUB_REF_NAME" "packages/amos-$version-windows-x64.msi" "packages/amos-$version-windows-x64.json" \
+          gh release upload "$GITHUB_REF_NAME" "packages/amos-$version-windows-x64.msi" \
             "portable/amos-$version-windows-x64-portable.zip" "portable/amos-$version-windows-x64-portable.zip.sha256" \
             "portable/amos-$version-windows-x86-portable.zip" "portable/amos-$version-windows-x86-portable.zip.sha256" --clobber
